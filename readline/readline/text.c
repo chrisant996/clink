@@ -1,6 +1,6 @@
 /* text.c -- text handling commands for readline. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -59,12 +59,12 @@
 #include "xmalloc.h"
 
 /* Forward declarations. */
-static int rl_change_case PARAMS((int, int));
-static int _rl_char_search PARAMS((int, int, int));
+static int rl_change_case (int, int);
+static int _rl_char_search (int, int, int);
 
 #if defined (READLINE_CALLBACKS)
-static int _rl_insert_next_callback PARAMS((_rl_callback_generic_arg *));
-static int _rl_char_search_callback PARAMS((_rl_callback_generic_arg *));
+static int _rl_insert_next_callback (_rl_callback_generic_arg *);
+static int _rl_char_search_callback (_rl_callback_generic_arg *);
 #endif
 
 /* The largest chunk of text that can be inserted in one call to
@@ -107,6 +107,7 @@ rl_insert_text (const char *string)
 
   for (i = rl_end; i >= rl_point; i--)
     rl_line_buffer[i + l] = rl_line_buffer[i];
+
   strncpy (rl_line_buffer + rl_point, string, l);
 
   /* Remember how to undo this if we aren't undoing something. */
@@ -940,8 +941,11 @@ _rl_overwrite_char (int count, int c)
   int k;
 
   /* Read an entire multibyte character sequence to insert COUNT times. */
+  k = 1;
   if (count > 0 && MB_CUR_MAX > 1 && rl_byte_oriented == 0)
     k = _rl_read_mbstring (c, mbkey, MB_LEN_MAX);
+  if (k < 0)
+    return 1;
 #endif
 
   rl_begin_undo_group ();
@@ -1206,17 +1210,7 @@ rl_newline (int count, int key)
 int
 rl_do_lowercase_version (int ignore1, int ignore2)
 {
-/* begin_clink_change */
-  /* Both rl_do_lowercase_version and _rl_null_function simply returned 0.
-     Some linkers fold identical function implementations so there's only
-     one copy.  That interferes with function pointer comparisons in RL's
-     subseq dispatching.
-     Returning something other than 0 here is a cheap way to force this to
-     be discrete from _rl_null_function, ensuring the functionality won't
-     be broken by linkers.  Since this function is never called, the
-     return value doesn't matter. */
-  return 999999;
-/* end_clink_change */
+  return 99999;		/* prevent from being combined with _rl_null_function */
 }
 
 /* This is different from what vi does, so the code's not shared.  Emacs
@@ -1637,7 +1631,10 @@ rl_transpose_words (int count, int key)
 {
   char *word1, *word2;
   int w1_beg, w1_end, w2_beg, w2_end;
-  int orig_point = rl_point;
+  int orig_point, orig_end;
+
+  orig_point = rl_point;
+  orig_end = rl_end;
 
   if (!count)
     return 0;
@@ -1681,6 +1678,7 @@ rl_transpose_words (int count, int key)
   /* This is exactly correct since the text before this point has not
      changed in length. */
   rl_point = w2_end;
+  rl_end = orig_end;		/* just make sure */
 
   /* I think that does it. */
   rl_end_undo_group ();

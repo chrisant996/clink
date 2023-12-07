@@ -7,6 +7,7 @@ examples/autoconf	d
 examples/rlfe	d
 support		d
 shlib		d
+m4		d
 COPYING		f
 README		f
 MANIFEST	f
@@ -17,10 +18,12 @@ NEWS		f
 USAGE		f
 aclocal.m4	f
 config.h.in	f
-configure	f
+configure	f	755
 configure.ac	f
+m4/codeset.m4	f
 Makefile.in	f
 readline.pc.in	f
+history.pc.in	f
 ansi_stdlib.h	f
 chardefs.h	f
 colors.h	f
@@ -32,6 +35,7 @@ posixdir.h	f
 posixjmp.h	f
 posixselect.h	f
 posixstat.h	f
+posixtime.h	f
 readline.h	f
 rlconf.h	f
 rldefs.h	f
@@ -121,6 +125,8 @@ examples/rlevent.c	f
 examples/rlkeymaps.c	f
 examples/rltest.c	f
 examples/rl-callbacktest.c	f
+examples/rl-timeout.c	f
+examples/rl-test-timeout	f
 examples/rl.c		f
 examples/rlptytest.c	f
 examples/rlversion.c	f
@@ -135,7 +141,7 @@ examples/rlfe/ChangeLog		f
 examples/rlfe/Makefile.in	f
 examples/rlfe/README		f
 examples/rlfe/config.h.in	f
-examples/rlfe/configure		f
+examples/rlfe/configure		f	755
 examples/rlfe/configure.in	f
 examples/rlfe/extern.h		f
 examples/rlfe/os.h		f

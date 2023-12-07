@@ -1,6 +1,6 @@
 /* history.h -- the names of functions that you can call in history. */
 
-/* Copyright (C) 1989-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -42,6 +42,11 @@ typedef void *histdata_t;
 typedef char *histdata_t;
 #endif
 
+/* Let's not step on anyone else's define for now, since we don't use this yet. */
+#ifndef HS_HISTORY_VERSION
+#  define HS_HISTORY_VERSION 0x0802	/* History 8.2 */
+#endif
+
 /* The structure used to store a history entry. */
 typedef struct _hist_entry {
   char *line;
@@ -68,102 +73,102 @@ typedef struct _hist_state {
 
 /* Begin a session in which the history functions might be used.  This
    just initializes the interactive variables. */
-extern void using_history PARAMS((void));
+extern void using_history (void);
 
 /* Return the current HISTORY_STATE of the history. */
-extern HISTORY_STATE *history_get_history_state PARAMS((void));
+extern HISTORY_STATE *history_get_history_state (void);
 
 /* Set the state of the current history array to STATE. */
-extern void history_set_history_state PARAMS((HISTORY_STATE *));
+extern void history_set_history_state (HISTORY_STATE *);
 
 /* Manage the history list. */
 
 /* Place STRING at the end of the history list.
    The associated data field (if any) is set to NULL. */
-extern void add_history PARAMS((const char *));
+extern void add_history (const char *);
 
 /* Change the timestamp associated with the most recent history entry to
    STRING. */
-extern void add_history_time PARAMS((const char *));
+extern void add_history_time (const char *);
 
 /* Remove an entry from the history list.  WHICH is the magic number that
    tells us which element to delete.  The elements are numbered from 0. */
-extern HIST_ENTRY *remove_history PARAMS((int));
+extern HIST_ENTRY *remove_history (int);
 
 /* Remove a set of entries from the history list: FIRST to LAST, inclusive */
-extern HIST_ENTRY **remove_history_range PARAMS((int, int));
+extern HIST_ENTRY **remove_history_range (int, int);
 
 /* Allocate a history entry consisting of STRING and TIMESTAMP and return
    a pointer to it. */
-extern HIST_ENTRY *alloc_history_entry PARAMS((char *, char *));
+extern HIST_ENTRY *alloc_history_entry (char *, char *);
 
 /* Copy the history entry H, but not the (opaque) data pointer */
-extern HIST_ENTRY *copy_history_entry PARAMS((HIST_ENTRY *));
+extern HIST_ENTRY *copy_history_entry (HIST_ENTRY *);
 
 /* Free the history entry H and return any application-specific data
    associated with it. */
-extern histdata_t free_history_entry PARAMS((HIST_ENTRY *));
+extern histdata_t free_history_entry (HIST_ENTRY *);
 
 /* Make the history entry at WHICH have LINE and DATA.  This returns
    the old entry so you can dispose of the data.  In the case of an
    invalid WHICH, a NULL pointer is returned. */
-extern HIST_ENTRY *replace_history_entry PARAMS((int, const char *, histdata_t));
+extern HIST_ENTRY *replace_history_entry (int, const char *, histdata_t);
 
 /* Clear the history list and start over. */
-extern void clear_history PARAMS((void));
+extern void clear_history (void);
 
 /* Stifle the history list, remembering only MAX number of entries. */
-extern void stifle_history PARAMS((int));
+extern void stifle_history (int);
 
 /* Stop stifling the history.  This returns the previous amount the
    history was stifled by.  The value is positive if the history was
    stifled, negative if it wasn't. */
-extern int unstifle_history PARAMS((void));
+extern int unstifle_history (void);
 
 /* Return 1 if the history is stifled, 0 if it is not. */
-extern int history_is_stifled PARAMS((void));
+extern int history_is_stifled (void);
 
 /* Information about the history list. */
 
 /* Return a NULL terminated array of HIST_ENTRY which is the current input
    history.  Element 0 of this list is the beginning of time.  If there
    is no history, return NULL. */
-extern HIST_ENTRY **history_list PARAMS((void));
+extern HIST_ENTRY **history_list (void);
 
 /* Returns the number which says what history element we are now
    looking at.  */
-extern int where_history PARAMS((void));
+extern int where_history (void);
   
 /* Return the history entry at the current position, as determined by
    history_offset.  If there is no entry there, return a NULL pointer. */
-extern HIST_ENTRY *current_history PARAMS((void));
+extern HIST_ENTRY *current_history (void);
 
 /* Return the history entry which is logically at OFFSET in the history
    array.  OFFSET is relative to history_base. */
-extern HIST_ENTRY *history_get PARAMS((int));
+extern HIST_ENTRY *history_get (int);
 
 /* Return the timestamp associated with the HIST_ENTRY * passed as an
    argument */
-extern time_t history_get_time PARAMS((HIST_ENTRY *));
+extern time_t history_get_time (HIST_ENTRY *);
 
 /* Return the number of bytes that the primary history entries are using.
    This just adds up the lengths of the_history->lines. */
-extern int history_total_bytes PARAMS((void));
+extern int history_total_bytes (void);
 
 /* Moving around the history list. */
 
 /* Set the position in the history list to POS. */
-extern int history_set_pos PARAMS((int));
+extern int history_set_pos (int);
 
 /* Back up history_offset to the previous history entry, and return
    a pointer to that entry.  If there is no previous entry, return
    a NULL pointer. */
-extern HIST_ENTRY *previous_history PARAMS((void));
+extern HIST_ENTRY *previous_history (void);
 
 /* Move history_offset forward to the next item in the input_history,
    and return the a pointer to that entry.  If there is no next entry,
    return a NULL pointer. */
-extern HIST_ENTRY *next_history PARAMS((void));
+extern HIST_ENTRY *next_history (void);
 
 /* Searching the history list. */
 
@@ -173,45 +178,45 @@ extern HIST_ENTRY *next_history PARAMS((void));
    current_history () is the history entry, and the value of this function
    is the offset in the line of that history entry that the string was
    found in.  Otherwise, nothing is changed, and a -1 is returned. */
-extern int history_search PARAMS((const char *, int));
+extern int history_search (const char *, int);
 
 /* Search the history for STRING, starting at history_offset.
    The search is anchored: matching lines must begin with string.
    DIRECTION is as in history_search(). */
-extern int history_search_prefix PARAMS((const char *, int));
+extern int history_search_prefix (const char *, int);
 
 /* Search for STRING in the history list, starting at POS, an
    absolute index into the list.  DIR, if negative, says to search
    backwards from POS, else forwards.
    Returns the absolute index of the history element where STRING
    was found, or -1 otherwise. */
-extern int history_search_pos PARAMS((const char *, int, int));
+extern int history_search_pos (const char *, int, int);
 
 /* Managing the history file. */
 
 /* Add the contents of FILENAME to the history list, a line at a time.
    If FILENAME is NULL, then read from ~/.history.  Returns 0 if
    successful, or errno if not. */
-extern int read_history PARAMS((const char *));
+extern int read_history (const char *);
 
 /* Read a range of lines from FILENAME, adding them to the history list.
    Start reading at the FROM'th line and end at the TO'th.  If FROM
    is zero, start at the beginning.  If TO is less than FROM, read
    until the end of the file.  If FILENAME is NULL, then read from
    ~/.history.  Returns 0 if successful, or errno if not. */
-extern int read_history_range PARAMS((const char *, int, int));
+extern int read_history_range (const char *, int, int);
 
 /* Write the current history to FILENAME.  If FILENAME is NULL,
    then write the history list to ~/.history.  Values returned
    are as in read_history ().  */
-extern int write_history PARAMS((const char *));
+extern int write_history (const char *);
 
 /* Append NELEMENT entries to FILENAME.  The entries appended are from
    the end of the list minus NELEMENTs up to the end of the list. */
-extern int append_history PARAMS((int, const char *));
+extern int append_history (int, const char *);
 
 /* Truncate the history file, leaving only the last NLINES lines. */
-extern int history_truncate_file PARAMS((const char *, int));
+extern int history_truncate_file (const char *, int);
 
 /* History expansion. */
 
@@ -227,12 +232,12 @@ extern int history_truncate_file PARAMS((const char *, int));
 
   If an error occurred in expansion, then OUTPUT contains a descriptive
   error message. */
-extern int history_expand PARAMS((char *, char **));
+extern int history_expand (char *, char **);
 
 /* Extract a string segment consisting of the FIRST through LAST
    arguments present in STRING.  Arguments are broken up as in
    the shell. */
-extern char *history_arg_extract PARAMS((int, int, const char *));
+extern char *history_arg_extract (int, int, const char *);
 
 /* Return the text of the history event beginning at the current
    offset into STRING.  Pass STRING with *INDEX equal to the
@@ -240,11 +245,11 @@ extern char *history_arg_extract PARAMS((int, int, const char *));
    DELIMITING_QUOTE is a character that is allowed to end the string
    specification for what to search for in addition to the normal
    characters `:', ` ', `\t', `\n', and sometimes `?'. */
-extern char *get_history_event PARAMS((const char *, int *, int));
+extern char *get_history_event (const char *, int *, int);
 
 /* Return an array of tokens, much as the shell might.  The tokens are
    parsed out of STRING. */
-extern char **history_tokenize PARAMS((const char *));
+extern char **history_tokenize (const char *);
 
 /* Exported history variables. */
 extern int history_base;

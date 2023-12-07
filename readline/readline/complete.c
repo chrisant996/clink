@@ -1,6 +1,6 @@
 /* complete.c -- filename completion for readline. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -95,7 +95,7 @@ typedef int QSFUNC ();
 /* Most systems don't declare getpwent in <pwd.h> if _POSIX_SOURCE is
    defined. */
 #if defined (HAVE_GETPWENT) && (!defined (HAVE_GETPW_DECLS) || defined (_POSIX_SOURCE))
-extern struct passwd *getpwent PARAMS((void));
+extern struct passwd *getpwent (void);
 #endif /* HAVE_GETPWENT && (!HAVE_GETPW_DECLS || _POSIX_SOURCE) */
 
 /* If non-zero, then this is the address of a function to call when
@@ -136,69 +136,69 @@ rl_iccpfunc_t *rl_is_exec_func = (rl_iccpfunc_t *)NULL;
 
 #if defined (VISIBLE_STATS)
 /* begin_clink_change */
-//static int stat_char PARAMS((char *));
-static int stat_char PARAMS((const char *, char));
+//static int stat_char (char *);
+static int stat_char (const char *, char);
 /* end_clink_change */
 #endif
 
 #if defined (COLOR_SUPPORT)
 /* begin_clink_change */
-//static int colored_stat_start PARAMS((const char *));
-static int colored_stat_start PARAMS((const char *, unsigned char));
+//static int colored_stat_start (const char *);
+static int colored_stat_start (const char *, unsigned char);
 /* end_clink_change */
-static void colored_stat_end PARAMS((void));
-static int colored_prefix_start PARAMS((void));
-static void colored_prefix_end PARAMS((void));
+static void colored_stat_end (void);
+static int colored_prefix_start (void);
+static void colored_prefix_end (void);
 #endif
 
-static int path_isdir PARAMS((const char *));
+static int path_isdir (const char *);
 
-static char *rl_quote_filename PARAMS((char *, int, char *));
+static char *rl_quote_filename (char *, int, char *);
 
-static void _rl_complete_sigcleanup PARAMS((int, void *));
+static void _rl_complete_sigcleanup (int, void *);
 
-static void set_completion_defaults PARAMS((int));
-static int get_y_or_n PARAMS((int));
-static int _rl_internal_pager PARAMS((int));
-static char *printable_part PARAMS((char *));
+static void set_completion_defaults (int);
+static int get_y_or_n (int);
+static int _rl_internal_pager (int);
+static char *printable_part (char *);
 /* begin_clink_change */
 #if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 /* end_clink_change */
-static int fnwidth PARAMS((const char *));
+static int fnwidth (const char *);
 /* begin_clink_change */
-//static int fnprint PARAMS((const char *, int, const char *));
-static int fnprint PARAMS((const char *, int, const char *, unsigned char));
+//static int fnprint (const char *, int, const char *);
+static int fnprint (const char *, int, const char *, unsigned char);
 /* end_clink_change */
-static int print_filename PARAMS((char *, char *, int));
+static int print_filename (char *, char *, int);
 /* begin_clink_change */
 #endif !OMIT_DEFAULT_DISPLAY_MATCHES
 /* end_clink_change */
 
-static char **gen_completion_matches PARAMS((char *, int, int, rl_compentry_func_t *, int, int));
+static char **gen_completion_matches (char *, int, int, rl_compentry_func_t *, int, int);
 
-static char **remove_duplicate_matches PARAMS((char **));
-static void insert_match PARAMS((char *, int, int, char *));
+static char **remove_duplicate_matches (char **);
+static void insert_match (char *, int, int, char *);
 /* begin_clink_change */
-//static int append_to_match PARAMS((char *, int, int, int));
-static int append_to_match PARAMS((char *, int, int, int, int));
+//static int append_to_match (char *, int, int, int);
+static int append_to_match (char *, int, int, int, int);
 /* end_clink_change */
-static void insert_all_matches PARAMS((char **, int, char *));
-static int complete_fncmp PARAMS((const char *, int, const char *, int));
+static void insert_all_matches (char **, int, char *);
+static int complete_fncmp (const char *, int, const char *, int);
 /* begin_clink_change */
 #if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 /* end_clink_change */
-static void display_matches PARAMS((char **));
+static void display_matches (char **);
 /* begin_clink_change */
 #else
-extern void display_matches PARAMS((char **));
+extern void display_matches (char **);
 #endif
 /* end_clink_change */
-static int compute_lcd_of_matches PARAMS((char **, int, const char *));
-static int postprocess_matches PARAMS((char ***, int));
-static int compare_match PARAMS((char *, const char *));
-static int complete_get_screenwidth PARAMS((void));
+static int compute_lcd_of_matches (char **, int, const char *);
+static int postprocess_matches (char ***, int);
+static int compare_match (char *, const char *);
+static int complete_get_screenwidth (void);
 
-static char *make_quoted_replacement PARAMS((char *, int, char *));
+static char *make_quoted_replacement (char *, int, char *);
 
 /* **************************************************************** */
 /*								    */
@@ -371,10 +371,7 @@ const char *rl_basic_quote_characters = "\"'";
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
    rl_basic_word_break_characters.  */
-/* begin_clink_change */
-///*const*/ char *rl_completer_word_break_characters = (/*const*/ char *)NULL;
-const char *rl_completer_word_break_characters = (const char *)NULL;
-/* end_clink_change */
+const char *rl_completer_word_break_characters = 0;
 
 /* Hook function to allow an application to set the completion word
    break characters before readline breaks up the line.  Allows
@@ -1222,7 +1219,8 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
 /* end_clink_change */
 #endif
 
-  if (prefix_bytes && _rl_completion_prefix_display_length > 0)
+  if (prefix_bytes && _rl_completion_prefix_display_length > 0 &&
+      prefix_bytes > _rl_completion_prefix_display_length)
     {
       char ellipsis;
 
@@ -1558,11 +1556,8 @@ char
 _rl_find_completion_word (int *fp, int *dp)
 {
   int scan, end, found_quote, delimiter, pass_next, isbrk;
-/* begin_clink_change */
-  //char quote_char, *brkchars;
   char quote_char;
   const char *brkchars;
-/* end_clink_change */
 
   end = rl_point;
   found_quote = delimiter = 0;
@@ -1931,7 +1926,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
 /* begin_clink_change */
-		//v1 = MBRTOWC(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
+		//v1 = MBRTOWC (&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
 		//v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
 		v1 = MBRTOWC (&wc1, match_list[i]+si, mi0_len-si, &ps1);
 		v2 = MBRTOWC (&wc2, match_list[i+1]+si, mi1_len-si, &ps2);
@@ -2198,7 +2193,7 @@ rl_display_match_list (char **matches, int len, int max)
 
       if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
 	max -= common_length - ELLIPSIS_LEN;
-      else
+      else if (_rl_colored_completion_prefix <= 0)
 	common_length = sind = 0;
     }
 #if defined (COLOR_SUPPORT)
@@ -2854,7 +2849,7 @@ compare_match (char *text, const char *match)
     {
       temp = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
       r = strcmp (temp, match);
-      free (temp);
+      xfree (temp);
       return r;
     }      
   return (strcmp (text, match));

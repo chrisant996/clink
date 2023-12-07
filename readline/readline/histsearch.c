@@ -1,6 +1,6 @@
 /* histsearch.c -- searching the history list. */
 
-/* Copyright (C) 1989, 1992-2009,2017 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1992-2009,2017,2021 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -58,7 +58,7 @@ extern int find_streqn (const char *a, const char *b, int n);
    string. */
 char *history_search_delimiter_chars = (char *)NULL;
 
-static int history_search_internal PARAMS((const char *, int, int));
+static int history_search_internal (const char *, int, int);
 
 /* Search the history for STRING, starting at history_offset.
    If DIRECTION < 0, then the search is through previous entries, else
@@ -258,7 +258,7 @@ _hs_history_patsearch (const char *string, int direction, int flags)
   ret = history_search_internal (pat, direction, flags|PATTERN_SEARCH);
 
   if (pat != string)
-    free (pat);
+    xfree (pat);
   return ret;
 }
 	

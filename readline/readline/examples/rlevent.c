@@ -44,6 +44,10 @@ extern int sleep();
 extern void exit();
 #endif
 
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
+
 #if defined (READLINE_LIBRARY)
 #  include "posixstat.h"
 #  include "readline.h"
@@ -101,7 +105,14 @@ main (argc, argv)
   int opt, fd, nch;
   FILE *ifp;
 
+#ifdef HAVE_SETLOCALE
+  setlocale (LC_ALL, "");
+#endif
+
+/* begin_clink_change */
+  //progname = strrchr(argv[0], '/');
   progname = rl_last_path_separator (argv[0]);
+/* end_clink_change */
   if (progname == 0)
     progname = argv[0];
   else

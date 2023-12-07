@@ -2,7 +2,7 @@
 
    Modified by Chet Ramey for Readline.
 
-   Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2015, 2017, 2019
+   Copyright (C) 1985, 1988, 1990-1991, 1995-2021
    Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -82,6 +82,8 @@ static void restore_default_color (void);
 #endif // !EXTERNAL_COLOR_SUPPORT
 /* end_clink_change */
 
+#define RL_COLOR_PREFIX_EXTENSION	".readline-colored-completion-prefix"
+
 COLOR_EXT_TYPE *_rl_color_ext_list = 0;
 
 /* begin_clink_change */
@@ -122,13 +124,28 @@ _rl_set_normal_color (void)
     }
 }
 
+static struct bin_str *
+_rl_custom_readline_prefix (void)
+{
+  size_t len;
+  COLOR_EXT_TYPE *ext;
+
+  len = strlen (RL_COLOR_PREFIX_EXTENSION);
+  for (ext = _rl_color_ext_list; ext; ext = ext->next)
+    if (ext->ext.len == len && STREQN (ext->ext.string, RL_COLOR_PREFIX_EXTENSION, len))
+      return (&ext->seq);
+  return (NULL);
+}
+
 bool
 _rl_print_prefix_color (void)
 {
   struct bin_str *s;
 
   /* What do we want to use for the prefix? Let's try cyan first, see colors.h */
-  s = &_rl_color_indicator[C_PREFIX];
+  s = _rl_custom_readline_prefix ();
+  if (s == 0)
+    s = &_rl_color_indicator[C_PREFIX];
   if (s->string != NULL)
     {
       if (is_colored (C_NORM))
@@ -290,14 +307,10 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
       else if (S_ISSOCK (mode))
         colored_filetype = C_SOCK;
 #endif
-/* begin_clink_change */
 #if defined (S_ISBLK)
-/* end_clink_change */
       else if (S_ISBLK (mode))
         colored_filetype = C_BLK;
-/* begin_clink_change */
 #endif
-/* end_clink_change */
       else if (S_ISCHR (mode))
         colored_filetype = C_CHR;
       else

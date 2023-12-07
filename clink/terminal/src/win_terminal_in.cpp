@@ -841,6 +841,8 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         {
         case KEY_EVENT:
             process_input(record.Event.KeyEvent);
+// TODO: When peeking, need to push the record itself so that filtering can
+// happen when the caller "reads" instead of "peeks".
             filter_unbound_input(buffer_count);
             break;
 

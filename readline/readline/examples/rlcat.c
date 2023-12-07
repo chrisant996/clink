@@ -45,6 +45,10 @@
 extern void exit();
 #endif
 
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
+
 #ifndef errno
 extern int errno;
 #endif
@@ -79,7 +83,10 @@ main (argc, argv)
   char *temp;
   int opt, Vflag, Nflag;
 
+/* begin_clink_change */
+  //progname = strrchr(argv[0], '/');
   progname = rl_last_path_separator (argv[0]);
+/* end_clink_change */
   if (progname == 0)
     progname = argv[0];
   else

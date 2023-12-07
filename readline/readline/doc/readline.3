@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Tue Mar 24 09:27:30 EDT 2020
+.\"	Last Change: Mon Sep 19 11:11:22 EDT 2022
 .\"
-.TH READLINE 3 "2020 October 29" "GNU Readline 8.1"
+.TH READLINE 3 "2022 September 19" "GNU Readline 8.2"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -339,6 +339,30 @@ The variables and their default values are:
 .PP
 .PD 0
 .TP
+.B active\-region\-start\-color
+A string variable that controls the text color and background when displaying
+the text in the active region (see the description of
+\fBenable\-active\-region\fP below).
+This string must not take up any physical character positions on the display,
+so it should consist only of terminal escape sequences.
+It is output to the terminal before displaying the text in the active region.
+This variable is reset to the default value whenever the terminal type changes.
+The default value is the string that puts the terminal in standout mode,
+as obtained from the terminal's terminfo description.
+A sample value might be \f(CW"\ee[01;33m"\fP.
+.TP
+.B active\-region\-end\-color
+A string variable that "undoes" the effects of \fBactive\-region\-start\-color\fP
+and restores "normal" terminal display appearance after displaying text
+in the active region.
+This string must not take up any physical character positions on the display,
+so it should consist only of terminal escape sequences.
+It is output to the terminal after displaying the text in the active region.
+This variable is reset to the default value whenever the terminal type changes.
+The default value is the string that restores the terminal from standout mode,
+as obtained from the terminal's terminfo description.
+A sample value might be \f(CW"\ee[0m\fP".
+.TP
 .B bell\-style (audible)
 Controls what happens when readline wants to ring the terminal bell.
 If set to \fBnone\fP, readline never rings the bell.  If set to
@@ -359,6 +383,9 @@ If set to \fBOn\fP, when listing completions, readline displays the
 common prefix of the set of possible completions using a different color.
 The color definitions are taken from the value of the \fBLS_COLORS\fP
 environment variable.
+If there is a color definition in \fB$LS_COLORS\fP for the custom suffix
+"readline-colored-completion-prefix", readline uses this color for
+the common prefix instead of its default.
 .TP
 .B colored\-stats (Off)
 If set to \fBOn\fP, readline displays possible completions using different
@@ -408,7 +435,8 @@ If the number of possible completions is greater than
 or equal to the value of this variable,
 readline will ask whether or not the user wishes to view them;
 otherwise they are simply listed
-on the terminal.  A negative value causes readline to never ask.
+on the terminal.
+A negative value causes readline to never ask.
 .TP
 .B convert\-meta (On)
 If set to \fBOn\fP, readline will convert characters with the
@@ -417,6 +445,8 @@ by stripping the eighth bit and prefixing it with an
 escape character (in effect, using escape as the \fImeta prefix\fP).
 The default is \fIOn\fP, but readline will set it to \fIOff\fP if the
 locale contains eight-bit characters.
+This variable is dependent on the \fBLC_CTYPE\fP locale category, and 
+may change if the locale is changed.
 .TP
 .B disable\-completion (Off)
 If set to \fBOn\fP, readline will inhibit word completion.  Completion 
@@ -447,12 +477,25 @@ Use the \e1 and \e2 escapes to begin and end sequences of
 non-printing characters, which can be used to embed a terminal control 
 sequence into the mode string.
 .TP
+.B enable\-active\-region (On)
+The \fIpoint\fP is the current cursor position, and \fImark\fP refers
+to a saved cursor position.
+The text between the point and mark is referred to as the \fIregion\fP.
+When this variable is set to \fIOn\fP, readline allows certain commands
+to designate the region as \fIactive\fP.
+When the region is active, readline highlights the text in the region using
+the value of the \fBactive\-region\-start\-color\fP, which defaults to the
+string that enables
+the terminal's standout mode.
+The active region shows the text inserted by bracketed-paste and any
+matching text found by incremental and non-incremental history searches.
+.TP
 .B enable\-bracketed\-paste (On)
-When set to \fBOn\fP, readline will configure the terminal in a way
-that will enable it to insert each paste into the editing buffer as a
-single string of characters, instead of treating each character as if
-it had been read from the keyboard.  This can prevent pasted characters
-from being interpreted as editing commands.
+When set to \fBOn\fP, readline configures the terminal to insert each
+paste into the editing buffer as a single string of characters, instead
+of treating each character as if it had been read from the keyboard.
+This prevents readline from executing any editing commands bound to key
+sequences appearing in the pasted text.
 .TP
 .B enable\-keypad (Off)
 When set to \fBOn\fP, readline will try to enable the application
@@ -497,6 +540,8 @@ regardless of what the terminal claims it can support.  The name
 is a synonym for this variable.
 The default is \fIOff\fP, but readline will set it to \fIOn\fP if the 
 locale contains eight-bit characters.
+This variable is dependent on the \fBLC_CTYPE\fP locale category, and 
+may change if the locale is changed.
 .TP
 .B isearch\-terminators (``C\-[ C\-J'')
 The string of characters that should terminate an incremental
@@ -560,6 +605,8 @@ eighth bit set directly rather than as a meta-prefixed escape
 sequence.
 The default is \fIOff\fP, but readline will set it to \fIOn\fP if the
 locale contains eight-bit characters.
+This variable is dependent on the \fBLC_CTYPE\fP locale category, and
+may change if the locale is changed.
 .TP
 .B page\-completions (On)
 If set to \fBOn\fP, readline uses an internal \fImore\fP-like pager
@@ -803,14 +850,14 @@ composed of alphanumeric characters (letters and digits).
 .B previous\-screen\-line
 Attempt to move point to the same physical screen column on the previous
 physical screen line. This will not have the desired effect if the current
-Readline line does not take up more than one physical line or if point is not
+readline line does not take up more than one physical line or if point is not
 greater than the length of the prompt plus the screen width.
 .TP
 .B next\-screen\-line
 Attempt to move point to the same physical screen column on the next
 physical screen line. This will not have the desired effect if the current
-Readline line does not take up more than one physical line or if the length
-of the current Readline line is not greater than the length of the prompt
+readline line does not take up more than one physical line or if the length
+of the current readline line is not greater than the length of the prompt
 plus the screen width.
 .TP
 .B clear\-display (M\-C\-l)
@@ -852,6 +899,21 @@ Move to the first line in the history.
 .B end\-of\-history (M\->)
 Move to the end of the input history, i.e., the line currently being
 entered.
+.TP
+.B
+operate\-and\-get\-next (C\-o)
+Accept the current line for return to the calling application as if a
+newline had been entered,
+and fetch the next line relative to the current line from the history
+for editing.
+A numeric argument, if supplied, specifies the history entry to use instead
+of the current line.
+.TP
+.B
+fetch\-history
+With a numeric argument, fetch that entry from the history list
+and make it the current line.
+Without an argument, move back to the first entry in the history list.
 .TP
 .B reverse\-search\-history (C\-r)
 Search backward starting at the current line and moving `up' through
@@ -919,15 +981,6 @@ the direction to move through the history.  A negative argument switches
 the direction through the history (back or forward).
 The history expansion facilities are used to extract the last argument,
 as if the "!$" history expansion had been specified.
-.TP
-.B
-operate\-and\-get\-next (C\-o)
-Accept the current line for return to the calling application as if a
-newline had been entered,
-and fetch the next line relative to the current line from the history
-for editing.
-A numeric argument, if supplied, specifies the history entry to use instead
-of the current line.
 .PD
 .SS Commands for Changing Text
 .PD 0
@@ -937,7 +990,7 @@ The character indicating end-of-file as set, for example, by
 .if t \f(CWstty\fP.
 .if n ``stty''.
 If this character is read when there are no characters
-on the line, and point is at the beginning of the line, Readline
+on the line, and point is at the beginning of the line, readline
 interprets it as the end of input and returns
 .SM
 .BR EOF .
@@ -1206,11 +1259,11 @@ the saved position, and the old cursor position is saved as the mark.
 .TP
 .B character\-search (C\-])
 A character is read and point is moved to the next occurrence of that
-character.  A negative count searches for previous occurrences.
+character.  A negative argument searches for previous occurrences.
 .TP
 .B character\-search\-backward (M\-C\-])
 A character is read and point is moved to the previous occurrence of that
-character.  A negative count searches for subsequent occurrences.
+character.  A negative argument searches for subsequent occurrences.
 .TP
 .B skip\-csi\-sequence
 Read enough characters to consume a multi-key sequence such as those

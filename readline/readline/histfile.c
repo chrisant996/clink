@@ -114,8 +114,6 @@ extern int errno;
 #  define PATH_MAX	1024	/* default */
 #endif
 
-extern void _hs_append_history_line PARAMS((int, const char *));
-
 /* history file version; currently unused */
 int history_file_version = 1;
 
@@ -141,11 +139,11 @@ int history_lines_written_to_file = 0;
    for more extensive tests. */
 #define HIST_TIMESTAMP_START(s)		(*(s) == history_comment_char && isdigit ((unsigned char)(s)[1]) )
 
-static char *history_backupfile PARAMS((const char *));
-static char *history_tempfile PARAMS((const char *));
-static int histfile_backup PARAMS((const char *, const char *));
-static int histfile_restore PARAMS((const char *, const char *));
-static int history_rename PARAMS((const char *, const char *));
+static char *history_backupfile (const char *);
+static char *history_tempfile (const char *);
+static int histfile_backup (const char *, const char *);
+static int histfile_restore (const char *, const char *);
+static int history_rename (const char *, const char *);
 
 /* Return the string that should be used in the place of this
    filename.  This only matters when you don't specify the
@@ -312,7 +310,7 @@ read_history_range (const char *filename, int from, int to)
 
   if (file_size == 0)
     {
-      free (input);
+      xfree (input);
       close (file);
       return 0;	/* don't waste time if we don't have to */
     }

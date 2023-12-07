@@ -1,6 +1,6 @@
 /* compat.c -- backwards compatibility functions. */
 
-/* Copyright (C) 2000-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -30,18 +30,18 @@
 #include "rlstdc.h"
 #include "rltypedefs.h"
 
-extern void rl_free_undo_list PARAMS((void));
-extern int rl_maybe_save_line PARAMS((void));
-extern int rl_maybe_unsave_line PARAMS((void));
-extern int rl_maybe_replace_line PARAMS((void));
+extern void rl_free_undo_list (void);
+extern int rl_maybe_save_line (void);
+extern int rl_maybe_unsave_line (void);
+extern int rl_maybe_replace_line (void);
 
-extern int rl_crlf PARAMS((void));
-extern int rl_ding PARAMS((void));
-extern int rl_alphabetic PARAMS((int));
+extern int rl_crlf (void);
+extern int rl_ding (void);
+extern int rl_alphabetic (int);
 
-extern char **rl_completion_matches PARAMS((const char *, rl_compentry_func_t *));
-extern char *rl_username_completion_function PARAMS((const char *, int));
-extern char *rl_filename_completion_function PARAMS((const char *, int));
+extern char **rl_completion_matches (const char *, rl_compentry_func_t *);
+extern char *rl_username_completion_function (const char *, int);
+extern char *rl_filename_completion_function (const char *, int);
 
 /* Provide backwards-compatible entry points for old function names. */
 

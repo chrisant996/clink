@@ -144,7 +144,7 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        commands.  The basic history manipulation commands are identical to the
        history substitution provided by [1mbash[22m.
 
-       The programmer can also use the Readline library, which  includes  some
+       The programmer can also use the readline library, which  includes  some
        history manipulation by default, and has the added advantage of command
        line editing.
 

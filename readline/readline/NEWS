@@ -1,3 +1,60 @@
+This is a terse description of the new features added to readline-8.2 since
+the release of readline-8.1.
+
+New Features in Readline
+
+a. There is now an HS_HISTORY_VERSION containing the version number of the
+   history library for applications to use.
+
+b. History expansion better understands multiple history expansions that may
+   contain strings that would ordinarily inhibit history expansion (e.g.,
+   `abc!$!$').
+
+c. There is a new framework for readline timeouts, including new public
+   functions to set timeouts and query how much time is remaining before a
+   timeout hits, and a hook function that can trigger when readline times
+   out. There is a new state value to indicate a timeout.
+
+d. Automatically bind termcap key sequences for page-up and page-down to
+   history-search-backward and history-search-forward, respectively.
+
+e. There is a new `fetch-history' bindable command that retrieves the history
+   entry corresponding to its numeric argument. Negative arguments count back
+   from the end of the history.
+
+f. `vi-undo' is now a bindable command.
+
+g. There is a new option: `enable-active-region'. This separates control of
+   the active region and bracketed-paste. It has the same default value as
+   bracketed-paste, and enabling bracketed paste enables the active region.
+   Users can now turn off the active region while leaving bracketed paste
+   enabled.
+
+h. rl_completer_word_break_characters is now `const char *' like
+   rl_basic_word_break_characters.
+
+i. Readline looks in $LS_COLORS for a custom filename extension
+   (*.readline-colored-completion-prefix) and uses that as the default color
+   for the common prefix displayed when `colored-completion-prefix' is set.
+
+j. Two new bindable string variables: active-region-start-color and
+   active-region-end-color. The first sets the color used to display the
+   active region; the second turns it off. If set, these are used in place
+   of terminal standout mode.
+
+k. New readline state (RL_STATE_EOF) and application-visible variable
+   (rl_eof_found) to allow applications to detect when readline reads EOF
+   before calling the deprep-terminal hook.
+
+l. There is a new configuration option: --with-shared-termcap-library, which
+   forces linking the shared readline library with the shared termcap (or
+   curses/ncurses/termlib) library so applications don't have to do it.
+
+m. Readline now checks for changes to locale settings (LC_ALL/LC_CTYPE/LANG)
+   each time it is called, and modifies the appropriate locale-specific display
+   and key binding variables when the locale changes.
+
+-------------------------------------------------------------------------------
 This is a terse description of the new features added to readline-8.1 since
 the release of readline-8.0.
 
@@ -89,7 +146,7 @@ the release of readline-6.3.
 
 New Features in Readline
 
-a.  The history truncation code now uses the same error recovery mechansim as
+a.  The history truncation code now uses the same error recovery mechanism as
     the history writing code, and restores the old version of the history file
     on error.  The error recovery mechanism handles symlinked history files.
 
@@ -260,7 +317,7 @@ d.  New bindable function: skip-csi-sequence.  Can be used as a default to
     to bind all keys.
 
 e.  New application-settable function: rl_filename_rewrite_hook.  Can be used
-    to rewite or modify filenames read from the file system before they are
+    to rewrite or modify filenames read from the file system before they are
     compared to the word to be completed.
 
 f.  New bindable variable: skip-completed-text, active when completing in the

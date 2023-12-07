@@ -25,6 +25,10 @@
 #include <util.h>
 #endif
 
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
+
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #else
@@ -220,7 +224,7 @@ static enum { RESET, TCBREAK } ttystate = RESET;
  *
  * fd    - The file descriptor of the terminal
  * 
- * Returns: 0 on sucess, -1 on error
+ * Returns: 0 on success, -1 on error
  */
 int tty_cbreak(int fd){
    struct termios buf;
@@ -315,6 +319,11 @@ int
 main()
 {
   int val;
+
+#ifdef HAVE_SETLOCALE
+  setlocale (LC_ALL, "");
+#endif
+
   val = openpty (&masterfd, &slavefd, NULL, NULL, NULL);
   if (val == -1)
     return -1;

@@ -1,6 +1,6 @@
 /* history.c -- standalone history library */
 
-/* Copyright (C) 1989-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2021 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -62,7 +62,7 @@ extern int errno;
 /* The number of slots to increase the_history by. */
 #define DEFAULT_HISTORY_GROW_SIZE 50
 
-static char *hist_inittime PARAMS((void));
+static char *hist_inittime (void);
 
 /* **************************************************************** */
 /*								    */
@@ -179,6 +179,13 @@ history_set_pos (int pos)
 /* end_clink_change */
   history_offset = pos;
   return (1);
+}
+
+/* Are we currently at the end of the history list? */
+int
+_hs_at_end_of_history (void)
+{
+  return (the_history == 0 || history_offset == history_length);
 }
  
 /* Return the current history array.  The caller has to be careful, since this
@@ -413,10 +420,7 @@ replace_history_entry (int which, const char *line, histdata_t data)
 
   temp->line = savestring (line);
   temp->data = data;
-/* begin_clink_change */
-  //temp->timestamp = savestring (old_value->timestamp);
   temp->timestamp = old_value->timestamp ? savestring (old_value->timestamp) : 0;
-/* end_clink_change */
   the_history[which] = temp;
 
   return (old_value);

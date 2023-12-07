@@ -1,6 +1,6 @@
 /* funmap.c -- attach names to functions. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -46,7 +46,7 @@ typedef int QSFUNC (const void *, const void *);
 typedef int QSFUNC ();
 #endif
 
-extern int _rl_qsort_string_compare PARAMS((char **, char **));
+extern int _rl_qsort_string_compare (char **, char **);
 
 FUNMAP **funmap;
 static int funmap_size;
@@ -96,6 +96,7 @@ static const FUNMAP default_funmap[] = {
   { "end-of-history", rl_end_of_history },
   { "end-of-line", rl_end_of_line },
   { "exchange-point-and-mark", rl_exchange_point_and_mark },
+  { "fetch-history", rl_fetch_history },
   { "forward-backward-delete-char", rl_rubout_or_delete },
   { "forward-byte", rl_forward_byte },
   { "forward-char", rl_forward_char },
@@ -220,6 +221,7 @@ static const FUNMAP default_funmap[] = {
   { "vi-set-mark", rl_vi_set_mark },
   { "vi-subst", rl_vi_subst },
   { "vi-tilde-expand", rl_vi_tilde_expand },
+  { "vi-undo", rl_vi_undo },
   { "vi-unix-word-rubout", rl_vi_unix_word_rubout },
   { "vi-yank-arg", rl_vi_yank_arg },
   { "vi-yank-pop", rl_vi_yank_pop },

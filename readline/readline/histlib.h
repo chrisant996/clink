@@ -1,6 +1,6 @@
 /* histlib.h -- internal definitions for the history library. */
 
-/* Copyright (C) 1989-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2009,2021-2022 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -80,10 +80,10 @@ extern char *strchr ();
 /* internal extern function declarations used by other parts of the library */
 
 /* histsearch.c */
-extern int _hs_history_patsearch PARAMS((const char *, int, int));
+extern int _hs_history_patsearch (const char *, int, int);
 
 /* begin_clink_change */
-typedef int _hist_search_func_t PARAMS((const char *, int));
+typedef int _hist_search_func_t (const char *, int);
 typedef struct {
   _hist_search_func_t *func;
   int start_index;
@@ -94,5 +94,12 @@ typedef struct {
 } history_event_lookup_cache_t;
 extern history_event_lookup_cache_t history_event_lookup_cache;
 /* end_clink_change */
+
+/* history.c */
+extern void _hs_replace_history_data (int, histdata_t *, histdata_t *);
+extern int _hs_at_end_of_history (void);
+
+/* histfile.c */
+extern void _hs_append_history_line (int, const char *);
 
 #endif /* !_HISTLIB_H_ */

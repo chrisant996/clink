@@ -279,6 +279,8 @@ rl_end_kbd_macro (int count, int ignore)
     }
 
   current_macro_index -= rl_key_sequence_length;
+  if (current_macro_index < 0)
+    current_macro_index = 0;
   current_macro[current_macro_index] = '\0';
 
   RL_UNSETSTATE(RL_STATE_MACRODEF);

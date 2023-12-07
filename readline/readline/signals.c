@@ -1,6 +1,6 @@
 /* signals.c -- signal handling support for readline. */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -48,28 +48,11 @@
 
 #if defined (HANDLE_SIGNALS)
 
-#if !defined (RETSIGTYPE)
-#  if defined (VOID_SIGHANDLER)
-#    define RETSIGTYPE void
-#  else
-#    define RETSIGTYPE int
-#  endif /* !VOID_SIGHANDLER */
-#endif /* !RETSIGTYPE */
-
-#if defined (VOID_SIGHANDLER)
-#  define SIGHANDLER_RETURN return
-#else
-#  define SIGHANDLER_RETURN return (0)
-#endif
+#define SIGHANDLER_RETURN return
 
 /* This typedef is equivalent to the one for Function; it allows us
    to say SigHandler *foo = signal (SIGKILL, SIG_IGN); */
-/* begin_clink_change
- * Address MSVC compiler warnings. signal() returns type "void (*)(int)".
- */
-//typedef RETSIGTYPE SigHandler ();
-typedef RETSIGTYPE SigHandler (int);
-/* end_clink_change */
+typedef void SigHandler (int);
 
 #if defined (HAVE_POSIX_SIGNALS)
 typedef struct sigaction sighandler_cxt;
@@ -83,12 +66,12 @@ typedef struct { SigHandler *sa_handler; int sa_mask, sa_flags; } sighandler_cxt
 #  define SA_RESTART 0
 #endif
 
-static SigHandler *rl_set_sighandler PARAMS((int, SigHandler *, sighandler_cxt *));
-static void rl_maybe_set_sighandler PARAMS((int, SigHandler *, sighandler_cxt *));
-static void rl_maybe_restore_sighandler PARAMS((int, sighandler_cxt *));
+static SigHandler *rl_set_sighandler (int, SigHandler *, sighandler_cxt *);
+static void rl_maybe_set_sighandler (int, SigHandler *, sighandler_cxt *);
+static void rl_maybe_restore_sighandler (int, sighandler_cxt *);
 
-static RETSIGTYPE rl_signal_handler PARAMS((int));
-static RETSIGTYPE _rl_handle_signal PARAMS((int));
+static void rl_signal_handler (int);
+static void _rl_handle_signal (int);
      
 /* Exported variables for use by applications. */
 
@@ -146,7 +129,7 @@ void *_rl_sigcleanarg;
 /* Readline signal handler functions. */
 
 /* Called from RL_CHECK_SIGNALS() macro to run signal handling code. */
-RETSIGTYPE
+void
 _rl_signal_handler (int sig)
 {
   _rl_caught_signal = 0;	/* XXX */
@@ -173,7 +156,7 @@ _rl_signal_handler (int sig)
   SIGHANDLER_RETURN;
 }
 
-static RETSIGTYPE
+static void
 rl_signal_handler (int sig)
 {
   _rl_caught_signal = sig;
@@ -183,7 +166,7 @@ rl_signal_handler (int sig)
 /* This is called to handle a signal when it is safe to do so (out of the
    signal handler execution path). Called by _rl_signal_handler for all the
    signals readline catches except SIGWINCH. */
-static RETSIGTYPE
+static void
 _rl_handle_signal (int sig)
 {
   int block_sig;
@@ -241,6 +224,9 @@ _rl_handle_signal (int sig)
     case SIGBREAK:
 #endif
 /* end_clink_change */
+      /* We will end up blocking SIGTTOU while we are resetting the tty, so
+	 watch out for this if it causes problems. We could prevent this by
+	 setting block_sig to 1 without modifying SET. */
       _rl_reset_completion_state ();
       rl_free_line_state ();
 #if defined (READLINE_CALLBACKS)
@@ -261,8 +247,11 @@ _rl_handle_signal (int sig)
 	 this even if we've been stopped on SIGTTOU, since we handle signals
 	 when we have returned from the signal handler and the signal is no
 	 longer blocked. */
-      sigaddset (&set, SIGTTOU);
-      block_sig = 1;
+      if (block_sig == 0)
+	{
+	  sigaddset (&set, SIGTTOU);
+	  block_sig = 1;
+	}
 #  endif
 #endif /* SIGTSTP */
    /* Any signals that should be blocked during cleanup should go here. */
@@ -280,19 +269,17 @@ _rl_handle_signal (int sig)
     case SIGTERM:
 #if defined (SIGALRM)
     case SIGALRM:
+      if (sig == SIGALRM)
+	_rl_timeout_handle_sigalrm ();
 #endif
 #if defined (SIGQUIT)
     case SIGQUIT:
 #endif
 
-/* begin_clink_change */
 #if defined (HAVE_POSIX_SIGNALS)
-/* end_clink_change */
       if (block_sig)
 	sigprocmask (SIG_BLOCK, &set, &oset);
-/* begin_clink_change */
 #endif
-/* end_clink_change */
 
       rl_echo_signal_char (sig);
       rl_cleanup_after_signal ();
@@ -308,19 +295,6 @@ _rl_handle_signal (int sig)
 
       /* We don't have to bother unblocking the signal because we are not
 	 running in a signal handler context. */
-#if 0
-#if defined (HAVE_POSIX_SIGNALS)
-      /* Make sure this signal is not blocked when we resend it to the
-	 calling application. */
-      sigemptyset (&set);
-      sigprocmask (SIG_BLOCK, (sigset_t *)NULL, &set);
-      sigdelset (&set, sig);
-#else /* !HAVE_POSIX_SIGNALS */
-#  if defined (HAVE_BSD_SIGNALS)
-      omask = sigblock (0);
-#  endif /* HAVE_BSD_SIGNALS */
-#endif /* !HAVE_POSIX_SIGNALS */
-#endif
 
 #if defined (__EMX__)
       signal (sig, SIG_ACK);
@@ -334,16 +308,6 @@ _rl_handle_signal (int sig)
 
       /* We don't need to modify the signal mask now that this is not run in
 	 a signal handler context. */
-#if 0
-      /* Let the signal that we just sent through if it is blocked.  */
-#if defined (HAVE_POSIX_SIGNALS)
-      sigprocmask (SIG_SETMASK, &set, (sigset_t *)NULL);
-#else /* !HAVE_POSIX_SIGNALS */
-#  if defined (HAVE_BSD_SIGNALS)
-      sigsetmask (omask & ~(sigmask (sig)));
-#  endif /* HAVE_BSD_SIGNALS */
-#endif /* !HAVE_POSIX_SIGNALS */
-#endif
 
       rl_reset_after_signal ();      
     }
@@ -353,7 +317,7 @@ _rl_handle_signal (int sig)
 }
 
 #if defined (SIGWINCH)
-static RETSIGTYPE
+static void
 rl_sigwinch_handler (int sig)
 {
   SigHandler *oh;

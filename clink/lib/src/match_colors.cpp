@@ -106,6 +106,7 @@ struct color_rule
 };
 
 static std::vector<color_rule> s_color_rules;
+static str_moveable s_completion_prefix;
 static bool s_norm_colored = false;
 
 //------------------------------------------------------------------------------
@@ -521,11 +522,27 @@ void parse_match_colors()
 
     std::vector<color_rule> empty;
     s_color_rules.swap(empty);
+    s_completion_prefix.free();
 
     // Parse LS_COLORS only if completion colors are enabled.
     const bool need_parse = (_rl_colored_stats || _rl_colored_completion_prefix);
     if (need_parse)
+    {
         _rl_parse_colors();
+
+        str<> ext;
+        for (const COLOR_EXT_TYPE* e = _rl_color_ext_list; e; e = e->next)
+        {
+            ext.clear();
+            ext.concat(e->ext.string, e->ext.len);
+            if (ext.equals(".readline-colored-completion-prefix"))
+            {
+                s_completion_prefix.clear();
+                s_completion_prefix.concat(e->seq.string, e->seq.len);
+                break;
+            }
+        }
+    }
 
     // Always copy the LS_COLORS indicators, because clink-select-complete
     // needs C_LEFT/etc to be initialized.
@@ -583,9 +600,17 @@ void parse_match_colors()
                 }
                 if (r > 0)
                 {
-                    color_rule rule;
-                    if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
-                        s_color_rules.emplace_back(std::move(rule));
+                    if (token.c_str()[0] == '*' &&
+                        strcmp(token.c_str() + 1, ".readline-colored-completion-prefix") == 0)
+                    {
+                        s_completion_prefix = value.c_str();
+                    }
+                    else
+                    {
+                        color_rule rule;
+                        if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
+                            s_color_rules.emplace_back(std::move(rule));
+                    }
                 }
             }
         }
@@ -1010,6 +1035,12 @@ next_rule:
 const char* get_indicator_color(indicator_no colored_filetype)
 {
     return s_colors[colored_filetype];
+}
+
+//------------------------------------------------------------------------------
+const char* get_completion_prefix_color()
+{
+    return s_completion_prefix.empty() ? get_indicator_color(C_PREFIX) : s_completion_prefix.c_str();
 }
 
 //------------------------------------------------------------------------------
