@@ -2,6 +2,24 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### PENDING
+- Updated the Readline library to v8.2 patch 7:
+  - `enable-active-region`
+  - `active-region-start-color` (and `active-region-end-color` which is ignored)
+  - `.readline-colored-completion-prefix`
+  - `blink-matching-paren`
+  - `fetch-history`
+  - TBD:  What is the histexpand.c change?
+  - TBD:  What are the signal-related changes in input.c etc?
+  - TBD:  What is the `_rl_search_getchar()` change?
+  - TBD:  What is the `_rl_isearch_dispatch()` change about `memcpy`?
+  - TBD:  What is the `rl_unix_filename_rubout()` change?
+  - TBD:  What is the macro.c change?
+  - TBD:  What is the EOF readline.c change?
+  - TBD:  What is the TIMEOUT readline.c change?
+  - TBD:  What is the rltty.c bracket paste change?
+  - Fixed leaked memory from undo lists.
+
 #### v1.5.18
 - Fixed [#524](https://github.com/chrisant996/clink/issues/524) and [#523](https://github.com/chrisant996/clink/issues/523); garbled display in wide terminal windows (regression introduced in v1.5.14, which exacerbated and revealed a bug that's existed since Clink v1.0.0 alpha and which could intermittently garble Unicode text or escape sequences).
 - Fixed the transient prompt sometimes not displaying properly (regression introduced in v1.5.17).

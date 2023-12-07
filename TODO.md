@@ -5,6 +5,19 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Test Readline 8.2 changes:
+  - Document (and test) `active-region-start-color`.
+  - Document (and test) `enable-active-region`.
+  - `CALLBACK_READ_RETURN`
+  - `RL_STATE_TIMEOUT`
+  - `RL_STATE_EOF`
+  - `fnprint()` change for `prefix_bytes > _rl_completion_prefix_display_length`.
+  - `_rl_free_saved_history_line()` changes regarding freeing/leaking `->data`.
+  - Make sure `_rl_nsearch_abort()` still draws properly.
+  - Test `_rl_abort_internal()` inside `rl_getc()`.
+  - Does `_rl_init_locale()` replace/break/coexist with the UTF8 locale change I made?
+  - `_rl_init_eightbit()` and `_rl_reset_locale`.
+- When peeking input, `win_terminal_in` needs to push the input record itself, to defer filtering unbound input.
 
 ## Normal Priority
 
