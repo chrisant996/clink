@@ -156,7 +156,6 @@ _rl_init_locale (void)
   _rl_utf8locale = (ret && *ret) ? utf8locale (ret) : 0;
 
   _rl_current_locale = savestring (ret);
-printf("_rl_utf8locale %d, _rl_current_locale '%s'\n", _rl_utf8locale, _rl_current_locale);
   return ret;
 }
 
@@ -297,7 +296,6 @@ find_codeset (char *name, size_t *lenp)
 
   while (*cp && *cp != '_' && *cp != '@' && *cp != '+' && *cp != ',')
     cp++;
-printf("find_codeset, *cp == %d\n", *cp);
 
   /* This does not make sense: language has to be specified.  As
      an exception we allow the variable to contain only the codeset
@@ -334,7 +332,6 @@ printf("find_codeset, *cp == %d\n", *cp);
 	}
     }
 
-printf("find_codeset, result == '%s'\n", result ? result : "(null)");
   return result;
 }
 
