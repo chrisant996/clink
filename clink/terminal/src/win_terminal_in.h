@@ -26,8 +26,10 @@ private:
     uint32          get_dimensions();
     void            fix_console_input_mode();
     void            read_console(input_idle* callback=nullptr, DWORD timeout=INFINITE, bool peek=false);
-    void            process_input(const KEY_EVENT_RECORD& key_event);
-    void            process_input(const MOUSE_EVENT_RECORD& mouse_event);
+    bool            peek_record(const INPUT_RECORD& record);
+    bool            process_record(const INPUT_RECORD& record, CONSOLE_SCREEN_BUFFER_INFO* csbi);
+    void            process_input(const KEY_EVENT_RECORD& key_event, bool peek);
+    bool            process_input(const MOUSE_EVENT_RECORD& mouse_event, bool peek);
     void            filter_unbound_input(uint32 buffer_count);
     void            push(uint32 value);
     void            push(const char* seq);
@@ -44,5 +46,7 @@ private:
     uint8           m_buffer_count = 0;
     wchar_t         m_lead_surrogate = 0;
     uint8           m_buffer[16]; // must be power of two.
+    INPUT_RECORD    m_pending_record;
+    bool            m_has_pending_record = false;
     const bool      m_cursor_visibility = true;
 };

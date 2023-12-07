@@ -623,8 +623,9 @@ int32 win_terminal_in::end(bool can_show_cursor)
 //------------------------------------------------------------------------------
 bool win_terminal_in::available(uint32 _timeout)
 {
+    bool ret = (m_buffer_count > 0 || m_has_pending_record);
     const DWORD stop = GetTickCount() + _timeout;
-    while (!m_buffer_count)
+    while (!ret)
     {
         DWORD timeout = stop - GetTickCount();
         if (timeout > _timeout)
@@ -633,20 +634,19 @@ bool win_terminal_in::available(uint32 _timeout)
         // Read console input.  This is necessary to filter out OS events that
         // Clink does not process as input.
         read_console(nullptr, timeout, true/*peek*/);
+        assert(!m_buffer_count);
 
         // If real input is available, break out.
-        const uint8 k = peek();
-        if (k != input_none_byte &&
-            k != input_exit_byte)
+        if (m_has_pending_record)
+        {
+            ret = true;
             break;
-
-        // Eat the input.
-        read();
+        }
 
         if (!timeout)
             break;
     }
-    return m_buffer_count > 0;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -722,11 +722,85 @@ static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
 }
 
 //------------------------------------------------------------------------------
+bool win_terminal_in::peek_record(const INPUT_RECORD& record)
+{
+    bool ret = false;
+    const uint32 buffer_count = m_buffer_count;
+
+    switch (record.EventType)
+    {
+    case KEY_EVENT:
+        process_input(record.Event.KeyEvent, true/*peek*/);
+        ret = (m_buffer_count > buffer_count);
+        m_buffer_count = buffer_count; // Revert.
+        break;
+
+    case MOUSE_EVENT:
+        ret = process_input(record.Event.MouseEvent, true/*peek*/);
+        break;
+
+    case WINDOW_BUFFER_SIZE_EVENT:
+        ret = true;
+        break;
+    }
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+bool win_terminal_in::process_record(const INPUT_RECORD& record, CONSOLE_SCREEN_BUFFER_INFO* csbi)
+{
+    const uint32 buffer_count = m_buffer_count;
+
+    switch (record.EventType)
+    {
+    case KEY_EVENT:
+        process_input(record.Event.KeyEvent, false/*peek*/);
+        filter_unbound_input(buffer_count);
+        break;
+
+    case MOUSE_EVENT:
+        process_input(record.Event.MouseEvent, false/*peek*/);
+        break;
+
+    case WINDOW_BUFFER_SIZE_EVENT:
+        // Windows can move the cursor onto a new line as a result of line
+        // wrapping adjustments.  If the width changes then return to give
+        // editor modules a chance to respond to the width change.
+        reset_wcwidths();
+
+        {
+            CONSOLE_SCREEN_BUFFER_INFO csbiNew;
+            GetConsoleScreenBufferInfo(m_stdout, &csbiNew);
+            if (!csbi || csbi->dwSize.X != csbiNew.dwSize.X)
+                return true;
+            *csbi = csbiNew; // Update for next time.
+        }
+        break;
+
+    default:
+        return false;
+    }
+
+    return m_buffer_count > buffer_count;
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool peek)
 {
     // If there's already input buffered, then don't read further.
     if (m_buffer_count > 0)
         return;
+    if (m_has_pending_record)
+    {
+        if (!peek)
+        {
+            const INPUT_RECORD record = m_pending_record;
+            m_has_pending_record = false;
+            process_record(record, nullptr);
+        }
+        return;
+    }
 
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
@@ -836,39 +910,21 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
             return;
         }
 
-        bool ret = false;
-        switch (record.EventType)
+        if (peek)
         {
-        case KEY_EVENT:
-            process_input(record.Event.KeyEvent);
-// TODO: When peeking, need to push the record itself so that filtering can
-// happen when the caller "reads" instead of "peeks".
-            filter_unbound_input(buffer_count);
-            break;
-
-        case MOUSE_EVENT:
-            process_input(record.Event.MouseEvent);
-            break;
-
-        case WINDOW_BUFFER_SIZE_EVENT:
-            // Windows can move the cursor onto a new line as a result of line
-            // wrapping adjustments.  If the width changes then return to give
-            // editor modules a chance to respond to the width change.
-            reset_wcwidths();
-
+            if (peek_record(record))
             {
-                CONSOLE_SCREEN_BUFFER_INFO csbiNew;
-                GetConsoleScreenBufferInfo(m_stdout, &csbiNew);
-                if (csbi.dwSize.X != csbiNew.dwSize.X)
-                    ret = true;
-                else
-                    csbi = csbiNew; // Update for next time.
+                assert(!m_has_pending_record);
+                m_has_pending_record = true;
+                m_pending_record = record;
+                return;
             }
-            break;
         }
-
-        if (ret)
-            return;
+        else
+        {
+            if (process_record(record, &csbi))
+                return;
+        }
     }
 }
 
@@ -1007,7 +1063,7 @@ static bool translate_ctrl_bracket(int32& key_vk, int32 key_sc)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
+void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
 {
     int32 key_char = record.uChar.UnicodeChar;
     int32 key_vk = record.wVirtualKeyCode;
@@ -1030,10 +1086,13 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     {
         if (key_char)
         {
-            if (s_verbose_input)
-                verbose_input(record, false);
-            if (g_debug_log_terminal.get())
-                verbose_input(record, true);
+            if (!peek)
+            {
+                if (s_verbose_input)
+                    verbose_input(record, false);
+                if (g_debug_log_terminal.get())
+                    verbose_input(record, true);
+            }
             push(key_char);
         }
 
@@ -1044,10 +1103,13 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_vk == VK_CONTROL || key_vk == VK_SHIFT || key_vk == VK_LWIN || key_vk == VK_RWIN)
         return;
 
-    if (s_verbose_input)
-        verbose_input(record, false);
-    if (g_debug_log_terminal.get())
-        verbose_input(record, true);
+    if (!peek)
+    {
+        if (s_verbose_input)
+            verbose_input(record, false);
+        if (g_debug_log_terminal.get())
+            verbose_input(record, true);
+    }
 
     // Special treatment for escape.
     if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
@@ -1303,7 +1365,7 @@ static void verbose_input(MOUSE_EVENT_RECORD const& record, bool log)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
+bool win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
 {
     // Remember the button state, to differentiate press vs release.
     const auto prv = m_prev_mouse_button_state;
@@ -1328,12 +1390,15 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
                                    mouse_input_type::none);
 
     if (mask == mouse_input_type::none)
-        return;
+        return false;
 
-    if (s_verbose_input)
-        verbose_input(record, false);
-    if (g_debug_log_terminal.get())
-        verbose_input(record, true);
+    if (!peek)
+    {
+        if (s_verbose_input)
+            verbose_input(record, false);
+        if (g_debug_log_terminal.get())
+            verbose_input(record, true);
+    }
 
     // If the caller isn't prepared to handle the mouse input, then handle
     // certain universal behaviors here.
@@ -1348,72 +1413,91 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
                 if (IsWindowVisible(hwndConsole) &&
                     (GetWindowLongW(hwndConsole, GWL_STYLE) & WS_VISIBLE))
                 {
-                    POINT pt;
-                    GetCursorPos(&pt);
-                    LPARAM lParam = MAKELPARAM(pt.x, pt.y);
-                    SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
+                    if (!peek)
+                    {
+                        POINT pt;
+                        GetCursorPos(&pt);
+                        LPARAM lParam = MAKELPARAM(pt.x, pt.y);
+                        SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
+                    }
+                    return true;
                 }
             }
             else if (wheel)
             {
                 // Windows Terminal does NOT support programmatic scrolling.
                 // ConEmu and plain Conhost DO support programmatic scrolling.
-                int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
-                UINT wheel_scroll_lines = 3;
-                SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
-                ScrollConsoleRelative(m_stdout, direction * int32(wheel_scroll_lines), SCR_BYLINE);
+                if (!peek)
+                {
+                    int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+                    UINT wheel_scroll_lines = 3;
+                    SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
+                    ScrollConsoleRelative(m_stdout, direction * int32(wheel_scroll_lines), SCR_BYLINE);
+                }
+                return true;
             }
         }
-        return;
+        return false;
     }
 
     // Left or right click, or drag.
     if (left_click || right_click || drag)
     {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(m_stdout, &csbi);
+        if (!peek)
+        {
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo(m_stdout, &csbi);
 
-        str<16> tmp;
-        const char code = (drag ? 'M' :
-                           right_click ? 'R' :
-                           record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
-        tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X, record.dwMousePosition.Y, code);
-        push(tmp.c_str());
-        return;
+            str<16> tmp;
+            const char code = (drag ? 'M' :
+                            right_click ? 'R' :
+                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
+            tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X, record.dwMousePosition.Y, code);
+            push(tmp.c_str());
+        }
+        return true;
     }
 
     // Mouse wheel.
     if (wheel)
     {
-        // Windows Terminal does NOT support programmatic scrolling.
-        // ConEmu and plain Conhost DO support programmatic scrolling.
-        int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
-        UINT wheel_scroll_lines = 3;
-        SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
+        if (!peek)
+        {
+            // Windows Terminal does NOT support programmatic scrolling.
+            // ConEmu and plain Conhost DO support programmatic scrolling.
+            int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+            UINT wheel_scroll_lines = 3;
+            SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
 
-        str<16> tmp;
-        const char code = (direction < 0 ? 'A' : 'B');
-        if (direction < 0)
-            direction = 0 - direction;
-        tmp.format("\x1b[$%u%c", direction * int32(wheel_scroll_lines), code);
-        push(tmp.c_str());
-        return;
+            str<16> tmp;
+            const char code = (direction < 0 ? 'A' : 'B');
+            if (direction < 0)
+                direction = 0 - direction;
+            tmp.format("\x1b[$%u%c", direction * int32(wheel_scroll_lines), code);
+            push(tmp.c_str());
+        }
+        return true;
     }
 
     // Mouse horizontal wheel.
     if (hwheel)
     {
-        int32 direction = (short(HIWORD(record.dwButtonState))) / 32;
-        UINT hwheel_distance = 1;
+        if (!peek)
+        {
+            int32 direction = (short(HIWORD(record.dwButtonState))) / 32;
+            UINT hwheel_distance = 1;
 
-        str<16> tmp;
-        const char code = (direction < 0 ? '<' : '>');
-        if (direction < 0)
-            direction = 0 - direction;
-        tmp.format("\x1b[$%u%c", direction * int32(hwheel_distance), code);
-        push(tmp.c_str());
-        return;
+            str<16> tmp;
+            const char code = (direction < 0 ? '<' : '>');
+            if (direction < 0)
+                direction = 0 - direction;
+            tmp.format("\x1b[$%u%c", direction * int32(hwheel_distance), code);
+            push(tmp.c_str());
+        }
+        return true;
     }
+
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -1443,7 +1527,7 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
     static const uint32 mask = sizeof_array(m_buffer) - 1;
     for (int32 i = 0; i < len; ++i)
         chord[i] = m_buffer[(m_buffer_head + i) & mask];
-    chord[len] = '\0'; // Word around rl_function_of_keyseq_len bug.
+    chord[len] = '\0'; // Work around rl_function_of_keyseq_len bug.
 
     str<32> new_chord;
     if (m_keys->translate(chord, len, new_chord))
