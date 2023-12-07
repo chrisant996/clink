@@ -15,7 +15,6 @@
     - Fixed a problem with arithmetic comparison operators checking the version in the inputrc file.
     - Fixed a bug that could cause readline to crash if the application removed the callback line handler before readline read all typeahead.
     - Added additional checks for read errors in the middle of readline commands.
-    - Fixed a problem with restoring the prompt when aborting an incremental search.
     - Fixed a problem with `unix-filename-rubout` that caused it to delete too much when applied to a pathname consisting only of one or more slashes.
     - Fixed a problem that caused the `\r` output by turning off bracketed paste to overwrite the line if terminal echo was disabled.
     - Fixed a couple problems where `transpose-words` could corrupt the end of the input line.
