@@ -129,7 +129,11 @@ _rl_init_locale (void)
   char *ret, *lspec;
 
   /* Set the LC_CTYPE locale category from environment variables. */
-  lspec = _rl_get_locale_var ("LC_CTYPE");
+/* begin_clink_change
+ * Clink forces UTF8 and doesn't support other codepages. */
+  //lspec = _rl_get_locale_var ("LC_CTYPE");
+  lspec = 0;
+/* end_clink_change */
   /* Since _rl_get_locale_var queries the right environment variables,
      we query the current locale settings with setlocale(), and, if
      that doesn't return anything, we set lspec to the empty string to
@@ -152,6 +156,7 @@ _rl_init_locale (void)
   _rl_utf8locale = (ret && *ret) ? utf8locale (ret) : 0;
 
   _rl_current_locale = savestring (ret);
+printf("_rl_utf8locale %d, _rl_current_locale '%s'\n", _rl_utf8locale, _rl_current_locale);
   return ret;
 }
 
@@ -292,6 +297,7 @@ find_codeset (char *name, size_t *lenp)
 
   while (*cp && *cp != '_' && *cp != '@' && *cp != '+' && *cp != ',')
     cp++;
+printf("find_codeset, *cp == %d\n", *cp);
 
   /* This does not make sense: language has to be specified.  As
      an exception we allow the variable to contain only the codeset
@@ -328,6 +334,7 @@ find_codeset (char *name, size_t *lenp)
 	}
     }
 
+printf("find_codeset, result == '%s'\n", result ? result : "(null)");
   return result;
 }
 
