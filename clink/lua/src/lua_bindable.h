@@ -222,7 +222,7 @@ void lua_bindable<T>::push(lua_State* state)
     int32 top = lua_gettop(state);
 #endif
 
-    if (m_registry_ref == LUA_NOREF)
+    if (m_registry_ref == LUA_NOREF && !m_owned)
         bind(state);
 
     lua_rawgeti(state, LUA_REGISTRYINDEX, m_registry_ref);
