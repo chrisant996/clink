@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "lua_script_loader.h"
+#include "lua_task_manager.h"
 #include "rl_buffer_lua.h"
 #include "line_state_lua.h"
 
@@ -282,6 +283,8 @@ void lua_state::shutdown()
 {
     if (m_state == nullptr)
         return;
+
+    shutdown_task_manager(false/*final*/);
 
     lua_close(m_state);
     m_state = nullptr;

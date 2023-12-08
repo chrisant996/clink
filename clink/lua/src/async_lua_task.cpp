@@ -21,7 +21,7 @@ class task_manager
 
 public:
                             task_manager();
-    void                    shutdown();
+    void                    shutdown(bool final);
     std::shared_ptr<async_lua_task> find(const char* key) const;
     bool                    add(const std::shared_ptr<async_lua_task>& task);
     void                    on_idle(lua_state& lua);
@@ -186,12 +186,13 @@ bool task_manager::usable() const
 }
 
 //------------------------------------------------------------------------------
-void task_manager::shutdown()
+void task_manager::shutdown(bool final)
 {
     if (m_zombie)
         return;
 
-    m_zombie = true;
+    if (final)
+        m_zombie = true;
 
     for (auto &iter : m_map)
     {
@@ -326,9 +327,9 @@ extern "C" void end_task_manager()
 }
 
 //------------------------------------------------------------------------------
-void shutdown_task_manager()
+void shutdown_task_manager(bool final)
 {
-    return s_manager.shutdown();
+    return s_manager.shutdown(final);
 }
 
 //------------------------------------------------------------------------------

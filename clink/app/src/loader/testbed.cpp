@@ -53,7 +53,7 @@ static int32 editline()
     line_editor_destroy(editor);
 
     shutdown_recognizer();
-    shutdown_task_manager();
+    shutdown_task_manager(true/*final*/);
 
     return 0;
 }

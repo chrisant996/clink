@@ -88,7 +88,7 @@ int32 main(int32 argc, char** argv)
     int32 result = (clatch::run(prefix) != true);
 
     shutdown_recognizer();
-    shutdown_task_manager();
+    shutdown_task_manager(true/*final*/);
 
     if (timer)
     {

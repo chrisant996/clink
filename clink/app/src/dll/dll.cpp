@@ -71,7 +71,7 @@ static void shutdown_clink()
         g_host = nullptr;
     }
 
-    shutdown_task_manager();
+    shutdown_task_manager(true/*final*/);
     shutdown_recognizer();
 
     if (logger* logger = logger::get())
