@@ -2023,6 +2023,16 @@ end
 --- -show:  :addarg({ clink.dirmatches })
 function clink.dirmatches(match_word)
     local word, expanded = rl.expandtilde(match_word or "")
+    local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
+
+    local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
+    if server then
+        local matches = {}
+        for share, special in os._enumshares(server, hidden) do
+            table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
+        end
+        return matches
+    end
 
     local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
@@ -2032,7 +2042,7 @@ function clink.dirmatches(match_word)
     local _, ismain = coroutine.running()
 
     local flags = {
-        hidden=settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files"),
+        hidden=hidden,
         system=settings.get("files.system"),
     }
 
@@ -2071,6 +2081,16 @@ end
 --- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
 function clink.filematches(match_word)
     local word, expanded = rl.expandtilde(match_word or "")
+    local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
+
+    local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
+    if server then
+        local matches = {}
+        for share, special in os._enumshares(server, hidden) do
+            table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
+        end
+        return matches
+    end
 
     local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
@@ -2080,7 +2100,7 @@ function clink.filematches(match_word)
     local _, ismain = coroutine.running()
 
     local flags = {
-        hidden=settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files"),
+        hidden=hidden,
         system=settings.get("files.system"),
     }
 
