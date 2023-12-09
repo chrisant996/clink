@@ -469,7 +469,16 @@ extern "C" int32 input_available_hook(void)
         // timeout is in microseconds (µsec) so divide by 1000 for milliseconds.
         const int32 timeout = rl_set_keyboard_input_timeout(-1);
         if (s_direct_input->available(timeout > 0 ? timeout / 1000 : 0))
+        {
+            // Buffers the available input so it's available to Readline for
+            // reading.  Clink's terminal_read_thunk is designed to require a
+            // loop of select() and read() in order to control how/when/whether
+            // Readline sees input.  It's necessary to call select here so
+            // that win_terminal_in has the input queued, otherwise rl_read_key
+            // won't be able to receive the available input.
+            s_direct_input->select(nullptr, 0);
             return true;
+        }
     }
     return false;
 }
@@ -2748,7 +2757,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         virtual int32   begin(bool) override                { assert(false); return 1; }
         virtual int32   end(bool) override                  { assert(false); return 0; }
         virtual bool    available(uint32 timeout) override  { assert(false); return false; }
-        virtual void    select(input_idle*) override        { assert(false); }
+        virtual void    select(input_idle*, uint32) override{ assert(false); }
         virtual int32   read() override                     { if (*data) return *(uint8*)(data++);
                                                               else if (old) return old->read();
                                                               else if (s_direct_input) return s_direct_input->read();

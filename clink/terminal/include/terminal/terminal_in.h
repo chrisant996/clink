@@ -21,7 +21,7 @@ public:
     virtual int32   begin(bool can_hide_cursor=true) = 0;
     virtual int32   end(bool can_show_cursor=true) = 0;
     virtual bool    available(uint32 timeout) = 0;
-    virtual void    select(input_idle* callback=nullptr) = 0;
+    virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) = 0;
     virtual int32   read() = 0;
     virtual key_tester* set_key_tester(key_tester* keys) = 0;
 };

@@ -650,10 +650,10 @@ bool win_terminal_in::available(uint32 _timeout)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::select(input_idle* callback)
+void win_terminal_in::select(input_idle* callback, uint32 timeout)
 {
     if (!m_buffer_count)
-        read_console(callback);
+        read_console(callback, timeout);
 }
 
 //------------------------------------------------------------------------------

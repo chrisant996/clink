@@ -25,7 +25,7 @@ public:
     virtual int32           begin(bool can_hide_cursor) override { return 1; }
     virtual int32           end(bool can_show_cursor) override { return 0; }
     virtual bool            available(uint32 timeout) override { return has_input(); }
-    virtual void            select(input_idle*) override {}
+    virtual void            select(input_idle*, uint32) override {}
     virtual int32           read() override { return *(uint8*)m_read++; }
     virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }
 
