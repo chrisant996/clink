@@ -27,6 +27,12 @@ extern int _rl_match_hidden_files;
 
 #include <memory>
 
+#ifdef PROTOTYPE_ENUM_SHARES
+#include "async_lua_task.h"
+#include <core/debugheap.h>
+#include <mutex>
+#endif
+
 //------------------------------------------------------------------------------
 extern setting_bool g_files_hidden;
 extern setting_bool g_files_system;
@@ -825,6 +831,399 @@ int32 make_file_globber(lua_State* state)
 {
     return globber_impl(state, false);
 }
+
+#ifdef PROTOTYPE_ENUM_SHARES
+//------------------------------------------------------------------------------
+static union
+{
+    FARPROC proc[2];
+    struct {
+        DWORD (APIENTRY* WNetOpenEnumW)(DWORD dwScope, DWORD dwType, DWORD dwUsage, LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum);
+        DWORD (APIENTRY* WNetEnumResourceW)(HANDLE hEnum, LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize);
+        DWORD (APIENTRY* WNetCloseEnum)(HANDLE hEnum);
+    };
+} s_mpr;
+
+//------------------------------------------------------------------------------
+static bool delayload_mpr()
+{
+    HMODULE hlib = LoadLibrary("mpr.dll");
+    if (!hlib)
+        return false;
+
+    s_mpr.proc[0] = GetProcAddress(hlib, "WNetOpenEnumW");
+    s_mpr.proc[1] = GetProcAddress(hlib, "WNetEnumResourceW");
+    s_mpr.proc[2] = GetProcAddress(hlib, "WNetCloseEnum");
+    for (auto proc : s_mpr.proc)
+    {
+        if (!proc)
+            return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void DisplayStruct(int i, LPNETRESOURCEW lpnrLocal)
+{
+    printf("NETRESOURCE[%d] Scope: 0x%x = ", i, lpnrLocal->dwScope);
+    switch (lpnrLocal->dwScope) {
+    case (RESOURCE_CONNECTED):
+        printf("connected\n");
+        break;
+    case (RESOURCE_GLOBALNET):
+        printf("all resources\n");
+        break;
+    case (RESOURCE_REMEMBERED):
+        printf("remembered\n");
+        break;
+    default:
+        printf("unknown scope %d\n", lpnrLocal->dwScope);
+        break;
+    }
+
+    printf("NETRESOURCE[%d] Type: 0x%x = ", i, lpnrLocal->dwType);
+    switch (lpnrLocal->dwType) {
+    case (RESOURCETYPE_ANY):
+        printf("any\n");
+        break;
+    case (RESOURCETYPE_DISK):
+        printf("disk\n");
+        break;
+    case (RESOURCETYPE_PRINT):
+        printf("print\n");
+        break;
+    default:
+        printf("unknown type %d\n", lpnrLocal->dwType);
+        break;
+    }
+
+    printf("NETRESOURCE[%d] DisplayType: 0x%x = ", i, lpnrLocal->dwDisplayType);
+    switch (lpnrLocal->dwDisplayType) {
+    case (RESOURCEDISPLAYTYPE_GENERIC):
+        printf("generic\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_DOMAIN):
+        printf("domain\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_SERVER):
+        printf("server\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_SHARE):
+        printf("share\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_FILE):
+        printf("file\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_GROUP):
+        printf("group\n");
+        break;
+    case (RESOURCEDISPLAYTYPE_NETWORK):
+        printf("network\n");
+        break;
+    default:
+        printf("unknown display type %d\n", lpnrLocal->dwDisplayType);
+        break;
+    }
+
+    printf("NETRESOURCE[%d] Usage: 0x%x = ", i, lpnrLocal->dwUsage);
+    if (lpnrLocal->dwUsage & RESOURCEUSAGE_CONNECTABLE)
+        printf("connectable ");
+    if (lpnrLocal->dwUsage & RESOURCEUSAGE_CONTAINER)
+        printf("container ");
+    printf("\n");
+
+    printf("NETRESOURCE[%d] Localname: %ls\n", i, lpnrLocal->lpLocalName);
+    printf("NETRESOURCE[%d] Remotename: %ls\n", i, lpnrLocal->lpRemoteName);
+    printf("NETRESOURCE[%d] Comment: %ls\n", i, lpnrLocal->lpComment);
+    printf("NETRESOURCE[%d] Provider: %ls\n", i, lpnrLocal->lpProvider);
+    printf("\n");
+}
+BOOL WINAPI EnumerateFunc(LPNETRESOURCEW lpnr)
+{
+    DWORD dwResult, dwResultEnum;
+    HANDLE hEnum;
+    DWORD cbBuffer = 16384;     // 16K is a good size
+    DWORD cEntries = -1;        // enumerate all possible entries
+    LPNETRESOURCEW lpnrLocal;    // pointer to enumerated structures
+    DWORD i;
+    //
+    // Call the WNetOpenEnum function to begin the enumeration.
+    //
+    dwResult = s_mpr.WNetOpenEnumW(RESOURCE_GLOBALNET, // all network resources
+                            RESOURCETYPE_ANY,   // all resources
+                            0,  // enumerate all resources
+                            lpnr,       // NULL first time the function is called
+                            &hEnum);    // handle to the resource
+
+    if (dwResult != NO_ERROR) {
+        printf("WnetOpenEnumW failed with error %d\n", dwResult);
+        return FALSE;
+    }
+    //
+    // Call the GlobalAlloc function to allocate resources.
+    //
+    lpnrLocal = (LPNETRESOURCEW) GlobalAlloc(GPTR, cbBuffer);
+    if (lpnrLocal == NULL) {
+        printf("WnetOpenEnumW failed with error %d\n", dwResult);
+//      NetErrorHandler(hwnd, dwResult, (LPSTR)"WNetOpenEnum");
+        return FALSE;
+    }
+
+    do {
+        //
+        // Initialize the buffer.
+        //
+        ZeroMemory(lpnrLocal, cbBuffer);
+        //
+        // Call the WNetEnumResource function to continue
+        //  the enumeration.
+        //
+        dwResultEnum = s_mpr.WNetEnumResourceW(hEnum,  // resource handle
+                                        &cEntries,      // defined locally as -1
+                                        lpnrLocal,      // LPNETRESOURCE
+                                        &cbBuffer);     // buffer size
+        //
+        // If the call succeeds, loop through the structures.
+        //
+        if (dwResultEnum == NO_ERROR) {
+            for (i = 0; i < cEntries; i++) {
+                // Call an application-defined function to
+                //  display the contents of the NETRESOURCE structures.
+                //
+                DisplayStruct(i, &lpnrLocal[i]);
+
+                // If the NETRESOURCE structure represents a container resource,
+                //  call the EnumerateFunc function recursively.
+
+                if (RESOURCEUSAGE_CONTAINER == (lpnrLocal[i].dwUsage
+                                                & RESOURCEUSAGE_CONTAINER))
+//          if(!EnumerateFunc(hwnd, hdc, &lpnrLocal[i]))
+                    if (!EnumerateFunc(&lpnrLocal[i]))
+                        printf("EnumerateFunc returned FALSE\n");
+//            TextOut(hdc, 10, 10, "EnumerateFunc returned FALSE.", 29);
+            }
+        }
+        // Process errors.
+        //
+        else if (dwResultEnum != ERROR_NO_MORE_ITEMS) {
+            printf("WNetEnumResource failed with error %d\n", dwResultEnum);
+
+//      NetErrorHandler(hwnd, dwResultEnum, (LPSTR)"WNetEnumResource");
+            break;
+        }
+    }
+    //
+    // End do.
+    //
+    while (dwResultEnum != ERROR_NO_MORE_ITEMS);
+    //
+    // Call the GlobalFree function to free the memory.
+    //
+    GlobalFree((HGLOBAL) lpnrLocal);
+    //
+    // Call WNetCloseEnum to end the enumeration.
+    //
+    dwResult = s_mpr.WNetCloseEnum(hEnum);
+
+    if (dwResult != NO_ERROR) {
+        //
+        // Process errors.
+        //
+        printf("WNetCloseEnum failed with error %d\n", dwResult);
+//    NetErrorHandler(hwnd, dwResult, (LPSTR)"WNetCloseEnum");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+class enumshares_async_lua_task : public async_lua_task
+{
+public:
+    enumshares_async_lua_task(const char* key, const char* src, const char* server)
+    : async_lua_task(key, src)
+    , m_server(server)
+    {}
+
+    bool next(str_base& out)
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        if (m_index >= m_shares.size())
+            return false;
+        out = m_shares[m_index].c_str();
+        ++m_index;
+        return true;
+    }
+
+    bool wait(uint32 timeout)
+    {
+        const DWORD waited = WaitForSingleObject(get_wait_handle(), timeout);
+        const bool completed = is_complete();
+        if (!completed)
+            cancel();
+        return completed;
+    }
+
+protected:
+    void do_work() override
+    {
+        static bool s_has_mpr = delayload_mpr();
+        if (!s_has_mpr)
+            return;
+
+#if 1
+        NETRESOURCEW server = {};
+        server.dwScope = RESOURCE_GLOBALNET;
+        server.dwType = RESOURCETYPE_ANY;
+        server.dwDisplayType = RESOURCEDISPLAYTYPE_SERVER;
+        server.dwUsage = RESOURCEUSAGE_CONTAINER;
+        server.lpRemoteName = const_cast<wchar_t*>(m_server.c_str());
+        server.lpProvider = L"Microsoft Windows Network";
+
+        HANDLE h;
+        if (NO_ERROR == s_mpr.WNetOpenEnumW(RESOURCE_GLOBALNET, RESOURCETYPE_ANY, 0, &server, &h))
+        {
+printf("opened\n");
+            DWORD buf_size = 32768;
+#ifdef DEBUG
+            buf_size = 8000;
+#endif
+            void* buffer = malloc(buf_size);
+            while (true)
+            {
+                DWORD count = 1;
+                DWORD size = buf_size;
+                ZeroMemory(buffer, buf_size);
+                const DWORD err = s_mpr.WNetEnumResourceW(h, &count, buffer, &size);
+printf("enum -> %d\n", err);
+                if (NO_ERROR == err)
+                {
+                    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+                    m_shares.emplace_back(reinterpret_cast<NETRESOURCEW*>(buffer)->lpRemoteName);
+printf("enum -> '%ls' '%ls'\n", reinterpret_cast<NETRESOURCEW*>(buffer)->lpLocalName, reinterpret_cast<NETRESOURCEW*>(buffer)->lpRemoteName);
+                }
+                else if (ERROR_MORE_DATA == err)
+                {
+                    if (size <= buf_size)
+                        break;
+                    void* new_buffer = realloc(buffer, size);
+                    if (!new_buffer)
+                        break;
+                    buffer = new_buffer;
+                    buf_size = size;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            s_mpr.WNetCloseEnum(h);
+            free(buffer);
+        }
+#else
+        EnumerateFunc(0);
+#endif
+    }
+
+private:
+    wstr_moveable m_server;
+    std::recursive_mutex m_mutex;
+    std::vector<str_moveable> m_shares;
+    size_t m_index = 0;
+};
+
+//------------------------------------------------------------------------------
+class enumshares_lua
+    : public lua_bindable<enumshares_lua>
+{
+public:
+                        enumshares_lua(const std::shared_ptr<enumshares_async_lua_task>& task) : m_task(task) {}
+                        ~enumshares_lua() {}
+    static int32        iter_aux(lua_State* state);
+
+    bool                next(str_base& out) { return m_task->next(out); }
+
+private:
+    std::shared_ptr<enumshares_async_lua_task> m_task;
+
+    friend class lua_bindable<enumshares_lua>;
+    static const char* const c_name;
+    static const enumshares_lua::method c_methods[];
+};
+
+//------------------------------------------------------------------------------
+int32 enumshares_lua::iter_aux(lua_State* state)
+{
+    auto* self = check(state, lua_upvalueindex(1));
+    if (!self)
+        return 0;
+
+    str<> out;
+    if (self->m_task->next(out))
+    {
+        lua_pushlstring(state, out.c_str(), out.length());
+        return 1;
+    }
+
+// TODO: handle running synchronously in main coroutine.
+    if (!self->m_task->is_complete() && !self->m_task->is_canceled())
+    {
+        self->push(state);
+        return lua_yieldk(state, 1, 0, iter_aux);
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+const char* const enumshares_lua::c_name = "enumshares_lua";
+const enumshares_lua::method enumshares_lua::c_methods[] = {
+    {}
+};
+
+//------------------------------------------------------------------------------
+static int32 enum_shares(lua_State* state)
+{
+    const char* server = checkstring(state, 1);
+    int32 timeout = optinteger(state, 2, 0); // TODO: use seconds or milliseconds?  (find precedent)
+    if (!server || !*server)
+        return 0;
+
+    static uint32 s_counter = 0;
+    str_moveable key;
+    key.format("enumshares||%08x", ++s_counter);
+
+    str<> src;
+    get_lua_srcinfo(state, src);
+
+    auto task = std::make_shared<enumshares_async_lua_task>(key.c_str(), src.c_str(), server);
+    if (!task)
+        return 0;
+
+    enumshares_lua* es = enumshares_lua::make_new(state, task);
+    if (!es)
+        return 0;
+
+    add_async_lua_task(std::shared_ptr<async_lua_task>(task));
+
+    // If a timeout was given, wait for completion until timeout, and then
+    // cancel the task if not yet complete.
+    // TODO: Optionally have a way to iterate over any results received before
+    // the timeout was reached?
+    if (timeout && !task->wait(timeout))
+    {
+        lua_pop(state, 1);
+        return 0;
+    }
+
+    // es was already pushed by make_new.
+    lua_pushcclosure(state, es->iter_aux, 1);
+    return 1;
+}
+#endif
 
 //------------------------------------------------------------------------------
 /// -name:  os.touch
@@ -2093,6 +2492,9 @@ void os_lua_initialise(lua_state& lua)
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
         { "_makedirglobber", &make_dir_globber },
         { "_makefileglobber", &make_file_globber },
+#ifdef PROTOTYPE_ENUM_SHARES
+        { "_enumshares", &enum_shares },
+#endif
     };
 
     lua_State* state = lua.get_state();
