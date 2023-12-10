@@ -106,7 +106,7 @@ static int _rl_get_keymap_by_name (const char *);
 static int _rl_get_keymap_by_map (Keymap);
 
 /* begin_clink_change */
-const char *rl_get_last_init_file PARAMS((void));
+const char *rl_get_last_init_file (void);
 /* end_clink_change */
 
 static int currently_reading_init_file;

@@ -524,7 +524,7 @@ extern void rl_clear_history (void);
 /* begin_clink_change */
 /* Returns true if rl_operate_and_get_next has set a saved history
    offset, so that the host knows not to rearrange history entries yet. */
-extern int rl_has_saved_history PARAMS((void));
+extern int rl_has_saved_history (void);
 /* end_clink_change */
 
 /* Undocumented. */
@@ -544,12 +544,12 @@ extern int rl_completion_mode (rl_command_func_t *);
 
 /* begin_clink_change */
 /* Path separators. */
-extern int rl_is_path_separator PARAMS((char c));
-extern char *rl_last_path_separator PARAMS((const char *string));
+extern int rl_is_path_separator (char c);
+extern char *rl_last_path_separator (const char *string);
 /* end_clink_change */
 
 /* begin_clink_change PRIVATE */
-extern int rl_need_match_quoting PARAMS((const char *match));
+extern int rl_need_match_quoting (const char *match);
 /* end_clink_change PRIVATE */
 
 #if 0

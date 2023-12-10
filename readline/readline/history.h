@@ -278,9 +278,9 @@ typedef struct _history_expansion {
 } history_expansion;
 extern history_expansion* history_expansions;
 
-extern void history_free_expansions PARAMS((history_expansion **));
-extern void save_history_expansion_state PARAMS((void));
-extern void restore_history_expansion_state PARAMS((void));
+extern void history_free_expansions (history_expansion **);
+extern void save_history_expansion_state (void);
+extern void restore_history_expansion_state (void);
 
 extern int history_return_expansions;
 extern int history_search_time_limit;
