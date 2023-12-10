@@ -1543,6 +1543,15 @@ bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
 
 
 
+//------------------------------------------------------------------------------
+// Make the clock available to C code (e.g. in Readline).
+extern "C" double os_clock()
+{
+    return os::clock();
+}
+
+
+
 #if defined(DEBUG)
 
 //------------------------------------------------------------------------------

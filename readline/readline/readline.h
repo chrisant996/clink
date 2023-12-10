@@ -69,6 +69,9 @@ typedef struct undo_list {
   int start, end;		/* Where the change took place. */
   char *text;			/* The text to insert, if undoing a delete. */
   enum undo_code what;		/* Delete, Insert, Begin, End. */
+/* begin_clink_change */
+  double clock;
+/* end_clink_change */
 } UNDO_LIST;
 
 /* The current undo list for RL_LINE_BUFFER. */
@@ -696,6 +699,8 @@ extern rl_voidfunc_t *rl_buffer_changing_hook;
    non-zero to stop further processing. */
 enum selection_event { SEL_BEFORE_INSERTCHAR, SEL_AFTER_INSERTCHAR, SEL_BEFORE_DELETE };
 extern rl_intfunc_t *rl_selection_event_hook;
+/* Called to check whether to concatenate new input with last undo entry. */
+extern rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook;
 /* Called after a command function is dispatched. */
 extern rl_voidfunc_t *rl_after_dispatch_hook;
 /* end_clink_change */

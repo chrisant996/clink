@@ -1216,6 +1216,24 @@ static void after_dispatch_hook()
 }
 
 //------------------------------------------------------------------------------
+static int can_concat_undo_hook(UNDO_LIST* undo, const char* string)
+{
+    const double clock = os::clock();
+    const double delta = clock - undo->clock;
+
+    assert(undo->end > undo->start);
+    const int was_space = whitespace(rl_line_buffer[undo->end - 1]);
+    const int is_space = whitespace(string[0]) && !string[1];
+
+    const int can = ((delta < 0.1) ||
+                     (delta < 5.0 && !(was_space && !is_space) && undo->end - undo->start < 20));
+
+    if (can)
+        undo->clock = clock;
+    return can;
+}
+
+//------------------------------------------------------------------------------
 static void maybe_collect_words()
 {
     if (s_need_collect_words)
@@ -1696,6 +1714,7 @@ static void init_readline_hooks()
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
     rl_after_dispatch_hook = after_dispatch_hook;
+    rl_can_concat_undo_hook = can_concat_undo_hook;
 
     // History hooks.
     rl_add_history_hook = host_add_history;

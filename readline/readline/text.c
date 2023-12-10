@@ -77,6 +77,7 @@ int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 rl_voidfunc_t *rl_buffer_changing_hook = 0;
 rl_intfunc_t *rl_selection_event_hook = 0;
 rl_voidfunc_t *rl_after_dispatch_hook = 0;
+rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook = 0;
 /* end_clink_change */
 
 /* **************************************************************** */
@@ -118,7 +119,10 @@ rl_insert_text (const char *string)
 	  rl_undo_list &&
 	  (rl_undo_list->what == UNDO_INSERT) &&
 	  (rl_undo_list->end == rl_point) &&
-	  (rl_undo_list->end - rl_undo_list->start < 20))
+/* begin_clink_change */
+	  //(rl_undo_list->end - rl_undo_list->start < 20))
+	  (rl_can_concat_undo_hook ? rl_can_concat_undo_hook (rl_undo_list, string) : (rl_undo_list->end - rl_undo_list->start < 20)))
+/* end_clink_change */
 	rl_undo_list->end++;
       else
 	rl_add_undo (UNDO_INSERT, rl_point, rl_point + l, (char *)NULL);

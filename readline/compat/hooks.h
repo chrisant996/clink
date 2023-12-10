@@ -59,6 +59,9 @@ struct hooked_stat
 void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
 
+// These are implemented in os.cpp.
+extern double os_clock();
+
 // These are implemented in matches_lookaside.cpp.
 extern int lookup_match_type(const char* match);
 extern unsigned char lookup_match_flags(const char* match);

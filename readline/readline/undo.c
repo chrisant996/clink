@@ -77,6 +77,9 @@ alloc_undo_entry (enum undo_code what, int start, int end, char *text)
   temp->start = start;
   temp->end = end;
   temp->text = text;
+/* begin_clink_change */
+  temp->clock = os_clock();
+/* end_clink_change */
 
   temp->next = (UNDO_LIST *)NULL;
   return temp;
@@ -131,6 +134,9 @@ _rl_copy_undo_entry (UNDO_LIST *entry)
 
   new = alloc_undo_entry (entry->what, entry->start, entry->end, (char *)NULL);
   new->text = entry->text ? savestring (entry->text) : 0;
+/* begin_clink_change */
+  new->clock = entry->clock;
+/* end_clink_change */
   return new;
 }
 

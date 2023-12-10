@@ -88,6 +88,10 @@ typedef char rl_get_face_func_t (int in, int active_begin, int active_end);
 typedef void rl_puts_face_func_t (const char* s, const char* face, int n);
 /* Type for function to process macros */
 typedef int rl_macro_hook_func_t (const char* macro);
+/* Type for function to check whether to concat undo entries */
+struct undo_list;
+typedef struct undo_list UNDO_LIST;
+typedef int rl_can_concat_undo_hook_func_t (UNDO_LIST* undo, const char* string);
 /* end_clink_change */
 
 /* Input function type */
