@@ -642,7 +642,6 @@ static int32 read_input(lua_State* state)
 {
     const bool no_cursor = (lua_isboolean(state, 1) && lua_toboolean(state, 1));
 
-// TODO: This needs to use input_available_hook().
     terminal_in* const in = get_lua_terminal_input();
     if (!in)
         return 0;
@@ -713,6 +712,9 @@ static int32 read_input(lua_State* state)
 /// <a href="#console.readinput">console.readinput()</a> to read the available
 /// input.
 ///
+/// In Clink v1.6.0 and higher, when <span class="arg">timeout</span> is
+/// negative, the timeout is infinite.
+///
 /// <strong>Note:</strong> Mouse input is not supported.
 /// -show:  if console.checkinput() then
 /// -show:  &nbsp;   local key = console.readinput() -- Returns immediately since input is available.
@@ -722,7 +724,8 @@ static int32 read_input(lua_State* state)
 /// -show:  end
 static int32 check_input(lua_State* state)
 {
-    const DWORD timeout = static_cast<DWORD>(optnumber(state, 1, 0) * 1000);
+    const auto _timeout = optnumber(state, 1, 0);
+    const uint32 timeout = (_timeout < 0) ? INFINITE : uint32(_timeout * 1000);
 
     bool available = false;
 
