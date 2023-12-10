@@ -7,7 +7,10 @@
 local bad = 0
 local total = 0
 
-local function scan(name)
+local bom_pattern = "^\xef\xbb\xbf"
+local highbit_pattern = "[\x80-\xff]"
+
+local function scan(name, dolines)
     local f = io.open(name, "rb")
     if not f then
         return
@@ -15,48 +18,46 @@ local function scan(name)
 
     total = total + 1
 
-    local n = 0
-    for line in f:lines() do
-        n = n + 1
-        if n == 1 and line:find("^\xef\xbb\xbf") then
-            break
+    if not dolines then
+        -- This "*a" optimization saves around 5-10% elapsed time.
+        local content = f:read("*a")
+        if not content:find(bom_pattern) and content:find(highbit_pattern) then
+            total = total - 1
+            scan(name, true)
         end
-        local pos = line:find("[\x80-\xff]")
-        if pos then
-            print(name.." -- \x1b[91mline "..n..", pos "..pos.."\x1b[m")
-            bad = bad + 1
-            break
+    else
+        local n = 0
+        for line in f:lines() do
+            n = n + 1
+            if n == 1 and line:find(bom_pattern) then
+                break
+            end
+            local pos = line:find(highbit_pattern)
+            if pos then
+                print(name.." -- \x1b[91mline "..n..", pos "..pos.."\x1b[m")
+                bad = bad + 1
+                break
+            end
         end
     end
 
     f:close()
 end
 
-local function is_file(name)
-    local f = io.open(name, "rb")
-    if f then
-        f:close()
-        return true
-    end
-end
-
 local function can_scan(name)
-    return name:sub(1, 1) ~= "." and name ~= "examples"
+    return not name:find("\\%.[^\\]*\\") and not name:find("\\examples\\")
 end
 
 local function traverse(dir)
-    local f = io.popen(string.format('2>nul dir /b "%s"', dir))
+    local f = io.popen(string.format('2>nul dir /b /s /a:-d "%s"', dir))
     if not f then
         return
     end
 
-    for line in f:lines() do
-        if can_scan(line) then
-            line = line:lower()
-            local name = dir.."/"..line
-            if not is_file(name) then
-                traverse(name)
-            elseif name:find("%.[hc]$") or name:find("%.cpp$") then
+    for name in f:lines() do
+        if can_scan(name) then
+            name = name:lower()
+            if name:find("%.[hc]$") or name:find("%.cpp$") then
                 scan(name)
             end
         end
@@ -65,16 +66,25 @@ local function traverse(dir)
     f:close()
 end
 
-traverse(".")
+local function analyze()
+    bad = 0
+    total = 0
 
-if bad > 0 then
-    print()
+    local start = os.clock()
+    traverse(".")
+    local elapsed = os.clock() - start
+
+    if bad > 0 then
+        print()
+    end
+
+    print(string.format("%u file(s) scanned in %.2f sec.", total, elapsed))
+
+    if bad > 0 then
+        print("\x1b[91m"..bad.." file(s) missing UTF8 BOM.\x1b[m")
+    else
+        print("\x1b[92mAll files ok.\x1b[m")
+    end
 end
 
-print(total.." file(s) scanned.")
-
-if bad > 0 then
-    print("\x1b[91m"..bad.." file(s) missing UTF8 BOM.\x1b[m")
-else
-    print("\x1b[92mAll files ok.\x1b[m")
-end
+analyze()
