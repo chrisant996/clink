@@ -1,6 +1,8 @@
 // Copyright (c) 2022 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
+#include "lua_bindable.h"
+
 #include <core/str.h>
 
 #include <memory>
@@ -13,6 +15,29 @@ struct callback_ref
 {
     callback_ref(int32 ref) : m_ref(ref) {}
     int32 m_ref;
+};
+
+//------------------------------------------------------------------------------
+class async_yield_lua
+    : public lua_bindable<async_yield_lua>
+{
+public:
+                            async_yield_lua(const char* name);
+                            ~async_yield_lua();
+
+    int32                   get_name(lua_State* state);
+    int32                   ready(lua_State* state);
+
+    void                    set_ready() { m_ready = true; }
+    void                    clear_ready() { m_ready = false; }
+
+private:
+    str_moveable            m_name;
+    bool                    m_ready = false;
+
+    friend class lua_bindable<async_yield_lua>;
+    static const char* const c_name;
+    static const method c_methods[];
 };
 
 //------------------------------------------------------------------------------
@@ -29,6 +54,7 @@ public:
     bool                    is_complete() const { return m_is_complete; }
     bool                    is_canceled() const { return m_is_canceled; }
 
+    void                    set_asyncyield(async_yield_lua* asyncyield);
     void                    set_callback(const std::shared_ptr<callback_ref>& callback);
     void                    run_callback(lua_state& lua);
     void                    disable_callback();
@@ -37,6 +63,8 @@ public:
 
 protected:
     virtual void            do_work() = 0;
+
+    void                    wake_asyncyield() const;
 
 private:
     void                    start();
@@ -49,6 +77,7 @@ private:
     std::unique_ptr<std::thread> m_thread;
     str_moveable            m_key;
     str_moveable            m_src;
+    async_yield_lua*        m_asyncyield = nullptr;
     std::shared_ptr<callback_ref> m_callback_ref;
     const bool              m_run_until_complete = false;
     bool                    m_run_callback = false;

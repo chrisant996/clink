@@ -41,10 +41,11 @@ local print = clink.print
 --  Updated by the coroutine management system:
 --      resumed:        Number of times the coroutine has been resumed.
 --      firstclock:     The os.clock() from the beginning of the first resume.
---      throttleclock:  The os.clock() from the end of the most recent yieldguard.
+--      throttleclock:  The os.clock() from the end of the most recent yieldguard or asyncyield.
 --      lastclock:      The os.clock() from the end of the last resume.
 --      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
 --      yieldguard:     Yielding due to io.popen, os.execute, etc.
+--      asyncyield:     Yielding due to an async_lua_task.
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
@@ -171,9 +172,14 @@ local function next_entry_target(entry, now)
         -- Multiple kinds of throttling for coroutines that want to run more
         -- frequently than every 5 seconds:
         --  1.  Throttle if running for 5 or more seconds, but reset the elapsed
-        --      timer every time io.popenyield() finishes.
+        --      timer every time io.popenyield() finishes or resuming after
+        --      asyncyield.
         --  2.  Throttle if running for more than 30 seconds total.
         -- Throttled coroutines can only run once every 5 seconds.
+        --
+        -- NOTE:  Throttling is intentionally based on elapsed clock time, not
+        -- on coroutine execution time.  The intent is responsiveness for the
+        -- user, not "fairness" to coroutines.
         local interval = entry.interval
         local throttleclock = entry.throttleclock or entry.firstclock
         if now and interval < 5 then
@@ -210,6 +216,9 @@ function clink._wait_duration()
             local this_target = next_entry_target(entry, now)
             if entry.yieldguard or entry.queued then -- luacheck: ignore 542
                 -- Yield until output is ready; don't influence the timeout.
+            elseif entry.asyncyield and not entry.asyncyield:ready() then -- luacheck: ignore 542
+                -- Don't resume until asyncyield says it's ready; don't
+                -- influence the timeout.
             elseif not target or target > this_target then
                 target = this_target
             end
@@ -223,6 +232,15 @@ end
 --------------------------------------------------------------------------------
 function clink._set_coroutine_context(context)
     _coroutine_context = context
+end
+
+--------------------------------------------------------------------------------
+function clink._set_coroutine_asyncyield(asyncyield)
+    local t = coroutine.running()
+    local entry = _coroutines[t]
+    if t and entry then
+        entry.asyncyield = asyncyield
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -246,9 +264,13 @@ function clink._resume_coroutines()
             else
                 _coroutines_resumable = true
                 local now = os.clock()
-                if next_entry_target(entry, now) <= now then
+                if next_entry_target(entry, now) <= now and
+                        (not entry.asyncyield or entry.asyncyield:ready()) then
                     if not entry.firstclock then
                         entry.firstclock = now
+                    end
+                    if entry.asyncyield then
+                        entry.throttleclock = now
                     end
                     entry.resumed = entry.resumed + 1
                     clink._set_coroutine_context(entry.context)
@@ -459,6 +481,9 @@ function clink._diag_coroutines(arg) -- luacheck: no unused
             local status = (t.status == "suspended") and "" or (statcolor..t.status..plain.."  ")
             if t.entry.error then
                 gen = red.."error"..plain.."  "..gen
+            end
+            if t.entry.asyncyield then
+                status = status..yellow.."async("..t.entry.asyncyield:getname()..")"..plain.."  "
             end
             if t.entry.yieldguard then
                 status = status..yellow.."yieldguard"..plain.."  "

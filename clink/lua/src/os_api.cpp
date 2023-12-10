@@ -1072,9 +1072,58 @@ BOOL WINAPI EnumerateFunc(LPNETRESOURCEW lpnr)
 #endif // USE_WNETOPENENUM && DEBUG_TRAVERSE_GLOBAL_NET
 
 //------------------------------------------------------------------------------
+class enumshares_async_lua_task : public async_lua_task
+{
+public:
+    enumshares_async_lua_task(async_yield_lua* asyncyield, const char* key, const char* src, const char* server, bool hidden)
+    : async_lua_task(key, src)
+    , m_server(server)
+    , m_hidden(hidden)
+    , m_ismain(!asyncyield)
+    {
+        set_asyncyield(asyncyield); // Takes ownership!
+    }
+
+    bool next(str_base& out, bool* special=nullptr)
+    {
+        bool ret = false;
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        // Fetch next available share.
+        if (m_index < m_shares.size())
+        {
+            ret = true;
+            out = m_shares[m_index].c_str() + 1;
+            if (special)
+                *special = (m_shares[m_index].c_str()[0] != '0');
+            ++m_index;
+            if (m_index >= m_shares.size() && !m_ismain)
+                wake_asyncyield();
+        }
+        return ret;
+    }
+
+    bool wait(uint32 timeout)
+    {
+        const DWORD waited = WaitForSingleObject(get_wait_handle(), timeout);
+        return waited == WAIT_OBJECT_0;
+    }
+
+protected:
+    void do_work() override;
+
+private:
+    const str_moveable m_server;
+    const bool m_hidden;
+    const bool m_ismain;
+    std::recursive_mutex m_mutex;
+    std::vector<str_moveable> m_shares;
+    size_t m_index = 0;
+};
+
+//------------------------------------------------------------------------------
 #ifdef USE_WNETOPENENUM
 
-void enum_shares_worker(const char* server, std::recursive_mutex& mutex, std::vector<str_moveable>& shares)
+void enumshares_async_lua_task::do_work()
 {
     static bool s_has_mpr = delayload_mpr();
     if (!s_has_mpr)
@@ -1083,7 +1132,7 @@ void enum_shares_worker(const char* server, std::recursive_mutex& mutex, std::ve
 #ifdef DEBUG_TRAVERSE_GLOBAL_NET
     EnumerateFunc(0);
 #else // !DEBUG_TRAVERSE_GLOBAL_NET
-    wstr<> wserver(server);
+    wstr<> wserver(m_server.c_str());
 
     NETRESOURCEW container = {};
     container.dwScope = RESOURCE_GLOBALNET;
@@ -1116,6 +1165,7 @@ printf("enum -> %d\n", err);
                 netname.format(L"0%s", info->shi1_netname);
                 m_shares.emplace_back(netname.c_str());
 printf("enum -> '%ls' '%ls'\n", reinterpret_cast<NETRESOURCEW*>(buffer)->lpLocalName, reinterpret_cast<NETRESOURCEW*>(buffer)->lpRemoteName);
+                wake_asyncyield();
             }
             else if (ERROR_MORE_DATA == err)
             {
@@ -1133,6 +1183,8 @@ printf("enum -> '%ls' '%ls'\n", reinterpret_cast<NETRESOURCEW*>(buffer)->lpLocal
             }
         }
 
+        wake_asyncyield();
+
         s_mpr.WNetCloseEnum(h);
         free(buffer);
     }
@@ -1141,26 +1193,30 @@ printf("enum -> '%ls' '%ls'\n", reinterpret_cast<NETRESOURCEW*>(buffer)->lpLocal
 
 #else // !USE_WNETOPENENUM
 
-void enum_shares_worker(const char* server, const async_lua_task* task, std::recursive_mutex& mutex, std::vector<str_moveable>& shares)
+void enumshares_async_lua_task::do_work()
 {
     static bool s_has_netapi = delayload_netapi();
     if (!s_has_netapi)
         return;
 
-    wstr<> wserver(server);
+    wstr<> wserver(m_server.c_str());
     LMSTR lmserver = const_cast<LMSTR>(wserver.c_str());
     PSHARE_INFO_1 buffer = nullptr;
     DWORD entries_read;
     DWORD total_entries;
     DWORD resume_handle = 0;
     NET_API_STATUS res = ERROR_MORE_DATA;
-    while (!task->is_canceled() && res == ERROR_MORE_DATA)
+    while (!is_canceled() && res == ERROR_MORE_DATA)
     {
         res = s_netapi.NetShareEnum(lmserver, 1, (LPBYTE*)&buffer, MAX_PREFERRED_LENGTH, &entries_read, &total_entries, &resume_handle);
         if (res == ERROR_SUCCESS || res == ERROR_MORE_DATA)
         {
+#undef DEBUG_SLEEP
+//#define DEBUG_SLEEP
             {
-                std::lock_guard<std::recursive_mutex> lock(mutex);
+#ifndef DEBUG_SLEEP
+                std::lock_guard<std::recursive_mutex> lock(m_mutex);
+#endif
                 for (PSHARE_INFO_1 info = buffer; entries_read--; ++info)
                 {
                     const bool special = !!(info->shi1_type & STYPE_SPECIAL);
@@ -1171,58 +1227,27 @@ void enum_shares_worker(const char* server, const async_lua_task* task, std::rec
                         dbg_ignore_scope(snapshot, "async enum shares");
                         wstr_moveable netname;
                         netname.format(L"%c%s", special ? '1' : '0', info->shi1_netname);
-                        shares.emplace_back(netname.c_str());
+#ifdef DEBUG_SLEEP
+Sleep(1000);
+std::lock_guard<std::recursive_mutex> lock(m_mutex);
+#endif
+                        m_shares.emplace_back(netname.c_str());
+#ifdef DEBUG_SLEEP
+wake_asyncyield();
+#endif
                     }
                 }
             }
             s_netapi.NetApiBufferFree(buffer);
+
+            wake_asyncyield();
         }
     };
+
+    wake_asyncyield();
 }
 
 #endif
-
-//------------------------------------------------------------------------------
-class enumshares_async_lua_task : public async_lua_task
-{
-public:
-    enumshares_async_lua_task(const char* key, const char* src, const char* server, bool hidden)
-    : async_lua_task(key, src)
-    , m_server(server)
-    , m_hidden(hidden)
-    {}
-
-    bool next(str_base& out, bool* special=nullptr)
-    {
-        std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        if (m_index >= m_shares.size())
-            return false;
-        out = m_shares[m_index].c_str() + 1;
-        if (special)
-            *special = (m_shares[m_index].c_str()[0] != '0');
-        ++m_index;
-        return true;
-    }
-
-    bool wait(uint32 timeout)
-    {
-        const DWORD waited = WaitForSingleObject(get_wait_handle(), timeout);
-        return waited == WAIT_OBJECT_0;
-    }
-
-protected:
-    void do_work() override
-    {
-        enum_shares_worker(m_server.c_str(), this, m_mutex, m_shares);
-    }
-
-private:
-    const str_moveable m_server;
-    const bool m_hidden;
-    std::recursive_mutex m_mutex;
-    std::vector<str_moveable> m_shares;
-    size_t m_index = 0;
-};
 
 //------------------------------------------------------------------------------
 class enumshares_lua
@@ -1244,19 +1269,31 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline bool ismain(lua_State* state) { return G(state)->mainthread == state; }
+inline bool is_main_coroutine(lua_State* state) { return G(state)->mainthread == state; }
 
 //------------------------------------------------------------------------------
 int32 enumshares_lua::iter_aux(lua_State* state)
 {
-    auto* self = check(state, lua_upvalueindex(1));
-    if (!self)
+    int ctx = 0;
+    if (lua_getctx(state, &ctx) == LUA_YIELD && ctx)
+    {
+        // Resuming from yield; remove asyncyield.
+        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        lua_pushnil(state);
+        lua_state::pcall_silent(state, 1, 0);
+    }
+
+    auto* async = async_yield_lua::check(state, lua_upvalueindex(1));
+    auto* self = check(state, lua_upvalueindex(2));
+    assert(async && self);
+    if (!async || !self)
         return 0;
 
     str<> out;
     bool special = false;
     if (self->m_task->next(out, &special))
     {
+        // Return next share name.
         lua_pushlstring(state, out.c_str(), out.length());
         lua_pushboolean(state, special);
         if (self->m_task->is_canceled())
@@ -1268,9 +1305,19 @@ int32 enumshares_lua::iter_aux(lua_State* state)
 
     if (!self->m_task->is_complete() && !self->m_task->is_canceled())
     {
-        assert(!ismain(state));
+        assert(!is_main_coroutine(state));
+
+        // No more shares available yet.
+        async->clear_ready();
+
+        // Yielding; set asyncyield.
+        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        lua_pushvalue(state, lua_upvalueindex(1));
+        lua_state::pcall_silent(state, 1, 0);
+
+        // Yield.
         self->push(state);
-        return lua_yieldk(state, 1, 0, iter_aux);
+        return lua_yieldk(state, 1, 1, iter_aux);
     }
 
     return 0;
@@ -1283,13 +1330,56 @@ const enumshares_lua::method enumshares_lua::c_methods[] = {
 };
 
 //------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
+/// -name:  os.enumshares
+/// -ver:   1.6.0
+/// -arg:   server:string
+/// -arg:   [hidden:boolean]
+/// -arg:   [timeout:number]
+/// -ret:   iterator
+/// This returns an iterator function which steps through the share names
+/// available on the given <span class="arg">server</span> one name at a time.
+/// (This only enumerates SMB UNC share names.)
+///
+/// When <span class="arg">hidden</span> is true, special hidden shares like
+/// ADMIN$ or C$ are included.
+///
+/// The optional <span class="arg">timeout</span> is the maximum number of
+/// seconds to wait for shares to be retrieved (use a floating point number for
+/// fractional seconds).  The default is 0 seconds, which means there is no
+/// maximum (negative numbers are treated the same as 0).
+///
+/// Each call to the returned iterator function returns a share name, a boolean
+/// indicating whether it's a special share, and either nil or "canceled" (if it
+/// takes longer than <span class="arg">timeout</span> to retrieve the share
+/// names for the given <span class="arg">server</span>).  When there are no
+/// more shares, the iterator function returns nil.
+///
+/// When called from a coroutine, the iterator function automatically yields
+/// when appropriate.
+/// -show:  local server = "localhost"
+/// -show:  local hidden = true -- Include special hidden shares.
+/// -show:  local timeout = 0   -- No maximum duration to wait.
+/// -show:  for share, special, canceled in os.enumshares(server, hidden, timeout) do
+/// -show:      local s = "\\\\"..server.."\\"..share
+/// -show:      if special then
+/// -show:          s = s.."  (special)"
+/// -show:      end
+/// -show:      if canceled then
+/// -show:          s = s.."  ("..canceled..")"
+/// -show:      end
+/// -show:      print(s)
+/// -show:  end
 static int32 enum_shares(lua_State* state)
 {
     int32 iarg = 1;
+    const bool ismain = is_main_coroutine(state);
     const char* const server = checkstring(state, iarg++);
     const bool hidden = lua_isboolean(state, iarg) && lua_toboolean(state, iarg++);
-    const int32 timeout = optinteger(state, iarg++, ismain(state) ? INFINITE : 0); // TODO: use seconds or milliseconds?  (find precedent)
+    const auto _timeout = optnumber(state, iarg++, 0);
+    const auto _timeoutms = _timeout * 1000;
+    const uint32 timeout = (_timeout < 0 ||
+                            _timeoutms >= double(uint32(INFINITE)) ||
+                            (_timeout <= 0 && ismain)) ? INFINITE : uint32(_timeoutms);
     if (!server || !*server)
         return 0;
 
@@ -1302,24 +1392,41 @@ static int32 enum_shares(lua_State* state)
 
     dbg_ignore_scope(snapshot, "async enum shares");
 
-    auto task = std::make_shared<enumshares_async_lua_task>(key.c_str(), src.c_str(), server, hidden);
+    // Push an asyncyield object.
+    async_yield_lua* asyncyield = nullptr;
+    if (ismain)
+    {
+        lua_pushnil(state);
+    }
+    else
+    {
+        asyncyield = async_yield_lua::make_new(state, "os.enumshares");
+        if (!asyncyield)
+            return 0;
+    }
+
+    // Push a task object.
+    auto task = std::make_shared<enumshares_async_lua_task>(asyncyield, key.c_str(), src.c_str(), server, hidden);
     if (!task)
         return 0;
-
     enumshares_lua* es = enumshares_lua::make_new(state, task);
-    if (!es)
+    if (!es || !asyncyield)
         return 0;
-
     add_async_lua_task(std::shared_ptr<async_lua_task>(task));
 
     // If a timeout was given, wait for completion until timeout, and then
     // cancel the task if not yet complete.  In the main coroutine the timeout
     // defaults to INFINITE because the main coroutine cannot yield.
-    if (timeout && !task->wait(timeout))
-        task->cancel();
+    if (timeout)
+    {
+// TODO: this doesn't yield; it needs to yield, but only once, and for no longer than timeout (in total)...
+        if (!task->wait(timeout))
+            task->cancel();
+    }
 
     // es was already pushed by make_new.
-    lua_pushcclosure(state, es->iter_aux, 1);
+    // asyncyield was already pushed by make_new.
+    lua_pushcclosure(state, es->iter_aux, 2);
     return 1;
 }
 

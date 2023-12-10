@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "lua_input_idle.h"
 #include "async_lua_task.h"
 
 #include <core/str_unordered_set.h>
@@ -222,8 +223,19 @@ async_lua_task::~async_lua_task()
 }
 
 //------------------------------------------------------------------------------
+void async_lua_task::set_asyncyield(async_yield_lua* asyncyield)
+{
+    assert(!m_callback_ref);
+// TODO: The underlying m_asyncyield object is garbage collected.  Is the
+// lifetime scoped correctly so that async_lua_task never outlives it?  I
+// don't think so...!
+    m_asyncyield = asyncyield;
+}
+
+//------------------------------------------------------------------------------
 void async_lua_task::set_callback(const std::shared_ptr<callback_ref>& callback)
 {
+    assert(!m_asyncyield);
     m_callback_ref = callback;
     m_run_callback = true;
 }
@@ -267,6 +279,20 @@ void async_lua_task::cancel()
 }
 
 //------------------------------------------------------------------------------
+void async_lua_task::wake_asyncyield() const
+{
+    assert(m_asyncyield);
+
+    // Signal the coroutine is ready to resume.
+    m_asyncyield->set_ready();
+
+    // Signal to run idle.
+    HANDLE h = lua_input_idle::get_idle_event();
+    if (h)
+        SetEvent(h);
+}
+
+//------------------------------------------------------------------------------
 void async_lua_task::start()
 {
     m_thread = std::make_unique<std::thread>(&proc, this);
@@ -292,6 +318,41 @@ void async_lua_task::proc(async_lua_task* task)
     SetEvent(task->m_event);
     SetEvent(get_task_manager_event());
 }
+
+
+
+//------------------------------------------------------------------------------
+async_yield_lua::async_yield_lua(const char* name)
+: m_name(name)
+{
+}
+
+//------------------------------------------------------------------------------
+async_yield_lua::~async_yield_lua()
+{
+}
+
+//------------------------------------------------------------------------------
+int32 async_yield_lua::get_name(lua_State* state)
+{
+    lua_pushlstring(state, m_name.c_str(), m_name.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int32 async_yield_lua::ready(lua_State* state)
+{
+    lua_pushboolean(state, m_ready);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+const char* const async_yield_lua::c_name = "async_yield_lua";
+const async_yield_lua::method async_yield_lua::c_methods[] = {
+    { "getname",            &get_name },
+    { "ready",              &ready },
+    {}
+};
 
 
 
