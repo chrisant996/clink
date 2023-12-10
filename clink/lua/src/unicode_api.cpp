@@ -255,10 +255,11 @@ static int32 isnormalized(lua_State* state)
 /// -ver:   1.3.26
 /// -arg:   text:string
 /// -ret:   iterator
-/// This returns an iterator which steps through <span class="arg">text</span>
-/// one Unicode codepoint at a time.  Each call to the iterator returns the
-/// string for the next codepoint, the numeric value of the codepoint, and a
-/// boolean indicating whether the codepoint is a combining mark.
+/// This returns an iterator function which steps through
+/// <span class="arg">text</span> one Unicode codepoint at a time.  Each call to
+/// the iterator function returns the string for the next codepoint, the numeric
+/// value of the codepoint, and a boolean indicating whether the codepoint is a
+/// combining mark.
 /// -show:  -- UTF8 sample string:
 /// -show:  -- Index by codepoint:   1       2       3           4       5
 /// -show:  -- Unicode character:    à       é       ᴆ           õ       û
