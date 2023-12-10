@@ -57,7 +57,7 @@ public:
     double      elapsed() const;
 private:
     double      m_freq;
-    long long   m_start;
+    int64       m_start;
 };
 
 struct cwd_restorer

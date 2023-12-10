@@ -111,6 +111,6 @@ private:
             flags               m_flags;
             uint8               m_unused;
         };
-        unsigned long long      m_state;
+        uint64                  m_state;
     };
 };

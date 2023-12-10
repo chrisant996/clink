@@ -13,7 +13,7 @@ public:
     {
         int32               st_mode;
         int32               attr;
-        unsigned long long  size;
+        uint64              size;
         FILETIME            accessed;
         FILETIME            modified;
         FILETIME            created;

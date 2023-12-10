@@ -290,7 +290,7 @@ double os::high_resolution_clock::elapsed() const
     if (!QueryPerformanceCounter(&current))
         return -1;
 
-    const long long delta = current.QuadPart - m_start;
+    const int64 delta = current.QuadPart - m_start;
     if (delta < 0)
         return -1;
 

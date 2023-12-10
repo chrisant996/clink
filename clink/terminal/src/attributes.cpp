@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "attributes.h"
 
-static_assert(sizeof(attributes) == sizeof(long long), "sizeof(attr) != 64bits");
+static_assert(sizeof(attributes) == sizeof(int64), "sizeof(attr) != 64bits");
 
 //------------------------------------------------------------------------------
 enum
