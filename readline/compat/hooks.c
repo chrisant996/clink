@@ -332,7 +332,7 @@ void wait_for_input(unsigned long timeout)
 
 //------------------------------------------------------------------------------
 #if !defined (HAVE_GETTIMEOFDAY) && defined (_WIN32)
-typedef long long uint64_t;
+typedef unsigned long long uint64_t;
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
     /* EPOCH is the number of 100 nanosecond intervals from
