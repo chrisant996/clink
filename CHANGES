@@ -26,6 +26,7 @@
 - Improved undo grouping for consecutive inserted text.
 - Added `os.enumshares()` to enumerate the SMB UNC shares on a given server.
 - Fixed Lua error messages from custom Lua libraries that report errors using table objects instead of strings.
+- Fixed issue with the `autosuggest.hint` setting where it could apply incorrect input line coloring when the <kbd>Right</kbd> key isn't bound to one of the usual commands for that key.
 - Internal changes and optimizations.
 
 #### v1.5.18
