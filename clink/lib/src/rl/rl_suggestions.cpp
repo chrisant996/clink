@@ -81,9 +81,12 @@ bool suggestion_manager::more() const
 }
 
 //------------------------------------------------------------------------------
-bool suggestion_manager::get_visible(str_base& out) const
+bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
 {
     assert(g_autosuggest_enable.get());
+
+    if (includes_hint)
+        *includes_hint = false;
 
     out.clear();
     if (!g_rl_buffer)
@@ -104,28 +107,21 @@ bool suggestion_manager::get_visible(str_base& out) const
     out.concat(sugg.get_pointer(), sugg.length());
 
 #ifdef USE_SUGGESTION_HINT_INLINE
-    if (g_autosuggest_hint.get())
+    if (can_show_suggestion_hint())
     {
-        int32 type;
-        rl_command_func_t* func = rl_function_of_keyseq("\x1b[C", nullptr, &type);
-        if (type == ISFUNC &&
-            (func == win_f1 ||
-             func == clink_forward_char ||
-             func == clink_forward_byte ||
-             func == clink_end_of_line))
-        {
 #ifdef RIGHT_ALIGN_SUGGESTION_HINT
-            COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
-            static const uint32 hint_cols = cell_count(STR_SUGGESTION_HINT_INLINE) + 1;
-            if (size.X + hint_cols >= _rl_screenwidth)
-            {
-                concat_spaces(out, _rl_screenwidth - size.X);
-                size.X = 0;
-            }
-            concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
-#endif // RIGHT_ALIGN_SUGGESTION_HINT
-            out.concat(STR_SUGGESTION_HINT_INLINE);
+        COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
+        static const uint32 hint_cols = cell_count(STR_SUGGESTION_HINT_INLINE) + 1;
+        if (size.X + hint_cols >= _rl_screenwidth)
+        {
+            concat_spaces(out, _rl_screenwidth - size.X);
+            size.X = 0;
         }
+        concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
+#endif // RIGHT_ALIGN_SUGGESTION_HINT
+        out.concat(STR_SUGGESTION_HINT_INLINE);
+        if (includes_hint)
+            *includes_hint = true;
     }
 #endif  // USE_SUGGESTION_HINT_INLINE
 

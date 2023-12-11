@@ -23,6 +23,7 @@
 #include "ellipsify.h"
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
 #include "rl/rl_commands.h"
+#include "rl/rl_suggestions.h"
 #endif
 
 #include <core/base.h>
@@ -1873,26 +1874,21 @@ void display_manager::display()
 #define m_next __use_next_instead__
         }
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
-        else if (next->has_suggestion() && g_autosuggest_hint.get())
+        else if (next->has_suggestion() && can_show_suggestion_hint())
         {
-            int32 type;
-            rl_command_func_t* func = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
-            if (func == clink_forward_char || func == win_f1)
-            {
-                static const char c_reverse[] = "\x1b[7m";
-                static const char c_unreverse[] = "\x1b[27m";
-                static const char c_hyperlink[] = "\x1b]8;;";
-                static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-                static const char c_BEL[] = "\a";
+            static const char c_reverse[] = "\x1b[7m";
+            static const char c_unreverse[] = "\x1b[27m";
+            static const char c_hyperlink[] = "\x1b]8;;";
+            static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
+            static const char c_BEL[] = "\a";
 
-                str_moveable in;
-                in << c_reverse << "Right" << c_unreverse << "=";
-                in << c_hyperlink << c_doc_autosuggest << c_BEL << "Accept Suggestion" << c_hyperlink << c_BEL;
+            str_moveable in;
+            in << c_reverse << "Right" << c_unreverse << "=";
+            in << c_hyperlink << c_doc_autosuggest << c_BEL << "Accept Suggestion" << c_hyperlink << c_BEL;
 
 #undef m_next
-                m_next.set_comment_row(std::move(in), comment_row_type::autosuggest);
+            m_next.set_comment_row(std::move(in), comment_row_type::autosuggest);
 #define m_next __use_next_instead__
-            }
         }
 #endif
     }

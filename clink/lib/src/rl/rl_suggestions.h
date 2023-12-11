@@ -16,7 +16,7 @@ class suggestion_manager
 {
 public:
     bool            more() const;
-    bool            get_visible(str_base& out) const;
+    bool            get_visible(str_base& out, bool* includes_hint=nullptr) const;
     void            clear();
     bool            can_suggest(const line_state& line);
     bool            can_update_matches();
@@ -44,3 +44,4 @@ bool pause_suggestions(bool pause);
 bool insert_suggestion(suggestion_action action);
 void suppress_suggestions();
 extern "C" void clear_suggestion();
+bool can_show_suggestion_hint();

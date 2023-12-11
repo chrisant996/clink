@@ -769,6 +769,7 @@ static const char* s_none_color = nullptr;
 static const char* s_suggestion_color = nullptr;
 static const char* s_histexpand_color = nullptr;
 int32 g_suggestion_offset = -1;
+bool g_suggestion_includes_hint = false;
 
 //------------------------------------------------------------------------------
 // This counts the number of screen lines needed to draw prompt_prefix.
@@ -842,7 +843,7 @@ static char get_face_func(int32 in, int32 active_begin, int32 active_end)
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
     {
 #ifdef USE_SUGGESTION_HINT_INLINE
-        if (g_autosuggest_hint.get())
+        if (g_suggestion_includes_hint)
         {
             if (in >= rl_end + IDX_SUGGESTION_LINK_TEXT)
                 return FACE_SUGGESTIONLINK;
@@ -1072,14 +1073,17 @@ void hook_display()
     }
 
     assert(g_autosuggest_enable.get());
+    assert(g_suggestion_offset < 0);
+    assert(!g_suggestion_includes_hint);
 
-    rollback<int32> rb_suggestion(g_suggestion_offset, rl_end);
+    rollback<int32> rb_sugg_offset(g_suggestion_offset, rl_end);
+    rollback<bool> rb_sugg_includes_hint(g_suggestion_includes_hint, false);
     rollback<char*> rb_buf(rl_line_buffer);
     rollback<int32> rb_len(rl_line_buffer_len);
     rollback<int32> rb_end(rl_end);
 
     str_moveable tmp;
-    if (s_suggestion.get_visible(tmp))
+    if (s_suggestion.get_visible(tmp, &g_suggestion_includes_hint))
     {
         rl_line_buffer = tmp.data();
         rl_line_buffer_len = tmp.length();
@@ -1119,6 +1123,23 @@ extern "C" void clear_suggestion()
     s_suggestion.clear();
     if (g_rl_buffer)
         g_rl_buffer->draw();
+}
+
+//------------------------------------------------------------------------------
+bool can_show_suggestion_hint()
+{
+    if (g_autosuggest_hint.get())
+    {
+        int32 type;
+        rl_command_func_t* func = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
+        if (type == ISFUNC &&
+            (func == win_f1 ||
+             func == clink_forward_char ||
+             func == clink_forward_byte ||
+             func == clink_end_of_line))
+            return true;
+    }
+    return false;
 }
 
 
