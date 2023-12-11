@@ -169,6 +169,15 @@ local function next_entry_target(entry, now)
     if not entry.lastclock then
         return 0
     else
+        -- Asyncyield operations with an expiration always target the expiration
+        -- time unless it's in the past.
+        if entry.asyncyield and not entry.asyncyield:ready() then
+            local expiration = entry.asyncyield:getexpiration()
+            if expiration and expiration >= now then
+                return expiration
+            end
+        end
+
         -- Multiple kinds of throttling for coroutines that want to run more
         -- frequently than every 5 seconds:
         --  1.  Throttle if running for 5 or more seconds, but reset the elapsed
@@ -216,7 +225,10 @@ function clink._wait_duration()
             local this_target = next_entry_target(entry, now)
             if entry.yieldguard or entry.queued then -- luacheck: ignore 542
                 -- Yield until output is ready; don't influence the timeout.
-            elseif entry.asyncyield and not entry.asyncyield:ready() then -- luacheck: ignore 542
+            elseif entry.asyncyield and
+                    not entry.asyncyield:ready() and
+                    (not entry.asyncyield:getexpiration() or
+                     entry.asyncyield:getexpiration() > now) then -- luacheck: ignore 542
                 -- Don't resume until asyncyield says it's ready; don't
                 -- influence the timeout.
             elseif not target or target > this_target then

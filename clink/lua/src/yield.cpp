@@ -127,11 +127,8 @@ unsigned __stdcall yield_thread::threadproc(void *arg)
 
     // Signal completion events.
     SetEvent(_this->m_ready_event);
+    _this->do_completion(); // Give subclass a chance to do completion processing.
     SetEvent(s_wake_event);
-
-    // Give subclass a chance to do completion processing.
-    if (_this->do_completion())
-        SetEvent(s_wake_event);
 
     // Release threadproc's strong ref.
     _this->m_holder = nullptr;

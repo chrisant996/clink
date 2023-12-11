@@ -1075,13 +1075,13 @@ BOOL WINAPI EnumerateFunc(LPNETRESOURCEW lpnr)
 class enumshares_async_lua_task : public async_lua_task
 {
 public:
-    enumshares_async_lua_task(async_yield_lua* asyncyield, const char* key, const char* src, const char* server, bool hidden)
+    enumshares_async_lua_task(const char* key, const char* src, async_yield_lua* asyncyield, const char* server, bool hidden)
     : async_lua_task(key, src)
     , m_server(server)
     , m_hidden(hidden)
     , m_ismain(!asyncyield)
     {
-        set_asyncyield(asyncyield); // Takes ownership!
+        set_asyncyield(asyncyield);
     }
 
     bool next(str_base& out, bool* special=nullptr)
@@ -1104,6 +1104,7 @@ public:
 
     bool wait(uint32 timeout)
     {
+        assert(m_ismain);
         const DWORD waited = WaitForSingleObject(get_wait_handle(), timeout);
         return waited == WAIT_OBJECT_0;
     }
@@ -1224,13 +1225,13 @@ void enumshares_async_lua_task::do_work()
                         continue;
                     if ((info->shi1_type & STYPE_MASK) == STYPE_DISKTREE)
                     {
-                        dbg_ignore_scope(snapshot, "async enum shares");
-                        wstr_moveable netname;
-                        netname.format(L"%c%s", special ? '1' : '0', info->shi1_netname);
 #ifdef DEBUG_SLEEP
 Sleep(1000);
 std::lock_guard<std::recursive_mutex> lock(m_mutex);
 #endif
+                        dbg_ignore_scope(snapshot, "async enum shares");
+                        wstr_moveable netname;
+                        netname.format(L"%c%s", special ? '1' : '0', info->shi1_netname);
                         m_shares.emplace_back(netname.c_str());
 #ifdef DEBUG_SLEEP
 wake_asyncyield();
@@ -1283,10 +1284,10 @@ int32 enumshares_lua::iter_aux(lua_State* state)
         lua_state::pcall_silent(state, 1, 0);
     }
 
-    auto* async = async_yield_lua::check(state, lua_upvalueindex(1));
+    auto* async = async_yield_lua::test(state, lua_upvalueindex(1));
     auto* self = check(state, lua_upvalueindex(2));
-    assert(async && self);
-    if (!async || !self)
+    assert(self);
+    if (!self)
         return 0;
 
     str<> out;
@@ -1303,9 +1304,15 @@ int32 enumshares_lua::iter_aux(lua_State* state)
         return 3;
     }
 
-    if (!self->m_task->is_complete() && !self->m_task->is_canceled())
+    if (async && async->is_expired())
+    {
+        self->m_task->cancel();
+        return 0;
+    }
+    else if (!self->m_task->is_complete() && !self->m_task->is_canceled())
     {
         assert(!is_main_coroutine(state));
+        assert(async);
 
         // No more shares available yet.
         async->clear_ready();
@@ -1345,8 +1352,8 @@ const enumshares_lua::method enumshares_lua::c_methods[] = {
 ///
 /// The optional <span class="arg">timeout</span> is the maximum number of
 /// seconds to wait for shares to be retrieved (use a floating point number for
-/// fractional seconds).  The default is 0 seconds, which means there is no
-/// maximum (negative numbers are treated the same as 0).
+/// fractional seconds).  The default is 0, which means an unlimited wait
+/// (negative numbers are treated the same as 0).
 ///
 /// Each call to the returned iterator function returns a share name, a boolean
 /// indicating whether it's a special share, and either nil or "canceled" (if it
@@ -1358,7 +1365,7 @@ const enumshares_lua::method enumshares_lua::c_methods[] = {
 /// when appropriate.
 /// -show:  local server = "localhost"
 /// -show:  local hidden = true -- Include special hidden shares.
-/// -show:  local timeout = 0   -- No maximum duration to wait.
+/// -show:  local timeout = 2.5 -- Wait up to 2.5 seconds for completion.
 /// -show:  for share, special, canceled in os.enumshares(server, hidden, timeout) do
 /// -show:      local s = "\\\\"..server.."\\"..share
 /// -show:      if special then
@@ -1400,26 +1407,25 @@ static int32 enum_shares(lua_State* state)
     }
     else
     {
-        asyncyield = async_yield_lua::make_new(state, "os.enumshares");
+        asyncyield = async_yield_lua::make_new(state, "os.enumshares", timeout);
         if (!asyncyield)
             return 0;
     }
 
     // Push a task object.
-    auto task = std::make_shared<enumshares_async_lua_task>(asyncyield, key.c_str(), src.c_str(), server, hidden);
+    auto task = std::make_shared<enumshares_async_lua_task>(key.c_str(), src.c_str(), asyncyield, server, hidden);
     if (!task)
         return 0;
     enumshares_lua* es = enumshares_lua::make_new(state, task);
-    if (!es || !asyncyield)
+    if (!es)
         return 0;
     add_async_lua_task(std::shared_ptr<async_lua_task>(task));
 
-    // If a timeout was given, wait for completion until timeout, and then
-    // cancel the task if not yet complete.  In the main coroutine the timeout
-    // defaults to INFINITE because the main coroutine cannot yield.
-    if (timeout)
+    // If a timeout was given and this is the main coroutine, wait for
+    // completion until the timeout, and then cancel the task if not yet
+    // complete.
+    if (ismain && timeout)
     {
-// TODO: this doesn't yield; it needs to yield, but only once, and for no longer than timeout (in total)...
         if (!task->wait(timeout))
             task->cancel();
     }
@@ -2692,12 +2698,12 @@ void os_lua_initialise(lua_state& lua)
         { "expandabbreviatedpath", &expand_abbreviated_path },
         { "isuseradmin", &is_user_admin },
         { "getfileversion", &get_file_version },
+        { "enumshares",  &enum_shares },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
         { "_makedirglobber", &make_dir_globber },
         { "_makefileglobber", &make_file_globber },
-        { "_enumshares", &enum_shares },
     };
 
     lua_State* state = lua.get_state();

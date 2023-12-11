@@ -6,6 +6,7 @@
 #include "lua_input_idle.h"
 #include "async_lua_task.h"
 
+#include <core/os.h>
 #include <core/str_unordered_set.h>
 #include <core/debugheap.h>
 #include <terminal/printer.h>
@@ -104,7 +105,7 @@ void task_manager::on_idle(lua_state& lua)
             iter->second->detach();
             auto callback = iter->second->take_callback();
             if (callback)
-                m_unref_callbacks.push_back(callback);
+                m_unref_callbacks.push_back(std::move(callback));
             iter = m_map.erase(iter);
         }
     }
@@ -131,8 +132,12 @@ void task_manager::end_line()
         {
             dbg_ignore_scope(snapshot, "task_manager");
             iter->second->detach();
-            m_unref_callbacks.push_back(iter->second->take_callback());
-            unref = true;
+            auto callback = iter->second->take_callback();
+            if (callback)
+            {
+                m_unref_callbacks.push_back(std::move(callback));
+                unref = true;
+            }
             iter = m_map.erase(iter);
         }
     }
@@ -281,7 +286,8 @@ void async_lua_task::cancel()
 //------------------------------------------------------------------------------
 void async_lua_task::wake_asyncyield() const
 {
-    assert(m_asyncyield);
+    if (!m_asyncyield)
+        return;
 
     // Signal the coroutine is ready to resume.
     m_asyncyield->set_ready();
@@ -295,7 +301,8 @@ void async_lua_task::wake_asyncyield() const
 //------------------------------------------------------------------------------
 void async_lua_task::start()
 {
-    m_thread = std::make_unique<std::thread>(&proc, this);
+    auto task = shared_from_this();
+    m_thread = std::make_unique<std::thread>(&proc, std::move(task));
 }
 
 //------------------------------------------------------------------------------
@@ -310,7 +317,7 @@ void async_lua_task::detach()
 }
 
 //------------------------------------------------------------------------------
-void async_lua_task::proc(async_lua_task* task)
+void async_lua_task::proc(std::shared_ptr<async_lua_task> task)
 {
     task->do_work();
     task->m_is_complete = true;
@@ -322,9 +329,11 @@ void async_lua_task::proc(async_lua_task* task)
 
 
 //------------------------------------------------------------------------------
-async_yield_lua::async_yield_lua(const char* name)
+async_yield_lua::async_yield_lua(const char* name, uint32 timeout)
 : m_name(name)
 {
+    if (timeout)
+        m_expiration = os::clock() + double(timeout) / 1000;
 }
 
 //------------------------------------------------------------------------------
@@ -340,6 +349,16 @@ int32 async_yield_lua::get_name(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+int32 async_yield_lua::get_expiration(lua_State* state)
+{
+    if (m_expiration > 0)
+        lua_pushnumber(state, m_expiration);
+    else
+        lua_pushnil(state);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 int32 async_yield_lua::ready(lua_State* state)
 {
     lua_pushboolean(state, m_ready);
@@ -347,9 +366,16 @@ int32 async_yield_lua::ready(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+bool async_yield_lua::is_expired() const
+{
+    return (m_expiration > 0 && m_expiration <= os::clock());
+}
+
+//------------------------------------------------------------------------------
 const char* const async_yield_lua::c_name = "async_yield_lua";
 const async_yield_lua::method async_yield_lua::c_methods[] = {
     { "getname",            &get_name },
+    { "getexpiration",      &get_expiration },
     { "ready",              &ready },
     {}
 };

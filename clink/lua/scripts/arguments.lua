@@ -2028,7 +2028,7 @@ function clink.dirmatches(match_word)
     local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
     if server then
         local matches = {}
-        for share, special in os._enumshares(server, hidden) do
+        for share, special in os.enumshares(server, hidden) do
             table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
         end
         return matches
@@ -2086,7 +2086,7 @@ function clink.filematches(match_word)
     local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
     if server then
         local matches = {}
-        for share, special in os._enumshares(server, hidden) do
+        for share, special in os.enumshares(server, hidden) do
             table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
         end
         return matches
