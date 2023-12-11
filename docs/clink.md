@@ -2834,6 +2834,28 @@ function print_date(rl_buffer)
 end
 ```
 
+#### Example to change how auto-suggested text is inserted
+
+This example creates new commands that change <kbd>Right</kbd> and <kbd>Shift</kbd>-<kbd>Right</kbd> to swap how they behave when auto-suggested text is present.  It also uses Lua to add descriptions for the new commands, and to set key bindings.
+
+```lua
+function cursor_forward_or_insert_next_word(rl_buffer)
+    local at_end = (rl_buffer:getcursor() > rl_buffer:getlength())
+    local command = at_end and "clink-insert-suggested-word" or "win-cursor-forward"
+    rl.invokecommand(command)
+end
+rl.describemacro([["luafunc:cursor_forward_or_insert_next_word"]], "Move cursor forward, or at end of line insert the next suggested word")
+rl.setbinding([["\e[C"]], [["luafunc:cursor_forward_or_insert_next_word"]])
+
+function cua_forward_char_or_insert_line(rl_buffer)
+    local at_end = (rl_buffer:getcursor() > rl_buffer:getlength())
+    local command = at_end and "clink-insert-suggested-line" or "cua-forward-char"
+    rl.invokecommand(command)
+end
+rl.describemacro([["luafunc:cua_forward_char_or_insert_line"]], "Extend the selection forward one character, or insert the suggested line")
+rl.setbinding([["\e[1;2C"]], [["luafunc:cua_forward_char_or_insert_line"]])
+```
+
 #### Advanced example
 
 <a name="findlineexample"></a>
