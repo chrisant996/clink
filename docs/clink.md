@@ -2838,13 +2838,13 @@ end
 This example creates new commands that change <kbd>Right</kbd> and <kbd>Shift</kbd>-<kbd>Right</kbd> to swap how they behave when auto-suggested text is present.  It also uses Lua to add descriptions for the new commands, and to set key bindings.
 
 ```lua
-function cursor_forward_or_insert_next_word(rl_buffer)
+function cursor_forward_or_insert_full_word(rl_buffer)
     local at_end = (rl_buffer:getcursor() > rl_buffer:getlength())
-    local command = at_end and "clink-insert-suggested-word" or "win-cursor-forward"
+    local command = at_end and "clink-insert-suggested-full-word" or "win-cursor-forward"
     rl.invokecommand(command)
 end
-rl.describemacro([["luafunc:cursor_forward_or_insert_next_word"]], "Move cursor forward, or at end of line insert the next suggested word")
-rl.setbinding([["\e[C"]], [["luafunc:cursor_forward_or_insert_next_word"]])
+rl.describemacro([["luafunc:cursor_forward_or_insert_full_word"]], "Move cursor forward, or at end of line insert the next full suggested word up to a space")
+rl.setbinding([["\e[C"]], [["luafunc:cursor_forward_or_insert_full_word"]])
 
 function cua_forward_char_or_insert_line(rl_buffer)
     local at_end = (rl_buffer:getcursor() > rl_buffer:getlength())
