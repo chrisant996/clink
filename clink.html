@@ -2835,13 +2835,13 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-history-search-forward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-search-forward"></a><code>history-search-forward</code></td>
-<td align="center"></td>
-<td>Search forward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
+<td align="center"><kbd>PgDn</kbd></td>
+<td>Search forward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-history-search-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-search-backward"></a><code>history-search-backward</code></td>
-<td align="center"></td>
-<td>Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
+<td align="center"><kbd>PgUp</kbd></td>
+<td>Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-history-substring-search-forward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-substring-search-forward"></a><code>history-substring-search-forward</code></td>
@@ -5624,6 +5624,24 @@ function print_date(rl_buffer)
     rl_buffer:beginoutput()
     print(os.date(&quot;%A %B %d, %Y   %I:%M %p&quot;))
 end
+</code></pre>
+<h4 id="example-to-change-how-auto-suggested-text-is-inserted"><a class="wlink" href="#example-to-change-how-auto-suggested-text-is-inserted"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Example to change how auto-suggested text is inserted</h4>
+<p>This example creates new commands that change <kbd>Right</kbd> and <kbd>Shift</kbd>-<kbd>Right</kbd> to swap how they behave when auto-suggested text is present.  It also uses Lua to add descriptions for the new commands, and to set key bindings.</p>
+<pre><code class="language-lua">function cursor_forward_or_insert_next_word(rl_buffer)
+    local at_end = (rl_buffer:getcursor() &gt; rl_buffer:getlength())
+    local command = at_end and &quot;clink-insert-suggested-word&quot; or &quot;win-cursor-forward&quot;
+    rl.invokecommand(command)
+end
+rl.describemacro([[&quot;luafunc:cursor_forward_or_insert_next_word&quot;]], &quot;Move cursor forward, or at end of line insert the next suggested word&quot;)
+rl.setbinding([[&quot;\e[C&quot;]], [[&quot;luafunc:cursor_forward_or_insert_next_word&quot;]])
+
+function cua_forward_char_or_insert_line(rl_buffer)
+    local at_end = (rl_buffer:getcursor() &gt; rl_buffer:getlength())
+    local command = at_end and &quot;clink-insert-suggested-line&quot; or &quot;cua-forward-char&quot;
+    rl.invokecommand(command)
+end
+rl.describemacro([[&quot;luafunc:cua_forward_char_or_insert_line&quot;]], &quot;Extend the selection forward one character, or insert the suggested line&quot;)
+rl.setbinding([[&quot;\e[1;2C&quot;]], [[&quot;luafunc:cua_forward_char_or_insert_line&quot;]])
 </code></pre>
 <h4 id="advanced-example"><a class="wlink" href="#advanced-example"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Advanced example</h4>
 <p><a name="findlineexample"></a></p>
