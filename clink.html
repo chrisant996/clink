@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.18</title>
+<title>Clink v1.6.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -902,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.18</div>
+                <div id="title">Clink v1.6.0</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -2249,6 +2249,14 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </thead>
 <tbody><tr>
+<td><a class="wlink" href="#configactiveregionendcolor"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configactiveregionendcolor"></a><code>active-region-end-color</code></td>
+<td>Not used or needed in Clink; exists only for compatibility when parsing the configuration file.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#configactiveregionstartcolor"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configactiveregionstartcolor"></a><code>active-region-start-color</code></td>
+<td>A string variable that controls the text color and background when displaying the text in the active region (see <a href="#configenableactiveregion">enable-active-region</a> below).  This string must not take up any physical character positions on the display, so it should consist only of terminal escape sequences.  It is output to the terminal before displaying the text in the active region.  The default value is &quot;\e[0;7m&quot; (reverse video).</td>
+</tr>
+<tr>
 <td><a class="wlink" href="#configbellstyle"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configbellstyle"></a><code>bell-style</code></td>
 <td>Controls what happens when Readline wants to ring the terminal bell. If set to &quot;none&quot;, Readline never rings the bell. If set to &quot;visible&quot; (the default in Clink), Readline uses a visible bell if one is available. If set to &quot;audible&quot;, Readline attempts to ring the terminal&#39;s bell.</td>
 </tr>
@@ -2295,6 +2303,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <tr>
 <td><a class="wlink" href="#configemacsmodestring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configemacsmodestring"></a><code>emacs-mode-string</code></td>
 <td>If the <a href="#configshowmodeinprompt"><code>show-mode-in-prompt</code></a> variable is enabled, this string is displayed immediately before the last line of the primary prompt when emacs editing mode is active. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;@&quot;.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#configenableactiveregion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configenableactiveregion"></a><code>enable-active-region</code></td>
+<td>The <em>point</em> is the current cursor position, and <em>mark</em> refers to a saved cursor position (see <a href="#commands-for-moving">Commands For Moving</a> and <a href="#some-miscellaneous-commands">Some Miscellaneous Commands</a>).  The text between the point and mark is referred to as the <em>region</em>.  When this variable is set to &quot;on&quot;, Readline allows certain commands to designate the region as <em>active</em>.  When the region is active, Readline highlights the text in the region using the value of the <code>active-region-start-color</code>, which defaults to reverse video (&quot;\e[0;7m&quot;).  The active region shows the text inserted by bracketed-paste and any matching text found by incremental and non-incremental history searches.  The default is &quot;on&quot;.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#configenablebracketedpaste"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configenablebracketedpaste"></a><code>enable-bracketed-paste</code></td>
@@ -2867,6 +2879,11 @@ $endif              # end clink-only section
 <td><a class="wlink" href="#rlcmd-operate-and-get-next"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-operate-and-get-next"></a><code>operate-and-get-next</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>o</kbd></td>
 <td>Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#rlcmd-fetch-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-fetch-history"></a><code>fetch-history</code></td>
+<td align="center"></td>
+<td>With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list.</td>
 </tr>
 </tbody></table>
 <h3 id="commands-for-changing-text"><a class="wlink" href="#commands-for-changing-text"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Commands For Changing Text</h3>
@@ -3654,7 +3671,7 @@ $endif              # end clink-only section
 <table>
 <thead>
 <tr>
-<th>Type</th>
+<th>Types</th>
 <th>Description</th>
 <th>Default</th>
 </tr>
@@ -3698,6 +3715,20 @@ $endif              # end clink-only section
 <td><code>so</code></td>
 <td>Common prefix for possible completions.</td>
 <td><code>01;35</code> (bright magenta)</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Special extensions</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.readline-colored-completion-prefix</code></td>
+<td>If there is a color definition in <code>%LS_COLORS%</code> for the custom suffix <code>.readline-colored-completion-prefix</code>, it is used for the common prefix, superseding the <code>so</code> type.</td>
+<td></td>
 </tr>
 </tbody></table>
 <p>Here is an example where <code>%LS_COLORS%</code> defines colors for various types.</p>
@@ -6667,7 +6698,7 @@ clink.lower("áèïÕÛ")       -- returns "ÁÈÏÕÛ"</code></pre></div></div>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#clink.version_minor"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink.version_minor">clink.version_minor</a></div> <div class="signature">integer variable<br/><div class="version">v1.1.10 and newer</div></div></div><div class="body"><p class="desc">The minor part of the Clink version number. For v1.<strong>2</strong>.3.a0f14d the minor version is 2.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#clink.version_patch"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink.version_patch">clink.version_patch</a></div> <div class="signature">integer variable<br/><div class="version">v1.1.10 and newer</div></div></div><div class="body"><p class="desc">The patch part of the Clink version number. For v1.2.<strong>3</strong>.a0f14d the patch version is 3.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a class="wlink" href="#console"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a class="wlink" href="#console.cellcount"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="console.cellcount">console.cellcount</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer<br/><div class="version">v1.2.5 and newer</div></div></div><div class="body"><p class="desc">Returns the count of visible character cells that would be consumed if the <span class="arg">text</span> string were output to the console, accounting for any ANSI escape codes that may be present in the text.</p><p class="desc"> Note: backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a class="wlink" href="#console.checkinput"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="console.checkinput">console.checkinput</a></div> <div class="signature">( [<span class="arg_name">timeout</span>:number] ) : boolean<br/><div class="version">v1.3.42 and newer</div></div></div><div class="body"><p class="desc">Checks whether input is available.</p><p class="desc"> The optional <span class="arg">timeout</span> is the number of seconds to wait for input to be available (use a floating point number for fractional seconds).  The default is 0 seconds, which returns immediately if input is not available.</p><p class="desc"> If input is available before the <span class="arg">timeout</span> is reached, the return value is true.  Use <a href="#console.readinput">console.readinput()</a> to read the available input.</p><p class="desc"> <strong>Note:</strong> Mouse input is not supported.</p><pre class="language-lua"><code>if console.checkinput() then
+<div class="function"><div class="header"> <div class="name"><a class="wlink" href="#console.checkinput"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="console.checkinput">console.checkinput</a></div> <div class="signature">( [<span class="arg_name">timeout</span>:number] ) : boolean<br/><div class="version">v1.3.42 and newer</div></div></div><div class="body"><p class="desc">Checks whether input is available.</p><p class="desc"> The optional <span class="arg">timeout</span> is the number of seconds to wait for input to be available (use a floating point number for fractional seconds).  The default is 0 seconds, which returns immediately if input is not available.</p><p class="desc"> If input is available before the <span class="arg">timeout</span> is reached, the return value is true.  Use <a href="#console.readinput">console.readinput()</a> to read the available input.</p><p class="desc"> In Clink v1.6.0 and higher, when <span class="arg">timeout</span> is negative, the timeout is infinite.</p><p class="desc"> <strong>Note:</strong> Mouse input is not supported.</p><pre class="language-lua"><code>if console.checkinput() then
 &nbsp;   local key = console.readinput() -- Returns immediately since input is available.
 &nbsp;   if key == "\x03" or key == "\x1b[27;27~" or key == "\x1b" then
 &nbsp;       -- Ctrl-C or ESC was pressed.
@@ -6805,6 +6836,19 @@ os.abbreviatesetcurrentdir("bag\\subdir", true)     -- returns "ba\\s" (if "subd
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#os.copy"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#os.createtmpfile"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name. If unsuccessful it returns nil, an error message, and the error number.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#os.debugprint"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="os.debugprint">os.debugprint</a></div> <div class="signature">( ... ) : nil<br/><div class="version">v1.2.20 and newer</div></div></div><div class="body"><p class="desc">This works like <a href="https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a> but writes the output via the OS <code>OutputDebugString()</code> API.</p><p class="desc"> This function has no effect if the <code><a href="#lua_debug">lua.debug</a></code> Clink setting is off.</p><pre class="language-lua"><code>clink.debugprint("my variable = "..myvar)</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a class="wlink" href="#os.enumshares"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="os.enumshares">os.enumshares</a></div> <div class="signature">( <span class="arg_name">server</span>:string, [<span class="arg_name">hidden</span>:boolean], [<span class="arg_name">timeout</span>:number] ) : iterator<br/><div class="version">v1.6.0 and newer</div></div></div><div class="body"><p class="desc">This returns an iterator function which steps through the share names available on the given <span class="arg">server</span> one name at a time. (This only enumerates SMB UNC share names.)</p><p class="desc"> When <span class="arg">hidden</span> is true, special hidden shares like ADMIN$ or C$ are included.</p><p class="desc"> The optional <span class="arg">timeout</span> is the maximum number of seconds to wait for shares to be retrieved (use a floating point number for fractional seconds).  The default is 0, which means an unlimited wait (negative numbers are treated the same as 0).</p><p class="desc"> Each call to the returned iterator function returns a share name, a boolean indicating whether it's a special share, and either nil or "canceled" (if it takes longer than <span class="arg">timeout</span> to retrieve the share names for the given <span class="arg">server</span>).  When there are no more shares, the iterator function returns nil.</p><p class="desc"> When called from a coroutine, the iterator function automatically yields when appropriate.</p><pre class="language-lua"><code>local server = "localhost"
+local hidden = true -- Include special hidden shares.
+local timeout = 2.5 -- Wait up to 2.5 seconds for completion.
+for share, special, canceled in os.enumshares(server, hidden, timeout) do
+local s = "\\\\"..server.."\\"..share
+if special then
+s = s.."  (special)"
+end
+if canceled then
+s = s.."  ("..canceled..")"
+end
+print(s)
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#os.expandabbreviatedpath"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="os.expandabbreviatedpath">os.expandabbreviatedpath</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil | string, string, boolean<br/><div class="version">v1.4.1 and newer</div></div></div><div class="body"><p class="desc">This expands any abbreviated directory components in <span class="arg">path</span>.</p><p class="desc"> The return value is nil if <span class="arg">path</span> couldn't be expanded.  It can't be expanded if it is a UNC path or a remote drive, or if it is already expanded, or if there are no matches for one of the directory components.</p><p class="desc"> Otherwise three values are returned.  First, a string containing the expanded part of <span class="arg">path</span>.  Second, a string containing the rest of <span class="arg">path</span> that wasn't expanded.  Third, a boolean indicating whether <span class="arg">path</span> was able to expand uniquely.</p><pre class="language-lua"><code>-- Suppose only the following directories exist in the D: drive:
 --  - D:\bag
 --  - D:\bookkeeper
@@ -7258,7 +7302,7 @@ string.matchlen("abx", "aby")       -- returns 2
 string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a class="wlink" href="#unicode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="unicode">unicode</a></h5><div class="function"><div class="header"> <div class="name"><a class="wlink" href="#unicode.fromcodepage"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="unicode.fromcodepage">unicode.fromcodepage</a></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">codepage</span>:integer] ) : string | nil<br/><div class="version">v1.3.27 and newer</div></div></div><div class="body"><p class="desc">This converts <span class="arg">text</span> from the <span class="arg">codepage</span> encoding to UTF8.</p><p class="desc"> When <span class="arg">codepage</span> is omitted, the current Active Code Page is used.</p><p class="desc"> If the text cannot be converted, nil is returned.</p><p class="desc"> <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from other encodings is intended for use with file input/output or network input/output.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a class="wlink" href="#unicode.isnormalized"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="unicode.isnormalized">unicode.isnormalized</a></div> <div class="signature">( <span class="arg_name">form</span>:integer, <span class="arg_name">text</span>:string ) : boolean [, integer]<br/><div class="version">v1.3.26 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">text</span> is already normalized according to the Unicode normalization <span class="arg">form</span>:</p><p class="desc"> <ul> <li><code>1</code> is Unicode normalization form C, canonical composition. Transforms each base character + combining characters into the precomposed equivalent.  For example, A + umlaut becomes Ä. <li><code>2</code> is Unicode normalization form D, canonical decomposition. Transforms each precomposed character into base character + combining characters.  For example, Ä becomes A + umlaut. <li><code>3</code> is Unicode normalization form KC, compatibility composition.  Transforms each base character + combining characters into the precomposed equivalent, and transforms compatibility characters into their equivalents.  For example, A + umlaut + ligature for "fi" becomes Ä + f + i. <li><code>4</code> is Unicode normalization form KD, compatibility decomposition.  Transforms each precomposed character into base character + combining characters, and transforms compatibility characters to their equivalents.  For example, Ä + ligature for "fi" becomes A + umlaut + f + i. </ul></p><p class="desc"> If successful, true or false is returned.</p><p class="desc"> If unsuccessful, false and an error code are returned.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a class="wlink" href="#unicode.iter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="unicode.iter">unicode.iter</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : iterator<br/><div class="version">v1.3.26 and newer</div></div></div><div class="body"><p class="desc">This returns an iterator which steps through <span class="arg">text</span> one Unicode codepoint at a time.  Each call to the iterator returns the string for the next codepoint, the numeric value of the codepoint, and a boolean indicating whether the codepoint is a combining mark.</p><pre class="language-lua"><code>-- UTF8 sample string:
+<div class="function"><div class="header"> <div class="name"><a class="wlink" href="#unicode.iter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="unicode.iter">unicode.iter</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : iterator<br/><div class="version">v1.3.26 and newer</div></div></div><div class="body"><p class="desc">This returns an iterator function which steps through <span class="arg">text</span> one Unicode codepoint at a time.  Each call to the iterator function returns the string for the next codepoint, the numeric value of the codepoint, and a boolean indicating whether the codepoint is a combining mark.</p><pre class="language-lua"><code>-- UTF8 sample string:
 -- Index by codepoint:   1       2       3           4       5
 -- Unicode character:    à       é       ᴆ           õ       û
 local text            = "\xc3\xa0\xc3\xa9\xe1\xb4\x86\xc3\xb5\xc3\xbb"
@@ -7385,6 +7429,40 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v160"><a class="wlink" href="#v160"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.0</h4>
+<ul>
+<li>Updated the Readline library to v8.2 patch 7 (the list here omits changes that were contributed to Readline from Clink, or which do not affect Clink).<ul>
+<li>New features:<ul>
+<li>History expansion better understands multiple history expansions that may contain strings that would ordinarily inhibit history expansion (e.g., <code>abc!$!$</code>).</li>
+<li>There is a new <code>fetch-history</code> bindable command that retrieves the history entry corresponding to its numeric argument. Negative arguments count back from the end of the history.</li>
+<li>There is a new option: <code>enable-active-region</code>. This separates control of the active region and bracketed-paste. It has the same default value as <code>bracketed-paste</code>, and enabling bracketed paste enables the active region. Users can now turn off the active region while leaving bracketed paste enabled.</li>
+<li>Readline looks in <code>%LS_COLORS%</code> for a custom filename extension (<code>*.readline-colored-completion-prefix</code>) and uses that as the default color for the common prefix displayed when <code>colored-completion-prefix</code> is set, superseding the <code>so</code> type if both are present.</li>
+<li>Two new bindable string variables: <code>active-region-start-color</code> and <code>active-region-end-color</code>. The first sets the color used to display the active region; the second is unused and unnecessary in Clink, but exists anyway for compatibility. If set, these are used in place of terminal standout mode.</li>
+</ul>
+</li>
+<li>Fixes:<ul>
+<li>Fixed a problem with cleaning up active marks.</li>
+<li>Fixed a problem with arithmetic comparison operators checking the version in the inputrc file.</li>
+<li>Fixed a bug that could cause readline to crash if the application removed the callback line handler before readline read all typeahead.</li>
+<li>Added additional checks for read errors in the middle of readline commands.</li>
+<li>Fixed a problem with <code>unix-filename-rubout</code> that caused it to delete too much when applied to a pathname consisting only of one or more slashes.</li>
+<li>Fixed a problem that caused the <code>\r</code> output by turning off bracketed paste to overwrite the line if terminal echo was disabled.</li>
+<li>Fixed a couple problems where <code>transpose-words</code> could corrupt the end of the input line.</li>
+<li>Fixed an issue that caused a history line&#39;s undo list to be cleared when it should not have been.</li>
+<li>Fixed leaked memory from undo lists.</li>
+<li>When replacing a history entry, make sure the existing entry has a non-NULL timestamp before copying it; it may have been added by the application, not the history library.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>The <code>blink-matching-paren</code> setting works in Clink now.</li>
+<li>Completion works for UNC share names now (share names like <code>\\server\share</code>, not server names like <code>\\server</code>).</li>
+<li>Improved undo grouping for consecutive inserted text.</li>
+<li>Added <code>os.enumshares()</code> to enumerate the SMB UNC shares on a given server.</li>
+<li>Fixed Lua error messages from custom Lua libraries that report errors using table objects instead of strings.</li>
+<li>Fixed issue with the <code>autosuggest.hint</code> setting where it could apply incorrect input line coloring when the <kbd>Right</kbd> key isn&#39;t bound to one of the usual commands for that key.</li>
+<li>Internal changes and optimizations.</li>
+</ul>
 <h4 id="v1518"><a class="wlink" href="#v1518"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.18</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/524">#524</a> and <a href="https://github.com/chrisant996/clink/issues/523">#523</a>; garbled display in wide terminal windows (regression introduced in v1.5.14, which exacerbated and revealed a bug that&#39;s existed since Clink v1.0.0 alpha and which could intermittently garble Unicode text or escape sequences).</li>
