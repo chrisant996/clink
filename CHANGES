@@ -24,6 +24,7 @@
 - The `blink-matching-paren` setting works in Clink now.
 - Completion works for UNC share names now (share names like `\\server\share`, not server names like `\\server`).
 - Improved undo grouping for consecutive inserted text.
+- Added `os.enumshares()` to enumerate the SMB UNC shares on a given server.
 - Fixed Lua error messages from custom Lua libraries that report errors using table objects instead of strings.
 - Internal changes and optimizations.
 
