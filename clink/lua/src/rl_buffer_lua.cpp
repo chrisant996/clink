@@ -134,7 +134,7 @@ int32 rl_buffer_lua::get_anchor(lua_State* state)
 int32 rl_buffer_lua::set_cursor(lua_State* state)
 {
     uint32 old = m_rl_buffer.get_cursor() + 1;
-    auto set = checkinteger(state, 1);
+    auto set = checkinteger(state, LUA_SELF + 1);
     if (!set.isnum())
         return 0;
     set.minus_one();
@@ -153,7 +153,7 @@ int32 rl_buffer_lua::set_cursor(lua_State* state)
 /// line.
 int32 rl_buffer_lua::insert(lua_State* state)
 {
-    const char* text = checkstring(state, 1);
+    const char* text = checkstring(state, LUA_SELF + 1);
     if (!text)
         return 0;
 
@@ -177,8 +177,8 @@ int32 rl_buffer_lua::insert(lua_State* state)
 /// Unicode character may have undesirable results.
 int32 rl_buffer_lua::remove(lua_State* state)
 {
-    auto from = checkinteger(state, 1);
-    auto to = checkinteger(state, 2);
+    auto from = checkinteger(state, LUA_SELF + 1);
+    auto to = checkinteger(state, LUA_SELF + 2);
     if (!from.isnum() || !to.isnum())
         return 0;
     from.minus_one();
@@ -271,7 +271,7 @@ int32 rl_buffer_lua::get_argument(lua_State* state)
 /// from having 0 as the numeric argument).
 int32 rl_buffer_lua::set_argument(lua_State* state)
 {
-    const auto arg = optinteger(state, 1, 0);
+    const auto arg = optinteger(state, LUA_SELF + 1, 0);
 
     _rl_reset_argument();
     if (arg.isnum())

@@ -198,7 +198,7 @@ const char* luaL_YieldGuard::get_command() const
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::ready(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     lua_pushboolean(state, yg && yg->m_thread && yg->m_thread->is_ready());
     return 1;
 }
@@ -206,7 +206,7 @@ int32 luaL_YieldGuard::ready(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::command(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     lua_pushstring(state, yg->get_command());
     return 1;
 }
@@ -214,7 +214,7 @@ int32 luaL_YieldGuard::command(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::set_need_completion(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
         yg->m_thread->set_need_completion();
     return 0;
@@ -223,7 +223,7 @@ int32 luaL_YieldGuard::set_need_completion(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::results(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
         return yg->m_thread->results(state);
     return 0;
@@ -232,11 +232,11 @@ int32 luaL_YieldGuard::results(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::wait(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
     {
         int32 isnum;
-        const double sec = lua_tonumberx(state, 2, &isnum);
+        const double sec = lua_tonumberx(state, LUA_SELF + 1, &isnum);
         const uint32 timeout = (!isnum ? INFINITE :
                                 (sec > 0) ? unsigned(sec * 1000) :
                                 0);
@@ -248,7 +248,7 @@ int32 luaL_YieldGuard::wait(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::__gc(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     if (yg)
         yg->~luaL_YieldGuard();
     return 0;
@@ -257,7 +257,7 @@ int32 luaL_YieldGuard::__gc(lua_State* state)
 //------------------------------------------------------------------------------
 int32 luaL_YieldGuard::__tostring(lua_State* state)
 {
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, LUA_SELF, LUA_YIELDGUARD);
     lua_pushfstring(state, "yieldguard (%p)", yg ? yg->m_thread.get() : nullptr);
     return 1;
 }

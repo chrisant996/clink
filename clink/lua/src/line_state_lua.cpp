@@ -223,11 +223,11 @@ int32 line_state_lua::get_word_count(lua_State* state)
 /// -show:  -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.
 int32 line_state_lua::get_word_info(lua_State* state)
 {
-    if (!lua_isnumber(state, 1))
+    if (!lua_isnumber(state, LUA_SELF + 1))
         return 0;
 
     const std::vector<word>& words = m_line->get_words();
-    uint32 index = int32(lua_tointeger(state, 1)) - 1 + m_shift;
+    uint32 index = int32(lua_tointeger(state, LUA_SELF + 1)) - 1 + m_shift;
     if (index >= words.size())
         return 0;
 
@@ -290,11 +290,11 @@ int32 line_state_lua::get_word_info(lua_State* state)
 /// could be garbled.
 int32 line_state_lua::get_word(lua_State* state)
 {
-    if (!lua_isnumber(state, 1))
+    if (!lua_isnumber(state, LUA_SELF + 1))
         return 0;
 
     str<32> word;
-    uint32 index = int32(lua_tointeger(state, 1)) - 1;
+    uint32 index = int32(lua_tointeger(state, LUA_SELF + 1)) - 1;
     m_line->get_word(m_shift + index, word);
     lua_pushlstring(state, word.c_str(), word.length());
     return 1;
@@ -332,7 +332,7 @@ int32 line_state_lua::get_end_word(lua_State* state)
 // UNDOCUMENTED; internal use only.
 int32 line_state_lua::shift(lua_State* state)
 {
-    uint32 num = optinteger(state, 1, 0);
+    uint32 num = optinteger(state, LUA_SELF + 1, 0);
 
     if (num > 0)
     {
@@ -381,14 +381,14 @@ inline bool is_unbreakchar(const char* unbreakchars, const char* line, uint32 le
 // UNDOCUMENTED; internal use only.
 int32 line_state_lua::unbreak(lua_State* state)
 {
-    const auto _index = checkinteger(state, 1);
-    const char* unbreakchars = checkstring(state, 2);
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    const char* unbreakchars = checkstring(state, LUA_SELF + 2);
     if (!_index.isnum() || !unbreakchars)
         return 0;
     if (!*unbreakchars) // No-op.
         return 0;
     if (!validate_unbreakchars(unbreakchars))
-        return luaL_argerror(state, 2, "must contain only ASCII characters");
+        return luaL_argerror(state, LUA_SELF + 2, "must contain only ASCII characters");
     const uint32 index = _index - 1 + m_shift;
 
     const std::vector<word>& words = m_line->get_words();
@@ -426,7 +426,7 @@ int32 line_state_lua::unbreak(lua_State* state)
 // UNDOCUMENTED; internal use only.
 int32 line_state_lua::overwrite_from(lua_State* state)
 {
-    line_state_lua* from = check(state, 1);
+    line_state_lua* from = check(state, LUA_SELF + 1);
     if (!from)
         return 0;
 

@@ -132,14 +132,14 @@ match_builder_lua::~match_builder_lua()
 int32 match_builder_lua::add_match(lua_State* state)
 {
     int32 ret = 0;
-    if (lua_gettop(state) > 0)
+    if (lua_gettop(state) > LUA_SELF)
     {
-        const char* type_str = optstring(state, 2, "");
+        const char* type_str = optstring(state, LUA_SELF + 2, "");
         if (!type_str)
             return 0;
 
         match_type type = to_match_type(type_str);
-        ret = !!add_match_impl(state, 1, type);
+        ret = !!add_match_impl(state, LUA_SELF + 1, type);
     }
 
     lua_pushboolean(state, ret);
@@ -168,7 +168,7 @@ int32 match_builder_lua::is_empty(lua_State* state)
 /// (rather than <code>set USERDOMAIN&nbsp;</code>).
 int32 match_builder_lua::set_append_character(lua_State* state)
 {
-    const char* append = optstring(state, 1, "");
+    const char* append = optstring(state, LUA_SELF + 1, "");
     if (!append)
         return 0;
 
@@ -186,8 +186,8 @@ int32 match_builder_lua::set_append_character(lua_State* state)
 int32 match_builder_lua::set_suppress_append(lua_State* state)
 {
     bool suppress = true;
-    if (lua_gettop(state) > 0)
-        suppress = (lua_toboolean(state, 1) != 0);
+    if (lua_gettop(state) > LUA_SELF)
+        suppress = (lua_toboolean(state, LUA_SELF + 1) != 0);
 
     m_builder->set_suppress_append(suppress);
 
@@ -205,9 +205,9 @@ int32 match_builder_lua::set_suppress_append(lua_State* state)
 int32 match_builder_lua::set_suppress_quoting(lua_State* state)
 {
     int32 suppress = 1;
-    if (lua_gettop(state) > 0)
+    if (lua_gettop(state) > LUA_SELF)
     {
-        int32 i = int32(lua_tointeger(state, 1));
+        int32 i = int32(lua_tointeger(state, LUA_SELF + 1));
         if (i >= 0 && i <= 2)
             suppress = i;
     }
@@ -235,8 +235,8 @@ int32 match_builder_lua::set_force_quoting(lua_State* state)
 int32 match_builder_lua::set_fully_qualify(lua_State* state)
 {
     bool fully_qualify = true;
-    if (lua_gettop(state) > 0)
-        fully_qualify = (lua_toboolean(state, 1) != 0);
+    if (lua_gettop(state) > LUA_SELF)
+        fully_qualify = (lua_toboolean(state, LUA_SELF + 1) != 0);
 
     m_builder->set_fully_qualify(fully_qualify);
 
@@ -292,12 +292,12 @@ int32 match_builder_lua::deprecated_add_match(lua_State* state)
 // backward compatibility.
 int32 match_builder_lua::set_matches_are_files(lua_State* state)
 {
-    if (lua_gettop(state) <= 0 || lua_isnil(state, 1))
+    if (lua_gettop(state) <= LUA_SELF || lua_isnil(state, LUA_SELF + 1))
         m_builder->set_matches_are_files(true);
-    else if (lua_isboolean(state, 1))
-        m_builder->set_matches_are_files(lua_toboolean(state, 1) != 0);
+    else if (lua_isboolean(state, LUA_SELF + 1))
+        m_builder->set_matches_are_files(lua_toboolean(state, LUA_SELF + 1) != 0);
     else
-        m_builder->set_matches_are_files(int32(lua_tointeger(state, 1)));
+        m_builder->set_matches_are_files(int32(lua_tointeger(state, LUA_SELF + 1)));
     return 0;
 }
 
@@ -314,7 +314,7 @@ int32 match_builder_lua::clear_toolkit(lua_State* state)
 // UNDOCUMENTED; internal use only.
 int32 match_builder_lua::set_input_line(lua_State* state)
 {
-    const char* text = checkstring(state, 1);
+    const char* text = checkstring(state, LUA_SELF + 1);
     if (!text)
         return 0;
 
@@ -329,7 +329,7 @@ int32 match_builder_lua::matches_ready(lua_State* state)
     if (!m_toolkit)
         return 0;
 
-    const auto id = checkinteger(state, 1);
+    const auto id = checkinteger(state, LUA_SELF + 1);
     if (!id.isnum())
         return 0;
 
@@ -361,24 +361,24 @@ int32 match_builder_lua::matches_ready(lua_State* state)
 /// -show:  })
 int32 match_builder_lua::add_matches(lua_State* state)
 {
-    if (lua_gettop(state) <= 0 || !lua_istable(state, 1))
+    if (lua_gettop(state) <= LUA_SELF || !lua_istable(state, LUA_SELF + 1))
     {
         lua_pushinteger(state, 0);
         lua_pushboolean(state, 0);
         return 2;
     }
 
-    const char* type_str = optstring(state, 2, "");
+    const char* type_str = optstring(state, LUA_SELF + 2, "");
     if (!type_str)
         return 0;
 
     match_type type = to_match_type(type_str);
 
     int32 count = 0;
-    int32 total = int32(lua_rawlen(state, 1));
+    int32 total = int32(lua_rawlen(state, LUA_SELF + 1));
     for (int32 i = 1; i <= total; ++i)
     {
-        lua_rawgeti(state, 1, i);
+        lua_rawgeti(state, LUA_SELF + 1, i);
         count += !!add_match_impl(state, -1, type);
         lua_pop(state, 1);
     }

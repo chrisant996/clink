@@ -272,10 +272,25 @@ int32 lua_bindable<T>::call(lua_State* state)
         return 0;
     }
 
+#ifdef DEBUG
+    const int32 top = lua_gettop(state);
+#endif
+
+    // Don't remove self before calling the method!  Removing it is convenient
+    // for the author of native C/C++ code in Clink, but it throws off all the
+    // arg# error reporting.  Use LUA_SELF + 1 to refer to arg #1, etc.
     lua_remove(state, 1);
+    const int32 ret = ((*self)->*(*ptr))(state);
+
+    // Now remove self to clean up the stack.
     lua_remove(state, 1);
 
-    return ((*self)->*(*ptr))(state);
+#ifdef DEBUG
+    const int32 new_top = lua_gettop(state);
+    assert(new_top == top - 2 + ret);
+#endif
+
+    return ret;
 }
 
 //------------------------------------------------------------------------------

@@ -20,6 +20,8 @@ class line_state;
 class terminal_in;
 typedef double lua_Number;
 
+#define LUA_SELF    (1)
+
 //------------------------------------------------------------------------------
 template<class T>
 class checked_num
