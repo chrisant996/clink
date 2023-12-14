@@ -86,7 +86,7 @@ extern int _rl_rprompt_shown_len;
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
-int32 g_display_manager_clean_lines = 0;
+static uint32 s_defer_clear_lines = 0;
 bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
@@ -1565,19 +1565,19 @@ void display_manager::display()
     bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
 
-    if (g_display_manager_clean_lines > 0)
+    if (s_defer_clear_lines > 0)
     {
         // Clear the lines within the display_accumulator scope.
-        for (int32 lines = g_display_manager_clean_lines; lines--;)
+        for (int32 lines = s_defer_clear_lines; lines--;)
             rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", lines ? 5 : 4);
         // Go back up to where the cursor was before clearing lines.
-        if (g_display_manager_clean_lines > 1)
+        if (s_defer_clear_lines > 1)
         {
             str<16> tmp;
-            tmp.format("\x1b[%uA", g_display_manager_clean_lines - 1);
+            tmp.format("\x1b[%uA", s_defer_clear_lines - 1);
             rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
         }
-        g_display_manager_clean_lines = 0;
+        s_defer_clear_lines = 0;
     }
 
     if (prompt || rl_display_prompt == rl_prompt)
@@ -2491,6 +2491,24 @@ bool use_display_manager()
 void clear_comment_row()
 {
     s_display_manager.clear_comment_row();
+}
+#endif
+
+//------------------------------------------------------------------------------
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
+void defer_clear_lines(uint32 prompt_lines)
+{
+    str<16> up;
+    if (prompt_lines > 0)
+        up.format("\r\x1b[%uA", prompt_lines);
+    else
+        up = "\r";
+
+    _rl_move_vert(0);
+    rl_fwrite_function(_rl_out_stream, up.c_str(), up.length());
+    _rl_last_c_pos = 0;
+
+    s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
 }
 #endif
 

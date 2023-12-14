@@ -28,9 +28,9 @@ bool use_display_manager();
 
 #if defined(INCLUDE_CLINK_DISPLAY_READLINE)
 void clear_comment_row();
+void defer_clear_lines(uint32 prompt_lines);
 #endif
 
-extern int32 g_display_manager_clean_lines;
 extern bool g_display_manager_no_comment_row;
 
 //------------------------------------------------------------------------------

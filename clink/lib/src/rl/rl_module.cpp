@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Martin Ridgers
+﻿// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -2455,14 +2455,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
         if (use_display_manager())
         {
-            if (lines > 0)
-            {
-                str<16> up;
-                up.format("\r\x1b[%uA", lines);
-                _rl_move_vert(0);
-                g_printer->print(up.c_str(), up.length());
-            }
-            clear_lines = lines + _rl_vis_botlin + 1;
+            clear_lines = lines;
         }
         else
 #endif
@@ -2487,7 +2480,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     if (redisplay)
     {
         g_prompt_redisplay++;
-        g_display_manager_clean_lines = clear_lines;
+        defer_clear_lines(clear_lines);
         rl_forced_update_display();
 
         lock_cursor(false);
