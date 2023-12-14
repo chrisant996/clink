@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `rem zzzzzzzz_very_long_160_chars_zzzzzzzz` prints two blank lines before the prompt when using flexprompt with `sparse` spacing.  Is it a Clink issue or a flexprompt issue?
 
 ## Normal Priority
 
