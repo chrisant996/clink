@@ -307,12 +307,12 @@ void line_editor_impl::begin_line()
     m_prev_command_word_quoted = false;
 
     m_words.clear();
-    m_commands.clear();
+    m_command_line_states.clear();
     m_classify_words.clear();
 
     m_override_needle = nullptr;
     m_override_words.clear();
-    m_override_commands.clear();
+    m_override_command_line_states.clear();
 
     rl_before_display_function = before_display_readline;
 
@@ -341,7 +341,7 @@ void line_editor_impl::end_line()
     assert(!began);
 
     m_words.clear();
-    m_commands.clear();
+    m_command_line_states.clear();
     m_classify_words.clear();
 
     set_active_line_editor(nullptr, nullptr);
@@ -437,10 +437,10 @@ void line_editor_impl::override_line(const char* line, const char* needle, int32
     m_override_needle = line ? needle : nullptr;
 
     m_override_words.clear();
-    m_override_commands.clear();
+    m_override_command_line_states.clear();
     if (line)
     {
-        collect_words(m_override_words, &m_matches, collect_words_mode::stop_at_cursor, m_override_commands);
+        collect_words(m_override_words, &m_matches, collect_words_mode::stop_at_cursor, m_override_command_line_states);
         set_flag(flag_generate);
     }
 }
@@ -846,22 +846,23 @@ bool line_editor_impl::update_input()
 void line_editor_impl::collect_words()
 {
     m_module.clear_need_collect_words();
-    m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_commands);
+    m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_command_line_states);
 }
 
 //------------------------------------------------------------------------------
-commands line_editor_impl::collect_commands()
+command_line_states line_editor_impl::collect_command_line_states()
 {
-    commands commands;
-    collect_words(m_classify_words, nullptr, collect_words_mode::whole_command, commands);
-    return commands;
+    command_line_states command_line_states;
+    collect_words(m_classify_words, nullptr, collect_words_mode::whole_command, command_line_states);
+    return command_line_states;
 }
 
 //------------------------------------------------------------------------------
-uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands)
+uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, command_line_states& command_line_states)
 {
-    uint32 command_offset = m_collector.collect_words(m_buffer, words, mode);
-    commands.set(m_buffer, words);
+    std::vector<command> commands;
+    uint32 command_offset = m_collector.collect_words(m_buffer, words, mode, &commands);
+    command_line_states.set(m_buffer, words, commands);
 
 #ifdef DEBUG
     const int32 dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
@@ -922,8 +923,8 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     {
         word_break_info break_info;
         if (m_generator)
-            m_generator->get_word_break_info(commands.get_linestate(m_buffer), break_info);
-        const uint32 end_word_offset = commands.break_end_word(break_info.truncate, break_info.keep);
+            m_generator->get_word_break_info(command_line_states.get_linestate(m_buffer), break_info);
+        const uint32 end_word_offset = command_line_states.break_end_word(break_info.truncate, break_info.keep);
 
 #ifdef DEBUG
         if (dbg_row > 0)
@@ -932,7 +933,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
             int32 i_word = 1;
             tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
             m_printer.print(tmp2.c_str(), tmp2.length());
-            auto const& after_break_words = commands.get_linestate(m_buffer).get_words();
+            auto const& after_break_words = command_line_states.get_linestate(m_buffer).get_words();
             for (auto const& w : after_break_words)
             {
                 tmp1.format("\x1b[90m%u\x1b[m", i_word);
@@ -978,7 +979,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 #endif
 
     words.clear();
-    for (const auto& w : commands.get_linestate(m_buffer).get_words())
+    for (const auto& w : command_line_states.get_linestate(m_buffer).get_words())
         words.emplace_back(w);
 
     return command_offset;
@@ -991,7 +992,7 @@ void line_editor_impl::classify()
     {
         if (g_history_autoexpand.get() && g_history_show_preview.get())
         {
-            commands commands = collect_commands();
+            command_line_states command_line_states = collect_command_line_states();
             history_expansion* list = nullptr;
             calc_history_expansions(m_buffer, list);
             set_history_expansions(list);
@@ -1020,8 +1021,8 @@ void line_editor_impl::classify()
     else
     {
         // Use the full line; don't stop at the cursor.
-        commands commands = collect_commands();
-        m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
+        command_line_states command_line_states = collect_command_line_states();
+        m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications);
         if (g_history_autoexpand.get() &&
             (g_history_show_preview.get() ||
              !is_null_or_empty(g_color_histexpand.get())))
@@ -1180,18 +1181,18 @@ void line_editor_impl::reclassify(reclassify_reason why)
 line_state line_editor_impl::get_linestate() const
 {
     if (m_buffer.has_override())
-        return m_override_commands.get_linestate(m_buffer);
+        return m_override_command_line_states.get_linestate(m_buffer);
 
-    return m_commands.get_linestate(m_buffer);
+    return m_command_line_states.get_linestate(m_buffer);
 }
 
 //------------------------------------------------------------------------------
 line_states line_editor_impl::get_linestates() const
 {
     if (m_buffer.has_override())
-        return m_override_commands.get_linestates(m_buffer);
+        return m_override_command_line_states.get_linestates(m_buffer);
 
-    return m_commands.get_linestates(m_buffer);
+    return m_command_line_states.get_linestates(m_buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -1394,7 +1395,7 @@ void line_editor_impl::try_suggest()
     if (!g_autosuggest_enable.get())
         return;
 
-    const line_states& lines = m_commands.get_linestates(m_buffer);
+    const line_states& lines = m_command_line_states.get_linestates(m_buffer);
     line_state line = lines.back();
     if (host_can_suggest(line))
     {
@@ -1452,5 +1453,5 @@ bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 //------------------------------------------------------------------------------
 uint32 line_editor_impl::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
-    return m_collector.collect_words(buffer, words, mode);
+    return m_collector.collect_words(buffer, words, mode, nullptr);
 }

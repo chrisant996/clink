@@ -38,15 +38,16 @@ public:
 };
 
 //------------------------------------------------------------------------------
+struct command
+{
+    uint32              offset;
+    uint32              length;
+    bool                is_alias_allowed;
+};
+
+//------------------------------------------------------------------------------
 class word_collector
 {
-    struct command
-    {
-        uint32          offset;
-        uint32          length;
-        bool            is_alias_allowed;
-    };
-
 public:
     word_collector(collector_tokeniser* command_tokeniser=nullptr, collector_tokeniser* word_tokeniser=nullptr, const char* quote_pair=nullptr);
     ~word_collector();
@@ -54,9 +55,11 @@ public:
     void init_alias_cache();
 
     uint32 collect_words(const char* buffer, uint32 length, uint32 cursor,
-                         std::vector<word>& words, collect_words_mode mode) const;
+                         std::vector<word>& words, collect_words_mode mode,
+                         std::vector<command>* commands) const;
     uint32 collect_words(const line_buffer& buffer,
-                         std::vector<word>& words, collect_words_mode mode) const;
+                         std::vector<word>& words, collect_words_mode mode,
+                         std::vector<command>* commands) const;
 
 private:
     char get_opening_quote() const;
@@ -91,12 +94,12 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class commands
+class command_line_states
 {
 public:
-    commands() { clear(); }
-    void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words);
-    void set(const line_buffer& buffer, const std::vector<word>& words);
+    command_line_states() { clear(); }
+    void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words, const std::vector<command>& commands);
+    void set(const line_buffer& buffer, const std::vector<word>& words, const std::vector<command>& commands);
     uint32 break_end_word(uint32 truncate, uint32 keep);
     void clear();
     const line_states& get_linestates(const char* buffer, uint32 len) const;

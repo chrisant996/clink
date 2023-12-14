@@ -27,13 +27,15 @@ struct word
 class line_state _DBGOBJECT
 {
 public:
-                        line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, const std::vector<word>& words);
+                        line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, uint32 range_offset, uint32 range_length, const std::vector<word>& words);
     const char*         get_line() const;
     uint32              get_length() const;
     uint32              get_cursor() const;
     uint32              get_command_offset() const;
     uint32              get_command_word_index() const;
     uint32              get_end_word_offset() const;
+    uint32              get_range_offset() const;
+    uint32              get_range_length() const;
     const std::vector<word>& get_words() const;
     uint32              get_word_count() const;
     bool                get_word(uint32 index, str_base& out) const;    // MAY STRIP quotes, except during getworkbreakinfo().
@@ -51,6 +53,8 @@ private:
     uint32              m_length;
     uint32              m_cursor;
     uint32              m_command_offset;
+    uint32              m_range_offset;
+    uint32              m_range_length;
 };
 
 //------------------------------------------------------------------------------

@@ -28,6 +28,8 @@ public:
     int32               get_word_info(lua_State* state);
     int32               get_word(lua_State* state);
     int32               get_end_word(lua_State* state);
+    int32               get_range_offset(lua_State* state);
+    int32               get_range_length(lua_State* state);
     int32               shift(lua_State* state);
     int32               reset_shift(lua_State* state);
     int32               unbreak(lua_State* state);

@@ -1296,16 +1296,17 @@ static int32 parse_line(lua_State* state)
 
     // Collect words from the whole line.
     std::vector<word> tmp_words;
+    std::vector<command> tmp_commands;
     uint32 len = uint32(strlen(line));
-    collector.collect_words(line, len, 0, tmp_words, collect_words_mode::whole_command);
+    collector.collect_words(line, len, 0, tmp_words, collect_words_mode::whole_command, &tmp_commands);
 
     // Group words into one line_state per command.
-    commands commands;
-    commands.set(line, len, 0, tmp_words);
+    command_line_states command_line_states;
+    command_line_states.set(line, len, 0, tmp_words, tmp_commands);
 
     // Make a deep copy in an object allocated in the Lua heap.  Garbage
     // collection will free it.
-    line_states_lua::make_new(state, commands.get_linestates(line, len));
+    line_states_lua::make_new(state, command_line_states.get_linestates(line, len));
     return 1;
 }
 
@@ -1677,11 +1678,12 @@ static int32 generate_from_history(lua_State* state)
 
         // Collect one line_state for each command in the line.
         std::vector<word> words;
-        commands commands;
-        collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command);
-        commands.set(buffer, len, 0, words);
+        std::vector<command> commands;
+        command_line_states command_line_states;
+        collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command, &commands);
+        command_line_states.set(buffer, len, 0, words, commands);
 
-        for (const line_state& line : commands.get_linestates(buffer, len))
+        for (const line_state& line : command_line_states.get_linestates(buffer, len))
         {
             // clink._generate_from_historyline
             lua_pushvalue(state, -1);

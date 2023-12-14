@@ -133,6 +133,9 @@ void word_collector::find_command_bounds(const char* buffer, uint32 length, uint
     assert(command_start < 0xccccc);
     assert(command_length < 0xccccc);
 
+    if (!commands.empty())
+        return;
+
     // Need to provide an empty command, because there's an empty command.  For
     // example exec.enable needs this so it can generate matches appropriately.
     commands.push_back({ command_start, command_length, false });
@@ -178,11 +181,14 @@ bool word_collector::is_alias_allowed(const char* buffer, uint32 offset) const
 
 //------------------------------------------------------------------------------
 uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length, uint32 line_cursor,
-                                           std::vector<word>& words, collect_words_mode mode) const
+                                     std::vector<word>& words, collect_words_mode mode,
+                                     std::vector<command>* _commands) const
 {
     words.clear();
 
-    std::vector<command> commands;
+    std::vector<command> tmp;
+    std::vector<command>& commands = _commands ? *_commands : tmp;
+
     commands.reserve(5);
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
     find_command_bounds(line_buffer, line_length, line_cursor, commands, stop_at_cursor);
@@ -299,7 +305,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             }
 
             // Add the word.
-            words.push_back({word_offset, unsigned(word_length), first, false/*is_alias*/, token.redir_arg, 0, token.delim});
+            words.push_back(std::move(word(word_offset, unsigned(word_length), first, false/*is_alias*/, token.redir_arg, 0, token.delim)));
 
             first = false;
         }
@@ -314,7 +320,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
         if (line_cursor)
             delim = line_buffer[line_cursor - 1];
 
-        words.push_back({line_cursor, 0, first, false, false, false, delim});
+        words.push_back(std::move(word(line_cursor, 0, first, false, false, false, delim)));
     }
 
     // Adjust for quotes.
@@ -354,31 +360,26 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
 }
 
 //------------------------------------------------------------------------------
-uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
+uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode, std::vector<command>* commands) const
 {
-    return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode);
+    return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands);
 }
 
 //------------------------------------------------------------------------------
-void commands::set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words)
+void command_line_states::set(const char* line_buffer, uint32 line_length, uint32 line_cursor,
+                              const std::vector<word>& words, const std::vector<command>& commands)
 {
     clear_internal();
 
-    // Count number of commands so we can pre-allocate words_storage so that
-    // emplace_back() doesn't invalidate pointers (references) stored in
-    // linestates.
-    uint32 num_commands = 0;
-    for (const auto& word : words)
-    {
-        if (word.command_word)
-            num_commands++;
-    }
+    // Pre-allocate words_storage so that emplace_back() doesn't invalidate
+    // pointers (references) stored in linestates.
+    m_words_storage.reserve(commands.size());
 
     // Build vector containing one line_state per command.
     size_t i = 0;
+    auto command_iter = commands.begin();
     std::vector<word> tmp;
     tmp.reserve(words.size());
-    m_words_storage.reserve(num_commands);
     while (true)
     {
         if (!tmp.empty() && (i >= words.size() || words[i].command_word))
@@ -386,7 +387,7 @@ void commands::set(const char* line_buffer, uint32 line_length, uint32 line_curs
             // Make sure classifiers can tell whether the word has a space
             // before it, so that ` doskeyalias` gets classified as NOT a doskey
             // alias, since doskey::resolve() won't expand it as a doskey alias.
-            int32 command_char_offset = tmp[0].offset;
+            uint32 command_char_offset = tmp[0].offset;
             if (tmp[0].quoted)
                 command_char_offset--;
             if (command_char_offset == 1 && line_buffer[0] == ' ')
@@ -400,11 +401,22 @@ void commands::set(const char* line_buffer, uint32 line_length, uint32 line_curs
             assert(tmp.empty());
             tmp.reserve(words.size());
 
+            // The !tmp.empty() check effectively discarded command ranges with
+            // no words.  Now it's still required for backward compatibility.
+            assert(command_iter != commands.end());
+            while (command_iter->offset + command_iter->length < command_char_offset)
+            {
+                ++command_iter;
+                assert(command_iter != commands.end());
+            }
+
             m_linestates.emplace_back(
                 line_buffer,
                 line_length,
                 line_cursor,
                 command_char_offset,
+                command_iter->offset,
+                command_iter->length,
                 m_words_storage.back()
             );
         }
@@ -425,13 +437,14 @@ void commands::set(const char* line_buffer, uint32 line_length, uint32 line_curs
 }
 
 //------------------------------------------------------------------------------
-void commands::set(const line_buffer& buffer, const std::vector<word>& words)
+void command_line_states::set(const line_buffer& buffer,
+                              const std::vector<word>& words, const std::vector<command>& commands)
 {
-    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words);
+    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, commands);
 }
 
 //------------------------------------------------------------------------------
-uint32 commands::break_end_word(uint32 truncate, uint32 keep)
+uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep)
 {
 #ifdef DEBUG
     assert(!m_broke_end_word);
@@ -464,22 +477,16 @@ uint32 commands::break_end_word(uint32 truncate, uint32 keep)
 }
 
 //------------------------------------------------------------------------------
-void commands::clear()
+void command_line_states::clear()
 {
     clear_internal();
 
     m_words_storage.emplace_back();
-    m_linestates.emplace_back(line_state {
-        nullptr,
-        0,
-        0,
-        0,
-        m_words_storage[0]
-    });
+    m_linestates.emplace_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, m_words_storage[0])));
 }
 
 //------------------------------------------------------------------------------
-void commands::clear_internal()
+void command_line_states::clear_internal()
 {
     m_words_storage.clear();
     m_linestates.clear();
@@ -489,7 +496,7 @@ void commands::clear_internal()
 }
 
 //------------------------------------------------------------------------------
-const line_states& commands::get_linestates(const char* buffer, uint32 len) const
+const line_states& command_line_states::get_linestates(const char* buffer, uint32 len) const
 {
     assert(m_linestates.size());
     const auto& front = m_linestates.front();
@@ -501,7 +508,7 @@ const line_states& commands::get_linestates(const char* buffer, uint32 len) cons
             dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
             s_none = new line_states;
-            s_none->push_back({ nullptr, 0, 0, 0, *wv });
+            s_none->push_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, *wv)));
         }
         return *s_none;
     }
@@ -509,13 +516,13 @@ const line_states& commands::get_linestates(const char* buffer, uint32 len) cons
 }
 
 //------------------------------------------------------------------------------
-const line_states& commands::get_linestates(const line_buffer& buffer) const
+const line_states& command_line_states::get_linestates(const line_buffer& buffer) const
 {
     return get_linestates(buffer.get_buffer(), buffer.get_length());
 }
 
 //------------------------------------------------------------------------------
-const line_state& commands::get_linestate(const char* buffer, uint32 len) const
+const line_state& command_line_states::get_linestate(const char* buffer, uint32 len) const
 {
     assert(m_linestates.size());
     const auto& back = m_linestates.back();
@@ -526,7 +533,7 @@ const line_state& commands::get_linestate(const char* buffer, uint32 len) const
         {
             dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
-            s_none = new line_state(nullptr, 0, 0, 0, *wv);
+            s_none = new line_state(nullptr, 0, 0, 0, 0, 0, *wv);
         }
         return *s_none;
     }
@@ -534,7 +541,7 @@ const line_state& commands::get_linestate(const char* buffer, uint32 len) const
 }
 
 //------------------------------------------------------------------------------
-const line_state& commands::get_linestate(const line_buffer& buffer) const
+const line_state& command_line_states::get_linestate(const line_buffer& buffer) const
 {
     return get_linestate(buffer.get_buffer(), buffer.get_length());
 }

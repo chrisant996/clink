@@ -19,6 +19,8 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getwordinfo",            &get_word_info },
     { "getword",                &get_word },
     { "getendword",             &get_end_word },
+    { "getrangeoffset",         &get_range_offset },
+    { "getrangelength",         &get_range_length },
     // UNDOCUMENTED; internal use only.
     { "_shift",                 &shift },
     { "_reset_shift",           &reset_shift },
@@ -48,7 +50,7 @@ line_state_copy::line_state_copy(const line_state& line)
 {
     m_buffer.concat(line.get_line(), line.get_length());
     m_words = line.get_words(); // Deep copy.
-    m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_command_offset(), m_words);
+    m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_command_offset(), line.get_range_offset(), line.get_range_length(), m_words);
 }
 
 //------------------------------------------------------------------------------
@@ -134,8 +136,9 @@ int32 line_state_lua::get_cursor(lua_State* state)
 /// Returns the offset to the start of the delimited command in the line that's
 /// being effectively edited. Note that this may not be the offset of the first
 /// command of the line unquoted as whitespace isn't considered for words.
-/// -show:  -- Given the following line; abc&123
-/// -show:  -- where commands are separated by & symbols.
+/// -show:  -- Given the following line;  abc&123
+/// -show:  --                                ^
+/// -show:  -- In the line_state for the second command;
 /// -show:  line_state:getcommandoffset() == 5
 ///
 /// The command offset points to the beginning of the command, but that might be
@@ -143,8 +146,9 @@ int32 line_state_lua::get_cursor(lua_State* state)
 /// at the beginning of a line; it disables doskey alias expansion.  So, if the
 /// command offset points at a space, then you know the first word will not be
 /// treated as a doskey alias.
-/// -show:  -- Given the following line; abc&  123
-/// -show:  -- where commands are separated by & symbols.
+/// -show:  -- Given the following line;  abc&  123
+/// -show:  --                                 ^
+/// -show:  -- In the line_state for the second command;
 /// -show:  line_state:getcommandoffset() == 6
 int32 line_state_lua::get_command_offset(lua_State* state)
 {
@@ -170,7 +174,7 @@ int32 line_state_lua::get_command_offset(lua_State* state)
 /// Returns the index of the command word. Usually the index is 1, but if a
 /// redirection symbol occurs before the command name then the index can be
 /// greater than 1.
-/// -show:  -- Given the following line; >x abc
+/// -show:  -- Given the following line;  >x abc
 /// -show:  -- the first word is "x" and is an argument to the redirection symbol,
 /// -show:  -- and the second word is "abc" and is the command word.
 /// -show:  line_state:getcommandwordindex() == 2
@@ -325,6 +329,56 @@ int32 line_state_lua::get_end_word(lua_State* state)
     str<32> word;
     m_line->get_end_word(word);
     lua_pushlstring(state, word.c_str(), word.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  line_state:getrangeoffset
+/// -ver:   1.6.1
+/// -ret:   integer
+/// Each line_state describes a range of text in a line.  This function returns
+/// the offset to the start of the range described by this line_state.
+///
+/// For all commands after the first command in a line, the first space (if any)
+/// is not part of the range.
+/// See [line_state:getcommandoffset](#line_state:getcommandoffset) for details.
+/// -show:  -- Given a line_state for the 2nd command in;  abc & ( @where   >nul  )  & xyz
+/// -show:  line_state:getrangeoffset() == 9           --          ^
+/// -show:  line_state:getcommandoffset() == 10        -            ^
+/// -show:  line_state:getrangelength() == 15          --          <------------->
+/// -show:
+/// -show:  -- Given a line_state for the 2nd command in;  abc & (   @ where   >nul  )  & xyz
+/// -show:  line_state:getrangeoffset() == 9           --          ^
+/// -show:  line_state:getcommandoffset() == 13        --              ^
+/// -show:  line_state:getrangelength() == 18          --          <---------------->
+int32 line_state_lua::get_range_offset(lua_State* state)
+{
+    lua_pushinteger(state, m_line->get_range_offset() + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  line_state:getrangelength
+/// -ver:   1.6.1
+/// -ret:   integer
+/// Each line_state describes a range of text in a line.  This function returns
+/// the length of the range described by this line_state.
+///
+/// For all commands after the first command in a line, the first space (if any)
+/// is not part of the range.
+/// See [line_state:getcommandoffset](#line_state:getcommandoffset) for details.
+/// -show:  -- Given a line_state for the 2nd command in;  abc & ( @where   >nul  )  & xyz
+/// -show:  line_state:getrangeoffset() == 9           --          ^
+/// -show:  line_state:getcommandoffset() == 10        --           ^
+/// -show:  line_state:getrangelength() == 15          --          <------------->
+/// -show:
+/// -show:  -- Given a line_state for the 2nd command in;  abc & (   @ where   >nul  )  & xyz
+/// -show:  line_state:getrangeoffset() == 9           --          ^
+/// -show:  line_state:getcommandoffset() == 13        --              ^
+/// -show:  line_state:getrangelength() == 18          --          <---------------->
+int32 line_state_lua::get_range_length(lua_State* state)
+{
+    lua_pushinteger(state, m_line->get_range_length());
     return 1;
 }
 

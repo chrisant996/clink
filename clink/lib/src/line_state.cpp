@@ -33,12 +33,16 @@ line_state::line_state(
     uint32 length,
     uint32 cursor,
     uint32 command_offset,
+    uint32 range_offset,
+    uint32 range_length,
     const std::vector<word>& words)
 : m_words(words)
 , m_line(line)
 , m_length(length)
 , m_cursor(cursor)
 , m_command_offset(command_offset)
+, m_range_offset(range_offset)
+, m_range_length(range_length)
 {
 }
 
@@ -85,6 +89,18 @@ uint32 line_state::get_end_word_offset() const
     if (m_words.size() > 0)
         return m_words.back().offset;
     return 0;
+}
+
+//------------------------------------------------------------------------------
+uint32 line_state::get_range_offset() const
+{
+    return m_range_offset;
+}
+
+//------------------------------------------------------------------------------
+uint32 line_state::get_range_length() const
+{
+    return m_range_length;
 }
 
 //------------------------------------------------------------------------------

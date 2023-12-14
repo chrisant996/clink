@@ -53,14 +53,15 @@ void word_collector_tester::run()
 
     // Collect words.
     std::vector<word> all_words;
+    std::vector<command> all_commands;
     collect_words_mode mode = collect_words_mode::stop_at_cursor;
     const uint32 len = uint32(strlen(m_input));
-    const uint32 command_offset = m_collector.collect_words(m_input, len, len, all_words, mode);
+    const uint32 command_offset = m_collector.collect_words(m_input, len, len, all_words, mode, &all_commands);
 
-    commands commands;
-    commands.set(m_input, len, len, all_words);
+    command_line_states command_line_states;
+    command_line_states.set(m_input, len, len, all_words, all_commands);
 
-    const std::vector<word>& words = commands.get_linestate(m_input, len).get_words();
+    const std::vector<word>& words = command_line_states.get_linestate(m_input, len).get_words();
 
     auto report = [&] ()
     {

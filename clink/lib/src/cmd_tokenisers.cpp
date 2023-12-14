@@ -239,29 +239,43 @@ bool cmd_state::test(const int32 c, const tokeniser_state new_state)
 
 
 //------------------------------------------------------------------------------
+// No double quote, as that would break quoting rules.
+static const char c_name_delims[] = " \t\n'`=;,()[]{}";
+static const char c_word_delims[] = " \t\n'`=+;,()[]{}";
+
+//------------------------------------------------------------------------------
+uint32 is_alias_word(str_iter& iter, alias_cache* alias_cache)
+{
+    const char* orig = iter.get_pointer();
+    while (iter.more())
+    {
+        const int32 c = iter.peek();
+        if (c == ' ' || c == '\t')
+            break;
+        iter.next();
+    }
+
+    str<> tmp;
+    tmp.concat(orig, uint32(iter.get_pointer() - orig));
+    if (tmp.empty())
+        return false;
+
+    str<> tmp2;
+    const bool is_alias = (alias_cache ?
+                           alias_cache->get_alias(tmp.c_str(), tmp2) :
+                           os::get_alias(tmp.c_str(), tmp2));
+    iter.reset_pointer(orig);
+    return is_alias ? tmp.length() : 0;
+}
+
+//------------------------------------------------------------------------------
 int32 skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
 {
     int32 parens = 0;
     bool do_parens = true;
 
     if ((first || g_enhanced_doskey.get()) && iter.more() && iter.peek() == '(')
-    {
-        str<> tmp;
-        str<> tmp2;
-        const char* orig = iter.get_pointer();
-        while (iter.more())
-        {
-            const int32 c = iter.peek();
-            if (c == ' ' || c == '\t')
-                break;
-            iter.next();
-        }
-        tmp.concat(orig, uint32(iter.get_pointer() - orig));
-        do_parens = (alias_cache ?
-                     !alias_cache->get_alias(tmp.c_str(), tmp2) :
-                     !os::get_alias(tmp.c_str(), tmp2));
-        iter.reset_pointer(orig);
-    }
+        do_parens = !is_alias_word(iter, alias_cache);
 
     if (do_parens)
     {
@@ -434,10 +448,6 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
 {
     if (!m_iter.more())
         return word_token(word_token::invalid_delim);
-
-    // No double quote, as that would break quoting rules.
-    static const char c_name_delims[] = " \t\n'`=;,()[]{}";
-    static const char c_word_delims[] = " \t\n'`=+;,()[]{}";
 
     const char oq = get_opening_quote();
     const char cq = get_closing_quote();

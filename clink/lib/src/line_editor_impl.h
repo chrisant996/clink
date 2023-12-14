@@ -120,8 +120,8 @@ private:
     void                begin_line();
     void                end_line();
     void                collect_words();
-    commands            collect_commands();
-    uint32              collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands);
+    command_line_states collect_command_line_states();
+    uint32              collect_words(words& words, matches_impl* matches, collect_words_mode mode, command_line_states& command_line_states);
     void                classify();
     void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
@@ -163,7 +163,7 @@ private:
     prev_buffer         m_prev_generate;
     words               m_words;
     unsigned short      m_command_offset = 0;
-    commands            m_commands;
+    command_line_states m_command_line_states;
 
     bool                m_prev_plain = false;
     prev_buffer         m_prev_classify;
@@ -175,7 +175,7 @@ private:
 
     const char*         m_override_needle = nullptr;
     words               m_override_words;
-    commands            m_override_commands;
+    command_line_states m_override_command_line_states;
 
 #ifdef DEBUG
     bool                m_in_matches_ready = false;

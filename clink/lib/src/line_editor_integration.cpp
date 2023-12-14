@@ -190,9 +190,9 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     if (debug_filter) puts("REGENERATE_MATCHES");
 #endif
 
-    commands commands;
+    command_line_states command_line_states;
     std::vector<word> words;
-    uint32 command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
+    uint32 command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, command_line_states);
 
     match_pipeline pipeline(regen);
     pipeline.reset();
@@ -201,7 +201,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     if (debug_filter) puts("-- GENERATE");
 #endif
 
-    const auto linestates = commands.get_linestates(s_editor->m_buffer);
+    const auto linestates = command_line_states.get_linestates(s_editor->m_buffer);
     pipeline.generate(linestates, s_editor->m_generator, old_filtering);
 
 #ifdef DEBUG
