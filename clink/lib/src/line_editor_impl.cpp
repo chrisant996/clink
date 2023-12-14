@@ -1057,7 +1057,13 @@ void line_editor_impl::classify()
         {
             char face = m_classifications.get_face(i);
             f.concat("\x1b[7m");
-            f.concat(&face, 1);
+            if (face >= 0x20 && face <= 0x7f)
+                f.concat(&face, 1);
+            else
+            {
+                tmp.format("%X", uint8(face));
+                f.concat(tmp.c_str(), tmp.length());
+            }
             f.concat("\x1b[m");
         }
         if (dbgrow < 0)

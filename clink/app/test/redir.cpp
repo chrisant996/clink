@@ -193,8 +193,9 @@ TEST_CASE("Redir parsing")
 
         SECTION("Mixed")
         {
+            //                         v-- CMD considers this a syntax error.
             tester.set_input("nullcmd |&|&| argcmd ");
-            tester.set_expected_words(14, "argcmd");
+            tester.set_expected_words(9, "&|&|", "argcmd");
             tester.run();
         }
 

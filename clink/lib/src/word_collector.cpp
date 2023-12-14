@@ -240,6 +240,8 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             if (!token)
                 break;
 
+            word_offset += command.offset + doskey_len;
+
             // Plus sign is never a word break immediately after a space.
             if (word_offset >= 2 &&
                 line_buffer[word_offset - 1] == '+' &&
@@ -249,7 +251,6 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                 word_length++;
             }
 
-            word_offset += command.offset + doskey_len;
             const char* word_start = line_buffer + word_offset;
 
             // Mercy.  We need to know later on if a flag word ends with = but

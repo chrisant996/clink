@@ -240,7 +240,7 @@ bool cmd_state::test(const int32 c, const tokeniser_state new_state)
 
 //------------------------------------------------------------------------------
 // No double quote, as that would break quoting rules.
-static const char c_name_delims[] = " \t\n'`=;,()[]{}";
+static const char c_name_delims[] = "@ \t=;,(";
 static const char c_word_delims[] = " \t\n'`=+;,()[]{}";
 
 //------------------------------------------------------------------------------
@@ -283,13 +283,13 @@ int32 skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
         while (iter.more())
         {
             const int32 c = iter.peek();
-            if (c != ' ' && c != '(')
+            if (c != ' ' && c != '@' && c != '(')
                 break;
             iter.next();
             if (c == '(')
             {
                 first = false;
-                if (iter.more() && iter.peek() == ' ')
+                if (iter.more() && (iter.peek() == ' ' || iter.peek() == '@'))
                     iter.next();
                 orig = iter.get_pointer();
                 parens++;
@@ -334,31 +334,46 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
 
     const char oq = get_opening_quote();
     const char cq = get_closing_quote();
+    bool first_command = (m_iter.get_pointer() == m_start);
 
-    // Skip past any separators.
-    while (m_iter.more())
+    // After the first command, skip past a separator (&, |, &&, or ||).
+    if (!first_command)
     {
-        const int32 c = m_iter.peek();
-        if (c != '&' && c != '|')
-            break;
-        m_iter.next();
+        const int32 c1 = m_iter.peek();
+        if (c1 == '&' || c1 == '|')
+        {
+            m_iter.next();
+            const int32 c2 = m_iter.peek();
+            if (c1 == c2)
+                m_iter.next();
+        }
     }
 
-    bool first = (m_iter.get_pointer() == m_start);
-    int32 parens = skip_leading_parens(m_iter, first, m_alias_cache);
+    int32 parens = skip_leading_parens(m_iter, first_command, m_alias_cache);
 
-    // Eat padding space after command separate or open paren.
-    if (!first && !parens && m_iter.more() && m_iter.peek() == ' ')
+    // Eat padding space after command separator or open paren.
+    if (!first_command && !parens && m_iter.more() && m_iter.peek() == ' ')
         m_iter.next();
 
     offset = uint32(m_iter.get_pointer() - m_start);
 
     int32 c = 0;
     bool in_quote = false;
-    bool is_break = false;
     bool is_arg = false;
+    bool any_text = false;
     tokeniser_state state = sSpc;
     cmd_state cmd_state(true/*only_rem*/);
+
+    // The first word can contain any non-space characters if it's an alias.
+    const uint32 alias_len = is_alias_word(m_iter, m_alias_cache);
+    if (alias_len)
+    {
+        any_text = true;
+        for (uint32 n = alias_len; n--;)
+            m_iter.next();
+        cmd_state.test(0xff, sTxt);
+    }
+
     while (m_iter.more())
     {
         c = m_iter.next();
@@ -385,6 +400,22 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
             const input_type input = get_input_type(c);
             tokeniser_state new_state = c_transition[state][input];
 
+            if (new_state == sTxt || new_state == sDig)
+            {
+                if (!any_text && !str_chr(c_name_delims, c) && c != '&' &&  c != '|')
+                {
+                    any_text = true;
+                    if (input == iDig && new_state == sTxt)
+                    {
+                        const char* p = m_iter.get_pointer();
+                        if (p - 2 >= m_start && *(p - 2) == '@' && m_iter.peek() == '>')
+                            m_iter.next();
+                    }
+                }
+            }
+            if (new_state == sBREAK && !any_text)
+                new_state = sTxt;
+
             if (new_state == sARG || new_state == sVALID || new_state == sBAD)
             {
                 state = sSpc;
@@ -405,7 +436,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
 
             if (new_state == sBREAK)
             {
-                is_break = true;
+                m_iter.reset_pointer(m_iter.get_pointer() - 1);
                 break;
             }
 
@@ -419,7 +450,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
         }
     }
 
-    length = uint32(m_iter.get_pointer() - m_start) - is_break;
+    length = uint32(m_iter.get_pointer() - m_start);
     length = trim_trailing_parens(m_start, offset, length, parens);
     assert(length >= offset);
     length -= offset;
