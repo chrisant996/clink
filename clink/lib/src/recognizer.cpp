@@ -291,6 +291,12 @@ int32 recognizer::find(const char* key, recognition& cached, str_base* file) con
 //------------------------------------------------------------------------------
 bool recognizer::enqueue(const char* key, const char* word, const char* cwd, recognition* cached)
 {
+    if (!key || !*key || !word || !*word)
+    {
+        assert(false);
+        return false;
+    }
+
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
