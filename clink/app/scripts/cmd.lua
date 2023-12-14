@@ -78,7 +78,7 @@ function cmd_classifier:classify(commands) -- luacheck: no self
                         -- A digit redirection cannot immediately follow @.
                         x = x - 1
                         color = settings.get("color.unrecognized")
-                        err = true
+                        err = true -- luacheck: no unused
                     end
                 end
                 classifications:applycolor(x, i+1-x, color)
@@ -88,11 +88,9 @@ function cmd_classifier:classify(commands) -- luacheck: no self
 
         -- Command separators, redirection arguments, and rem command.
         local last_offset
-        for ic, command in ipairs(commands) do
+        for _, command in ipairs(commands) do
             line_state = command.line_state
             if last_offset then
-                local s = line_state:getrangeoffset()
-                local e = line_state:getrangelength()
                 color_separators(line, last_offset, line_state:getcommandoffset() - 1, classifications, color_cmdsep)
             end
             for word_index = 1, line_state:getwordcount(), 1 do
