@@ -33,6 +33,7 @@ extern void end_task_manager();
 extern void host_filter_transient_prompt(int crlf);
 extern void terminal_begin_command();
 extern int show_cursor(int visible);
+extern int _rl_last_v_pos;
 
 //------------------------------------------------------------------------------
 static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wchar_t** out_wide, int* out_free)
@@ -311,6 +312,10 @@ void end_prompt(int crlf)
     if (crlf < 0)
         end_prompt_lf();
 #endif
+
+    _rl_last_c_pos = 0;
+    _rl_last_v_pos = 0;
+    _rl_vis_botlin = 0;
 
     // Terminal shell integration.
     terminal_begin_command();

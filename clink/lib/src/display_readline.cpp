@@ -1506,7 +1506,9 @@ void display_manager::end_prompt_lf()
 
     // Print CRLF to end the prompt.
     rl_crlf();
+    _rl_last_v_pos = 0;
     _rl_last_c_pos = 0;
+    _rl_vis_botlin = 0;
     rl_fflush_function(_rl_out_stream);
     rl_display_fixed++;
 }
