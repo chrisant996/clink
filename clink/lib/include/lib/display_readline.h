@@ -26,7 +26,12 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nullptr, uint32 len=-1);
 bool use_display_manager();
 
+#if defined(INCLUDE_CLINK_DISPLAY_READLINE)
+void clear_comment_row();
+#endif
+
 extern int32 g_display_manager_clean_lines;
+extern bool g_display_manager_no_comment_row;
 
 //------------------------------------------------------------------------------
 #if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)

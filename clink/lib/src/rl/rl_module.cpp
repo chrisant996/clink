@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -2445,6 +2445,9 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     {
         was_visible = show_cursor(false);
         lock_cursor(true);
+
+        // Erase comment row if present.
+        clear_comment_row();
 
         // Count the number of lines the prompt takes to display.
         int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());

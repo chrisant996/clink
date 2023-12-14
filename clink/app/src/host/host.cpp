@@ -26,6 +26,7 @@
 #include <lib/clink_rl_signal.h>
 #include <lib/errfile_reader.h>
 #include <lib/sticky_search.h>
+#include <lib/display_readline.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/prompt.h>
@@ -562,6 +563,7 @@ cant:
         rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
         rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
         rollback<int32> mml(_rl_mark_modified_lines, 0);
+        rollback<bool> dmncr(g_display_manager_no_comment_row, true);
 
         set_prompt(prompt, rprompt, true/*redisplay*/);
     }

@@ -87,6 +87,7 @@ extern int _rl_rprompt_shown_len;
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
 int32 g_display_manager_clean_lines = 0;
+bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
 static setting_int g_input_rows(
@@ -1362,6 +1363,8 @@ public:
     void                set_history_expansions(history_expansion* list=nullptr);
     void                measure(measure_columns& mc);
     bool                get_horz_offset(int32& bytes, int32& column) const;
+    bool                has_comment_row() const;
+    void                clear_comment_row();
 
 private:
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
@@ -1450,14 +1453,7 @@ void display_manager::end_prompt_lf()
     // prompt and input line without the scroll constraints?
 
     // Erase comment row if present.
-    if (m_curr.get_comment_row())
-    {
-        _rl_move_vert(_rl_vis_botlin + 1);
-        _rl_cr();
-        _rl_last_c_pos = 0;
-        _rl_clear_to_eol(0);
-        m_curr.clear_comment_row();
-    }
+    clear_comment_row();
 
     // If the cursor is the only thing on an otherwise-blank last line,
     // compensate so we don't print an extra CRLF.
@@ -1547,7 +1543,9 @@ void display_manager::display()
     }
 
     // Is history expansion preview desired?
-    const bool want_histexpand_preview = (g_history_show_preview.get() && g_history_autoexpand.get());
+    const bool want_histexpand_preview = (!g_display_manager_no_comment_row &&
+                                          g_history_show_preview.get() &&
+                                          g_history_autoexpand.get());
 
     // Max number of rows to use when displaying the input line.
     uint32 max_rows = g_input_rows.get();
@@ -2073,6 +2071,25 @@ bool display_manager::get_horz_offset(int32& bytes, int32& column) const
 }
 
 //------------------------------------------------------------------------------
+bool display_manager::has_comment_row() const
+{
+    return !!*m_curr.get_comment_row();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::clear_comment_row()
+{
+    if (*m_curr.get_comment_row())
+    {
+        _rl_move_vert(_rl_vis_botlin + 1);
+        _rl_cr();
+        _rl_last_c_pos = 0;
+        _rl_clear_to_eol(0);
+        m_curr.clear_comment_row();
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_manager::update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt)
 {
     uint32 lcol = d->m_x;
@@ -2468,6 +2485,14 @@ bool use_display_manager()
 #endif
     return s_use_display_manager;
 }
+
+//------------------------------------------------------------------------------
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
+void clear_comment_row()
+{
+    s_display_manager.clear_comment_row();
+}
+#endif
 
 //------------------------------------------------------------------------------
 extern "C" void host_on_new_line()
