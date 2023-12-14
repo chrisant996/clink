@@ -10,6 +10,7 @@
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
 - Fixed the return value from `rl_buffer:setcursor()`.
+- Fixed `console:getnumlines()` between onendedit and onbeginedit.
 - Fixed erasing the "History expansion for" preview when the transient prompt is enabled.
 - Fixed the transient prompt sometimes not erasing properly (regression introduced in v1.5.17).
 
