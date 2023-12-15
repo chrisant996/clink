@@ -8,6 +8,7 @@
   - Each of the following CMD syntax errors are recognized:  lines starting with `&` or `@2>`, and lines containing `& &` or `2>&file`.
   - The whole redirections `2>file` or `>file` or `2>&1` are colored instead of only the `>` or `>&`.
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
+- Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
 - Fixed the return value from `rl_buffer:setcursor()`.
 - Fixed `console:getnumlines()` between onendedit and onbeginedit.
