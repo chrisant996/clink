@@ -309,7 +309,14 @@ end
 
 --------------------------------------------------------------------------------
 local function set_handler(match_word, word_index, line_state) -- luacheck: no unused
-    return settings.list()
+    local list = settings.list()
+    local desc_color = settings.get("color.description")
+    for _, m in ipairs(list) do
+        if m.match:find("^color%.") then
+            m.description = "(\x1b["..settings.get(m.match).."mSample\x1b[0;"..desc_color.."m) "..m.description
+        end
+    end
+    return list
 end
 
 --------------------------------------------------------------------------------
