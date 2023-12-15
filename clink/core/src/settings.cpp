@@ -984,10 +984,6 @@ bool setting_color::parse(const char* value, store<const char*>& out)
         itoa(fg, buf, 10);
         code << ";" << buf;
     }
-    else
-    {
-        code << ";39";
-    }
 
     if (bg >= 0)
     {
@@ -997,10 +993,6 @@ bool setting_color::parse(const char* value, store<const char*>& out)
         char buf[10];
         itoa(bg, buf, 10);
         code << ";" << buf;
-    }
-    else
-    {
-        code << ";49";
     }
 
     out.value = code.c_str();
