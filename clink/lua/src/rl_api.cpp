@@ -338,7 +338,7 @@ static int32 is_rl_variable_true(lua_State* state)
 ///
 /// The <span class="arg">key</span> sequence string is the same format as from
 /// <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering
-/// Clink key sindings</a> for more information.
+/// Clink key bindings</a> for more information.
 ///
 /// An optional <span class="arg">keymap</span> may be specified as well.  If it
 /// is omitted or nil, then the current keymap is searched.  Otherwise it may
@@ -443,7 +443,7 @@ static int32 get_rl_binding(lua_State* state)
 ///
 /// The <span class="arg">key</span> sequence string is the same format as from
 /// <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering
-/// Clink key sindings</a> for more information.
+/// Clink key bindings</a> for more information.
 ///
 /// The <span class="arg">binding</span> is either the name of a Readline
 /// command, a quoted macro string (just like in the .inputrc config file), or
