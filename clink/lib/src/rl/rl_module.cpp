@@ -2403,13 +2403,11 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     m_rl_prompt.clear();
     m_rl_rprompt.clear();
 
-    bool force_prompt_color = false;
     {
         str<16> tmp;
         const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
         if (prompt_color)
         {
-            force_prompt_color = true;
             m_rl_prompt.format("\x01%s\x02", prompt_color);
             if (rprompt)
                 m_rl_rprompt.format("\x01%s\x02", prompt_color);
@@ -2417,7 +2415,8 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     }
 
     ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-    if (get_native_ansi_handler() != ansi_handler::conemu)
+    const ansi_handler native = get_native_ansi_handler();
+    if (native != ansi_handler::conemu && native != ansi_handler::winterminal)
         flags |= ecma48_processor_flags::apply_title;
     ecma48_processor(prompt, &m_rl_prompt, nullptr/*cell_count*/, flags);
     if (rprompt)
