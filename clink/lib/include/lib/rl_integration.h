@@ -39,6 +39,7 @@ void    clear_pending_lastfunc();
 //------------------------------------------------------------------------------
 void    add_macro_description(const char* macro, const char* desc);
 void    clear_macro_descriptions();
+bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort);
 
 //------------------------------------------------------------------------------
 void    signal_terminal_resized();

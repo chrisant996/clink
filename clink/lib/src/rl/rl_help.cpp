@@ -428,7 +428,7 @@ static void concat_key_string(int32 i, str<32>& keyseq)
 }
 
 //------------------------------------------------------------------------------
-static bool translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort)
+bool translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort)
 {
     static const char ctrl_map[] = "@abcdefghijklmnopqrstuvwxyz[\\]^_";
 

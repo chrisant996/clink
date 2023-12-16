@@ -385,6 +385,7 @@ extern int rl_read_init_file (const char *);
 extern int rl_parse_and_bind (char *);
 /* begin_clink_change */
 extern const char *rl_get_last_init_file (void);
+extern int rl_translate_old_keyseq (const char *, char **);
 /* end_clink_change */
 
 /* Functions for manipulating keymaps. */

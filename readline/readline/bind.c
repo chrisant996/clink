@@ -1929,6 +1929,72 @@ rl_parse_and_bind (char *string)
   return 0;
 }
 
+/* begin_clink_change
+ * Copied from rl_parse_and_bind... */
+int
+rl_translate_old_keyseq (const char* string, char** out)
+{
+  const char* kname;
+  int key, foundmod;
+/* begin_clink_change */
+  int has_meta;
+  int keyseq_len;
+  char keyseq[3];
+/* end_clink_change */
+
+  /* Get the actual character we want to deal with. */
+  kname = strrchr (string, '-');
+  if (kname == 0)
+    kname = string;
+  else
+    kname++;
+
+  key = glean_key_from_name (kname);
+
+  /* Add in control and meta bits. */
+  foundmod = 0;
+  if (substring_member_of_array (string, _rl_possible_control_prefixes))
+    {
+      key = CTRL (_rl_to_upper (key));
+      foundmod = 1;
+    }
+
+/* begin_clink_change */
+  has_meta = 0;
+/* end_clink_change */
+  if (substring_member_of_array (string, _rl_possible_meta_prefixes))
+    {
+/* begin_clink_change */
+      //key = META (key);
+      key = UNMETA (key);
+      has_meta = 1;
+/* end_clink_change */
+      foundmod = 1;
+    }
+
+  if (foundmod == 0 && kname != string)
+/* begin_clink_change */
+    //return 1;
+    return 0;
+/* end_clink_change */
+
+/* begin_clink_change */
+  keyseq_len = 0;
+  if (has_meta)
+    keyseq[keyseq_len++] = ESC;
+  keyseq[keyseq_len++] = key;
+  keyseq[keyseq_len++] = '\0';
+/* end_clink_change */
+
+/* begin_clink_change */
+  *out = (char *)xmalloc (keyseq_len);
+  memcpy (out, keyseq, keyseq_len);
+
+  return keyseq_len - 1;
+/* end_clink_change */
+}
+/* end_clink_change */
+
 /* Simple structure for boolean readline variables (i.e., those that can
    have one of two values; either "On" or 1 for truth, or "Off" or 0 for
    false. */
