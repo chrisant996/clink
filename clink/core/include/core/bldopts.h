@@ -29,6 +29,13 @@
 #define SHOW_VERT_SCROLLBARS
 
 //------------------------------------------------------------------------------
+// Define to include the match.coloring_rules setting.
+// The %CLINK_MATCH_COLORS% environment variable is included regardless.
+#ifdef DEBUG
+#define INCLUDE_MATCH_COLORING_RULES    // Needs documentation.
+#endif
+
+//------------------------------------------------------------------------------
 // Debugging options.
 #ifdef DEBUG
 //#define TRACE_ASSERT_STACK

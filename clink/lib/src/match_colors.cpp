@@ -37,10 +37,68 @@ static const auto& LS_COLORS_indicator = _rl_color_indicator;
 
 //------------------------------------------------------------------------------
 #ifdef INCLUDE_MATCH_COLORING_RULES
+static const char c_match_colors_help[] =
+"The string is a series of one or more rules, delimited by : characters.\n"
+"\n"
+"Each rule is a series of one or more conditions delimited by spaces, followed\n"
+"by an equal sign and then the SGR parameters for an ANSI escape code.  All of\n"
+"the conditions must be true for the rule to match (in other words, a space is\n"
+"like an AND operator).\n"
+"\n"
+"Each condition can be any of the following types:\n"
+"    di          Directory.\n"
+"    ex          Executable file.\n"
+"    fi          Normal file.\n"
+"    hi          Hidden file or directory.\n"
+"    ln          Symlink; \"ln=target\" uses the color from the target.\n"
+"    mi          Missing file or directory.\n"
+"    no          Normal color; covers anything not covered by any other types.\n"
+"    or          Orphaned symlink (the target of the symlink is missing).\n"
+"    ro          Readonly file or directory.\n"
+"\n"
+"Special types:\n"
+"    so          Applies to the common prefix for possible completions.\n"
+"    *.readline-colored-completion-prefix\n"
+"                Applies to the common prefix for possible completions.\n"
+"\n"
+"Conditions may include the following operators:\n"
+"                Spaces act as an AND operator.\n"
+"    any         Clears all types in the rule, including the implicit default\n"
+"                \"fi\" type when no type is given.\n"
+"    not         Negate the next condition; for example, \"not di\" means when\n"
+"                not a directory, or \"not *.txt\" means when *.txt pattern\n"
+"                doesn't match.\n"
+"\n"
+"Conditions may include patterns for matching files:\n"
+"    pattern     Anything else is a fnmatch pattern (like .gitignore globbing\n"
+"                patterns).  But the pattern is compared only to the filename\n"
+"                portion after stripping the path.\n"
+"\n"
+"Any quoted string is assumed to be a pattern, so \"hi\" is a pattern instead\n"
+"of the Hidden type, and etc.\n"
+"\n"
+"Rules are evaluated in the order listed, with one exception:  Rules with\n"
+"exactly one type and no patterns are evaluated last; this makes it easier to\n"
+"list the rules -- you can put the defaults first, followed by specializations.\n"
+"\n"
+"NOTE:  This is the same as how the %%LS_COLORS%% environment variable works,\n"
+"except this adds \"hi\", \"ro\", \"any\", and \"not\", and patterns can be\n"
+"wildmatch patterns instead of just *.ext patterns.\n"
+"\n"
+"Examples:\n"
+"\n"
+"    di=94;di *.tmp=90\n"
+"            Directories in bright blue, but dirs ending in .tmp in magenta.\n"
+"    di=93;so=96:ro ex=1;32:ex=1:ro=32\n"
+"            Directories in bright yellow, common prefix in bright cyan,\n"
+"            readonly executable files in bold green, readonly files in green,\n"
+"            and executable files in bold."
+;
+
 static setting_str g_match_colordef(
     "match.coloring_rules",
     "Coloring rules for completions",
-    "TBD.",
+    c_match_colors_help,
     "");
 #endif
 
