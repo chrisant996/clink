@@ -1345,9 +1345,13 @@ static int32 translate_key(lua_State* state)
             {
                 // "Old style" bindable sequence to input sequence.
                 keys_len = rl_translate_old_keyseq(input, &out);
-                keys.reserve(keys_len);
-                memcpy(keys.data(), out, keys_len + 1);
-                free(out);
+                if (out)
+                {
+                    keys.reserve(keys_len);
+                    memcpy(keys.data(), out, keys_len + 1);
+                    free(out);
+                    out = nullptr;
+                }
             }
 
             if (form == 3)

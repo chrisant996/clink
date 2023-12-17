@@ -1940,6 +1940,8 @@ rl_translate_old_keyseq (const char* string, char** out)
   int has_meta;
   int keyseq_len;
   char keyseq[3];
+
+  *out = 0;
 /* end_clink_change */
 
   /* Get the actual character we want to deal with. */
@@ -1988,7 +1990,7 @@ rl_translate_old_keyseq (const char* string, char** out)
 
 /* begin_clink_change */
   *out = (char *)xmalloc (keyseq_len);
-  memcpy (out, keyseq, keyseq_len);
+  memcpy (*out, keyseq, keyseq_len);
 
   return keyseq_len - 1;
 /* end_clink_change */
