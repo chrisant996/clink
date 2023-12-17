@@ -57,15 +57,6 @@ const char** host_copy_dir_history(int32* total)
     return s_callbacks->copy_dir_history(total);
 }
 
-//------------------------------------------------------------------------------
-void host_get_app_context(int32& id, host_context& context)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->get_app_context(id, context);
-}
-
 
 
 //------------------------------------------------------------------------------

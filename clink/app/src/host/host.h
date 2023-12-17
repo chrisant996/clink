@@ -71,7 +71,6 @@ public:
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;
     void            send_oninputlinechanged_event(const char* line) override;
     bool            has_event_handler(const char* event_name) override;
-    void            get_app_context(int32& id, host_context& context) override;
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();

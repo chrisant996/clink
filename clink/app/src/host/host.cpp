@@ -292,6 +292,21 @@ bool host_remove_dir_history(int32 index)
     return false;
 }
 
+//------------------------------------------------------------------------------
+void host_get_app_context(int32& id, host_context& context)
+{
+    const auto* app = app_context::get();
+    if (app)
+    {
+        id = app->get_id();
+        app->get_binaries_dir(context.binaries);
+        app->get_state_dir(context.profile);
+        app->get_default_settings_file(context.default_settings);
+        app->get_default_init_file(context.default_inputrc);
+        app->get_script_path_readable(context.scripts);
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -665,19 +680,6 @@ bool host::has_event_handler(const char* event_name)
         return false;
 
     return lua_toboolean(state, -1) != false;
-}
-
-//------------------------------------------------------------------------------
-void host::get_app_context(int32& id, host_context& context)
-{
-    const auto* app = app_context::get();
-
-    id = app->get_id();
-    app->get_binaries_dir(context.binaries);
-    app->get_state_dir(context.profile);
-    app->get_default_settings_file(context.default_settings);
-    app->get_default_init_file(context.default_inputrc);
-    app->get_script_path_readable(context.scripts);
 }
 
 //------------------------------------------------------------------------------

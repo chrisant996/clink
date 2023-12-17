@@ -12,6 +12,7 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <terminal/ecma48_iter.h>
+#include <lib/host_callbacks.h>
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
 #include <lib/matches.h>
@@ -1394,6 +1395,35 @@ static int32 bracket_prompt_codes(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+// DOCUMENTATION PROBLEM:  How to document APIs that are _only_ available in
+// the standalone Lua interpret?
+static int32 load_init_file(lua_State* state)
+{
+    static bool s_initialised = false;
+    if (!s_initialised)
+    {
+        s_initialised = true;
+
+        int32 id;
+        host_context context;
+        host_get_app_context(id, context);
+        const char* state_dir = context.profile.empty() ? nullptr : context.profile.c_str();
+        const char* default_inputrc = context.default_inputrc.empty() ? nullptr : context.default_inputrc.c_str();
+
+        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
+        initialise_readline("clink", state_dir, default_inputrc);
+    }
+    else
+    {
+        _rl_disable_meta_key();
+        _rl_set_insert_mode(RL_IM_INSERT, 0);
+
+        rl_re_read_init_file(0, 0);
+    }
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1427,6 +1457,12 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0, "islineequal",             &is_line_equal },
         { 1, "translatekey",            &translate_key },
         { 1, "bracketpromptcodes",      &bracket_prompt_codes },
+        // UNDOCUMENTED; only for the standalone interpreter.
+        // The standalone Lua interpreter doesn't automatically load any
+        // Readline init file (.inputrc, _inputrc, etc).  Any API functions
+        // that implicitly use Readline config variables may not work as
+        // expected until after using rl.loadinitfile().
+        { -1, "loadinitfile",           &load_init_file },
     };
 
     lua_State* state = lua.get_state();
