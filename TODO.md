@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `clink.popuplist()` seems to always return `.display` instead of `.value`?  E.g. "<nothing>" is returned instead of "*" when inputrc_editor.lua tries to bind a key to "<nothing>".
 
 ## Normal Priority
 - `dump-functions` lists unfriendly bash style key sequences;
