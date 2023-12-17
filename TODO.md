@@ -7,6 +7,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- `dump-functions` lists unfriendly bash style key sequences;
+  - Make `clink-dump-functions` and `clink-dump-macros`.
+  - They should report friendly key names and understand that `luafunc:` macros are effectively commands.
+- Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
+  - [x] Need Lua function to convert key input string to key name (friendly key name, or key binding string).
+  - [x] Need Lua function to convert key binding string to key input string.
+  - [ ] Need Lua function to get available commands, and their info.
+  - [x] Need Lua function to apply Readline `\1` `\2` codes.
+  - Make `clink-reload` reset the keymaps to their original default states?
+  - Maybe have a way to get the original default key bindings?
+- Some wizard for interactively viewing/modifying color settings.
+- Do `history-size` or other deprecated init variables break Clink...?
 
 ## Low Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
