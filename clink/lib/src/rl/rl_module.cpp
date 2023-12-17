@@ -1769,6 +1769,59 @@ static void init_readline_hooks()
 }
 
 //------------------------------------------------------------------------------
+static bool is_ok_inputrc(const char* default_inputrc)
+{
+    // The "default_inputrc" file was introduced in v1.3.5, but up through
+    // v1.6.0 it wasn't actually loaded properly.  And the provided one had
+    // syntax errors, so the fix in v1.6.1 is careful to avoid loading the
+    // default_inputrc file if it contains only the syntax error lines.
+
+    static const char* const c_oops[] =
+    {
+        "colored-completion-prefix",
+        "colored-stats",
+        "mark-symlinked-directories",
+        "completion-auto-query-items",
+        "history-point-at-end-of-anchored-search",
+        "search-ignore-case",
+    };
+
+    FILE* f = fopen(default_inputrc, "r");
+    if (!f)
+        return true;
+
+    char buffer[128];
+    while (fgets(buffer, sizeof_array(buffer), f))
+    {
+        bool found = false;
+        size_t len = strlen(buffer);
+        while (len && strchr("\r\n", buffer[len - 1]))
+            buffer[--len] = '\0';
+        if (!buffer[0] || strchr("#\r\n", buffer[0]))
+            continue;
+        for (const char* oops : c_oops)
+        {
+            const size_t oops_len = strlen(oops);
+            if (len >= oops_len && strnicmp(oops, buffer, oops_len) == 0)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            fclose(f);
+            return true;
+        }
+    }
+    fclose(f);
+
+    // The file contains only the specific syntax errors from the original
+    // default_inputrc mistake.  Don't load it.
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc)
 {
     // Can't give a more specific scope like "Readline initialization", because
@@ -1799,7 +1852,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         s_rl_initialized = true;
 
         static str_moveable s_default_inputrc;
-        s_default_inputrc = default_inputrc;
+        if (is_ok_inputrc(default_inputrc))
+            s_default_inputrc = default_inputrc;
         _rl_default_init_file = s_default_inputrc.empty() ? nullptr : s_default_inputrc.c_str();
 
         init_readline_hooks();

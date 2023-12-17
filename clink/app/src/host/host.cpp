@@ -868,10 +868,10 @@ skip_errorlevel:
         // Load inputrc before loading scripts.  Config settings in inputrc can
         // affect Lua scripts (e.g. completion-case-map affects '-' and '_' in
         // command names in argmatchers).
-        str_moveable bin_dir;
-        app->get_binaries_dir(bin_dir);
-        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
-        initialise_readline("clink", state_dir.c_str(), bin_dir.c_str());
+        str_moveable default_inputrc;
+        app->get_default_init_file(default_inputrc);
+        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
+        initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
         initialise_lua(lua);
         lua.load_scripts();
     }

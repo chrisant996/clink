@@ -98,12 +98,12 @@ void test_editor::start(const char* prompt)
 
 #ifdef INIT_READLINE
     // initialise_readline() needs a printer_context to be active.
-    str_moveable bin_dir;
     str_moveable state_dir;
-    app_context::get()->get_binaries_dir(bin_dir);
+    str_moveable default_inputrc;
     app_context::get()->get_state_dir(state_dir);
-    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
-    initialise_readline("clink", state_dir.c_str(), bin_dir.c_str());
+    app_context::get()->get_default_init_file(default_inputrc);
+    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
+    initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
 #endif
 
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);

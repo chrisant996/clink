@@ -1414,13 +1414,16 @@ static int32 load_init_file(lua_State* state)
         extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
         initialise_readline("clink", state_dir, default_inputrc);
     }
+#if 0
     else
     {
         _rl_disable_meta_key();
         _rl_set_insert_mode(RL_IM_INSERT, 0);
 
+// TODO:  This is insufficient; load_user_inputrc() does more than just that.
         rl_re_read_init_file(0, 0);
     }
+#endif
     return 0;
 }
 
