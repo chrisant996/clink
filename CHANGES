@@ -7,9 +7,9 @@
   - Commands starting with `@` are supported, and completion correctly ignores the `@`.
   - Each of the following CMD syntax errors are recognized:  lines starting with `&` or `@2>`, and lines containing `& &` or `2>&file`.
   - The whole redirections `2>file` or `>file` or `2>&1` are colored instead of only the `>` or `>&`.
+- Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Added `rl.translatekey()` and `rl.bracketpromptcodes()`.
-- Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
@@ -23,7 +23,7 @@
   - New features:
     - History expansion better understands multiple history expansions that may contain strings that would ordinarily inhibit history expansion (e.g., `abc!$!$`).
     - There is a new `fetch-history` bindable command that retrieves the history entry corresponding to its numeric argument. Negative arguments count back from the end of the history.
-    - There is a new option: `enable-active-region`. This separates control of the active region and bracketed-paste. It has the same default value as `bracketed-paste`, and enabling bracketed paste enables the active region. Users can now turn off the active region while leaving bracketed paste enabled.
+    - There is a new option: `enable-active-region`. This separates control of the active region and bracketed-paste. It has the same default value as `enable-bracketed-paste`, and enabling bracketed paste enables the active region. Users can now turn off the active region while leaving bracketed paste enabled. (Note that bracketed paste is currently ignored in Clink.)
     - Readline looks in `%LS_COLORS%` for a custom filename extension (`*.readline-colored-completion-prefix`) and uses that as the default color for the common prefix displayed when `colored-completion-prefix` is set, superseding the `so` type if both are present.
     - Two new bindable string variables: `active-region-start-color` and `active-region-end-color`. The first sets the color used to display the active region; the second is unused and unnecessary in Clink, but exists anyway for compatibility. If set, these are used in place of terminal standout mode.
   - Fixes:
@@ -32,7 +32,6 @@
     - Fixed a bug that could cause readline to crash if the application removed the callback line handler before readline read all typeahead.
     - Added additional checks for read errors in the middle of readline commands.
     - Fixed a problem with `unix-filename-rubout` that caused it to delete too much when applied to a pathname consisting only of one or more slashes.
-    - Fixed a problem that caused the `\r` output by turning off bracketed paste to overwrite the line if terminal echo was disabled.
     - Fixed a couple problems where `transpose-words` could corrupt the end of the input line.
     - Fixed an issue that caused a history line's undo list to be cleared when it should not have been.
     - Fixed leaked memory from undo lists.
