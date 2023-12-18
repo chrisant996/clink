@@ -60,7 +60,7 @@ void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
 
 // These are implemented in os.cpp.
-extern double os_clock();
+extern double os_clock(void);
 
 // These are implemented in matches_lookaside.cpp.
 extern int lookup_match_type(const char* match);
