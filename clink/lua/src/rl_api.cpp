@@ -1402,9 +1402,12 @@ static int32 bracket_prompt_codes(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  getinputrcfilename
 /// -ver:   1.6.1
-/// -ret:   string | nil
+/// -ret:   string|nil, string|nil
 /// Returns the path and file name of the Readline init file that was loaded, if
-/// any.  See [Init File](#init-file) for more info.
+/// any.  Also returns the path and file name of the default Readline init file,
+/// if any is present.
+///
+/// See [Init File](#init-file) for more info.
 static int32 get_inputrc_file_name(lua_State* state)
 {
     static bool s_initialised = !lua_state::is_interpreter();
@@ -1434,7 +1437,16 @@ static int32 get_inputrc_file_name(lua_State* state)
 
     // May return nullptr, which turns into nil, which is intended.
     lua_pushstring(state, rl_get_last_init_file());
-    return 1;
+
+    int32 id;
+    host_context context;
+    host_get_app_context(id, context);
+    if (context.default_inputrc.empty())
+        lua_pushnil(state);
+    else
+        lua_pushstring(state, context.default_inputrc.c_str());
+
+    return 2;
 }
 
 
