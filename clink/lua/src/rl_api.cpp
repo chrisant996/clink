@@ -1400,11 +1400,14 @@ static int32 bracket_prompt_codes(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-// DOCUMENTATION PROBLEM:  How to document APIs that are _only_ available in
-// the standalone Lua interpret?
-static int32 load_init_file(lua_State* state)
+/// -name:  getinputrcfilename
+/// -ver:   1.6.1
+/// -ret:   string | nil
+/// Returns the path and file name of the Readline init file that was loaded, if
+/// any.  See [Init File](#init-file) for more info.
+static int32 get_inputrc_file_name(lua_State* state)
 {
-    static bool s_initialised = false;
+    static bool s_initialised = !lua_state::is_interpreter();
     if (!s_initialised)
     {
         s_initialised = true;
@@ -1428,7 +1431,10 @@ static int32 load_init_file(lua_State* state)
         rl_re_read_init_file(0, 0);
     }
 #endif
-    return 0;
+
+    // May return nullptr, which turns into nil, which is intended.
+    lua_pushstring(state, rl_get_last_init_file());
+    return 1;
 }
 
 
@@ -1464,12 +1470,7 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0, "islineequal",             &is_line_equal },
         { 1, "translatekey",            &translate_key },
         { 1, "bracketpromptcodes",      &bracket_prompt_codes },
-        // UNDOCUMENTED; only for the standalone interpreter.
-        // The standalone Lua interpreter doesn't automatically load any
-        // Readline init file (.inputrc, _inputrc, etc).  Any API functions
-        // that implicitly use Readline config variables may not work as
-        // expected until after using rl.loadinitfile().
-        { -1, "loadinitfile",           &load_init_file },
+        { 1, "getinputrcfilename",      &get_inputrc_file_name },
     };
 
     lua_State* state = lua.get_state();
