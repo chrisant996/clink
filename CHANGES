@@ -9,9 +9,12 @@
   - The whole redirections `2>file` or `>file` or `2>&1` are colored instead of only the `>` or `>&`.
 - Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
-- Added `rl.translatekey()` and `rl.bracketpromptcodes()`.
+- Added `rl.getinputrcfilename()`.
+- Added `rl.translatekey()`.
+- Added `rl.bracketpromptcodes()`.
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
+- Fixed updating column text in `clink.popuplist()` when <kbd>Del</kbd> is pressed (e.g. history timestamps in the `clink-popup-history` command).
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
 - Fixed the return value from `rl_buffer:setcursor()`.
 - Fixed `console:getnumlines()` between onendedit and onbeginedit.
