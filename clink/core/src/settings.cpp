@@ -1049,6 +1049,7 @@ void setting_color::get_descriptive(str_base& out) const
     str_iter part;
     str_tokeniser parts(tmp.c_str(), ";");
 
+    bool any_fg = false;
     while (parts.next(part))
     {
         int32 x = int_from_str_iter(part);
@@ -1092,17 +1093,21 @@ nope:
                 x -= 60;
             }
             out << color_names[x - 30] << " ";
+            any_fg = true;
         }
         else if (x == 39)
         {
             if (expected > fg_token) goto nope;
             expected = fg_token + 1;
             out << "default ";
+            any_fg = true;
         }
         else if ((x >= 40 && x < 48) || (x >= 100 && x < 108))
         {
             if (expected > bg_token) goto nope;
             expected = bg_token + 1;
+            if (!any_fg)
+                out << "default ";
             out << "on ";
             x -= 10;
             if (x >= 90)
