@@ -356,6 +356,14 @@ void textlist_impl::addl_columns::add_columns(const char* ptr)
 }
 
 //------------------------------------------------------------------------------
+void textlist_impl::addl_columns::erase_row(int32 row)
+{
+    assert(row >= 0 && row < m_rows.size());
+    if (row >= 0 && row < m_rows.size())
+        m_rows.erase(m_rows.begin() + row);
+}
+
+//------------------------------------------------------------------------------
 int32 textlist_impl::addl_columns::calc_widths(int32 available)
 {
     memset(&m_layout_width, 0, sizeof(m_layout_width));
@@ -906,6 +914,10 @@ find:
             int32 move_count = (m_count - 1) - m_index;
             memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
             m_items.erase(m_items.begin() + m_index);
+            if (m_has_columns)
+                m_columns.erase_row(m_index);
+            if (m_entries)
+                memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
             if (m_infos)
             {
                 memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));

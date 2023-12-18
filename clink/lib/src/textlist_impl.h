@@ -51,6 +51,7 @@ class textlist_impl
         int32       get_col_layout_width(int32 col) const;
         const char* add_entry(const char* entry);
         void        add_columns(const char* columns);
+        void        erase_row(int32 row);
         int32       calc_widths(int32 available);
         bool        get_any_tabs() const;
         void        clear();
