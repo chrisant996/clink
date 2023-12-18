@@ -72,10 +72,28 @@ extern Keymap _rl_dispatching_keymap;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-const int32 RL_MORE_INPUT_STATES = ~(RL_STATE_CALLBACK|
-                                     RL_STATE_INITIALIZED|
-                                     RL_STATE_OVERWRITE|
-                                     RL_STATE_VICMDONCE);
+const int32 RL_RESET_STATES = ~(RL_STATE_INITIALIZED|
+                                RL_STATE_TERMPREPPED|
+                                RL_STATE_OVERWRITE|
+                                RL_STATE_CALLBACK|
+                                RL_STATE_VICMDONCE|
+                                RL_STATE_DONE|
+                                RL_STATE_TIMEOUT|
+                                RL_STATE_EOF);
+const int32 RL_MORE_INPUT_STATES = (RL_STATE_READCMD|
+                                    RL_STATE_METANEXT|
+                                    RL_STATE_DISPATCHING|
+                                    RL_STATE_MOREINPUT|
+                                    RL_STATE_ISEARCH|
+                                    RL_STATE_NSEARCH|
+                                    RL_STATE_SEARCH|
+                                    RL_STATE_NUMERICARG|
+                                    RL_STATE_MACROINPUT|
+                                    RL_STATE_MACRODEF|
+                                    RL_STATE_INPUTPENDING|
+                                    RL_STATE_VIMOTION|
+                                    RL_STATE_MULTIKEY|
+                                    RL_STATE_CHARSEARCH);
 const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
                                       RL_STATE_NSEARCH|
                                       RL_STATE_CHARSEARCH);
@@ -1047,7 +1065,7 @@ void force_signaled_redisplay()
 }
 
 //------------------------------------------------------------------------------
-void hook_display()
+static void hook_display()
 {
     struct clear_want { ~clear_want() { _rl_want_redisplay = false; } } clear_want;
 
@@ -2742,7 +2760,8 @@ void rl_module::on_end_line()
     _rl_selected_color = nullptr;
 
     // This prevents any partial Readline state leaking from one line to the next
-    rl_readline_state &= ~RL_MORE_INPUT_STATES;
+    assert(!RL_ISSTATE(RL_RESET_STATES));
+    RL_UNSETSTATE(RL_RESET_STATES);
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
@@ -2861,7 +2880,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     // Call Readline's until there's no characters left.
 //#define USE_RESEND_HACK
 #ifdef USE_RESEND_HACK
-    int32 is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
+    int32 is_inc_searching = RL_ISSTATE(RL_STATE_ISEARCH);
 #endif
     uint32 len = input.len;
     rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &len);
@@ -2933,7 +2952,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     }
 
     // Check if Readline wants more input or if we're done.
-    if (rl_readline_state & RL_MORE_INPUT_STATES)
+    if (RL_ISSTATE(RL_MORE_INPUT_STATES))
     {
         assert(m_prev_group >= 0);
         int32 group = result.set_bind_group(m_catch_group);
