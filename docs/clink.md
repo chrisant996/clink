@@ -2022,7 +2022,7 @@ The function receives five arguments:
 
 The function may return any of the following values:
 - Return `1` to advance to the next argument position _before_ parsing the word (normally the parser advances _after_ parsing a word).  Multiple advances are possible for the same word:  if the "on advance" functions for argument positions 2, 3, and 4 all return `1`, then argument position 5 will parse the word.
-- Return `0` to repeat using same argument position to parse both the current word and the next word.  Multiple repititions are possible for the same argument position:  if the "on advance" function for argument position 3 returns `0` for three words in a row, then all three of the words are parsed using argument position 3.
+- Return `0` to repeat using same argument position to parse both the current word and the next word.  Multiple repetitions are possible for the same argument position:  if the "on advance" function for argument position 3 returns `0` for three words in a row, then all three of the words are parsed using argument position 3.
 - Return `-1` to behave as though [:chaincommand()](#_argmatcher:chaincommand) were used, and start parsing a new command line beginning at `word_index`.  To start at the _next_ word index, see the "[chain next](#chainnextexample)" example below.
 - Return `nil` (either `return nil` or just `return`) to advance to the next argument position _after_ parsing the word (this is the default behavior).
 
@@ -2051,11 +2051,11 @@ clink.argmatcher("start")
 :chaincommand()
 ```
 
-<a name="chainnextexample"/>
+<a name="chainnextexample"></a>
 
 This example demonstrates how to chain on the next word, or also on the current word:
 - `foo chain bar` chains starting at word 3 ("bar").
-- `foo whatever.exe` chains starting at word w ("whatever.exe").
+- `foo whatever.exe` chains starting at word 2 ("whatever.exe").
 
 ```lua
 local function chain_on_word(arg_index, word, word_index, line_state, user_data)
