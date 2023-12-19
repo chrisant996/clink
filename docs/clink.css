@@ -50,6 +50,20 @@ a code:hover {
     text-decoration: none;
 }
 
+.uplinks {
+    opacity: 0%;
+    font-size: 0.80rem;
+    font-weight: normal;
+    -webkit-user-select: none;
+    user-select: none;
+    margin-left: 0.15rem;
+    margin-right: 0.15rem;
+}
+
+.uplinks a {
+    margin-right: 0.15rem;
+}
+
 .wfix {
     visibility: hidden;
     display: inline-block;
@@ -59,10 +73,14 @@ a code:hover {
 }
 
 h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink, td:hover .wlink { opacity: 100%; }
-h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink, td:focus .wlink { opacity: 100%; }
+h1:focus-within .wlink, h2:focus-within .wlink, h3:focus-within .wlink, h4:focus-within .wlink, h5:focus-within .wlink, h6:focus-within .wlink, td:focus-within .wlink { opacity: 100%; }
+h1:hover .uplinks, h2:hover .uplinks, h3:hover .uplinks, h4:hover .uplinks, h5:hover .uplinks, h6:hover .uplinks { opacity: 100%; }
+h1:focus-within .uplinks, h2:focus-within .uplinks, h3:focus-within .uplinks, h4:focus-within .uplinks, h5:focus-within .uplinks, h6:focus-within .uplinks { opacity: 100%; }
 
 .wlink:hover { opacity: 100%; text-decoration: underline; }
-.wlink:focus { opacity: 100%; text-decoration: underline; }
+.wlink:focus-within { opacity: 100%; text-decoration: underline; }
+.uplinks:hover { opacity: 100% }
+.uplinks:focus-within { opacity: 100% }
 
 h1, h2, h3, h4, h5, h6, dt { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
 
@@ -341,19 +359,29 @@ kbd {
     margin-top: -0.5rem;
 }
 
-#content #api .header .name {
-    font-weight: bold;
-    float: left;
-    width: 40%;
-    position: relative;
+#content #api .header {
+    display: flex;
+    justify-content: space-between;
 }
 
-#content #api .header .name:hover .wlink {
+#content #api .header .name {
+    font-weight: bold;
+    position: relative;
+    vertical-align: top;
+    padding-right: 1rem;
+}
+
+#content #api .header:hover .wlink {
+    opacity: 100%;
+}
+
+#content #api .header:hover .uplinks {
     opacity: 100%;
 }
 
 #content #api .header .signature {
     text-align: right;
+    vertical-align: top;
 }
 
 #content #api .group_name {

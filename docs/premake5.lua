@@ -12,6 +12,20 @@ local function make_weblink(name)
 end
 
 --------------------------------------------------------------------------------
+local function make_uplinks(name, api)
+    local uplinks = ' <span class="uplinks">'
+    if name then
+        uplinks = uplinks..'<a href="#'..name..'">up</a> '
+    end
+    if api then
+        uplinks = uplinks..'<a href="#lua-api">apis</a> '
+    end
+    uplinks = uplinks..'<a href="#toc">top</a>'
+    uplinks = uplinks..'</span>'
+    return uplinks
+end
+
+--------------------------------------------------------------------------------
 local function markdown_file(source_path, out)
     print("  << " .. source_path)
 
@@ -47,6 +61,29 @@ local function generate_file(source_path, out, weblinks)
     print("  << " .. source_path)
     local docver = _OPTIONS["docver"] or clink_git_name:upper()
     local last_name
+
+    local outline_stack = {}
+    local function apply_outline(hopen, hcontent)
+        if hopen and hcontent then
+            local hlevel = hopen:match('<h([0-9])')
+            if hlevel then
+                hlevel = tonumber(hlevel)
+                for i = hlevel, 9 do
+                    outline_stack[i] = nil
+                end
+                for i = hlevel, 1, -1 do
+                    up = outline_stack[i]
+                    if up then
+                        break
+                    end
+                end
+                outline_stack[hlevel] = { name=last_name, text=hcontent:gsub("<[^>]*>", "") }
+                hcontent = hcontent..make_uplinks(up and up.name)
+            end
+        end
+        return hcontent
+    end
+
     local table_context, table_countdown
     for line in io.open(source_path, "r"):lines() do
         local include = line:match("%$%(INCLUDE +([^)]+)%)")
@@ -63,11 +100,10 @@ local function generate_file(source_path, out, weblinks)
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
                 line = line:gsub("<br>", "&lt;br&gt;")
                 line = line:gsub("<!%-%- NEXT PASS INCLUDE (.*) %-%->", "$(INCLUDE %1)")
-
-                local n, hopen, hclose, table_id
+                local n, hopen, htext, hclose, table_id
                 if weblinks then
                     n = line:match('^<p><a name="([^"]+)"')
-                    hopen, hclose = line:match('^( *<h[0-9][^>]*>)(.+)$')
+                    hopen, hcontent, hclose = line:match('^( *<h[0-9][^>]*>)(.+)(</h.+)$')
                     table_id = n or line:match('^ *<h[0-9]+ id="([^"]+)"')
                     if table_id == "readline-configuration-variables" or
                             table_id == "clink-settings" or
@@ -112,6 +148,7 @@ local function generate_file(source_path, out, weblinks)
                 if hopen then
                     out:write(hopen)
                     out:write(make_weblink(last_name))
+                    out:write(apply_outline(hopen, hcontent))
                     out:write(hclose .. "\n")
                 else
                     out:write(line .. "\n")
@@ -297,7 +334,10 @@ local function do_docs()
     table.sort(groups, compare_groups)
 
     local api_html = io.open(".build/docs/api_html", "w")
-    api_html:write('<h3 id="lua-api-groups">API groups</h3>')
+    api_html:write('\n<h1 id="lua-api">Lua API Reference</h1>')
+    api_html:write('\n<p>This section describes the Clink Lua API extensions.</p>')
+    api_html:write('\n<p>Also see <a href="https://www.lua.org/docs.html">Lua Documentation</a> and the <a href="https://www.lua.org/manual/5.2/">Lua 5.2 Manual</a> for more information about the Lua programming language.</p>')
+    api_html:write('\n<h3 id="lua-api-groups">API groups</h3>\n')
     api_html:write('<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><defs>')
     api_html:write('<symbol id="wicon" viewBox="0 0 16 16" fill="currentColor">')
     api_html:write('<path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>')
@@ -327,10 +367,10 @@ local function do_docs()
         end
 
         api_html:write('<div class="'..group_class..'">')
-        api_html:write('<h5 class="group_name">'..make_weblink(group.name)..'<a name="'..group.name..'">'..group.name..'</a></h5>')
+        api_html:write('\n<h5 id="'..group.name..'" class="group_name">'..group.name..'</h5>')
 
         for _, doc_tag in ipairs(group) do
-            api_html:write('<div class="function">')
+            api_html:write('\n<div class="function">')
 
             local name = doc_tag.name[1]
             local arg = table.concat(bold_name(doc_tag.arg), ", ")
@@ -352,7 +392,7 @@ local function do_docs()
                 else
                     version = ''
                 end
-                api_html:write(' <div class="name">'..make_weblink(name)..'<a name="'..name..'">'..name..'</a></div>')
+                api_html:write(' <div id="'..name..'" class="name">'..make_weblink(name)..'<span>'..name..'</span>'..make_uplinks(group.name, true)..'</div>')
                 if var then
                     api_html:write(' <div class="signature">'..var..' variable'..version..'</div>')
                 else
@@ -385,7 +425,7 @@ local function do_docs()
             api_html:write("<hr/>\n")
         end
 
-        api_html:write("</div>") -- group
+        api_html:write("\n</div>") -- group
     end
     api_html:close()
 
