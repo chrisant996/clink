@@ -1895,8 +1895,10 @@ static void safe_replace_keymap(Keymap replace, Keymap with)
 }
 
 //------------------------------------------------------------------------------
-static void save_restore_default_keymaps(const bool restore)
+static void save_restore_initial_state(const bool restore)
 {
+    // Keymaps.
+
     static const Keymap saved_vi_movement_keymap = rl_make_bare_keymap();
     static const Keymap saved_vi_insertion_keymap = rl_make_bare_keymap();
     static const Keymap saved_emacs_standard_keymap = rl_make_bare_keymap();
@@ -1914,7 +1916,7 @@ static void save_restore_default_keymaps(const bool restore)
     }
     else
     {
-        // Replace keymaps with original state.
+        // Restore saved keymaps.
         safe_replace_keymap(vi_movement_keymap, saved_vi_movement_keymap);
         safe_replace_keymap(vi_insertion_keymap, saved_vi_insertion_keymap);
         safe_replace_keymap(emacs_standard_keymap, saved_emacs_standard_keymap);
@@ -1924,6 +1926,103 @@ static void save_restore_default_keymaps(const bool restore)
         // Clear global "recent" pointer, since it could have been invalidated
         // by the operations above.
         rl_binding_keymap = nullptr;
+    }
+
+    // Config variables.
+
+    static struct {
+        int32* const target;
+        int32 saved;
+    } c_saved_int_vars[] = {
+        { &_rl_bell_preference                          },  // "bell-style"
+        { &_rl_bind_stty_chars                          },  // "bind-tty-special-chars"
+        { &rl_blink_matching_paren                      },  // "blink-matching-paren"
+        //{ &rl_byte_oriented                             },  // "byte-oriented"
+        { &_rl_colored_completion_prefix                },  // "colored-completion-prefix"
+        { &_rl_colored_stats                            },  // "colored-stats"
+        { &rl_completion_auto_query_items               },  // "completion-auto-query-items"
+        { &_rl_completion_columns                       },  // "completion-display-width"
+        { &rl_completion_query_items                    },  // "completion-query-items"
+        { &_rl_completion_case_fold                     },  // "completion-ignore-case"
+        { &_rl_completion_case_map                      },  // "completion-map-case"
+        { &_rl_completion_prefix_display_length         },  // "completion-prefix-display-length"
+        { &_rl_convert_meta_chars_to_ascii              },  // "convert-meta"
+        { &rl_inhibit_completion                        },  // "disable-completion"
+        { &_rl_echo_control_chars                       },  // "echo-control-characters"
+        { &rl_editing_mode                              },  // "editing-mode"
+        { &_rl_enable_active_region                     },  // "enable-active-region"
+        { &_rl_enable_bracketed_paste                   },  // "enable-bracketed-paste"
+        { &_rl_enable_keypad                            },  // "enable-keypad"
+        { &_rl_enable_meta                              },  // "enable-meta-key"
+        { &rl_complete_with_tilde_expansion             },  // "expand-tilde"
+        { &_rl_history_point_at_end_of_anchored_search  },  // "history-point-at-end-of-anchored-search"
+        { &_rl_history_preserve_point                   },  // "history-preserve-point"
+        //{ nullptr                                       },  // "history-size"
+        { &_rl_horizontal_scroll_mode                   },  // "horizontal-scroll-mode"
+        { &_rl_meta_flag                                },  // "input-meta"
+        { &_rl_keyseq_timeout                           },  // "keyseq-timeout"
+        { &_rl_complete_mark_directories                },  // "mark-directories"
+        { &_rl_mark_modified_lines                      },  // "mark-modified-lines"
+        { &_rl_complete_mark_symlink_dirs               },  // "mark-symlinked-directories"
+        { &_rl_match_hidden_files                       },  // "match-hidden-files"
+        { &_rl_menu_complete_prefix_first               },  // "menu-complete-display-prefix"
+        { &_rl_menu_complete_wraparound                 },  // "menu-complete-wraparound"
+        { &_rl_meta_flag                                },  // "meta-flag"
+        { &_rl_output_meta_chars                        },  // "output-meta"
+        { &_rl_page_completions                         },  // "page-completions"
+        { &_rl_bell_preference                          },  // "prefer-visible-bell"
+        { &_rl_print_completions_horizontally           },  // "print-completions-horizontally"
+        { &_rl_revert_all_at_newline                    },  // "revert-all-at-newline"
+        { &_rl_search_case_fold                         },  // "search-ignore-case"
+        { &_rl_complete_show_all                        },  // "show-all-if-ambiguous"
+        { &_rl_complete_show_unmodified                 },  // "show-all-if-unmodified"
+        { &_rl_show_mode_in_prompt                      },  // "show-mode-in-prompt"
+        { &_rl_skip_completed_text                      },  // "skip-completed-text"
+        { &rl_visible_stats                             },  // "visible-stats"
+    };
+
+    for (auto& entry : c_saved_int_vars)
+    {
+        if (!restore)
+        {
+            // Save original value.
+            entry.saved = *entry.target;
+        }
+        else
+        {
+            // Restore saved value.
+            *entry.target = entry.saved;
+        }
+    }
+
+    static struct {
+        char** const target;
+        char* saved;
+    } c_saved_string_vars[] = {
+        { &_rl_active_region_end_color                  },  // "active-region-end-color"
+        { &_rl_active_region_start_color                },  // "active-region-start-color"
+        { &_rl_comment_begin                            },  // "comment-begin"
+        { &_rl_emacs_mode_str                           },  // "emacs-mode-string"
+        { &_rl_isearch_terminators                      },  // "isearch-terminators"
+        //{ nullptr                                       },  // "keymap"
+        { &_rl_vi_cmd_mode_str                          },  // "vi-cmd-mode-string"
+        { &_rl_vi_ins_mode_str                          },  // "vi-ins-mode-string"
+    };
+
+    for (auto& entry : c_saved_string_vars)
+    {
+        if (!restore)
+        {
+            // Save original value.
+            assert(!entry.saved);
+            entry.saved = *entry.target ? savestring(*entry.target) : nullptr;
+        }
+        else
+        {
+            // Restore saved value.
+            free(*entry.target);
+            *entry.target = entry.saved ? savestring(entry.saved) : nullptr;
+        }
     }
 }
 
@@ -2078,9 +2177,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
     }
 
-    // Save/restore the original keymap table definitions so that reloading
-    // the inputrc doesn't have lingering key bindings.
-    save_restore_default_keymaps(initialized);
+    // Save/restore the original keymap table definitions and original config
+    // variable values so that reloading the inputrc doesn't have lingering
+    // key bindings or config variables values.
+    save_restore_initial_state(initialized);
 
     // Bind extended keys so editing follows Windows' conventions.
     static constexpr const char* const emacs_key_binds[][2] = {
