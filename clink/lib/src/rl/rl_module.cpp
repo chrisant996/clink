@@ -1840,6 +1840,94 @@ static bool is_ok_inputrc(const char* default_inputrc)
 }
 
 //------------------------------------------------------------------------------
+static void safe_replace_keymap(Keymap replace, Keymap with)
+{
+    Keymap to, from;
+
+    for (uint32 i = 0; i < KEYMAP_SIZE; i++)
+    {
+        switch (replace[i].type)
+        {
+        case ISKMAP:
+            {
+                Keymap target = FUNCTION_TO_KEYMAP(replace, i);
+                assert(target != vi_movement_keymap);
+                assert(target != vi_insertion_keymap);
+                assert(target != emacs_standard_keymap);
+                if (target && target != emacs_meta_keymap && target != emacs_ctlx_keymap)
+                    rl_free_keymap(target);
+            }
+            break;
+        case ISMACR:
+            free(replace[i].function);
+            break;
+        }
+
+        replace[i].type = with[i].type;
+        switch (with[i].type)
+        {
+        case ISFUNC:
+            replace[i].function = with[i].function;
+            break;
+        case ISKMAP:
+            {
+                from = FUNCTION_TO_KEYMAP(with, i);
+                assert(from != vi_movement_keymap);
+                assert(from != vi_insertion_keymap);
+                assert(from != emacs_standard_keymap);
+                if (from && from != emacs_meta_keymap && from != emacs_ctlx_keymap)
+                {
+                    to = rl_make_bare_keymap();
+                    safe_replace_keymap(to, from);
+                }
+                else
+                {
+                    to = from;
+                }
+                replace[i].function = KEYMAP_TO_FUNCTION(to);
+            }
+            break;
+        case ISMACR:
+            replace[i].function = KEYMAP_TO_FUNCTION(savestring((const char*)with[i].function));
+            break;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+static void save_restore_default_keymaps(const bool restore)
+{
+    static const Keymap saved_vi_movement_keymap = rl_make_bare_keymap();
+    static const Keymap saved_vi_insertion_keymap = rl_make_bare_keymap();
+    static const Keymap saved_emacs_standard_keymap = rl_make_bare_keymap();
+    static const Keymap saved_emacs_meta_keymap = rl_make_bare_keymap();
+    static const Keymap saved_emacs_ctlx_keymap = rl_make_bare_keymap();
+
+    if (!restore)
+    {
+        // Save original state of keymaps.
+        safe_replace_keymap(saved_vi_movement_keymap, vi_movement_keymap);
+        safe_replace_keymap(saved_vi_insertion_keymap, vi_insertion_keymap);
+        safe_replace_keymap(saved_emacs_meta_keymap, emacs_meta_keymap);
+        safe_replace_keymap(saved_emacs_ctlx_keymap, emacs_ctlx_keymap);
+        safe_replace_keymap(saved_emacs_standard_keymap, emacs_standard_keymap);
+    }
+    else
+    {
+        // Replace keymaps with original state.
+        safe_replace_keymap(vi_movement_keymap, saved_vi_movement_keymap);
+        safe_replace_keymap(vi_insertion_keymap, saved_vi_insertion_keymap);
+        safe_replace_keymap(emacs_standard_keymap, saved_emacs_standard_keymap);
+        safe_replace_keymap(emacs_meta_keymap, saved_emacs_meta_keymap);
+        safe_replace_keymap(emacs_ctlx_keymap, saved_emacs_ctlx_keymap);
+
+        // Clear global "recent" pointer, since it could have been invalidated
+        // by the operations above.
+        rl_binding_keymap = nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
 void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc)
 {
     // Can't give a more specific scope like "Readline initialization", because
@@ -1865,6 +1953,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 
     // Add commands.
     static bool s_rl_initialized = false;
+    const bool initialized = s_rl_initialized;
     if (!s_rl_initialized)
     {
         s_rl_initialized = true;
@@ -1988,6 +2077,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
         rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
     }
+
+    // Save/restore the original keymap table definitions so that reloading
+    // the inputrc doesn't have lingering key bindings.
+    save_restore_default_keymaps(initialized);
 
     // Bind extended keys so editing follows Windows' conventions.
     static constexpr const char* const emacs_key_binds[][2] = {
