@@ -100,7 +100,8 @@ To debug the actual DLL injection procedure, you must debug both the `clink_x64.
   - The `stdcall_thunk` function is the instruction payload that will be copied into the target CMD.exe process.
   - Observe the value of `region.base` before the `CreateRemoteThread` call executes -- this is the address of the instruction payload that has been copied into the target CMD.exe process.
   - Set a breakpoint in the target CMD.exe process for that address -- when `CreateRemoteThread` executes, it will transfer execution to that address in the target CMD.exe process, and you can debug through the execution of the instruction payload itself.
-  - Note:  If the instruction payload references any functions or variables from the Clink process, it will crash during execution inside the target CMD.exe process.
+
+> **Note:**  If the instruction payload references any functions or variables from the Clink process, it will crash during execution inside the target CMD.exe process.  Compiler features like the "just my code", "edit and continue", "omit frame pointers", exception handling, inlining, and runtime checks must be configured appropriately to keep the instruction payload self-contained (see the "clink_process" lib in the premake5.lua file).
 
 ### Debugging Lua Scripts
 
@@ -108,6 +109,23 @@ To debug the actual DLL injection procedure, you must debug both the `clink_x64.
 2. Use `clink set lua.break_on_error true` to automatically break into the Lua debugger on any Lua script error.
 3. Add a `pause()` line in a Lua script to break into the debugger at that spot, if the `lua.debug` setting is enabled.
 4. Use `help` in the Lua debugger to get help on using the Lua debugger.
+
+### Ingesting new Readline versions
+
+Perform a 3-way merge over the Readline sources where:
+- Base = Readline sources from previous Readline version
+- Theirs = Readline sources from updated Readline version
+- Yours = Clink sources for Readline
+
+Watch out for changes that may need additional follow-up!
+Including but not limited to these, for example:
+- New config variables in bind.c need to be added to `save_restore_initial_states` in rl_module.cpp.
+- Some config variables may be incompatible with Clink and may need compensating changes.
+- Use of `'/'` literals instead of calling `rl_is_path_separator()` (or in complete.c calling `pathfold()`).
+- Changes in the `COLOR_SUPPORT` code.
+- Changes in `HANDLE_MULTIBYTE` support, which may be incorrect or incomplete on Windows.
+- Changes in keyboard timeout support, an area of Readline that requires shimming and workarounds in order to even compile for Windows, and doesn't behave the same as Readline expects.
+- Changes in signal handler usage, particularly for `SIGALRM` or `SIGTERM` or most other signaler events since MSVC only supports `SIGINT` and `SIGBREAK` (which is a Microsoft extension).
 
 ### License
 
