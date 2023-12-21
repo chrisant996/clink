@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021 Christopher Antos
+// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1490,6 +1490,8 @@ void textlist_impl::update_display()
                 }
                 longest = max<int32>(longest, 40);
             }
+
+            longest = max<int32>(longest, cell_count(m_default_title.c_str()) + 4);
 
             const int32 effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int32>(40, m_screen_cols - 4);
             const int32 popup_width = min<int32>(longest + 2, effective_screen_cols); // +2 for borders.
