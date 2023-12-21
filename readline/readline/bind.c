@@ -2327,6 +2327,9 @@ sv_compwidth (const char *value)
 static int
 sv_histsize (const char *value)
 {
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
   int nval;
 
   nval = 500;
@@ -2340,6 +2343,9 @@ sv_histsize (const char *value)
 	}
     }
   stifle_history (nval);
+/* begin_clink_change */
+#endif
+/* end_clink_change */
   return 0;
 }
 
