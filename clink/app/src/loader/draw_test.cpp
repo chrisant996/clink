@@ -102,7 +102,7 @@ void test_editor::start(const char* prompt)
     str_moveable default_inputrc;
     app_context::get()->get_state_dir(state_dir);
     app_context::get()->get_default_init_file(default_inputrc);
-    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
+    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user=false);
     initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
 #endif
 

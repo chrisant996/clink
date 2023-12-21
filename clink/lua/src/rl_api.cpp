@@ -1421,8 +1421,13 @@ static int32 get_inputrc_file_name(lua_State* state)
         const char* state_dir = context.profile.empty() ? nullptr : context.profile.c_str();
         const char* default_inputrc = context.default_inputrc.empty() ? nullptr : context.default_inputrc.c_str();
 
-        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
-        initialise_readline("clink", state_dir, default_inputrc);
+        // Optional undocumented argument:  when called in the standalone Lua
+        // interpreter, passing false disables loading the user's inputrc, but
+        // the default_inputrc (if any) is still loaded.
+        const bool no_user = (lua_isboolean(state, 1) && lua_toboolean(state, 1) == false);
+
+        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user);
+        initialise_readline("clink", state_dir, default_inputrc, no_user);
     }
 #if 0
     else

@@ -108,7 +108,7 @@ lua_editor_tester::lua_editor_tester(lua_State* lua)
     static bool s_inited_readline = false;
     if (!s_inited_readline)
     {
-        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc);
+        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user=false);
         initialise_readline("clink", nullptr, nullptr);
         s_inited_readline = true;
     }

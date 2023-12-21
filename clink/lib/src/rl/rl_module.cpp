@@ -1663,7 +1663,7 @@ static void postprocess_lcd(char* lcd, const char* text)
 }
 
 //------------------------------------------------------------------------------
-static void load_user_inputrc(const char* state_dir)
+static void load_user_inputrc(const char* state_dir, bool no_user)
 {
 #if defined(PLATFORM_WINDOWS)
     // Remember to update clink_info() if anything changes in here.
@@ -1682,6 +1682,8 @@ static void load_user_inputrc(const char* state_dir)
         "_inputrc",
         "clink_inputrc",
     };
+
+    rollback<int32> rb_load_user_inputrc(_rl_load_user_init_file, !no_user);
 
     for (const char* env_var : env_vars)
     {
@@ -2027,7 +2029,7 @@ static void save_restore_initial_state(const bool restore)
 }
 
 //------------------------------------------------------------------------------
-void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc)
+void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user)
 {
     // Can't give a more specific scope like "Readline initialization", because
     // realloc of some things will use "Readline" and assert on label change.
@@ -2352,7 +2354,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 #ifdef CLINK_USE_LUA_EDITOR_TESTER
     if (state_dir)
 #endif
-        load_user_inputrc(state_dir);
+        load_user_inputrc(state_dir, no_user);
 
     // Override the effect of any 'set keymap' assignments in the inputrc file.
     // This mimics what rl_initialize() does.

@@ -588,6 +588,7 @@ extern int rl_gnu_readline_p;
 /* begin_clink_change */
 /* Init file to load as defaults, before loading the user's init file. */
 extern const char *_rl_default_init_file;
+extern int _rl_load_user_init_file;
 /* end_clink_change */
 
 /* Flags word encapsulating the current readline state. */

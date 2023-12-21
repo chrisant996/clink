@@ -74,7 +74,8 @@ Keymap rl_binding_keymap;
 
 /* begin_clink_change */
 const char *_rl_default_init_file = NULL;
-int fake_byte_oriented = 0;
+int _rl_load_user_init_file = 1;
+static int fake_byte_oriented = 0;
 #undef rl_byte_oriented
 #define rl_byte_oriented fake_byte_oriented
 /* end_clink_change */
@@ -1110,6 +1111,11 @@ _rl_read_init_file (const char *filename, int include_level)
     }
 
   currently_reading_init_file = 1;
+
+/* begin_clink_change */
+  if (!_rl_load_user_init_file)
+    file_size = 0;
+/* end_clink_change */
 
   /* Loop over the lines in the file.  Lines that start with `#' are
      comments; all other lines are commands for readline initialization. */
