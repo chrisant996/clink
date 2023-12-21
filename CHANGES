@@ -8,6 +8,7 @@
   - Each of the following CMD syntax errors are recognized:  lines starting with `&` or `@2>`, and lines containing `& &` or `2>&file`.
   - The whole redirections `2>file` or `>file` or `2>&1` are colored instead of only the `>` or `>&`.
 - Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
+- The `clink-reload` bindable command now reverts key bindings and config variables before reloading the inputrc file, so that old bindings and values don't linger in the current session if they've been removed from the inputrc file.
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
