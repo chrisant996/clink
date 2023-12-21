@@ -133,6 +133,9 @@ private:
     int32           m_longest = 0;
     addl_columns    m_columns;
 
+    // Display.
+    int32           m_prev_content_width = 0;
+
     // Current entry.
     int32           m_top = 0;
     int32           m_index = 0;

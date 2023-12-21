@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Christopher Antos
+﻿// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1497,6 +1497,11 @@ void textlist_impl::update_display()
             const int32 popup_width = min<int32>(longest + 2, effective_screen_cols); // +2 for borders.
             const int32 content_width = popup_width - 2;
 
+            const bool clear_eol = (content_width < m_prev_content_width);
+            if (content_width != m_prev_content_width)
+                m_prev_displayed = -1;
+            m_prev_content_width = content_width;
+
             str<> noescape;
             str<> left;
             str<> horzline;
@@ -1574,6 +1579,8 @@ void textlist_impl::update_display()
                 line << left << m_color.border << "\xe2\x94\x8c";       // ┌
                 line << horzline;                                       // ─
                 line << "\xe2\x94\x90" << "\x1b[m";                     // ┐
+                if (clear_eol && _rl_term_clreol)
+                    line << _rl_term_clreol;
                 m_printer->print(line.c_str(), line.length());
             }
 
@@ -1687,6 +1694,8 @@ void textlist_impl::update_display()
 #endif
                         line << "\xe2\x94\x82";                         // │
                     line << "\x1b[m";
+                    if (clear_eol && _rl_term_clreol)
+                        line << _rl_term_clreol;
                     m_printer->print(line.c_str(), line.length());
                 }
             }
@@ -1702,6 +1711,8 @@ void textlist_impl::update_display()
                 line << left << m_color.border << "\xe2\x94\x94";       // └
                 line << horzline;                                       // ─
                 line << "\xe2\x94\x98" << "\x1b[m";                     // ┘
+                if (clear_eol && _rl_term_clreol)
+                    line << _rl_term_clreol;
                 m_printer->print(line.c_str(), line.length());
             }
 
@@ -1851,6 +1862,8 @@ void textlist_impl::reset()
     m_win_history = false;
     m_has_columns = false;
     m_del_callback = nullptr;
+
+    m_prev_content_width = 0;
 
     m_top = 0;
     m_index = 0;
