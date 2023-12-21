@@ -7,12 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- `dump-functions` lists unfriendly bash style key sequences;
-  - Make `clink-dump-functions` and `clink-dump-macros`.
-  - They should report friendly key names and understand that `luafunc:` macros are effectively commands.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
-  - Make `clink-reload` reset the keymaps to their original default states?
-  - Maybe have a way to get the original default key bindings?
+  - [x] Make `clink-reload` reset the keymaps to their original default states.
+  - [ ] Make `clink-reload` reset the config variables to their original default values.
+  - [ ] Maybe have a way to query the original key bindings, after `initialise_readline` applies default bindings, but before `load_user_inputrc` modifies them?  So that it's possible for an inputrc editor to show what the effective key bindings will be, without needing to reapply the pending inputrc changes.  Or maybe have a way to suppress loading an inputrc file (load the default_inputrc file, but not the user's inputrc file)?
 - Some wizard for interactively viewing/modifying color settings.
 - Do `history-size` or other deprecated init variables break Clink...?
 
