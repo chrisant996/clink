@@ -8,11 +8,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
-  - [x] Make `clink-reload` reset the keymaps to their original default states.
-  - [ ] Make `clink-reload` reset the config variables to their original default values.
-  - [ ] Maybe have a way to query the original key bindings, after `initialise_readline` applies default bindings, but before `load_user_inputrc` modifies them?  So that it's possible for an inputrc editor to show what the effective key bindings will be, without needing to reapply the pending inputrc changes.  Or maybe have a way to suppress loading an inputrc file (load the default_inputrc file, but not the user's inputrc file)?
 - Some wizard for interactively viewing/modifying color settings.
-- Do `history-size` or other deprecated init variables break Clink...?
 
 ## Low Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
