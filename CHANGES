@@ -15,7 +15,9 @@
 - Added `rl.bracketpromptcodes()` to apply `\1` and `\2` codes as needed by Readline in certain inputrc config variables.
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
+- Fixed the `history-size` config variable to be completely ignored (it interfered with Clink's history database and settings, which were meant to supersede it).
 - Fixed updating column text in `clink.popuplist()` when <kbd>Del</kbd> is pressed (e.g. history timestamps in the `clink-popup-history` command).
+- Fixed the width of `clink.popuplist()` to take the title into account.
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
 - Fixed the return value from `rl_buffer:setcursor()`.
 - Fixed `console:getnumlines()` between onendedit and onbeginedit.
