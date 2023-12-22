@@ -1192,9 +1192,10 @@ static int32 describe_macro(lua_State* state)
     if (macro && description)
     {
         str<> tmp;
-        if (macro[0] != '\"' || (macro[0] && macro[strlen(macro) - 1] != '\"'))
+        const uint32 len = str_len(macro);
+        if (macro[0] == '\"' && macro[1] && macro[len - 1] == '\"')
         {
-            tmp << "\"" << macro << "\"";
+            tmp.concat(macro + 1, len - 2);
             macro = tmp.c_str();
         }
 

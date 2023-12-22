@@ -70,10 +70,7 @@ void add_macro_description(const char* macro, const char* desc)
 //------------------------------------------------------------------------------
 const char* lookup_macro_description(const char* macro)
 {
-    str<> tmp;
-    tmp << "\"" << macro << "\"";
-
-    const auto iter = s_macro_descriptions.find(tmp.c_str());
+    const auto iter = s_macro_descriptions.find(macro);
     if (iter == s_macro_descriptions.end())
         return nullptr;
     return iter->second.c_str();
@@ -791,6 +788,8 @@ static Keyentry* collect_functions(
         const char* name = e.func_name;
         if (name)
             seen_name.emplace(name);
+        if (e.macro_text && _strnicmp(e.macro_text, "luafunc:", 8) == 0)
+            seen_name.emplace(e.macro_text);
     }
 
 #if defined (VI_MODE)
@@ -860,6 +859,14 @@ static Keyentry* collect_functions(
 
     for (auto& macro_desc : s_macro_descriptions)
     {
+        // Only add macro functions.
+        if (_strnicmp(macro_desc.first, "luafunc:", 8) != 0)
+            continue;
+
+        // Only add a macro function if it hasn't been seen yet.
+        if (seen_name.find(macro_desc.first) != seen_name.end())
+            continue;
+
         if (*offset >= *max)
         {
             *max *= 2;
@@ -870,7 +877,7 @@ static Keyentry* collect_functions(
         memset(&out, 0, sizeof(out));
         out.sort = MAKELONG(999, 999);
         out.key_name = (char*)calloc(1, 1);
-        out.func_name = macro_desc.first;
+        out.macro_text = savestring(macro_desc.first);
         out.func_desc = macro_desc.second.c_str();
         out.cat = categories ? keycat_macros : 0;
 
@@ -905,11 +912,18 @@ static int32 __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
     if (cmp)
         return cmp;
 
-    // Finally sort by function name (folding case).
-    cmp = strcmpi(p1->func_name, p2->func_name);
+    // Next sort by whether there's a function name.
+    cmp = !p1->func_name - !p2->func_name;
     if (cmp)
         return cmp;
-    return strcmp(p1->func_name, p2->func_name);
+
+    // Finally sort by function name or macro text (folding case).
+    const char* text1 = p1->func_name ? p1->func_name : p1->macro_text;
+    const char* text2 = p2->func_name ? p2->func_name : p2->macro_text;
+    cmp = strcmpi(text2, text2);
+    if (cmp)
+        return cmp;
+    return strcmp(text2, text2);
 }
 
 //------------------------------------------------------------------------------
@@ -1020,7 +1034,6 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);
 
     // Remove duplicates; these can happen due to ANYOTHERKEY.
-// TODO: But don't remove unbound entries!
     {
         Keyentry* tortoise = collector + 1;
         Keyentry* hare = collector + 1;
