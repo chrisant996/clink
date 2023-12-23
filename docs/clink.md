@@ -1114,12 +1114,21 @@ set show-mode-in-prompt on
 $endif
 ```
 
-The `$if application` construct is used to include application-specific settings. Each program using the Readline library sets the _application name_, and you can test for a particular value. This could be used to bind key sequences to functions useful for a specific program. For instance, the following command adds a key sequence that quotes the current or previous word, but only in Clink:
+The `$if clink` construct is used to include Clink-specific settings. For instance, the following command adds a key sequence that quotes the current or previous word, but only in Clink:
 
 ```inputrc
 $if clink
 # Quote the current or previous word
 "\C-xq": "\eb\"\ef\""
+$endif
+```
+
+The `$if clink_version` test may be used to perform comparisons against specific Clink versions. The `clink_version` expands to the current Clink version. The set of comparison operators includes `=` (and `==`), `!=`, `<=`, `>=`, `<`, and `>`. The version number supplied on the right side of the operator consists of a major version number, an optional decimal point and minor version, and an optional decimal point and patch version (e.g., "1.6" or "1.6.2"). If the minor or patch versions are omitted, they are assumed to be "0". The operator may be separated from the string `clink_version` and from the version number argument by whitespace. In other applications that use Readline (such as `bash`) or in versions of Clink before v1.6.1, the test is always false.  The following example sets a key binding if the Clink version being used is 1.6.1 or newer:
+
+```inputrc
+$if clink_version >= 1.6.1
+"\C-x\C-f": clink-dump-functions    # This function doesn't exist before Clink 1.6.1,
+                                    # and would print an error in older versions.
 $endif
 ```
 
