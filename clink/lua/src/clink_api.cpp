@@ -2337,9 +2337,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #endif
 
     lua_pushliteral(state, "version_encoded");
-    lua_pushinteger(state, CLINK_VERSION_MAJOR * 10000000 +
-                           CLINK_VERSION_MINOR *    10000 +
-                           CLINK_VERSION_PATCH);
+    lua_pushinteger(state, CLINK_VERSION_ENCODED);
     lua_rawset(state, -3);
 
     lua_pushliteral(state, "version_major");

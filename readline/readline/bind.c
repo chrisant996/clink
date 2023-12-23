@@ -1428,6 +1428,99 @@ parser_if (char *args)
 	}
       _rl_parsing_conditionalized_out = 1 - opresult;
     }
+/* begin_clink_change */
+  else if (_rl_strnicmp (args, "clink_version", 13) == 0)
+    {
+      int versionarg, op, previ, major, minor, patch, opresult;
+
+      _rl_parsing_conditionalized_out = 1;
+      /* if "clink_version" is separated from the operator by whitespace, or the
+         operand is separated from the operator by whitespace, restore it.
+         We're more liberal with allowed whitespace for this variable. */
+      if (i > 0 && i <= llen && args[i-1] == '\0')
+        args[i-1] = ' ';
+      args[llen] = '\0';		/* just in case */
+      for (i = 13; whitespace (args[i]); i++)
+	;
+      if (OPSTART(args[i]) == 0)
+	{
+	  _rl_init_file_error ("comparison operator expected, found `%s'", args[i] ? args + i : "end-of-line");
+	  return 0;
+	}
+      previ = i;
+      op = parse_comparison_op (args, &i);
+      if (op <= 0)
+	{
+	  _rl_init_file_error ("comparison operator expected, found `%s'", args+previ);
+	  return 0;
+	}
+      for ( ; args[i] && whitespace (args[i]); i++)
+	;
+      if (args[i] == 0 || _rl_digit_p (args[i]) == 0)
+	{
+	  _rl_init_file_error ("numeric argument expected, found `%s'", args+i);
+	  return 0;
+	}
+      major = minor = patch = 0;
+      previ = i;
+      for ( ; args[i] && _rl_digit_p (args[i]); i++)
+	major = major*10 + _rl_digit_value (args[i]);
+      if (args[i] == '.')
+	{
+	  if (args[i + 1] && _rl_digit_p (args [i + 1]) == 0)
+	    {
+	      _rl_init_file_error ("numeric argument expected, found `%s'", args+previ);
+	      return 0;
+	    }
+	  for (++i; args[i] && _rl_digit_p (args[i]); i++)
+	    minor = minor*10 + _rl_digit_value (args[i]);
+	  if (args[i] == '.')
+	    {
+	      if (args[i + 1] && _rl_digit_p (args [i + 1]) == 0)
+		{
+		  _rl_init_file_error ("numeric argument expected, found `%s'", args+previ);
+		  return 0;
+		}
+	      for (++i; args[i] && _rl_digit_p (args[i]); i++)
+		patch = patch*10 + _rl_digit_value (args[i]);
+	    }
+	}
+      /* optional - check for trailing garbage on the line, allow whitespace
+	 and a trailing comment */
+      previ = i;
+      for ( ; args[i] && whitespace (args[i]); i++)
+	;
+      if (args[i] && args[i] != '#')
+	{
+	  _rl_init_file_error ("trailing garbage on line: `%s'", args+previ);
+	  return 0;
+	}
+      versionarg = (major * 10000000 + minor * 10000 + patch);
+
+      switch (op)
+	{
+	case OP_EQ:
+ 	  opresult = c_clink_version == versionarg;
+	  break;
+	case OP_NE:
+	  opresult = c_clink_version != versionarg;
+	  break;
+	case OP_GT:
+	  opresult = c_clink_version > versionarg;
+	  break;
+	case OP_GE:
+	  opresult = c_clink_version >= versionarg;
+	  break;
+	case OP_LT:
+	  opresult = c_clink_version < versionarg;
+	  break;
+	case OP_LE:
+	  opresult = c_clink_version <= versionarg;
+	  break;
+	}
+      _rl_parsing_conditionalized_out = 1 - opresult;
+    }
+/* end_clink_change */
   /* Check to see if the first word in ARGS is the same as the
      value stored in rl_readline_name. */
   else if (_rl_stricmp (args, rl_readline_name) == 0)

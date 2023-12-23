@@ -49,6 +49,8 @@ extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 
 #include "../../../clink/app/src/version.h" // Ugh.
 
+extern "C" const int32 c_clink_version = CLINK_VERSION_ENCODED;
+
 
 
 //------------------------------------------------------------------------------
