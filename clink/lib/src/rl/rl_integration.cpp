@@ -41,9 +41,7 @@ int32 force_reload_scripts()
     s_force_reload_scripts = true;
     if (g_result)
         g_result->done(true); // Force a new edit line so scripts can be reloaded.
-    reset_cached_font(); // Force discarding cached font info.
-    readline_internal_teardown(true);
-    return rl_re_read_init_file(0, 0);
+    return 0;
 }
 
 

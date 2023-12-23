@@ -3142,6 +3142,13 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = nullptr;
     s_matches = nullptr;
 
+    if (is_force_reload_scripts())
+    {
+        end_prompt(false);
+        reset_cached_font(); // Force discarding cached font info.
+        readline_internal_teardown(true);
+    }
+
     if (m_done)
     {
         result.done(m_eof);
