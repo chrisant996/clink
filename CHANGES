@@ -9,6 +9,7 @@
   - The whole redirections `2>file` or `>file` or `2>&1` are colored instead of only the `>` or `>&`.
 - Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
 - The `clink-reload` bindable command now reverts key bindings and config variables before reloading the inputrc file, so that old bindings and values don't linger in the current session if they've been removed from the inputrc file.
+- Added `clink-dump-functions` and `clink-dump-macros` bindable commands.  These behave similar to `dump-functions` and `dump-macros`, but they show user-friendly key names and `luafunc:` macros are listed as functions instead of as macros.
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
@@ -16,6 +17,7 @@
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
 - Fixed the `history-size` config variable to be completely ignored (it interfered with Clink's history database and settings, which were meant to supersede it).
+- Fixed the `clink-popup-show-help` command when including unbound commands (numeric argument of 4) so it doesn't double-list the bound `luafunc:` macros.
 - Fixed updating column text in `clink.popuplist()` when <kbd>Del</kbd> is pressed (e.g. history timestamps in the `clink-popup-history` command).
 - Fixed the width of `clink.popuplist()` to take the title into account.
 - Fixed Lua argument errors for some objects (the argument # in the error message was one lower than it should have been in some messages).
