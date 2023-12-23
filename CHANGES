@@ -14,6 +14,7 @@
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
 - Added `rl.bracketpromptcodes()` to apply `\1` and `\2` codes as needed by Readline in certain inputrc config variables.
+- Added a new conditional directive `$if clink_version` in the inputrc file (e.g. `$if clink_version >= 1.6.1`).
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
 - Fixed the `history-size` config variable to be completely ignored (it interfered with Clink's history database and settings, which were meant to supersede it).
@@ -25,6 +26,7 @@
 - Fixed `console:getnumlines()` between onendedit and onbeginedit.
 - Fixed erasing the "History expansion for" preview when the transient prompt is enabled.
 - Fixed the transient prompt sometimes not erasing properly (regression introduced in v1.5.17).
+- Fixed the `clink-reload` command so any inputrc file parse errors are printed on new lines.
 
 #### v1.6.0
 - Updated the Readline library to v8.2 patch 7 (the list here omits changes that were contributed to Readline from Clink, or which do not affect Clink).
