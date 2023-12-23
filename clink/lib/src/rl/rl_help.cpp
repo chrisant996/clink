@@ -25,6 +25,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
+#include <readline/xmalloc.h>
 extern int __complete_get_screenwidth(void);
 }
 
@@ -613,7 +614,7 @@ static Keyentry* collect_keymap(
     int32 i;
 
     if (!ensure_keydesc_map())
-        return nullptr;
+        return collector;
 
     for (i = 0; i < KEYMAP_SIZE; ++i)
     {
@@ -654,8 +655,12 @@ static Keyentry* collect_keymap(
 
         if (*offset >= *max)
         {
-            *max *= 2;
-            collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
+            int32 need = *max * 2;
+            Keyentry* p = (Keyentry *)realloc(collector, sizeof(collector[0]) * need);
+            if (!p)
+                break;
+            *max = need;
+            collector = p;
         }
 
         int32 sort;
@@ -778,7 +783,7 @@ static Keyentry* collect_functions(
     bool categories)
 {
     if (!funmap)
-        return nullptr;
+        return collector;
 
     str_unordered_set seen_name;
     std::unordered_set<rl_command_func_t*> seen_func;
@@ -842,8 +847,12 @@ static Keyentry* collect_functions(
 
         if (*offset >= *max)
         {
-            *max *= 2;
-            collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
+            int32 need = *max * 2;
+            Keyentry* p = (Keyentry *)realloc(collector, sizeof(collector[0]) * need);
+            if (!p)
+                break;
+            *max = need;
+            collector = p;
         }
 
         Keyentry& out = collector[*offset];
@@ -869,8 +878,12 @@ static Keyentry* collect_functions(
 
         if (*offset >= *max)
         {
-            *max *= 2;
-            collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
+            int32 need = *max * 2;
+            Keyentry* p = (Keyentry *)realloc(collector, sizeof(collector[0]) * need);
+            if (!p)
+                break;
+            *max = need;
+            collector = p;
         }
 
         Keyentry& out = collector[*offset];
@@ -885,6 +898,18 @@ static Keyentry* collect_functions(
     }
 
     return collector;
+}
+
+//------------------------------------------------------------------------------
+static void free_collector(Keyentry* collector, int32 offset)
+{
+    // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
+    while (--offset > 0)
+    {
+        free(collector[offset].key_name);
+        free(collector[offset].macro_text);
+    }
+    free(collector);
 }
 
 //------------------------------------------------------------------------------
@@ -942,6 +967,60 @@ static int32 __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
 }
 
 //------------------------------------------------------------------------------
+static int32 __cdecl cmp_sort_collector_func(const void* pv1, const void* pv2)
+{
+    const Keyentry* p1 = (const Keyentry*)pv1;
+    const Keyentry* p2 = (const Keyentry*)pv2;
+    int32 cmp;
+
+    // Sort functions, then luafunc: macros, then macros.
+    assertimplies(p1->func_name, *p1->func_name);
+    assertimplies(p2->func_name, *p2->func_name);
+    const bool lf1 = (p1->macro_text && _strnicmp(p1->macro_text, "luafunc:", 8) == 0);
+    const bool lf2 = (p2->macro_text && _strnicmp(p2->macro_text, "luafunc:", 8) == 0);
+    const int32 o1 = (p1->func_name ? 0 : (lf1 ? 1 : 2));
+    const int32 o2 = (p2->func_name ? 0 : (lf2 ? 1 : 2));
+    cmp = o1 - o2;
+    if (cmp)
+        return cmp;
+
+    // Sort by function name (folding case).
+    assert(!!p1->func_name == !!p2->func_name);
+    const char* func1 = (p1->func_name ? p1->func_name : (lf1 ? p1->macro_text : nullptr));
+    const char* func2 = (p2->func_name ? p2->func_name : (lf2 ? p2->macro_text : nullptr));
+    assert(!!func1 == !!func2);
+    if (func1)
+    {
+        cmp = strcmpi(func1, func2);
+        if (cmp)
+            return cmp;
+        cmp = strcmp(func1, func2);
+        if (cmp)
+            return cmp;
+    }
+
+    // Sort by modifier keys.
+    cmp = (p1->sort >> 16) - (p2->sort >> 16);
+    if (cmp)
+        return cmp;
+
+    // Sort by named key order.
+    cmp = (int16)p1->sort - (int16)p2->sort;
+    if (cmp)
+        return cmp;
+
+    // Sort by key name (folding case).
+    cmp = strcmpi(p1->key_name, p2->key_name);
+    if (cmp)
+        return cmp;
+    cmp = strcmp(p1->key_name, p2->key_name);
+    if (cmp)
+        return cmp;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static void pad_with_spaces(str_base& str, uint32 pad_to)
 {
     const uint32 len = cell_count(str.c_str());
@@ -995,6 +1074,51 @@ static bool is_keyentry_equivalent(const Keyentry* map, int32 a, int32 b)
 }
 
 //------------------------------------------------------------------------------
+static bool print_warnings(const std::vector<str_moveable>& warnings, int32 max_width, bool pager)
+{
+    if (warnings.size() > 0)
+    {
+        bool stop = false;
+
+        if (pager && !g_pager->on_print_lines(*g_printer, 1))
+            stop = true;
+        else
+            g_printer->print("\n");
+
+        int32 num_warnings = stop ? 0 : int32(warnings.size());
+        for (int32 i = 0; i < num_warnings; ++i)
+        {
+            const str_moveable& s = warnings[i];
+
+            // Ask the pager what to do.
+            if (pager)
+            {
+                const int32 lines = ((cell_count(s.c_str()) + max_width - 1) / max_width);
+                if (!g_pager->on_print_lines(*g_printer, lines))
+                {
+                    stop = true;
+                    break;
+                }
+            }
+
+            // Print the warning.
+            g_printer->print(s.c_str(), s.length());
+            g_printer->print("\n");
+        }
+
+        if (pager)
+        {
+            if (stop || !g_pager->on_print_lines(*g_printer, 1))
+                return false;
+        }
+
+        g_printer->print("\n");
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>* out=nullptr)
 {
@@ -1016,6 +1140,8 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     int32 offset = 1;
     int32 max_collect = 64;
     Keyentry* collector = (Keyentry*)malloc(sizeof(Keyentry) * max_collect);
+    if (!collector)
+        return;
     memset(&collector[0], 0, sizeof(collector[0]));
 
     // Collect the functions in the active keymap.
@@ -1027,8 +1153,11 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     if (mode & 4)
         collector = collect_functions(collector, &offset, &max_collect, show_categories);
 
-    if (!collector)
+    if (offset <= 1)
+    {
+        free_collector(collector, offset);
         return;
+    }
 
     // Sort the collected keymap.
     qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);
@@ -1151,38 +1280,8 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     if (!out)
     {
         g_pager->start_pager(*g_printer);
-        if (warnings.size() > 0)
-        {
-            bool stop = false;
-
-            if (!g_pager->on_print_lines(*g_printer, 1))
-                stop = true;
-            else
-                g_printer->print("\n");
-
-            int32 num_warnings = stop ? 0 : int32(warnings.size());
-            for (int32 i = 0; i < num_warnings; ++i)
-            {
-                str_moveable& s = warnings[i];
-
-                // Ask the pager what to do.
-                int32 lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
-                if (!g_pager->on_print_lines(*g_printer, lines))
-                {
-                    stop = true;
-                    break;
-                }
-
-                // Print the warning.
-                g_printer->print(s.c_str(), s.length());
-                g_printer->print("\n");
-            }
-
-            if (stop || !g_pager->on_print_lines(*g_printer, 1))
-                lines.clear();
-            else
-                g_printer->print("\n");
-        }
+        if (!print_warnings(warnings, max_width, true))
+            lines.clear();
     }
 
     // Display the matches.
@@ -1305,13 +1404,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
         rl_reset_line_state();
     }
 
-    // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
-    while (--offset)
-    {
-        free(collector[offset].key_name);
-        free(collector[offset].macro_text);
-    }
-    free(collector);
+    free_collector(collector, offset);
 }
 
 //------------------------------------------------------------------------------
@@ -1399,6 +1492,181 @@ int32 show_rl_help_raw(int32, int32)
 {
     int32 mode = rl_explicit_arg ? rl_numeric_arg : 3;
     show_key_bindings(false/*friendly*/, mode);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static bool is_macro_entry(const Keyentry* entry)
+{
+    return (!entry->func_name && entry->macro_text && _strnicmp(entry->macro_text, "luafunc:", 8) != 0);
+}
+
+//------------------------------------------------------------------------------
+static bool funcmac_dumper_internal(bool macros)
+{
+    static const char norm[] = "\x1b[m";
+    static const char bold[] = "\x1b[1m";
+    // Can't use Faint because Windows Terminal always blends with Black
+    // instead of blending with the background color.
+    static const char dim[] = "";//"\x1b[2m";
+
+    int32 offset = 1;
+    int32 max_collect = 64;
+    Keyentry* collector = (Keyentry*)malloc(sizeof(Keyentry) * max_collect);
+    if (!collector)
+        return false;
+    memset(&collector[0], 0, sizeof(collector[0]));
+
+    // Collect the functions or macros in the active keymap.
+    Keymap map = rl_get_keymap();
+    str<32> keyseq;
+    std::vector<str_moveable> warnings;
+    collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, !rl_explicit_arg/*friendly*/, true, (map == emacs_standard_keymap) ? &warnings : nullptr);
+    if (!macros)
+        collector = collect_functions(collector, &offset, &max_collect, false);
+
+    if (offset > 1)
+    {
+        qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector_func);
+
+        if (rl_dispatching)
+            end_prompt(true/*crlf*/);
+
+        print_warnings(warnings, 0, false/*pager*/);
+
+        int32 i = 1;
+        str<> line;
+        str<> keyseq;
+        str<> keys;
+        while (i < offset)
+        {
+            const Keyentry* entry = collector + i;
+            const bool is_macro = is_macro_entry(entry);
+            if (is_macro != macros)
+            {
+                ++i;
+                continue;
+            }
+
+            const char* name = entry->func_name ? entry->func_name : entry->macro_text;
+            const char* quote = entry->func_name ? "" : "\"";
+            if (!rl_explicit_arg && macros)
+            {
+                line.format("%s outputs %s\n", entry->key_name, entry->macro_text ? entry->macro_text : "");
+                ++i;
+            }
+            else if (!rl_explicit_arg)
+            {
+                // Count bindings.
+                int32 j = i + 1;
+                while (j < offset &&
+                        is_macro == is_macro_entry(collector + j) &&
+                        strcmp(name, collector[j].func_name ? collector[j].func_name : collector[j].macro_text) == 0)
+                    ++j;
+                const int num = j - i;
+
+                assert(num > 0);
+                if (!entry->key_name || !*entry->key_name)
+                {
+                    assert(num == 1);
+                    line.format("%s%s%s%s is not bound to any keys.%s\n", dim, quote, name, quote, norm);
+                }
+                else
+                {
+                    // One line with the first 5 key bindings.
+                    line.format("%s%s%s can be found on ", quote, name, quote);
+                    for (int32 k = 0; k < num; ++k)
+                    {
+                        if (k)
+                            line << ", ";
+                        if (k >= 5)
+                        {
+                            line << "..";
+                            break;
+                        }
+                        line << bold << collector[i + k].key_name << norm;
+                    }
+                    line << ".\n";
+                }
+
+                i = j;
+            }
+            else
+            {
+                // One line per key binding.
+                if (!entry->key_name || !*entry->key_name)
+                {
+                    line.format("%s#", dim);
+                    pad_with_spaces(line, 16);
+                    line << quote << name << quote;
+                    line << " (not bound)" << norm << "\n";
+                }
+                else
+                {
+                    char* friendly = nullptr;
+
+                    if (rl_explicit_arg)
+                    {
+                        const char* start = entry->key_name;
+                        uint32 len = strlen(start);
+                        if (*start == '"' && len > 2 && start[len - 1] == '"')
+                        {
+                            ++start;
+                            len -= 2;
+                        }
+
+                        keyseq.clear();
+                        keyseq.concat(start, len);
+
+                        int32 keys_len;
+                        keys.reserve(2 * keyseq.length());
+                        if (!rl_translate_keyseq(keyseq.c_str(), keys.data(), &keys_len))
+                        {
+                            int32 sort_dummy;
+                            translate_keyseq(keys.c_str(), keys_len, &friendly, true/*friendly*/, sort_dummy);
+                        }
+                    }
+
+                    line = entry->key_name;
+                    line << ":";
+                    pad_with_spaces(line, 15);
+                    line << " " << quote << name << quote;
+                    if (friendly)
+                    {
+                        pad_with_spaces(line, 54);
+                        line << "  # " << friendly;
+                    }
+                    line << "\n";
+
+                    free(friendly);
+                }
+
+                ++i;
+            }
+
+            g_printer->print(line.c_str(), line.length());
+        }
+
+        rl_reset_line_state();
+    }
+
+    free_collector(collector, offset);
+    return (offset > 1);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_dump_functions(int32, int32)
+{
+    if (!funcmac_dumper_internal(false/*macros*/))
+        rl_ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_dump_macros(int32, int32)
+{
+    if (!funcmac_dumper_internal(true/*macros*/))
+        rl_ding();
     return 0;
 }
 

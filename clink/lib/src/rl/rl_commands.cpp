@@ -956,6 +956,11 @@ void cua_after_command(bool force_clear)
         // No action after some special commands.
         s_map.emplace(show_rl_help);
         s_map.emplace(show_rl_help_raw);
+        s_map.emplace(rl_dump_functions);
+        s_map.emplace(rl_dump_macros);
+        s_map.emplace(rl_dump_variables);
+        s_map.emplace(clink_dump_functions);
+        s_map.emplace(clink_dump_macros);
     }
 
     // If not a recognized command, clear the cua selection.
