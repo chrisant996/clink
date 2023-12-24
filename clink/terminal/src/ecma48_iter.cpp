@@ -1,6 +1,8 @@
 // Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
+// https://ecma-international.org/publications-and-standards/standards/ecma-48/
+
 #include "pch.h"
 #include "ecma48_iter.h"
 #include "wcwidth.h"
