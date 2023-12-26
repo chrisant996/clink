@@ -25,6 +25,7 @@
 
 struct mem_tracking
 {
+    static size_t           offset();
     static size_t           pad_size(size_t size);
     static mem_tracking*    from_pv(const void* pv);
     void*                   to_pv();
@@ -353,10 +354,16 @@ inline BYTE* byteptr(const void* pv)
     return const_cast<BYTE*>(static_cast<const BYTE*>(pv));
 }
 
+size_t mem_tracking::offset()
+{
+    const size_t mask = (sizeof(void*) - 1);
+    return (((sizeof(mem_tracking) + get_config().size_guard) + mask) & ~mask);
+}
+
 size_t mem_tracking::pad_size(size_t size)
 {
     assert(size);
-    return sizeof(mem_tracking) + get_config().size_guard * 2 + size;
+    return offset() + size + get_config().size_guard;
 }
 
 mem_tracking* mem_tracking::from_pv(const void* pv)
@@ -365,7 +372,7 @@ mem_tracking* mem_tracking::from_pv(const void* pv)
 
     auto& config = get_config();
 
-    mem_tracking* const p = pv ? reinterpret_cast<mem_tracking*>(byteptr(pv) - (sizeof(mem_tracking) + config.size_guard)) : nullptr;
+    mem_tracking* const p = pv ? reinterpret_cast<mem_tracking*>(byteptr(pv) - offset()) : nullptr;
     BYTE const* verify;
     size_t size;
 
@@ -400,7 +407,9 @@ mem_tracking* mem_tracking::from_pv(const void* pv)
 
 void* mem_tracking::to_pv()
 {
-    return byteptr(this) + sizeof(mem_tracking) + get_config().size_guard;
+    void* const pv = byteptr(this) + offset();
+    assert((DWORD_PTR(pv) & (sizeof(pv) - 1)) == 0);
+    return pv;
 }
 
 void mem_tracking::fill(size_t const size, bool const dead)
