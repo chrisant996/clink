@@ -258,6 +258,7 @@ void lua_state::initialise(lua_state_flags flags)
         lua_load_script(self, lib, debugger);
 
     // Load core scripts.
+    lua_load_script(self, lib, error);
     lua_load_script(self, lib, core);
     lua_load_script(self, lib, console);
     if (!interpreter)

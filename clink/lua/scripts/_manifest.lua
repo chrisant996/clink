@@ -4,6 +4,7 @@
 return {
     name = "lib",
     files = {
+        "error.lua",
         "core.lua",
         "events.lua",
         "console.lua",

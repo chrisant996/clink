@@ -44,7 +44,9 @@ local function do_embed(debug_info)
         ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
     }
 
-    debug_info = debug_info and "" or " -s"
+    local function strip(file)
+        return (debug_info or path.getname(file) == "error.lua") and "" or " -s"
+    end
 
     for name, arch in spairs(archs) do
         if not arch.luac then
@@ -80,7 +82,7 @@ local function do_embed(debug_info)
                 out:write("#if ARCHITECTURE == "..name.."\n")
 
                 -- Compile the input Lua script to binary.
-                exec(arch.luac..debug_info.." -o .build/embed_temp "..file)
+                exec(arch.luac..strip(file).." -o .build/embed_temp "..file)
                 local bin_in = io.open(".build/embed_temp", "rb")
                 local bin_data = bin_in:read("*a")
                 bin_in:close()
