@@ -367,6 +367,12 @@ static int32 clink_print(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  CLINK_EXE
+/// -ver:   1.0.0
+/// -var:   string
+/// The full path to the Clink executable file.
+
+//------------------------------------------------------------------------------
 /// -name:  clink.version_encoded
 /// -ver:   1.1.10
 /// -var:   integer
