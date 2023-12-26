@@ -169,13 +169,17 @@ end
 
 --}}}
 
---{{{  sorted iterator for the help command
+--{{{  sorted iterator
 --     https://stackoverflow.com/questions/15706270/sort-a-table-in-lua
 
 local function spairs(t, order)
   -- collect the keys
   local keys = {}
-  for k in pairs(t) do keys[#keys+1] = k end
+  local num = 0
+  for k in pairs(t) do
+    num = num + 1
+    keys[num] = k
+  end
 
   -- if order function given, sort by it by passing the table and keys a, b,
   -- otherwise just sort the keys
@@ -192,6 +196,16 @@ local function spairs(t, order)
     if keys[i] then
       return keys[i], t[keys[i]]
     end
+  end
+end
+
+local function dump_order(t, a, b)
+  local ta = type(a)
+  local tb = type(b)
+  if ta == tb then
+    return a < b
+  else
+    return ta < tb
   end
 end
 
@@ -384,7 +398,7 @@ Can also be called from a script as dump(var,depth).
 ]],
 
 tron    = [[
-tron [crl]          -- turn trace on for (c)alls, (r)etuns, (l)lines|
+tron [crl]          -- turn trace on for (c)alls, (r)eturns, (l)lines|
 
 If no parameter is given then tracing is turned off.
 When tracing is turned on a line is printed to the console for each
@@ -503,7 +517,7 @@ local function dumpval( level, name, value, limit )
         indented( level, index, dumpvisited[value] )
       else
         indented( level, index, '{  -- ', dumpvisited[value] )
-        for n,v in pairs(value) do
+        for n,v in spairs(value, dump_order) do
           dumpval( level+1, n, v, limit )
         end
         indented( level, '};' )
