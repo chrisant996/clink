@@ -1786,6 +1786,34 @@ static void init_readline_hooks()
     // Macro hooks (for "luafunc:" support).
     rl_macro_hook_func = macro_hook_func;
     rl_last_func_hook_func = last_func_hook_func;
+
+    // Recognize both / and \\ as path separators, and normalize to \\.
+    rl_backslash_path_sep = 1;
+    rl_preferred_path_separator = PATH_SEP[0];
+
+    // Quote spaces in completed filenames.
+    rl_completer_quote_characters = "\"";
+    rl_basic_quote_characters = "\"";
+
+    // Same list CMD uses for quoting filenames.
+    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
+
+    // Basic word break characters.
+    // Readline does not currently use rl_basic_word_break_characters or
+    // rl_basic_word_break_characters_without_backslash for anything.
+
+    // Completer word break characters -- rl_basic_word_break_characters, with
+    // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
+    // so we can let the match generators decide when '%' should start a word or
+    // end a word (see :getwordbreakinfo()).
+    // NOTE:  Due to adjust_completion_word(), this has no practical effect
+    // anymore.  Word break characters are handled by cmd_word_tokeniser.
+    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{(,"; /* }) */
+
+    // Completion and match display.
+    rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
+    rl_sort_completion_matches = 0; // We'll handle sorting.
+
 }
 
 //------------------------------------------------------------------------------
@@ -2461,33 +2489,6 @@ rl_module::rl_module(terminal_in* input)
     init_readline_hooks();
 
     _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
-
-    // Recognize both / and \\ as path separators, and normalize to \\.
-    rl_backslash_path_sep = 1;
-    rl_preferred_path_separator = PATH_SEP[0];
-
-    // Quote spaces in completed filenames.
-    rl_completer_quote_characters = "\"";
-    rl_basic_quote_characters = "\"";
-
-    // Same list CMD uses for quoting filenames.
-    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
-
-    // Basic word break characters.
-    // Readline does not currently use rl_basic_word_break_characters or
-    // rl_basic_word_break_characters_without_backslash for anything.
-
-    // Completer word break characters -- rl_basic_word_break_characters, with
-    // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
-    // so we can let the match generators decide when '%' should start a word or
-    // end a word (see :getwordbreakinfo()).
-    // NOTE:  Due to adjust_completion_word(), this has no practical effect
-    // anymore.  Word break characters are handled by cmd_word_tokeniser.
-    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{(,"; /* }) */
-
-    // Completion and match display.
-    rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
-    rl_sort_completion_matches = 0; // We'll handle sorting.
 }
 
 //------------------------------------------------------------------------------
