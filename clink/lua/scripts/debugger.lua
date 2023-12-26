@@ -73,6 +73,7 @@ end
 
 local bold = "\x1b[1m"
 local normal = "\x1b[m"
+local show_cursor = "\x1b[?25h"
 
 -- pause() must step over a different number of lines depending on whether the
 -- debugger is started yet, and whether debugger.lua is embedded (precompiled).
@@ -1002,6 +1003,8 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
   end
 
   --}}}
+
+  io_write(show_cursor)
 
   while true do
     io_write(bold .. "[DEBUG]>" .. normal .. " ")
