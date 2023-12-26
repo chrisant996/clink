@@ -1009,8 +1009,14 @@ static int32 get_popup_list_colors(lua_State* state)
 /// new CMD.exe, which gets a new Clink instance injected, so the history or
 /// info command will use the new session unless explicitly directed to use the
 /// calling session.
-/// -show:  local c = os.getalias("clink")
-/// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
+/// -show:  local exe = string.format('"%s" --session %s', CLINK_EXE, clink.getsession())
+/// -show:  local r = io.popen('2>nul '..exe..' history')
+/// -show:  if r then
+/// -show:  &nbsp;   for line in r:lines() do
+/// -show:  &nbsp;       print(line)
+/// -show:  &nbsp;   end
+/// -show:  &nbsp;   r:close()
+/// -show:  end
 static int32 get_session(lua_State* state)
 {
     str<32> session;
