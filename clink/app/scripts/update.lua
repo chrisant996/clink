@@ -705,12 +705,11 @@ local function check_need_ui(update_file, mode)
 end
 
 local function get_clink_exe()
-    local a = os.getalias("clink")
-    if a then
-        a = a:gsub(" *%$%*$", "")
-        local n = path.getname(a:gsub('^"*', ''):gsub('"*$', ''))
+    local exe = CLINK_EXE
+    if exe then
+        local n = path.getname(exe)
         if n and n:find("^[cC][lL][iI][nN][kK]_.*%.exe$") then
-            return a
+            return '"' .. exe .. '"'
         end
     end
 end
