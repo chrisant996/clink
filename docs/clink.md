@@ -472,6 +472,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_cmdredir"></a>`color.cmdredir` | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when [`clink.colorize_input`](#clink_colorize_input) is enabled.
 <a name="color_cmdsep"><a/>`color.cmdsep` | `bold` [*](#alternatedefault) | The color for command separators (`&`, `\|`) in the input line when [`clink.colorize_input`](#clink_colorize_input) is enabled.
 <a name="color_comment_row"></a>`color.comment_row` | `bright white on cyan` [*](#alternatedefault) | The color for the comment row.  During [`clink-select-complete`](#rlcmd-clink-select-complete) the comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.  It can also show how history expansion will be applied at the cursor.
+<a name="color_common_match_prefix"></a>`color.common_match_prefix` | | Used when displaying a prefix that all match completions have in common.  This can be superseded by [Completion Colors](#completioncolors).
 <a name="color_description"></a>`color.description` | `bright cyan` [*](#alternatedefault) | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` [*](#alternatedefault) | Used when displaying doskey alias completions, and in the input line when [`clink.colorize_input`](#clink_colorize_input) is enabled.
 <a name="color_executable"></a>`color.executable` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file when [`clink.colorize_input`](#clink_colorize_input) is enabled.
@@ -524,6 +525,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 <a name="lua_strict"></a>`lua.strict` | True | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 <a name="lua_traceback_on_error"></a>`lua.traceback_on_error` | False | Prints stack trace on Lua errors.
+<a name="match_coloring_rules"></a>`match.coloring_rules` | | Provides a series of color definitions used when displaying match completions.  See [Completion Colors](#completioncolors) for details.
 <a name="match_expand_abbrev"></a>`match.expand_abbrev` | True | Expands an abbreviated path before performing completion.  In an abbreviated path, directory names may be shortened to the minimum number of characters to unambiguously refer to a directory.  For example, "c:\Users\chris\Documents" could be abbreviated as "c:\U\c\Do", depending on what directories exist in the file system.
 <a name="match_expand_envvars"></a>`match.expand_envvars` | False [*](#alternatedefault) | Expands environment variables in a word before performing completion.
 <a name="match_fit_columns"></a>`match.fit_columns` | True | When displaying match completions, this calculates column widths to fit as many as possible on the screen.
@@ -944,7 +946,7 @@ Variable | Description
 <a name="configbellstyle"></a>`bell-style` | Controls what happens when Readline wants to ring the terminal bell. If set to "none", Readline never rings the bell. If set to "visible" (the default in Clink), Readline uses a visible bell if one is available. If set to "audible", Readline attempts to ring the terminal's bell.
 <a name="configlinkmatchingparen"></a>`blink-matching-paren` | If set to "on", Readline attempts to briefly move the cursor to an opening parenthesis when a closing parenthesis is inserted. The default is "off".
 <a name="configcoloredcompletionprefix"></a>`colored-completion-prefix` | If set to "on", when listing completions, Readline displays the common prefix of the set of possible completions using a different color. The color definitions are taken from the value of the [`%LS_COLORS%`](#completioncolors) environment variable. The default is "off".
-<a name="configcoloredstats"></a>`colored-stats` | If set to "on", Readline displays possible completions using different colors to indicate their file type. The color definitions are taken from the value of the [`%LS_COLORS%`](#completioncolors) environment variable. The default is "off".
+<a name="configcoloredstats"></a>`colored-stats` | If set to "on", Readline displays possible completions using different colors to indicate their file type. The color definitions are determined as described in [Completion Colors](#completioncolors). The default is "off", but is automatically overridden by the [`match.coloring_rules`](#match_coloring_rules) setting or the `%CLINK_MATCH_COLORS` environment variable.
 <a name="configcommentbegin"></a>`comment-begin` | The string to insert at the beginning of the line when the [`insert-comment`](#rlcmd-insert-comment) command is executed. The default value is "::".
 <a name="configcompletiondisplaywidth"></a>`completion-display-width` | The number of screen columns used to display possible matches when performing completion. The value is ignored if it is less than 0 or greater than the terminal screen width. A value of 0 will cause matches to be displayed one per line. The default value is -1.
 <a name="configcompletionignorecase"></a>`completion-ignore-case` | If set to "on", Readline performs filename matching and completion in a case-insensitive fashion. The default value is "on".
@@ -1457,11 +1459,62 @@ Command | Key | Description
 
 ## Completion Colors
 
-The `%LS_COLORS%` environment variable provides color definitions as a series of color definitions separated by colons (`:`).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) for an ANSI escape code.  The two character type ids are listed below.
+The [`match.coloring_rules`](#match_coloring_rules) setting provides a string that determines how match completions are displayed.
 
-When the [`colored-completion-prefix`](#configcoloredcompletionprefix) [Readline setting](#configreadline) is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
+The string can contain a series of one or more rules separated by colons (`:`).  If an environment variable `%CLINK_MATCH_COLORS%` exists, its value supersedes this setting.
 
-When [`colored-stats`](#configcoloredstats) is configured to `on`, then the color definitions from `%LS_COLORS%` are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the [color.readonly](#color_readonly), [color.hidden](#color_hidden), [color.doskey](#color_doskey), and [color.cmd](#color_cmd) Clink settings exist to cover those.
+Each rule is a series of one or more conditions separated by spaces, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) for an ANSI escape code.  All of the conditions must be true for the rule to match (in other words, a space is like an AND operator).
+
+Each condition can be any of the following:
+
+- A pattern, for example `*.zip` (for zip files).  This is an fnmatch pattern (like .gitignore globbing patterns).  The pattern is compared only to the filename portion after stripping the path.  For example, `*.zip`.
+- A type, for example `di` (for directories).  The available types are listed below.
+- A `not` operator, which negates the next condition.  For example, `not di` applies to anything that isn't a directory, or `not *.zip` applies to any name that doesn't match `*.zip`.
+
+Any quoted string is assumed to be a pattern, so `"hi"` is a pattern instead of the Hidden type, and etc.
+
+Rules are evaluated in the order listed, with one exception:  Rules with exactly one type and no patterns are evaluated last; this makes it easier to list the rules -- you can put the simple defaults first, followed by specializations.
+
+Type | Description | Default
+-|-|-
+`di` | Directory. | `01;34` (bright blue)
+`ex` | Executable file. | `01;32` (bright green)
+`fi` | Normal file. |
+`ro` | Readonly file or directory. | The [color.readonly](#color_readonly) setting.
+`hi` | Hidden file or directory. | The [color.hidden](#color_hidden) setting.
+`mi` | Missing file or directory. |
+`ln` | Symlinks.  When `ln=target` then symlinks are colored according to the target of the symlink. | `target`
+`or` | Orphaned symlink (the target of the symlink is missing). |
+`no` | Normal color; covers anything not covered by any other types. |
+`any` | This clears all types in the rule so far, including the implicit default `fi` type when no type is given.  For example, `any history*` applies to directories as well as to files (any directory or file whose name begins with "history"). |
+
+For backward compatibility with [`%LS_COLORS%`](#LS_COLORS), either `so` or `*.readline-colored-completion-prefix` may be used to override the[`color.common_match_prefix`](#color_common_match_prefix) setting.
+
+Here is an example that defines colors for various types.
+
+```plaintext
+clink set match.coloring_rules  di=93:ro ex=1;32:ex=1:ro=32:di *.tmp=90
+```
+
+- `di=93` uses bright yellow for directories.
+- `ro ex=1;32` uses bright green for readonly executable files.
+- `ex=1` uses bold for executable files (depending on the terminal's color theme, bold by itself usually ends up being bright white).
+- `ro=32` uses dark green for readonly files.
+- `di *.tmp=90` uses bright magenta for directory names ending in `.tmp`.
+
+> **Note:** The `match.coloring_rules` setting was added in Clink v1.6.1.  It works similar to how the [`%LS_COLORS%`](#LS_COLORS) environment variable works, except it adds \"hi\", \"ro\", \"any\", and \"not\", and patterns can be fnmatch patterns instead of just "*.ext" patterns.
+
+<a name="LS_COLORS"></a>
+
+### LS_COLORS (for backward compatibility)
+
+The `%LS_COLORS%` environment variable is supported for backwards compatibility with Readline.  It can provide color definitions as a series of color definitions separated by colons (`:`).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) for an ANSI escape code.  The two character type ids are listed below.
+
+If either [`match.coloring_rules`](#match_coloring_rules) or `%CLINK_MATCH_COLORS` are set, then they take precedence and `%LS_COLORS%` is ignored.
+
+When [`colored-stats`](#configcoloredstats) is configured to `on`, then file completions are colored according to their file type or extension from `%LS_COLORS%`.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the [color.readonly](#color_readonly), [color.hidden](#color_hidden), [color.doskey](#color_doskey), and [color.cmd](#color_cmd) Clink settings exist to cover those.
+
+When [`colored-completion-prefix`](#configcoloredcompletionprefix) is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is bright magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
 
 Types|Description|Default
 -|-|-
