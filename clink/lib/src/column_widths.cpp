@@ -8,6 +8,7 @@
 #include "display_matches.h"
 #include "matches_lookaside.h"
 #include "match_adapter.h"
+#include "match_colors.h"
 #include "column_widths.h"
 #include "ellipsify.h"
 #include "scroll_car.h"
@@ -60,7 +61,7 @@ int32 printable_len(const char* match, match_type type)
         rl_visible_stats ||
 #endif
 #if defined (COLOR_SUPPORT)
-        _rl_colored_stats ||
+        using_match_colors() ||
 #endif
         _rl_complete_mark_directories))
     {
@@ -202,7 +203,7 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     }
 
 #if defined(COLOR_SUPPORT)
-    if (sind == 0 && _rl_colored_completion_prefix > 0)
+    if (sind == 0 && get_completion_prefix_color())
     {
         str<32> lcd;
         adapter.get_lcd(lcd);

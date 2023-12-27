@@ -34,6 +34,7 @@
 void _rl_parse_colors (void);
 
 /* begin_clink_change */
+extern const char* const c_default_completion_prefix_color;
 void _rl_free_colors (void);
 /* end_clink_change */
 

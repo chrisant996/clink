@@ -59,6 +59,10 @@
 
 static bool get_funky_string (char **dest, const char **src, bool equals_end, size_t *output_count);
 
+/* begin_clink_change */
+const char* const c_default_completion_prefix_color = "01;35";
+/* end_clink_change */
+
 struct bin_str _rl_color_indicator[] =
   {
     { LEN_STR_PAIR ("\033[") },         //  lc: Left of color sequence
@@ -316,6 +320,10 @@ static_assert (C_LINK == 7, "C_LINK is not the expected index");
 
   if (!saved)
     {
+      /* Initialize C_SOCK color with a public constant pointer so it's
+	 possible to detect whether it's been overridden by LS_COLORS. */
+      _rl_color_indicator[C_SOCK].len = strlen (c_default_completion_prefix_color);
+      _rl_color_indicator[C_SOCK].string = c_default_completion_prefix_color;
       memcpy (original, _rl_color_indicator, sizeof(original));
       saved = 1;
       return;

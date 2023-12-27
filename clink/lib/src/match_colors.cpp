@@ -1,8 +1,31 @@
 /*
-
     Customizable colors for matches.
 
+    Rewritten and expanded by Christopher Antos for Clink.
+
+    Some portions loosely adapted from parse-colors.c, which is
+    Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2017
+    Free Software Foundation, Inc.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/* Modified by Chet Ramey for Readline.  */
+/* Written by Richard Stallman and David MacKenzie.  */
+/* Color support by Peter Anvin <Peter.Anvin@linux.org> and Dennis
+   Flaherty <dennisf@denix.elk.miles.com> based on original patches by
+   Greg Lee <lee@uhunix.uhcc.hawaii.edu>.  */
 
 #include "pch.h"
 #include <assert.h>
@@ -38,41 +61,24 @@ static const auto& LS_COLORS_indicator = _rl_color_indicator;
 //------------------------------------------------------------------------------
 #ifdef INCLUDE_MATCH_COLORING_RULES
 static const char c_match_colors_help[] =
-"The string is a series of one or more rules, delimited by : characters.\n"
+"This string is a series of one or more color definition rules separated by ':'\n"
+"characters.  The colors are applied when displaying file and directory match\n"
+"completions.\n"
 "\n"
-"Each rule is a series of one or more conditions delimited by spaces, followed\n"
+"Each rule is a series of one or more conditions separated by spaces, followed\n"
 "by an equal sign and then the SGR parameters for an ANSI escape code.  All of\n"
 "the conditions must be true for the rule to match (in other words, a space is\n"
 "like an AND operator).\n"
 "\n"
-"Each condition can be any of the following types:\n"
-"    di          Directory.\n"
-"    ex          Executable file.\n"
-"    fi          Normal file.\n"
-"    hi          Hidden file or directory.\n"
-"    ln          Symlink; \"ln=target\" uses the color from the target.\n"
-"    mi          Missing file or directory.\n"
-"    no          Normal color; covers anything not covered by any other types.\n"
-"    or          Orphaned symlink (the target of the symlink is missing).\n"
-"    ro          Readonly file or directory.\n"
-"\n"
-"Special types:\n"
-"    so          Applies to the common prefix for possible completions.\n"
-"    *.readline-colored-completion-prefix\n"
-"                Applies to the common prefix for possible completions.\n"
-"\n"
-"Conditions may include the following operators:\n"
-"                Spaces act as an AND operator.\n"
-"    any         Clears all types in the rule, including the implicit default\n"
-"                \"fi\" type when no type is given.\n"
-"    not         Negate the next condition; for example, \"not di\" means when\n"
-"                not a directory, or \"not *.txt\" means when *.txt pattern\n"
-"                doesn't match.\n"
-"\n"
-"Conditions may include patterns for matching files:\n"
-"    pattern     Anything else is a fnmatch pattern (like .gitignore globbing\n"
-"                patterns).  But the pattern is compared only to the filename\n"
-"                portion after stripping the path.\n"
+"Each condition can be any of the following:\n"
+"    - A pattern, for example \"*.zip\" (for zip files).  This is an fnmatch\n"
+"      pattern (like .gitignore globbing patterns).  The pattern is compared\n"
+"      only to the filename portion after stripping the path.\n"
+"    - A type, for example \"di\" (for directories).  The available types are\n"
+"      listed below.\n"
+"    - A \"not\" operator, which negates the next condition.  For example,\n"
+"      \"not di\" applies to anything that isn't a directory, or \"not *.zip\"\n"
+"      applies to any name that doesn't match \"*.zip\".\n"
 "\n"
 "Any quoted string is assumed to be a pattern, so \"hi\" is a pattern instead\n"
 "of the Hidden type, and etc.\n"
@@ -81,18 +87,37 @@ static const char c_match_colors_help[] =
 "exactly one type and no patterns are evaluated last; this makes it easier to\n"
 "list the rules -- you can put the defaults first, followed by specializations.\n"
 "\n"
-"NOTE:  This is the same as how the %%LS_COLORS%% environment variable works,\n"
+"The available types are:\n"
+"    di          Directory.\n"
+"    ex          Executable file.\n"
+"    fi          Normal file.\n"
+"    ro          Readonly file or directory.\n"
+"    hi          Hidden file or directory.\n"
+"    mi          Missing file or directory.\n"
+"    ln          Symlink; \"ln=target\" uses the color from the target.\n"
+"    or          Orphaned symlink (the target of the symlink is missing).\n"
+"    no          Normal color; covers anything not covered by any other types.\n"
+"    any         Clears all types in the rule, including the implicit default\n"
+"                \"fi\" type when no type is given.\n"
+"\n"
+"For backward compatibility with LS_COLORS, either \"so\" or\n"
+"\"*.readline-colored-completion-prefix\" may be used to override the\n"
+"color.common_match_prefix setting.\n"
+"\n"
+"If an environment variable %CLINK_MATCH_COLORS% exists then its value\n"
+"supersedes this setting.\n"
+"\n"
+"NOTE:  This is similar to how the %LS_COLORS% environment variable works,\n"
 "except this adds \"hi\", \"ro\", \"any\", and \"not\", and patterns can be\n"
-"wildmatch patterns instead of just *.ext patterns.\n"
+"fnmatch patterns instead of just *.ext patterns.\n"
 "\n"
 "Examples:\n"
 "\n"
-"    di=94;di *.tmp=90\n"
+"    di=94:di *.tmp=90\n"
 "            Directories in bright blue, but dirs ending in .tmp in magenta.\n"
-"    di=93;so=96:ro ex=1;32:ex=1:ro=32\n"
-"            Directories in bright yellow, common prefix in bright cyan,\n"
-"            readonly executable files in bold green, readonly files in green,\n"
-"            and executable files in bold."
+"    di=93:ro ex=1;32:ex=1:ro=32\n"
+"            Directories in bright yellow, readonly executable files in bold\n"
+"            green, readonly files in green, and executable files in bold."
 ;
 
 static setting_str g_match_colordef(
@@ -101,6 +126,12 @@ static setting_str g_match_colordef(
     c_match_colors_help,
     "");
 #endif
+
+static setting_color g_common_match_prefix(
+    "color.common_match_prefix",
+    "Common prefix of completions",
+    "Used when displaying prefix that matches have in common.",
+    "");
 
 //------------------------------------------------------------------------------
 #define CFLAG_NORM                      0x0001
@@ -125,9 +156,9 @@ static const struct {
     { "ro", C_READONLY, CFLAG_READONLY },
     { "hi", C_HIDDEN,   CFLAG_HIDDEN },
     { "ln", C_LINK,     CFLAG_SYMLINK },
+    { "ex", C_EXEC,     CFLAG_EXEC },
     { "mi", C_MISSING,  0 },
     { "or", C_ORPHAN,   0 },
-    { "ex", C_EXEC,     CFLAG_EXEC },
     { "so", C_SOCK,     0 },
 };
 
@@ -166,6 +197,7 @@ struct color_rule
 static std::vector<color_rule> s_color_rules;
 static str_moveable s_completion_prefix;
 static bool s_norm_colored = false;
+static bool s_colored_stats = false;
 
 //------------------------------------------------------------------------------
 static char* copy_str(const char* str, int32 len)
@@ -525,6 +557,8 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
         free(s_colors[rlind]);
         s_colors[rlind] = copy_str(value.c_str(), value.length());
         assert(s_colors[rlind]);
+        if (rlind == C_SOCK)
+            s_completion_prefix = value.c_str();
         return false;
     }
 
@@ -555,7 +589,7 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
 //      not         Negate the next condition ("not di" means when not a
 //                  directory, or "not *.txt" means when *.txt pattern doesn't
 //                  match.
-//      pattern     Anything else is a wildmatch pattern.  But if the pattern
+//      pattern     Anything else is an fnmatch pattern.  But if the pattern
 //                  doesn't contain any path separators, then the pattern is
 //                  compared only to the filename portion of any match.
 //
@@ -567,9 +601,12 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
 // to list the rules -- you can put the defaults first, followed by
 // specializations.
 //
+// If an environment variable %CLINK_MATCH_COLORS% exists then its value
+// supersedes this setting.
+//
 // Example:
 //
-//      di=94;di *.tmp=90
+//      di=94:di *.tmp=90
 //              Directories in bright blue, but dirs ending in .tmp in dark
 //              gray (bright black).
 void parse_match_colors()
@@ -580,20 +617,34 @@ void parse_match_colors()
 
     std::vector<color_rule> empty;
     s_color_rules.swap(empty);
-    s_completion_prefix.free();
+    g_common_match_prefix.get(s_completion_prefix);
+    s_colored_stats = false;
 
     // Parse LS_COLORS only if completion colors are enabled.
-    const bool need_parse = (_rl_colored_stats || _rl_colored_completion_prefix);
-    if (need_parse)
+    if (_rl_colored_stats || _rl_colored_completion_prefix)
     {
         _rl_parse_colors();
+
+        if (_rl_colored_completion_prefix > 0)
+        {
+            // If C_SOCK was overridden, then that supersedes the
+            // g_common_match_prefix setting.  But override it early so that
+            // *.readline-colored-completion-prefix can supersede C_SOCK.
+            const auto sock = LS_COLORS_indicator[C_SOCK];
+            if (sock.string != c_default_completion_prefix_color)
+            {
+                s_completion_prefix.clear();
+                s_completion_prefix.concat(sock.string, sock.len);
+            }
+        }
 
         str<> ext;
         for (const COLOR_EXT_TYPE* e = _rl_color_ext_list; e; e = e->next)
         {
             ext.clear();
             ext.concat(e->ext.string, e->ext.len);
-            if (ext.equals(".readline-colored-completion-prefix"))
+            if (_rl_colored_completion_prefix &&
+                ext.equals(".readline-colored-completion-prefix"))
             {
                 s_completion_prefix.clear();
                 s_completion_prefix.concat(e->seq.string, e->seq.len);
@@ -631,7 +682,7 @@ void parse_match_colors()
         s_colors[i] = copy_str(str, len);
     }
 
-    if (need_parse)
+    // Parse match coloring rules, if any.
     {
         str<> s;
         s_error_context = "CLINK_MATCH_COLORS";
@@ -648,6 +699,8 @@ void parse_match_colors()
             str<> token;
             str<16> value;
             str_iter iter(s.c_str(), s.length());
+            str<16> readline_colored_completion_prefix;
+            bool override = false;
             while (iter.more())
             {
                 const int32 r = get_token_and_value(iter, token, value);
@@ -658,19 +711,26 @@ void parse_match_colors()
                 }
                 if (r > 0)
                 {
-                    if (token.c_str()[0] == '*' &&
-                        strcmp(token.c_str() + 1, ".readline-colored-completion-prefix") == 0)
+                    if (token.equals("*.readline-colored-completion-prefix"))
                     {
-                        s_completion_prefix = value.c_str();
+                        s_colored_stats = true;
+                        override = true;
+                        readline_colored_completion_prefix = value.c_str();
                     }
                     else
                     {
                         color_rule rule;
                         if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
+                        {
+                            s_colored_stats = true;
                             s_color_rules.emplace_back(std::move(rule));
+                        }
                     }
                 }
             }
+
+            if (override)
+                s_completion_prefix = readline_colored_completion_prefix.c_str();
         }
     }
 
@@ -682,6 +742,12 @@ void parse_match_colors()
     assert(s_colors[C_LINK]);
 
     s_error_context = nullptr;
+}
+
+//------------------------------------------------------------------------------
+bool using_match_colors()
+{
+    return _rl_colored_stats || s_colored_stats;
 }
 
 //------------------------------------------------------------------------------
@@ -864,7 +930,7 @@ static bool get_ls_color(const char *f, match_type type, str_base& out)
 //------------------------------------------------------------------------------
 bool get_match_color(const char* f, match_type type, str_base& out)
 {
-    if (!_rl_colored_stats)
+    if (!using_match_colors())
     {
         out.clear();
         return false;
@@ -1098,7 +1164,13 @@ const char* get_indicator_color(indicator_no colored_filetype)
 //------------------------------------------------------------------------------
 const char* get_completion_prefix_color()
 {
-    return s_completion_prefix.empty() ? get_indicator_color(C_PREFIX) : s_completion_prefix.c_str();
+    if (!s_completion_prefix.empty())
+        return s_completion_prefix.c_str();
+
+    if (_rl_colored_completion_prefix > 0)
+        return get_indicator_color(C_PREFIX);
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
