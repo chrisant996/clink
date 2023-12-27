@@ -16,15 +16,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
-- Color improvements:
-  - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
-  - More sophisticated match color definitions?
-    - Unify match color settings, e.g. something like `%LS_COLORS%` or `%COLORDIR%` (from 4Dos/4NT/TakeCommand).  The fractured `%LS_COLORS%` + `color.readonly` stuff is awkward and confusing.
-    - Ability to combine conditions, e.g. executable=1, readonly=32, executable _AND_ readonly=1;32.
-      - Spaces should mean an "or" operator, instead of an "and" operator (like in 4Dos/4NT/TakeCommand etc).
-      - Precedence for "or", "and", "xor" can be simply left to right (like in 4Dos/4NT/TakeCommand etc).
-      - Automatically optimize rule evaluation by processing CFLAG checks before pattern checks in any group of "or" clauses.
-      - If parsing is fast enough, then maybe don't even bother "compiling" the rules, and simply parse for every entry?
+- Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
     ```
     local remove = clink.onbeginedit(func) -- add func
