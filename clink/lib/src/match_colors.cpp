@@ -529,7 +529,8 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
         {
             color_pattern pat;
             pat.m_pattern.concat(token.c_str(), token.length());
-            pat.m_only_filename = !strpbrk(token.c_str(), "/\\");
+            //pat.m_only_filename = !strpbrk(token.c_str(), "/\\");
+            pat.m_only_filename = true;
             pat.m_not = not;
 // printf("pat '%s'%s\n", pat.m_pattern.c_str(), not ? " (not)" : "");
             rule.m_patterns.emplace_back(std::move(pat));
