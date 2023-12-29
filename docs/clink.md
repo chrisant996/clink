@@ -141,9 +141,9 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 
 ## How Completion Works
 
-"Completion" is for the word at the cursor; Clink can complete it for you when you press <kbd>Tab</kbd>.
+"Completion" is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.
 
-"Suggestions" are for the whole command line; Clink offers [automatic suggestions](#gettingstarted_autosuggest) for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.
+"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
 
 Some examples of what completions can offer:
 - File names,
@@ -271,7 +271,7 @@ Key | Windows | Bash
 
 ### Auto-suggest
 
-Clink can suggest commands as you type, based on command history and completions.
+Clink can suggest command lines as you type, based on command history and completions.
 
 You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.
 
@@ -289,7 +289,7 @@ Later, you start to type a new command, and it matches the earlier command from 
 
 The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
-If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers suggestions for a whole input line, and the suggestions can come from the saved command history or from the list of possible completions.
+If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers a suggestion for a whole input line, and the suggestion can come from the saved command history or from the list of possible completions.  There can be many possible completions available, but there is never more than one auto-suggestion available.
 
 The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Accept Suggestion` usage hint when a suggestion is available.
 
