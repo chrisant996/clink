@@ -35,7 +35,7 @@ const char* append_string_into_buffer(char*& buffer, const char* match, bool all
 size_t calc_packed_size(const char* match, const char* display, const char* description)
 {
     size_t alloc_size = 3;              // For the 3 NUL terminators.
-    alloc_size++;                       // For the match type.
+    alloc_size += sizeof(match_type);   // For the match type.
     alloc_size++;                       // For the append char.
     alloc_size++;                       // For the match flags.
     if (match) alloc_size += strlen(match);
@@ -68,7 +68,9 @@ bool pack_match(char* buffer, size_t packed_size,
     if (display && !display[0])
         return false;
 
-    *(buffer++) = (char)type;   // Match type.
+    static_assert(sizeof(match_type) == 2, "pack_match expects sizeof(match_type) == 2");
+    *(buffer++) = LOBYTE(type); // Match type (low byte).
+    *(buffer++) = HIBYTE(type); // Match type (high byte).
     *(buffer++) = append_char;  // Append char.
     *(buffer++) = flags;        // Match flags.
 
@@ -166,7 +168,7 @@ bool matches_lookaside::add(const char* match)
         return false;
 
     size_t len = strlen(match) + 1;
-    extra->type = static_cast<match_type>(match[len++]);
+    extra->type = static_cast<match_type>(static_cast<uint8>(match[len++]) | static_cast<uint8>(match[len++]) << 8);
     extra->append_char = match[len++];
     extra->flags = uint8(match[len++]);
 #ifdef DEBUG
