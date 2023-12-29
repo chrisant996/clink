@@ -1095,6 +1095,9 @@ bool get_match_color(const char* f, match_type type, str_base& out)
             tmp.truncate(len - 1);
         }
         name = tmp.c_str();
+        // Directory takes precedence over Readonly, if no rules match.
+        if (colored_filetype == indicator_no(C_READONLY))
+            colored_filetype = indicator_no(C_DIR);
     }
 
     // Look for a matching rule.  First match wins.
