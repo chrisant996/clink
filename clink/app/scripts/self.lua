@@ -413,8 +413,8 @@ local function classify_handler(arg_index, _, word_index, line_state, classify)
 
         -- Anything further is unrecognized.
         classify_to_end(idx + 1, line_state, classify, "n") --none
+        return true
     end
-    return true
 end
 
 --------------------------------------------------------------------------------
