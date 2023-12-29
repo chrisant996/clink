@@ -658,6 +658,19 @@ const char* setting::get_custom_default() const
     return custom_default->second.value.c_str();
 }
 
+//------------------------------------------------------------------------------
+void setting::set_source(const char* source)
+{
+    assert(m_source.empty());
+    m_source = source;
+}
+
+//------------------------------------------------------------------------------
+const char* setting::get_source() const
+{
+    return m_source.c_str();
+}
+
 
 
 //------------------------------------------------------------------------------

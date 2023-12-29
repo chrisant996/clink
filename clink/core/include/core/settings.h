@@ -91,12 +91,16 @@ public:
     virtual void    get(str_base& out) const = 0;
     virtual void    get_descriptive(str_base& out) const { get(out); }
 
+    void            set_source(char const* source);
+    const char*     get_source() const;
+
 protected:
                     setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
     const char*     get_custom_default() const;
     str<settings::c_max_len_name + 1, false> m_name;
     str<settings::c_max_len_short_desc + 1, false> m_short_desc;
     str<128>        m_long_desc;
+    str_moveable    m_source;
     type_e          m_type;
 
     template <typename T>

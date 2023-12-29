@@ -171,6 +171,7 @@ enum class global_state : uint32
 DEFINE_ENUM_FLAG_OPERATORS(global_state);
 
 //------------------------------------------------------------------------------
+bool lua_state::s_internal = false;
 bool lua_state::s_interpreter = false;
 bool lua_state::s_in_luafunc = false;
 bool lua_state::s_in_onfiltermatches = false;
@@ -194,6 +195,8 @@ lua_state::~lua_state()
 //------------------------------------------------------------------------------
 void lua_state::initialise(lua_state_flags flags)
 {
+    assert(!s_internal);
+
     shutdown();
 
     const bool interpreter = !!int32(flags & lua_state_flags::interpreter);

@@ -157,6 +157,12 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
     // Initialize the definition and apply any value that was read during load.
     dbg_snapshot_heap(snapshot);
     new (addr) S(name, short_desc, long_desc, value...);
+    if (!lua_state::is_internal())
+    {
+        str<> source;
+        get_lua_srcinfo(state, source);
+        ((setting*)addr)->set_source(source.c_str());
+    }
     ((S*)addr)->deferred_load();
     dbg_ignore_since_snapshot(snapshot, "Settings");
 
@@ -363,6 +369,7 @@ static int32 list(lua_State* state)
     {
         lua_createtable(state, 0, 1);
 
+        const char* source;
         int32 count = 0;
         for (setting_iter iter = settings::first(); const setting* setting = iter.next();)
         {
@@ -375,6 +382,14 @@ static int32 list(lua_State* state)
             lua_pushliteral(state, "description");
             lua_pushstring(state, setting->get_short_desc());
             lua_rawset(state, -3);
+
+            source = setting->get_source();
+            if (source && *source)
+            {
+                lua_pushliteral(state, "source");
+                lua_pushstring(state, source);
+                lua_rawset(state, -3);
+            }
 
             lua_rawseti(state, -2, ++count);
         }

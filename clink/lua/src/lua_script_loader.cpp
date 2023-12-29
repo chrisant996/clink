@@ -10,7 +10,12 @@
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_state& state, const char* script, int32 length)
 {
+    assert(!state.is_internal());
+    state.set_internal(true);
+
     state.do_string(script, length);
+
+    state.set_internal(false);
 }
 
 #else // CLINK_USE_EMBEDDED_SCRIPTS
@@ -18,7 +23,12 @@ void lua_load_script_impl(lua_state& state, const char* script, int32 length)
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_state& state, const char* path, int32 length)
 {
+    assert(!state.is_internal());
+    state.set_internal(true);
+
     state.do_file(path);
+
+    state.set_internal(false);
 }
 
 #endif // CLINK_USE_EMBEDDED_SCRIPTS
