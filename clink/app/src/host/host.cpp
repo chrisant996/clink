@@ -303,6 +303,7 @@ void host_get_app_context(int32& id, host_context& context)
         app->get_state_dir(context.profile);
         app->get_default_settings_file(context.default_settings);
         app->get_default_init_file(context.default_inputrc);
+        app->get_settings_path(context.settings);
         app->get_script_path_readable(context.scripts);
     }
 }

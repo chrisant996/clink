@@ -18,6 +18,7 @@ struct host_context
     str_moveable    profile;
     str_moveable    default_settings;
     str_moveable    default_inputrc;
+    str_moveable    settings;
     str_moveable    scripts;
 };
 

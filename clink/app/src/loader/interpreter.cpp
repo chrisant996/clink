@@ -249,15 +249,15 @@ int32 interpreter(int32 argc, char** argv)
 
     __lua_set_clink_callbacks(&g_lua_callbacks);
 
-    settings::load("nul");
-
     if (s_enable_debugging)
     {
         extern bool g_force_load_debugger;
+        extern bool g_force_break_on_error;
         g_force_load_debugger = true;
-        if (s_enable_debugging > 1)
-            settings::find("lua.break_on_error")->set("true");
+        g_force_break_on_error = (s_enable_debugging > 1);
     }
+
+    settings::load("nul");
 
     terminal term = terminal_create(nullptr, false/*cursor_visibility*/);
     printer printer(*term.out);

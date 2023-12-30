@@ -9,6 +9,7 @@
 #include <core/settings.h>
 #include <core/str_tokeniser.h>
 #include <core/debugheap.h>
+#include <lib/host_callbacks.h>
 
 #include <new.h>
 
@@ -363,6 +364,20 @@ static void push_setting_values_table(lua_State* state, const setting* setting, 
 
 //------------------------------------------------------------------------------
 // Undocumented, because it's only needed internally.
+static int32 load(lua_State* state)
+{
+    int32 id;
+    host_context context;
+    host_get_app_context(id, context);
+
+    const char* file = *context.settings.c_str() ? context.settings.c_str() : "nul";
+    const char* def = *context.default_settings.c_str() ? context.default_settings.c_str() : nullptr;
+    lua_pushboolean(state, settings::load(file, def));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// Undocumented, because it's only needed internally.
 static int32 list(lua_State* state)
 {
     if (lua_gettop(state) < 1)
@@ -453,26 +468,33 @@ static int32 match(lua_State* state)
 void settings_lua_initialise(lua_state& lua)
 {
     struct {
+        int32       always;
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {
-        { "get",    &get },
-        { "set",    &set },
-        { "add",    &add },
+        { 1, "get",    &get },
+        { 1, "set",    &set },
+        { 1, "add",    &add },
         // UNDOCUMENTED; internal use only.
-        { "list",   &list },
-        { "match",  &match },
+        { -1, "load",  &load },
+        { 1, "list",   &list },
+        { 1, "match",  &match },
     };
 
     lua_State* state = lua.get_state();
 
     lua_createtable(state, sizeof_array(methods), 0);
 
+    const bool lua_interpreter = lua.is_interpreter();
+
     for (const auto& method : methods)
     {
-        lua_pushstring(state, method.name);
-        lua_pushcfunction(state, method.method);
-        lua_rawset(state, -3);
+        if (lua_interpreter ? method.always : method.always >= 0)
+        {
+            lua_pushstring(state, method.name);
+            lua_pushcfunction(state, method.method);
+            lua_rawset(state, -3);
+        }
     }
 
     lua_setglobal(state, "settings");
