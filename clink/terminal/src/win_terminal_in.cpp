@@ -670,7 +670,17 @@ int32 win_terminal_in::read()
     }
 
     if (!m_buffer_count)
-        return terminal_in::input_none;
+    {
+        if (m_has_pending_record)
+        {
+            const INPUT_RECORD record = m_pending_record;
+            m_has_pending_record = false;
+            process_record(record, nullptr);
+        }
+
+        if (!m_buffer_count)
+            return terminal_in::input_none;
+    }
 
     uint8 c = pop();
     switch (c)
