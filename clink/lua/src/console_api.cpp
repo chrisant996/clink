@@ -153,6 +153,49 @@ static int32 get_plain_text(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.explodeansi
+/// -ver:   1.6.1
+/// -arg:   text:string
+/// -ret:   table
+/// Splits <span class="arg">text</span> on ANSI escape code boundaries and
+/// returns a table containing the substrings.
+/// -show:  console.explodeansi("\x1b[7mReverse\x1b[0;1mBold\x1b[m\x1b[K")
+/// -show:  -- returns the following table:
+/// -show:  --  {
+/// -show:  --      "\x1b[7m",
+/// -show:  --      "Reverse",
+/// -show:  --      "\x1b[0;1m",
+/// -show:  --      "Bold",
+/// -show:  --      "\x1b[m",
+/// -show:  --      "\x1b[K",
+/// -show:  --  }
+int32 explode_ansi(lua_State* state)
+{
+    const char* text = checkstring(state, 1);
+    if (!text)
+        return 0;
+
+    int32 count = 0;
+    lua_createtable(state, 16, 0);
+
+    ecma48_state _state;
+    ecma48_iter iter(text, _state);
+    while (const ecma48_code &code = iter.next())
+    {
+        lua_pushlstring(state, code.get_pointer(), code.get_length());
+        lua_rawseti(state, -2, ++count);
+    }
+
+    if (!count)
+    {
+        lua_pushlstring(state, "", 0);
+        lua_rawseti(state, -2, ++count);
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  console.getwidth
 /// -ver:   1.1.20
 /// -ret:   integer
@@ -872,6 +915,7 @@ void console_lua_initialise(lua_state& lua)
         { "scroll",                 &scroll },
         { "cellcount",              &get_cell_count },
         { "plaintext",              &get_plain_text },
+        { "explodeansi",            &explode_ansi },
         { "getwidth",               &get_width },
         { "getheight",              &get_height },
         { "getnumlines",            &get_num_lines },
