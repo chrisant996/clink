@@ -13,10 +13,12 @@
 - Added a new conditional directive `$if clink_version` in the inputrc file (e.g. `$if clink_version >= 1.6.1`).
 - Added a new `match.coloring_rules` setting and `%CLINK_MATCH_COLORS%` environment variable, both of which supersede Readline's `%LS_COLORS%` definitions when displaying match completions.
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
+- Added `console.explodeansi()` to split a string into substrings on ANSI escape code boundaries.
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
 - Added `rl.bracketpromptcodes()` to apply `\1` and `\2` codes as needed by Readline in certain inputrc config variables.
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
+- Fixed `console.readinput()` repeatedly returning nil after `console.checkinput()` returns true (regression introduced in v1.5.12).
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
 - Fixed the `history-size` config variable to be completely ignored (it interfered with Clink's history database and settings, which were meant to supersede it).
 - Fixed the `clink-popup-show-help` command when including unbound commands (numeric argument of 4) so it doesn't double-list the bound `luafunc:` macros.
