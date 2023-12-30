@@ -2,10 +2,6 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-settings.add("color.cmdsep", "bold", "Color for & and | command separators")
-settings.add("color.cmdredir", "bold", "Color for < and > redirection symbols")
-
---------------------------------------------------------------------------------
 local function color_separators(line, start_offset, end_offset, classifications, color_cmdsep)
     local seen
     local num = 0

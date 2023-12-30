@@ -171,6 +171,16 @@ static setting_color g_color_cmd(
     "Used when Clink displays shell (CMD.EXE) command completions.",
     "bold");
 
+static setting_color g_color_cmdredir(
+    "color.cmdredir",
+    "Color for < and > redirection symbols",
+    "bold");
+
+static setting_color g_color_cmdsep(
+    "color.cmdsep",
+    "Color for & and | command separators",
+    "bold");
+
 static setting_color g_color_description(
     "color.description",
     "Description completion color",
