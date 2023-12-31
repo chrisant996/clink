@@ -297,15 +297,15 @@ kbd {
     background-color: #fff;
 }
 
-#content table:not(.linkmenu,.console) td {
+#content table:not(.linkmenu,.console,.grouplist) td {
     border: 1px solid #ddd;
 }
 
-#content table:not(.linkmenu,.console) tr:nth-child(odd) {
+#content table:not(.linkmenu,.console,.grouplist) tr:nth-child(odd) {
     background-color: #fbfbfb;
 }
 
-#content table:not(.linkmenu,.console) tr:nth-child(even) {
+#content table:not(.linkmenu,.console,.grouplist) tr:nth-child(even) {
     background-color: #fff;
 }
 
@@ -352,6 +352,18 @@ kbd {
 
 #content #api .group {
     margin-bottom: 1rem;
+}
+
+#content #api .grouplist {
+    margin-left: 5rem;
+    margin-bottom: 2rem;
+}
+
+#content #api .grouplist td {
+    border: none;
+    border-spacing: 0px;
+    padding: 0px;
+    padding-right: 2rem;
 }
 
 #content #api .body {

@@ -17,7 +17,7 @@ local function make_uplinks(name, api)
     if name then
         uplinks = uplinks..'<a href="#'..name..'">up</a> '
     end
-    if api then
+    if api or name == "lua-api-groups" then
         uplinks = uplinks..'<a href="#lua-api">apis</a> '
     end
     uplinks = uplinks..'<a href="#toc">top</a>'
@@ -229,7 +229,7 @@ local function parse_doc_tags_impl(out, file)
         end
 
         line = line:sub(right + 1)
-        local _, _, name, group = line:find("^((.+)[.:].+)$")
+        local _, _, name, group, delim = line:find("^((.+)([.:]).+)$")
         if not group then
             group = "[other]"
             name = line
@@ -239,13 +239,13 @@ local function parse_doc_tags_impl(out, file)
         show_num = 1
         seen_show = nil
 
-        return group, name
+        return group, name, delim
     end
 
     for line in line_reader do
         local desc = {}
 
-        local group, name = parse_tagged(line)
+        local group, name, delim = parse_tagged(line)
         if name then
             for tag, value in read_tagged do
                 local desc_tag = desc[tag] or {}
@@ -265,7 +265,7 @@ local function parse_doc_tags_impl(out, file)
             desc.name = { name }
             desc.desc_num = desc_num
 
-            out[group] = out[group] or {}
+            out[group] = out[group] or { delim=delim }
             table.insert(out[group], desc)
         end
     end
@@ -367,7 +367,29 @@ local function do_docs()
         end
 
         api_html:write('<div class="'..group_class..'">')
-        api_html:write('\n<h5 id="'..group.name..'" class="group_name">'..group.name..'</h5>')
+        api_html:write('\n<h5 id="'..group.name..'" class="group_name">'..group.name..(group.delim or '')..'</h5>')
+
+        local numcols = math.ceil(#group / 5)
+        if numcols < 1 then
+            numcols = 1
+        elseif numcols > 4 then
+            numcols = 4
+        end
+        api_html:write('\n<table class="grouplist">')
+        local stride = math.ceil(#group / numcols)
+        for i = 1, stride do
+            api_html:write('<tr>')
+            for j = 1, numcols do
+                local doc_tag = group[i + (j-1)*stride]
+                if doc_tag then
+                    local name = doc_tag.name[1]
+                    local surname = name:match("([^.:]+)$") or name
+                    api_html:write('<td><a href="#'..name..'">'..surname..'</a></td>')
+                end
+            end
+            api_html:write('</tr>')
+        end
+        api_html:write('</table>')
 
         for _, doc_tag in ipairs(group) do
             api_html:write('\n<div class="function">')
