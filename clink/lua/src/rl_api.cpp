@@ -1379,7 +1379,7 @@ static int32 translate_key(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  bracketpromptcodes
+/// -name:  rl.bracketpromptcodes
 /// -ver:   1.6.1
 /// -arg:   prompt:string
 /// -ret:   string
@@ -1401,7 +1401,7 @@ static int32 bracket_prompt_codes(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  getinputrcfilename
+/// -name:  rl.getinputrcfilename
 /// -ver:   1.6.1
 /// -ret:   string|nil, string|nil
 /// Returns the path and file name of the Readline init file that was loaded, if
