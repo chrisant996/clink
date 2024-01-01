@@ -223,11 +223,12 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
     data[size] = '\0';
 
     enum section { ignore, set, clear };
+    section section = ignore;
+    bool valid = false;
 
     // Split at new lines.
     str<256> line;
     str<32> key;
-    section section;
     str_tokeniser lines(buffer.c_str(), "\n\r");
     while (lines.next(line))
     {
@@ -245,9 +246,15 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
         if (line_data[0] == '[')
         {
             if (_strnicmp(line_data, "[set]", 5) == 0)
+            {
                 section = set;
+                valid = true;
+            }
             else if (_strnicmp(line_data, "[clear]", 7) == 0)
+            {
                 section = clear;
+                valid = true;
+            }
             else
                 section = ignore;
             continue;
@@ -262,7 +269,8 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
         {
             value = strchr(line_data, '=');
             if (value == nullptr)
-                continue;
+                return false;
+
             key.clear();
             key.concat(line_data, int32(value - line_data));
             key.trim();
@@ -282,7 +290,7 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
         }
     }
 
-    return true;
+    return valid;
 }
 
 //------------------------------------------------------------------------------
@@ -669,8 +677,7 @@ bool parse_ini(const char* file, std::vector<setting_name_value>& out)
         return false;
 
     out.clear();
-    parse_ini(in, out);
-    return true;
+    return parse_ini(in, out);
 }
 
 //------------------------------------------------------------------------------
@@ -726,6 +733,9 @@ bool sandboxed_set_setting(const char* name, const char* value)
 //------------------------------------------------------------------------------
 bool sandboxed_overlay(const std::vector<setting_name_value>& overlay)
 {
+    if (overlay.empty())
+        return false;
+
     if (!g_last_file)
         return false;
     const char* file = g_last_file->c_str();
