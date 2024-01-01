@@ -63,7 +63,7 @@ static setting_bool g_lua_breakontraceback(
     "Breaks into the Lua debugger on traceback() calls, if lua.debug is enabled.",
     false);
 
-static setting_bool g_lua_breakonerror(
+setting_bool g_lua_breakonerror(
     "lua.break_on_error",
     "Breaks into Lua debugger on Lua errors",
     "Breaks into the Lua debugger on Lua errors, if lua.debug is enabled.",

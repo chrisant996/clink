@@ -257,7 +257,7 @@ int32 interpreter(int32 argc, char** argv)
         g_force_break_on_error = (s_enable_debugging > 1);
     }
 
-    settings::load("nul");
+    settings::load(nullptr);
 
     terminal term = terminal_create(nullptr, false/*cursor_visibility*/);
     printer printer(*term.out);

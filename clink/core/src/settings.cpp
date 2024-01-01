@@ -406,12 +406,13 @@ bool load(const char* file, const char* default_file)
     s_ever_loaded = true;
 #endif
 
-    bool ret = false;
-
-    if (!g_last_file)
-        g_last_file = new str_moveable;
-    if (file != g_last_file->c_str())
-        *g_last_file = file;
+    if (file)
+    {
+        if (!g_last_file)
+            g_last_file = new str_moveable;
+        if (file != g_last_file->c_str())
+            *g_last_file = file;
+    }
 
     load_custom_defaults(default_file);
     get_loaded_map().clear();
@@ -419,6 +420,9 @@ bool load(const char* file, const char* default_file)
     // Reset settings to default.
     for (auto iter = settings::first(); auto* next = iter.next();)
         next->set();
+
+    if (!file)
+        return true;
 
     // Maybe migrate settings.
     str<> old_file;
@@ -434,7 +438,7 @@ bool load(const char* file, const char* default_file)
         path::append(old_file, "settings");
         in = fopen(old_file.c_str(), "rb");
         if (in == nullptr)
-            goto out;
+            return false;
         migrating = true;
     }
 
@@ -462,11 +466,6 @@ bool load(const char* file, const char* default_file)
     if (migrating)
         save_internal(file, migrating);
 
-    ret = true;
-
-out:
-    if (g_force_break_on_error)
-        settings::find("lua.break_on_error")->set("true");
     return true;
 }
 

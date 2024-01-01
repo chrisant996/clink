@@ -55,6 +55,7 @@ void set_test_harness() { s_test_harness = true; }
 
 //------------------------------------------------------------------------------
 extern setting_enum g_dupe_mode;
+extern setting_bool g_lua_breakonerror;
 
 #ifdef _WIN64
 static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
@@ -2113,6 +2114,14 @@ static int32 release_updater_mutex(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 is_break_on_error(lua_State* state)
+{
+    extern bool g_force_break_on_error;
+    lua_pushboolean(state, g_force_break_on_error || g_lua_breakonerror.get());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
 static int32 last_allocation_number(lua_State* state)
 {
@@ -2305,6 +2314,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_show_update_prompt",    &show_update_prompt },
         { 0,    "_acquire_updater_mutex", &acquire_updater_mutex },
         { 0,    "_release_updater_mutex", &release_updater_mutex },
+        { 1,    "_is_break_on_error",     &is_break_on_error },
 #if defined(DEBUG) && defined(_MSC_VER)
         { 0,    "last_allocation_number", &last_allocation_number },
         { 0,    "get_c_callstack",        &get_c_callstack },
