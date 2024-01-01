@@ -32,25 +32,38 @@ namespace settings
 const uint32 c_max_len_name = 32;
 const uint32 c_max_len_short_desc = 48;
 
-setting_iter        first();
-setting*            find(const char* name);
-bool                load(const char* file, const char* default_file=nullptr);
-bool                save(const char* file);
-
-void                get_settings_file(str_base& out);
-bool                sandboxed_set_setting(const char* name, const char* value);
-
 struct setting_name_value
 {
     setting_name_value(const char* name, const char* value)
     : name(name)
     , value(value)
+    , clear(false)
+    {
+    }
+
+    setting_name_value(const char* name, const char* value, bool clear)
+    : name(name)
+    , value(value)
+    , clear(clear)
     {
     }
 
     str_moveable    name;
     str_moveable    value;
+    bool            clear;
 };
+
+setting_iter        first();
+setting*            find(const char* name);
+bool                load(const char* file, const char* default_file=nullptr);
+bool                save(const char* file);
+
+bool                parse_ini(const char* file, std::vector<setting_name_value>& out);
+void                overlay(const std::vector<setting_name_value>& overlay);
+
+void                get_settings_file(str_base& out);
+bool                sandboxed_set_setting(const char* name, const char* value);
+bool                sandboxed_overlay(const std::vector<setting_name_value>& overlay);
 
 bool                migrate_setting(const char* name, const char* value, std::vector<setting_name_value>& out);
 

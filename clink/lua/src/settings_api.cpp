@@ -147,6 +147,98 @@ static int32 set(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 parse_ini(lua_State* state)
+{
+    const char* file = checkstring(state, 1);
+    if (!file)
+        return 0;
+
+    std::vector<settings::setting_name_value> pairs;
+
+    if (!settings::parse_ini(file, pairs))
+        return 0;
+
+    lua_createtable(state, int32(pairs.size()), 0);
+
+    for (uint32 i = 0; i < pairs.size(); ++i)
+    {
+        const auto& el = pairs[i];
+
+        lua_createtable(state, el.clear ? 1 : 2, 0);
+
+        lua_pushliteral(state, "name");
+        lua_pushlstring(state, el.name.c_str(), el.name.length());
+        lua_rawset(state, -3);
+
+        if (!el.clear)
+        {
+            lua_pushliteral(state, "value");
+            lua_pushlstring(state, el.value.c_str(), el.value.length());
+            lua_rawset(state, -3);
+        }
+
+        lua_rawseti(state, -2, i + 1);
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int32 overlay(lua_State* state)
+{
+    if (!lua_istable(state, 1))
+        return luaL_argerror(state, 1, "must be a table");
+
+    std::vector<settings::setting_name_value> pairs;
+
+    for (int32 i = 1, n = int32(lua_rawlen(state, 2)); i <= n; ++i)
+    {
+        lua_rawgeti(state, -1, i);
+
+        if (!lua_istable(state, -1))
+        {
+            lua_pop(state, 1);
+            continue;
+        }
+
+        const char* name;
+        lua_pushliteral(state, "name");
+        lua_rawget(state, -2);
+        if (!lua_isstring(state, -1))
+        {
+            lua_pop(state, 2);
+            continue;
+        }
+        name = lua_tostring(state, -1);
+        lua_pop(state, 1);
+
+        const char* value;
+        lua_pushliteral(state, "value");
+        lua_rawget(state, -2);
+        if (lua_isnoneornil(state, -1))
+            value = nullptr;
+        else if (lua_isstring(state, -1))
+            value = lua_tostring(state, -1);
+        else
+        {
+            const char* msg = lua_pushfstring(state, "'value' field of element #%u is not a string or nil", i);
+            return luaL_argerror(state, 1, msg);
+        }
+        lua_pop(state, 1);
+
+        pairs.emplace_back(name, value, !value/*clear*/);
+
+        lua_pop(state, 1);
+    }
+
+    settings::overlay(pairs);
+    bool ok = settings::sandboxed_overlay(pairs);
+
+    lua_pushboolean(state, ok == true);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 {
     const char* name = checkstring(state, 1);
@@ -472,13 +564,15 @@ void settings_lua_initialise(lua_state& lua)
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {
-        { 1, "get",    &get },
-        { 1, "set",    &set },
-        { 1, "add",    &add },
+        { 1, "get",         &get },
+        { 1, "set",         &set },
+        { 1, "add",         &add },
         // UNDOCUMENTED; internal use only.
-        { -1, "load",  &load },
-        { 1, "list",   &list },
-        { 1, "match",  &match },
+        { -1, "load",       &load },
+        { 1, "list",        &list },
+        { 1, "match",       &match },
+        { 1, "parseini",    &parse_ini },
+        { 1, "overlay",     &overlay },
     };
 
     lua_State* state = lua.get_state();

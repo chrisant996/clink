@@ -199,6 +199,93 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
 }
 
 //------------------------------------------------------------------------------
+static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
+{
+    dbg_ignore_scope(snapshot, "Settings ini file");
+
+    // Buffer the file.
+    fseek(in, 0, SEEK_END);
+    int32 size = ftell(in);
+    fseek(in, 0, SEEK_SET);
+
+    if (size == 0)
+    {
+        fclose(in);
+        return false;
+    }
+
+    str<4096> buffer;
+    buffer.reserve(size);
+
+    char* data = buffer.data();
+    fread(data, size, 1, in);
+    fclose(in);
+    data[size] = '\0';
+
+    enum section { ignore, set, clear };
+
+    // Split at new lines.
+    str<256> line;
+    str<32> key;
+    section section;
+    str_tokeniser lines(buffer.c_str(), "\n\r");
+    while (lines.next(line))
+    {
+        char* line_data = line.data();
+
+        // Skip line's leading whitespace.
+        while (isspace(*line_data))
+            ++line_data;
+
+        // Comment?
+        if (line_data[0] == '#' || line_data[0] == ';')
+            continue;
+
+        // Section?
+        if (line_data[0] == '[')
+        {
+            if (_strnicmp(line_data, "[set]", 5) == 0)
+                section = set;
+            else if (_strnicmp(line_data, "[clear]", 7) == 0)
+                section = clear;
+            else
+                section = ignore;
+            continue;
+        }
+
+        if (section == ignore)
+            continue;
+
+        // 'key = value'?
+        char* value = nullptr;
+        if (section == set)
+        {
+            value = strchr(line_data, '=');
+            if (value == nullptr)
+                continue;
+            key.clear();
+            key.concat(line_data, int32(value - line_data));
+            key.trim();
+
+            ++value;
+            while (*value && isspace(*value))
+                ++value;
+
+            out.emplace_back(key.c_str(), value);
+        }
+        else
+        {
+            key = line_data;
+            key.trim();
+
+            out.emplace_back(key.c_str(), nullptr, true/*clear*/);
+        }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 // Mingw can't handle 'static' here, due to 'friend'.
 /*static*/ void load_custom_defaults(const char* file)
 {
@@ -279,6 +366,24 @@ static bool set_setting(const char* name, const char* value, const char* comment
 
     // Set its value.
     return s->set(value);
+}
+
+//------------------------------------------------------------------------------
+static void clear_setting(const char* name)
+{
+    setting* s = settings::find(name);
+
+    if (!s)
+    {
+        auto& map = get_loaded_map();
+        const auto& i = map.find(name);
+        if (i != map.end())
+            map.erase(i);
+        return;
+    }
+
+    // Clear its value.
+    s->set();
 }
 
 //------------------------------------------------------------------------------
@@ -556,6 +661,31 @@ bool save(const char* file)
 }
 
 //------------------------------------------------------------------------------
+bool parse_ini(const char* file, std::vector<setting_name_value>& out)
+{
+    // Open the file.
+    FILE* in = fopen(file, "rb");
+    if (in == nullptr)
+        return false;
+
+    out.clear();
+    parse_ini(in, out);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void overlay(const std::vector<setting_name_value>& overlay)
+{
+    for (const auto& o : overlay)
+    {
+        if (o.clear)
+            clear_setting(o.name.c_str());
+        else
+            set_setting(o.name.c_str(), o.value.c_str());
+    }
+}
+
+//------------------------------------------------------------------------------
 #ifdef DEBUG
 bool get_ever_loaded()
 {
@@ -591,6 +721,29 @@ bool sandboxed_set_setting(const char* name, const char* value)
     return (load(file) &&
             set_setting(name, value) &&
             save(file));
+}
+
+//------------------------------------------------------------------------------
+bool sandboxed_overlay(const std::vector<setting_name_value>& overlay)
+{
+    if (!g_last_file)
+        return false;
+    const char* file = g_last_file->c_str();
+
+    // Swap real settings data structures with new temporary versions.
+    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+
+    if (!load(file))
+        return false;
+
+    for (const auto& o : overlay)
+        set_setting(o.name.c_str(), o.value.c_str());
+
+    if (!save(file))
+        return false;
+
+    return true;
 }
 
 } // namespace settings
