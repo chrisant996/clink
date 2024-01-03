@@ -1832,7 +1832,7 @@ static bool is_ok_inputrc(const char* default_inputrc)
     // The "default_inputrc" file was introduced in v1.3.5, but up through
     // v1.6.0 it wasn't actually loaded properly.  And the provided one had
     // syntax errors, so the fix in v1.6.1 is careful to avoid loading the
-    // default_inputrc file if it contains only the syntax error lines.
+    // default_inputrc file if it contains any of the syntax error lines.
 
     static const char* const c_oops[] =
     {
@@ -1848,10 +1848,10 @@ static bool is_ok_inputrc(const char* default_inputrc)
     if (!f)
         return true;
 
+    bool ok = true;
     char buffer[128];
-    while (fgets(buffer, sizeof_array(buffer), f))
+    while (ok && fgets(buffer, sizeof_array(buffer), f))
     {
-        bool found = false;
         size_t len = strlen(buffer);
         while (len && strchr("\r\n", buffer[len - 1]))
             buffer[--len] = '\0';
@@ -1862,21 +1862,16 @@ static bool is_ok_inputrc(const char* default_inputrc)
             const size_t oops_len = strlen(oops);
             if (len >= oops_len && strnicmp(oops, buffer, oops_len) == 0)
             {
-                found = true;
+                // The file contains a specific syntax error from the original
+                // default_inputrc mistake.  Don't load it.
+                ok = false;
                 break;
             }
         }
-        if (!found)
-        {
-            fclose(f);
-            return true;
-        }
     }
-    fclose(f);
 
-    // The file contains only the specific syntax errors from the original
-    // default_inputrc mistake.  Don't load it.
-    return false;
+    fclose(f);
+    return ok;
 }
 
 //------------------------------------------------------------------------------
