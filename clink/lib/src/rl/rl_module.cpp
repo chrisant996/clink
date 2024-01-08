@@ -2100,6 +2100,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         init_readline_hooks();
 
         clink_add_funmap_entry("clink-accept-suggested-line", clink_accept_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line and accept the input line");
+        clink_add_funmap_entry("clink-backward-bigword", rl_vi_bWord, keycat_cursor, "Move back to the start of the current or previous space delimited word");
         clink_add_funmap_entry("clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen");
         clink_add_funmap_entry("clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard");
         clink_add_funmap_entry("clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard");
@@ -2114,6 +2115,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         clink_add_funmap_entry("clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line");
         clink_add_funmap_entry("clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line");
         clink_add_funmap_entry("clink-find-conhost", clink_find_conhost, keycat_misc, "Invokes the 'Find...' command in a standalone CMD window");
+        clink_add_funmap_entry("clink-forward-bigword", clink_forward_bigword, keycat_cursor, "Move forward to the beginning of the next space delimited word, or insert the next full suggested word up to a space");
         clink_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point");
         clink_add_funmap_entry("clink-insert-suggested-full-word", clink_insert_suggested_full_word, keycat_misc, "If there is a suggestion, insert the next full word from the suggested line");
         clink_add_funmap_entry("clink-insert-suggested-line", clink_insert_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line");
@@ -2146,12 +2148,14 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
         clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory");
         clink_add_funmap_entry("clink-what-is", clink_what_is, keycat_misc, "Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name");
+        clink_add_funmap_entry("cua-backward-bigword", cua_backward_bigword, keycat_select, "Extend the selection backward one space delimited word");
         clink_add_funmap_entry("cua-backward-char", cua_backward_char, keycat_select, "Extend the selection backward one character");
         clink_add_funmap_entry("cua-backward-word", cua_backward_word, keycat_select, "Extend the selection backward one word");
         clink_add_funmap_entry("cua-beg-of-line", cua_beg_of_line, keycat_select, "Extend selection to the beginning of the line");
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
         clink_add_funmap_entry("cua-end-of-line", cua_end_of_line, keycat_select, "Extend the selection to the end of the line");
+        clink_add_funmap_entry("cua-forward-bigword", cua_forward_bigword, keycat_select, "Extend the selection forward one space delimited word, or insert the next full suggested word up to a space");
         clink_add_funmap_entry("cua-forward-char", cua_forward_char, keycat_select, "Extend the selection forward one character, or insert the next full suggested word up to a space");
         clink_add_funmap_entry("cua-forward-word", cua_forward_word, keycat_select, "Extend the selection forward one word");
         clink_add_funmap_entry("cua-next-screen-line", cua_next_screen_line, keycat_select, "Extend the selection down one screen line");

@@ -103,6 +103,8 @@ int32   cua_backward_char(int32 count, int32 invoking_key);
 int32   cua_forward_char(int32 count, int32 invoking_key);
 int32   cua_backward_word(int32 count, int32 invoking_key);
 int32   cua_forward_word(int32 count, int32 invoking_key);
+int32   cua_forward_bigword(int32 count, int32 invoking_key);
+int32   cua_backward_bigword(int32 count, int32 invoking_key);
 int32   cua_select_word(int32 count, int32 invoking_key);
 int32   cua_beg_of_line(int32 count, int32 invoking_key);
 int32   cua_end_of_line(int32 count, int32 invoking_key);
@@ -111,6 +113,7 @@ int32   cua_copy(int32 count, int32 invoking_key);
 int32   cua_cut(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
+int32   clink_forward_bigword(int32 count, int32 invoking_key);
 int32   clink_forward_word(int32 count, int32 invoking_key);
 int32   clink_forward_char(int32 count, int32 invoking_key);
 int32   clink_forward_byte(int32 count, int32 invoking_key);

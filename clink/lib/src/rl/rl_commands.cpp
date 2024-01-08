@@ -1025,6 +1025,20 @@ int32 cua_forward_word(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
+int32 cua_backward_bigword(int32 count, int32 invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_vi_bWord(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 cua_forward_bigword(int32 count, int32 invoking_key)
+{
+    cua_selection_manager mgr;
+    return clink_forward_bigword(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
 int32 cua_select_word(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
@@ -1132,6 +1146,23 @@ another_word:
     }
 
     return rl_forward_word(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_forward_bigword(int32 count, int32 invoking_key)
+{
+    if (count != 0)
+    {
+another_word:
+        if (insert_suggestion(suggestion_action::insert_next_full_word))
+        {
+            count--;
+            if (count > 0)
+                goto another_word;
+        }
+    }
+
+    return rl_vi_fWord(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
