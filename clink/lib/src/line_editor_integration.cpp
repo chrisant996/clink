@@ -60,12 +60,12 @@ const char** host_copy_dir_history(int32* total)
 
 
 //------------------------------------------------------------------------------
-void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
+void set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
 {
     if (!s_editor)
         return;
 
-    s_editor->set_prompt(prompt, rprompt, redisplay);
+    s_editor->set_prompt(prompt, rprompt, redisplay, transient);
 }
 
 

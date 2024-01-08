@@ -2660,7 +2660,7 @@ void rl_module::set_keyseq_len(int32 len)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay)
+void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
 {
     redisplay = redisplay && (g_rl_buffer && g_printer);
 
@@ -2747,8 +2747,26 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     }
 
     // Update the prompt.
-    rl_set_prompt(m_rl_prompt.c_str());
-    rl_set_rprompt(m_rl_rprompt.c_str());
+    if (transient)
+    {
+        // Make sure no mode strings in the transient prompt.
+        rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
+        rollback<char*> vims(_rl_vi_ins_mode_str, const_cast<char*>(""));
+        rollback<char*> vcms(_rl_vi_cmd_mode_str, const_cast<char*>(""));
+        rollback<int32> eml(_rl_emacs_modestr_len, 0);
+        rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
+        rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
+        rollback<int32> mml(_rl_mark_modified_lines, 0);
+        rollback<bool> dmncr(g_display_manager_no_comment_row, true);
+
+        rl_set_prompt(m_rl_prompt.c_str());
+        rl_set_rprompt(m_rl_rprompt.c_str());
+    }
+    else
+    {
+        rl_set_prompt(m_rl_prompt.c_str());
+        rl_set_rprompt(m_rl_rprompt.c_str());
+    }
 
     // Display the prompt.
     if (redisplay)

@@ -380,10 +380,10 @@ void line_editor_impl::set_input_idle(input_idle* idle)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_prompt(const char* prompt, const char* rprompt, bool redisplay)
+void line_editor_impl::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
 {
     m_desc.prompt = prompt;
-    m_module.set_prompt(prompt, rprompt, redisplay);
+    m_module.set_prompt(prompt, rprompt, redisplay, transient);
 }
 
 //------------------------------------------------------------------------------

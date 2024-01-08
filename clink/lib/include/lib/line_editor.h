@@ -52,7 +52,7 @@ public:
     virtual void        set_generator(match_generator& generator) = 0;
     virtual void        set_classifier(word_classifier& classifier) = 0;
     virtual void        set_input_idle(input_idle* idle) = 0;
-    virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) = 0;
+    virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false) = 0;
     virtual bool        get_line(str_base& out) = 0;
     virtual bool        edit(str_base& out, bool edit=true) = 0;
     virtual void        override_line(const char* line, const char* needle, int32 point) = 0;

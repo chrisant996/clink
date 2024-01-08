@@ -58,7 +58,7 @@ public:
     virtual void        set_generator(match_generator& generator) override;
     virtual void        set_classifier(word_classifier& classifier) override;
     virtual void        set_input_idle(input_idle* idle) override;
-    virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) override;
+    virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false) override;
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out, bool edit=true) override;
     virtual void        override_line(const char* line, const char* needle, int32 point) override;

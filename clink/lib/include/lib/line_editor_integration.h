@@ -22,7 +22,7 @@ enum class collect_words_mode;
 void set_active_line_editor(line_editor_impl* editor, host_callbacks* callbacks);
 
 //------------------------------------------------------------------------------
-void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
+void set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false);
 
 //------------------------------------------------------------------------------
 void force_update_internal(bool restrict=false);

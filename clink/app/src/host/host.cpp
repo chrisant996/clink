@@ -68,6 +68,16 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
+enum prompt_spacing { normal, compact, sparse, MAX };
+static setting_enum s_prompt_spacing(
+    "prompt.spacing",
+    "Controls spacing before prompt",
+    "The default is 'normal' which never removes or adds blank lines.  Set to\n"
+    "'compact' to remove blank lines before the prompt, or set to 'sparse' to\n"
+    "remove blank lines and then add one blank line.",
+    "normal,compact,sparse",
+    prompt_spacing::normal);
+
 static setting_enum s_prompt_transient(
     "prompt.transient",
     "Controls when past prompts are collapsed",
@@ -316,6 +326,46 @@ static void write_line_feed()
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD written;
     WriteConsoleW(handle, L"\n", 1, &written, nullptr);
+}
+
+//------------------------------------------------------------------------------
+static void adjust_prompt_spacing()
+{
+    assert(g_printer);
+
+    static_assert(MAX == prompt_spacing::MAX, "ambiguous symbol");
+    const int32 _spacing = s_prompt_spacing.get();
+    const prompt_spacing spacing = (_spacing < normal || _spacing >= MAX) ? normal : prompt_spacing(_spacing);
+
+    if (spacing != normal)
+    {
+        // Consume blank lines before the prompt.  The prompt.spacing concept
+        // was inspired by Powerlevel10k, which doesn't consume blank lines,
+        // but CMD causes blank lines more often than zsh does.  So to achieve
+        // a similar effect it's necessary to actively consume blank lines.
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (GetConsoleScreenBufferInfo(h, &csbi) && csbi.dwCursorPosition.X == 0)
+        {
+            str<> text;
+            SHORT y = csbi.dwCursorPosition.Y;
+            while (y > 0)
+            {
+                if (!g_printer->get_line_text(y - 1, text))
+                    break;
+                if (!text.empty())
+                    break;
+                --y;
+            }
+            if (y < csbi.dwCursorPosition.Y)
+            {
+                COORD pos;
+                pos.X = 0;
+                pos.Y = y;
+                SetConsoleCursorPosition(h, pos);
+            }
+        }
+    }
 }
 
 
@@ -570,19 +620,7 @@ cant:
     if (!prompt)
         goto cant;
 
-    {
-        // Make sure no mode strings in the transient prompt.
-        rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
-        rollback<char*> vims(_rl_vi_ins_mode_str, const_cast<char*>(""));
-        rollback<char*> vcms(_rl_vi_cmd_mode_str, const_cast<char*>(""));
-        rollback<int32> eml(_rl_emacs_modestr_len, 0);
-        rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
-        rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
-        rollback<int32> mml(_rl_mark_modified_lines, 0);
-        rollback<bool> dmncr(g_display_manager_no_comment_row, true);
-
-        set_prompt(prompt, rprompt, true/*redisplay*/);
-    }
+    set_prompt(prompt, rprompt, true/*redisplay*/, true/*transient*/);
 
     if (final)
         return;
@@ -895,6 +933,8 @@ skip_errorlevel:
     // Send onbeginedit event.
     if (send_event)
     {
+        adjust_prompt_spacing();
+
         lua.send_event("onbeginedit");
 
         // Terminal shell integration.  Happens after any Lua scripts so that
@@ -1348,6 +1388,13 @@ const char* host::filter_prompt(const char** rprompt, bool& ok, bool transient, 
             ok = m_prompt_filter->filter(p, rp,
                                          m_filtered_prompt, m_filtered_rprompt,
                                          transient, final);
+
+            if (!transient && s_prompt_spacing.get() == sparse)
+            {
+                tmp = "\n";
+                tmp.concat(m_filtered_prompt.c_str(), m_filtered_prompt.length());
+                m_filtered_prompt = tmp.c_str();
+            }
 
             if (transient && !ok)
             {
