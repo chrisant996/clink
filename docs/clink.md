@@ -539,6 +539,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="match_translate_slashes"></a>`match.translate_slashes` | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
 <a name="match_wild"></a>`match.wild` | True | Matches `?` and `*` wildcards and leading `.` when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but [`glob-complete-word`](#rlcmd-glob-complete-word) always matches wildcards).
 <a name="prompt_async"></a>`prompt.async` | True | Enables [asynchronous prompt refresh](#asyncpromptfiltering).  Turn this off if prompt filter refreshes are annoying or cause problems.
+<a name="prompt_spacing"></a>`prompt.spacing` | `normal` | The default is `normal` which never removes or adds blank lines.  Set to `compact` to remove blank lines before the prompt, or set to `sparse` to remove blank lines and then add one blank line.
 <a name="prompt-transient"></a>`prompt.transient` | `off` | Controls when past prompts are collapsed ([transient prompts](#transientprompts)).  `off` = never collapse past prompts, `always` = always collapse past prompts, `same_dir` = only collapse past prompts when the current working directory hasn't changed since the last prompt.
 <a name="readline_hide_stderr"></a>`readline.hide_stderr` | False | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
 <a name="terminal_adjust_cursor_style"></a>`terminal.adjust_cursor_style` | True | When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).
@@ -1220,6 +1221,20 @@ $endif              # end clink-only section
 
 ## Bindable Commands
 
+<table class="linkmenu">
+<tr><td><a href="#commands-for-moving">Commands For Moving</a></td><td>Common commands for moving the cursor in the command line.</td></tr>
+<tr><td><a href="#commands-for-manipulating-the-history">Commands For Manipulating The History</a></td><td>Common commands for using the command history list.</td></tr>
+<tr><td><a href="#commands-for-changing-text">Commands For Changing Text</a></td><td>Common commands for deleting and inserting text.</td></tr>
+<tr><td><a href="#killing-and-yanking-1">Killing And Yanking</a></td><td>Commands for using the "<a href="#killing-and-yanking">kill ring</a>" (Readline's version of a clipboard).</td></tr>
+<tr><td><a href="#specifying-numeric-arguments">Specifying Numeric Arguments</a></td><td>Commands for inputing numeric arguments to other Readline commands.</td></tr>
+<tr><td><a href="#completion-commands">Completion Commands</a></td><td>Common completion commands.</td></tr>
+<tr><td><a href="#keyboard-macros">Keyboard Macros</a></td><td>Commands for using keyboard macros.</td></tr>
+<tr><td><a href="#some-miscellaneous-commands">Some Miscellaneous Commands</a></td><td>Some commands that aren't commonly used.</td></tr>
+<tr><td><a href="#readline-vi-mode">Readline vi Mode</a></td><td>Commands for toggling vi mode.</td></tr>
+<tr><td><a href="#other-readline-commands">Other Readline Commands</a></td><td>Commands that exist only for .inputrc compatibility with the bash shell.</td></tr>
+<tr><td><a href="#clink-commands"><strong>Clink Commands</strong></a></td><td><strong>Clink adds many new and enhanced commands beyond the basic Readline commands.</strong></td></tr>
+</table>
+
 ### Commands For Moving
 
 Command | Key | Description
@@ -1234,7 +1249,6 @@ Command | Key | Description
 <a name="rlcmd-next-screen-line"></a>`next-screen-line` | | Attempt to move point to the same physical screen column on the next physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if the length of the current Readline line is not greater than the length of the prompt plus the screen width.
 <a name="rlcmd-clear-display"></a>`clear-display` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the terminal screen and the terminal's scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen.
 <a name="rlcmd-clear-screen"></a>`clear-screen` | <kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen.
-<a name="rlcmd-redraw-current-line"></a>`redraw-current-line` | | Refresh the current line.
 
 ### Commands For Manipulating The History
 
@@ -1253,7 +1267,7 @@ Command | Key | Description
 <a name="rlcmd-history-search-backward"></a>`history-search-backward` | <kbd>PgUp</kbd> | Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search.
 <a name="rlcmd-history-substring-search-forward"></a>`history-substring-search-forward` | | Search forward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.
 <a name="rlcmd-history-substring-search-backward"></a>`history-substring-search-backward` | | Search backward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.
-<a name="rlcmd-yank-nth-arg"></a>`yank-nth-arg` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd> | Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument _n_, insert the <em>n</em>th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>th word from the end of the previous command. Once the argument _n_ is computed, the argument is extracted as if the "!n" history expansion had been specified.
+<a name="rlcmd-yank-nth-arg"></a>`yank-nth-arg` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd> | Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument _n_, insert the <em>n</em>-th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>-th word from the end of the previous command. Once the argument _n_ is computed, the argument is extracted as if the "!n" history expansion had been specified.
 <a name="rlcmd-yank-last-arg"></a>`yank-last-arg` | <kbd>Alt</kbd>-<kbd>.</kbd> or <kbd>Alt</kbd>-<kbd>_</kbd> | Insert last argument to the previous command (the last word of the previous history entry). With a numeric argument, behave exactly like [`yank-nth-arg`](#rlcmd-yank-nth-arg). Successive calls to `yank-last-arg` move back through the history list, inserting the last word (or the word specified by the argument to the first call) of each line in turn. Any numeric argument supplied to these successive calls determines the direction to move through the history. A negative argument switches the direction through the history (back or forward). The history expansion facilities are used to extract the last argument, as if the "!$" history expansion had been specified.
 <a name="rlcmd-operate-and-get-next"></a>`operate-and-get-next` | <kbd>Ctrl</kbd>-<kbd>o</kbd> | Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.
 <a name="rlcmd-fetch-history"></a>`fetch-history` | | With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list.
@@ -1337,6 +1351,7 @@ Command | Key | Description
 <a name="rlcmd-character-search"></a>`character-search` | <kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the next occurrence of that character. A negative count searches for previous occurrences.
 <a name="rlcmd-character-search-backward"></a>`character-search-backward` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the previous occurrence of that character. A negative count searches for subsequent occurrences.
 <a name="rlcmd-insert-comment"></a>`insert-comment` | <kbd>Alt</kbd>-<kbd>#</kbd> | Without a numeric argument, the value of the [`comment-begin`](#configcommentbegin) variable is inserted at the beginning of the current line. If a numeric argument is supplied, this command acts as a toggle: if the characters at the beginning of the line do not match the value of `comment-begin`, the value is inserted, otherwise the characters in `comment-begin` are deleted from the beginning of the line. In either case, the line is accepted as if a newline had been typed.
+<a name="rlcmd-redraw-current-line"></a>`redraw-current-line` | | Refresh the current line.
 <a name="rlcmd-dump-functions"></a>`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-variables"></a>`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-macros"></a>`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
@@ -1374,10 +1389,11 @@ Command | Key | Description
 <a name="rlcmd-add-history"></a>`add-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd> | Add the current line to the history without executing it, and clear the editing line.
 <a name="rlcmd-alias-expand-line"></a>`alias-expand-line` | | A synonym for [`clink-expand-doskey-alias`](#rlcmd-clink-expand-doskey-alias).
 <a name="rlcmd-clink-accept-suggested-line"></a>`clink-accept-suggested-line` | | If there is a suggestion, insert the suggestion and accept the input line (like [`accept-line`](#rlcmd-accept-line)).
+<a name="rlcmd-clink-backward-bigword"></a>`clink-backward-bigword` | | Move back to the start of the current or previous space delimited word.
 <a name="rlcmd-clink-complete-numbers"></a>`clink-complete-numbers` | | Like [`complete`](#rlcmd-complete), but for numbers from the console screen (3 digits or more, up to hexadecimal).
 <a name="rlcmd-clink-copy-cwd"></a>`clink-copy-cwd` | <kbd>Alt</kbd>-<kbd>c</kbd> | Copies the current working directory to the clipboard.
 <a name="rlcmd-clink-copy-line"></a>`clink-copy-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd> | Copies the input line to the clipboard.
-<a name="rlcmd-clink-copy-word"></a>`clink-copy-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd> | Copies the word at the cursor point to the clipboard, or copies the <em>n</em>th word if a numeric argument is provided via the [`digit-argument`](#rlcmd-digit-argument) keys.
+<a name="rlcmd-clink-copy-word"></a>`clink-copy-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd> | Copies the word at the cursor point to the clipboard, or copies the <em>n</em>-th word if a numeric argument is provided via the [`digit-argument`](#rlcmd-digit-argument) keys.
 <a name="rlcmd-clink-ctrl-c"></a>`clink-ctrl-c` | <kbd>Ctrl</kbd>-<kbd>c</kbd> | Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one.
 <a name="rlcmd-clink-diagnostics"></a>`clink-diagnostics` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> | Show internal diagnostic information.
 <a name="rlcmd-clink-dump-functions"></a>`clink-dump-functions` | | Print all of the functions and their key bindings.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file.  Unlike [`dump-functions`](#rlcmd-dump-functions), this uses friendly key names and includes `luafunc:` macros.
@@ -1389,6 +1405,7 @@ Command | Key | Description
 <a name="rlcmd-clink-expand-history-and-alias"></a>`clink-expand-history-and-alias` | | Performs [history](#using-history-expansion) and doskey alias expansion in the input line.
 <a name="rlcmd-clink-expand-line"></a>`clink-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | Performs [history](#using-history-expansion), doskey alias, and environment variable expansion in the input line.
 <a name="rlcmd-clink-find-conhost"></a>`clink-find-conhost` | | Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu. When [`clink.default_bindings`](#clink_default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.
+<a name="rlcmd-clink-forward-bigword"></a>`clink-forward-bigword` | | Move forward to the beginning of the next space delimited word, or insert the next full suggested word up to a space.
 <a name="rlcmd-clink-insert-dot-dot"></a>`clink-insert-dot-dot` | <kbd>Alt</kbd>-<kbd>a</kbd> | Inserts `..\` at the cursor point.
 <a name="rlcmd-clink-insert-suggested-full-word"></a>`clink-insert-suggested-full-word` | | If there is a suggestion, insert the next full word from the suggested line.
 <a name="rlcmd-clink-insert-suggested-line"></a>`clink-insert-suggested-line` | | If there is a suggestion, insert the suggested line.
@@ -1420,12 +1437,14 @@ Command | Key | Description
 <a name="rlcmd-clink-show-help-raw"></a>`clink-show-help-raw` | | Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.
 <a name="rlcmd-clink-up-directory"></a>`clink-up-directory` | <kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Execute `cd ..` to move up one directory.
 <a name="rlcmd-clink-what-is"></a>`clink-what-is` | <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> | Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.
+<a name="rlcmd-cua-backward-bigword"></a>`cua-backward-bigword` | | Extend the selection backward one space delimited word.
 <a name="rlcmd-cua-backward-char"></a>`cua-backward-char` | <kbd>Shift</kbd>-<kbd>Left</kbd> | Extend the selection backward one character.
 <a name="rlcmd-cua-backward-word"></a>`cua-backward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd> | Extend the selection backward one word.
 <a name="rlcmd-cua-beg-of-line"></a>`cua-beg-of-line` | <kbd>Shift</kbd>-<kbd>Home</kbd> | Extend the selection to the beginning of the line.
 <a name="rlcmd-cua-copy"></a>`cua-copy` | <kbd>Shift</kbd>-<kbd>Ins</kbd> | Copy the selected text to the clipboard.
 <a name="rlcmd-cua-cut"></a>`cua-cut` | <kbd>Shift</kbd>-<kbd>Del</kbd> | Cut the selected text to the clipboard.
 <a name="rlcmd-cua-end-of-line"></a>`cua-end-of-line` | <kbd>Shift</kbd>-<kbd>End</kbd> | Extend the selection to the end of the line.
+<a name="rlcmd-cua-forward-bigword"></a>`cua-forward-bigword` | | Extend the selection forward one space delimited word, or insert the next full suggested word up to a space.
 <a name="rlcmd-cua-forward-char"></a>`cua-forward-char` | <kbd>Shift</kbd>-<kbd>Right</kbd> | Extend the selection forward one character, or insert the next full suggested word up to a space.
 <a name="rlcmd-cua-forward-word"></a>`cua-forward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Right</kbd> | Extend the selection forward one word.
 <a name="rlcmd-cua-next-screen-line"></a>`cua-next-screen-line` | <kbd>Shift</kbd>-<kbd>Down</kbd> | Extend the selection down one screen line.
@@ -2702,6 +2721,8 @@ A transient right side prompt is also possible (similar to the usual [right side
 
 A prompt filter must have a `:filter()` function defined on it, and may in addition have any combination of `:rightfilter()`, `:transientfilter()`, and `:transientrightfilter()` functions defined on it.
 
+> **Related:**  The [prompt.spacing](#prompt_spacing) setting can optionally remove blank lines before the prompt, and can optionally insert one blank line before the normal (non-transient) prompt.
+
 The next example shows how to make a prompt that shows:
 1. The current directory and ` > ` on the left, and the date and time on the right.
 2. Just `> ` on the left, for past commands.
@@ -3202,7 +3223,7 @@ Here are the word designators:
 <tr><td>
 <code><em>n</em></code>
 </td><td>
-    The <em>n</em>th word.
+    The <em>n</em>-th word.
 </td></tr>
 
 <tr><td>
