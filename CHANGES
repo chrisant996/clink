@@ -10,7 +10,9 @@
 - Completions for `clink set` color settings include a color sample in the description field (e.g. type `clink set color`<kbd>Alt</kbd>-<kbd>=</kbd> to see the color settings and their current color samples).
 - The `clink-reload` bindable command now reverts key bindings and config variables before reloading the inputrc file, so that old bindings and values don't linger in the current session if they've been removed from the inputrc file.
 - Added `clink-dump-functions` and `clink-dump-macros` bindable commands.  These behave similar to `dump-functions` and `dump-macros`, but they show user-friendly key names and `luafunc:` macros are listed as functions instead of as macros.
+- Added some new "bigword" cursor movement commands for moving to the next or previous space delimited word; `clink-backward-bigword`, `clink-forward-bigword`, `cua-backward-bigword`, `cua-forward-bigword`.
 - Added a new conditional directive `$if clink_version` in the inputrc file (e.g. `$if clink_version >= 1.6.1`).
+- Added a new `prompt.spacing` setting which can control blank lines before the prompt (it was a clink-flex-prompt feature which has now been incorporated into Clink itself).
 - Added a new `match.coloring_rules` setting and `%CLINK_MATCH_COLORS%` environment variable, both of which supersede Readline's `%LS_COLORS%` definitions when displaying match completions.
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Added `console.explodeansi()` to split a string into substrings on ANSI escape code boundaries.
