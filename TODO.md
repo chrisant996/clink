@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Need to rethink how `%CLINK_MATCH_COLORS%` vs `%LS_COLORS%` works -- setting `CLINK_MATCH_COLORS` should probably supersede `LS_COLORS` and ignore any existing `LS_COLORS`.  But right now I'm seeing a mish-mash of match colors even when using simply `set CLINK_MATCH_COLORS=di=95`.  And the fact that `color.readonly` and `color.hidden` exist is also a little problematic; it's possible to make an INI file that clears them and instead sets `match.coloring_rules`, but it's clumsy.
 
 ## Normal Priority
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
