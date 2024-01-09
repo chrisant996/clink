@@ -3,6 +3,8 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.6.1
+
+**Features:**
 - Improved input line parsing and coloring:
   - Commands starting with `@` are supported, and completion correctly ignores the `@`.
   - Each of the following CMD syntax errors are recognized:  lines starting with `&` or `@2>`, and lines containing `& &` or `2>&file`.
@@ -14,11 +16,17 @@
 - Added a new conditional directive `$if clink_version` in the inputrc file (e.g. `$if clink_version >= 1.6.1`).
 - Added a new `prompt.spacing` setting which can control blank lines before the prompt (it was a clink-flex-prompt feature which has now been incorporated into Clink itself).
 - Added a new `match.coloring_rules` setting and `%CLINK_MATCH_COLORS%` environment variable, both of which supersede Readline's `%LS_COLORS%` definitions when displaying match completions.
+- Document the `CLINK_EXE` global variable which has existed since v1.0.0 but was accidentally undocumented.
+- Internal changes.
+
+**Lua:**
 - Added `line_state:getrangeoffset()` and `line_state:getrangelength()` to get the beginning offset and length of the range in the input line described by the line_state.
 - Added `console.explodeansi()` to split a string into substrings on ANSI escape code boundaries.
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
 - Added `rl.bracketpromptcodes()` to apply `\1` and `\2` codes as needed by Readline in certain inputrc config variables.
+
+**Fixes:**
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
 - Fixed `console.readinput()` repeatedly returning nil after `console.checkinput()` returns true (regression introduced in v1.5.12).
 - Fixed loading the `default_inputrc` file if it exists (introduced in v1.3.5, and it never worked properly until now).
@@ -34,8 +42,6 @@
 - Fixed the color of flags for `clink set` (e.g. `--help`).
 - Fixed the `clink-reload` command so any inputrc file parse errors are printed on new lines.
 - Fixed the `lua.break_on_error` setting so it works properly in released builds of Clink.
-- Document the `CLINK_EXE` global variable which has existed since v1.0.0 but was accidentally undocumented.
-- Internal changes.
 
 #### v1.6.0
 - Updated the Readline library to v8.2 patch 7 (the list here omits changes that were contributed to Readline from Clink, or which do not affect Clink).
