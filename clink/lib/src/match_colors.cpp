@@ -196,6 +196,7 @@ struct color_rule
 
 static std::vector<color_rule> s_color_rules;
 static str_moveable s_completion_prefix;
+static bool s_using_color_rules = false;
 static bool s_norm_colored = false;
 static bool s_colored_stats = false;
 
@@ -619,10 +620,25 @@ void parse_match_colors()
     std::vector<color_rule> empty;
     s_color_rules.swap(empty);
     g_common_match_prefix.get(s_completion_prefix);
+    s_using_color_rules = false;
     s_colored_stats = false;
 
-    // Parse LS_COLORS only if completion colors are enabled.
-    if (_rl_colored_stats || _rl_colored_completion_prefix)
+    str<> s;
+    s_error_context = "CLINK_MATCH_COLORS";
+    if (!os::get_env("CLINK_MATCH_COLORS", s))
+    {
+#ifdef INCLUDE_MATCH_COLORING_RULES
+        s_error_context = g_match_colordef.get_name();
+        g_match_colordef.get(s);
+#endif
+    }
+    s_using_color_rules = !s.empty();
+
+    if (s_using_color_rules)
+    {
+        _rl_free_colors(); // Discard LS_COLORS and revert to defaults.
+    }
+    else if (_rl_colored_stats || _rl_colored_completion_prefix)
     {
         _rl_parse_colors();
 
@@ -684,55 +700,43 @@ void parse_match_colors()
     }
 
     // Parse match coloring rules, if any.
+    if (s_using_color_rules)
     {
-        str<> s;
-        s_error_context = "CLINK_MATCH_COLORS";
-        if (!os::get_env("CLINK_MATCH_COLORS", s))
+        str<> token;
+        str<16> value;
+        str_iter iter(s.c_str(), s.length());
+        str<16> readline_colored_completion_prefix;
+        bool override = false;
+        while (iter.more())
         {
-#ifdef INCLUDE_MATCH_COLORING_RULES
-            s_error_context = g_match_colordef.get_name();
-            g_match_colordef.get(s);
-#endif
-        }
-
-        if (s.length())
-        {
-            str<> token;
-            str<16> value;
-            str_iter iter(s.c_str(), s.length());
-            str<16> readline_colored_completion_prefix;
-            bool override = false;
-            while (iter.more())
+            const int32 r = get_token_and_value(iter, token, value);
+            if (r < 0)
             {
-                const int32 r = get_token_and_value(iter, token, value);
-                if (r < 0)
+                _rl_errmsg("unparsable value for %s string", s_error_context);
+                break;
+            }
+            if (r > 0)
+            {
+                if (token.equals("*.readline-colored-completion-prefix"))
                 {
-                    _rl_errmsg("unparsable value for %s string", s_error_context);
-                    break;
+                    s_colored_stats = true;
+                    override = true;
+                    readline_colored_completion_prefix = value.c_str();
                 }
-                if (r > 0)
+                else
                 {
-                    if (token.equals("*.readline-colored-completion-prefix"))
+                    color_rule rule;
+                    if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
                     {
                         s_colored_stats = true;
-                        override = true;
-                        readline_colored_completion_prefix = value.c_str();
-                    }
-                    else
-                    {
-                        color_rule rule;
-                        if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
-                        {
-                            s_colored_stats = true;
-                            s_color_rules.emplace_back(std::move(rule));
-                        }
+                        s_color_rules.emplace_back(std::move(rule));
                     }
                 }
             }
-
-            if (override)
-                s_completion_prefix = readline_colored_completion_prefix.c_str();
         }
+
+        if (override)
+            s_completion_prefix = readline_colored_completion_prefix.c_str();
     }
 
     s_norm_colored = is_colored(C_NORM);
