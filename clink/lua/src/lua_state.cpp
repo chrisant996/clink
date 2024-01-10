@@ -838,8 +838,14 @@ void get_lua_srcinfo(lua_State* L, str_base& out)
 
 //------------------------------------------------------------------------------
 static terminal_in* s_lua_term_in = nullptr;
-void set_lua_terminal_input(terminal_in* in) { s_lua_term_in = in; }
+static terminal_out* s_lua_term_out = nullptr;
+void set_lua_terminal(terminal_in* in, terminal_out* out)
+{
+    s_lua_term_in = in;
+    s_lua_term_out = out;
+}
 terminal_in* get_lua_terminal_input() { return s_lua_term_in; }
+terminal_out* get_lua_terminal_output() { return s_lua_term_out; }
 
 
 

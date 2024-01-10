@@ -263,7 +263,7 @@ int32 interpreter(int32 argc, char** argv)
     printer printer(*term.out);
     printer_context prt(term.out, &printer);
     term.in->begin();
-    set_lua_terminal_input(term.in);
+    set_lua_terminal(term.in, term.out);
 
     extern void init_standalone_textlist(terminal& term);
     init_standalone_textlist(term);
@@ -340,7 +340,7 @@ int32 interpreter(int32 argc, char** argv)
     }
 
     term.in->end();
-    set_lua_terminal_input(nullptr);
+    set_lua_terminal(nullptr, nullptr);
 
     return ret;
 }

@@ -451,7 +451,7 @@ host::host(const char* name)
     m_printer = new printer(*m_terminal.out);
 
     assert(!get_lua_terminal_input());
-    set_lua_terminal_input(m_terminal.in);
+    set_lua_terminal(m_terminal.in, m_terminal.out);
 }
 
 //------------------------------------------------------------------------------
@@ -464,7 +464,7 @@ host::~host()
     delete m_lua;
     delete m_printer;
 
-    set_lua_terminal_input(nullptr);
+    set_lua_terminal(nullptr, nullptr);
     terminal_destroy(m_terminal);
 }
 

@@ -18,6 +18,7 @@ struct lua_State;
 class str_base;
 class line_state;
 class terminal_in;
+class terminal_out;
 typedef double lua_Number;
 
 #define LUA_SELF    (1)
@@ -137,8 +138,9 @@ private:
 
 //------------------------------------------------------------------------------
 void get_lua_srcinfo(lua_State* L, str_base& out);
-void set_lua_terminal_input(terminal_in* in);
+void set_lua_terminal(terminal_in* in, terminal_out* out);
 terminal_in* get_lua_terminal_input();
+terminal_out* get_lua_terminal_output();
 
 //------------------------------------------------------------------------------
 // Dumps from pos to top of stack (use negative pos for relative position, use

@@ -10,6 +10,7 @@
 #include <core/str_tokeniser.h>
 #include <core/debugheap.h>
 #include <lib/host_callbacks.h>
+#include <terminal/terminal_out.h>
 
 #include <new.h>
 
@@ -141,6 +142,17 @@ static int32 set(lua_State* state)
     bool ok = setting->set(value);
     if (ok)
         ok = settings::sandboxed_set_setting(key, value);
+
+    if (lua_state::is_interpreter() &&
+        strcmp(setting->get_name(), "terminal.emulation") == 0)
+    {
+        terminal_out* out = get_lua_terminal_output();
+        if (out)
+        {
+            out->end();
+            out->begin();
+        }
+    }
 
     lua_pushboolean(state, ok == true);
     return 1;
