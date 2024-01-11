@@ -16,7 +16,6 @@
 - Added a new conditional directive `$if clink_version` in the inputrc file (e.g. `$if clink_version >= 1.6.1`).
 - Added a new `prompt.spacing` setting which can control blank lines before the prompt (it was a clink-flex-prompt feature which has now been incorporated into Clink itself).
 - Added a new `match.coloring_rules` setting and `%CLINK_MATCH_COLORS%` environment variable, both of which supersede Readline's `%LS_COLORS%` definitions when displaying match completions.
-- Document the `CLINK_EXE` global variable which has existed since v1.0.0 but was accidentally undocumented.
 - Internal changes.
 
 **Lua:**
@@ -25,6 +24,7 @@
 - Added `rl.getinputrcfilename()` to get the loaded inputrc file name.
 - Added `rl.translatekey()` to translate between key sequence formats (input key, key binding, and friendly key name).
 - Added `rl.bracketpromptcodes()` to apply `\1` and `\2` codes as needed by Readline in certain inputrc config variables.
+- Document the `CLINK_EXE` global variable which has existed since v1.0.0 but was accidentally undocumented.
 
 **Fixes:**
 - Removed superfluous `;39` and/or `;49` from color setting escape codes in some cases.
