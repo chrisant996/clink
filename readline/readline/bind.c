@@ -74,7 +74,9 @@ Keymap rl_binding_keymap;
 
 /* begin_clink_change */
 const char *_rl_default_init_file = NULL;
+int _rl_default_init_file_optional_set = 0;
 int _rl_load_user_init_file = 1;
+static int _rl_inputrc_optional_set = 0;
 static int fake_byte_oriented = 0;
 #undef rl_byte_oriented
 #define rl_byte_oriented fake_byte_oriented
@@ -1075,7 +1077,11 @@ rl_read_init_file (const char *filename)
 
 /* begin_clink_change */
   if (_rl_default_init_file)
-    _rl_read_init_file (_rl_default_init_file, 1);
+    {
+      _rl_inputrc_optional_set = _rl_default_init_file_optional_set;
+      _rl_read_init_file (_rl_default_init_file, 1);
+      _rl_inputrc_optional_set = 0;
+    }
 /* end_clink_change */
 
 #if defined (__MSDOS__)
@@ -1737,6 +1743,7 @@ rl_parse_and_bind (char *string)
   int has_meta;
   int keyseq_len;
   char keyseq[3];
+  int implicit_set = 0;
 /* end_clink_change */
 
   while (string && whitespace (*string))
@@ -1795,8 +1802,20 @@ rl_parse_and_bind (char *string)
   if (equivalency)
     string[i++] = '\0';
 
+/* begin_clink_change */
+  if (_rl_inputrc_optional_set)
+    {
+      implicit_set = (find_boolean_var (string) >= 0 || find_string_var (string) >= 0);
+      if (implicit_set)
+	i = 0;
+    }
+/* end_clink_change */
+
   /* If this is a command to set a variable, then do that. */
-  if (_rl_stricmp (string, "set") == 0)
+/* begin_clink_change */
+  //if (_rl_stricmp (string, "set") == 0)
+  if (implicit_set || _rl_stricmp (string, "set") == 0)
+/* end_clink_change */
     {
       char *var, *value, *e;
       int s;

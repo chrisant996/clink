@@ -66,6 +66,7 @@ extern char* tgetstr(const char*, char**);
 extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
 extern char* tgoto(const char* base, int32 x, int32 y);
 extern Keymap _rl_dispatching_keymap;
+extern int _rl_default_init_file_optional_set;
 }
 
 //------------------------------------------------------------------------------
@@ -1827,54 +1828,6 @@ static void init_readline_hooks()
 }
 
 //------------------------------------------------------------------------------
-static bool is_ok_inputrc(const char* default_inputrc)
-{
-    // The "default_inputrc" file was introduced in v1.3.5, but up through
-    // v1.6.0 it wasn't actually loaded properly.  And the provided one had
-    // syntax errors, so the fix in v1.6.1 is careful to avoid loading the
-    // default_inputrc file if it contains any of the syntax error lines.
-
-    static const char* const c_oops[] =
-    {
-        "colored-completion-prefix",
-        "colored-stats",
-        "mark-symlinked-directories",
-        "completion-auto-query-items",
-        "history-point-at-end-of-anchored-search",
-        "search-ignore-case",
-    };
-
-    FILE* f = fopen(default_inputrc, "r");
-    if (!f)
-        return true;
-
-    bool ok = true;
-    char buffer[128];
-    while (ok && fgets(buffer, sizeof_array(buffer), f))
-    {
-        size_t len = strlen(buffer);
-        while (len && strchr("\r\n", buffer[len - 1]))
-            buffer[--len] = '\0';
-        if (!buffer[0] || strchr("#\r\n", buffer[0]))
-            continue;
-        for (const char* oops : c_oops)
-        {
-            const size_t oops_len = strlen(oops);
-            if (len >= oops_len && strnicmp(oops, buffer, oops_len) == 0)
-            {
-                // The file contains a specific syntax error from the original
-                // default_inputrc mistake.  Don't load it.
-                ok = false;
-                break;
-            }
-        }
-    }
-
-    fclose(f);
-    return ok;
-}
-
-//------------------------------------------------------------------------------
 static void safe_replace_keymap(Keymap replace, Keymap with)
 {
     Keymap to, from;
@@ -2092,10 +2045,14 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     {
         s_rl_initialized = true;
 
-        static str_moveable s_default_inputrc;
-        if (is_ok_inputrc(default_inputrc))
-            s_default_inputrc = default_inputrc;
+        static str_moveable s_default_inputrc(default_inputrc);
         _rl_default_init_file = s_default_inputrc.empty() ? nullptr : s_default_inputrc.c_str();
+
+        // The "default_inputrc" file was introduced in v1.3.5, but up through
+        // v1.6.0 it wasn't actually loaded properly.  And the provided one
+        // had syntax errors (missing the "set" keyword), so to compensate now
+        // the "set" keyword is optional in the "default_inputrc" file.
+        _rl_default_init_file_optional_set = 1;
 
         init_readline_hooks();
 
