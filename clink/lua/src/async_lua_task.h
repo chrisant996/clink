@@ -25,13 +25,14 @@ public:
                             async_yield_lua(const char* name, uint32 timeout=0);
                             ~async_yield_lua();
 
-    int32                   get_name(lua_State* state);
-    int32                   get_expiration(lua_State* state);
-    int32                   ready(lua_State* state);
-
     bool                    is_expired() const;
     void                    set_ready() { m_ready = true; }
     void                    clear_ready() { m_ready = false; }
+
+protected:
+    int32                   get_name(lua_State* state);
+    int32                   get_expiration(lua_State* state);
+    int32                   ready(lua_State* state);
 
 private:
     str_moveable            m_name;

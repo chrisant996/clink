@@ -53,6 +53,38 @@ match_builder_lua::~match_builder_lua()
 }
 
 //------------------------------------------------------------------------------
+int32 match_builder_lua::do_add_matches(lua_State* state, bool self_on_stack)
+{
+    const int32 lua_self = self_on_stack ? LUA_SELF : 0;
+
+    if (lua_gettop(state) <= lua_self || !lua_istable(state, lua_self + 1))
+    {
+        lua_pushinteger(state, 0);
+        lua_pushboolean(state, 0);
+        return 2;
+    }
+
+    const char* type_str = optstring(state, lua_self + 2, "");
+    if (!type_str)
+        return 0;
+
+    match_type type = to_match_type(type_str);
+
+    int32 count = 0;
+    int32 total = int32(lua_rawlen(state, lua_self + 1));
+    for (int32 i = 1; i <= total; ++i)
+    {
+        lua_rawgeti(state, lua_self + 1, i);
+        count += !!add_match_impl(state, -1, type);
+        lua_pop(state, 1);
+    }
+
+    lua_pushinteger(state, count);
+    lua_pushboolean(state, count == total);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  builder:addmatch
 /// -ver:   1.0.0
 /// -arg:   match:string|table
@@ -361,31 +393,7 @@ int32 match_builder_lua::matches_ready(lua_State* state)
 /// -show:  })
 int32 match_builder_lua::add_matches(lua_State* state)
 {
-    if (lua_gettop(state) <= LUA_SELF || !lua_istable(state, LUA_SELF + 1))
-    {
-        lua_pushinteger(state, 0);
-        lua_pushboolean(state, 0);
-        return 2;
-    }
-
-    const char* type_str = optstring(state, LUA_SELF + 2, "");
-    if (!type_str)
-        return 0;
-
-    match_type type = to_match_type(type_str);
-
-    int32 count = 0;
-    int32 total = int32(lua_rawlen(state, LUA_SELF + 1));
-    for (int32 i = 1; i <= total; ++i)
-    {
-        lua_rawgeti(state, LUA_SELF + 1, i);
-        count += !!add_match_impl(state, -1, type);
-        lua_pop(state, 1);
-    }
-
-    lua_pushinteger(state, count);
-    lua_pushboolean(state, count == total);
-    return 2;
+    return do_add_matches(state, true/*self_on_stack*/);
 }
 
 //------------------------------------------------------------------------------

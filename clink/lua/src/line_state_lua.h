@@ -20,6 +20,10 @@ public:
                         line_state_lua(const line_state& line);
                         line_state_lua(line_state_copy* copy);
                         ~line_state_lua();
+
+    const line_state*   get_line_state() const { return m_line; }
+
+protected:
     int32               get_line(lua_State* state);
     int32               get_cursor(lua_State* state);
     int32               get_command_offset(lua_State* state);
@@ -34,8 +38,6 @@ public:
     int32               reset_shift(lua_State* state);
     int32               unbreak(lua_State* state);
     int32               overwrite_from(lua_State* state);
-
-    const line_state*   get_line_state() const { return m_line; }
 
 private:
     const line_state*   m_line;

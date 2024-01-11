@@ -17,6 +17,8 @@ public:
                         matches_lua(const matches& matches);
                         matches_lua(std::shared_ptr<match_builder_toolkit>& toolkit);
                         ~matches_lua();
+
+protected:
     int32               get_prefix(lua_State* state);
     int32               get_count(lua_State* state);
     int32               get_match(lua_State* state);

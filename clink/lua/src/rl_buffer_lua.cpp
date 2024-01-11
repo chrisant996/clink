@@ -59,6 +59,16 @@ rl_buffer_lua::~rl_buffer_lua()
 }
 
 //------------------------------------------------------------------------------
+void rl_buffer_lua::do_begin_output()
+{
+    if (!m_began_output)
+    {
+        end_prompt(true/*crlf*/);
+        m_began_output = true;
+    }
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl_buffer:getbuffer
 /// -ver:   1.0.0
 /// -ret:   string
@@ -226,11 +236,7 @@ int32 rl_buffer_lua::end_undo_group(lua_State* state)
 /// so that subsequent output doesn't overwrite the input buffer display.
 int32 rl_buffer_lua::begin_output(lua_State* state)
 {
-    if (!m_began_output)
-    {
-        end_prompt(true/*crlf*/);
-        m_began_output = true;
-    }
+    do_begin_output();
     return 0;
 }
 

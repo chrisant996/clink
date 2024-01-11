@@ -111,6 +111,8 @@ class globber_lua
 {
 public:
                         globber_lua(const char* pattern, int32 extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat=false);
+
+protected:
     int32               next(lua_State* state);
     int32               close(lua_State* state);
 
@@ -1257,9 +1259,13 @@ class enumshares_lua
 public:
                         enumshares_lua(const std::shared_ptr<enumshares_async_lua_task>& task) : m_task(task) {}
                         ~enumshares_lua() {}
-    static int32        iter_aux(lua_State* state);
 
     bool                next(str_base& out) { return m_task->next(out); }
+
+    void                pushcclosure(lua_State* state) { lua_pushcclosure(state, iter_aux, 2); }
+
+protected:
+    static int32        iter_aux(lua_State* state);
 
 private:
     std::shared_ptr<enumshares_async_lua_task> m_task;
@@ -1432,7 +1438,7 @@ static int32 enum_shares(lua_State* state)
 
     // es was already pushed by make_new.
     // asyncyield was already pushed by make_new.
-    lua_pushcclosure(state, es->iter_aux, 2);
+    es->pushcclosure(state);
     return 1;
 }
 

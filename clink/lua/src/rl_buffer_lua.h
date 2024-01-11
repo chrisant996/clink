@@ -18,6 +18,9 @@ public:
                             rl_buffer_lua(line_buffer& buffer);
                             ~rl_buffer_lua();
 
+    void                    do_begin_output();
+
+protected:
     int32                   get_buffer(lua_State* state);
     int32                   get_length(lua_State* state);
     int32                   get_cursor(lua_State* state);

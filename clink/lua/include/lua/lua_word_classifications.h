@@ -18,13 +18,15 @@ class lua_word_classifications
 {
 public:
                             lua_word_classifications(word_classifications& classifications, uint32 index_offset, uint32 command_word_index, uint32 num_words);
+
+    bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
+
+protected:
     int32                   classify_word(lua_State* state);
     int32                   apply_color(lua_State* state);
     int32                   shift(lua_State* state);
     int32                   reset_shift(lua_State* state);
     int32                   unbreak(lua_State* state);
-
-    bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
 
 private:
     word_classifications&   m_classifications;

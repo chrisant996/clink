@@ -725,7 +725,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, const line_st
     str<> msg;
     if (!push_named_function(L, func_name, &msg))
     {
-        buffer.begin_output(L);
+        buffer.do_begin_output();
         puts(msg.c_str());
         return false;
     }
@@ -747,7 +747,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, const line_st
     {
         if (const char* error = lua_tostring(L, -1))
         {
-            buffer.begin_output(L);
+            buffer.do_begin_output();
             printf("error executing function '%s':\n", func_name);
             puts(error);
         }

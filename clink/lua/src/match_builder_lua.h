@@ -19,6 +19,10 @@ public:
                     match_builder_lua(match_builder& builder);
                     match_builder_lua(std::shared_ptr<match_builder_toolkit>& toolkit);
                     ~match_builder_lua();
+
+    int32           do_add_matches(lua_State* state, bool self_on_stack);
+
+protected:
     int32           add_match(lua_State* state);
     int32           add_matches(lua_State* state);
     int32           is_empty(lua_State* state);

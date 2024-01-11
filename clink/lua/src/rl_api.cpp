@@ -707,7 +707,7 @@ static int32 set_matches(lua_State* state)
     match_builder builder(*matches);
     match_builder_lua builder_lua(builder);
 
-    return builder_lua.add_matches(state);
+    return builder_lua.do_add_matches(state, false/*self_on_stack*/);
 }
 
 //------------------------------------------------------------------------------
