@@ -583,8 +583,8 @@ void settings_lua_initialise(lua_state& lua)
         { -1, "load",       &load },
         { 1, "list",        &list },
         { 1, "match",       &match },
-        { 1, "parseini",    &parse_ini },
-        { 1, "overlay",     &overlay },
+        { 1, "_parseini",   &parse_ini },
+        { 1, "_overlay",    &overlay },
     };
 
     lua_State* state = lua.get_state();
