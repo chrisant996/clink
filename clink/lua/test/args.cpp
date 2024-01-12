@@ -978,6 +978,10 @@ TEST_CASE("Lua arg parsers")
         str<> host(os::get_shellname());
         doskey doskey(host.c_str());
 
+        MAKE_CLEANUP([&doskey](){
+            doskey.remove_alias("xyz");
+        });
+
         SECTION("Flag at end")
         {
             REQUIRE(doskey.add_alias("xyz", "sudo gsudo plerg -m $*") == true);
@@ -1132,6 +1136,11 @@ TEST_CASE("Lua arg parsers")
         lua_word_classifier lua_classifier(lua);
         tester.get_editor()->set_classifier(lua_classifier);
 
+        MAKE_CLEANUP([](){
+            settings::find("clink.colorize_input")->set("false");
+            settings::find("color.argmatcher")->set();
+        });
+
         settings::find("clink.colorize_input")->set("true");
         settings::find("color.argmatcher")->set("92");
 
@@ -1210,14 +1219,4 @@ TEST_CASE("Lua arg parsers")
             tester.run();
         }
     }
-}
-
-TEST_CASE("Lua arg parsers (cleanup)")
-{
-    str<> host(os::get_shellname());
-    doskey doskey(host.c_str());
-    doskey.remove_alias("xyz");
-
-    settings::find("clink.colorize_input")->set("false");
-    settings::find("color.argmatcher")->set();
 }

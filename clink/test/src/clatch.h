@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>
+#include <functional>
 
 namespace clatch {
 
@@ -88,6 +89,14 @@ struct test
             tail->m_next = this;
         get_tail() = this;
     }
+};
+
+//------------------------------------------------------------------------------
+struct cleanup
+{
+                        cleanup(std::function<void(void)>&& func) : m_func(std::move(func)) {}
+                        ~cleanup() { if (m_func) m_func(); }
+    std::function<void(void)> m_func;
 };
 
 //------------------------------------------------------------------------------
@@ -193,6 +202,9 @@ void fail(const char* expr, const char* file, int32 line, CALLBACK&& cb)
 #define SECTION(name)\
     static clatch::section CLATCH_IDENT(section);\
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section), name))
+
+#define MAKE_CLEANUP(...)\
+    clatch::cleanup CLATCH_IDENT(cleanup)(std::move(##__VA_ARGS__));
 
 
 #define SECTIONNAME()\
