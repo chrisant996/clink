@@ -415,6 +415,17 @@ _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
       rl_unix_line_discard (1, c);
       break;
 
+    case CTRL('Q'):
+    case CTRL('V'):
+      n = rl_quoted_insert (1, c);
+      if (n < 0)
+	{
+	  _rl_nsearch_abort (cxt);
+	  return -1;
+	}
+      cxt->lastc = (rl_point > 0) ? rl_line_buffer[rl_point - 1] : rl_line_buffer[0];
+      break;
+
     case RETURN:
     case NEWLINE:
       return 0;

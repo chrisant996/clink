@@ -67,6 +67,9 @@ the simplest way possible, perhaps to replace calls in your code to
 
 The function @code{readline()} prints a prompt @var{prompt}
 and then reads and returns a single line of text from the user.
+Since it's possible to enter characters into the line while quoting
+them to disable any Readline editing function they might normally have,
+this line may include embedded newlines and other special characters.
 If @var{prompt} is @code{NULL} or the empty string, no prompt is displayed.
 The line @code{readline} returns is allocated with @code{malloc()};
 the caller should @code{free()} the line when it has finished with it.

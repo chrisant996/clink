@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Thu Jan 19 17:20:59 EST 2023
+.\"	Last Change: Thu Dec 14 15:42:44 EST 2023
 .\"
-.TH HISTORY 3 "2023 January 19" "GNU History 8.2"
+.TH HISTORY 3 "2023 December 14" "GNU History 8.3"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -74,10 +74,21 @@ does when reading input,
 so that several words that would otherwise be separated 
 are considered one word when surrounded by quotes (see the
 description of \fBhistory_tokenize()\fP below).
+.PP
 History expansions are introduced by the appearance of the
 history expansion character, which is \^\fB!\fP\^ by default.
 Only backslash (\^\fB\e\fP\^) and single quotes can quote
 the history expansion character.
+.PP
+There is a special abbreviation for substitution, active when the
+\fIquick substitution\fP character (default \fB\(ha\fP)
+is the first character on the line.
+It selects the previous history list entry, using an event designator
+equivalent to \fB!!\fP,
+and substitutes one string for another in that line.
+It is described below under \fBEvent Designators\fP.
+This is the only history expansion that does not begin with the history
+expansion character.
 .SS Event Designators
 An event designator is a reference to a command line entry in the
 history list.

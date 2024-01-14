@@ -1,11 +1,11 @@
 @ignore
-Copyright (C) 1988-2023 Free Software Foundation, Inc. 
+Copyright (C) 1988-2024 Free Software Foundation, Inc. 
 @end ignore
 
 @set EDITION 8.3
 @set VERSION 8.3
 
-@set UPDATED 3 November 2023
-@set UPDATED-MONTH November 2023
+@set UPDATED 5 January 2024
+@set UPDATED-MONTH January 2024
 
-@set LASTCHANGE Fri Nov  3 12:04:26 EDT 2023
+@set LASTCHANGE Fri Jan  5 11:01:44 EST 2024

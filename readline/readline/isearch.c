@@ -454,7 +454,11 @@ add_character:
 	{
 	  f = cxt->keymap[c].function;
 	  if (f == rl_do_lowercase_version)
-	    f = cxt->keymap[_rl_to_lower (c)].function;
+	    {
+	      f = cxt->keymap[_rl_to_lower (c)].function;
+	      if (f == rl_do_lowercase_version)
+		f = rl_insert;
+	    }
 	}
 
       if (f == rl_reverse_search_history)
@@ -471,6 +475,8 @@ add_character:
 	cxt->lastc = -6;
       else if (f == rl_bracketed_paste_begin)
 	cxt->lastc = -7;
+      else if (c == CTRL('V') || f == rl_quoted_insert)
+	cxt->lastc = -8;
     }
 
   /* If we changed the keymap earlier while translating a key sequence into
@@ -736,6 +742,27 @@ opcode_dispatch:
       xfree (paste);
       break;
 
+    case -8:	/* quoted insert */
+#if defined (HANDLE_SIGNALS)
+      if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
+	_rl_disable_tty_signals ();
+#endif
+      c = _rl_search_getchar (cxt);
+#if defined (HANDLE_SIGNALS)
+      if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
+	_rl_restore_tty_signals ();
+#endif
+
+      if (c < 0)
+	{
+	  cxt->sflags |= SF_FAILED;
+	  cxt->history_pos = cxt->last_found_line;
+	  return -1;
+	}
+      
+      _rl_add_executing_keyseq (c);
+
+      /*FALLTHROUGH*/
     /* Add character to search string and continue search. */
     default:
 #if defined (HANDLE_MULTIBYTE)

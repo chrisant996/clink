@@ -2184,7 +2184,7 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
 	  _rl_readstr_restore (cxt);
 	  return -1;
 	}
-      cxt->lastc = rl_line_buffer[rl_point - 1];	/* preserve prevc */
+      cxt->lastc = (rl_point > 0) ? rl_line_buffer[rl_point - 1] : rl_line_buffer[0];	/* preserve prevc */
       break;
 
     case RETURN:

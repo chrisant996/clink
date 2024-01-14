@@ -2161,7 +2161,8 @@ matches were generated.
 @end example
 
 Specify how arguments to each @var{name} should be completed.
-If the @option{-p} option is supplied, or if no options are supplied, existing
+If the @option{-p} option is supplied, or if no options or @var{name}s
+are supplied, existing
 completion specifications are printed in a way that allows them to be
 reused as input.
 The @option{-r} option removes a completion specification for

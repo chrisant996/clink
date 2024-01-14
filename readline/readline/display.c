@@ -1227,7 +1227,7 @@ rl_redisplay (void)
      the line breaks in the prompt string in expand_prompt, taking invisible
      characters into account, and if lpos exceeds the screen width, we copy
      the data in the loop below. */
-  lpos = prompt_physical_chars + modmark;
+  lpos = local_prompt ? prompt_physical_chars + modmark : 0;
 
 #if defined (HANDLE_MULTIBYTE)
   memset (line_state_invisible->wrapped_line, 0, line_state_invisible->wbsize * sizeof (int));

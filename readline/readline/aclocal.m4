@@ -2188,6 +2188,43 @@ main(int c, char **v)
   fi
 ])
 
+AC_DEFUN([BASH_FUNC_BRK],
+[
+  AC_MSG_CHECKING([for brk])
+  AC_CACHE_VAL(ac_cv_func_brk,
+  [AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <unistd.h>]],
+		[[ void *x = brk (0); ]])],
+	[ac_cv_func_brk=yes],[ac_cv_func_brk=no])])
+  AC_MSG_RESULT($ac_cv_func_brk)
+  if test X$ac_cv_func_brk = Xyes; then
+    AC_CACHE_CHECK([for working brk], [bash_cv_func_brk],
+      [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <unistd.h>
+
+int
+main(int c, char **v)
+{
+	void *x;
+
+	x = brk (0);
+	exit ((x == (void *)-1) ? 1 : 0);
+}
+]])],[bash_cv_func_brk=yes],[bash_cv_func_brk=no],[AC_MSG_WARN([cannot check working brk if cross-compiling])
+    bash_cv_func_brk=yes
+])])
+    if test $bash_cv_func_brk = no; then
+      ac_cv_func_brk=no
+    fi
+  fi
+  if test $ac_cv_func_brk = yes; then
+    AC_DEFINE(HAVE_BRK, 1,
+      [Define if you have a working brk function.])
+  fi
+])
+
 AC_DEFUN(BASH_FUNC_FNMATCH_EQUIV_FALLBACK,
 [AC_MSG_CHECKING(whether fnmatch can be used to check bracket equivalence classes)
 AC_CACHE_VAL(bash_cv_fnmatch_equiv_fallback,

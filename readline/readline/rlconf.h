@@ -76,4 +76,9 @@
 #define RL_VI_CMD_MODESTR_DEFAULT	"(cmd)"
 #define RL_VI_CMD_MODESTR_DEFLEN	5
 
+/* Do you want readline to assume it's running in an ANSI-compatible terminal
+   by default? If set to 0, readline tries to check and verify whether or not
+   it is. */
+#define RL_ANSI_TERM_DEFAULT	1	/* for now */
+
 #endif /* _RLCONF_H_ */

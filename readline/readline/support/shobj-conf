@@ -114,7 +114,7 @@ sunos5*-*gcc*|solaris2*-*gcc*)
 	;;
 
 sunos5*|solaris2*)
-	SHOBJ_CFLAGS='-K pic'
+	SHOBJ_CFLAGS='-fPIC'	# was -K pic
 	SHOBJ_LD=/usr/ccs/bin/ld
 	SHOBJ_LDFLAGS='-G -dy -z text -i -h $@'
 

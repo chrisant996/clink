@@ -1071,7 +1071,7 @@ history_expand (const char *hstring, char **output)
   /* The quick substitution character is a history expansion all right.  That
      is to say, "^this^that^" is equivalent to "!!:s^this^that^", and in fact,
      that is the substitution that we do. */
-  if (hstring[0] == history_subst_char)
+  if ((history_quoting_state != '\'' || history_quotes_inhibit_expansion == 0) && hstring[0] == history_subst_char)
     {
       string = (char *)xmalloc (l + 5);
 

@@ -1244,7 +1244,11 @@ _rl_subseq_result (int r, Keymap map, int key, int got_subseq)
       type = m[ANYOTHERKEY].type;
       func = m[ANYOTHERKEY].function;
       if (type == ISFUNC && func == rl_do_lowercase_version)
-	r = _rl_dispatch (_rl_to_lower ((unsigned char)key), map);
+	{
+	  int newkey = _rl_to_lower ((unsigned char)key);
+	  /* check that there is actually a lowercase version to avoid infinite recursion */
+	  r = (newkey != key) ? _rl_dispatch (newkey, map) : 1;
+	}
       else if (type == ISFUNC)
 	{
 	  /* If we shadowed a function, whatever it is, we somehow need a

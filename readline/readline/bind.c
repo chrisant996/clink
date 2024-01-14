@@ -895,21 +895,30 @@ int
 rl_trim_arg_from_keyseq	(const char *keyseq, size_t len, Keymap map)
 {
   register int i, j, parsing_digits;
-  unsigned char ic;
+  unsigned int ic;		/* int to handle ANYOTHERKEY */
   Keymap map0;
 
   if (map == 0)
     map = _rl_keymap;
   map0 = map;
 
-  /* The digits following the initial one (e.g., the binding to digit-argument)
-    or the optional `-' in a binding to digit-argument or universal-argument
-    are not added to rl_executing_keyseq. This is basically everything read by
-    rl_digit_loop. The parsing_digits logic is here in case they ever are. */
+  /* Make sure to add the digits following the initial one (e.g., the binding
+     to digit-argument) and the optional `-' in a binding to digit-argument
+     or universal-argument to rl_executing_keyseq. This is basically
+     everything read by rl_digit_loop. */
   for (i = j = parsing_digits = 0; keyseq && i < len; i++)
     {
       ic = keyseq[i];
 
+      if (parsing_digits == 2)
+	{
+	  if (ic == '-')	/* skip over runs of minus chars */
+	    {
+	      j = i + 1;
+	      continue;
+	    }
+	  parsing_digits = 1;
+	}
       if (parsing_digits)
 	{
 	  if (_rl_digit_p (ic))
@@ -922,10 +931,11 @@ rl_trim_arg_from_keyseq	(const char *keyseq, size_t len, Keymap map)
 
       if (map[ic].type == ISKMAP)
 	{
-	  if (i + 1 == len)
-	    return -1;
 	  map = FUNCTION_TO_KEYMAP (map, ic);
-	  continue;
+	  if (i + 1 == len)
+	    ic = ANYOTHERKEY;
+	  else
+	    continue;
 	}
       if (map[ic].type == ISFUNC)
 	{
@@ -944,16 +954,11 @@ rl_trim_arg_from_keyseq	(const char *keyseq, size_t len, Keymap map)
 
 	  /* This logic should be identical to rl_digit_loop */
 	  /* We accept M-- as equivalent to M--1, C-u- as equivalent to C-u-1
-	     but set parsing_digits to 2 to note that we saw `-' */
-	  if (map[ic].function == rl_universal_argument && (i + 1 == '-'))
-	    {
-	      i++;
-	      parsing_digits = 2;
-	    }
-	  if (map[ic].function == rl_digit_argument && ic == '-')
-	    {
-	      parsing_digits = 2;
-	    }
+	     but set parsing_digits to 2 to note that we saw `-'. See above
+	     for the check that skips over one or more `-' characters. */
+	  if (map[ic].function == rl_universal_argument ||
+	       (map[ic].function == rl_digit_argument && ic == '-'))
+	    parsing_digits = 2;
 
 	  map = map0;
 	  j = i + 1;

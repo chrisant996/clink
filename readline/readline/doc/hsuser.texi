@@ -316,6 +316,16 @@ also treated as quoted if it immediately precedes the closing double quote
 in a double-quoted string. 
 @end ifset
 
+There is a special abbreviation for substitution, active when the
+@var{quick substitution} character (default @samp{^})
+is the first character on the line.
+It selects the previous history list entry, using an event designator
+equivalent to @code{!!},
+and substitutes one string for another in that line.
+It is described below (@pxref{Event Designators}).
+This is the only history expansion that does not begin with the history
+expansion character.
+
 @ifset BashFeatures
 Several shell options settable with the @code{shopt}
 builtin (@pxref{The Shopt Builtin}) may be used to tailor
