@@ -1250,31 +1250,46 @@ COORD measure_readline_display(const char* prompt, const char* buffer, uint32 le
 
 
 //------------------------------------------------------------------------------
+void (*display_accumulator::s_saved_fwrite)(FILE*, const char*, int32) = nullptr;
+void (*display_accumulator::s_saved_fflush)(FILE*) = nullptr;
+bool display_accumulator::s_active = false;
 int32 display_accumulator::s_nested = 0;
 static str_moveable s_buf;
 
 //------------------------------------------------------------------------------
 display_accumulator::display_accumulator()
 {
-    assert(!m_saved_fwrite);
-    assert(!m_saved_fflush);
     assert(rl_fwrite_function);
     assert(rl_fflush_function);
-    assert(s_nested || s_buf.empty());
+
+    if (!s_nested)
+    {
+        assert(!s_saved_fwrite);
+        assert(!s_saved_fflush);
+        assert(!s_active);
+        assert(s_buf.empty());
+        s_saved_fwrite = rl_fwrite_function;
+        s_saved_fflush = rl_fflush_function;
+    }
 
     ++s_nested;
 
 #ifdef DEBUG
+    if (s_nested == 1)
     {
         str<> value;
         if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value) && atoi(value.c_str()) != 0)
             return;
     }
+    else
+    {
+        if (!s_active)
+            return;
+    }
 #endif
 
-    m_saved_fwrite = rl_fwrite_function;
-    m_saved_fflush = rl_fflush_function;
-    m_active = true;
+    s_active = true;
+
     rl_fwrite_function = fwrite_proc;
     rl_fflush_function = fflush_proc;
 }
@@ -1282,55 +1297,30 @@ display_accumulator::display_accumulator()
 //------------------------------------------------------------------------------
 display_accumulator::~display_accumulator()
 {
-    if (m_active)
+    if (--s_nested == 0)
     {
-        if (s_nested > 1)
-            restore();
-        else
-            flush();
-        assert(!m_active);
+        flush();
+        rl_fwrite_function = s_saved_fwrite;
+        rl_fflush_function = s_saved_fflush;
+        s_saved_fwrite = nullptr;
+        s_saved_fflush = nullptr;
+        s_active = false;
     }
-    --s_nested;
-}
-
-//------------------------------------------------------------------------------
-void display_accumulator::split()
-{
-    if (m_active && s_buf.length())
-    {
-        m_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
-        m_saved_fflush(_rl_out_stream);
-        s_buf.clear();
-    }
+    assert(s_nested >= 0);
 }
 
 //------------------------------------------------------------------------------
 void display_accumulator::flush()
 {
-    if (!m_active || s_nested > 1)
-        return;
-
-    restore();
-
-    if (s_buf.length())
+    assertimplies(!s_active, s_buf.empty());
+    if (s_active && !s_buf.empty())
     {
-        rl_fwrite_function(_rl_out_stream, s_buf.c_str(), s_buf.length());
-        rl_fflush_function(_rl_out_stream);
+        assert(s_saved_fwrite);
+        assert(s_saved_fflush);
+        s_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
+        s_saved_fflush(_rl_out_stream);
         s_buf.clear();
     }
-}
-
-//------------------------------------------------------------------------------
-void display_accumulator::restore()
-{
-    assert(m_active);
-    assert(m_saved_fwrite);
-    assert(m_saved_fflush);
-    rl_fwrite_function = m_saved_fwrite;
-    rl_fflush_function = m_saved_fflush;
-    m_saved_fwrite = nullptr;
-    m_saved_fflush = nullptr;
-    m_active = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1753,7 +1743,7 @@ void display_manager::display()
         if (is_CJK_codepage(GetConsoleOutputCP()))
         {
             CONSOLE_SCREEN_BUFFER_INFO csbi;
-            coalesce.split();
+            coalesce.flush();
             if (get_console_screen_buffer_info(&csbi) &&
                 m_last_prompt_line_width != csbi.dwCursorPosition.X)
             {

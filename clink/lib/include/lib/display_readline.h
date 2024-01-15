@@ -94,14 +94,12 @@ class display_accumulator
 public:
                     display_accumulator();
                     ~display_accumulator();
-    void            split();
-    void            flush();
+    static void     flush();
 private:
-    void            restore();
     static void     fwrite_proc(FILE*, const char*, int32);
     static void     fflush_proc(FILE*);
-    void (*m_saved_fwrite)(FILE*, const char*, int32) = nullptr;
-    void (*m_saved_fflush)(FILE*) = nullptr;
-    bool            m_active = false;
+    static void (*s_saved_fwrite)(FILE*, const char*, int32);
+    static void (*s_saved_fflush)(FILE*);
     static int32    s_nested;
+    static bool     s_active;
 };
