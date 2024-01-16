@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.2
+
+- Fixed [#546](https://github.com/chrisant996/clink/issues/546); when "Wrap text output on resize" is unchecked or the Window Width is different from the Screen Buffer Width, then the display becomes garbled.  The root cause is a limitation in how the OS implements support for ANSI escape codes, but Clink now has workaround code that tries to compensate for the problems as much as possible (the terminal display will be a bit jittery, though; there's nothing that can be done about that, short of fixing how the OS handles escape codes).
+
 #### v1.6.1
 
 **Features:**
