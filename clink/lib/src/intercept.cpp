@@ -117,43 +117,64 @@ static bool parse_line_token(str_base& out, const char* line)
 }
 
 //------------------------------------------------------------------------------
-static bool is_cd_dash(const char* line, bool only_cd_chdir)
+static bool parse_cd_chdir_command(const char*& line, str_base* command=nullptr)
 {
     while (*line == ' ' || *line == '\t')
         line++;
 
-    bool test_flag = true;
-    if (_strnicmp(line, "cd", 2) == 0)
-        line += 2;
-    else if (_strnicmp(line, "chdir", 5) == 0)
-        line += 5;
-    else if (only_cd_chdir)
-        return false;
-    else
-        test_flag = false;
-
-    if (test_flag)
+    const char* tmp;
+    const char* scan = line;
+    if (_strnicmp(scan, "cd", 2) == 0)
     {
-        bool have_space = false;
-        while (*line == ' ' || *line == '\t')
+        scan += 2;
+        tmp = "cd";
+    }
+    else if (_strnicmp(scan, "chdir", 5) == 0)
+    {
+        scan += 5;
+        tmp = "chdir";
+    }
+    else
+        return false;
+
+    bool have_space = false;
+    while (*scan == ' ' || *scan == '\t')
+    {
+        have_space = true;
+        scan++;
+    }
+
+    if (_strnicmp(scan, "/d", 2) == 0)
+    {
+        have_space = false;
+        scan += 2;
+        while (*scan == ' ' || *scan == '\t')
         {
             have_space = true;
-            line++;
+            scan++;
         }
+    }
 
-        if (_strnicmp(line, "/d", 2) == 0)
-        {
-            have_space = false;
-            line += 2;
-            while (*line == ' ' || *line == '\t')
-            {
-                have_space = true;
-                line++;
-            }
-        }
+    // `cd` and `chdir` require a space before the `-`.
+    if (!have_space)
+        return false;
 
-        // `cd` and `chdir` require a space before the `-`.
-        if (!have_space)
+    line = scan;
+    if (command)
+        *command = tmp;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool is_cd_dash(const char* line, bool only_cd_chdir)
+{
+    str<> command;
+    bool cd_chdir = parse_cd_chdir_command(line, &command);
+
+    if (only_cd_chdir)
+    {
+        str<> alias;
+        if (!cd_chdir || os::get_alias(command.c_str(), alias))
             return false;
     }
 

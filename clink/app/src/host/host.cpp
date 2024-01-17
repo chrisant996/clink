@@ -1240,8 +1240,8 @@ skip_errorlevel:
 
     if (ret && !resolved)
     {
-        // If the line is a directory, rewrite the line to invoke the CD command
-        // to change to the directory.
+        // If the line is a "cd -" or "chdir -" command, rewrite the line to
+        // invoke the CD command to change to the directory.
         intercepted = intercept_directory(out.c_str(), &out, true/*only_cd_chdir*/);
         if (intercepted != intercept_result::none)
         {
