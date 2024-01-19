@@ -377,15 +377,15 @@ bool suggestion_manager::insert(suggestion_action action)
     }
 
     // Find the offset at which to replace with suggestion text.
-    uint32 replace_offset = m_endword_offset;
+    uint32 replace_offset = max(m_endword_offset, m_suggestion_offset);
     const char* insert = m_iter.get_pointer();
 
     // Track quotes between end word offset and cursor (end of line).
     bool quote = false;
     {
         const uint32 len = g_rl_buffer->get_length();
-        if (replace_offset > 0)
-            quote = (g_rl_buffer->get_buffer()[replace_offset - 1] == '"');
+        if (m_endword_offset > 0)
+            quote = (g_rl_buffer->get_buffer()[m_endword_offset - 1] == '"');
         if (replace_offset < len)
         {
             str_iter orig_iter(g_rl_buffer->get_buffer() + replace_offset, g_rl_buffer->get_length() - replace_offset);
