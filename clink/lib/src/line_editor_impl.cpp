@@ -1107,7 +1107,7 @@ void line_editor_impl::maybe_send_oncommand_event()
             break;
         }
     }
-    if (!p)
+    if (!p || !p->length)
         return;
 
     const word& info = *p;
@@ -1150,7 +1150,7 @@ void line_editor_impl::maybe_send_oncommand_event()
         bool ready;
         str<> file;
         const recognition recognized = recognize_command(line.get_line(), lookup, quoted, ready, &file);
-        if (!ready)
+        if (!ready || recognized == recognition::unknown)
             return;
 
         m_desc.callbacks->send_oncommand_event(line, lookup, quoted, recognized, file.c_str());

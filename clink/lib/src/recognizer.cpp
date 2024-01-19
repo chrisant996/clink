@@ -609,6 +609,8 @@ void shutdown_recognizer()
 //------------------------------------------------------------------------------
 recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file)
 {
+    assert(word);
+
     ready = true;
 
     str<> tmp;
@@ -636,6 +638,9 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     str<> tmp2;
     if (os::expand_env(word, -1, tmp2))
         word = tmp2.c_str();
+
+    if (!*word)
+        return recognition::unknown;
 
     // Ignore device names.
     if (path::is_device(word))
