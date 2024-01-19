@@ -335,6 +335,32 @@ function _argreader:_detect_arg_cycle()
 end
 
 --------------------------------------------------------------------------------
+-- NOTE: line_state may not be self._line_state if it came from extra.
+function _argreader:start_chained_command(line_state, word_index, expand_aliases)
+    for i = word_index, line_state:getwordcount() do
+        local info = line_state:getwordinfo(i)
+        if not info.redir then
+            if info.quoted then
+                return line_state
+            end
+            if expand_aliases then
+                local word = line_state:getword(i)
+                local alias = os.getalias(word)
+                local got = os.getalias(word)
+                alias = got and got ~= ""
+                if not alias ~= not info.alias then
+                    local ls = line_state:_set_alias(i, alias)
+                    if ls then
+                        self._line_state = ls
+                    end
+                end
+            end
+            break
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 -- When extra isn't nil, skip classifying the word.  This only happens when
 -- parsing extra words from expanding a doskey alias.
 --
@@ -435,13 +461,13 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     local arg = matcher._args[arg_index]
 
     -- Determine next arg index.
-    local react
+    local react, react_expand_aliases
     if arg and not is_flag then
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
         end
         if arg.onadvance then
-            react = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
+            react, react_expand_aliases = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
             if react then
                 -- 1 = Ignore; advance to next arg_index.
                 -- 0 = Repeat; stay on the arg_index.
@@ -449,6 +475,9 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
                 if react ~= 1 and react ~= 0 and react ~= -1 then
                     react = nil
                 end
+            end
+            if react ~= -1 then
+                react_expand_aliases = nil
             end
         end
     end
@@ -537,11 +566,13 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     -- Some matchers have no args at all.  Or ran out of args.
     if react == -1 then
         self._chain_command = true
+        self:start_chained_command(line_state, word_index, react_expand_aliases)
         return true -- chaincommand.
     end
     if not arg then
         if matcher._chain_command then
             self._chain_command = true
+            self:start_chained_command(line_state, word_index, matcher._chain_command_expand_aliases)
             return true -- chaincommand.
         end
         if self._word_classifier and not extra then
@@ -1302,6 +1333,7 @@ end
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:chaincommand
 --- -ver:   1.3.13
+--- -arg:   [aliases:boolean]
 --- -ret:   self
 --- This makes the rest of the line be parsed as a separate command, after the
 --- argmatcher reaches the end of its defined argument positions.  You can use
@@ -1341,8 +1373,16 @@ end
 --- -show:  -- "profile1" is colored as an argument (for "exec").
 --- -show:  -- "program" is colored as an argmatcher.
 --- -show:  -- "-" generates completions "-x" and "-y".
-function _argmatcher:chaincommand()
+---
+--- In Clink v1.6.2 and higher, an optional <span class="arg">aliases</span>
+--- argument specifies whether the argmatcher's command expands doskey aliases
+--- when invoking the chained command (it's uncommon, but for example the
+--- <code>i</code> command in
+--- <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a>
+--- can).
+function _argmatcher:chaincommand(aliases)
     self._chain_command = true
+    self._chain_command_expand_aliases = aliases and true
     self._no_file_generation = true -- So that pop() doesn't interfere.
     return self
 end
@@ -2612,9 +2652,9 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
     for _,command in ipairs(commands) do
         local lookup
         local extra
-::do_command::
         local line_state = command.line_state
         local word_classifier = command.classifications
+::do_command::
 
         local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup)
         local command_word_index = line_state:getcommandwordindex()

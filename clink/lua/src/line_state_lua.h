@@ -38,6 +38,7 @@ protected:
     int32               reset_shift(lua_State* state);
     int32               unbreak(lua_State* state);
     int32               overwrite_from(lua_State* state);
+    int32               set_alias(lua_State* state);
 
 private:
     const line_state*   m_line;

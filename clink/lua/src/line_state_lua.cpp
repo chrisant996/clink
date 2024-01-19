@@ -25,6 +25,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "_shift",                 &shift },
     { "_reset_shift",           &reset_shift },
     { "_unbreak",               &unbreak },
+    { "_set_alias",             &set_alias },
     { "_overwrite_from",        &overwrite_from },
     {}
 };
@@ -42,6 +43,7 @@ public:
                                 ~line_state_copy() { delete m_line; }
     const line_state*           get_line() const { return m_line; }
     bool                        adjust_word(uint32 index, uint32 len);
+    void                        set_alias(uint32 index, bool value);
 private:
     line_state*                 m_line;
     str_moveable                m_buffer;
@@ -86,6 +88,22 @@ bool line_state_copy::adjust_word(uint32 index, uint32 len)
     }
 
     return into_next;
+}
+
+//------------------------------------------------------------------------------
+void line_state_copy::set_alias(uint32 index, bool value)
+{
+    assert(index < m_words.size());
+
+    auto& word = m_words[index];
+
+    assert(!word.is_alias);
+    assert(!word.is_redir_arg);
+    assert(!word.is_merged_away);
+    assert(!word.quoted);
+
+    word.is_alias = value;
+    word.command_word = true;
 }
 
 
@@ -471,12 +489,35 @@ int32 line_state_lua::unbreak(lua_State* state)
     const uint32 new_len = word.length + append_len;
     const bool into_next = copy->adjust_word(index, new_len);
 
-    // PERF: Can it return itself if's already a copy?  Does anything rely on
-    // the copy operation, e.g. "original != line_state"?
+    // PERF: Can it return itself if it's already a copy?  Does anything rely
+    // on the copy operation, e.g. "original != line_state"?
     line_state_lua::make_new(state, copy);
     lua_pushboolean(state, into_next);
     lua_pushinteger(state, new_len);
     return 3;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::set_alias(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    const bool value = lua_isnoneornil(state, LUA_SELF + 2) || lua_toboolean(state, LUA_SELF + 2);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+
+    const std::vector<word>& words = m_line->get_words();
+    if (index >= words.size())
+        return 0;
+
+    line_state_copy* copy = make_line_state_copy(*m_line);
+    copy->set_alias(index, value);
+
+    // PERF: Can it return itself if it's already a copy?  Does anything rely
+    // on the copy operation, e.g. "original != line_state"?
+    line_state_lua::make_new(state, copy);
+    return 1;
 }
 
 //------------------------------------------------------------------------------
