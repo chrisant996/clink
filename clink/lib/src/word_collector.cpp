@@ -351,7 +351,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             str<> tmp;
             str_iter it(line_buffer + word.offset, word.length);
             tmp.concat(it.get_pointer(), it.length());
-            printf("WORD %d '%s'%s%s\n", i, tmp.c_str(), word.is_redir_arg ? " redir" : "", word.command_word ? " command" : "");
+            printf("WORD %d '%s'%s%s (delim '%.1s')\n", i, tmp.c_str(), word.is_redir_arg ? " redir" : "", word.command_word ? " command" : "", word.delim ? reinterpret_cast<const char*>(&word.delim) : "");
             i++;
         }
     }
