@@ -36,7 +36,10 @@ extern setting_bool g_lua_strict;
 //  - static const char* const c_name.
 //  - static const method c_methods[], which must end with a {} element.
 template <class T>
-class lua_bindable _DBGOBJECT
+class lua_bindable
+#ifdef USE_DEBUG_OBJECT
+: public object
+#endif
 {
 public:
     typedef int32       (T::*method_t)(lua_State*);

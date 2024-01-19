@@ -24,7 +24,10 @@ struct word
 };
 
 //------------------------------------------------------------------------------
-class line_state _DBGOBJECT
+class line_state
+#ifdef USE_DEBUG_OBJECT
+: public object
+#endif
 {
 public:
                         line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, uint32 range_offset, uint32 range_length, const std::vector<word>& words);

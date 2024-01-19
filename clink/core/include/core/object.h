@@ -15,9 +15,5 @@ struct object
 
 //------------------------------------------------------------------------------
 #if defined(USE_MEMORY_TRACKING) && defined(USE_RTTI)
-#define _DBGOBJECT      : public object
-#define DBGOBJECT_      public object,
-#else
-#define _DBGOBJECT
-#define DBGOBJECT_
+#define USE_DEBUG_OBJECT
 #endif

@@ -237,7 +237,10 @@ struct match_desc
 };
 
 //------------------------------------------------------------------------------
-class match_builder _DBGOBJECT
+class match_builder
+#ifdef USE_DEBUG_OBJECT
+: public object
+#endif
 {
 public:
                             match_builder(matches& matches);
@@ -262,7 +265,10 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class match_builder_toolkit _DBGOBJECT
+class match_builder_toolkit
+#ifdef USE_DEBUG_OBJECT
+: public object
+#endif
 {
 public:
     virtual int32           get_generation_id() const = 0;

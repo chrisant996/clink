@@ -32,7 +32,10 @@ const line_state_lua::method line_state_lua::c_methods[] = {
 
 
 //------------------------------------------------------------------------------
-class line_state_copy _DBGOBJECT
+class line_state_copy
+#ifdef USE_DEBUG_OBJECT
+: public object
+#endif
 {
 public:
                                 line_state_copy(const line_state& line);
