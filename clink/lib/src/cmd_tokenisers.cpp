@@ -240,11 +240,22 @@ bool cmd_state::test(const int32 c, const tokeniser_state new_state)
 
 //------------------------------------------------------------------------------
 // No double quote, as that would break quoting rules.
+static const char c_command_delims[] = "@ \t=;,(/";
 static const char c_name_delims[] = "@ \t=;,(";
 static const char c_word_delims[] = " \t\n'`=+;,()[]{}";
 
 //------------------------------------------------------------------------------
-uint32 is_alias_word(str_iter& iter, alias_cache* alias_cache)
+static const char* get_delims(bool command_word, bool redir_arg, bool in_word)
+{
+    if (redir_arg || (command_word && !in_word))
+        return c_name_delims;
+    if (command_word)
+        return c_command_delims;
+    return c_word_delims;
+}
+
+//------------------------------------------------------------------------------
+static uint32 is_alias_word(str_iter& iter, alias_cache* alias_cache)
 {
     const char* orig = iter.get_pointer();
     while (iter.more())
@@ -498,7 +509,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
         while (m_iter.more())
         {
             const int32 c = m_iter.peek();
-            if (!str_chr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
+            if (!str_chr(get_delims(command_word, redir_arg, false), c))
                 break;
             m_iter.next();
         }
@@ -510,6 +521,8 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
     start_new_word();
 
     int32 c = 0;
+    bool first_char = true;
+    bool first_slash = false;
     bool in_quote = false;
     tokeniser_state state = sSpc;
     while (true)
@@ -536,6 +549,9 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
         else
         {
             c = m_iter.peek();
+
+            if (first_char)
+                first_slash = (c == '/');
 
             input_type input = get_input_type(c);
             tokeniser_state new_state = c_transition[state][input];
@@ -575,6 +591,10 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             if (new_state == sTxt && m_cmd_state.test(c, new_state))
                 break;
 
+            // Forward slash in a command word is a word break in CMD.
+            if (c == '/' && !first_slash && !first_char && command_word && !redir_arg)
+                break;
+
             m_iter.next();
             if (c == '^')
                 m_iter.next();
@@ -582,7 +602,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             // Space or equal or semicolon is a word break.
             if (new_state == sSpc)
                 break;
-            if (new_state == sTxt && str_chr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
+            if (new_state == sTxt && str_chr(get_delims(command_word, redir_arg, !first_slash && !first_char), c))
                 break;
 
             // Normal text always updates the end of the word.
@@ -597,6 +617,8 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
 
             state = new_state;
         }
+
+        first_char = false;
     }
 
     length = uint32(end_word - start_word);
