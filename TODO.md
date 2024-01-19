@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Readline's attempt at fixing leaked undo records is causing heap corruption.  I haven't found a consistent repro yet, but it seems that giving a few history entries a modmark, then moving to the end of history, then ESC, then up to a history entry with a modmark, then Undo tends to hit a crash or assertion.
+- Readline has 3 new patches, but none of them are about undo record heap corruption.
 
 ## Normal Priority
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
