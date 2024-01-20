@@ -329,6 +329,7 @@ static bool ensure_keydesc_map()
                     static const char* const c_overwritable[] =
                     {
                         "insert-last-argument",
+                        "clink-backward-bigword",
                     };
 
                     bool keydesc_overwrite = true;
