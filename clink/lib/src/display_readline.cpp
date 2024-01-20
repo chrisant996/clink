@@ -1450,6 +1450,7 @@ private:
     str_moveable        m_last_prompt_line;
     int32               m_last_prompt_line_width = -1;
     int32               m_last_prompt_line_botlin = -1;
+    int32               m_last_point = -1;
     bool                m_last_modmark = false;
     bool                m_horz_scroll = false;
 
@@ -1479,6 +1480,7 @@ void display_manager::clear()
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
+    m_last_point = -1;
     m_last_modmark = false;
     m_horz_scroll = false;
 
@@ -1729,7 +1731,7 @@ void display_manager::display()
 
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
-    const bool need_update = (!rl_display_fixed || forced_display || was_horz_scroll != m_horz_scroll);
+    const bool need_update = (!rl_display_fixed || forced_display || was_horz_scroll != m_horz_scroll || rl_point != m_last_point);
 
     // Prepare data structures for displaying the input line.
     const display_lines* next = &m_curr;
@@ -2051,6 +2053,7 @@ void display_manager::display()
     {
         m_next.swap(m_curr);
         m_next.clear();
+        m_last_point = rl_point;
     }
 
     rl_display_fixed = 0;
