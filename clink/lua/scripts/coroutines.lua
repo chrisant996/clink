@@ -426,6 +426,21 @@ local function table_has_elements(t)
 end
 
 --------------------------------------------------------------------------------
+local function sortkeys(a, b)
+    local na = tonumber(a)
+    local nb = tonumber(b)
+    if na and nb then
+        return na < nb
+    elseif na then
+        return true
+    elseif nb then
+        return false
+    else
+        return a < b
+    end
+end
+
+--------------------------------------------------------------------------------
 local function spairs(t, order)
     -- collect the keys
     local keys = {}
@@ -436,7 +451,7 @@ local function spairs(t, order)
     if order then
         table.sort(keys, function(a,b) return order(t, a, b) end)
     else
-        table.sort(keys)
+        table.sort(keys, sortkeys)
     end
 
     -- return the iterator function
