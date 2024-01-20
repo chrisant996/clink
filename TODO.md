@@ -5,8 +5,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Readline's attempt at fixing leaked undo records is causing heap corruption.  I haven't found a consistent repro yet, but it seems that giving a few history entries a modmark, then moving to the end of history, then ESC, then up to a history entry with a modmark, then Undo tends to hit a crash or assertion.
-- Readline has 3 new patches, but none of them are about undo record heap corruption.
+- Readline's attempt at fixing leaked undo records is causing heap corruption.  I haven't found a consistent repro yet, but it seems that giving a few history entries a modmark, then moving to the end of history, then ESC, then up to a history entry with a modmark, then Undo tends to hit a crash or assertion.  Readline has 3 new patches, but none of them are about undo record heap corruption.
+  - Probably the simplest path forward is to add instrumentation to track all undo list entries, and who's pointing at what and how many times each block is freed and etc.  A special heap that never actually frees blocks, so that it can track references and statistics, and pinpoint who's messing it up.
+- [ ] `cd /d ` `Alt-=` no longer shows any matches, with the current set of fixes for the issues below.  Because of passing `false` for `last_onadvance` in `reader:update(...)` circa arguments.lua:1736.
+  - Passing `false` makes `sudo cd/` `Alt-=` generate flag matches, but the needle issue prevents them from showing up.
+  - Passing `false` prevents `cd /d ` `Alt-=` from generating directory matches.
+  - [ ] **PROBLEM:** when using `sudo cd/` `Alt-=` the match pipeline uses `cd/` as the needle, because it only sees the initial `line_state` and doesn't consult with the argmatchers or `_argreader` to see the final effective `line_state`.  Maybe the final effective `line_state` results could tell the `line_editor_impl` to adjust its notion of the current word and needle, instead of the match pipeline always figuring it out anew on the fly?
+- [ ] The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
+
+## Unit Tests
+- [ ] Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
+- [ ] Other tests for `foo/` parsing.
 
 ## Normal Priority
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
