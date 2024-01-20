@@ -24,7 +24,8 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     // UNDOCUMENTED; internal use only.
     { "_shift",                 &shift },
     { "_reset_shift",           &reset_shift },
-    { "_unbreak",               &unbreak },
+    { "_break_word",            &break_word },
+    { "_unbreak_word",          &unbreak_word },
     { "_set_alias",             &set_alias },
     { "_overwrite_from",        &overwrite_from },
     {}
@@ -42,7 +43,8 @@ public:
                                 line_state_copy(const line_state& line);
                                 ~line_state_copy() { delete m_line; }
     const line_state*           get_line() const { return m_line; }
-    bool                        adjust_word(uint32 index, uint32 len);
+    void                        break_word(uint32 index, uint32 len);
+    bool                        unbreak_word(uint32 index, uint32 len);
     void                        set_alias(uint32 index, bool value);
 private:
     line_state*                 m_line;
@@ -65,7 +67,29 @@ line_state_copy* make_line_state_copy(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-bool line_state_copy::adjust_word(uint32 index, uint32 len)
+void line_state_copy::break_word(uint32 index, uint32 len)
+{
+    assert(index < m_words.size());
+    assert(len > 0 && len < m_words[index].length);
+
+    word next = m_words[index];
+    next.offset += len;
+    next.length -= len;
+    next.command_word = false;
+    assert(!next.is_alias);
+    assert(!next.is_redir_arg);
+    assert(!next.is_merged_away);
+    assert(!next.quoted);
+
+    word& word = m_words[index];
+    word.length = len;
+    word.delim = m_buffer.c_str()[word.offset + len];
+
+    m_words.insert(m_words.begin() + index + 1, std::move(next));
+}
+
+//------------------------------------------------------------------------------
+bool line_state_copy::unbreak_word(uint32 index, uint32 len)
 {
     assert(index < m_words.size());
     assert(len > m_words[index].length);
@@ -454,7 +478,37 @@ inline bool is_unbreakchar(const char* unbreakchars, const char* line, uint32 le
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int32 line_state_lua::unbreak(lua_State* state)
+int32 line_state_lua::break_word(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    const auto length = checkinteger(state, LUA_SELF + 2);
+    if (!_index.isnum() || !length.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+
+    const std::vector<word>& words = m_line->get_words();
+    if (index >= words.size())
+        return 0;
+
+    const word& word = words[index];
+    if (word.quoted)
+        return 0;
+
+    if (length <= 0 || uint32(length) >= word.length)
+        return 0;
+
+    line_state_copy* copy = make_line_state_copy(*m_line);
+    copy->break_word(index, length);
+
+    // PERF: Can it return itself if it's already a copy?  Does anything rely
+    // on the copy operation, e.g. "original != line_state"?
+    line_state_lua::make_new(state, copy);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::unbreak_word(lua_State* state)
 {
     const auto _index = checkinteger(state, LUA_SELF + 1);
     const char* unbreakchars = checkstring(state, LUA_SELF + 2);
@@ -487,7 +541,7 @@ int32 line_state_lua::unbreak(lua_State* state)
     line_state_copy* copy = make_line_state_copy(*m_line);
 
     const uint32 new_len = word.length + append_len;
-    const bool into_next = copy->adjust_word(index, new_len);
+    const bool into_next = copy->unbreak_word(index, new_len);
 
     // PERF: Can it return itself if it's already a copy?  Does anything rely
     // on the copy operation, e.g. "original != line_state"?

@@ -276,6 +276,42 @@ local function get_classify_color(code)
 end
 
 --------------------------------------------------------------------------------
+local function break_slash(line_state, word_index, word_classifications)
+    -- If word_index not specified, then find the command word.  This loops to
+    -- find it instead of using getcommandwordindex() so that it can work even
+    -- when chain command parsing is re-parsing an existing line_state
+    -- starting from a later word index.
+    if not word_index then
+        for i = 1, line_state:getwordcount() do
+            local info = line_state:getwordinfo(i)
+            if not info.redir then
+                if info.quoted then
+                    return
+                end
+                word_index = i
+                break
+            end
+        end
+    end
+
+    -- If the first character is not a forward slash but a forward slash is
+    -- present later in the word, then split the word into two.
+    local word = line_state:getword(word_index)
+    local slash = word:find("/")
+    if slash and slash > 1 then
+        -- In `xyz/whatever` the `xyz` can never be an alias because it isn't
+        -- whitespace delimited.
+        local ls = line_state:_break_word(word_index, slash - 1)
+        if ls then
+            if word_classifications then
+                word_classifications:_break_word(word_index, slash - 1)
+            end
+            return ls, word_classifications
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 function _argreader:lookup_link(arg, arg_index, word, word_index, line_state)
     if word and arg then
         local link, forced
@@ -343,15 +379,25 @@ function _argreader:start_chained_command(line_state, word_index, expand_aliases
             if info.quoted then
                 return line_state
             end
+            local alias
             if expand_aliases then
                 local word = line_state:getword(i)
-                local alias = os.getalias(word)
                 local got = os.getalias(word)
                 alias = got and got ~= ""
                 if not alias ~= not info.alias then
                     local ls = line_state:_set_alias(i, alias)
                     if ls then
                         self._line_state = ls
+                        line_state = ls
+                    end
+                end
+            end
+            if not alias then
+                local ls, wc = break_slash(line_state, i, self._word_classifier)
+                if ls then
+                    self._line_state = ls
+                    if self._word_classifier then
+                        self._word_classifier = wc
                     end
                 end
             end
@@ -493,12 +539,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
         -- nowordbreakchars.  This more accurately reflects how the command
         -- line will actually be parsed, especially for commas.
         local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
-        local adjusted, skip_word, len = line_state:_unbreak(word_index, nowordbreakchars)
+        local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
         if adjusted then
             self._line_state = adjusted
             line_state = adjusted
             if self._word_classifier then
-                self._word_classifier:_unbreak(word_index, len, skip_word)
+                self._word_classifier:_unbreak_word(word_index, len, skip_word)
             end
             if skip_word then
                 if is_flag then
@@ -2451,7 +2497,8 @@ function clink.getargmatcher(find)
         end
         return _has_argmatcher(find, quoted)
     elseif t == "userdata" then
-        return _find_argmatcher(find)
+        local matcher = _find_argmatcher(find)
+        return matcher
     else
         return nil
     end
@@ -2474,7 +2521,10 @@ function clink._generate_from_historyline(line_state)
 
     -- Consume extra words from expanded doskey alias.
     if not extra then
-        extra = alias
+        if alias then
+            alias.line_state = break_slash(alias.line_state) or alias.line_state
+            extra = alias
+        end
     elseif extra.done then
         extra = nil
     end
@@ -2517,7 +2567,10 @@ local function do_generate(line_state, match_builder)
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if not extra then
-        extra = alias
+        if alias then
+            alias.line_state = break_slash(alias.line_state) or alias.line_state
+            extra = alias
+        end
     elseif extra.done then
         extra = nil
     end
@@ -2573,7 +2626,10 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
     if not extra then
-        extra = alias
+        if alias then
+            alias.line_state = break_slash(alias.line_state) or alias.line_state
+            extra = alias
+        end
     elseif extra.done then
         extra = nil
     end
@@ -2660,7 +2716,10 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil
         if not extra then
-            extra = alias
+            if alias then
+                alias.line_state = break_slash(alias.line_state) or alias.line_state
+                extra = alias
+            end
         elseif extra.done then
             extra = nil
         end

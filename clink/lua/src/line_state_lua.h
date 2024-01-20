@@ -36,7 +36,8 @@ protected:
     int32               get_range_length(lua_State* state);
     int32               shift(lua_State* state);
     int32               reset_shift(lua_State* state);
-    int32               unbreak(lua_State* state);
+    int32               break_word(lua_State* state);
+    int32               unbreak_word(lua_State* state);
     int32               overwrite_from(lua_State* state);
     int32               set_alias(lua_State* state);
 

@@ -36,7 +36,7 @@ struct word_class_info
     uint32          end : 16;
     word_class      word_class;
     bool            argmatcher;
-    bool            unbreak;
+    bool            flush;
 };
 
 //------------------------------------------------------------------------------
@@ -69,7 +69,8 @@ public:
     void            classify_word(uint32 index, char wc, bool overwrite=true);
     bool            is_word_classified(uint32 index);
 
-    void            unbreak(uint32 index, uint32 length, bool skip_word);
+    void            break_word(uint32 index, uint32 length);
+    void            unbreak_word(uint32 index, uint32 length, bool skip_word);
     void            flush_unbreak();
 
 private:

@@ -188,9 +188,7 @@ bool line_state::overwrite_from(const line_state* other)
     if (strcmp(other->m_line, m_line) != 0)
         return false;
 
-    assert(other->m_words.size() == m_words.size());
-    if (other->m_words.size() != m_words.size())
-        return false;
+    const_cast<std::vector<word>&>(m_words).resize(other->m_words.size());
 
     size_t resize = 0;
     word* tortoise = const_cast<word*>(&*m_words.begin());

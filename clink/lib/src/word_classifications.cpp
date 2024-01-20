@@ -87,7 +87,7 @@ uint32 word_classifications::add_command(const line_state& line)
         info.end = info.start + word.length;
         info.word_class = word_class::invalid;
         info.argmatcher = false;
-        info.unbreak = false;
+        info.flush = false;
     }
 
     return index;
@@ -228,7 +228,27 @@ bool word_classifications::is_word_classified(uint32 word_index)
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::unbreak(uint32 index, uint32 length, bool skip_word)
+void word_classifications::break_word(uint32 index, uint32 length)
+{
+    if (index < m_info.size())
+    {
+        auto& info = m_info[index];
+        assert(info.word_class == word_class::invalid);
+        assert(!info.flush);
+        assert(length > 0 && length < info.end - info.start);
+
+        word_class_info next = info;
+        next.start += length;
+        // next.word_class = word_class::invalid;
+        next.argmatcher = false;
+
+        info.end = info.start + length;
+        m_info.insert(m_info.begin() + index + 1, std::move(next));
+    }
+}
+
+//------------------------------------------------------------------------------
+void word_classifications::unbreak_word(uint32 index, uint32 length, bool skip_word)
 {
     if (index < m_info.size())
     {
@@ -237,13 +257,12 @@ void word_classifications::unbreak(uint32 index, uint32 length, bool skip_word)
         {
             auto& next = m_info[index + 1];
             assert(info.start + length == next.start);
-            info.unbreak = true;
+            info.flush = true;
             info.end = info.start;
             next.start = info.start;
         }
         else
         {
-            auto& info = m_info[index];
             info.end = info.start + length;
             assertimplies(index + 1 < m_info.size(), info.end <= m_info[index + 1].start);
             assertimplies(index + 1 == m_info.size(), info.end <= m_length);
@@ -256,7 +275,7 @@ void word_classifications::flush_unbreak()
 {
     for (auto it = m_info.begin(); it != m_info.end(); )
     {
-        if (it->unbreak)
+        if (it->flush)
             it = m_info.erase(it);
         else
             ++it;

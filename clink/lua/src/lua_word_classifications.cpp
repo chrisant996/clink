@@ -27,7 +27,12 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
     // UNDOCUMENTED; internal use only.
     { "_shift",           &shift },
     { "_reset_shift",     &reset_shift },
-    { "_unbreak",         &unbreak },
+    { "_break_word",      &break_word },
+    { "_unbreak_word",    &unbreak_word },
+#ifdef DEBUG
+    { "_getwordstart",    &get_word_start },
+    { "_getwordend",      &get_word_end },
+#endif
     {}
 };
 
@@ -189,7 +194,24 @@ int32 lua_word_classifications::reset_shift(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int32 lua_word_classifications::unbreak(lua_State* state)
+int32 lua_word_classifications::break_word(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    const auto length = checkinteger(state, LUA_SELF + 2);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+    if (index >= m_num_words)
+        return luaL_argerror(state, LUA_SELF + 1, "word index out of bounds");
+
+    m_classifications.break_word(index, length);
+    ++m_num_words;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 lua_word_classifications::unbreak_word(lua_State* state)
 {
     const auto _index = checkinteger(state, LUA_SELF + 1);
     const auto length = checkinteger(state, LUA_SELF + 2);
@@ -200,6 +222,40 @@ int32 lua_word_classifications::unbreak(lua_State* state)
     if (index >= m_num_words)
         return luaL_argerror(state, LUA_SELF + 1, "word index out of bounds");
 
-    m_classifications.unbreak(index, length, skip_word);
+    m_classifications.unbreak_word(index, length, skip_word);
     return 0;
 }
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+#ifdef DEBUG
+int32 lua_word_classifications::get_word_start(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+    if (index >= m_num_words)
+        return luaL_argerror(state, LUA_SELF + 1, "word index out of bounds");
+
+    lua_pushinteger(state, m_classifications[index]->start + 1);
+    return 1;
+}
+#endif
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+#ifdef DEBUG
+int32 lua_word_classifications::get_word_end(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+    if (index >= m_num_words)
+        return luaL_argerror(state, LUA_SELF + 1, "word index out of bounds");
+
+    lua_pushinteger(state, m_classifications[index]->end);
+    return 1;
+}
+#endif
