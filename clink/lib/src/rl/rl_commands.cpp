@@ -35,16 +35,23 @@
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
+#include <readline/history.h>
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-#include <readline/history.h>
 extern int32 find_streqn (const char *a, const char *b, int32 n);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
+#ifdef DEBUG
+#include <core/assert_improved.h>
+#endif
+#include <core/callstack.h>
+#include <core/linear_allocator.h>
+
 #include <list>
 #include <unordered_set>
+#include <unordered_map>
 #include <signal.h>
 
 #include "../../../clink/app/src/version.h" // Ugh.
@@ -243,6 +250,85 @@ int32 host_remove_history(int32 rl_history_index, const char* line)
     history_database* h = history_database::get();
     return h && h->remove(rl_history_index, line);
 }
+
+
+
+//------------------------------------------------------------------------------
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+class undo_entry_heap
+{
+    struct tracker
+    {
+        bool m_freed = 0;
+        void* m_alloc_frames[20];
+        uint32 m_alloc_frames_count = 0;
+        DWORD m_alloc_frames_hash = 0;
+        void* m_free_frames[20];
+        uint32 m_free_frames_count = 0;
+        DWORD m_free_frames_hash = 0;
+    };
+
+public:
+    undo_entry_heap() : m_heap(32768)
+    {
+    }
+
+    UNDO_LIST* alloc_undo_entry()
+    {
+        tracker* t = new tracker;
+        UNDO_LIST* p = (UNDO_LIST*)m_heap.alloc(sizeof(*p));
+        t->m_alloc_frames_count = get_callstack_frames(1, sizeof_array(t->m_alloc_frames), t->m_alloc_frames, &t->m_alloc_frames_hash);
+        assert(!t->m_freed);
+        m_allocated.emplace(p, t);
+        return p;
+    }
+
+    void free_undo_entry(UNDO_LIST* p)
+    {
+        auto it = m_allocated.find(p);
+        assert(it != m_allocated.end());
+        tracker* t = it->second;
+        assert(t);
+        if (t->m_freed)
+        {
+            str<> s;
+            char sa[4096];
+            char sf[4096];
+            char sd[4096];
+            format_frames(t->m_alloc_frames_count, t->m_alloc_frames, t->m_alloc_frames_hash, sa, sizeof(sa), true);
+            format_frames(t->m_free_frames_count, t->m_free_frames, t->m_free_frames_hash, sf, sizeof(sf), true);
+            DWORD df_hash;
+            void* df_frames[20];
+            uint32 df_count = get_callstack_frames(1, sizeof_array(df_frames), df_frames, &df_hash);
+            format_frames(df_count, df_frames, df_hash, sd, sizeof(sd), true);
+            s.format("ALREADY FREED %p\r\n\r\nalloc stacktrace:  %s\r\noriginal free stacktrace:  %s\r\nthis double-free stacktrace:  %s", p, sa, sf, sd);
+            assert(!t->m_freed);
+            dbgtracef("%s", s.c_str());
+        }
+        // NOTE: This diagnostic heap doesn't actually free any blocks; that
+        // enables it to accurately, uniquely, and independently track the
+        // history of each individual allocation.
+        t->m_freed = true;
+        t->m_free_frames_count = get_callstack_frames(1, sizeof_array(t->m_free_frames), t->m_free_frames, &t->m_free_frames_hash);
+    }
+
+private:
+    linear_allocator m_heap;
+    std::unordered_map<const UNDO_LIST*, tracker*> m_allocated;
+};
+
+static undo_entry_heap s_undo_entry_heap;
+
+extern "C" UNDO_LIST* clink_alloc_undo_entry(void)
+{
+    return s_undo_entry_heap.alloc_undo_entry();
+}
+
+extern "C" void clink_free_undo_entry(UNDO_LIST* p)
+{
+    s_undo_entry_heap.free_undo_entry(p);
+}
+#endif // UNDO_LIST_HEAP_DIAGNOSTICS
 
 
 

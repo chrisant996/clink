@@ -61,6 +61,12 @@ void wait_for_input(unsigned long timeout);
 
 // These are implemented in rl_commands.cpp.
 extern const int c_clink_version;
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+struct undo_list;
+typedef struct undo_list UNDO_LIST;
+extern UNDO_LIST* clink_alloc_undo_entry(void);
+extern void clink_free_undo_entry(UNDO_LIST* p);
+#endif
 
 // These are implemented in os.cpp.
 extern double os_clock(void);

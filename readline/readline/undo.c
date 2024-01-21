@@ -72,7 +72,11 @@ alloc_undo_entry (enum undo_code what, int start, int end, char *text)
 {
   UNDO_LIST *temp;
 
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+  temp = clink_alloc_undo_entry();
+#else
   temp = (UNDO_LIST *)xmalloc (sizeof (UNDO_LIST));
+#endif
   temp->what = what;
   temp->start = start;
   temp->end = end;
@@ -111,7 +115,11 @@ _rl_free_undo_list (UNDO_LIST *ul)
       if (release->what == UNDO_DELETE)
 	xfree (release->text);
 
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+      clink_free_undo_entry(release);
+#else
       xfree (release);
+#endif
     }
 }
 
@@ -268,7 +276,11 @@ rl_do_undo (void)
 	    }
 	}
 
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+      clink_free_undo_entry(release);
+#else
       xfree (release);
+#endif
     }
   while (waiting_for_begin);
 
