@@ -766,7 +766,7 @@ opcode_dispatch:
 	  else
 	    cxt->sline_index += cxt->direction;
 
-	  if (cxt->sline_index < 0)
+	  if (cxt->sline_index < 0 || cxt->sline_index > cxt->sline_len)
 	    {
 	      cxt->sline_index = 0;
 	      break;
@@ -799,8 +799,8 @@ opcode_dispatch:
 
       if (cxt->sflags & SF_FAILED)
 	{
-	  /* XXX - reset sline_index if < 0 */
-	  if (cxt->sline_index < 0)
+	  /* XXX - reset sline_index if < 0 or longer than the history line */
+	  if (cxt->sline_index < 0 || cxt->sline_index > cxt->sline_len)
 	    cxt->sline_index = 0;
 	  break;
 	}

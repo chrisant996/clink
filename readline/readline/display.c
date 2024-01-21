@@ -779,7 +779,11 @@ rl_expand_prompt (char *prompt)
   prompt_visible_length = prompt_physical_chars = 0;
 
   if (prompt == 0 || *prompt == 0)
-    return (0);
+    {
+      local_prompt = xmalloc (sizeof (char));
+      local_prompt[0] = '\0';
+      return (0);
+    }
 
   p = strrchr (prompt, '\n');
   if (p == 0)
@@ -1287,6 +1291,8 @@ rl_redisplay (void)
 	      wc_width = (temp >= 0) ? temp : 1;
 	    }
 	}
+      else
+	wc_width = 1;		/* make sure it's set for the META_CHAR check */
 #endif
 
       if (in == rl_point)
@@ -1296,12 +1302,22 @@ rl_redisplay (void)
 	}
 
 #if defined (HANDLE_MULTIBYTE)
-      if (META_CHAR (c) && _rl_output_meta_chars == 0)	/* XXX - clean up */
+      if (META_CHAR (c) && wc_bytes == 1 && wc_width == 1)
 #else
       if (META_CHAR (c))
 #endif
 	{
-	  if (_rl_output_meta_chars == 0)
+#if 0
+	  /* TAG: readline-8.3 20230227 */
+	  /* https://savannah.gnu.org/support/index.php?110830
+	     asking for non-printing meta characters to be printed using an
+	     escape sequence. */
+
+	  /* isprint(c) handles bytes up to UCHAR_MAX */
+	  if (_rl_output_meta_chars == 0 || isprint (c) == 0)
+#else
+ 	  if (_rl_output_meta_chars == 0)
+#endif
 	    {
 	      char obuf[5];
 	      int olen;

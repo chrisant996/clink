@@ -1107,6 +1107,8 @@ history_expand (char *hstring, char **output)
 	  squote = 0;
 	  if (string[i])
 	    i++;
+	  if (i >= l)
+	    i = l;
 	}
 
       for ( ; string[i]; i++)
@@ -1177,6 +1179,11 @@ history_expand (char *hstring, char **output)
 	      flag = (i > 0 && string[i - 1] == '$');
 	      i++;
 	      hist_string_extract_single_quoted (string, &i, flag);
+	      if (i >= l)
+		{
+		  i = l;
+		  break;
+		}
 	    }
 	  else if (history_quotes_inhibit_expansion && string[i] == '\\')
 	    {
@@ -1187,7 +1194,7 @@ history_expand (char *hstring, char **output)
 	    }
 	  
 	}
-	  
+
       if (string[i] != history_expansion_char)
 	{
 	  xfree (result);
@@ -1709,6 +1716,8 @@ get_word:
 	  (delimiter != '"' || member (string[i], slashify_in_quotes)))
 	{
 	  i++;
+	  if (string[i] == 0)
+	    break;
 	  continue;
 	}
 

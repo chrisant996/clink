@@ -76,6 +76,10 @@
 #define INCREMENT_POS(start)    (start)++
 #endif /* !HANDLE_MULTIBYTE */
 
+/* Flags for the motion context */
+#define MOVE_SUCCESS	0
+#define MOVE_FAILED	0x01
+
 /* This is global so other parts of the code can check whether the last
    command was a text modification command. */
 int _rl_vi_last_command = 'i';	/* default `.' puts you in insert mode */
@@ -1171,7 +1175,7 @@ _rl_mvcxt_dispose (_rl_vimotion_cxt *m)
 static int
 rl_domove_motion_callback (_rl_vimotion_cxt *m)
 {
-  int c;
+  int c, r, opoint;
 
   _rl_vi_last_motion = c = m->motion;
 
@@ -1181,8 +1185,15 @@ rl_domove_motion_callback (_rl_vimotion_cxt *m)
   rl_extend_line_buffer (rl_end + 1);
   rl_line_buffer[rl_end++] = ' ';
   rl_line_buffer[rl_end] = '\0';
+  opoint = rl_point;
 
-  _rl_dispatch (c, _rl_keymap);
+  r = _rl_dispatch (c, _rl_keymap);
+
+  /* Note in the context that the motion command failed. Right now we only do
+     this for unsuccessful searches (ones where _rl_dispatch returns non-zero
+     and point doesn't move). */
+  if (r != 0 && rl_point == opoint && (c == 'f' || c == 'F'))
+    m->flags |= MOVE_FAILED;
 
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
@@ -1217,7 +1228,7 @@ _rl_vi_domove_motion_cleanup (int c, _rl_vimotion_cxt *m)
     {
       /* 'c' and 'C' enter insert mode after the delete even if the motion
 	 didn't delete anything, as long as the motion command is valid. */
-      if (_rl_to_upper (m->key) == 'C' && _rl_vi_motion_command (c))
+      if (_rl_to_upper (m->key) == 'C' && _rl_vi_motion_command (c) && (m->flags & MOVE_FAILED) == 0)
 	return (vidomove_dispatch (m));
       RL_UNSETSTATE (RL_STATE_VIMOTION);
       return (-1);
@@ -1399,7 +1410,11 @@ rl_vi_delete_to (int count, int key)
       _rl_vimvcxt = _rl_mvcxt_alloc (VIM_DELETE, key);
     }
   else if (_rl_vimvcxt)
-    _rl_mvcxt_init (_rl_vimvcxt, VIM_DELETE, key);
+    {
+      /* are we being called recursively or by `y' or `c'? */
+      savecxt = _rl_vimvcxt;
+      _rl_vimvcxt = _rl_mvcxt_alloc (VIM_DELETE, key);
+    }
   else
     _rl_vimvcxt = _rl_mvcxt_alloc (VIM_DELETE, key);
 
@@ -1498,7 +1513,11 @@ rl_vi_change_to (int count, int key)
       _rl_vimvcxt = _rl_mvcxt_alloc (VIM_CHANGE, key);
     }
   else if (_rl_vimvcxt)
-    _rl_mvcxt_init (_rl_vimvcxt, VIM_CHANGE, key);
+    {
+      /* are we being called recursively or by `y' or `d'? */
+      savecxt = _rl_vimvcxt;
+      _rl_vimvcxt = _rl_mvcxt_alloc (VIM_CHANGE, key);
+    }
   else
     _rl_vimvcxt = _rl_mvcxt_alloc (VIM_CHANGE, key);
   _rl_vimvcxt->start = rl_point;
@@ -1577,7 +1596,11 @@ rl_vi_yank_to (int count, int key)
       _rl_vimvcxt = _rl_mvcxt_alloc (VIM_YANK, key);
     }
   else if (_rl_vimvcxt)
-    _rl_mvcxt_init (_rl_vimvcxt, VIM_YANK, key);
+    {
+      /* are we being called recursively or by `c' or `d'? */
+      savecxt = _rl_vimvcxt;
+      _rl_vimvcxt = _rl_mvcxt_alloc (VIM_YANK, key);
+    }
   else
     _rl_vimvcxt = _rl_mvcxt_alloc (VIM_YANK, key);
   _rl_vimvcxt->start = rl_point;

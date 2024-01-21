@@ -392,6 +392,9 @@ rl_maybe_replace_line (void)
       xfree (temp->line);
       FREE (temp->timestamp);
       xfree (temp);
+      /* XXX - what about _rl_saved_line_for_history? if the saved undo list
+	 is rl_undo_list, and we just put that into a history entry, should
+	 we set the saved undo list to NULL? */
     }
   return 0;
 }
@@ -435,18 +438,18 @@ rl_maybe_save_line (void)
 int
 _rl_free_saved_history_line (void)
 {
-  UNDO_LIST *orig;
-
   if (_rl_saved_line_for_history)
     {
-      if (rl_undo_list && rl_undo_list == (UNDO_LIST *)_rl_saved_line_for_history->data)
-	rl_undo_list = 0;
-      /* Have to free this separately because _rl_free_history entry can't:
-	 it doesn't know whether or not this has application data. Only the
-	 callers that know this is _rl_saved_line_for_history can know that
-	 it's an undo list. */
-      if (_rl_saved_line_for_history->data)
-	_rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
+      UNDO_LIST *sentinel;
+
+      sentinel = (UNDO_LIST *)_rl_saved_line_for_history->data;
+
+      /* We should only free `data' if it's not the current rl_undo_list and
+	 it's not the `data' member in a history entry somewhere. We have to
+	 free it separately because only the callers know it's an undo list. */
+      if (sentinel && sentinel != rl_undo_list && _hs_search_history_data ((histdata_t *)sentinel) < 0)
+	_rl_free_undo_list (sentinel);
+
       _rl_free_history_entry (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
     }

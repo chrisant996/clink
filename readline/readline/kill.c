@@ -358,15 +358,15 @@ rl_unix_filename_rubout (int count, int key)
       if (count <= 0)
 	count = 1;
 
-      while (count--)
+      while (rl_point > 0 && count--)
 	{
 	  c = rl_line_buffer[rl_point - 1];
 
 	  /* First move backwards through whitespace */
 	  while (rl_point && whitespace (c))
 	    {
-	      rl_point--;
-	      c = rl_line_buffer[rl_point - 1];
+	      if (--rl_point)
+		c = rl_line_buffer[rl_point - 1];
 	    }
 
 	  /* Consume one or more slashes. */
@@ -402,14 +402,14 @@ rl_unix_filename_rubout (int count, int key)
 	  while (rl_point && (whitespace (c) || rl_is_path_separator (c)))
 /* end_clink_change */
 	    {
-	      rl_point--;
-	      c = rl_line_buffer[rl_point - 1];
+	      if (--rl_point)
+		c = rl_line_buffer[rl_point - 1];
 	    }
 
 	  while (rl_point && (whitespace (c) == 0) && !rl_is_path_separator (c))
 	    {
-	      rl_point--;	/* XXX - multibyte? */
-	      c = rl_line_buffer[rl_point - 1];
+	      if (--rl_point)	/* XXX - multibyte? */
+		c = rl_line_buffer[rl_point - 1];
 	    }
 	}
 

@@ -127,7 +127,7 @@ _rl_free_undo_list (UNDO_LIST *ul)
 void
 rl_free_undo_list (void)
 {
-  UNDO_LIST *release, *orig_list;
+  UNDO_LIST *orig_list;
 
   orig_list = rl_undo_list;
   _rl_free_undo_list (rl_undo_list);

@@ -1,6 +1,6 @@
 /* histlib.h -- internal definitions for the history library. */
 
-/* Copyright (C) 1989-2009,2021-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2009,2021-2023 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -97,6 +97,7 @@ extern history_event_lookup_cache_t history_event_lookup_cache;
 
 /* history.c */
 extern void _hs_replace_history_data (int, histdata_t *, histdata_t *);
+extern int _hs_search_history_data (histdata_t *);
 extern int _hs_at_end_of_history (void);
 
 /* histfile.c */
