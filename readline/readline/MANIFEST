@@ -82,6 +82,7 @@ vi_keymap.c	f
 vi_mode.c	f
 xfree.c		f
 xmalloc.c	f
+gettimeofday.c	f
 history.c	f
 histexpand.c	f
 histfile.c	f

@@ -59,6 +59,9 @@ struct hooked_stat
 void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
 
+#define HAVE_GETTIMEOFDAY 1
+int gettimeofday(struct timeval *, void *);
+
 // These are implemented in rl_commands.cpp.
 extern const int c_clink_version;
 #ifdef UNDO_LIST_HEAP_DIAGNOSTICS

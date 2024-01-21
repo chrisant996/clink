@@ -38,6 +38,7 @@
 #  include <unistd.h>
 #endif
 
+#include "rlstdc.h"
 #include "posixselect.h"
 
 #if defined (HAVE_STRING_H)

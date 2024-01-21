@@ -1,6 +1,6 @@
-/* posixselect.h -- wrapper for select(2) includes and definitions */
+/* gettimeofday.c - gettimeofday replacement using time() */
 
-/* Copyright (C) 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2020 Free Software Foundation, Inc.
 
    This file is part of GNU Bash, the Bourne Again SHell.
 
@@ -18,30 +18,18 @@
    along with Bash.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _POSIXSELECT_H_
-#define _POSIXSELECT_H_
+#include "config.h"
 
-#if defined (FD_SET) && !defined (HAVE_SELECT) && !defined (_WIN32)
-#  define HAVE_SELECT 1
+#if !defined (HAVE_GETTIMEOFDAY)
+
+#include "posixtime.h"
+
+/* A version of gettimeofday that just sets tv_sec from time(3) */
+int
+gettimeofday (struct timeval *restrict tv, void *restrict tz)
+{
+  tv->tv_sec = (time_t) time ((time_t *)0);
+  tv->tv_usec = 0;
+  return 0;
+}
 #endif
-
-#if defined (HAVE_SELECT)
-#  if !defined (HAVE_SYS_SELECT_H) || !defined (M_UNIX)
-#    include "posixtime.h"
-#  endif
-#endif /* HAVE_SELECT */
-#if defined (HAVE_SYS_SELECT_H)
-#  include <sys/select.h>
-#endif
-
-#ifndef USEC_PER_SEC
-#  define USEC_PER_SEC 1000000
-#endif
-
-#define USEC_TO_TIMEVAL(us, tv) \
-do { \
-  (tv).tv_sec = (us) / USEC_PER_SEC; \
-  (tv).tv_usec = (us) % USEC_PER_SEC; \
-} while (0)
-
-#endif /* _POSIXSELECT_H_ */

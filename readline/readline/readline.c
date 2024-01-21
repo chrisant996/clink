@@ -670,8 +670,7 @@ readline_internal_charloop (void)
 	  if (RL_ISSTATE (RL_STATE_TIMEOUT))
 	    {
 	      RL_SETSTATE (RL_STATE_DONE);
-	      rl_done = 1;
-	      return 1;
+	      return (rl_done = 1);
 	    }
 
 	  /* If we get here, we're not being called from something dispatched

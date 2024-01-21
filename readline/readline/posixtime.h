@@ -50,8 +50,8 @@ struct timeval
 
 #if !HAVE_GETTIMEOFDAY
 /* begin_clink_change */
-//extern int gettimeofday PARAMS((struct timeval *, void *));
-extern int gettimeofday (struct timeval *, void *);
+//extern int gettimeofday PARAMS((struct timeval * restrict, void * restrict));
+extern int gettimeofday (struct timeval * restrict, void * restrict);
 /* end_clink_change */
 #endif
 

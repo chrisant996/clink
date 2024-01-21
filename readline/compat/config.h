@@ -195,6 +195,9 @@ extern wcswidth_t *wcswidth;
 /* Define if you have the isxdigit function. */
 #define HAVE_ISXDIGIT 1
 
+/* Define if you have the gettimeofday function.*/
+/* #undef HAVE_GETTIMEOFDAY */
+
 /* Define if you have the kill function. */
 /* #undef HAVE_KILL */
 

@@ -302,6 +302,13 @@ rl_gather_tyi (void)
     chars_avail = 0;
 #endif
 
+  if (result == -1 && rl_input_available_hook)
+    {
+      result = (*rl_input_available_hook) ();
+      if (result == 0)
+        result = -1;
+    }
+
 #if defined (O_NDELAY)
   if (result == -1)
     {

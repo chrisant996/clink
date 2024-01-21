@@ -1448,3 +1448,15 @@ configure.ac
 	  readline library to be linked against a shared termcap/curses library
 	  that configure finds. If the argument begins with `-l', use that
 	  library instead; updated INSTALL accordingly
+
+				11/25/2022
+				----------
+gettimeofday.c
+	- add file from bash's lib/sh/gettimeofday.c, only compiled in if
+	  HAVE_GETTIMEOFDAY is not defined
+
+Makefile.in
+	- gettimeofday.o: link in, it will not define any symbols if
+	  HAVE_GETTIMEOFDAY is defined. This is for systems like _WIN32 that
+	  don't have gettimeofday()
+

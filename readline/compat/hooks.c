@@ -336,7 +336,6 @@ void wait_for_input(unsigned long timeout)
 }
 
 //------------------------------------------------------------------------------
-#if !defined (HAVE_GETTIMEOFDAY) && defined (_WIN32)
 typedef unsigned long long uint64_t;
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
@@ -358,4 +357,3 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
     tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
     return 0;
 }
-#endif

@@ -120,7 +120,7 @@ CSOURCES = $(srcdir)/readline.c $(srcdir)/funmap.c $(srcdir)/keymaps.c \
 	   $(srcdir)/histfile.c $(srcdir)/nls.c $(srcdir)/search.c \
 	   $(srcdir)/shell.c $(srcdir)/savestring.c $(srcdir)/tilde.c \
 	   $(srcdir)/text.c $(srcdir)/misc.c $(srcdir)/compat.c \
-	   $(srcdir)/mbutil.c
+	   $(srcdir)/mbutil.c $(srcdir)/gettimeofday.c
 
 # The header files for this library.
 HSOURCES = $(srcdir)/readline.h $(srcdir)/rldefs.h $(srcdir)/chardefs.h \
@@ -139,7 +139,7 @@ OBJECTS = readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
 	  rltty.o complete.o bind.o isearch.o display.o signals.o \
 	  util.o kill.o undo.o macro.o input.o callback.o terminal.o \
 	  text.o nls.o misc.o $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
-	  xmalloc.o xfree.o compat.o
+	  xmalloc.o xfree.o compat.o gettimeofday.o
 
 # The texinfo files which document this library.
 DOCSOURCE = doc/rlman.texinfo doc/rltech.texinfo doc/rluser.texinfo
@@ -453,6 +453,9 @@ xfree.o: ${BUILD_DIR}/config.h
 xfree.o: ansi_stdlib.h
 xmalloc.o: ${BUILD_DIR}/config.h
 xmalloc.o: ansi_stdlib.h
+
+gettimeofday.o: ${BUILD_DIR}/config.h
+gettimeofday.o: posixtime.h
 
 colors.o: ${BUILD_DIR}/config.h colors.h
 colors.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
