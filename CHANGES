@@ -5,12 +5,22 @@
 #### v1.6.2
 
 - Added optional argument `argmatcher:chaincommand(aliases)` to let the argmatcher know that the chained command will have doskey aliases expanded.
-- Fixed command line input parsing so that `foo/` is interpreted as two words `foo` and `/` just like CMD does.
+- Fixed command line input parsing so that the first word (the command word) `foo/` is interpreted as two words `foo` and `/` just like CMD does.
 - Fixed [#549](https://github.com/chrisant996/clink/issues/549); `cd -` intercept interferes with `cd` doskey alias.
 - Fixed [#546](https://github.com/chrisant996/clink/issues/546); when "Wrap text output on resize" is unchecked or the Window Width is different from the Screen Buffer Width, then the display becomes garbled.  The root cause is a limitation in how the OS implements support for ANSI escape codes, but Clink now has workaround code that tries to compensate for the problems as much as possible (the terminal display will be a bit jittery, though; there's nothing that can be done about that, short of fixing how the OS handles escape codes).
 - Fixed updating the display after using `clink-popup-show-help` to invoke a command that changes only the cursor position.
 - Fixed a case where a custom strategy for auto-suggestions could accidentally skip inserting part of the suggestion.
 - Fixed a race condition where `clink-diagnostics` could encounter an error while printing information about coroutines.
+
+**Important pre-release changes in Readline:**
+Readline 8.2 introduced a crash in the `undo` command after navigating through history and making edits in history entries.  The following pre-release updates in Readline fix the crash and several related issues.  They also fix many other edge-case stability issues, and add a couple of new features.
+- Fixed crashes due to memory corruption in the undo information for editing operations.
+- Fixed many issues found by Address Sanitizer (ASAN); these are edge cases where crashes or memory corruption or malfunctions or memory leaks occurred.
+- Added new `execute-named-command` bindable command which reads a command name from the input and executes it (default is <kbd>Alt</kbd>-<kbd>x</kbd>).
+- Allow `quoted-insert` into search strings.
+- Repeated invocations of `vi-yank-pop` now cycle through the kill ring.
+- Fixed when `do-lowercase-version` is bound to something that's not an uppercase letter.
+- Fixed getting the value of the `active-region-start-color` config variable.
 
 #### v1.6.1
 
