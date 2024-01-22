@@ -275,6 +275,8 @@ public:
 
     UNDO_LIST* alloc_undo_entry()
     {
+        dbg_ignore_scope(snapshot, "undo_entry_heap");
+
         tracker* t = new tracker;
         UNDO_LIST* p = (UNDO_LIST*)m_heap.alloc(sizeof(*p));
         t->m_alloc_frames_count = get_callstack_frames(1, sizeof_array(t->m_alloc_frames), t->m_alloc_frames, &t->m_alloc_frames_hash);
