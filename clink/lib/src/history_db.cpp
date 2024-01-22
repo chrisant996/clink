@@ -19,6 +19,9 @@
 #include <new>
 extern "C" {
 #include <readline/history.h>
+#include <readline/readline.h>  // Needed by rlprivate.h.
+#include <readline/rldefs.h>    // Needed by rlmbutil.h in rlprivate.h.
+#include <readline/rlprivate.h> // Needed for _rl_free_undo_list().
 }
 
 #include <algorithm>
@@ -1380,9 +1383,20 @@ void history_db::get_file_path(str_base& out, bool session) const
 }
 
 //------------------------------------------------------------------------------
+static void __clear_history()
+{
+    // Currently Readline doesn't free the history undo lists, so we must.
+    auto** history = history_list();
+    for (int32 i = history_length; --i >= 0;)
+        _rl_free_undo_list((UNDO_LIST*)history[i]->data);
+
+    clear_history();
+}
+
+//------------------------------------------------------------------------------
 void history_db::load_internal()
 {
-    clear_history();
+    __clear_history();
     m_index_map.clear();
     m_master_len = 0;
     m_master_deleted_count = 0;
