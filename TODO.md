@@ -5,9 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Readline's attempt at fixing leaked undo records is causing heap corruption.  I haven't found a consistent repro yet, but it seems that giving a few history entries a modmark, then moving to the end of history, then ESC, then up to a history entry with a modmark, then Undo tends to hit a crash or assertion.  Readline has 3 new patches, but none of them are about undo record heap corruption.
-  - Probably the simplest path forward is to add instrumentation to track all undo list entries, and who's pointing at what and how many times each block is freed and etc.  A special heap that never actually frees blocks, so that it can track references and statistics, and pinpoint who's messing it up.
-  - Yeah, just instrument it with a custom heap.  Looks like all alloc/free calls are already encapsulated, even.
 - [ ] `cd /d ` `Alt-=` no longer shows any matches, with the current set of fixes for the issues below.  Because of passing `false` for `last_onadvance` in `reader:update(...)` circa arguments.lua:1736.
   - Passing `false` makes `sudo cd/` `Alt-=` generate flag matches, but the needle issue prevents them from showing up.
   - Passing `false` prevents `cd /d ` `Alt-=` from generating directory matches.
@@ -41,18 +38,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
 ## Readline devel branch changes
-- APPLYING:
-  - asan3.patch; asan updates to non-incremental search, redisplay; rework non-incremental search to avoid pointer aliasing issues
-  - asan2.patch; asan fixes; fix for history truncation; ANSI/ISO C changes; special cases for char search motion commands
-  - fixes for readline asan issues
-- 0dba4a16ba67; allow quoted-insert into search strings; fixes for negative count arguments in rl_trim_arg_from_keyseq; fix issues if someone binds do-lowercase-version to something that's not an uppercase character; add checks for ANSI terminal; fix to history expansion to not interpret quick substitution at the start of the line if the application says it's in single quotes
-- d5e50a6456d0; fix bug with custom completion suffix; split filename completion rewrite hooks into two functions; new `execute-named-command' bindable function
-- 3237b1161100; basic code to handle lines longer than a screenful; fixes for printing variable values; rewrite words being completed if we're rewriting filenames from the file system; new hook function to print macro values; changes to print key bindings more consistently
-- 9f177ebb2be5; new rl_full_quoting_desired application-settable variable; repeated invocations of vi-yank-pop now cycle through the kill ring; fix some uninitialized variable problems; fix some small memory leaks; better deallocation when completion is interrupted; don't print signal chars in callback mode by default; don't compile in obsolete typedefs by default
-- e5554d06e0ab; fixes for incomplete multibyte characters; fix for ^C during incremental search in callback mode; fix for binding do-lowercase-version to something that's not an uppercase letter
-- a7f5650e6549; add support for case-insensitive incremental and non-incremental history searches; controlled by new bindable variable `search-ignore-case'
-- d77e3904850a; cleanups for using rl_input_available_hook with callback mode
-- b4ebdc06601f; ANSI C changes; fix for rl_getc and signals that arrive before it gets called in callback mode
+- Should I kick these cherry-picks into a topic branch and pull them into Clink more conservatively?
+- [x] 0dba4a16ba67; allow quoted-insert into search strings; fixes for negative count arguments in rl_trim_arg_from_keyseq; fix issues if someone binds do-lowercase-version to something that's not an uppercase character; add checks for ANSI terminal; fix to history expansion to not interpret quick substitution at the start of the line if the application says it's in single quotes
+- [x] d5e50a6456d0; fix bug with custom completion suffix; split filename completion rewrite hooks into two functions; new `execute-named-command' bindable function
+- [x] 3237b1161100; basic code to handle lines longer than a screenful; fixes for printing variable values; rewrite words being completed if we're rewriting filenames from the file system; new hook function to print macro values; changes to print key bindings more consistently
+- [x] 9f177ebb2be5; new rl_full_quoting_desired application-settable variable; repeated invocations of vi-yank-pop now cycle through the kill ring; fix some uninitialized variable problems; fix some small memory leaks; better deallocation when completion is interrupted; don't print signal chars in callback mode by default; don't compile in obsolete typedefs by default
+- [x] e5554d06e0ab; fixes for incomplete multibyte characters; fix for ^C during incremental search in callback mode; fix for binding do-lowercase-version to something that's not an uppercase letter
+- [x] asan3.patch; asan updates to non-incremental search, redisplay; rework non-incremental search to avoid pointer aliasing issues
+- [x] asan2.patch; asan fixes; fix for history truncation; ANSI/ISO C changes; special cases for char search motion commands
+- [x] fixes for readline asan issues
+- [x] a7f5650e6549; add support for case-insensitive incremental and non-incremental history searches; controlled by new bindable variable `search-ignore-case'
+- [x] d77e3904850a; cleanups for using rl_input_available_hook with callback mode
+- [x] b4ebdc06601f; ANSI C changes; fix for rl_getc and signals that arrive before it gets called in callback mode
 
 ## Follow Up
 - Push update to z.lua repo.
