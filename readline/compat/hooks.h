@@ -69,6 +69,7 @@ struct undo_list;
 typedef struct undo_list UNDO_LIST;
 extern UNDO_LIST* clink_alloc_undo_entry(void);
 extern void clink_free_undo_entry(UNDO_LIST* p);
+extern void clink_check_undo_entry_leaks(void);
 #endif
 
 // These are implemented in os.cpp.

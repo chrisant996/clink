@@ -314,6 +314,41 @@ public:
         t->m_free_frames_count = get_callstack_frames(1, sizeof_array(t->m_free_frames), t->m_free_frames, &t->m_free_frames_hash);
     }
 
+    void check_undo_entry_leaks()
+    {
+        uint32 leaks = 0;
+        for (const auto tracker : m_allocated)
+        {
+            if (!tracker.second->m_freed)
+                ++leaks;
+        }
+
+        assert(!leaks);
+
+        if (leaks)
+        {
+            dbgtracef("----- UNDO_LIST leaks: %u -----", leaks);
+
+#ifdef INCLUDE_CALLSTACKS
+            char stack[4096];
+            for (const auto alloc : m_allocated)
+            {
+                stack[0] = '\0';
+                format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
+                dbgtracef("Leak:  0x%p,  text \"%s\",  context: %s", alloc.first, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
+            }
+            dbgtracef("----- end of UNDO_LIST leaks -----");
+#endif
+        }
+        else
+        {
+            dbg_ignore_scope(snapshot, "undo_entry_heap");
+
+            m_allocated.clear();
+            m_heap.clear();
+        }
+    }
+
 private:
     linear_allocator m_heap;
     std::unordered_map<const UNDO_LIST*, tracker*> m_allocated;
@@ -329,6 +364,11 @@ extern "C" UNDO_LIST* clink_alloc_undo_entry(void)
 extern "C" void clink_free_undo_entry(UNDO_LIST* p)
 {
     s_undo_entry_heap.free_undo_entry(p);
+}
+
+extern "C" void clink_check_undo_entry_leaks(void)
+{
+    s_undo_entry_heap.check_undo_entry_leaks();
 }
 #endif // UNDO_LIST_HEAP_DIAGNOSTICS
 

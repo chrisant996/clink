@@ -657,5 +657,8 @@ clear_history (void)
 /* begin_clink_change */
   xfree (history_event_lookup_cache.search_string);
   memset (&history_event_lookup_cache, 0, sizeof (history_event_lookup_cache));
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+  clink_check_undo_entry_leaks ();
+#endif
 /* end_clink_change */
 }
