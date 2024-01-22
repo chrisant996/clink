@@ -1005,7 +1005,7 @@ void line_editor_impl::classify()
         rl_end = g_suggestion_offset;
 
     // Skip parsing if the line buffer hasn't changed.
-    const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH);
+    const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
     if (m_prev_plain == plain && m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
 

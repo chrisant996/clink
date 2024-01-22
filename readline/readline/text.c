@@ -2102,6 +2102,10 @@ _rl_readstr_init (int pchar, int flags)
   rl_message ("%s", p);
   xfree (p);
 
+/* begin_clink_change */
+  RL_SETSTATE(RL_STATE_READSTR);
+/* end_clink_change */
+
   _rl_rscxt = cxt;  
 
   return cxt;
@@ -2112,6 +2116,10 @@ _rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)
 {
   _rl_rscxt_dispose (cxt, 0);
   _rl_rscxt = 0;
+
+/* begin_clink_change */
+  RL_UNSETSTATE(RL_STATE_READSTR);
+/* end_clink_change */
 
   return (r != 1);
 }

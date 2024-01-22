@@ -154,7 +154,7 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (m_paused)
         return false;
 
-    if (RL_ISSTATE(RL_STATE_NSEARCH))
+    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR))
     {
         clear();
         g_rl_buffer->set_need_draw();

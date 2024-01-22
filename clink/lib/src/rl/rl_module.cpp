@@ -94,10 +94,12 @@ const int32 RL_MORE_INPUT_STATES = (RL_STATE_READCMD|
                                     RL_STATE_INPUTPENDING|
                                     RL_STATE_VIMOTION|
                                     RL_STATE_MULTIKEY|
-                                    RL_STATE_CHARSEARCH);
+                                    RL_STATE_CHARSEARCH|
+                                    RL_STATE_READSTR);
 const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
                                       RL_STATE_NSEARCH|
-                                      RL_STATE_CHARSEARCH);
+                                      RL_STATE_CHARSEARCH|
+                                      RL_STATE_READSTR);
 
 extern "C" {
 extern void         (*rl_fwrite_function)(FILE*, const char*, int);
@@ -662,8 +664,17 @@ static int32 terminal_read_thunk(FILE* stream)
 {
     if (stream == in_stream)
     {
-        assert(s_processed_input);
-        return s_processed_input->read();
+        if (RL_ISSTATE(RL_STATE_READSTR))
+        {
+            assert(s_direct_input);
+            s_direct_input->select();
+            return s_direct_input->read();
+        }
+        else
+        {
+            assert(s_processed_input);
+            return s_processed_input->read();
+        }
     }
 
     if (stream == null_stream)
@@ -2589,7 +2600,7 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
                 return true;
         }
     }
-    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH))
+    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_READSTR))
     {
         if (strcmp(seq, bindableEsc) == 0)
         {

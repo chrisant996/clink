@@ -1175,6 +1175,10 @@ extern int rl_persistent_signal_handlers;
 #define RL_STATE_TIMEOUT	0x4000000	/* done; timed out */
 #define RL_STATE_EOF		0x8000000	/* done; got eof on read */
 
+/* begin_clink_change */
+#define RL_STATE_READSTR	0x10000000	/* reading a string */
+/* end_clink_change */
+
 #define RL_SETSTATE(x)		(rl_readline_state |= (x))
 #define RL_UNSETSTATE(x)	(rl_readline_state &= ~(x))
 #define RL_ISSTATE(x)		(rl_readline_state & (x))
