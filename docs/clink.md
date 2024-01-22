@@ -1355,6 +1355,8 @@ Command | Key | Description
 <a name="rlcmd-dump-functions"></a>`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-variables"></a>`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-macros"></a>`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
+<a name="rlcmd-execute-named-command"></a>`execute-named-command` | <kbd>Alt</kbd>-<kbd>x</kbd> | Read a bindable readline command name from the input and execute the function to which it's bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that
+argument to the function it executes.
 
 ### Readline vi Mode
 
