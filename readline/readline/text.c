@@ -2079,7 +2079,13 @@ void
 _rl_unsave_saved_readstr_line ()
 {
   if (_rl_saved_line_for_readstr)
-    _rl_unsave_line (_rl_saved_line_for_readstr);
+/* begin_clink_change */
+    //_rl_unsave_line (_rl_saved_line_for_readstr);
+    {
+      _rl_free_undo_list (rl_undo_list);
+      _rl_unsave_line (_rl_saved_line_for_readstr);
+    }
+/* end_clink_change */
   _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
 }
 
@@ -2196,6 +2202,12 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
 	}
       cxt->lastc = (rl_point > 0) ? rl_line_buffer[rl_point - 1] : rl_line_buffer[0];	/* preserve prevc */
       break;
+
+/* begin_clink_change */
+    case CTRL('Z'):
+      rl_do_undo ();
+      break;
+/* end_clink_change */
 
     case RETURN:
     case NEWLINE:
