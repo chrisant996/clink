@@ -116,6 +116,8 @@ _rl_free_undo_list (UNDO_LIST *ul)
 	xfree (release->text);
 
 #ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+      if (release->what == UNDO_DELETE)
+	release->text = 0;
       clink_free_undo_entry(release);
 #else
       xfree (release);
@@ -279,6 +281,8 @@ rl_do_undo (void)
 	}
 
 #ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+      if (release->what == UNDO_DELETE)
+	release->text = 0;
       clink_free_undo_entry(release);
 #else
       xfree (release);
