@@ -426,6 +426,12 @@ _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
       cxt->lastc = (rl_point > 0) ? rl_line_buffer[rl_point - 1] : rl_line_buffer[0];
       break;
 
+/* begin_clink_change */
+    case CTRL('Z'):
+      rl_do_undo ();
+      break;
+/* end_clink_change */
+
     case RETURN:
     case NEWLINE:
       return 0;
