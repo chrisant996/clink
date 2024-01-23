@@ -325,13 +325,21 @@ void match_pipeline::generate(
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
                m_matches.get_match_count() ? "" : " <none>");
 
+        int32 limit = dbg_get_env_int("DEBUG_PIPELINE");
+        if (limit < 0)
+            limit = 0 - limit;
+        else
+            limit = 20;
+
         int32 i = 0;
-        for (matches_iter iter = m_matches.get_iter(); i < 21 && iter.next(); i++)
+        for (matches_iter iter = m_matches.get_iter(); iter.next(); i++)
         {
-            if (i == 20)
+            if (i >= limit)
+            {
                 printf(" ...");
-            else
-                printf(" %s", iter.get_match());
+                break;
+            }
+            printf(" %s", iter.get_match());
         }
         printf("\n");
     }
