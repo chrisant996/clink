@@ -75,7 +75,7 @@ void match_adapter::set_alt_matches(char** matches, bool own)
     // Skip first alt match when counting.
     if (matches && matches[1])
     {
-        assert(has_matches_lookaside(matches));
+        assert(RL_ISSTATE(RL_STATE_READSTR) || has_matches_lookaside(matches));
 
         uint32 count = 0;
         while (*(++matches))

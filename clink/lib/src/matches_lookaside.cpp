@@ -201,7 +201,9 @@ match_details lookup_match(const char* match)
         if (extra)
             return match_details(match, extra);
     }
-assert(false);
+
+    // It's ok to have no lookaside when in RL_STATE_READSTR.
+    assert(RL_ISSTATE(RL_STATE_READSTR));
     return match_details(nullptr, nullptr);
 }
 
@@ -241,8 +243,9 @@ int32 destroy_matches_lookaside(char** matches)
         }
 
     // Trying to destroy the lookaside for matches that never had one would
-    // suggest a bug in lifetime management somewhere.
-    assert(false);
+    // suggest a bug in lifetime management somewhere.  Except for during
+    // RL_STATE_READSTR, where there's no lookaside.
+    assert(RL_ISSTATE(RL_STATE_READSTR));
     return false;
 }
 
