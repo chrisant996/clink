@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] TEST READLINE DEVEL CHANGES.
 - [ ] `cd /d ` `Alt-=` no longer shows any matches, with the current set of fixes for the issues below.  Because of passing `false` for `last_onadvance` in `reader:update(...)` circa arguments.lua:1736.
   - Passing `false` makes `sudo cd/` `Alt-=` generate flag matches, but the needle issue prevents them from showing up.
   - Passing `false` prevents `cd /d ` `Alt-=` from generating directory matches.
