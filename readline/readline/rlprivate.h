@@ -513,6 +513,9 @@ extern int _rl_readstr_cleanup (_rl_readstr_cxt *, int);
 extern void _rl_readstr_restore (_rl_readstr_cxt *);
 extern int _rl_readstr_getchar (_rl_readstr_cxt *);
 extern int _rl_readstr_dispatch (_rl_readstr_cxt *, int);
+/* begin_clink_change */
+extern int _rl_readstr_pchar;  /* Only valid during RL_STATE_READSTR. */
+/* end_clink_change */
 
 /* undo.c */
 extern UNDO_LIST *_rl_copy_undo_entry (UNDO_LIST *);

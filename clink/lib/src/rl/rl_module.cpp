@@ -2632,6 +2632,13 @@ void rl_module::set_keyseq_len(int32 len)
 }
 
 //------------------------------------------------------------------------------
+static void suppress_redisplay()
+{
+    // Do nothing.  This is used to suppress the rl_redisplay_function call in
+    // rl_message when set_prompt restores the readstr message prompt.
+}
+
+//------------------------------------------------------------------------------
 void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
 {
     redisplay = redisplay && (g_rl_buffer && g_printer);
@@ -2738,6 +2745,15 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     {
         rl_set_prompt(m_rl_prompt.c_str());
         rl_set_rprompt(m_rl_rprompt.c_str());
+    }
+
+    // Restore message during RL_STATE_READSTR.
+    if (RL_ISSTATE(RL_STATE_READSTR))
+    {
+        rollback<rl_voidfunc_t*> rdf(rl_redisplay_function, suppress_redisplay);
+        char* p = _rl_make_prompt_for_search(_rl_readstr_pchar);
+        rl_message("%s", p);
+        xfree(p);
     }
 
     // Display the prompt.
