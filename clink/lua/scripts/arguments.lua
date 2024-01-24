@@ -401,7 +401,7 @@ function _argreader:start_chained_command(line_state, word_index, mode, expand_a
                 local word = line_state:getword(i)
                 local got = os.getalias(word)
                 alias = got and got ~= ""
-                if not alias ~= not info.alias then
+                if (not alias) ~= (not info.alias) then
                     local ls = line_state:_set_alias(i, alias)
                     if ls then
                         self._line_state = ls
@@ -629,7 +629,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- Some matchers have no args at all.  Or ran out of args.
     if react == -1 then
-        local mode, expand_aliases = parse_chaincommand_modes(react_chain_modes)
+        local mode, expand_aliases = parse_chaincommand_modes(react_modes)
         self._chain_command = true
         self:start_chained_command(line_state, word_index, mode, expand_aliases)
         return true -- chaincommand.
@@ -2666,7 +2666,6 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
     local extra
     local original_line_state = line_state
-    local original_end_word_offset = line_state:getendwordoffset()
     local chain
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
@@ -2695,7 +2694,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         local command_word_index = line_state:getcommandwordindex()
         local word_count = line_state:getwordcount()
         if chain then
-            chain = nil
+            chain = nil -- luacheck: ignore 311 -- (Luacheck overlooked the goto.)
             if command_word_index + 1 <= word_count then
                 local ls = break_slash(line_state, word_count)
                 line_state = ls or line_state
@@ -2805,7 +2804,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             end
         end
 
-        no_cmd = nil
+        no_cmd = nil -- luacheck: ignore 311 -- (Luacheck overlooked the goto.)
 
         if argmatcher then
             local reader = _argreader(argmatcher, line_state)
