@@ -19,6 +19,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getwordinfo",            &get_word_info },
     { "getword",                &get_word },
     { "getendword",             &get_end_word },
+    { "getendwordoffset",       &get_end_word_offset },
     { "getrangeoffset",         &get_range_offset },
     { "getrangelength",         &get_range_length },
     // UNDOCUMENTED; internal use only.
@@ -374,6 +375,19 @@ int32 line_state_lua::get_end_word(lua_State* state)
     str<32> word;
     m_line->get_end_word(word);
     lua_pushlstring(state, word.c_str(), word.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  line_state:getendwordoffset
+/// -ver:   1.6.2
+/// -ret:   integer
+/// Returns the offset of the last word of the line. This is the word that
+/// matches are being generated for.
+int32 line_state_lua::get_end_word_offset(lua_State* state)
+{
+    assert(m_line->get_word_count() > 0);
+    lua_pushinteger(state, m_line->get_end_word_offset() + 1);
     return 1;
 }
 

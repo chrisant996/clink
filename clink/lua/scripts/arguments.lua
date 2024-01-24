@@ -276,6 +276,21 @@ local function get_classify_color(code)
 end
 
 --------------------------------------------------------------------------------
+local function parse_chaincommand_modes(modes)
+    local mode = "cmd"
+    local expand_aliases
+    modes = modes or ""
+    for _, m in ipairs(string.explode(modes:lower(), ", ")) do
+        if m == "doskey" then
+            expand_aliases = true
+        elseif m == "cmd" or m == "start" or m == "run" then
+            mode = m
+        end
+    end
+    return mode, expand_aliases
+end
+
+--------------------------------------------------------------------------------
 local function break_slash(line_state, word_index, word_classifications)
     -- If word_index not specified, then find the command word.  This loops to
     -- find it instead of using getcommandwordindex() so that it can work even
@@ -372,7 +387,9 @@ end
 
 --------------------------------------------------------------------------------
 -- NOTE: line_state may not be self._line_state if it came from extra.
-function _argreader:start_chained_command(line_state, word_index, expand_aliases)
+function _argreader:start_chained_command(line_state, word_index, mode, expand_aliases)
+    self._no_cmd = nil
+    mode = mode or "cmd"
     for i = word_index, line_state:getwordcount() do
         local info = line_state:getwordinfo(i)
         if not info.redir then
@@ -392,7 +409,7 @@ function _argreader:start_chained_command(line_state, word_index, expand_aliases
                     end
                 end
             end
-            if not alias then
+            if not alias and mode == "cmd" then
                 local ls, wc = break_slash(line_state, i, self._word_classifier)
                 if ls then
                     self._line_state = ls
@@ -401,6 +418,7 @@ function _argreader:start_chained_command(line_state, word_index, expand_aliases
                     end
                 end
             end
+            self._no_cmd = not (mode == "cmd" or mode == "start")
             break
         end
     end
@@ -507,13 +525,13 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     local arg = matcher._args[arg_index]
 
     -- Determine next arg index.
-    local react, react_expand_aliases
+    local react, react_modes
     if arg and not is_flag then
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
         end
         if arg.onadvance then
-            react, react_expand_aliases = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
+            react, react_modes = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
             if react then
                 -- 1 = Ignore; advance to next arg_index.
                 -- 0 = Repeat; stay on the arg_index.
@@ -523,7 +541,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
                 end
             end
             if react ~= -1 then
-                react_expand_aliases = nil
+                react_modes = nil
             end
         end
     end
@@ -611,14 +629,15 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- Some matchers have no args at all.  Or ran out of args.
     if react == -1 then
+        local mode, expand_aliases = parse_chaincommand_modes(react_chain_modes)
         self._chain_command = true
-        self:start_chained_command(line_state, word_index, react_expand_aliases)
+        self:start_chained_command(line_state, word_index, mode, expand_aliases)
         return true -- chaincommand.
     end
     if not arg then
         if matcher._chain_command then
             self._chain_command = true
-            self:start_chained_command(line_state, word_index, matcher._chain_command_expand_aliases)
+            self:start_chained_command(line_state, word_index, matcher._chain_command_mode, matcher._chain_command_expand_aliases)
             return true -- chaincommand.
         end
         if self._word_classifier and not extra then
@@ -1379,7 +1398,7 @@ end
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:chaincommand
 --- -ver:   1.3.13
---- -arg:   [aliases:boolean]
+--- -arg:   [modes:string]
 --- -ret:   self
 --- This makes the rest of the line be parsed as a separate command, after the
 --- argmatcher reaches the end of its defined argument positions.  You can use
@@ -1420,16 +1439,28 @@ end
 --- -show:  -- "program" is colored as an argmatcher.
 --- -show:  -- "-" generates completions "-x" and "-y".
 ---
---- In Clink v1.6.2 and higher, an optional <span class="arg">aliases</span>
---- argument specifies whether the argmatcher's command expands doskey aliases
---- when invoking the chained command (it's uncommon, but for example the
---- <code>i</code> command in
---- <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a>
---- can).
-function _argmatcher:chaincommand(aliases)
+--- In Clink v1.6.2 and higher, an optional <span class="arg">modes</span>
+--- argument can let Clink know how the command will get interpreted.  The
+--- string can contain any combination of the following words, separated by
+--- spaces or commas.  If some words are mutually exclusive, the one that
+--- comes last in the string is used.
+--- <table>
+--- <tr><th>Mode</th><th>Description</th></tr>
+--- <tr><td><code>cmd</code></td><td>Lets the argmatcher know that the command gets processed how CMD.exe would process it.  This is the default if <span class="arg">modes</span> is omitted.</td></tr>
+--- <tr><td><code>start</code></td><td>Lets the argmatcher know the command gets processed how the START command would process it.</td></tr>
+--- <tr><td><code>run</code></td><td>Lets the argmatcher know the command gets processed how the <kbd>Win</kbd>-<kbd>R</kbd> Windows Run dialog box would process it.</td></tr>
+--- <tr><td><code>doskey</code></td><td>Lets the argmatcher know if the command starts with a doskey alias it will be expanded.  This is very unusual, but for example the <a href="https://github.com/chrisant996/clink-gizmos/blob/main/i.lua">i.lua</a> script in <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> does this.</td></tr>
+--- </table>
+---
+--- The <span class="arg">modes</span> string does not affect how the command
+--- gets executed.  It only affects how the argmatcher performs completions
+--- and input line coloring, to help the argmatcher be accurate.
+function _argmatcher:chaincommand(modes)
+    modes = modes or ""
     self._chain_command = true
-    self._chain_command_expand_aliases = aliases and true
+    self._chain_command_mode = "cmd"
     self._no_file_generation = true -- So that pop() doesn't interfere.
+    self._chain_command_mode, self._chain_command_expand_aliases = parse_chaincommand_modes(modes)
     return self
 end
 
@@ -1724,7 +1755,14 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
 
     -- Consume words and use them to move through matchers' arguments.
     local command_word_index = line_state:getcommandwordindex()
-    for word_index = command_word_index + 1, (line_state:getwordcount() - 1) do
+    local word_count = line_state:getwordcount()
+    if command_word_index + 1 == word_count then
+        local ls = break_slash(line_state, word_count)
+        line_state = ls or line_state
+        reader._line_state = line_state
+        word_count = line_state:getwordcount()
+    end
+    for word_index = command_word_index + 1, (word_count - 1) do
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
             local word = line_state:getword(word_index)
@@ -1736,7 +1774,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     end
 
     -- If not generating matches, then just consume the end word and return.
-    local word_count = line_state:getwordcount()
+    word_count = line_state:getwordcount()
     if not match_builder then
         reader:update(line_state:getword(word_count), word_count)
         return
@@ -2622,6 +2660,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
     local extra
     local original_line_state = line_state
+    local original_end_word_offset = line_state:getendwordoffset()
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
@@ -2647,7 +2686,14 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
 
         -- Consume words and use them to move through matchers' arguments.
         local command_word_index = line_state:getcommandwordindex()
-        for word_index = command_word_index + 1, (line_state:getwordcount() - 1) do
+        local word_count = line_state:getwordcount()
+        if command_word_index + 1 <= word_count then
+            local ls = break_slash(line_state, word_count)
+            line_state = ls or line_state
+            reader._line_state = line_state
+            word_count = line_state:getwordcount()
+        end
+        for word_index = command_word_index + 1, (word_count - 1) do
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
@@ -2710,6 +2756,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local extra
         local line_state = command.line_state
         local word_classifier = command.classifications
+        local no_cmd
 ::do_command::
 
         local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup)
@@ -2717,7 +2764,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         lookup = nil
         if not extra then
             if alias then
-                alias.line_state = break_slash(alias.line_state) or alias.line_state
+                alias.line_state = break_slash(alias.line_state, command_word_index, word_classifier) or alias.line_state
                 extra = alias
             end
         elseif extra.done then
@@ -2730,7 +2777,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             local m = has_argmatcher and "m" or ""
             if info.alias then
                 word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-            elseif not info.quoted and clink.is_cmd_command(command_word) then
+            elseif not info.quoted and not no_cmd and clink.is_cmd_command(command_word) then
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
@@ -2739,13 +2786,16 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                     cl = unrecognized_color and "u"                              --unrecognized
                 elseif recognized > 0 then
                     cl = executable_color and "x"                                --executable
+                else
+                    cl = "o"                                                     --other
                 end
-                cl = cl or "o"                                                   --other
                 word_classifier:classifyword(command_word_index, m..cl, false);
             else
                 word_classifier:classifyword(command_word_index, m.."o", false); --other
             end
         end
+
+        no_cmd = nil
 
         if argmatcher then
             local reader = _argreader(argmatcher, line_state)
@@ -2756,6 +2806,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 local stop -- When consuming extra, it means switch to a new argmatcher.
                 stop, lookup = reader:consume_extra(extra)
                 if stop then
+                    no_cmd = reader._no_cmd
                     goto do_command
                 end
             end
@@ -2770,6 +2821,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                     if chain then
                         line_state:_shift(word_index)
                         word_classifier:_shift(word_index, line_state:getcommandwordindex())
+                        no_cmd = reader._no_cmd
                         goto do_command
                     end
                 end
