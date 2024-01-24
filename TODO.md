@@ -5,17 +5,25 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] `cd /d ` `Alt-=` no longer shows any matches, with the current set of fixes for the issues below.  Because of passing `false` for `last_onadvance` in `reader:update(...)` circa arguments.lua:1736.
-  - Passing `false` makes `sudo cd/` `Alt-=` generate flag matches, but the needle issue prevents them from showing up.
-  - Passing `false` prevents `cd /d ` `Alt-=` from generating directory matches.
-  - [ ] **PROBLEM:** when using `sudo cd/` `Alt-=` the match pipeline uses `cd/` as the needle, because it only sees the initial `line_state` and doesn't consult with the argmatchers or `_argreader` to see the final effective `line_state`.  Maybe the final effective `line_state` results could tell the `line_editor_impl` to adjust its notion of the current word and needle, instead of the match pipeline always figuring it out anew on the fly?
+- [x] For `sudo cd/` `Alt-=` the match pipeline uses `cd/` as the needle, because it only sees the initial `line_state` and doesn't consult with the argmatchers or `_argreader` to see the final effective `line_state`.  Maybe the final effective `line_state` results could tell the `line_editor_impl` to adjust its notion of the current word and needle, instead of the match pipeline always figuring it out anew on the fly?
+  - [x] Needle seems to be correct now; `getwordbreakinfo()` determines the needle, but it hadn't been accounting for `_break_word()`.
+  - [x] `cd/` `Alt-=`
+  - [x] `sudo cd/` `Alt-=`
+  - [x] `i somedir whatever/` `Alt-=` tries to generate file matches for `somedir\whatever\*` -- OH! It's because I still have an alias for `i`, and consuming an alias wasn't working right.
+  - [x] `start filestat/` has incorrect input coloring (`filestat/` is colored as an arg; which was caused by the `start` argmatcher itself).
+- [ ] `sudo sudo filestat/` hits a script error (present in v1.6.2 even without the `foo/` changes).
+- [ ] `start i . filestat/` colors `filestat` as unrecognized, even though it found the argmatcher and `Alt-=` uses it to generate matches, but not for input line coloring.
 - [ ] The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 
 ## Unit Tests
 - [ ] Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
 - [ ] Other tests for `foo/` parsing.
+- [ ] Test for `oncommand` during chaincommand parsing.
+- [ ] Tests for chaincommand and `foo/` syntax.
 
 ## Normal Priority
+- Readline is still leaking undo list in some cases.
+- Ideally shouldn't find argmatchers for built-in CMD commands when `:chaincommand("process")`.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Some wizard for interactively viewing/modifying color settings.
 
