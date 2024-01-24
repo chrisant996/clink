@@ -812,7 +812,7 @@ function _argreader:consume_extra(extra)
 
     local word = line_state:getword(word_index)
     if self:update(word, word_index, extra) then
-        line_state = self.line_state -- self:update() can swap to a different line_state.
+        line_state = self._line_state -- self:update() can swap to a different line_state.
         local lookup = line_state:getword(word_index);
         extra.next_index = 2
         line_state:_shift(word_index)
@@ -1756,12 +1756,6 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     -- Consume words and use them to move through matchers' arguments.
     local command_word_index = line_state:getcommandwordindex()
     local word_count = line_state:getwordcount()
-    if command_word_index + 1 == word_count then
-        local ls = break_slash(line_state, word_count)
-        line_state = ls or line_state
-        reader._line_state = line_state
-        word_count = line_state:getwordcount()
-    end
     for word_index = command_word_index + 1, (word_count - 1) do
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
@@ -2601,6 +2595,7 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 local function do_generate(line_state, match_builder)
     local lookup
     local extra
+    local chain
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
@@ -2627,11 +2622,22 @@ local function do_generate(line_state, match_builder)
             end
         end
 
+        if chain then
+            chain = nil
+            local word_count = line_state:getwordcount()
+            if chain and line_state:getcommandwordindex() + 1 == word_count then
+                local ls = break_slash(line_state, word_count)
+                line_state = ls or line_state
+                reader._line_state = line_state
+            end
+        end
+
         local ret, shift, inner = argmatcher:_generate(reader, match_builder)
         line_state = reader._line_state -- argmatcher:_generate() calls reader:update() which can swap to a different line_state.
         if ret and (shift or inner) then
             line_state:_shift(shift)
             lookup = inner
+            chain = true
             goto do_command
         end
         clink.co_state._argmatcher_fromhistory = {}
@@ -2661,6 +2667,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local extra
     local original_line_state = line_state
     local original_end_word_offset = line_state:getendwordoffset()
+    local chain
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
@@ -2687,17 +2694,20 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         -- Consume words and use them to move through matchers' arguments.
         local command_word_index = line_state:getcommandwordindex()
         local word_count = line_state:getwordcount()
-        if command_word_index + 1 <= word_count then
-            local ls = break_slash(line_state, word_count)
-            line_state = ls or line_state
-            reader._line_state = line_state
-            word_count = line_state:getwordcount()
+        if chain then
+            chain = nil
+            if command_word_index + 1 <= word_count then
+                local ls = break_slash(line_state, word_count)
+                line_state = ls or line_state
+                reader._line_state = line_state
+                word_count = line_state:getwordcount()
+            end
         end
         for word_index = command_word_index + 1, (word_count - 1) do
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
-                local chain = reader:update(word, word_index)
+                chain = reader:update(word, word_index)
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 if chain then
                     line_state:_shift(word_index)
