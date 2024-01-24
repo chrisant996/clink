@@ -812,7 +812,7 @@ function _argreader:consume_extra(extra)
 
     local word = line_state:getword(word_index)
     if self:update(word, word_index, extra) then
-        line_state = self._line_state -- self:update() can swap to a different line_state.
+        line_state = extra.line_state -- self:update() can swap to a different line_state.
         local lookup = line_state:getword(word_index);
         extra.next_index = 2
         line_state:_shift(word_index)
@@ -2625,7 +2625,7 @@ local function do_generate(line_state, match_builder)
         if chain then
             chain = nil
             local word_count = line_state:getwordcount()
-            if chain and line_state:getcommandwordindex() + 1 == word_count then
+            if line_state:getcommandwordindex() + 1 == word_count then
                 local ls = break_slash(line_state, word_count)
                 line_state = ls or line_state
                 reader._line_state = line_state
@@ -2693,14 +2693,11 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         -- Consume words and use them to move through matchers' arguments.
         local command_word_index = line_state:getcommandwordindex()
         local word_count = line_state:getwordcount()
-        if chain then
-            chain = nil -- luacheck: ignore 311 -- (Luacheck overlooked the goto.)
-            if command_word_index + 1 <= word_count then
-                local ls = break_slash(line_state, word_count)
-                line_state = ls or line_state
-                reader._line_state = line_state
-                word_count = line_state:getwordcount()
-            end
+        if chain and command_word_index + 1 <= word_count then
+            local ls = break_slash(line_state, word_count)
+            line_state = ls or line_state
+            reader._line_state = line_state
+            word_count = line_state:getwordcount()
         end
         for word_index = command_word_index + 1, (word_count - 1) do
             local info = line_state:getwordinfo(word_index)
@@ -2733,7 +2730,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 pos = next
             end
             if pos > 0 then
-                return pos, 0
+                return pos, 0, line_state
             end
         end
 
@@ -2746,14 +2743,14 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 -- quotes) so that matching can happen for the `text` portion.
                 local attached_arg,attach_pos = word:find("^[^:=][^:=]+[:=]")
                 if attached_arg then
-                    return attach_pos, 0
+                    return attach_pos, 0, line_state
                 end
-                return 0, 1
+                return 0, 1, line_state
             end
         end
     end
 
-    return 0
+    return 0, nil, line_state
 end
 
 --------------------------------------------------------------------------------
@@ -2803,8 +2800,6 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 word_classifier:classifyword(command_word_index, m.."o", false); --other
             end
         end
-
-        no_cmd = nil -- luacheck: ignore 311 -- (Luacheck overlooked the goto.)
 
         if argmatcher then
             local reader = _argreader(argmatcher, line_state)
@@ -3083,4 +3078,12 @@ function clink.arg.register_parser(cmd, parser)
     -- Register the parser.
     _argmatchers[cmd] = parser
     return matcher
+end
+
+function am_test()
+    local lss
+    lss = clink.parseline("i . dir/")
+    local truncate, keep, ls = argmatcher_generator:getwordbreakinfo(lss[1].line_state)
+    print("AM_TEST:", "truncate "..tostring(truncate), "keep "..tostring(keep))
+    print(ls:getendword(), ls:getwordcount())
 end
