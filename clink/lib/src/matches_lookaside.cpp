@@ -168,7 +168,9 @@ bool matches_lookaside::add(const char* match)
         return false;
 
     size_t len = strlen(match) + 1;
-    extra->type = static_cast<match_type>(static_cast<uint8>(match[len++]) | static_cast<uint8>(match[len++]) << 8);
+    const uint16 lo_type = static_cast<uint8>(match[len++]);
+    const uint16 hi_type = static_cast<uint8>(match[len++]);
+    extra->type = static_cast<match_type>(lo_type | (hi_type << 8));
     extra->append_char = match[len++];
     extra->flags = uint8(match[len++]);
 #ifdef DEBUG
