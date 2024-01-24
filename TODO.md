@@ -5,9 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] `sudo sudo filestat/` hits a script error (present in v1.6.2 even without the `foo/` changes).
-- [ ] `start i . filestat/` colors `filestat` as unrecognized, even though it found the argmatcher and `Alt-=` uses it to generate matches, but not for input line coloring.
-- [ ] The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 
 ## Unit Tests
 - [ ] Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
@@ -16,12 +13,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Tests for chaincommand and `foo/` syntax.
 
 ## Normal Priority
-- Readline is still leaking undo list in some cases.
+- The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Ideally shouldn't find argmatchers for built-in CMD commands when `:chaincommand("process")`.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
+- Readline is still leaking undo list in some cases.  Repro:  `text` `ESC` `UP` `ENTER`.  Sent Chet details in email.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
