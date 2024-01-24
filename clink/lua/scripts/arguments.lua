@@ -793,7 +793,7 @@ function _argreader:consume_extra(extra)
 
     local word = line_state:getword(word_index)
     if self:update(word, word_index, extra) then
-        line_state = extra.line_state -- self:update() can swap to a different line_state.
+        line_state = self.line_state -- self:update() can swap to a different line_state.
         local lookup = line_state:getword(word_index);
         extra.next_index = 2
         line_state:_shift(word_index)
