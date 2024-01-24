@@ -2111,7 +2111,7 @@ The function may return any of the following values:
 - Return `-1` to behave as though [:chaincommand()](#_argmatcher:chaincommand) were used, and start parsing a new command line beginning at `word_index`.  To start at the _next_ word index, see the "[chain next](#chainnextexample)" example below.
 - Return `nil` (either `return nil` or just `return`) to advance to the next argument position _after_ parsing the word (this is the default behavior).
 
-In Clink v1.6.2 and higher, the function may additionally return a second value as `true` which tells the argmatcher whether doskey aliases will be expanded in the chained command.  Note that this doesn't cause doskey aliases to be expanded -- it only tells the argmatcher that something else is going to expand doskey aliases, so that the argmatcher can accurately parse and color the input text.
+In Clink v1.6.2 and higher, when returning `-1` the function may also return a second value which is a string that lets Clink know how the command will get interpreted.  The string is the same as the <span class="arg">modes</span> argument in [:chaincommand()](#_argmatcher:chaincommand).
 
 This example demonstrates treating arg index 1 as an optional title string only if quoted:
 
