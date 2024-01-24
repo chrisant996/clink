@@ -141,10 +141,11 @@ line_state_lua::line_state_lua(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-line_state_lua::line_state_lua(line_state_copy* copy)
+line_state_lua::line_state_lua(line_state_copy* copy, uint32 shift)
 {
     m_line = copy->get_line();
     m_copy = copy;
+    m_shift = shift;
 }
 
 //------------------------------------------------------------------------------
@@ -516,7 +517,7 @@ int32 line_state_lua::break_word(lua_State* state)
 
     // PERF: Can it return itself if it's already a copy?  Does anything rely
     // on the copy operation, e.g. "original != line_state"?
-    line_state_lua::make_new(state, copy);
+    line_state_lua::make_new(state, copy, m_shift);
     return 1;
 }
 
@@ -559,7 +560,7 @@ int32 line_state_lua::unbreak_word(lua_State* state)
 
     // PERF: Can it return itself if it's already a copy?  Does anything rely
     // on the copy operation, e.g. "original != line_state"?
-    line_state_lua::make_new(state, copy);
+    line_state_lua::make_new(state, copy, m_shift);
     lua_pushboolean(state, into_next);
     lua_pushinteger(state, new_len);
     return 3;
@@ -584,7 +585,7 @@ int32 line_state_lua::set_alias(lua_State* state)
 
     // PERF: Can it return itself if it's already a copy?  Does anything rely
     // on the copy operation, e.g. "original != line_state"?
-    line_state_lua::make_new(state, copy);
+    line_state_lua::make_new(state, copy, m_shift);
     return 1;
 }
 

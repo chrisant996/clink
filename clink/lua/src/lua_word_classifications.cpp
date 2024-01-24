@@ -30,6 +30,7 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
     { "_break_word",      &break_word },
     { "_unbreak_word",    &unbreak_word },
 #ifdef DEBUG
+    { "_getwordcount",    &get_word_count },
     { "_getwordstart",    &get_word_start },
     { "_getwordend",      &get_word_end },
 #endif
@@ -225,6 +226,18 @@ int32 lua_word_classifications::unbreak_word(lua_State* state)
     m_classifications.unbreak_word(index, length, skip_word);
     return 0;
 }
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+#ifdef DEBUG
+int32 lua_word_classifications::get_word_count(lua_State* state)
+{
+    lua_pushinteger(state, m_num_words);
+    lua_pushinteger(state, m_classifications.size());
+    lua_pushinteger(state, m_shift);
+    return 3;
+}
+#endif
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.

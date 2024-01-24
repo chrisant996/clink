@@ -18,7 +18,7 @@ class line_state_lua
 {
 public:
                         line_state_lua(const line_state& line);
-                        line_state_lua(line_state_copy* copy);
+                        line_state_lua(line_state_copy* copy, uint32 shift);
                         ~line_state_lua();
 
     const line_state*   get_line_state() const { return m_line; }

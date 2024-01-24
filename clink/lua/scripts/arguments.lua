@@ -2764,7 +2764,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         lookup = nil
         if not extra then
             if alias then
-                alias.line_state = break_slash(alias.line_state, command_word_index, word_classifier) or alias.line_state
+                alias.line_state = break_slash(alias.line_state) or alias.line_state
                 extra = alias
             end
         elseif extra.done then

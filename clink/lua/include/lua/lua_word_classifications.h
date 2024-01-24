@@ -29,6 +29,7 @@ protected:
     int32                   break_word(lua_State* state);
     int32                   unbreak_word(lua_State* state);
 #ifdef DEBUG
+    int32                   get_word_count(lua_State* state);
     int32                   get_word_start(lua_State* state);
     int32                   get_word_end(lua_State* state);
 #endif
