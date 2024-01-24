@@ -52,6 +52,9 @@ void* linear_allocator::alloc(uint32 size)
         char* oversized = (char*)malloc(size + sizeof(m_ptr));
         if (oversized == nullptr)
             return nullptr;
+#ifdef DEBUG
+        m_footprint += size + sizeof(m_ptr);
+#endif
         *reinterpret_cast<char**>(oversized) = *reinterpret_cast<char**>(m_ptr);
         *reinterpret_cast<char**>(m_ptr) = oversized;
         return oversized + sizeof(m_ptr);
@@ -87,6 +90,10 @@ bool linear_allocator::new_page()
     if (temp == nullptr)
         return false;
 
+#ifdef DEBUG
+    m_footprint += m_max;
+#endif
+
     *reinterpret_cast<char**>(temp) = m_ptr;
     m_used = sizeof(m_ptr);
     m_ptr = temp;
@@ -97,6 +104,9 @@ bool linear_allocator::new_page()
 void linear_allocator::free_chain(bool keep_one)
 {
     m_used = m_ptr && keep_one ? sizeof(m_ptr) : m_max;
+#ifdef DEBUG
+    m_footprint = m_ptr && keep_one ? m_max : 0;
+#endif
 
     char* ptr = m_ptr;
 

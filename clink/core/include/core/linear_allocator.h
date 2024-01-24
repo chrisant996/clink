@@ -18,6 +18,10 @@ public:
     template <class T> T*   calloc(uint32 count=1);
     bool                    fits(uint32) const;
     bool                    oversized(uint32) const;
+#ifdef DEBUG
+    uint32                  pagesize() const { return m_max; }
+    uint32                  footprint() const { return m_footprint; }
+#endif
 
     bool                    unittest_at_end(void* ptr, uint32 size) const;
     bool                    unittest_in_prev_page(void* ptr, uint32 size) const;
@@ -28,6 +32,9 @@ private:
     char*                   m_ptr = nullptr;
     uint32                  m_used;
     uint32                  m_max;
+#ifdef DEBUG
+    uint32                  m_footprint = 0;
+#endif
 };
 
 //------------------------------------------------------------------------------

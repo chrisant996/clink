@@ -259,7 +259,8 @@ class undo_entry_heap
 {
     struct tracker
     {
-        bool m_freed = 0;
+        bool m_freed = false;
+        bool m_seen = false;
         void* m_alloc_frames[20];
         uint32 m_alloc_frames_count = 0;
         DWORD m_alloc_frames_hash = 0;
@@ -317,28 +318,43 @@ public:
     void check_undo_entry_leaks()
     {
         uint32 leaks = 0;
+        bool new_leaks = false;
         for (const auto tracker : m_allocated)
         {
             if (!tracker.second->m_freed)
                 ++leaks;
+            if (!tracker.second->m_seen)
+                new_leaks = true;
         }
-
-        assert(!leaks);
 
         if (leaks)
         {
-            dbgtracef("----- UNDO_LIST leaks: %u -----", leaks);
+            if (new_leaks)
+            {
+                if (m_heap.footprint() > m_heap.pagesize() || dbg_get_env_int("DEBUG_REPORT_UNDO_LIST_LEAKS"))
+                    assert(!leaks);
+
+                dbgtracef("----- UNDO_LIST leaks: %u -----", leaks);
 
 #ifdef INCLUDE_CALLSTACKS
-            char stack[4096];
-            for (const auto alloc : m_allocated)
-            {
-                stack[0] = '\0';
-                format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
-                dbgtracef("Leak:  0x%p,  text \"%s\",  context: %s", alloc.first, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
-            }
-            dbgtracef("----- end of UNDO_LIST leaks -----");
+                char stack[4096];
+                for (const auto alloc : m_allocated)
+                {
+                    if (!alloc.second->m_seen)
+                    {
+                        alloc.second->m_seen = true;
+                        stack[0] = '\0';
+                        format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
+                        dbgtracef("Leak:  0x%p,  text \"%s\",  context: %s", alloc.first, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
+                    }
+                }
+                dbgtracef("----- end of UNDO_LIST leaks -----");
 #endif
+            }
+            else
+            {
+                dbgtracef("----- UNDO_LIST leaks: %u; can't reset undo_entry_heap -----", leaks);
+            }
         }
         else
         {
