@@ -7,20 +7,16 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Unit Tests
-- [ ] Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
-- [ ] Other tests for `foo/` parsing.
-- [ ] Test for `oncommand` during chaincommand parsing.
-- [ ] Tests for chaincommand and `foo/` syntax.
 
 ## Normal Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Ideally shouldn't find argmatchers for built-in CMD commands when `:chaincommand("process")`.
+- Ideally should find argmatchers for built-in CMD commands even when a directory by the same name exists, unless `:chaincommand("process")`.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
 - Readline is still leaking undo list in some cases.  Repro:  `text` `ESC` `UP` `ENTER`.  Sent Chet details in email.
-- `i . dir/` `Alt-=` doesn't know to treat the `/` as a word break, because `:getwordbreakinfo()` doesn't `:update()` on the final word, so it doesn't realize it's a chain command case.  The cost vs benefit isn't worth pursuing at this time.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
@@ -37,20 +33,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
   - Argmatcher could maybe automatically show syntax hints for the current word.
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
-
-## Readline devel branch changes
-- Should I kick these cherry-picks into a topic branch and pull them into Clink more conservatively?
-- [x] 0dba4a16ba67; allow quoted-insert into search strings; fixes for negative count arguments in rl_trim_arg_from_keyseq; fix issues if someone binds do-lowercase-version to something that's not an uppercase character; add checks for ANSI terminal; fix to history expansion to not interpret quick substitution at the start of the line if the application says it's in single quotes
-- [x] d5e50a6456d0; fix bug with custom completion suffix; split filename completion rewrite hooks into two functions; new `execute-named-command' bindable function
-- [x] 3237b1161100; basic code to handle lines longer than a screenful; fixes for printing variable values; rewrite words being completed if we're rewriting filenames from the file system; new hook function to print macro values; changes to print key bindings more consistently
-- [x] 9f177ebb2be5; new rl_full_quoting_desired application-settable variable; repeated invocations of vi-yank-pop now cycle through the kill ring; fix some uninitialized variable problems; fix some small memory leaks; better deallocation when completion is interrupted; don't print signal chars in callback mode by default; don't compile in obsolete typedefs by default
-- [x] e5554d06e0ab; fixes for incomplete multibyte characters; fix for ^C during incremental search in callback mode; fix for binding do-lowercase-version to something that's not an uppercase letter
-- [x] asan3.patch; asan updates to non-incremental search, redisplay; rework non-incremental search to avoid pointer aliasing issues
-- [x] asan2.patch; asan fixes; fix for history truncation; ANSI/ISO C changes; special cases for char search motion commands
-- [x] fixes for readline asan issues
-- [x] a7f5650e6549; add support for case-insensitive incremental and non-incremental history searches; controlled by new bindable variable `search-ignore-case'
-- [x] d77e3904850a; cleanups for using rl_input_available_hook with callback mode
-- [x] b4ebdc06601f; ANSI C changes; fix for rl_getc and signals that arrive before it gets called in callback mode
 
 ## Follow Up
 - Push update to z.lua repo.
