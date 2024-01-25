@@ -545,8 +545,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
             end
         end
     end
-    if last_onadvance and react ~= 1 and react ~= -1 then
-        return
+    if last_onadvance then
+        -- When in last_onadvance mode, bail out unless chaining or advancing
+        -- is needed.
+        if react ~= 1 and react ~= -1 and not ((not arg) and matcher._chain_command) then
+            return
+        end
     end
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
@@ -627,15 +631,18 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
         self._arg_index = next_arg_index
     end
 
-    -- Some matchers have no args at all.  Or ran out of args.
     if react == -1 then
+        -- Chain due to request by `onadvance` callback.
         local mode, expand_aliases = parse_chaincommand_modes(react_modes)
         self._chain_command = true
         self:start_chained_command(line_state, word_index, mode, expand_aliases)
         return true -- chaincommand.
     end
+
+    -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
         if matcher._chain_command then
+            -- Chain due to :chaincommand() used in argmatcher.
             self._chain_command = true
             self:start_chained_command(line_state, word_index, matcher._chain_command_mode, matcher._chain_command_expand_aliases)
             return true -- chaincommand.
@@ -1775,8 +1782,13 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     end
 
     -- Special processing for last word, in case there's an onadvance callback.
-    reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onadvance]])
+    if reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onadvance]]) then
+        if reader._line_state:getwordcount() > word_count then
+            return true, word_count
+        end
+    end
     line_state = reader._line_state -- reader:update() can swap to a different line_state.
+    word_count = line_state:getwordcount()
 
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.
@@ -2595,7 +2607,6 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 local function do_generate(line_state, match_builder)
     local lookup
     local extra
-    local chain
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
@@ -2622,22 +2633,11 @@ local function do_generate(line_state, match_builder)
             end
         end
 
-        if chain then
-            chain = nil
-            local word_count = line_state:getwordcount()
-            if line_state:getcommandwordindex() + 1 == word_count then
-                local ls = break_slash(line_state, word_count)
-                line_state = ls or line_state
-                reader._line_state = line_state
-            end
-        end
-
         local ret, shift, inner = argmatcher:_generate(reader, match_builder)
         line_state = reader._line_state -- argmatcher:_generate() calls reader:update() which can swap to a different line_state.
         if ret and (shift or inner) then
             line_state:_shift(shift)
             lookup = inner
-            chain = true
             goto do_command
         end
         clink.co_state._argmatcher_fromhistory = {}
@@ -2666,7 +2666,6 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
     local extra
     local original_line_state = line_state
-    local chain
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
@@ -2693,17 +2692,11 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         -- Consume words and use them to move through matchers' arguments.
         local command_word_index = line_state:getcommandwordindex()
         local word_count = line_state:getwordcount()
-        if chain and command_word_index + 1 <= word_count then
-            local ls = break_slash(line_state, word_count)
-            line_state = ls or line_state
-            reader._line_state = line_state
-            word_count = line_state:getwordcount()
-        end
         for word_index = command_word_index + 1, (word_count - 1) do
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
-                chain = reader:update(word, word_index)
+                local chain = reader:update(word, word_index)
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 if chain then
                     line_state:_shift(word_index)
@@ -2711,6 +2704,18 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 end
             end
         end
+
+        -- Special processing for last word, in case there's an onadvance callback.
+        word_count = line_state:getwordcount()
+        if reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onadvance]]) then
+            line_state = reader._line_state -- reader:update() can swap to a different line_state.
+            if line_state:getwordcount() > word_count then
+                line_state:_shift(word_count)
+                goto do_command
+            end
+        end
+        line_state = reader._line_state -- reader:update() can swap to a different line_state.
+        -- word_count = line_state:getwordcount() -- Unused.
 
         if original_line_state ~= line_state then
             original_line_state:_overwrite_from(line_state)
@@ -3078,12 +3083,4 @@ function clink.arg.register_parser(cmd, parser)
     -- Register the parser.
     _argmatchers[cmd] = parser
     return matcher
-end
-
-function am_test()
-    local lss
-    lss = clink.parseline("i . dir/")
-    local truncate, keep, ls = argmatcher_generator:getwordbreakinfo(lss[1].line_state)
-    print("AM_TEST:", "truncate "..tostring(truncate), "keep "..tostring(keep))
-    print(ls:getendword(), ls:getwordcount())
 end

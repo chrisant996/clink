@@ -12,6 +12,7 @@
 #include <lua/lua_word_classifier.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
+#include <lib/cmd_tokenisers.h>
 #include <lib/doskey.h>
 
 extern "C" {
@@ -26,8 +27,13 @@ TEST_CASE("Lua arg parsers")
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
+    cmd_command_tokeniser command_tokeniser;
+    cmd_word_tokeniser word_tokeniser;
+
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
-    line_editor_tester tester(desc, "&|", nullptr);
+    desc.command_tokeniser = &command_tokeniser;
+    desc.word_tokeniser = &word_tokeniser;
+    line_editor_tester tester(desc, nullptr, nullptr);
     tester.get_editor()->set_generator(lua_generator);
 
     SECTION("Main")
@@ -967,11 +973,27 @@ TEST_CASE("Lua arg parsers")
 
     SECTION("Chaincommand")
     {
+        // TODO: Also fromhistory tests, since the code path is different.
+
+        static const char* dir_fs[] = {
+#ifdef FIXED_FIND_ARGMATCHER_DIRNAME
+            "cd/leaf",              // Tricksy!  And caught an issue in _has_argmatcher.
+#endif
+            "nest/leaf",
+            "nest/nest2/leaf",
+            nullptr,
+        };
+
+        fs_fixture fs(dir_fs);
+
         const char* script = "\
-            clink.argmatcher('sudo'):addflags('-x'):chaincommand()\
-            clink.argmatcher('gsudo'):addflags('-y'):chaincommand()\
-            clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('aaa', 'zzz'):nofiles()\
+            clink.argmatcher('sudo'):addflags('-x', '/x'):chaincommand()\
+            clink.argmatcher('gsudo'):addflags('-y', '/y'):chaincommand()\
+            clink.argmatcher('plerg'):addflags('-l', '-m', '-n', '/l', '/m', '/n'):addarg('aaa', 'zzz'):nofiles()\
+            clink.argmatcher('cd'):addflags('/d'):addarg(clink.dirmatches):nofiles()\
         ";
+
+        lua_load_script(lua, app, exec);
 
         REQUIRE_LUA_DO_STRING(lua, script);
 
@@ -1014,6 +1036,71 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("xyz 123 ");
             tester.set_expected_matches();
             tester.run();
+        }
+
+        SECTION("Slash in command")
+        {
+            tester.set_input("plerg /");
+            tester.set_expected_matches("/l", "/m", "/n");
+            tester.run();
+
+            tester.set_input("plerg/");
+            tester.set_expected_matches("/l", "/m", "/n");
+            tester.run();
+
+            tester.set_input("cd /");
+            tester.set_expected_matches("/d");
+            tester.run();
+
+            tester.set_input("cd/");
+            tester.set_expected_matches("/d");
+            tester.run();
+
+            tester.set_input("sudo plerg /");
+            tester.set_expected_matches("/l", "/m", "/n");
+            tester.run();
+
+            tester.set_input("sudo plerg/");
+            tester.set_expected_matches("/l", "/m", "/n");
+            tester.run();
+
+            tester.set_input("sudo cd /");
+            tester.set_expected_matches("/d");
+            tester.run();
+
+            tester.set_input("sudo cd/");
+            tester.set_expected_matches("/d");
+            tester.run();
+
+            tester.set_input("sudo gsudo cd /");
+            tester.set_expected_matches("/d");
+            tester.run();
+
+            tester.set_input("sudo gsudo cd/");
+            tester.set_expected_matches("/d");
+            tester.run();
+        }
+
+        SECTION("Slash in word")
+        {
+#ifdef FIXED_FIND_ARGMATCHER_DIRNAME
+            tester.set_input("abcdefg cd/");
+            tester.set_expected_matches("leaf");
+            tester.run();
+#endif
+
+            tester.set_input("abcdefg nest/");
+            tester.set_expected_matches("nest\\leaf", "nest\\nest2\\");
+            tester.run();
+
+            tester.set_input("abcdefg ne/");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("No expand doskey")
+        {
+            // TODO: Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
         }
     }
 
