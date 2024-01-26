@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.6.1</title>
+<title>Clink v1.6.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -942,7 +942,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.6.1</div>
+                <div id="title">Clink v1.6.2</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3285,6 +3285,16 @@ $endif              # end clink-only section
 <td align="center"></td>
 <td>Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.</td>
 </tr>
+<tr>
+<td><a class="wlink" href="#rlcmd-execute-named-command"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-execute-named-command"></a><code>execute-named-command</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>x</kbd></td>
+<td>Read a bindable readline command name from the input and execute the function to which it&#39;s bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that</td>
+</tr>
+<tr>
+<td>argument to the function it executes.</td>
+<td align="center"></td>
+<td></td>
+</tr>
 </tbody></table>
 <h3 id="readline-vi-mode"><a class="wlink" href="#readline-vi-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Readline vi Mode <span class="uplinks"><a href="#bindable-commands">up</a> <a href="#toc">top</a></span></h3>
 <p>While the Readline library does not have a full set of vi editing functions, it does contain enough to allow simple editing of the line. The Readline vi mode behaves as specified in the POSIX standard.</p>
@@ -4425,6 +4435,7 @@ m:setflagprefix(&quot;-&quot;)
 <li>Return <code>-1</code> to behave as though <a href="#_argmatcher:chaincommand">:chaincommand()</a> were used, and start parsing a new command line beginning at <code>word_index</code>.  To start at the <em>next</em> word index, see the &quot;<a href="#chainnextexample">chain next</a>&quot; example below.</li>
 <li>Return <code>nil</code> (either <code>return nil</code> or just <code>return</code>) to advance to the next argument position <em>after</em> parsing the word (this is the default behavior).</li>
 </ul>
+<p>In Clink v1.6.2 and higher, when returning <code>-1</code> the function may also return a second value which is a string that lets Clink know how the command will get interpreted.  The string is the same as the <span class="arg">modes</span> argument in <a href="#_argmatcher:chaincommand">:chaincommand()</a>.</p>
 <p>This example demonstrates treating arg index 1 as an optional title string only if quoted:</p>
 <pre><code class="language-lua">local function maybe_string(arg_index, word, word_index, line_state, user_data)
     local info = line_state:getwordinfo(word_index)
@@ -6655,7 +6666,7 @@ maybe_adddescriptions(foo, {
 
 <div class="function"><div class="header"> <div id="_argmatcher:addflagsunsorted" class="name"><a class="wlink" href="#_argmatcher:addflagsunsorted"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>_argmatcher:addflagsunsorted</span> <span class="uplinks"><a href="#_argmatcher">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addflags">_argmatcher:addflags</a> except that this also disables sorting for flags.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="_argmatcher:chaincommand" class="name"><a class="wlink" href="#_argmatcher:chaincommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>_argmatcher:chaincommand</span> <span class="uplinks"><a href="#_argmatcher">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : self<br/><div class="version">v1.3.13 and newer</div></div></div><div class="body"><p class="desc">This makes the rest of the line be parsed as a separate command, after the argmatcher reaches the end of its defined argument positions.  You can use it to "chain" from one parser to another.</p><p class="desc"> For example, <code>cmd.exe program arg</code> is example of a line where one command can have another command within it.  <code>:chaincommand()</code> enables <code>program arg</code> to be parsed separately.  If <code>program</code> has an argmatcher, then it takes over and parses the rest of the input line.</p><p class="desc"> An example that chains in a linked argmatcher:</p><pre class="language-lua"><code>clink.argmatcher("program"):addflags("/x", "/y")
+<div class="function"><div class="header"> <div id="_argmatcher:chaincommand" class="name"><a class="wlink" href="#_argmatcher:chaincommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>_argmatcher:chaincommand</span> <span class="uplinks"><a href="#_argmatcher">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">modes</span>:string] ) : self<br/><div class="version">v1.3.13 and newer</div></div></div><div class="body"><p class="desc">This makes the rest of the line be parsed as a separate command, after the argmatcher reaches the end of its defined argument positions.  You can use it to "chain" from one parser to another.</p><p class="desc"> For example, <code>cmd.exe program arg</code> is example of a line where one command can have another command within it.  <code>:chaincommand()</code> enables <code>program arg</code> to be parsed separately.  If <code>program</code> has an argmatcher, then it takes over and parses the rest of the input line.</p><p class="desc"> An example that chains in a linked argmatcher:</p><pre class="language-lua"><code>clink.argmatcher("program"):addflags("/x", "/y")
 clink.argmatcher("cmd"):addflags(
 &nbsp;   "/c" .. clink.argmatcher():chaincommand(),
 &nbsp;   "/k" .. clink.argmatcher():chaincommand()
@@ -6678,7 +6689,7 @@ clink.argmatcher("sometool"):addarg(
 -- "exec" is colored as an argument (for "sometool").
 -- "profile1" is colored as an argument (for "exec").
 -- "program" is colored as an argmatcher.
--- "-" generates completions "-x" and "-y".</code></pre></div></div><hr/>
+-- "-" generates completions "-x" and "-y".</code></pre><p class="desc">In Clink v1.6.2 and higher, an optional <span class="arg">modes</span> argument can let Clink know how the command will get interpreted.  The string can contain any combination of the following words, separated by spaces or commas.  If some words are mutually exclusive, the one that comes last in the string is used. <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>cmd</code></td><td>Lets the argmatcher know that the command gets processed how CMD.exe would process it.  This is the default if <span class="arg">modes</span> is omitted.</td></tr> <tr><td><code>start</code></td><td>Lets the argmatcher know the command gets processed how the START command would process it.</td></tr> <tr><td><code>run</code></td><td>Lets the argmatcher know the command gets processed how the <kbd>Win</kbd>-<kbd>R</kbd> Windows Run dialog box would process it.</td></tr> <tr><td><code>doskey</code></td><td>Lets the argmatcher know if the command starts with a doskey alias it will be expanded.  This is very unusual, but for example the <a href="https://github.com/chrisant996/clink-gizmos/blob/main/i.lua">i.lua</a> script in <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> does this.</td></tr> </table></p><p class="desc"> The <span class="arg">modes</span> string does not affect how the command gets executed.  It only affects how the argmatcher performs completions and input line coloring, to help the argmatcher be accurate.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="_argmatcher:hideflags" class="name"><a class="wlink" href="#_argmatcher:hideflags"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>_argmatcher:hideflags</span> <span class="uplinks"><a href="#_argmatcher">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This hides the specified flags when displaying possible completions (the flags are still recognized).</p><p class="desc"> This is intended for use when there are several synonyms for a flag, so that input coloring and linked argmatchers work, without cluttering the possible completion list.</p><pre class="language-lua"><code>local dirs = clink.argmatcher():addarg(clink.dirmatches)
 local my_parser = clink.argmatcher("mycommand")
@@ -7076,7 +7087,7 @@ end</code></pre></div></div><hr/>
 
 </div><div class="group">
 <h5 id="line_state" class="group_name"><a class="wlink" href="#line_state"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>line_state: <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#line_state:getcommandoffset">getcommandoffset</a></td><td><a href="#line_state:getrangelength">getrangelength</a></td></tr><tr><td><a href="#line_state:getcommandwordindex">getcommandwordindex</a></td><td><a href="#line_state:getrangeoffset">getrangeoffset</a></td></tr><tr><td><a href="#line_state:getcursor">getcursor</a></td><td><a href="#line_state:getword">getword</a></td></tr><tr><td><a href="#line_state:getendword">getendword</a></td><td><a href="#line_state:getwordcount">getwordcount</a></td></tr><tr><td><a href="#line_state:getline">getline</a></td><td><a href="#line_state:getwordinfo">getwordinfo</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#line_state:getcommandoffset">getcommandoffset</a></td><td><a href="#line_state:getendwordoffset">getendwordoffset</a></td><td><a href="#line_state:getword">getword</a></td></tr><tr><td><a href="#line_state:getcommandwordindex">getcommandwordindex</a></td><td><a href="#line_state:getline">getline</a></td><td><a href="#line_state:getwordcount">getwordcount</a></td></tr><tr><td><a href="#line_state:getcursor">getcursor</a></td><td><a href="#line_state:getrangelength">getrangelength</a></td><td><a href="#line_state:getwordinfo">getwordinfo</a></td></tr><tr><td><a href="#line_state:getendword">getendword</a></td><td><a href="#line_state:getrangeoffset">getrangeoffset</a></td></tr></table>
 <div class="function"><div class="header"> <div id="line_state:getcommandoffset" class="name"><a class="wlink" href="#line_state:getcommandoffset"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getcommandoffset</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line;  abc&123
 --                                ^
 -- In the line_state for the second command;
@@ -7093,6 +7104,8 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div id="line_state:getcursor" class="name"><a class="wlink" href="#line_state:getcursor"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getcursor</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="line_state:getendword" class="name"><a class="wlink" href="#line_state:getendword"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getendword</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : string<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><p class="desc"> <strong>Note:</strong>  The returned word omits any quotes.  This helps generators naturally complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word including quotes can be obtained using the <code>offset</code> and <code>length</code> fields from <a href="#line_state:getwordinfo">line_state:getwordinfo()</a> to extract a substring from the line returned by <a href="#line_state:getline">line_state:getline()</a>.</p><pre class="language-lua"><code>line_state:getword(line_state:getwordcount()) == line_state:getendword()</code></pre><p class="desc"><strong>However:</strong>  During <code><a href="#the-getwordbreakinfo-function">generator:getwordbreakinfo()</a></code> functions the returned word includes quotes, otherwise word break offsets could be garbled.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="line_state:getendwordoffset" class="name"><a class="wlink" href="#line_state:getendwordoffset"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getendwordoffset</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.6.2 and newer</div></div></div><div class="body"><p class="desc">Returns the offset of the last word of the line. This is the word that matches are being generated for.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="line_state:getline" class="name"><a class="wlink" href="#line_state:getline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getline</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : string<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/>
 
@@ -7981,6 +7994,28 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v162"><a class="wlink" href="#v162"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.2 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added optional argument <code>argmatcher:chaincommand(aliases)</code> to let the argmatcher know that the chained command will have doskey aliases expanded.</li>
+<li>Fixed match display potentially missing some matches (regression introduced in v1.6.1).  In particular, git command completions were affected.</li>
+<li>Fixed command line input parsing so that the first word (the command word) <code>foo/</code> is interpreted as two words <code>foo</code> and <code>/</code> just like CMD does.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/549">#549</a>; <code>cd -</code> intercept interferes with <code>cd</code> doskey alias.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/546">#546</a>; in Windows 10 when &quot;Wrap text output on resize&quot; is unchecked or the Window Width is different from the Screen Buffer Width, then the display becomes garbled.  The root cause is a limitation in how Windows 10 implements support for ANSI escape codes, but Clink now has workaround code that tries to compensate for the problems as much as possible (the terminal display will be a bit jittery, though; there&#39;s nothing that can be done about that).</li>
+<li>Fixed updating the display after using <code>clink-popup-show-help</code> to invoke a command that changes only the cursor position.</li>
+<li>Fixed a case where a custom strategy for auto-suggestions could accidentally skip inserting part of the suggestion.</li>
+<li>Fixed a race condition where <code>clink-diagnostics</code> could encounter an error while printing information about coroutines.</li>
+</ul>
+<p><strong>Important pre-release changes in Readline:</strong>
+Readline 8.2 introduced a crash in the <code>undo</code> command after navigating through history and making edits in history entries.  The following pre-release updates in Readline fix the crash and several related issues.  They also fix many other edge-case stability issues, and add a couple of new features.</p>
+<ul>
+<li>Fixed crashes due to memory corruption in the undo information for editing operations.</li>
+<li>Fixed many issues found by Address Sanitizer (ASAN); these are edge cases where crashes or memory corruption or malfunctions or memory leaks occurred.</li>
+<li>Added new <code>execute-named-command</code> bindable command which reads a command name from the input and executes it (default is <kbd>Alt</kbd>-<kbd>x</kbd>).</li>
+<li>Allow <code>quoted-insert</code> into search strings.</li>
+<li>Repeated invocations of <code>vi-yank-pop</code> now cycle through the kill ring.</li>
+<li>Fixed when <code>do-lowercase-version</code> is bound to something that&#39;s not an uppercase letter.</li>
+<li>Fixed getting the value of the <code>active-region-start-color</code> config variable.</li>
+</ul>
 <h4 id="v161"><a class="wlink" href="#v161"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.1 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <p><strong>Features:</strong></p>
 <ul>
