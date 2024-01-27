@@ -6,6 +6,7 @@
 
 - Fixed to differentiate between `undo` and `vi-undo` commands again (they do the same thing, but are technically different commands).
 - Fixed `execute-named-command` to also accept <kbd>Ctrl</kbd>-<kbd>-</kbd> for `undo` (the emacs binding for undo).
+- Fixed redisplaying multi-line prompts after using completion during `execute-named-command`.
 
 #### v1.6.2
 
