@@ -2205,11 +2205,6 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
 
 /* begin_clink_change */
     case CTRL('Z'):
-      if (_rl_keymap[CTRL('Z')].type != ISFUNC ||
-	  (_rl_keymap[CTRL('Z')].function != rl_undo_command &&
-	   _rl_keymap[CTRL('Z')].function != rl_vi_undo))
-	goto dflt;
-      /* FALLTHROUGH */
     case CTRL('_'):
       rl_do_undo ();
       break;
@@ -2270,9 +2265,6 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
       break;
 
     default:
-/* begin_clink_change */
-dflt:
-/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	rl_insert_text (cxt->mb);
