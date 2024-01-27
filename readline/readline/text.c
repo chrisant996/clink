@@ -2105,14 +2105,14 @@ _rl_readstr_init (int pchar, int flags)
   rl_line_buffer[0] = 0;
   rl_end = rl_point = 0;
 
-  p = _rl_make_prompt_for_search (pchar ? pchar : '@');
-  rl_message ("%s", p);
-  xfree (p);
-
 /* begin_clink_change */
   RL_SETSTATE(RL_STATE_READSTR);
   _rl_readstr_pchar = pchar ? pchar : '@';
 /* end_clink_change */
+
+  p = _rl_make_prompt_for_search (pchar ? pchar : '@');
+  rl_message ("%s", p);
+  xfree (p);
 
   _rl_rscxt = cxt;  
 

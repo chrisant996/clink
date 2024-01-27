@@ -3454,12 +3454,15 @@ rl_message (const char *format, ...)
       local_prompt = (char *)NULL;
     }
   rl_display_prompt = msg_buf;
-  local_prompt = expand_prompt (msg_buf, 0, &prompt_visible_length,
-					    &prompt_last_invisible,
-					    &prompt_invis_chars_first_line,
-					    &prompt_physical_chars);
-  local_prompt_prefix = (char *)NULL;
-  local_prompt_len = local_prompt ? strlen (local_prompt) : 0;
+/* begin_clink_change */
+//  local_prompt = expand_prompt (msg_buf, 0, &prompt_visible_length,
+//					    &prompt_last_invisible,
+//					    &prompt_invis_chars_first_line,
+//					    &prompt_physical_chars);
+//  local_prompt_prefix = (char *)NULL;
+//  local_prompt_len = local_prompt ? strlen (local_prompt) : 0;
+  rl_expand_prompt (msg_buf);
+/* end_clink_change */
   (*rl_redisplay_function) ();
 
   return 0;
@@ -3559,30 +3562,31 @@ _rl_make_prompt_for_search (int pchar)
   /* We've saved the prompt, and can do anything with the various prompt
      strings we need before they're restored.  We want the unexpanded
      portion of the prompt string after any final newline. */
-  p = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
-  if (p == 0)
-    {
+/* begin_clink_change
+ * I strongly disagree; keeping only the last line leads to cases where the
+ * last line is only ">" leaving the user with no context. */
+  //p = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
+  p = 0;
+  //if (p == 0)
+    //{
       len = (rl_prompt && *rl_prompt) ? strlen (rl_prompt) : 0;
-/* begin_clink_change */
-      // pmt = (char *)xmalloc (len + 2);
-      // if (len)
-	// strcpy (pmt, rl_prompt);
-      // pmt[len] = pchar;
-      // pmt[len+1] = '\0';
+      //pmt = (char *)xmalloc (len + 2);
+      //if (len)
+	//strcpy (pmt, rl_prompt);
+      //pmt[len] = pchar;
+      //pmt[len+1] = '\0';
+    //}
+  //else
+    //{
+      //p++;
+      //len = strlen (p);
+      //pmt = (char *)xmalloc (len + 2);
+      //if (len)
+	//strcpy (pmt, p);
+      //pmt[len] = pchar;
+      //pmt[len+1] = '\0';
+    //}
 /* end_clink_change */
-    }
-  else
-    {
-      p++;
-      len = strlen (p);
-/* begin_clink_change */
-      // pmt = (char *)xmalloc (len + 2);
-      // if (len)
-	// strcpy (pmt, p);
-      // pmt[len] = pchar;
-      // pmt[len+1] = '\0';
-/* end_clink_change */
-    }  
 
 /* begin_clink_change */
   color = (_rl_display_message_color && 

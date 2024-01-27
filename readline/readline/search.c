@@ -349,11 +349,20 @@ _rl_nsearch_init (int dir, int pchar)
   rl_line_buffer[0] = 0;
   rl_end = rl_point = 0;
 
+/* begin_clink_change
+ * So that display_manager::display() knows the mode, since rl_message()
+ * forces a redisplay and the message presentation is different in the
+ * search prompt (and readstr prompt) versus other rl_message() usage.*/
+  RL_SETSTATE(RL_STATE_NSEARCH);
+/* end_clink_change */
+
   p = _rl_make_prompt_for_search (pchar ? pchar : ':');
   rl_message ("%s", p);
   xfree (p);
 
-  RL_SETSTATE(RL_STATE_NSEARCH);
+/* begin_clink_change */
+  //RL_SETSTATE(RL_STATE_NSEARCH);
+/* end_clink_change */
 
   _rl_nscxt = cxt;
 

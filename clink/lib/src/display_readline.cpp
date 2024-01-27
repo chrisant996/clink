@@ -1693,7 +1693,8 @@ void display_manager::display()
         rl_before_display_function();
 
     // Modmark.
-    const bool is_message = (rl_display_prompt == rl_get_message_buffer());
+    const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
+                             !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
     const bool modmark = (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
 
     // If someone thought that the redisplay was handled, but the currently
