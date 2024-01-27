@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.3
+
+- Fixed to differentiate between `undo` and `vi-undo` commands again (they do the same thing, but are technically different commands).
+- Fixed `execute-named-command` to also accept <kbd>Ctrl</kbd>-<kbd>-</kbd> for `undo` (the emacs binding for undo).
+
 #### v1.6.2
 
 - Added optional argument `argmatcher:chaincommand(aliases)` to let the argmatcher know that the chained command will have doskey aliases expanded.
