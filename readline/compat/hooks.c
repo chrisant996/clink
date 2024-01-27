@@ -359,3 +359,10 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
     tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
     return 0;
 }
+
+//------------------------------------------------------------------------------
+static const char* s_trick_the_linker = 0;
+void prevent_COMDAT_folding(const char* str)
+{
+    s_trick_the_linker = str;
+}
