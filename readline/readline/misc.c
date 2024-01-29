@@ -600,10 +600,6 @@ rl_clear_history (void)
 
   history_offset = history_length = 0;
   rl_undo_list = saved_undo_list;	/* should be NULL */
-
-/* begin_clink_change */
-  history_prev_use_curr = 0;
-/* end_clink_change */
 }
 
 /* **************************************************************** */

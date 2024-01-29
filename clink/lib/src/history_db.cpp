@@ -18,10 +18,11 @@
 
 #include <new>
 extern "C" {
-#include <readline/history.h>
 #include <readline/readline.h>  // Needed by rlprivate.h.
 #include <readline/rldefs.h>    // Needed by rlmbutil.h in rlprivate.h.
 #include <readline/rlprivate.h> // Needed for _rl_free_undo_list().
+#include <readline/history.h>
+#include <readline/histlib.h>   // Depends on config.h.
 }
 
 #include <algorithm>
@@ -1385,12 +1386,17 @@ void history_db::get_file_path(str_base& out, bool session) const
 //------------------------------------------------------------------------------
 static void __clear_history()
 {
-    // Currently Readline doesn't free the history undo lists, so we must.
-    auto** history = history_list();
-    for (int32 i = history_length; --i >= 0;)
-        _rl_free_undo_list((UNDO_LIST*)history[i]->data);
+    rl_clear_history();
+    assert(!rl_undo_list);
 
-    clear_history();
+    history_prev_use_curr = 0;
+
+    free(const_cast<char*>(history_event_lookup_cache.search_string));
+    memset(&history_event_lookup_cache, 0, sizeof(history_event_lookup_cache));
+
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+    clink_check_undo_entry_leaks();
+#endif
 }
 
 //------------------------------------------------------------------------------
