@@ -261,12 +261,19 @@ class undo_entry_heap
     {
         bool m_freed = false;
         bool m_seen = false;
-        void* m_alloc_frames[20];
-        uint32 m_alloc_frames_count = 0;
+        uint32 m_num = 0;
         DWORD m_alloc_frames_hash = 0;
-        void* m_free_frames[20];
-        uint32 m_free_frames_count = 0;
+        uint32 m_alloc_frames_count = 0;
+        void* m_alloc_frames[20];
         DWORD m_free_frames_hash = 0;
+        uint32 m_free_frames_count = 0;
+        void* m_free_frames[20];
+    };
+
+    struct wrapped_UNDO_LIST
+    {
+        tracker*    m_tracker;      // Make it easy to find in the debugger:  ((tracker**)rl_undo_list)[-1]
+        UNDO_LIST   m_undo_list;
     };
 
 public:
@@ -279,11 +286,18 @@ public:
         dbg_ignore_scope(snapshot, "undo_entry_heap");
 
         tracker* t = new tracker;
-        UNDO_LIST* p = (UNDO_LIST*)m_heap.alloc(sizeof(*p));
+        wrapped_UNDO_LIST* p = (wrapped_UNDO_LIST*)m_heap.alloc(sizeof(tracker*) + sizeof(*p));
+        if (!p)
+        {
+            delete t;
+            return nullptr;
+        }
+        t->m_num = s_num++;
         t->m_alloc_frames_count = get_callstack_frames(1, sizeof_array(t->m_alloc_frames), t->m_alloc_frames, &t->m_alloc_frames_hash);
         assert(!t->m_freed);
-        m_allocated.emplace(p, t);
-        return p;
+        p->m_tracker = t;
+        m_allocated.emplace(&p->m_undo_list, t);
+        return &p->m_undo_list;
     }
 
     void free_undo_entry(UNDO_LIST* p)
@@ -304,7 +318,7 @@ public:
             void* df_frames[20];
             uint32 df_count = get_callstack_frames(1, sizeof_array(df_frames), df_frames, &df_hash);
             format_frames(df_count, df_frames, df_hash, sd, sizeof(sd), true);
-            s.format("ALREADY FREED %p\r\n\r\nalloc stacktrace:  %s\r\noriginal free stacktrace:  %s\r\nthis double-free stacktrace:  %s", p, sa, sf, sd);
+            s.format("ALREADY FREED %p (#%u)\r\n\r\nalloc stacktrace:  %s\r\noriginal free stacktrace:  %s\r\nthis double-free stacktrace:  %s", p, t->m_num, sa, sf, sd);
             assert(!t->m_freed);
             dbgtracef("%s", s.c_str());
         }
@@ -345,7 +359,7 @@ public:
                         alloc.second->m_seen = true;
                         stack[0] = '\0';
                         format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
-                        dbgtracef("Leak:  0x%p,  text \"%s\",  context: %s", alloc.first, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
+                        dbgtracef("Leak:  0x%p (#%u),  text \"%s\",  context: %s", alloc.first, alloc.second->m_num, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
                     }
                 }
                 dbgtracef("----- end of UNDO_LIST leaks -----");
@@ -368,9 +382,12 @@ public:
 private:
     linear_allocator m_heap;
     std::unordered_map<const UNDO_LIST*, tracker*> m_allocated;
+
+    static uint32 s_num;
 };
 
 static undo_entry_heap s_undo_entry_heap;
+uint32 undo_entry_heap::s_num = 0;
 
 extern "C" UNDO_LIST* clink_alloc_undo_entry(void)
 {
