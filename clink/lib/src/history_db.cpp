@@ -1477,8 +1477,8 @@ void history_db::load_rl_history(bool can_clean)
     // history file.
     if (can_clean && m_use_master_bank)
     {
-        compact();
-        load_internal();
+        if (compact())
+            load_internal();
     }
 }
 
@@ -1510,17 +1510,17 @@ void history_db::clear()
 }
 
 //------------------------------------------------------------------------------
-void history_db::compact(bool force, bool uniq, int32 _limit)
+bool history_db::compact(bool force, bool uniq, int32 _limit)
 {
     if (!is_valid())
-        return;
+        return false;
 
     if (!m_use_master_bank)
     {
         assert(false);
         LOG("History:  compact is disabled because master bank is disabled");
         DIAG("... compact:  nothing to do because master bank is disabled");
-        return;
+        return false;
     }
 
     const bool explicit_limit = (_limit >= 0);
@@ -1571,121 +1571,122 @@ void history_db::compact(bool force, bool uniq, int32 _limit)
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
     size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 5000);
-    if (force || m_master_deleted_count > threshold)
+    if (!(force || m_master_deleted_count > threshold))
     {
-        DIAG("... compact:  rewrite master bank\n");
+        DIAG("... skip compact; threshold is %zu, actual marked for delete is %zu\n", threshold, m_master_deleted_count);
+        return false;
+    }
 
-        size_t kept, deleted, dups;
-        assert(!m_master_ctag.empty());
+    DIAG("... compact:  rewrite master bank\n");
 
-        bank_handles master_handles = get_bank(bank_master);
-        master_handles.m_handle_removals = nullptr; // Don't redirect removals.
-        write_lock dest(master_handles);
+    size_t kept, deleted, dups;
+    assert(!m_master_ctag.empty());
 
-        struct removal_file_data
+    bank_handles master_handles = get_bank(bank_master);
+    master_handles.m_handle_removals = nullptr; // Don't redirect removals.
+    write_lock dest(master_handles);
+
+    struct removal_file_data
+    {
+        str_moveable                m_file;
+        std::vector<line_id_impl>   m_lines;
+    };
+
+    std::vector<removal_file_data> removals_files;
+    str_moveable removals;
+
+    // Collect line ids from all removals files that match the current
+    // master.  After the master bank gets a new concurreny tag the
+    // collected line ids will be translated to their corresponding new ids
+    // and written back to the respective removals files with the updated
+    // concurrency tag.
+    for_each_session([&](str_base& path, bool local)
+    {
+        if (m_use_master_bank)
         {
-            str_moveable                m_file;
-            std::vector<line_id_impl>   m_lines;
-        };
+            removals = path.c_str();
+            removals << ".removals";
 
-        std::vector<removal_file_data> removals_files;
-        str_moveable removals;
-
-        // Collect line ids from all removals files that match the current
-        // master.  After the master bank gets a new concurreny tag the
-        // collected line ids will be translated to their corresponding new ids
-        // and written back to the respective removals files with the updated
-        // concurrency tag.
-        for_each_session([&](str_base& path, bool local)
-        {
-            if (m_use_master_bank)
+            if (os::get_file_size(path.c_str()) > 0 ||
+                os::get_file_size(removals.c_str()) > 0)
             {
-                removals = path.c_str();
-                removals << ".removals";
+                bank_handles compact_handles;
+                compact_handles.m_handle_lines = open_file(path.c_str());
+                compact_handles.m_handle_removals = open_file(removals.c_str(), true/*if_exists*/);
 
-                if (os::get_file_size(path.c_str()) > 0 ||
-                    os::get_file_size(removals.c_str()) > 0)
+                if (compact_handles.m_handle_removals)
                 {
-                    bank_handles compact_handles;
-                    compact_handles.m_handle_lines = open_file(path.c_str());
-                    compact_handles.m_handle_removals = open_file(removals.c_str(), true/*if_exists*/);
+                    DIAG("... compact:  apply removals from '%s'\n", removals.c_str());
 
-                    if (compact_handles.m_handle_removals)
+                    // WARNING: ALWAYS LOCK MASTER BEFORE SESSION!
+                    read_lock src(compact_handles);
+                    if (src && dest)
                     {
-                        DIAG("... compact:  apply removals from '%s'\n", removals.c_str());
-
-                        // WARNING: ALWAYS LOCK MASTER BEFORE SESSION!
-                        read_lock src(compact_handles);
-                        if (src && dest)
+                        removal_file_data data;
+                        if (src.collect_removals(dest, data.m_lines) > 0)
                         {
-                            removal_file_data data;
-                            if (src.collect_removals(dest, data.m_lines) > 0)
-                            {
-                                data.m_file = std::move(removals);
-                                removals_files.emplace_back(std::move(data));
-                            }
+                            data.m_file = std::move(removals);
+                            removals_files.emplace_back(std::move(data));
                         }
                     }
-
-                    compact_handles.close();
                 }
+
+                compact_handles.close();
             }
-        });
+        }
+    });
 
-        // Rewrite the master bank and apply the limit (if any).  This may also
-        // optionally enforce uniqueness.  The result counters are written to
-        // the log file.
-        std::map<line_id_impl, line_id_impl> remap_removals;
-        rewrite_master_bank(dest, limit, &kept, &deleted, uniq, &dups, &remap_removals);
+    // Rewrite the master bank and apply the limit (if any).  This may also
+    // optionally enforce uniqueness.  The result counters are written to
+    // the log file.
+    std::map<line_id_impl, line_id_impl> remap_removals;
+    rewrite_master_bank(dest, limit, &kept, &deleted, uniq, &dups, &remap_removals);
 
-        // Extract the new master concurrency tag.
-        str<64> old_ctag(m_master_ctag.get());
-        m_master_ctag.clear();
-        extract_ctag(dest, m_master_ctag);
-        assert(!old_ctag.iequals(m_master_ctag.get())); // It should be different.
+    // Extract the new master concurrency tag.
+    str<64> old_ctag(m_master_ctag.get());
+    m_master_ctag.clear();
+    extract_ctag(dest, m_master_ctag);
+    assert(!old_ctag.iequals(m_master_ctag.get())); // It should be different.
 
-        // Rewrite each removals files with the new master concurrency tag and
-        // the translated line ids.
-        str<64> tmp;
-        DWORD written;
-        for (const auto& r : removals_files)
+    // Rewrite each removals files with the new master concurrency tag and
+    // the translated line ids.
+    str<64> tmp;
+    DWORD written;
+    for (const auto& r : removals_files)
+    {
+        assert(os::get_path_type(r.m_file.c_str()) == os::path_type_file);
+        void* handle = make_removals_file(r.m_file.c_str(), m_master_ctag.get());
+
+        // Truncate file immedately after the ctag to keep the file in a
+        // consistent state even while being rewritten.
+        SetEndOfFile(handle);
+
+        // Look up the ids and write the new ids for ones that were kept.
+        for (const auto& id : r.m_lines)
         {
-            assert(os::get_path_type(r.m_file.c_str()) == os::path_type_file);
-            void* handle = make_removals_file(r.m_file.c_str(), m_master_ctag.get());
-
-            // Truncate file immedately after the ctag to keep the file in a
-            // consistent state even while being rewritten.
-            SetEndOfFile(handle);
-
-            // Look up the ids and write the new ids for ones that were kept.
-            for (const auto& id : r.m_lines)
+            const auto iter = remap_removals.find(id);
+            if (iter != remap_removals.end())
             {
-                const auto iter = remap_removals.find(id);
-                if (iter != remap_removals.end())
-                {
-                    tmp.format("%u\n", iter->second.offset);
-                    WriteFile(handle, tmp.c_str(), tmp.length(), &written, nullptr);
-                }
+                tmp.format("%u\n", iter->second.offset);
+                WriteFile(handle, tmp.c_str(), tmp.length(), &written, nullptr);
             }
-
-            CloseHandle(handle);
         }
 
-        if (uniq)
-        {
-            LOG("Compacted history:  %zu active, %zu deleted, %zu duplicates removed", kept, deleted, dups);
-            DIAG("... ... lines active %zu / purged %zu / duplicates removed %zu\n", kept, deleted, dups);
-        }
-        else
-        {
-            LOG("Compacted history:  %zu active, %zu deleted", kept, deleted);
-            DIAG("... ... lines active %zu / purged %zu\n", kept, deleted);
-        }
+        CloseHandle(handle);
+    }
+
+    if (uniq)
+    {
+        LOG("Compacted history:  %zu active, %zu deleted, %zu duplicates removed", kept, deleted, dups);
+        DIAG("... ... lines active %zu / purged %zu / duplicates removed %zu\n", kept, deleted, dups);
     }
     else
     {
-        DIAG("... skip compact; threshold is %zu, actual marked for delete is %zu\n", threshold, m_master_deleted_count);
+        LOG("Compacted history:  %zu active, %zu deleted", kept, deleted);
+        DIAG("... ... lines active %zu / purged %zu\n", kept, deleted);
     }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------

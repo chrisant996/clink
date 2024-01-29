@@ -118,7 +118,7 @@ public:
     void                        initialise(str_base* error_message=nullptr);
     void                        load_rl_history(bool can_clean=true);
     void                        clear();
-    void                        compact(bool force=false, bool uniq=false, int32 limit=-1);
+    bool                        compact(bool force=false, bool uniq=false, int32 limit=-1);
     bool                        add(const char* line);
     int32                       remove(const char* line);
     bool                        remove(line_id id) { return remove_internal(id, true); }
