@@ -4,9 +4,12 @@
 
 #### v1.6.3
 
+- Completions for all `clink set` settings include the current value in the description field (e.g. type `clink set `<kbd>Alt</kbd>-<kbd>=</kbd> to see Clink settings and their current values).
 - Fixed to differentiate between `undo` and `vi-undo` commands again (they do the same thing, but are technically different commands).
 - Fixed `execute-named-command` to also accept <kbd>Ctrl</kbd>-<kbd>-</kbd> for `undo` (the emacs binding for undo).
 - Fixed redisplaying multi-line prompts after using completion during `execute-named-command`.
+- Fixed accidentally loading the history file twice on each prompt; now it loads once, as intended.
+- Fixed another double-free and potential crash in the Readline library; after navigating through history entries and then editing a history entry, pressing <kbd>Ctrl</kbd>-<kbd>c</kbd> or <kbd>Ctrl</kbd>-<kbd>Break</kbd> could cause a crash or memory corruption (regression exposed by changes in Readline 8.2).
 
 #### v1.6.2
 
