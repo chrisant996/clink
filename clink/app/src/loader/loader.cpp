@@ -21,7 +21,7 @@ int32 autorun(int32, char**);
 int32 clink_info(int32, char**);
 int32 draw_test(int32, char**);
 int32 history(int32, char**);
-int32 inject(int32, char**);
+int32 inject(int32, char**, app_context::desc&);
 int32 input_echo(int32, char**);
 int32 set(int32, char**);
 int32 update(int32, char**);
@@ -68,24 +68,25 @@ static void show_usage()
 }
 
 //------------------------------------------------------------------------------
-static int32 dispatch_verb(const char* verb, int32 argc, char** argv)
+static int32 dispatch_verb(const char* verb, int32 argc, char** argv, app_context::desc& desc)
 {
     struct {
         const char* verb;
         int32 (*handler)(int32, char**);
+        int32 (*handler_nocontext)(int32, char**, app_context::desc&);
     } handlers[] = {
-        "autorun",              autorun,
-        "drawtest",             draw_test,
-        "echo",                 input_echo,
-        "history",              history,
-        "info",                 clink_info,
-        "inject",               inject,
-        "set",                  set,
-        "update",               update,
-        "installscripts",       installscripts,
-        "uninstallscripts",     uninstallscripts,
-        "testbed",              testbed,
-        "lua",                  interpreter,
+        { "autorun",              autorun,                      },
+        { "drawtest",             draw_test,                    },
+        { "echo",                 input_echo,                   },
+        { "history",              history,                      },
+        { "info",                 clink_info,                   },
+        { "inject",               nullptr,            inject,   },
+        { "set",                  set,                          },
+        { "update",               update,                       },
+        { "installscripts",       installscripts,               },
+        { "uninstallscripts",     uninstallscripts,             },
+        { "testbed",              testbed,                      },
+        { "lua",                  interpreter,                  },
     };
 
     for (int32 i = 0; i < sizeof_array(handlers); ++i)
@@ -98,7 +99,18 @@ static int32 dispatch_verb(const char* verb, int32 argc, char** argv)
             t = optind;
             optind = 1;
 
-            ret = handlers[i].handler(argc, argv);
+            if (handlers[i].handler)
+            {
+                // Allocate app_context from the heap (not stack) so testbed
+                // can replace it when simulating an injected scenario.
+                app_context* context = new app_context(desc);
+                ret = handlers[i].handler(argc, argv);
+                delete context;
+            }
+            else
+            {
+                ret = handlers[i].handler_nocontext(argc, argv, desc);
+            }
 
             optind = t;
             return ret;
@@ -170,13 +182,7 @@ int32 loader(int32 argc, char** argv)
     // Dispatch the verb if one was found.
     int32 ret = 0;
     if (optind < argc)
-    {
-        // Allocate app_context from the heap (not stack) so testbed can replace
-        // it when simulating an injected scenario.
-        app_context* context = new app_context(app_desc);
-        ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
-        delete context;
-    }
+        ret = dispatch_verb(argv[optind], argc - optind, argv + optind, app_desc);
     else
         show_usage();
 

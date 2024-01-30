@@ -18,6 +18,8 @@
 #include <process/vm.h>
 #include <process/pe.h>
 
+#include <memory>
+
 //------------------------------------------------------------------------------
 static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)
 {
@@ -471,7 +473,7 @@ const int32 exit_code_nonfatal = 1;
 const int32 exit_code_fatal = 2;
 
 //------------------------------------------------------------------------------
-int32 inject(int32 argc, char** argv)
+int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
 {
     // Autorun injection must always return success otherwise it interferes with
     // other scripts (e.g. VS postbuild steps, which causes CMake to be unable
@@ -505,7 +507,6 @@ int32 inject(int32 argc, char** argv)
 
     // Parse arguments
     DWORD target_pid = 0;
-    app_context::desc app_desc;
     int32 i;
     int32 ret = exit_code_fatal;
     bool is_autorun = false;
@@ -581,21 +582,13 @@ int32 inject(int32 argc, char** argv)
         return exit_code_nonfatal;
     }
 
+    std::unique_ptr<app_context> context = std::make_unique<app_context>(app_desc);
+
     // Start a log file.
     str<256> log_path;
     if (app_desc.log)
     {
         app_context::get()->get_log_path(log_path);
-
-        // The app_context singleton was created before the --profile flag was
-        // parsed, so compensate here.
-        if (app_desc.state_dir[0])
-        {
-            str<> log_name;
-            path::get_name(log_path.c_str(), log_name);
-            log_path.copy(app_desc.state_dir);
-            path::append(log_path, log_name.c_str());
-        }
 
         // Don't restart the log file; append to whatever log file may already
         // exist.  The DLL code restarts the log file on a successful inject.
