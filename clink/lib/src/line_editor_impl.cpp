@@ -285,6 +285,10 @@ void line_editor_impl::begin_line()
     clear_flag(~flag_init);
     set_flag(flag_editing);
 
+#ifdef DEBUG
+    m_signaled = false;
+#endif
+
     m_bind_resolver.reset();
     m_command_offset = 0;
     m_prev_key.reset();
@@ -474,11 +478,7 @@ bool line_editor_impl::update()
 
     update_input();
 
-    if (clink_maybe_handle_signal())
-    {
-        m_buffer.reset();
-        end_line();
-    }
+    maybe_handle_signal();
 
     if (!check_flag(flag_editing))
         return false;
@@ -690,19 +690,8 @@ void line_editor_impl::set_keyseq_len(int32 len)
 // to help dispatch() be able to dispatch an entire chord.
 bool line_editor_impl::update_input()
 {
-    if (clink_is_signaled())
-    {
-        const int32 sig = clink_is_signaled();
-        for (auto* module : m_modules)
-            module->on_signal(sig);
-        m_buffer.reset();
-        if (!m_dispatching)
-        {
-            clink_maybe_handle_signal();
-            end_line();
-        }
+    if (maybe_handle_signal())
         return true;
-    }
 
     if (!m_module.is_input_pending())
     {
@@ -1229,6 +1218,34 @@ void line_editor_impl::clear_flag(uint8 flag)
 bool line_editor_impl::check_flag(uint8 flag) const
 {
     return ((m_flags & flag) != 0);
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::maybe_handle_signal()
+{
+    if (m_dispatching)
+    {
+        const int32 sig = clink_is_signaled();
+        return !!sig;
+    }
+    else
+    {
+        const int32 sig = clink_maybe_handle_signal();
+        if (!sig)
+            return false;
+
+#ifdef DEBUG
+        assert(!m_signaled);
+        m_signaled = true;
+#endif
+
+        for (auto* module : m_modules)
+            module->on_signal(sig);
+        m_buffer.reset();
+
+        end_line();
+        return true;
+    }
 }
 
 //------------------------------------------------------------------------------

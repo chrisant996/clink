@@ -2968,8 +2968,9 @@ void rl_module::on_end_line()
     _rl_arginfo_color = nullptr;
     _rl_selected_color = nullptr;
 
-    // This prevents any partial Readline state leaking from one line to the next
-    assert(!RL_ISSTATE(RL_RESET_STATES));
+    // This prevents any partial Readline state leaking from one line to the
+    // next.  One case where this is necessary is CTRL-BREAK (not CTRL-C) at
+    // the pager's "-- More --" prompt.
     RL_UNSETSTATE(RL_RESET_STATES);
 
     g_rl_buffer = nullptr;
@@ -3209,4 +3210,5 @@ void rl_module::on_terminal_resize(int32, int32, const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_signal(int32 sig)
 {
+    rl_callback_handler_remove();
 }

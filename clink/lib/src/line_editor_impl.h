@@ -133,6 +133,7 @@ private:
     void                set_flag(uint8 flag);
     void                clear_flag(uint8 flag);
     bool                check_flag(uint8 flag) const;
+    bool                maybe_handle_signal();
 
     static bool         is_key_same(const key_t& prev_key, const char* prev_line, int32 prev_length,
                                     const key_t& next_key, const char* next_line, int32 next_length,
@@ -179,6 +180,7 @@ private:
 
 #ifdef DEBUG
     bool                m_in_matches_ready = false;
+    bool                m_signaled = false;
 #endif
 
     const char*         m_insert_on_begin = nullptr;

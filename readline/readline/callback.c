@@ -335,6 +335,11 @@ rl_callback_read_char (void)
 void
 rl_callback_handler_remove (void)
 {
+/* begin_clink_change */
+  // BUGBUG:  Temporary fix; this does much more work than necessary, and I
+  // can't tell whether all of it is safe to run multiple times.
+  readline_internal_teardown (0);
+/* end_clink_change */
   rl_linefunc = NULL;
   RL_UNSETSTATE (RL_STATE_CALLBACK);
   RL_CHECK_SIGNALS ();
