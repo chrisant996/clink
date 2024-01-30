@@ -16,7 +16,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
-- Readline is still leaking undo list in some cases.  Repro:  `text` `ESC` `UP` `ENTER`.  Sent Chet details in email.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
