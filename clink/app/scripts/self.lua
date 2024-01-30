@@ -311,9 +311,45 @@ end
 local function set_handler(match_word, word_index, line_state) -- luacheck: no unused
     local list = settings.list()
     local desc_color = settings.get("color.description")
+    local align_width = 10
     for _, m in ipairs(list) do
+        local prefix = ""
+        local cells = 0
         if m.match:find("^color%.") then
-            m.description = "(\x1b["..settings.get(m.match).."mSample\x1b[0;"..desc_color.."m) "..m.description
+            cells = 6
+            prefix = "\x1b["..settings.get(m.match).."mSample\x1b[0;"..desc_color.."m"
+        else
+            local value = settings.get(m.match)
+            if value ~= nil then
+                value = tostring(value)
+                if #value > 0 and not value:find("\x1b") then
+                    local iter = unicode.iter(value)
+                    local ellipsis = "…"
+                    local ellipsis_cells = console.cellcount(ellipsis)
+                    local i = iter()
+                    while i do
+                        local next = iter()
+                        local i_cells = console.cellcount(i)
+                        if next and cells + i_cells + ellipsis_cells > align_width then
+                            prefix = prefix..ellipsis
+                            cells = cells + ellipsis_cells
+                            break
+                        end
+                        prefix = prefix..i
+                        cells = cells + i_cells
+                        i = next
+                    end
+                end
+            end
+        end
+        if prefix then
+            local spaces = cells and (align_width - cells) or 0
+            if spaces > 0 then
+                spaces = string.rep(" ", spaces)
+            else
+                spaces = ""
+            end
+            m.description = "("..prefix..")  "..spaces..m.description
         end
     end
     return list
