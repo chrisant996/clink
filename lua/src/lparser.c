@@ -324,6 +324,10 @@ static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
       luaK_nil(fs, reg, extra);
     }
   }
+/* begin_clink_change */
+  if (nexps > nvars)
+    ls->fs->freereg -= nexps - nvars;  /* remove extra values */
+/* end_clink_change */
 }
 
 
@@ -1152,8 +1156,10 @@ static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
     nexps = explist(ls, &e);
     if (nexps != nvars) {
       adjust_assign(ls, nvars, nexps, &e);
-      if (nexps > nvars)
-        ls->fs->freereg -= nexps - nvars;  /* remove extra values */
+/* begin_clink_change */
+      //if (nexps > nvars)
+        //ls->fs->freereg -= nexps - nvars;  /* remove extra values */
+/* end_clink_change */
     }
     else {
       luaK_setoneret(ls->fs, &e);  /* close last expression */
