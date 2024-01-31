@@ -32,6 +32,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
   - Argmatcher could maybe automatically show syntax hints for the current word.
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
+- Issue #554.  Consider adding some way to configure Clink to try to run as a "portable program" in the sense that it doesn't write to any OS default locations (such as %TEMP%) and instead writes only to places that are specifically configured.  But Lua scripts and programs they launch would need to also have their own special "portable program" support to avoid writing to OS default locations (especially %TEMP%).  And what size of temporary files are ok to redirect to a "portable storage"?  And who maintains/purges files from the portable storage?  Because Clink runs scripts and other programs, trying to support a "portable program" mode is more complicated than it might sound at first.
 
 ## Follow Up
 - Push update to z.lua repo.
