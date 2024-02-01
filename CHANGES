@@ -4,7 +4,7 @@
 
 #### v1.6.3
 
-- **Breaking Change:** For the four <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations, Clink got the <kbd>Shift</kbd> key backwards and generated inaccurate input codes.  And that broke the Readline/bash default key binding for `undo` (the Windows default key binding of <kbd>Ctrl</kbd>-<kbd>z</kbd> works fine).  If your .inputrc file has bindings for any of the <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations then you can keep the keys working the same by updating the key bindings.
+- **Breaking Change:** For the four <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations, Clink got the <kbd>Shift</kbd> key backwards and generated inaccurate input codes.  And that broke the Readline/bash default key binding for `undo` (the Windows default key binding of <kbd>Ctrl</kbd>-<kbd>z</kbd> works fine).  If your .inputrc file has bindings for any of the <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations then you can keep the keys working the same by updating the key bindings.  You can even use the [`$if clink_version >= 1.6.3`](#if_clink_version) syntax in your .inputrc file to make it define the key bindings differently in different versions of Clink.
   Key Combination | Old Code | New Code
   -|-|-
   <kbd>Ctrl</kbd>-<kbd>-</kbd> | `"\C-_"` or `C-_` | `"\e[27;5;189~"`

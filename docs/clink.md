@@ -1126,6 +1126,7 @@ $if clink
 $endif
 ```
 
+<a name="if_clink_version"></a>
 The `$if clink_version` test may be used to perform comparisons against specific Clink versions. The `clink_version` expands to the current Clink version. The set of comparison operators includes `=` (and `==`), `!=`, `<=`, `>=`, `<`, and `>`. The version number supplied on the right side of the operator consists of a major version number, an optional decimal point and minor version, and an optional decimal point and patch version (e.g., "1.6" or "1.6.2"). If the minor or patch versions are omitted, they are assumed to be "0". The operator may be separated from the string `clink_version` and from the version number argument by whitespace. In other applications that use Readline (such as `bash`) or in versions of Clink before v1.6.1, the test is always false.  The following example sets a key binding if the Clink version being used is 1.6.1 or newer:
 
 ```inputrc
