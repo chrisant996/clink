@@ -107,6 +107,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- Clink's `win_terminal_in` keyboard driver generates some things differently than VT220:
+  - Ideally it might have mapped `CTRL-SPC`->0x00(`^@`), `CTRL--`->0x0d(`^M`), `CTRL-/`->0x1f(`^_`), `CTRL-?`->0x7f(`^?` aka `Rubout`).  But I think Clink's approach is overall better for those keys.
+  - Ubuntu in Windows Terminal receives `^?` for `BACKSPC` and `^H` for `CTRL-BACKSPC`.  But that seems backwards versus what I've always seen on many systems over the decades, so I think Clink should stick with `^H` for `BACKSPC` and `^?` for `CTRL-BACKSPC`.
+  - The `CTRL-DIGIT` keys intentionally produce unique key sequences instead of `CTRL-0` through `CTRL-9` mapping to certain control codes or `1`, `9`, and `0`.
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.  _[Too much complexity for too little benefit too rarely.]_
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
