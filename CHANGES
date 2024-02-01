@@ -4,6 +4,13 @@
 
 #### v1.6.3
 
+- **Breaking Change:** For the four <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations, Clink got the <kbd>Shift</kbd> key backwards and generated inaccurate input codes.  And that broke the Readline/bash default key binding for `undo` (the Windows default key binding of <kbd>Ctrl</kbd>-<kbd>z</kbd> works fine).  If your .inputrc file has bindings for any of the <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations then you can keep the keys working the same by updating the key bindings.
+  Key Combination | Old Code | New Code
+  -|-|-
+  <kbd>Ctrl</kbd>-<kbd>-</kbd> | `"\C-_"` or `C-_` | `"\e[27;5;189~"`
+  <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>-</kbd> | `"\e[27;6;189~"` | `"\C-_"` or `C-_`
+  <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>-</kbd> | `"\e\C-_"` or `"\M-\C-_"` or `M-C-_` or etc | `"\e[27;7;189~"`
+  <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>-</kbd> | `"\e[27;8;189~"` | `"\e\C-_"` or `"\M-\C-_"` or `M-C-_` or etc
 - Completions for all `clink set` settings include the current value in the description field (e.g. type `clink set `<kbd>Alt</kbd>-<kbd>=</kbd> to see Clink settings and their current values).
 - Fixed to differentiate between `undo` and `vi-undo` commands again (they do the same thing, but are technically different commands).
 - Fixed `execute-named-command` to also accept <kbd>Ctrl</kbd>-<kbd>-</kbd> for `undo` (the emacs binding for undo).
