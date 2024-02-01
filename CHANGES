@@ -17,8 +17,13 @@
 - Fixed redisplaying multi-line prompts after using completion during `execute-named-command`.
 - Fixed accidentally loading the history file twice on each prompt; now it loads once, as intended.
 - Fixed another double-free and potential crash in the Readline library; after navigating through history entries and then editing a history entry, pressing <kbd>Ctrl</kbd>-<kbd>c</kbd> or <kbd>Ctrl</kbd>-<kbd>Break</kbd> could cause a crash or memory corruption (regression exposed by changes in Readline 8.2).
-- Fixed an obscure Lua bug: "Dead keys with nil values can stay in weak tables."
-- Fixed an obscure Lua bug: "Expression list with four or more expressions in a 'for' loop can crash the interpreter."
+- Applied fixes for 6 Lua bugs, curated by [@goodusername123](https://github.com/goodusername123) (thank you!) from [Lua.org](https://lua.org/bugs.html):
+  - "Dead keys with nil values can stay in weak tables."
+  - "Expression list with four or more expressions in a 'for' loop can crash the interpreter."
+  - "Label between local definitions can mix-up their initializations."
+  - "Return hook may not see correct values for active local variables when function returns."
+  - "Suspended __le metamethod can give wrong result."
+  - "Wrong code generated for a 'goto' followed by a label inside an 'if'."
 - Fixed the Lua debugger so 5-digit line numbers don't break indentation when showing source code lines.
 
 #### v1.6.2
