@@ -12,6 +12,7 @@
 - Fixed another double-free and potential crash in the Readline library; after navigating through history entries and then editing a history entry, pressing <kbd>Ctrl</kbd>-<kbd>c</kbd> or <kbd>Ctrl</kbd>-<kbd>Break</kbd> could cause a crash or memory corruption (regression exposed by changes in Readline 8.2).
 - Fixed an obscure Lua bug: "Dead keys with nil values can stay in weak tables."
 - Fixed an obscure Lua bug: "Expression list with four or more expressions in a 'for' loop can crash the interpreter."
+- Fixed the Lua debugger so 5-digit line numbers don't break indentation when showing source code lines.
 
 #### v1.6.2
 
