@@ -1253,7 +1253,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
     {
         bool ctrl_code = false;
 
-        if (!(key_flags & SHIFT_PRESSED) || key_vk == '2' || key_vk == '6')
+        if (!(key_flags & SHIFT_PRESSED) || key_vk == '2' || key_vk == '6' || key_vk == VK_OEM_MINUS)
         {
             ctrl_code = true;
 
@@ -1284,7 +1284,10 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
                 key_vk = 0x1e;
                 break;
             case VK_OEM_MINUS:          // 0xbd, - in any country.
-                key_vk = 0x1f;
+                if (!(key_flags & SHIFT_PRESSED))
+                    ctrl_code = false;
+                else
+                    key_vk = 0x1f;
                 break;
             default:
                 // Can't use VK_OEM_4, VK_OEM_5, and VK_OEM_6 for detecting ^[,
