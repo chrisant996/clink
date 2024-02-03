@@ -17,6 +17,7 @@
 #include "match_adapter.h"
 #include "line_editor_integration.h"
 #include "rl_integration.h"
+#include "suggestions.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
 #endif
@@ -26,7 +27,6 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <rl/rl_commands.h>
-#include <rl/rl_suggestions.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>

@@ -34,6 +34,8 @@ protected:
     int32                   refresh_line(lua_State* state);
     int32                   get_argument(lua_State* state);
     int32                   set_argument(lua_State* state);
+    int32                   has_suggestion(lua_State* state);
+    int32                   insert_suggestion(lua_State* state);
     int32                   ding(lua_State* state);
 
 private:

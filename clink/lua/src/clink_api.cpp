@@ -31,6 +31,7 @@
 #include <lib/matches_lookaside.h>
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
+#include <lib/suggestions.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>

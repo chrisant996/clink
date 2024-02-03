@@ -19,8 +19,7 @@
 #include "clink_rl_signal.h"
 #include "rl_integration.h"
 #include "line_editor_integration.h"
-
-#include "rl_suggestions.h"
+#include "suggestions.h"
 
 #include <core/base.h>
 #include <core/log.h>

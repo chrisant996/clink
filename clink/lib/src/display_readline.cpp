@@ -23,7 +23,7 @@
 #include "ellipsify.h"
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
 #include "rl/rl_commands.h"
-#include "rl/rl_suggestions.h"
+#include "suggestions.h"
 #endif
 
 #include <core/base.h>

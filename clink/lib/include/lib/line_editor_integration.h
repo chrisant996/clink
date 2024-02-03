@@ -59,5 +59,3 @@ bool has_deprecated_argmatcher(const char* name);
 //------------------------------------------------------------------------------
 bool host_can_suggest(const line_state& line);
 bool host_suggest(const line_states& lines, matches* matches, int32 generation_id);
-void set_suggestion_started(const char* line);
-void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);

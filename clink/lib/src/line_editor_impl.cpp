@@ -16,6 +16,7 @@
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
 #include "line_editor_integration.h"
+#include "suggestions.h"
 #include "recognizer.h"
 
 #include <core/base.h>
@@ -28,7 +29,6 @@
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
 #include <rl/rl_commands.h>
-#include <rl/rl_suggestions.h>
 extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>

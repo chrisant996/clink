@@ -7,7 +7,7 @@
 #include "host_callbacks.h"
 #include "match_pipeline.h"
 #include "reclassify.h"
-#include "rl/rl_suggestions.h"
+#include "suggestions.h"
 
 #include <core/str.h>
 #include <core/str_transform.h>

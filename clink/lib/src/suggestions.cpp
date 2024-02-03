@@ -5,14 +5,13 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "display_readline.h"
-
 #include "matches_impl.h"
-#include "rl_commands.h"
-#include "rl_suggestions.h"
+#include "suggestions.h"
 
 #include <core/base.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
+#include <rl/rl_commands.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -91,6 +90,8 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
     out.clear();
     if (!g_rl_buffer)
         return false;
+    if (m_suggestion_offset >= g_rl_buffer->get_length())
+        return false;
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
@@ -126,6 +127,13 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
 #endif  // USE_SUGGESTION_HINT_INLINE
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool suggestion_manager::has_suggestion() const
+{
+    str<> tmp;
+    return get_visible(tmp);
 }
 
 //------------------------------------------------------------------------------

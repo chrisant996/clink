@@ -21,8 +21,7 @@
 #include "sticky_search.h"
 #include "line_editor_integration.h"
 #include "rl_integration.h"
-
-#include "rl_suggestions.h"
+#include "suggestions.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -1143,6 +1142,12 @@ bool can_suggest_internal(const line_state& line)
 void suppress_suggestions()
 {
     s_suggestion.suppress_suggestions();
+}
+
+//------------------------------------------------------------------------------
+bool has_suggestion()
+{
+    return s_suggestion.has_suggestion();
 }
 
 //------------------------------------------------------------------------------

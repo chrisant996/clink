@@ -12,7 +12,7 @@
 #include <core/os.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
-#include <lib/line_editor_integration.h>
+#include <lib/suggestions.h>
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"

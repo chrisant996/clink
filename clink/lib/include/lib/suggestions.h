@@ -17,6 +17,7 @@ class suggestion_manager
 public:
     bool            more() const;
     bool            get_visible(str_base& out, bool* includes_hint=nullptr) const;
+    bool            has_suggestion() const;
     void            clear();
     bool            can_suggest(const line_state& line);
     bool            can_update_matches();
@@ -40,8 +41,11 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool pause_suggestions(bool pause);
-bool insert_suggestion(suggestion_action action);
-void suppress_suggestions();
+bool has_suggestion();
 extern "C" void clear_suggestion();
 bool can_show_suggestion_hint();
+void suppress_suggestions();
+void set_suggestion_started(const char* line);
+void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
+bool insert_suggestion(suggestion_action action);
+bool pause_suggestions(bool pause);

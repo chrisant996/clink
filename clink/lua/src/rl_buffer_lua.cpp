@@ -4,7 +4,10 @@
 #include "pch.h"
 #include "rl_buffer_lua.h"
 #include "lua_state.h"
-#include "lib/line_buffer.h"
+
+#include <core/str_iter.h>
+#include <lib/line_buffer.h>
+#include <lib/suggestions.h>
 
 extern "C" {
 #include <lua.h>
@@ -20,20 +23,22 @@ extern "C" {
 //------------------------------------------------------------------------------
 const char* const rl_buffer_lua::c_name = "rl_buffer_lua";
 const rl_buffer_lua::method rl_buffer_lua::c_methods[] = {
-    { "getbuffer",      &get_buffer },
-    { "getlength",      &get_length },
-    { "getcursor",      &get_cursor },
-    { "getanchor",      &get_anchor },
-    { "setcursor",      &set_cursor },
-    { "insert",         &insert },
-    { "remove",         &remove },
-    { "beginundogroup", &begin_undo_group },
-    { "endundogroup",   &end_undo_group },
-    { "beginoutput",    &begin_output },
-    { "refreshline",    &refresh_line },
-    { "getargument",    &get_argument },
-    { "setargument",    &set_argument },
-    { "ding",           &ding },
+    { "getbuffer",          &get_buffer },
+    { "getlength",          &get_length },
+    { "getcursor",          &get_cursor },
+    { "getanchor",          &get_anchor },
+    { "setcursor",          &set_cursor },
+    { "insert",             &insert },
+    { "remove",             &remove },
+    { "beginundogroup",     &begin_undo_group },
+    { "endundogroup",       &end_undo_group },
+    { "beginoutput",        &begin_output },
+    { "refreshline",        &refresh_line },
+    { "getargument",        &get_argument },
+    { "setargument",        &set_argument },
+    { "hassuggestion",      &has_suggestion },
+    { "insertsuggestion",   &insert_suggestion },
+    { "ding",               &ding },
     {}
 };
 
@@ -287,6 +292,63 @@ int32 rl_buffer_lua::set_argument(lua_State* state)
         rl_numeric_arg = arg;
     }
     return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:hassuggestion
+/// -ver:   1.6.4
+/// -ret:   boolean
+/// Returns <code>true</code> if a suggestion is available (see
+/// <a href="#gettingstarted_autosuggest">Auto-Suggest</a>).  Otherwise
+/// returns <code>false</code>.
+int32 rl_buffer_lua::has_suggestion(lua_State* state)
+{
+    lua_pushboolean(state, ::has_suggestion());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:insertsuggestion
+/// -ver:   1.6.4
+/// -arg:   [amount:string]
+/// -ret:   boolean
+/// If no suggestion is available (see
+/// <a href="#gettingstarted_autosuggest">Auto-Suggest</a>), this does nothing
+/// and returns <code>false</code>.
+///
+/// If a suggestion is available, then this inserts the suggestion and returns
+/// <code>true</code>.
+///
+/// The optional <span class="arg">amount</span> argument can change how much of
+/// the suggestion is inserted:
+///
+/// <table>
+/// <tr><th><code>amount</code></th><th>Description</th></tr>
+/// <tr><td><code>"all"</code></td><td>All of the suggestion is inserted (this is the default if <span class="arg">amount</span> is omitted).</td></tr>
+/// <tr><td><code>"word"</code></td><td>The next word in the suggestion is inserted, according to normal word breaks.</td></tr>
+/// <tr><td><code>"fullword"</code></td><td>The next full word in the suggestion is inserted, using spaces as word breaks.</td></tr>
+/// </table>
+int32 rl_buffer_lua::insert_suggestion(lua_State* state)
+{
+    const char* how = optstring(state, LUA_SELF + 1, nullptr);
+
+    suggestion_action action = suggestion_action::insert_to_end;
+    if (how)
+    {
+        if (strcmp(how, "all") == 0)
+            action = suggestion_action::insert_to_end;
+        else if (strcmp(how, "word") == 0)
+            action = suggestion_action::insert_next_word;
+        else if (strcmp(how, "fullword") == 0)
+            action = suggestion_action::insert_next_full_word;
+        else
+            return 0;
+    }
+
+    const bool inserted = ::insert_suggestion(action);
+
+    lua_pushboolean(state, inserted);
+    return 1;
 }
 
 //------------------------------------------------------------------------------
