@@ -666,10 +666,7 @@ _rl_reset_completion_state (void)
 
 /* Set default values for readline word completion.  These are the variables
    that application completion functions can change or inspect. */
-/* begin_clink_change */
-//static void
-void
-/* end_clink_change */
+static void
 set_completion_defaults (int what_to_do)
 {
   /* Only the completion entry function can change these. */
