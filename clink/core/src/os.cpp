@@ -1269,6 +1269,38 @@ HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
 }
 
 //------------------------------------------------------------------------------
+void make_version_string(str_base& out)
+{
+    out.clear();
+
+#pragma warning(push)
+#pragma warning(disable:4996)
+    OSVERSIONINFO ver = { sizeof(ver) };
+    if (!GetVersionEx(&ver))
+        return;
+#pragma warning(pop)
+
+    out.format("%d.%d.%05d", ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber);
+
+    HKEY hkey = 0;
+    if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion", 0, MAXIMUM_ALLOWED, &hkey))
+    {
+        DWORD type = REG_DWORD;
+        DWORD revision = 0;
+        DWORD len = sizeof(revision);
+        if (!RegQueryValueEx(hkey, "UBR", 0, &type, (LPBYTE)&revision, &len) &&
+            type == REG_DWORD &&
+            len == sizeof(revision))
+        {
+            str<> tmp;
+            tmp.format(".%d", revision);
+            out.concat(tmp.c_str());
+        }
+        RegCloseKey(hkey);
+    }
+}
+
+//------------------------------------------------------------------------------
 bool disambiguate_abbreviated_path(const char*& in, str_base& out)
 {
     out.clear();

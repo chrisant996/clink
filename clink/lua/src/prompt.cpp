@@ -84,41 +84,25 @@ static void make_version_string(str_base& out)
 {
     out.clear();
 
-    HKEY hkey = 0;
+    str<> ver;
+    os::make_version_string(ver);
+
+    wstr<> tmp(ver.c_str());
+
     LPWSTR buffer = nullptr;
+    DWORD_PTR arguments[2] = { DWORD_PTR(tmp.c_str()) };
+    const DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY;
+    FormatMessageW(flags, nullptr, 0x2350,
+                    0, (LPWSTR)&buffer,          // Cast for FORMAT_MESSAGE_ALLOCATE_BUFFER.
+                    0, (va_list*)&arguments);    // Cast for FORMAT_MESSAGE_ARGUMENT_ARRAY.
 
-    if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion", 0, MAXIMUM_ALLOWED, &hkey))
-    {
-#pragma warning(push)
-#pragma warning(disable:4996)
-        DWORD type = REG_DWORD;
-        DWORD revision = 0;
-        DWORD len = sizeof(revision);
-        OSVERSIONINFO ver = { sizeof(ver) };
-        if (!RegQueryValueEx(hkey, "UBR", 0, &type, (LPBYTE)&revision, &len) &&
-            type == REG_DWORD &&
-            len == sizeof(revision) &&
-            GetVersionEx(&ver))
-        {
-            wstr<> tmp;
-            tmp.format(L"%d.%d.%05d.%d", ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber, revision);
-
-            DWORD_PTR arguments[2] = { DWORD_PTR(tmp.c_str()) };
-            const DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY;
-            FormatMessageW(flags, nullptr, 0x2350,
-                           0, (LPWSTR)&buffer,          // Cast for FORMAT_MESSAGE_ALLOCATE_BUFFER.
-                           0, (va_list*)&arguments);    // Cast for FORMAT_MESSAGE_ARGUMENT_ARRAY.
-
-            if (buffer)
-                out = buffer;
-        }
-#pragma warning(pop)
-    }
+    if (buffer)
+        out = buffer;
+    else
+        out = ver.c_str();
 
     if (buffer)
         LocalFree(buffer);
-    if (hkey)
-        RegCloseKey(hkey);
 }
 
 

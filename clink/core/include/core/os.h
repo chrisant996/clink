@@ -124,4 +124,6 @@ HANDLE  spawn_internal(const char* command, const char* cwd, HANDLE hin, HANDLE 
 
 HANDLE  dup_handle(HANDLE process_handle, HANDLE h, bool inherit=false);
 
+void    make_version_string(str_base& out);
+
 }; // namespace os

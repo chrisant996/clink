@@ -240,6 +240,9 @@ int32 clink_info(int32 argc, char** argv)
         }
     }
 
+    os::make_version_string(s);
+    printf("%-*s : %s\n", spacing, "system", s.c_str());
+
     const DWORD cpid = GetACP();
     const DWORD kbid = LOWORD(GetKeyboardLayout(0));
     WCHAR wide_layout_name[KL_NAMELENGTH * 2];
