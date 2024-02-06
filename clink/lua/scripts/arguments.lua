@@ -2273,6 +2273,14 @@ end
 --- -ret:   table
 --- This is the same as <a href="#clink.filematches">clink.filematches()</a>
 --- except this doesn't append a <code>*</code> to the search pattern.
+--- -show:  local function zip_file_matches(word)
+--- -show:  &nbsp;   return clink.filematchesexact(word.."*.zip")
+--- -show:  end
+--- -show:
+--- -show:  clink.argmatcher("unzip")
+--- -show:  :addarg(zip_file_matches)   -- First arg is name of a .zip file.
+--- -show:  :addarg()
+--- -show:  :loop(2)
 function clink.filematchesexact(match_word)
     return file_matches_impl(match_word, true)
 end
