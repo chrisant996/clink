@@ -774,6 +774,8 @@ static int32 append_prefix_complex(const char* text, int32 len, const char* lead
 //------------------------------------------------------------------------------
 uint32 append_display_with_presuf(const char* match, const char* display, int32 presuf, int32 prefix_bytes, int32 condense, match_type type)
 {
+    match = __printable_part((char*)match);
+
     assert(presuf);
     bool pre = !!(presuf & bit_prefix);
     bool suf = !pre && (presuf & bit_suffix);
