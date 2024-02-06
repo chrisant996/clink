@@ -2141,17 +2141,7 @@ function clink.argmatcher(...)
 end
 
 --------------------------------------------------------------------------------
---- -name:  clink.dirmatches
---- -ver:   1.1.18
---- -arg:   word:string
---- -ret:   table
---- You can use this function in an argmatcher to supply directory matches.
---- This automatically handles Readline tilde completion.
---- -show:  -- Make "cd" generate directory matches (no files).
---- -show:  clink.argmatcher("cd")
---- -show:  :addflags("/d")
---- -show:  :addarg({ clink.dirmatches })
-function clink.dirmatches(match_word)
+local function dir_matches_impl(match_word, exact)
     local word, expanded = rl.expandtilde(match_word or "")
     local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
 
@@ -2177,7 +2167,7 @@ function clink.dirmatches(match_word)
     }
 
     local matches = {}
-    for _, i in ipairs(os.globdirs(word.."*", true, flags)) do
+    for _, i in ipairs(os.globdirs(word..(exact and "" or "*"), true, flags)) do
         local m = path.join(root, i.name)
         table.insert(matches, { match = m, type = i.type })
         if not ismain and _ % 250 == 0 then
@@ -2185,6 +2175,69 @@ function clink.dirmatches(match_word)
         end
     end
     return matches
+end
+
+--------------------------------------------------------------------------------
+local function file_matches_impl(match_word, exact)
+    local word, expanded = rl.expandtilde(match_word or "")
+    local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
+
+    local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
+    if server then
+        local matches = {}
+        for share, special in os.enumshares(server, hidden) do
+            table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
+        end
+        return matches
+    end
+
+    local root = (path.getdirectory(word) or ""):gsub("/", "\\")
+    if expanded then
+        root = rl.collapsetilde(root)
+    end
+
+    local _, ismain = coroutine.running()
+
+    local flags = {
+        hidden=hidden,
+        system=settings.get("files.system"),
+    }
+
+    local matches = {}
+    for _, i in ipairs(os.globfiles(word..(exact and "" or "*"), true, flags)) do
+        local m = path.join(root, i.name)
+        table.insert(matches, { match = m, type = i.type })
+        if not ismain and _ % 100 == 0 then
+            coroutine.yield()
+        end
+    end
+    return matches
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.dirmatches
+--- -ver:   1.1.18
+--- -arg:   word:string
+--- -ret:   table
+--- You can use this function in an argmatcher to supply directory matches.
+--- This automatically handles Readline tilde completion.
+--- -show:  -- Make "cd" generate directory matches (no files).
+--- -show:  clink.argmatcher("cd")
+--- -show:  :addflags("/d")
+--- -show:  :addarg({ clink.dirmatches })
+function clink.dirmatches(match_word)
+    return dir_matches_impl(match_word)
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.dirmatchesexact
+--- -ver:   1.6.4
+--- -arg:   word:string
+--- -ret:   table
+--- This is the same as <a href="#clink.dirmatches">clink.dirmatches()</a>
+--- except this doesn't append a <code>*</code> to the search pattern.
+function clink.dirmatchesexact(match_word)
+    return dir_matches_impl(match_word, true)
 end
 
 --------------------------------------------------------------------------------
@@ -2210,39 +2263,18 @@ end
 --- -show:  :addarg({ "two", "too" })
 --- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
 function clink.filematches(match_word)
-    local word, expanded = rl.expandtilde(match_word or "")
-    local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
+    return file_matches_impl(match_word)
+end
 
-    local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
-    if server then
-        local matches = {}
-        for share, special in os.enumshares(server, hidden) do
-            table.insert(matches, { match = string.format("\\\\%s\\%s\\", server, share), type = special and "dir,hidden" or "dir" })
-        end
-        return matches
-    end
-
-    local root = (path.getdirectory(word) or ""):gsub("/", "\\")
-    if expanded then
-        root = rl.collapsetilde(root)
-    end
-
-    local _, ismain = coroutine.running()
-
-    local flags = {
-        hidden=hidden,
-        system=settings.get("files.system"),
-    }
-
-    local matches = {}
-    for _, i in ipairs(os.globfiles(word.."*", true, flags)) do
-        local m = path.join(root, i.name)
-        table.insert(matches, { match = m, type = i.type })
-        if not ismain and _ % 100 == 0 then
-            coroutine.yield()
-        end
-    end
-    return matches
+--------------------------------------------------------------------------------
+--- -name:  clink.filematchesexact
+--- -ver:   1.6.4
+--- -arg:   word:string
+--- -ret:   table
+--- This is the same as <a href="#clink.filematches">clink.filematches()</a>
+--- except this doesn't append a <code>*</code> to the search pattern.
+function clink.filematchesexact(match_word)
+    return file_matches_impl(match_word, true)
 end
 
 

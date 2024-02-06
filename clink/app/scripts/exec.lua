@@ -142,19 +142,22 @@ local function exec_matches(line_state, match_builder, chained)
 
     local _, ismain = coroutine.running()
 
-    local add_files = function(pattern, rooted)
+    local add_files = function(pattern, rooted, only_files)
         local any_added = false
         if ismain or os.getdrivetype(pattern) ~= "remote" then
-            local root = nil
-            if rooted then
-                root = (path.getdirectory(pattern) or ""):gsub("/", "\\")
-                if expanded then
-                    root = rl.collapsetilde(root)
+            -- Use clink.filematches[exact] instead of a custom os.globfiles
+            -- loop, so that the behavior is factored.  For example, UNC share
+            -- names.  But since clink.filematches is always rooted, it's
+            -- necessary to strip the directory when rooted is false (for
+            -- matches found through the %PATH% variable).
+            local matches = clink.filematchesexact(pattern)
+            for _, m in ipairs(matches) do
+                if not only_files or m.type:find("file") then
+                    if not rooted then
+                        m.match = m.match:match("[^/\\]*[/\\]?$")
+                    end
+                    any_added = match_builder:addmatch(m) or any_added
                 end
-            end
-            for _, f in ipairs(os.globfiles(pattern, true)) do
-                local file = (root and path.join(root, f.name)) or f.name
-                any_added = match_builder:addmatch({ match = file, type = f.type }) or any_added
             end
         end
         return any_added
@@ -170,33 +173,26 @@ local function exec_matches(line_state, match_builder, chained)
     -- Include files.
     if settings.get("exec.files") then
         match_cwd = false
-        added = add_files(text.."*", true) or added
+        added = add_files(endword.."*", true) or added
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches.
     local suffices = (os.getenv("pathext") or ""):explode(";")
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
-            added = add_files(dir.."*"..suffix) or added
+            added = add_files(dir.."*"..suffix, false, true) or added
         end
 
         -- Should we also consider the path referenced by 'text'?
         if match_cwd then
             -- Pass true because these need to include the base path.
-            added = add_files(text.."*"..suffix, true) or added
+            added = add_files(endword.."*"..suffix, true, true) or added
         end
     end
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        local root = (path.getdirectory(text) or ""):gsub("/", "\\")
-        if expanded then
-            root = rl.collapsetilde(root)
-        end
-        for _, d in ipairs(os.globdirs(text.."*", true)) do
-            local dir = path.join(root, d.name)
-            match_builder:addmatch({ match = dir, type = d.type })
-        end
+        match_builder:addmatches(clink.dirmatchesexact(endword.."*"))
     end
 
     return true
