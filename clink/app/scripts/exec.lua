@@ -116,7 +116,7 @@ local function exec_matches(line_state, match_builder, chained)
     local match_cwd = settings.get("exec.cwd")
 
     local paths = nil
-    local text, expanded = rl.expandtilde(endword)
+    local text, expanded = rl.expandtilde(endword) -- luacheck: no unused
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
