@@ -2,6 +2,15 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.4
+
+- Added `rl_buffer:hassuggestion()` and `rl_buffer:insertsuggestion()` for direct access to inserting suggestions without invoking Readline commands.
+- Added `clink.dirmatchesexact()` and `clink.filematchesexact()` which are the same as the non-`exact` variants, except these don't append a `*` to the search pattern.  For example, `clink.filematchesexact("*.zip")` can collect exactly "\*.zip" file matches instead of "\*.zip\*".
+- Added OS version info to `clink info`.
+- Added UNC share name completion when using Executable Completion (the `exec.enable` setting).
+- Fixed applying `colored-completion-prefix` when match display filtering is active or a match has a custom `display` field.
+- Fixed the `exec.path` setting so it doesn't accidentally include directories if their names end with an executable extension such as `.exe`.
+
 #### v1.6.3
 
 - **Breaking Change:** For the four <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations, Clink got the <kbd>Shift</kbd> key backwards and generated inaccurate input codes.  And that broke the Readline/bash default key binding for `undo` (the Windows default key binding of <kbd>Ctrl</kbd>-<kbd>z</kbd> works fine).  If your .inputrc file has bindings for any of the <kbd>Ctrl</kbd>-<kbd>-</kbd> key combinations then you can keep the keys working the same by updating the key bindings.  You can even use the [`$if clink_version >= 1.6.3`](#if_clink_version) syntax in your .inputrc file to make it define the key bindings differently in different versions of Clink.
