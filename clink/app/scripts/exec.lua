@@ -88,8 +88,10 @@ local function exec_matches(line_state, match_builder, chained)
         -- This is to mimic how bash seems to work when completing `.` or `..`
         -- as the first word in a command line.
         -- See https://github.com/chrisant996/clink/issues/111.
-        match_builder:addmatch({ match = endword, type = "dir" })
-        return true
+        if endword == "." then
+            match_builder:addmatch({ match = ".\\", type = "dir" })
+        end
+        match_builder:addmatch({ match = "..\\", type = "dir" })
     end
 
     -- If enabled, lines prefixed with whitespace disable executable matching.
