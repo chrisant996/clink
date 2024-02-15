@@ -11,6 +11,7 @@
 - Fixed completing input `.` or `..` when the `exec.enable` setting is enabled.
 - Fixed applying `colored-completion-prefix` when match display filtering is active or a match has a custom `display` field.
 - Fixed the `exec.path` setting so it doesn't accidentally include directories if their names end with an executable extension such as `.exe`.
+- Fixed finding an argmatcher registered with a full path (e.g. `c:\foo\bar.exe`) when a full path is entered without a drive letter (e.g. enter `\foo\bar.exe`).
 
 #### v1.6.3
 
