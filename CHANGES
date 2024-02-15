@@ -8,6 +8,7 @@
 - Added `clink.dirmatchesexact()` and `clink.filematchesexact()` which are the same as the non-`exact` variants, except these don't append a `*` to the search pattern.  For example, `clink.filematchesexact("*.zip")` can collect exactly "\*.zip" file matches instead of "\*.zip\*".
 - Added OS version info to `clink info`.
 - Added UNC share name completion when using Executable Completion (the `exec.enable` setting).
+- Fixed completing input `.` or `..` when the `exec.enable` setting is enabled.
 - Fixed applying `colored-completion-prefix` when match display filtering is active or a match has a custom `display` field.
 - Fixed the `exec.path` setting so it doesn't accidentally include directories if their names end with an executable extension such as `.exe`.
 
