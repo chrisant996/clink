@@ -58,7 +58,7 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
                 path::append(full, word);
                 if (os::get_path_type(full.c_str()) == os::path_type_file)
                 {
-                    out = full.c_str();
+                    os::get_full_path_name(full.c_str(), out);
                     return true;
                 }
             }
@@ -69,7 +69,7 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
         full.concat(start, length);
         if (os::get_path_type(full.c_str()) == os::path_type_file)
         {
-            out = full.c_str();
+            os::get_full_path_name(full.c_str(), out);
             return true;
         }
     }
