@@ -456,6 +456,40 @@ static void success_message(const char* message)
 }
 
 //------------------------------------------------------------------------------
+static bool safe_append_quoted(str_base& s, const char* append)
+{
+    // https://devblogs.microsoft.com/oldnewthing/20100917-00/?p=12833
+    // https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
+
+    const char* quote = strchr(append, '\"');
+    if (quote && quote[1])
+        return false;
+
+    unsigned backslashes = 0;
+    const bool space = !!strchr(append, ' ');
+
+    if (space)
+    {
+        for (const char* end = append + strlen(append); end-- > append && *end == '\\';)
+            ++backslashes;
+        s << "\"";
+    }
+
+    s << append;
+
+    if (space)
+    {
+        if (quote)
+            s.truncate(s.length() - 1);
+        while (backslashes--)
+            s << "\\";
+        s << "\"";
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 int32 autorun(int32 argc, char** argv)
 {
     // Parse command line arguments.
@@ -514,7 +548,13 @@ int32 autorun(int32 argc, char** argv)
     {
         for (i = optind + 1; i < argc; ++i)
         {
-            g_clink_args << argv[i];
+            if (!safe_append_quoted(g_clink_args, argv[i]))
+            {
+                printf("ERROR: Invalid quoting for argument '%s'.\n", argv[i]);
+                puts("Is a backslash missing?  On Windows, double backslashes before a quote.");
+                puts("For example \"c:\\foo bar\\\\\" instead of \"c:\\foo bar\\\".");
+                return 1;
+            }
             if (i < argc - 1)
                 g_clink_args << " ";
         }
