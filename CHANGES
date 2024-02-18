@@ -12,6 +12,7 @@
 - Fixed applying `colored-completion-prefix` when match display filtering is active or a match has a custom `display` field.
 - Fixed the `exec.path` setting so it doesn't accidentally include directories if their names end with an executable extension such as `.exe`.
 - Fixed finding an argmatcher registered with a full path (e.g. `c:\foo\bar.exe`) when a full path is entered without a drive letter (e.g. enter `\foo\bar.exe`).
+- Fixed [#562](https://github.com/chrisant996/clink/issues/562); `clink autorun install` strips quotes by mistake.
 
 #### v1.6.3
 
