@@ -2,6 +2,8 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+- Fixed stripping colors from strings (e.g. when displaying in popup lists); it didn't strip 8-bit and 24-bit colors correctly.
+
 #### v1.6.4
 
 - Added `rl_buffer:hassuggestion()` and `rl_buffer:insertsuggestion()` for direct access to inserting suggestions without invoking Readline commands.

@@ -576,17 +576,39 @@ concat_verbatim:
                         if (code.decode_csi(csi) && csi.final == 'm')
                         {
                             str<> tmp;
-                            for (int32 i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
+                            unsigned skip = 0;
+                            for (int32 i = 0; i < csi.param_count; ++i)
                             {
+                                if (skip)
+                                {
+                                    --skip;
+                                    continue;
+                                }
                                 switch (csi.params[i])
                                 {
                                 case 0:     tmp.concat(";23;24;29"); break;
                                 case 3:     tmp.concat(";3"); break;
                                 case 4:     tmp.concat(";4"); break;
                                 case 9:     tmp.concat(";9"); break;
+                                case 21:    tmp.concat(";21"); break;
                                 case 23:    tmp.concat(";23"); break;
                                 case 24:    tmp.concat(";24"); break;
                                 case 29:    tmp.concat(";29"); break;
+                                case 53:    tmp.concat(";53"); break;
+                                case 55:    tmp.concat(";55"); break;
+                                case 73:    tmp.concat(";73"); break;
+                                case 74:    tmp.concat(";74"); break;
+                                case 75:    tmp.concat(";75"); break;
+                                case 38:
+                                case 48:
+                                case 58:
+                                    if (i + 1 < csi.param_count)
+                                    {
+                                        if (csi.params[i + 1] == 2)
+                                            skip = 4;
+                                        else if (csi.params[i + 1] == 5)
+                                            skip = 2;
+                                    }
                                 }
                             }
 
