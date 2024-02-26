@@ -2384,7 +2384,7 @@ end
 
 A [match generator](#matchgenerators) or [argmatcher](#argumentcompletion) or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted (this is reset every time match generation is invoked).
 
-The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
+The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). In Clink v1.6.5 and newer, the table includes the full set of match fields, especially including the `display` field.
 
 The possible completion types are:
 
