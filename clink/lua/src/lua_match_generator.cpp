@@ -118,6 +118,64 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 }
 
 //------------------------------------------------------------------------------
+static void push_match_fields(lua_State* state, const char* match, const match_details& details, str_base& tmp)
+{
+    lua_pushliteral(state, "match");
+    lua_pushstring(state, match);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "type");
+    match_type_to_string(details.get_type(), tmp);
+    lua_pushlstring(state, tmp.c_str(), tmp.length());
+    lua_rawset(state, -3);
+
+    // The display field is special:
+    //  - When MATCH_FLAG_APPEND_DISPLAY is set, add it as "arginfo".
+    //  - When display and match are different, add it as "display".
+    //  - Otherwise do nothing with it.
+    const char* display = details.get_display();
+    if (display && *display)
+    {
+        if (details.get_flags() & MATCH_FLAG_APPEND_DISPLAY)
+        {
+            lua_pushliteral(state, "arginfo");
+            lua_pushstring(state, display);
+            lua_rawset(state, -3);
+        }
+        else if (strcmp(display, match))
+        {
+            lua_pushliteral(state, "display");
+            lua_pushstring(state, display);
+            lua_rawset(state, -3);
+        }
+    }
+
+    const char* description = details.get_description();
+    if (description && *description)
+    {
+        lua_pushliteral(state, "description");
+        lua_pushstring(state, description);
+        lua_rawset(state, -3);
+    }
+
+    char append_char = details.get_append_char();
+    if (append_char)
+    {
+        lua_pushliteral(state, "appendchar");
+        lua_pushlstring(state, &append_char, 1);
+        lua_rawset(state, -3);
+    }
+
+    uint8 flags = details.get_flags();
+    if (flags & MATCH_FLAG_HAS_SUPPRESS_APPEND)
+    {
+        lua_pushliteral(state, "suppressappend");
+        lua_pushboolean(state, !!(flags & MATCH_FLAG_SUPPRESS_APPEND));
+        lua_rawset(state, -3);
+    }
+}
+
+//------------------------------------------------------------------------------
 bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_builder* builder, display_filter_flags flags, bool nosort, bool* old_filtering)
 {
     bool ret = false;
@@ -210,59 +268,7 @@ done:
 
             lua_createtable(state, 0, 2);
 
-            lua_pushliteral(state, "match");
-            lua_pushstring(state, match);
-            lua_rawset(state, -3);
-
-            lua_pushliteral(state, "type");
-            match_type_to_string(details.get_type(), tmp);
-            lua_pushlstring(state, tmp.c_str(), tmp.length());
-            lua_rawset(state, -3);
-
-            // The display field is special:
-            //  - When MATCH_FLAG_APPEND_DISPLAY is set, add it as "arginfo".
-            //  - When display and match are different, add it as "display".
-            //  - Otherwise do nothing with it.
-            const char* display = details.get_display();
-            if (display && *display)
-            {
-                if (details.get_flags() & MATCH_FLAG_APPEND_DISPLAY)
-                {
-                    lua_pushliteral(state, "arginfo");
-                    lua_pushstring(state, display);
-                    lua_rawset(state, -3);
-                }
-                else if (strcmp(display, match))
-                {
-                    lua_pushliteral(state, "display");
-                    lua_pushstring(state, display);
-                    lua_rawset(state, -3);
-                }
-            }
-
-            const char* description = details.get_description();
-            if (description && *description)
-            {
-                lua_pushliteral(state, "description");
-                lua_pushstring(state, description);
-                lua_rawset(state, -3);
-            }
-
-            char append_char = details.get_append_char();
-            if (append_char)
-            {
-                lua_pushliteral(state, "appendchar");
-                lua_pushlstring(state, &append_char, 1);
-                lua_rawset(state, -3);
-            }
-
-            uint8 flags = details.get_flags();
-            if (flags & MATCH_FLAG_HAS_SUPPRESS_APPEND)
-            {
-                lua_pushliteral(state, "suppressappend");
-                lua_pushboolean(state, !!(flags & MATCH_FLAG_SUPPRESS_APPEND));
-                lua_rawset(state, -3);
-            }
+            push_match_fields(state, match, details, tmp);
 
             lua_rawseti(state, -2, i);
         }
@@ -441,18 +447,11 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     for (int32 i = 1; i <= match_count; ++i)
     {
         const char* match = matches[mi++];
-        match_type type = (match_type)lookup_match_type(match);
+        match_details details = lookup_match(match);
 
         lua_createtable(state, 0, 2);
 
-        lua_pushliteral(state, "match");
-        lua_pushstring(state, match);
-        lua_rawset(state, -3);
-
-        lua_pushliteral(state, "type");
-        match_type_to_string(type, tmp);
-        lua_pushlstring(state, tmp.c_str(), tmp.length());
-        lua_rawset(state, -3);
+        push_match_fields(state, match, details, tmp);
 
         lua_rawseti(state, -2, i);
     }
