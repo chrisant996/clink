@@ -86,7 +86,7 @@ setting_enum g_history_timestamp(
     "The default is 'off'.  When set to 'save', timestamps are saved for each\n"
     "history item but are only shown in the 'history' command when the\n"
     "'--show-time' flag is used.  When set to 'show', timestamps are saved and\n"
-    "are shown in 'history' unless the '--bare' flag is used.",
+    "are shown in 'history' unless the '--bare' or '--no-show-time' flag is used.",
     "off,save,show",
     0);
 

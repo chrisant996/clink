@@ -474,12 +474,14 @@ local history = clink.argmatcher("history")
     "--help",
     "--bare",
     "--show-time",
+    "--no-show-time",
     "--time-format"..empty_arg,
     "--unique")
 :adddescriptions({
     ["--help"]      = "Show help",
-    ["--bare"]      = "Omit item numbers when printing history",
+    ["--bare"]      = "Omit item numbers and timestamps when printing history",
     ["--show-time"] = "Show history item timestamps, if any",
+    ["--no-show-time"] = "Omit timestamps when printing history",
     ["--time-format"] = "Override the format string for showing timestamps",
     ["--unique"]    = "Remove duplicates when compacting history",
     ["add"]         = "Append the rest of the line to the history",
