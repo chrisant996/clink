@@ -517,7 +517,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="history_show_preview"></a>`history.show_preview` | True | When enabled, if the text at the cursor is subject to history expansion, then this shows a preview of the expanded result below the input line using the [`color.comment_row`](#color_comment_row) setting.
 <a name="history_sticky_search"></a>`history.sticky_search` | False | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
 <a name="history_time_format"></a>`history.time_format` | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set history.time_format</code> or [History Timestamps](#history-timestamps).
-<a name="history_time_stamp"></a>`history.time_stamp` | `off` | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` flag is used.
+<a name="history_time_stamp"></a>`history.time_stamp` | `off` | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` or `--no-show-time` flag is used.
 <a name="lua_break_on_error"></a>`lua.break_on_error` | False | Breaks into Lua debugger on Lua errors.
 <a name="lua_break_on_traceback"></a>`lua.break_on_traceback` | False | Breaks into Lua debugger on `traceback()`.
 <a name="lua_debug"></a>`lua.debug` | False | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling [pause()](#pause).
@@ -3035,7 +3035,7 @@ Use <code>clink set <a href="#history_time_stamp">history.time_stamp</a> off</co
 
 Use `clink set history.time_stamp save` to save timestamps for each history item but only show them in the `history` command when the `--show-time` flag is used.  They may also be shown when a `clink-popup-history` or `win-history-list` key binding is pressed, if a non-zero [numeric argument](#readline-arguments) is supplied.
 
-Use `clink set history.time_stamp show` to save timestamps for each history item and show them in the `history` command unless the `--bare` flag is used.  They're also shown when a `clink-popup-history` or `win-history-list` key binding is pressed, unless a [numeric argument](#readline-arguments) argument of zero is supplied.
+Use `clink set history.time_stamp show` to save timestamps for each history item and show them in the `history` command unless the `--bare` or `--no-show-time` flag is used.  They're also shown when a `clink-popup-history` or `win-history-list` key binding is pressed, unless a [numeric argument](#readline-arguments) argument of zero is supplied.
 
 Use <code>clink set <a href="#history_time_format">history.time_format</a> <span class="arg">format</span></code> to specify the format for showing timestamps (the default format is <code>%F %T &nbsp</code>).
 
