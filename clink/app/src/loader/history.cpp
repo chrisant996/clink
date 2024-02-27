@@ -24,13 +24,14 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+static bool is_console(HANDLE h);
 extern setting_bool g_save_history;
 extern setting_enum g_history_timestamp;
 
 //------------------------------------------------------------------------------
 static bool s_diag = false;
 static bool s_showtime = false;
-static history_timeformatter s_timeformatter;
+static history_timeformatter s_timeformatter(!is_console(GetStdHandle(STD_OUTPUT_HANDLE)));
 
 //------------------------------------------------------------------------------
 class terminal_scope

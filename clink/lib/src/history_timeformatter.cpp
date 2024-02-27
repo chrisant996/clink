@@ -49,7 +49,8 @@ static setting_str g_history_timeformat(
     "%F %T  ");
 
 //------------------------------------------------------------------------------
-history_timeformatter::history_timeformatter()
+history_timeformatter::history_timeformatter(bool plaintext)
+: m_plaintext(plaintext)
 {
 }
 
@@ -61,7 +62,10 @@ history_timeformatter::~history_timeformatter()
 //------------------------------------------------------------------------------
 void history_timeformatter::set_timeformat(const char* timeformat, bool for_popup)
 {
-    m_timeformat = timeformat;
+    if (m_plaintext)
+        ecma48_processor(timeformat, &m_timeformat, nullptr, ecma48_processor_flags::plaintext);
+    else
+        m_timeformat = timeformat;
     m_max_timelen = 0;
     m_for_popup = for_popup;
 }
@@ -99,6 +103,13 @@ void history_timeformatter::ensure_timeformat()
         g_history_timeformat.get(m_timeformat);
     if (m_timeformat.empty())
         m_timeformat = "%F %T  ";
+
+    if (m_plaintext && !m_timeformat.empty())
+    {
+        str_moveable tmp;
+        ecma48_processor(m_timeformat.c_str(), &tmp, nullptr, ecma48_processor_flags::plaintext);
+        m_timeformat = std::move(tmp);
+    }
 
     if (m_for_popup)
     {
