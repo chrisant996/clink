@@ -342,7 +342,7 @@ public:
         template <int32 S>  line_iter(const read_lock& lock, char (&buffer)[S]);
         template <int32 S>  line_iter(void* handle, char (&buffer)[S]);
                             ~line_iter() = default;
-        line_id_impl        next(str_iter& out, str_base* timestamp=nullptr);
+        line_id_impl        next(str_iter& out, str_base* timestamp=nullptr, history_db::line_id* timestamp_id=nullptr);
         void                set_file_offset(uint32 offset);
         uint32              get_deleted_count() const { return m_deleted; }
 
@@ -642,7 +642,7 @@ inline bool is_line_breaker(uint8 c)
 }
 
 //------------------------------------------------------------------------------
-line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
+line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp, history_db::line_id* timestamp_id)
 {
     if (timestamp)
         timestamp->clear();
@@ -713,6 +713,8 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
                     timestamp->clear();
                     timestamp->concat(start, int32(end - start));
                 }
+                if (timestamp_id)
+                    *timestamp_id = line_id_impl(offset).outer;
                 continue;
             }
             if (timestamp)
@@ -826,7 +828,7 @@ class read_line_iter
 {
 public:
                             read_line_iter(const history_db& db, uint32 this_size);
-    history_db::line_id     next(str_iter& out, str_base* timestamp=nullptr);
+    history_db::line_id     next(str_iter& out, str_base* timestamp=nullptr, history_db::line_id* timestamp_id=nullptr);
     uint32                  get_bank() const { return m_bank_index; }
 
 private:
@@ -867,14 +869,14 @@ bool read_line_iter::next_bank()
 }
 
 //------------------------------------------------------------------------------
-history_db::line_id read_line_iter::next(str_iter& out, str_base* timestamp)
+history_db::line_id read_line_iter::next(str_iter& out, str_base* timestamp, history_db::line_id* timestamp_id)
 {
     if (m_bank_index >= sizeof_array(m_db.m_bank_handles))
         return 0;
 
     do
     {
-        if (line_id_impl ret = m_line_iter.next(out, timestamp))
+        if (line_id_impl ret = m_line_iter.next(out, timestamp, timestamp_id))
         {
             ret.bank_index = m_bank_index;
             return ret.outer;
@@ -902,9 +904,9 @@ history_db::iter::~iter()
 }
 
 //------------------------------------------------------------------------------
-history_db::line_id history_db::iter::next(str_iter& out, str_base* timestamp)
+history_db::line_id history_db::iter::next(str_iter& out, str_base* timestamp, history_db::line_id* timestamp_id)
 {
-    return impl ? ((read_line_iter*)impl)->next(out, timestamp) : 0;
+    return impl ? ((read_line_iter*)impl)->next(out, timestamp, timestamp_id) : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -973,12 +975,28 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
 
     // Read lines to keep into vector.
     str_iter out;
+    str<> tmp;
+    str<> timestamp;
+    line_id_impl timestamp_id;
     read_lock::line_iter iter(lock, buffer.data(), buffer.size());
     std::vector<std::unique_ptr<remap_history_line>> lines_to_keep;
-    while (const line_id_impl id = iter.next(out))
+    while (const line_id_impl id = iter.next(out, &timestamp, &timestamp_id.outer))
     {
-        std::unique_ptr<remap_history_line> line = std::make_unique<remap_history_line>();
+        std::unique_ptr<remap_history_line> line;
+        std::unique_ptr<remap_history_line> timestamp_line;
+
+        // Initialize the lines to keep.
+        if (!timestamp.empty())
+        {
+            tmp.clear();
+            tmp.format("|\ttime=%s", timestamp.c_str());
+            timestamp_line = std::make_unique<remap_history_line>();
+            timestamp_line->m_line.set(tmp.c_str());
+        }
+        line = std::make_unique<remap_history_line>();
         line->m_line.set(out.get_pointer(), out.length());
+
+        // Maybe apply uniq and keep only the latest.
         if (uniq)
         {
             auto const lookup = seen.find(line->m_line.get());
@@ -987,13 +1005,30 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
                 // Reuse the old entry so the map stays valid.  Leave the old
                 // entry present but empty, so the indices don't shift.
                 line = std::move(lines_to_keep[lookup->second]);
+                assert(!lines_to_keep[lookup->second].get());
+                // Discard the old timestamp as well.
+                assert(strstr(lines_to_keep[lookup->second - 1]->m_line.get(), "\ttime="));
+                lines_to_keep[lookup->second - 1].reset();
+                // Update number of duplicate entries.
                 if (_dups)
                     ++(*_dups);
             }
-            seen.insert_or_assign(line->m_line.get(), lines_to_keep.size());
+            // The +1 advances past the timestamp_line that gets added before
+            // the line (see a few lines further below).
+            seen.insert_or_assign(line->m_line.get(), lines_to_keep.size() + 1);
         }
+
+        // Finishd initializing the lines to keep.
+        if (!timestamp.empty())
+            timestamp_line->m_old = timestamp_id;
         line->m_old = id;
+
+        // And keep them.  Add timestamp_line even when empty, so the position
+        // is reserved in case uniq ends up needing it.
+        lines_to_keep.emplace_back(std::move(timestamp_line));
         lines_to_keep.emplace_back(std::move(line));
+        assert(!timestamp_line.get());
+        assert(!line.get());
     }
 
     if (_kept)
