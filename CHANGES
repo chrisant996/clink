@@ -6,6 +6,7 @@
 
 - Added `clink history --no-show-time` to allow omitting history timestamps even when the `history.time_stamp` setting is `show`.
 - Fixed `clink history` when output is redirected; strip any escape codes that might be embedded in the time format.
+- Fixed [#569](https://github.com/chrisant996/clink/issues/569); `cmd /e:off` causes syntax error in clink.bat script.
 - Fixed [#567](https://github.com/chrisant996/clink/issues/567); `clink history compact` accidentally deletes all timestamps.
 
 #### v1.6.5
