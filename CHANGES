@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.6
+
+- Added `clink history --no-show-time` to allow omitting history timestamps even when the `history.time_stamp` setting is `show`.
+- Fixed `clink history` when output is redirected; strip any escape codes that might be embedded in the time format.
+- Fixed [#567](https://github.com/chrisant996/clink/issues/567); `clink history compact` accidentally deletes all timestamps.
+
 #### v1.6.5
 
 - Added all match fields in the table of matches passed to the `clink.onfiltermatches()` callback function.
