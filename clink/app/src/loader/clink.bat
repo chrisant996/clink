@@ -35,17 +35,20 @@ if _%1==_ (
 if defined CLINK_NOAUTORUN if /i "%~1"=="inject" if /i "%~2"=="--autorun" goto :end
 
 :: Endlocal before inject tags the prompt.
-endlocal
 
 :: Pass through to appropriate loader.
 if /i "%processor_architecture%"=="x86" (
+        endlocal
         "%~dp0\clink_x86.exe" %*
 ) else if /i "%processor_architecture%"=="arm64" (
+        endlocal
         "%~dp0\clink_arm64.exe" %*
 ) else if /i "%processor_architecture%"=="amd64" (
     if defined processor_architew6432 (
+        endlocal
         "%~dp0\clink_x86.exe" %*
     ) else (
+        endlocal
         "%~dp0\clink_x64.exe" %*
     )
 )
