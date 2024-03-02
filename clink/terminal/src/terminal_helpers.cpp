@@ -244,6 +244,9 @@ int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (
     double best_deltaE = 0;
     int32 best_idx = -1;
 
+    // FUTURE: consider using Oklab instead?
+    // https://bottosson.github.io/posts/oklab/
+    // https://github.com/chrisant996/dirx/blob/90d9f7422fee098776375360fb1a40b4d3da52e9/colors.cpp#L1780-L1847
     for (int32 i = sizeof_array(csbix.ColorTable); i--;)
     {
         cie::lab candidate(csbix.ColorTable[i]);
