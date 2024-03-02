@@ -892,14 +892,17 @@ static int32 set_width(lua_State* state)
     if (!GCSBIEx(proc_get)(h, &csbix))
         return 0;
 
+    // GCSBIEx and SCSBIEx use different coordinate systems for srWindow.
+    // https://github.com/microsoft/terminal/issues/3698
+    // https://github.com/microsoft/terminal/issues/3698#issuecomment-558734017
+    ++csbix.srWindow.Right;
+    ++csbix.srWindow.Bottom;
+    // REVIEW: But sometimes adding 1 overcompensates and increases the height?
+
     csbix.dwSize.X = width;
     csbix.srWindow.Right = width;
     if (!SCSBIEx(proc_set)(h, &csbix))
         return 0;
-
-// BUGBUG:  SetConsoleScreenBufferInfoEx isn't working correctly; sometimes it
-// shrinks the height by 1, but sometimes adding 1 overcompensates and increases
-// the height.
 
     lua_pushboolean(state, true);
     return 1;
