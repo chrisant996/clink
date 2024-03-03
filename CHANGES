@@ -8,6 +8,7 @@
 - Fixed `clink history` when output is redirected; strip any escape codes that might be embedded in the time format.
 - Fixed [#569](https://github.com/chrisant996/clink/issues/569); `cmd /e:off` causes syntax error in clink.bat script.
 - Fixed [#567](https://github.com/chrisant996/clink/issues/567); `clink history compact` accidentally deletes all timestamps.
+- Fixed documentation error in Lua API Reference about `"w"` mode in `io.open()` and `io.sopen()` (the behavior was correct, but the documentation was inaccurate/unclear).
 
 #### v1.6.5
 
