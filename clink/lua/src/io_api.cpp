@@ -558,14 +558,14 @@ private:
 ///
 /// The <span class="arg">mode</span> string can be any of the following:
 /// <ul>
-/// <li><code>"r"</code>: read mode (the default);
-/// <li><code>"w"</code>: write mode;
-/// <li><code>"wx"</code>: write mode, but fail if the file already exists (requires v1.3.18 or higher);
-/// <li><code>"a"</code>: append mode;
-/// <li><code>"r+"</code>: update mode, all previous data is preserved;
-/// <li><code>"w+"</code>: update mode, all previous data is erased;
-/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher);
-/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file.
+/// <li><code>"r"</code>: opens for read (the default);
+/// <li><code>"w"</code>: opens for write, all previous data is erased;
+/// <li><code>"wx"</code>: opens for write, but fail if the file already exists (requires v1.3.18 or higher);
+/// <li><code>"a"</code>: opens for writing at the end of the file (append), creates the file if it doesn't exist;
+/// <li><code>"r+"</code>: opens for read and write, all previous data is preserved;
+/// <li><code>"w+"</code>: opens for read and write, all previous data is erased;
+/// <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher);
+/// <li><code>"a+"</code>: opens for reading and writing at the end of the file (append), writing is only allowed at the end of file, creates the file if it doesn't exist.
 /// </ul>
 ///
 /// The <span class="arg">mode</span> string can also have a <code>'b'</code> at
@@ -598,14 +598,14 @@ static int32 io_sclose(lua_State* state)
 ///
 /// The <span class="arg">mode</span> string can be any of the following:
 /// <ul>
-/// <li><code>"r"</code>: read mode (the default);
-/// <li><code>"w"</code>: write mode;
-/// <li><code>"wx"</code>: write mode, but fail if the file already exists;
-/// <li><code>"a"</code>: append mode;
-/// <li><code>"r+"</code>: update mode, all previous data is preserved;
-/// <li><code>"w+"</code>: update mode, all previous data is erased;
-/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists;
-/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file.
+/// <li><code>"r"</code>: opens for read (the default);
+/// <li><code>"w"</code>: opens for write, all previous data is erased;
+/// <li><code>"wx"</code>: opens for write, but fail if the file already exists (requires v1.3.18 or higher);
+/// <li><code>"a"</code>: opens for writing at the end of the file (append), creates the file if it doesn't exist;
+/// <li><code>"r+"</code>: opens for read and write, all previous data is preserved;
+/// <li><code>"w+"</code>: opens for read and write, all previous data is erased;
+/// <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher);
+/// <li><code>"a+"</code>: opens for reading and writing at the end of the file (append), writing is only allowed at the end of file, creates the file if it doesn't exist.
 /// </ul>
 ///
 /// The <span class="arg">mode</span> string can also have a <code>'b'</code> at
