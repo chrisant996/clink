@@ -15,3 +15,4 @@ enum class intercept_result : uint8
 
 //------------------------------------------------------------------------------
 intercept_result intercept_directory(const char* line, str_base* out=nullptr, bool only_cd_chdir=false);
+void make_cd_command(const char* dir, str_base& out);

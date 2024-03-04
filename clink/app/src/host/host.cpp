@@ -285,12 +285,7 @@ static void prev_dir_history(str_base& inout)
     auto a = s_dir_history.rbegin();
     a++;
 
-    str<> drive;
-    path::get_drive(a->get(), drive);
-    if (!drive.empty())
-        inout.format(" %s & cd \"%s\"", drive.c_str(), a->get());
-    else
-        inout.format(" cd \"%s\"", a->get());
+    make_cd_command(a->get(), inout);
 }
 
 //------------------------------------------------------------------------------

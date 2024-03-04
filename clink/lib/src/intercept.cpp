@@ -257,16 +257,31 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
     // the `/d` flag disables `cd` accepting forward slashes in paths.
     if (out)
     {
-        str<> drive;
         path::normalise_separators(tmp);
-        // `cd /d` requires command extensions, so for broadest compatibility
-        // just specify the drive explicitly.
-        path::get_drive(tmp.c_str(), drive);
-        if (!drive.empty())
-            out->format(" %s & cd \"%s\"", drive.c_str(), tmp.c_str());
-        else
-            out->format(" cd \"%s\"", tmp.c_str());
+        make_cd_command(tmp.c_str(), *out);
     }
 
     return intercept_result::chdir;
 }
+
+void make_cd_command(const char* dir, str_base& out)
+{
+    str<> drive;
+    out.clear();
+    if (path::get_drive(dir, drive))
+    {
+        str<> cwd;
+        str<> cwd_drive;
+        os::get_current_dir(cwd);
+        path::get_drive(cwd.c_str(), cwd_drive);
+        if (!drive.iequals(cwd_drive.c_str()))
+        {
+            // `cd /d` requires command extensions, so for broadest
+            // compatibility just specify the drive explicitly.
+            out.format(" %s & cd \"%s\"", drive.c_str(), dir);
+            return;
+        }
+    }
+    out.format(" cd \"%s\"", dir);
+}
+
