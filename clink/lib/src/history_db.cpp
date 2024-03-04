@@ -646,6 +646,9 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp, hist
 {
     if (timestamp)
         timestamp->clear();
+    if (timestamp_id)
+        *timestamp_id = 0;
+
     while (m_remaining || provision())
     {
         const char* last = m_file_iter.get_buffer() + m_file_iter.get_buffer_size();
@@ -719,6 +722,8 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp, hist
             }
             if (timestamp)
                 timestamp->clear();
+            if (timestamp_id)
+                *timestamp_id = 0;
         }
 
         // Removals from master are deferred when `history.shared` is false, so
@@ -989,14 +994,15 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
     {
         std::unique_ptr<keep_line_pair> keep = std::make_unique<keep_line_pair>();
 
-        // Initialize the lines to keep.
-        if (!timestamp.empty())
-        {
-            tmp.clear();
-            tmp.format("|\ttime=%s", timestamp.c_str());
-            keep->m_timestamp.m_line.set(tmp.c_str());
-        }
+        // Initialize the line to keep.  The string pointer allocated here
+        // must live until the loop is finished, because its raw pointer is
+        // used as the key in the seen map.
         keep->m_line.m_line.set(out.get_pointer(), out.length());
+
+        // Initialize the timestamp to keep, if any.
+        tmp.clear();
+        if (!timestamp.empty())
+            tmp.format("|\ttime=%s", timestamp.c_str());
 
         // Maybe apply uniq and keep only the latest.
         if (uniq)
@@ -1015,11 +1021,8 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
             seen.insert_or_assign(keep->m_line.m_line.get(), lines_to_keep.size());
         }
 
-        // Finishd initializing the lines to keep.
-        if (!timestamp.empty())
-            keep->m_timestamp.m_old = timestamp_id;
-        else
-            keep->m_timestamp.m_line.set(nullptr);
+        // Initialize the rest of the keep struct.
+        keep->m_timestamp.m_line.set(tmp.empty() ? nullptr : tmp.c_str());
         keep->m_timestamp.m_old = timestamp_id;
         keep->m_line.m_old = id;
 
@@ -1056,6 +1059,8 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
         {
             if (keep->m_timestamp.m_line.get())
                 keep->m_timestamp.m_new = lock.add(keep->m_timestamp.m_line.get());
+            else
+                keep->m_timestamp.m_new.outer = 0;
             keep->m_line.m_new = lock.add(keep->m_line.m_line.get());
         }
     }
