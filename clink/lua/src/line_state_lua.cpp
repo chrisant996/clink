@@ -488,7 +488,14 @@ inline bool is_unbreakchar(const char* unbreakchars, const char* line, uint32 le
     if (index >= len)
         return false;
     const char c = line[index];
-    return c && strchr(unbreakchars, c);
+    if (!c)
+        return false;
+    const char* un = strchr(unbreakchars, c);
+    if (!un)
+        return false;
+    if (index > 0 && line[index - 1] == ':')
+        return false;
+    return true;
 }
 
 //------------------------------------------------------------------------------

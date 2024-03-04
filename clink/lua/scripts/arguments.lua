@@ -560,6 +560,10 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
         -- Flags in other commands default to certain punctuation marks as
         -- nowordbreakchars.  This more accurately reflects how the command
         -- line will actually be parsed, especially for commas.
+        --
+        -- UNLESS the character is immediately preceded by ":", so that e.g.
+        -- "-Q:+x" can still be interpreted as two words, "-Q:" and "+x".
+        -- This exception is handled inside _unbreak_word() itself.
         local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
         local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
         if adjusted then
