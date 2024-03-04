@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.7
+
+- Recognize the little-known `cmd /r` as a synonym for `cmd /c` so that Clink can optimize and skip injecting into a `cmd /r` process.
+- Fixed [#567](https://github.com/chrisant996/clink/issues/567) more thoroughly; `cd /d` cannot be used anywhere because it requires command extensions.
+
 #### v1.6.6
 
 - Added `clink history --no-show-time` to allow omitting history timestamps even when the `history.time_stamp` setting is `show`.
