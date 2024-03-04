@@ -285,7 +285,12 @@ static void prev_dir_history(str_base& inout)
     auto a = s_dir_history.rbegin();
     a++;
 
-    inout.format(" cd /d \"%s\"", a->get());
+    str<> drive;
+    path::get_drive(a->get(), drive);
+    if (!drive.empty())
+        inout.format(" %s & cd \"%s\"", drive.c_str(), a->get());
+    else
+        inout.format(" cd \"%s\"", a->get());
 }
 
 //------------------------------------------------------------------------------
@@ -1122,11 +1127,16 @@ skip_errorlevel:
                 //  6.  "pushd" prints the directory stack, if any, into the
                 //      temporary file.
                 //  7.  "endlocal" restores the environment.
-                //  8.  "exit /b %%clink_exit_code%%" restores the last exit
+                //  8.  "setlocal enableextensions" enables support for "exit
+                //      /b" command, which internally invokes "goto :eof",
+                //      which requires that command extensions are enabled.
+                //  9.  "exit /b %%clink_exit_code%%" restores the last exit
                 //      code, which got cleared by "pushd".
+                // NOTE:  %errorlevel% will expand to 0 unless command
+                // extensions were enabled at the time of the error.
                 str<280> script;
                 script.format("@echo off& setlocal& set clink_dummy_capture_env=& echo %%errorlevel%% 2>nul >\"%s\"& set clink_exit_code=%%errorlevel%%& pushd 2>nul >>\"%s\"&\n"
-                              "endlocal& exit /b %%clink_exit_code%%", tmp_errfile.c_str(), tmp_errfile.c_str());
+                              "endlocal& setlocal enableextensions& exit /b %%clink_exit_code%%", tmp_errfile.c_str(), tmp_errfile.c_str());
                 wrote = (fputs(script.c_str(), file) != EOF);
                 fclose(file);
                 file = nullptr;
@@ -1143,6 +1153,8 @@ skip_errorlevel:
                 //      up-to-date values for %LINES% and %COLUMNS%.
                 //  3.  "echo %%errorlevel%%" prints the last exit code into
                 //      the temporary file.
+                // NOTE:  %errorlevel% will expand to 0 unless command
+                // extensions were enabled at the time of the error.
                 out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
             }
             resolved = true;

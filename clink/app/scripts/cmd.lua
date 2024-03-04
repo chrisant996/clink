@@ -214,12 +214,15 @@ local function delayinit(argmatcher)
     :addflags({
         "/c"..chain, "/C"..chain,
         "/k"..chain, "/K"..chain,
+        "/r"..chain, "/R"..chain,
         "/s", "/q", "/d", "/a", "/u",
         "/S", "/Q", "/D", "/A", "/U",
         "/t:"..colors, "/T:"..colors,
         "/e:on", "/e:off", "/e:"..onoff["e"], "/E:"..onoff["e"],
         "/f:on", "/f:off", "/f:"..onoff["f"], "/F:"..onoff["f"],
         "/v:on", "/v:off", "/v:"..onoff["v"], "/V:"..onoff["v"],
+        "/x", "/y",
+        "/X", "/Y",
     })
     :nofiles()
     :adddescriptions(descriptions)
@@ -230,6 +233,9 @@ local function delayinit(argmatcher)
         "/e:", "/E:",
         "/f:", "/F:",
         "/v:", "/V:",
+        "/x", "/X",
+        "/y", "/Y",
+        "/r", "/R",
     })
 end
 

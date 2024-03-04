@@ -354,6 +354,7 @@ bool host_cmd::is_interactive() const
         switch (tolower(*args))
         {
         case 'c': return false;
+        case 'r': return false; // A little-known synonym for /c.
         case 'k': args = nullptr; break;
         }
     }
