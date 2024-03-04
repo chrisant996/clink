@@ -20,13 +20,12 @@ struct column_widths
 {
     size_t                  num_columns() const { return m_widths.size(); }
     width_t                 column_width(size_t i) const { return m_widths[i]; }
+    width_t                 max_match_len(size_t i) const { return m_max_match_len_in_column[i]; }
     std::vector<width_t>    m_widths;
+    std::vector<width_t>    m_max_match_len_in_column;
     width_t                 m_col_padding = 0;  // Padding between columns.
     width_t                 m_desc_padding = 0; // Min padding between match and description.
     width_t                 m_sind = 0;         // LCD length.
-    width_t                 m_max_len = 0;      // Longest combined match and description.
-    width_t                 m_max_match = 0;    // Longest individual match string.
-    width_t                 m_max_desc = 0;     // Longest individual description string.
     bool                    m_can_condense = false;
     bool                    m_right_justify = false;
 };

@@ -926,8 +926,8 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
                 break;
 
             const int32 col_max = ((show_descriptions && !widths.m_right_justify) ?
-                                 cols - 1 :
-                                 widths.column_width(j));
+                                   min<int32>(cols - 1, widths.column_width(j)) :
+                                   widths.column_width(j)); // Allow to wrap lines.
 
             const match_type type = adapter.get_match_type(l);
             const char* const match = adapter.get_match(l);
@@ -973,7 +973,7 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
 #endif
                     const int32 pad_to = (right_justify ?
                         max<int32>(printed_len + widths.m_desc_padding, col_max - (adapter.get_match_visible_description(l) + parens)) :
-                        widths.m_max_match + 4);
+                        widths.max_match_len(j) + widths.m_desc_padding);
                     if (pad_to < cols - 1)
                     {
                         pad_filename(printed_len, pad_to, 0);
