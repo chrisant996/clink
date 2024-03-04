@@ -5,12 +5,12 @@
 #### v1.6.7
 
 - Recognize the little-known `cmd /r` as a synonym for `cmd /c` so that Clink can optimize and skip injecting into a `cmd /r` process.
-- Fixed [#570](https://github.com/chrisant996/clink/issues/570); fixed #567 more thoroughly, and `cd /d` cannot be used anywhere because it also requires command extensions.
+- Fixed [#570](https://github.com/chrisant996/clink/issues/570); fixed #569 more thoroughly, and `cd /d` cannot be used anywhere because it also requires command extensions.
 
 #### v1.6.6
 
 - Added `clink history --no-show-time` to allow omitting history timestamps even when the `history.time_stamp` setting is `show`.
-- Fixed match display to not right justify descriptions when the screen isn't wide enough or when description contain aligned columns (like `clink set` completions do since v1.6.3).
+- Fixed match display to not right justify descriptions when the screen isn't wide enough or when descriptions contain aligned columns (like `clink set` completions do since v1.6.3).
 - Fixed `clink history` when output is redirected; strip any escape codes that might be embedded in the time format.
 - Fixed [#569](https://github.com/chrisant996/clink/issues/569); `cmd /e:off` causes syntax error in clink.bat script.
 - Fixed [#567](https://github.com/chrisant996/clink/issues/567); `clink history compact` accidentally deletes all timestamps.
