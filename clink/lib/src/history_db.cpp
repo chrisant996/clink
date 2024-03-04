@@ -972,6 +972,11 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
         line_id_impl    m_old;
         line_id_impl    m_new;
     };
+    struct keep_line_pair
+    {
+        remap_history_line m_line;
+        remap_history_line m_timestamp;
+    };
 
     // Read lines to keep into vector.
     str_iter out;
@@ -979,56 +984,48 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
     str<> timestamp;
     line_id_impl timestamp_id;
     read_lock::line_iter iter(lock, buffer.data(), buffer.size());
-    std::vector<std::unique_ptr<remap_history_line>> lines_to_keep;
+    std::vector<std::unique_ptr<keep_line_pair>> lines_to_keep;
     while (const line_id_impl id = iter.next(out, &timestamp, &timestamp_id.outer))
     {
-        std::unique_ptr<remap_history_line> line;
-        std::unique_ptr<remap_history_line> timestamp_line;
+        std::unique_ptr<keep_line_pair> keep = std::make_unique<keep_line_pair>();
 
         // Initialize the lines to keep.
         if (!timestamp.empty())
         {
             tmp.clear();
             tmp.format("|\ttime=%s", timestamp.c_str());
-            timestamp_line = std::make_unique<remap_history_line>();
-            timestamp_line->m_line.set(tmp.c_str());
+            keep->m_timestamp.m_line.set(tmp.c_str());
         }
-        line = std::make_unique<remap_history_line>();
-        line->m_line.set(out.get_pointer(), out.length());
+        keep->m_line.m_line.set(out.get_pointer(), out.length());
 
         // Maybe apply uniq and keep only the latest.
         if (uniq)
         {
-            auto const lookup = seen.find(line->m_line.get());
+            auto const lookup = seen.find(keep->m_line.m_line.get());
             if (lookup != seen.end())
             {
                 // Reuse the old entry so the map stays valid.  Leave the old
                 // entry present but empty, so the indices don't shift.
-                line = std::move(lines_to_keep[lookup->second]);
+                keep = std::move(lines_to_keep[lookup->second]);
                 assert(!lines_to_keep[lookup->second].get());
-                // Discard the old timestamp as well.
-                assert(strstr(lines_to_keep[lookup->second - 1]->m_line.get(), "\ttime="));
-                lines_to_keep[lookup->second - 1].reset();
                 // Update number of duplicate entries.
                 if (_dups)
                     ++(*_dups);
             }
-            // The +1 advances past the timestamp_line that gets added before
-            // the line (see a few lines further below).
-            seen.insert_or_assign(line->m_line.get(), lines_to_keep.size() + 1);
+            seen.insert_or_assign(keep->m_line.m_line.get(), lines_to_keep.size());
         }
 
         // Finishd initializing the lines to keep.
         if (!timestamp.empty())
-            timestamp_line->m_old = timestamp_id;
-        line->m_old = id;
+            keep->m_timestamp.m_old = timestamp_id;
+        else
+            keep->m_timestamp.m_line.set(nullptr);
+        keep->m_timestamp.m_old = timestamp_id;
+        keep->m_line.m_old = id;
 
-        // And keep them.  Add timestamp_line even when empty, so the position
-        // is reserved in case uniq ends up needing it.
-        lines_to_keep.emplace_back(std::move(timestamp_line));
-        lines_to_keep.emplace_back(std::move(line));
-        assert(!timestamp_line.get());
-        assert(!line.get());
+        // And keep them.
+        lines_to_keep.emplace_back(std::move(keep));
+        assert(!keep.get());
     }
 
     if (_kept)
@@ -1042,41 +1039,63 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
     lock.clear();
     lock.add(tag.get());
 
-    // Write lines from vector.
-    size_t skip = (0 < limit && limit < lines_to_keep.size()) ? lines_to_keep.size() - limit : 0;
-    for (auto const& line : lines_to_keep)
+    // Decide how many lines to keep.
+    size_t start = 0;
+    if (0 < limit && limit < lines_to_keep.size())
     {
-        if (line.get())
+        for (start = lines_to_keep.size(); limit && start--;)
+            if (lines_to_keep[start].get())
+                --limit;
+    }
+
+    // Write lines from vector.
+    for (size_t ii = start; ii < lines_to_keep.size(); ++ii)
+    {
+        const auto& keep = lines_to_keep[ii];
+        if (keep)
         {
-            if (skip)
-                skip--;
-            else
-                line->m_new = lock.add(line->m_line.get());
+            if (keep->m_timestamp.m_line.get())
+                keep->m_timestamp.m_new = lock.add(keep->m_timestamp.m_line.get());
+            keep->m_line.m_new = lock.add(keep->m_line.m_line.get());
         }
     }
 
     // Verify ids monotonically increase.
 #ifdef DEBUG
-    const remap_history_line* prev = nullptr;
-    for (const auto& line : lines_to_keep)
-        if (line)
+    const keep_line_pair* prev = nullptr;
+    for (size_t ii = start; ii < lines_to_keep.size(); ++ii)
+    {
+        const auto& keep = lines_to_keep[ii];
+        if (keep)
         {
             if (prev)
             {
-                assert(line->m_old.outer > prev->m_old.outer);
-                assert(line->m_new.outer > prev->m_new.outer);
+                if (keep->m_timestamp.m_line.get())
+                {
+                    assert(keep->m_timestamp.m_old.outer > prev->m_line.m_old.outer);
+                    assert(keep->m_line.m_old.outer > keep->m_timestamp.m_old.outer);
+                    assert(keep->m_timestamp.m_new.outer > prev->m_line.m_new.outer);
+                    assert(keep->m_line.m_new.outer > keep->m_timestamp.m_new.outer);
+                }
+                assert(keep->m_line.m_old.outer > prev->m_line.m_old.outer);
+                assert(keep->m_line.m_new.outer > prev->m_line.m_new.outer);
             }
-            prev = line.get();
+            prev = keep.get();
         }
+    }
 #endif
 
     if (remap)
     {
-        for (const auto& line : lines_to_keep)
+        for (size_t ii = start; ii < lines_to_keep.size(); ++ii)
         {
-            if (!line)
-                continue;
-            remap->emplace(line->m_old.outer, line->m_new.outer);
+            const auto& keep = lines_to_keep[ii];
+            if (keep)
+            {
+                if (keep->m_timestamp.m_line.get())
+                    remap->emplace(keep->m_timestamp.m_old.outer, keep->m_timestamp.m_new.outer);
+                remap->emplace(keep->m_line.m_old.outer, keep->m_line.m_new.outer);
+            }
         }
     }
 }
