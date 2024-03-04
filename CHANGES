@@ -5,6 +5,7 @@
 #### v1.6.7
 
 - Recognize the little-known `cmd /r` as a synonym for `cmd /c` so that Clink can optimize and skip injecting into a `cmd /r` process.
+- Fixed `argmatcher:addarg({loopchars="+", etcetc})` so that `-Q:+x` still gets parsed into two input words `-Q:` and `+x`.
 - Fixed [#570](https://github.com/chrisant996/clink/issues/570); fixed #569 more thoroughly, and `cd /d` cannot be used anywhere because it also requires command extensions.
 
 #### v1.6.6
