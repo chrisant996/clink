@@ -5,6 +5,7 @@
 #### v1.6.6
 
 - Added `clink history --no-show-time` to allow omitting history timestamps even when the `history.time_stamp` setting is `show`.
+- Fixed match display to not right justify descriptions when the screen isn't wide enough or when description contain aligned columns (like `clink set` completions do since v1.6.3).
 - Fixed `clink history` when output is redirected; strip any escape codes that might be embedded in the time format.
 - Fixed [#569](https://github.com/chrisant996/clink/issues/569); `cmd /e:off` causes syntax error in clink.bat script.
 - Fixed [#567](https://github.com/chrisant996/clink/issues/567); `clink history compact` accidentally deletes all timestamps.
