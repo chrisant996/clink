@@ -141,6 +141,9 @@ state_flag is_cmd_command(const char* word)
     dbg_ignore_scope(snapshot, "is_cmd_command"); // (s_map ctor allocates.)
     static str_map_caseless<state_flag>::type s_map;
 
+// TODO: Under what circumstances should ^ in word be ignored?  E.g. `^echo`
+// should get colored as a command.
+
     if (s_map.size() == 0)
     {
         // Internal commands in CMD get special word break treatment for the

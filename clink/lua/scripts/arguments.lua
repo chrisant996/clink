@@ -2487,9 +2487,13 @@ local function _has_argmatcher(command_word, quoted, no_cmd)
     if argmatcher and not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         local alias = os.getalias(command_word)
         if not alias or alias == "" then
-            -- Avoid coloring directories as having argmatchers.
+            -- Avoid coloring directories as having argmatchers, unless it's
+            -- also CMD builtin command name in a context where CMD commands
+            -- may be processed.
             if clink._async_path_type(command_word, 15, clink.reclassifyline) == "dir" then
-                return
+                if no_cmd or not clink.is_cmd_command(command_word) then
+                    return
+                end
             end
         end
     end
