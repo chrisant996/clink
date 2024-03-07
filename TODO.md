@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `i asdf d` asserts "!word.is_alias" in line_state_lua.cpp (line 125).
 
 ## Unit Tests
 
@@ -15,7 +14,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
-- `^echo` is not colored as a CMD command, but CMD interprets it as one.  That's easy to address, but it's hard to address the downstream effects on callers of `is_cmd_command()`, who might need additional special logic to deal with embedded carets.
+- line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
