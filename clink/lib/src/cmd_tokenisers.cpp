@@ -141,9 +141,6 @@ state_flag is_cmd_command(const char* word)
     dbg_ignore_scope(snapshot, "is_cmd_command"); // (s_map ctor allocates.)
     static str_map_caseless<state_flag>::type s_map;
 
-// TODO: Under what circumstances should ^ in word be ignored?  E.g. `^echo`
-// should get colored as a command.
-
     if (s_map.size() == 0)
     {
         // Internal commands in CMD get special word break treatment for the
@@ -160,9 +157,28 @@ state_flag is_cmd_command(const char* word)
 #endif
     }
 
-    auto const it = s_map.find(word);
+    auto it = s_map.find(word);
     if (it == s_map.end())
-        return flag_none;
+    {
+        if (!strchr(word, '^'))
+            return flag_none;
+
+        str<> tmp;
+        for (const char* walk = word; *walk; ++walk)
+        {
+            if (*walk == '^')
+            {
+                ++walk;
+                if (!*walk)
+                    break;
+            }
+            tmp.concat(walk, 1);
+        }
+
+        it = s_map.find(tmp.c_str());
+        if (it == s_map.end())
+            return flag_none;
+    }
 
     return it->second;
 }
@@ -512,6 +528,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
         while (m_iter.more())
         {
             const int32 c = m_iter.peek();
+            // TODO: Handle '^'?
             if (!str_chr(get_delims(command_word, redir_arg, false), c))
                 break;
             m_iter.next();
@@ -575,6 +592,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
                 state = sSpc;
                 start_new_word();
                 c = m_iter.peek();
+                // TODO: Handle '^'?
                 input = get_input_type(c);
                 new_state = c_transition[state][input];
                 if (new_state == sBREAK) // 'rem' can lead to this.
@@ -589,6 +607,18 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             // second (and empty) word as a redir_arg.
             if (!m_iter.more())
                 break;
+
+            if (c == '^')
+            {
+                char c2 = *m_iter.get_next_pointer();
+                input_type input2 = get_input_type(c2);
+                if (input2 == sSpc)
+                {
+                    c = c2;
+                    input = input2;
+                    new_state = c_transition[state][input];
+                }
+            }
 
             // Internal commands have special word break syntax.
             if (new_state == sTxt && m_cmd_state.test(c, new_state))
