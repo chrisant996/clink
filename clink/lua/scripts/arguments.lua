@@ -2296,19 +2296,19 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _is_argmatcher_loaded(command_word, quoted)
+local function _is_argmatcher_loaded(command_word, quoted, no_cmd)
     local argmatcher
 
     repeat
         -- Check for an exact match.
         argmatcher = _argmatchers[command_word]
-        if argmatcher then
+        if argmatcher and not (no_cmd and argmatcher._cmd_command) then
             break
         end
 
         -- Check for a name match.
         argmatcher = _argmatchers[path.getname(command_word)]
-        if argmatcher then
+        if argmatcher and not (no_cmd and argmatcher._cmd_command) then
             break
         end
 
@@ -2325,9 +2325,14 @@ local function _is_argmatcher_loaded(command_word, quoted)
         end
     until true
 
-    if quoted and argmatcher and argmatcher._cmd_command then
-        -- CMD commands cannot be quoted.
-        argmatcher = nil
+    if argmatcher and argmatcher._cmd_command then
+        if quoted then
+            -- CMD commands cannot be quoted.
+            argmatcher = nil
+        elseif no_cmd then
+            -- Ignore CMD commands when they're not allowed.
+            argmatcher = nil
+        end
     end
 
     return argmatcher
@@ -2375,7 +2380,7 @@ local function get_completion_dirs()
 end
 
 --------------------------------------------------------------------------------
-local function attempt_load_argmatcher(command_word, quoted)
+local function attempt_load_argmatcher(command_word, quoted, no_cmd)
     if not command_word or command_word == "" then
         return
     end
@@ -2437,7 +2442,7 @@ local function attempt_load_argmatcher(command_word, quoted)
                     return
                 end
                 -- Check again, and stop if argmatcher is loaded.
-                local argmatcher = _is_argmatcher_loaded(command_word, quoted)
+                local argmatcher = _is_argmatcher_loaded(command_word, quoted, no_cmd)
                 if argmatcher then
                     loaded_argmatchers[command_word] = 3 -- Attempted, loaded, and has argmatcher.
                     return argmatcher
@@ -2452,7 +2457,7 @@ end
 -- not, then it looks for a Lua script by that name in one of the completions
 -- directories.  If found, the script is loaded, and it checks again whether an
 -- argmatcher is already loaded for the specified word.
-local function _has_argmatcher(command_word, quoted)
+local function _has_argmatcher(command_word, quoted, no_cmd)
     if not command_word or command_word == "" then
         return
     end
@@ -2471,12 +2476,12 @@ local function _has_argmatcher(command_word, quoted)
         end
     end
 
-    local argmatcher = _is_argmatcher_loaded(command_word, quoted)
+    local argmatcher = _is_argmatcher_loaded(command_word, quoted, no_cmd)
 
     -- If an argmatcher isn't loaded, look for a Lua script by that name in one
     -- of the completions directories.  If found, load it and check again.
     if not argmatcher and not loaded_argmatchers[command_word] and recognized then
-        argmatcher = attempt_load_argmatcher(command_word, quoted)
+        argmatcher = attempt_load_argmatcher(command_word, quoted, no_cmd)
     end
 
     if argmatcher and not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
@@ -2497,7 +2502,8 @@ end
 --  argmatcher  = The argmatcher, unless there are too few words to use it.
 --  exists      = True if argmatcher exists (even if too few words to use it).
 --  extra       = Extra line_state to run through reader before continuing.
-local function _find_argmatcher(line_state, check_existence, lookup)
+--  no_cmd      = Don't find argmatchers for CMD builtin commands.
+local function _find_argmatcher(line_state, check_existence, lookup, no_cmd)
     -- Running an argmatcher only makes sense if there's two or more words.
     local word_count = line_state:getwordcount()
     local command_word_index = line_state:getcommandwordindex()
@@ -2528,7 +2534,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                     local ecwi = els:getcommandwordindex()
                     local einfo = els:getwordinfo(ecwi)
                     local eword = els:getword(ecwi)
-                    local argmatcher = _has_argmatcher(eword, einfo and einfo.quoted)
+                    local argmatcher = _has_argmatcher(eword, einfo and einfo.quoted, no_cmd)
                     if argmatcher then
                         if check_existence then
                             argmatcher = nil
@@ -2554,7 +2560,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
         end
     end
 
-    local argmatcher = _has_argmatcher(command_word, info and info.quoted)
+    local argmatcher = _has_argmatcher(command_word, info and info.quoted, no_cmd)
     if argmatcher then
         if check_existence then
             argmatcher = nil
@@ -2600,8 +2606,9 @@ end
 function clink._generate_from_historyline(line_state)
     local lookup
     local extra
+    local no_cmd
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd) -- luacheck: no unused
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
@@ -2624,6 +2631,7 @@ function clink._generate_from_historyline(line_state)
         local stop -- When consuming extra, it means switch to a new argmatcher.
         stop, lookup = reader:consume_extra(extra)
         if stop then
+            no_cmd = reader._no_cmd
             goto do_command
         end
     end
@@ -2638,6 +2646,7 @@ function clink._generate_from_historyline(line_state)
             line_state = reader._line_state -- reader:update() can swap to a different line_state.
             if chain then
                 line_state:_shift(word_index)
+                no_cmd = reader._no_cmd
                 goto do_command
             end
         end
@@ -2655,8 +2664,9 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 local function do_generate(line_state, match_builder)
     local lookup
     local extra
+    local no_cmd
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if not extra then
         if alias then
@@ -2677,6 +2687,7 @@ local function do_generate(line_state, match_builder)
             local stop
             stop, lookup = reader:consume_extra(extra)
             if stop then
+                no_cmd = reader._no_cmd
                 goto do_command
             end
         end
@@ -2686,6 +2697,7 @@ local function do_generate(line_state, match_builder)
         if ret and (shift or inner) then
             line_state:_shift(shift)
             lookup = inner
+            no_cmd = reader._no_cmd
             goto do_command
         end
         clink.co_state._argmatcher_fromhistory = {}
@@ -2714,8 +2726,9 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
     local extra
     local original_line_state = line_state
+    local no_cmd
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd) -- luacheck: no unused
     lookup = nil
     if not extra then
         if alias then
@@ -2733,6 +2746,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             local stop -- When consuming extra, it means switch to a new argmatcher.
             stop, lookup = reader:consume_extra(extra)
             if stop then
+                no_cmd = reader._no_cmd
                 goto do_command
             end
         end
@@ -2748,6 +2762,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 if chain then
                     line_state:_shift(word_index)
+                    no_cmd = reader._no_cmd
                     goto do_command
                 end
             end
@@ -2759,6 +2774,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             line_state = reader._line_state -- reader:update() can swap to a different line_state.
             if line_state:getwordcount() > word_count then
                 line_state:_shift(word_count)
+                no_cmd = reader._no_cmd
                 goto do_command
             end
         end
@@ -2818,7 +2834,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local no_cmd
 ::do_command::
 
-        local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup)
+        local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup, no_cmd)
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil
         if not extra then
