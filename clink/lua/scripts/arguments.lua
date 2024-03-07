@@ -196,7 +196,11 @@ local function do_onuse_callback(argmatcher, command_word)
 
     -- Start the delay init callback if it hasn't already started.
     local c = argmatcher._onuse_coroutine
-if c then print("...already...  "..tostring(c)) end
+    if clink.DEBUG and c then
+        print("\n\n\x1b[7m...already...  "..tostring(c).."\x1b[m")
+        print("\n\n")
+        pause()
+    end
     if not c then
         -- Run the delayinit callback in a coroutine so typing is responsive.
         c = coroutine.create(function ()
