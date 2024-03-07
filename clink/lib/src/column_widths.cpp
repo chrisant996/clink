@@ -255,6 +255,7 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
 
     /* Compute the maximum number of possible columns.  */
     int32 max_match = 0;    // Longest match width in cells.
+    int32 max_desc = 0;     // Longest desc width in cells.
     int32 max_len = 0;      // Longest combined match and desc width in cells.
     for (size_t filesno = 0; filesno < count; ++filesno)
     {
@@ -305,6 +306,8 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
             desc_len = min<uint32>(1024, adapter.get_match_visible_description(filesno));
             if (desc_len)
                 desc_len += desc_padding + paren_cells;
+            if (max_desc < desc_len)
+                max_desc = desc_len;
         }
 
         if (max_len < match_len + desc_len)
@@ -391,10 +394,16 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
 
     if (!no_right_justify && !widths.m_right_justify && variable_widths)
     {
-        // Can't right justify after all; rebuild m_max_match_len_in_column.
+        // Can't right justify after all.
+        widths.m_widths.clear();
         widths.m_max_match_len_in_column.clear();
+        const auto& columns_info = s_columns_info[limit - 1];
         for (size_t i = 0; i < limit; ++i)
+        {
+            const auto& arr = columns_info.col_arr[i];
+            widths.m_widths.push_back(max_match + max_desc);
             widths.m_max_match_len_in_column.push_back(max_match);
+        }
     }
 
     return widths;
