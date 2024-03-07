@@ -393,6 +393,8 @@ end
 -- NOTE: line_state may not be self._line_state if it came from extra.
 function _argreader:start_chained_command(line_state, word_index, mode, expand_aliases)
     self._no_cmd = nil
+    self._chain_command = true
+    self._chain_command_expand_aliases = expand_aliases
     mode = mode or "cmd"
     for i = word_index, line_state:getwordcount() do
         local info = line_state:getwordinfo(i)
@@ -400,16 +402,18 @@ function _argreader:start_chained_command(line_state, word_index, mode, expand_a
             if info.quoted then
                 return line_state
             end
-            local alias
-            if expand_aliases then
+            local alias = info.alias
+            if expand_aliases and not alias then
                 local word = line_state:getword(i)
-                local got = os.getalias(word)
-                alias = got and got ~= ""
-                if (not alias) ~= (not info.alias) then
-                    local ls = line_state:_set_alias(i, alias)
-                    if ls then
-                        self._line_state = ls
-                        line_state = ls
+                if word ~= "" then
+                    local got = os.getalias(word)
+                    alias = got and got ~= ""
+                    if (not alias) ~= (not info.alias) then
+                        local ls = line_state:_set_alias(i, alias)
+                        if ls then
+                            self._line_state = ls
+                            line_state = ls
+                        end
                     end
                 end
             end
@@ -439,6 +443,7 @@ end
 local default_flag_nowordbreakchars = "'`=+;,"
 function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck: no unused
     self._chain_command = nil
+    self._chain_command_expand_aliases = nil
     self._cycle_detection = nil
     if self._disabled then
         return
@@ -642,7 +647,6 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     if react == -1 then
         -- Chain due to request by `onadvance` callback.
         local mode, expand_aliases = parse_chaincommand_modes(react_modes)
-        self._chain_command = true
         self:start_chained_command(line_state, word_index, mode, expand_aliases)
         return true -- chaincommand.
     end
@@ -651,7 +655,6 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     if not arg then
         if matcher._chain_command then
             -- Chain due to :chaincommand() used in argmatcher.
-            self._chain_command = true
             self:start_chained_command(line_state, word_index, matcher._chain_command_mode, matcher._chain_command_expand_aliases)
             return true -- chaincommand.
         end
@@ -1922,7 +1925,8 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         -- Check matcher._chain_command for :chaincommand().
         -- Check reader._chain_command for onadvance callback that returns -1.
         if matcher._chain_command or reader._chain_command then
-            local exec = clink._exec_matches(line_state, match_builder, true--[[chained]])
+            local expand_aliases = matcher._chain_command_expand_aliases or reader._chain_command_expand_aliases
+            local exec = clink._exec_matches(line_state, match_builder, true--[[chained]], not expand_aliases)
             return exec or add_matches({clink.filematches}) or false
         end
     end

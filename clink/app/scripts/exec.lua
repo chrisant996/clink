@@ -74,7 +74,7 @@ end
 --------------------------------------------------------------------------------
 local exec_generator = clink.generator(50)
 
-local function exec_matches(line_state, match_builder, chained)
+local function exec_matches(line_state, match_builder, chained, no_aliases)
     -- If executable matching is disabled do nothing.
     if not settings.get("exec.enable") then
         return false
@@ -122,7 +122,7 @@ local function exec_matches(line_state, match_builder, chained)
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        if not chained and settings.get("exec.aliases") then
+        if not no_aliases and settings.get("exec.aliases") then
             local aliases = os.getaliases()
             match_builder:addmatches(aliases, "alias")
         end
