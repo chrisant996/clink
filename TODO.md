@@ -5,17 +5,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `i asdf d` asserts "!word.is_alias" in line_state_lua.cpp (line 125).
 
 ## Unit Tests
 
 ## Normal Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
-- Ideally shouldn't find argmatchers for built-in CMD commands when `:chaincommand("process")`.
-- Ideally should find argmatchers for built-in CMD commands even when a directory by the same name exists, unless `:chaincommand("process")`.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
+- `^echo` is not colored as a CMD command, but CMD interprets it as one.  That's easy to address, but it's hard to address the downstream effects on callers of `is_cmd_command()`, who might need additional special logic to deal with embedded carets.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
