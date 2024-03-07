@@ -27,12 +27,8 @@ if /i "%~1"=="--quiet" (
 )
 
 rem -- If the .bat is run without any arguments, then start a cmd.exe instance.
-if "%~1"=="" (
-    setlocal enableextensions
-    set WT_PROFILE_ID=
-    set WT_SESSION=
-    start "Clink" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg%%clink_quiet_arg%"
-    endlocal
+if _%1==_ (
+    call :launch
     goto :end
 )
 
@@ -55,5 +51,14 @@ if /i "%processor_architecture%"=="x86" (
         "%~dp0\clink_x64.exe" %*
     )
 )
+
+goto :end
+
+:launch
+setlocal enableextensions
+set WT_PROFILE_ID=
+set WT_SESSION=
+start "Clink" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg%%clink_quiet_arg%"
+endlocal
 
 :end
