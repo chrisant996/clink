@@ -355,10 +355,12 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     widths.m_sind = sind;
     widths.m_can_condense = can_condense;
 
-    if (fixed_cols || max_cols <= 0)
+    size_t limit;
+    const bool variable_widths = !(fixed_cols || max_cols <= 0);
+    if (!variable_widths)
     {
         const size_t col_max = max_len + col_padding;
-        const size_t limit = one_column ? 1 : max<size_t>(line_length / col_max, 1);
+        limit = one_column ? 1 : max<size_t>(line_length / col_max, 1);
         for (size_t i = 0; i < limit; ++i)
         {
             widths.m_widths.push_back(max_len);
@@ -368,16 +370,16 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     else
     {
         /* Find maximum allowed columns.  */
-        size_t cols;
-        for (cols = max_cols; 1 < cols; --cols)
+        for (limit = max_cols; 1 < limit; --limit)
         {
-            if (s_columns_info[cols - 1].valid_len)
+            if (s_columns_info[limit - 1].valid_len)
                 break;
         }
 
-        for (size_t i = 0; i < cols; ++i)
+        const auto& columns_info = s_columns_info[limit - 1];
+        for (size_t i = 0; i < limit; ++i)
         {
-            const auto& arr = s_columns_info[cols - 1].col_arr[i];
+            const auto& arr = columns_info.col_arr[i];
             widths.m_widths.push_back(arr.a_len + arr.b_len - col_padding);
             widths.m_max_match_len_in_column.push_back(arr.a_len);
         }
@@ -386,6 +388,14 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     widths.m_right_justify = (!no_right_justify &&
                               (widths.num_columns() > 1 || max_match > (screen_width * 4) / 10) &&
                               (widths.m_widths[0] < screen_width - 2));
+
+    if (!no_right_justify && !widths.m_right_justify && variable_widths)
+    {
+        // Can't right justify after all; rebuild m_max_match_len_in_column.
+        widths.m_max_match_len_in_column.clear();
+        for (size_t i = 0; i < limit; ++i)
+            widths.m_max_match_len_in_column.push_back(max_match);
+    }
 
     return widths;
 }
