@@ -8,7 +8,10 @@
 - Fixed displaying descriptions when they're left-justified (regression introduced in v1.6.6).
 - Fixed `argmatcher:chaincommand("run")` to not find argmatchers for builtin CMD command names (since CMD doesn't get invoked in that case, so it won't get interpreted as a CMD command).
 - Fixed `argmatcher:chaincommand()` to find an argmatcher for a builtin CMD command even if a directory exists with the same name (since CMD interprets that case as a CMD command).
+- Fixed `argmatcher:chaincommand("cmd")` so when `exec.aliases` is enabled it can include aliases as completions.
 - Fixed `argmatcher:addarg({loopchars="+", etcetc})` so that `-Q:+x` still gets parsed into two input words `-Q:` and `+x`.
+- Fixed to parse `foo^ bar` as two words "foo" and "bar".
+- Fixed to recognize `^echo` (etc) as a builtin CMD command name despite embedded `^` characters.
 - Fixed [#570](https://github.com/chrisant996/clink/issues/570); fixed #569 more thoroughly, and `cd /d` cannot be used anywhere because it also requires command extensions.
 
 #### v1.6.6
