@@ -9,7 +9,10 @@
             VALUE "CompanyName",     "Martin Ridgers, Christopher Antos"
             VALUE "ProductName",     "Clink"
             VALUE "FileDescription", "Clink"
+            VALUE "InternalName",    "Clink"
             VALUE "ProductVersion",  CLINK_VERSION_STR
+            VALUE "FileVersion",     CLINK_VERSION_STR
+            VALUE "LegalCopyright",  CLINK_COPYRIGHT_STR
         }
     }
     BLOCK "VarFileInfo" {
