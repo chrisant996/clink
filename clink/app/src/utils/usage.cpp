@@ -15,8 +15,8 @@
 //------------------------------------------------------------------------------
 static constexpr const char* const c_clink_header =
     "Clink v" CLINK_VERSION_STR "\n"
-    "Copyright (c) 2012-2018 Martin Ridgers\n"
-    "Portions Copyright (c) 2020-2023 Christopher Antos\n"
+    ORIGINAL_COPYRIGHT_STR "\n"
+    PORTIONS_COPYRIGHT_STR "\n"
     "https://github.com/chrisant996/clink\n"
     ;
 
