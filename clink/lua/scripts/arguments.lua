@@ -2866,11 +2866,11 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 local cl
                 local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
                 if recognized < 0 then
-                    cl = unrecognized_color and "u"                              --unrecognized
+                    cl = unrecognized_color and "u" or "o"      --unrecognized
                 elseif recognized > 0 then
-                    cl = executable_color and "x"                                --executable
+                    cl = executable_color and "x" or "o"        --executable
                 else
-                    cl = "o"                                                     --other
+                    cl = "o"                                    --other
                 end
                 word_classifier:classifyword(command_word_index, m..cl, false);
             else
