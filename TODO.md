@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Flicker reduction broke clearing excess from end of input area!
 
 ## Unit Tests
 
