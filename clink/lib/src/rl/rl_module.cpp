@@ -2765,7 +2765,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     if (redisplay)
     {
         g_prompt_redisplay++;
-        defer_clear_lines(clear_lines);
+        defer_clear_lines(clear_lines, transient);
         rl_forced_update_display();
 
         lock_cursor(false);

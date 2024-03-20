@@ -50,6 +50,7 @@ int32 host_filter_matches(char** matches);
 void host_invalidate_matches();
 const char** host_copy_dir_history(int32* total);
 void host_get_app_context(int32& id, host_context& context);
+bool is_sparse_prompt_spacing();
 
 //------------------------------------------------------------------------------
 void clear_deprecated_argmatchers();

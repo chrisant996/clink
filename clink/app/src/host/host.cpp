@@ -368,6 +368,12 @@ static void adjust_prompt_spacing()
     }
 }
 
+//------------------------------------------------------------------------------
+bool is_sparse_prompt_spacing()
+{
+    return s_prompt_spacing.get() == prompt_spacing::sparse;
+}
+
 
 
 //------------------------------------------------------------------------------

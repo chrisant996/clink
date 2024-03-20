@@ -21,6 +21,7 @@
 #include "display_readline.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
+#include "line_editor_integration.h"
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
 #include "rl/rl_commands.h"
 #include "suggestions.h"
@@ -2610,7 +2611,7 @@ void clear_comment_row()
 
 //------------------------------------------------------------------------------
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-void defer_clear_lines(uint32 prompt_lines)
+void defer_clear_lines(uint32 prompt_lines, bool transient)
 {
     str<16> up;
     if (prompt_lines > 0)
@@ -2622,7 +2623,10 @@ void defer_clear_lines(uint32 prompt_lines)
     rl_fwrite_function(_rl_out_stream, up.c_str(), up.length());
     _rl_last_c_pos = 0;
 
-    s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
+    if (transient)
+        s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
+    else if (is_sparse_prompt_spacing())
+        s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
 }
 #endif
 
