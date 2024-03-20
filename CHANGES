@@ -4,6 +4,7 @@
 
 #### v1.6.10
 
+- Added an optimization to further reduce flicker when re-drawing the prompt.
 - Fixed [#575](https://github.com/chrisant996/clink/issues/575); error when `color.executable` is set and `color.unrecognized` is not (regression introduced in v1.6.2).
 
 #### v1.6.9
