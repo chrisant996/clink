@@ -109,7 +109,8 @@ To debug the actual DLL injection procedure, you must debug both the `clink_x64.
   - Observe the value of `region.base` before the `CreateRemoteThread` call executes -- this is the address of the instruction payload that has been copied into the target CMD.exe process.
   - Set a breakpoint in the target CMD.exe process for that address -- when `CreateRemoteThread` executes, it will transfer execution to that address in the target CMD.exe process, and you can debug through the execution of the instruction payload itself.
 
-> **Note:**  If the instruction payload references any functions or variables from the Clink process, it will crash during execution inside the target CMD.exe process.  Compiler features like the "just my code", "edit and continue", "omit frame pointers", exception handling, inlining, and runtime checks must be configured appropriately to keep the instruction payload self-contained (see the "clink_process" lib in the premake5.lua file).
+> [!CAUTION]
+> If the instruction payload references any functions or variables from the Clink process, it will crash during execution inside the target CMD.exe process.  Compiler features like the "just my code", "edit and continue", "omit frame pointers", exception handling, inlining, and runtime checks must be configured appropriately to keep the instruction payload self-contained (see the "clink_process" lib in the premake5.lua file).
 
 ### Debugging Lua Scripts
 
