@@ -6,6 +6,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Flicker reduction broke clearing excess from end of input area!
+  - REPRO: `Up` to pick a history entry, `Ctrl-Left` to position cursor, `Ctrl-Backspace` to delete a word to the left --> the trailing text is not cleared.
 
 ## Unit Tests
 
