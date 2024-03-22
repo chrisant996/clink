@@ -2335,7 +2335,7 @@ test_left:
     _rl_last_c_pos = rcol;
 
     // Clear anything leftover from o.
-    if (o && d->m_lastcol < o->m_lastcol)
+    if (!o || d->m_lastcol < o->m_lastcol)
     {
         if (use_eol_opt)
         {
@@ -2345,7 +2345,7 @@ test_left:
         {
             // m_lastcol does not include filler spaces; and that's fine since
             // the spaces use FACE_NORMAL.
-            const uint32 erase_cols = o->m_lastcol - d->m_lastcol;
+            const uint32 erase_cols = (o ? o->m_lastcol : _rl_screenwidth) - d->m_lastcol;
 
             move_to_column(d->m_lastcol);
 
