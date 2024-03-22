@@ -4,6 +4,9 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 For details, refer to the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
 
+> [!NOTE]
+> Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
+
 ### Download
 
 Downloads are available from the [releases page](https://github.com/chrisant996/clink/releases).
@@ -37,14 +40,19 @@ Once installed, there are several ways to start Clink.
 
 1. If Clink is configured for autorun, just start `cmd.exe` and Clink is automatically injected and ready to use.
 
-> The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
+    > The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
 
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
 3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
 
-> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
+    > If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
 
-Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
+You can use Clink right away without configuring anything:
+
+- Searchable [command history](#saved-command-history) will be saved between sessions.
+- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.
+- Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
+- Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
 See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on how to get started with using Clink.
 
