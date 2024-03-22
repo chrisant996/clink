@@ -2335,17 +2335,20 @@ test_left:
     _rl_last_c_pos = rcol;
 
     // Clear anything leftover from o.
-    if (!o || d->m_lastcol < o->m_lastcol)
+    const uint32 lastcol = (o ? o->m_lastcol : _rl_screenwidth);
+    if (d->m_lastcol < lastcol)
     {
         if (use_eol_opt)
         {
+            // Using _rl_screenwidth is more accurate than lastcol, because
+            // the escape code clears to the screen width.
             _rl_clear_to_eol(_rl_screenwidth - rcol);
         }
         else
         {
             // m_lastcol does not include filler spaces; and that's fine since
             // the spaces use FACE_NORMAL.
-            const uint32 erase_cols = (o ? o->m_lastcol : _rl_screenwidth) - d->m_lastcol;
+            const uint32 erase_cols = lastcol - d->m_lastcol;
 
             move_to_column(d->m_lastcol);
 
