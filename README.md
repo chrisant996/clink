@@ -1,8 +1,11 @@
 ### Overview
 
-Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for many Linux distributions.
 
 For details, refer to the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
+
+> [!NOTE]
+> Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
 
 ### Download
 
@@ -98,13 +101,28 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 </div>
 </div>
 
+### Installation
+
+You can install Clink by running the setup EXE file from the [releases page](https://github.com/chrisant996/clink/releases).
+
+Or by using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and running `winget install clink`.
+
+Or by using [scoop](https://scoop.sh/) and running `scoop install clink`.
+
+Or by downloading the ZIP file from [releases page](https://github.com/chrisant996/clink/releases), and extracting the files to a directory of your choosing.
+
 ### Usage
 
-There are several ways to start Clink.
+Once installed, there are several ways to start Clink.
 
-1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
+1. If Clink is configured for autorun, just start `cmd.exe` and Clink is automatically injected and ready to use.
+
+> The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
+
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
+
+> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
 
 You can use Clink right away without configuring anything:
 
@@ -113,7 +131,7 @@ You can use Clink right away without configuring anything:
 - Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
-See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on getting started with Clink.
+See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on how to get started with using Clink.
 
 ### Upgrading from Clink v0.4.9
 
