@@ -69,10 +69,6 @@ Var uninstallerExe
 
 ;-------------------------------------------------------------------------------
 Function cleanLegacyInstall
-    IfFileExists $INSTDIR\..\clink_uninstall.exe +3 0
-        DetailPrint "Install does not trample an existing one."
-        Return
-
     ; Start menu items and uninstall registry entry.
     ;
     StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -82,7 +78,7 @@ Function cleanLegacyInstall
 
     ; Install dir
     ;
-    Delete /REBOOTOK $INSTDIR\..\clink*
+    Delete /REBOOTOK $INSTDIR
 
     ; Migrate state to the new location.
     ;
@@ -118,6 +114,11 @@ Function cleanPreviousInstalls
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
+Function cleanPreviousUninstallers
+    Delete /REBOOTOK $INSTDIR\clink_uninstall*.exe
+FunctionEnd
+
+;-------------------------------------------------------------------------------
 Section "!Application files" app_files_id
     SectionIn RO
     SetShellVarContext all
@@ -141,6 +142,10 @@ Section "!Application files" app_files_id
         File ${CLINK_BUILD}\clink_dll_arm*.dll
         File ${CLINK_BUILD}\clink_arm*.exe
     ${EndIf}
+
+    ; Clean up previous uninstallers.
+    ;
+    Call cleanPreviousUninstallers
 
     ; Create an uninstaller.
     ;
