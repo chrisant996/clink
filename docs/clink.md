@@ -2177,6 +2177,8 @@ The function receives five arguments:
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line.
+    - Each argmatcher gets a separate `user_data` while the line is being parsed.
+    - All argmatchers within a command share a `user_data.shared_user_data` table, which allows linked argmatchers to data with each other within a command (only in Clink v1.6.10 and higher).
 
 The function doesn't return anything.
 
