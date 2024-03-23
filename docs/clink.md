@@ -2089,7 +2089,7 @@ An argmatcher can supply "on advance" or "on arg" functions to be called when th
 - An "[on arg](#the-on-arg-function)" function is called _when_ parsing a word.  It can examine the word and do custom processing.
 - An "[on link](#the-on-link-function)" function is called _after_ parsing a word.  It can examine the word and override what argmatcher it links to (see [Linking Parsers](#argmatcher_linking)).
 
-All of these callback functions receive a `user_data` table.  When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on advance" and "on arg" and "on link" functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).
+All of these callback functions receive a `user_data` table.  Your "on advance" and "on arg" and "on link" functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).  When parsing begins for a command, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  In Clink v1.6.10 and higher, each `user_data` table contains a `shared_user_data` field which is a reference to another table.  The `user_data.shared_user_data` enables linked argmatchers to share data with each other while parsing a command.
 
 > **Note:** These callback functions are called very often, so they need to be very fast or they can cause responsiveness problems while typing.
 
@@ -2104,7 +2104,7 @@ The function receives five arguments:
 - `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
-- `user_data` is a table that the argmatcher can use to help it parse the input line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
 The function may return any of the following values:
 - Return `1` to advance to the next argument position _before_ parsing the word (normally the parser advances _after_ parsing a word).  Multiple advances are possible for the same word:  if the "on advance" functions for argument positions 2, 3, and 4 all return `1`, then argument position 5 will parse the word.
@@ -2176,9 +2176,7 @@ The function receives five arguments:
 - `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
-- `user_data` is a table that the argmatcher can use to help it parse the input line.
-    - Each argmatcher gets a separate `user_data` while the line is being parsed.
-    - All argmatchers within a command share a `user_data.shared_user_data` table, which allows linked argmatchers to data with each other within a command (only in Clink v1.6.10 and higher).
+- `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
 The function doesn't return anything.
 
@@ -2212,7 +2210,7 @@ The function receives six arguments:
 - `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
-- `user_data` is a table that the argmatcher can use to help it parse the input line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
 The function may return any of the following:
 - Return an argmatcher to override subsequent parsing and use the specified argmatcher.
@@ -2550,7 +2548,7 @@ The classifier function is passed up to six arguments:
 - `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `classifications` is a [word_classifications](#word_classifications) object which can be used to apply colors.
-- In Clink v1.5.17 and higher, `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
+- In Clink v1.5.17 and higher, `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
 Words are colored by classifying the words, and each classification has an associated color.  See [word_classifications:classifyword()](#word_classifications:classifyword) for the available classification codes.
 
