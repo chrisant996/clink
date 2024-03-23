@@ -60,10 +60,12 @@ setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
 
 --------------------------------------------------------------------------------
 function _argreader._new(root, line_state)
+    local shared_user_data = {}
     local reader = setmetatable({
         _matcher = root,
         _realmatcher = root,
-        _user_data = {},
+        _shared_user_data = shared_user_data,
+        _user_data = { shared_user_data=shared_user_data },
         _line_state = line_state,
         _arg_index = 1,
         _stack = {},
@@ -862,7 +864,7 @@ function _argreader:_push(matcher, realmatcher)
     self._realmatcher = realmatcher or matcher
     self._noflags = nil
     if not realmatcher then -- Don't start new user data when switching to flags matcher.
-        self._user_data = {}
+        self._user_data = { shared_user_data=self._shared_user_data }
     end
 end
 
