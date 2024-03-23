@@ -6,6 +6,7 @@
 
 - Added an optimization to further reduce flicker when re-drawing the prompt.
 - Added a `user_data.shared_user_data` table to allow linked argmatchers to share data with each other while an input line is being parsed ().
+- Fixed [#579](https://github.com/chrisant996/clink/issues/579); popup lists could accidentally truncate text in the first column when there's only one column.
 - Fixed [#576](https://github.com/chrisant996/clink/issues/576); setup exe doesn't remove old uninstall exe files.
 - Fixed [#575](https://github.com/chrisant996/clink/issues/575); error when `color.executable` is set and `color.unrecognized` is not (regression introduced in v1.6.2).
 
