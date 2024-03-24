@@ -15,6 +15,10 @@
 #include "lstate.h"
 #include "lundump.h"
 
+/* begin_clink_change */
+#include <string.h>
+/* end_clink_change */
+
 typedef struct {
  lua_State* L;
  lua_Writer writer;
@@ -125,7 +129,7 @@ static void DumpDebug(const Proto* f, DumpState* D)
  int strip = D->strip;
  if (strip && f->source) {
   const char* src = getstr(f->source);
-  strip = !(src[0] == '=' && src[1] == '{');
+  strip = (strnicmp(src, "@~clink~\\", 8) != 0);
  }
  DumpString(strip ? NULL : f->source,D);
 /* end_clink_change */

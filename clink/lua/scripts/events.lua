@@ -432,6 +432,7 @@ local function collect_event_src(t, event)
     t[event] = tsub
 
     local any_cost
+    local any_events
     local longest = 24
     for _,c in ipairs(callbacks) do
         if c.func then
@@ -446,11 +447,13 @@ local function collect_event_src(t, event)
                 if not any_cost and entry.cost then
                     any_cost = true
                 end
+                any_events = true
             end
         end
     end
     tsub.any_cost = any_cost
     t.longest = max_len(t.longest, longest)
+    return any_events
 end
 
 --------------------------------------------------------------------------------
@@ -492,12 +495,13 @@ function clink._diag_events(arg)
     table.sort(sorted_events, function(a, b) return a < b end)
 
     local t = {}
+    local any_events
     for _,event_name in ipairs(sorted_events) do
-        collect_event_src(t, event_name)
+        any_events = collect_event_src(t, event_name) or any_events
     end
 
-    if t.longest then
-        clink.print(bold.."events:"..norm)
+    clink.print(bold.."events:"..norm)
+    if any_events then
         for _,event_name in ipairs(sorted_events) do
             print_event_src(t, event_name)
         end

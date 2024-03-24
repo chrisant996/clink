@@ -42,6 +42,9 @@ static int stripping=0;			/* strip debug information? */
 static char Output[]={ OUTPUT };	/* default output file name */
 static const char* output=Output;	/* actual output file name */
 static const char* progname=PROGNAME;	/* actual program name */
+/* begin_clink_change */
+static const char* renamed=NULL;	/* overridden (renamed) file name in debug information */
+/* end_clink_change */
 
 static void fatal(const char* message)
 {
@@ -67,6 +70,9 @@ static void usage(const char* message)
   "  -l       list (use -l -l for full listing)\n"
   "  -o name  output to file " LUA_QL("name") " (default is \"%s\")\n"
   "  -p       parse only\n"
+/* begin_clink_change */
+  "  -R name  override with " LUA_QL("name") " in debug information\n"
+/* end_clink_change */
   "  -s       strip debug information\n"
   "  -v       show version information\n"
   "  --       stop handling options\n"
@@ -103,6 +109,14 @@ static int doargs(int argc, char* argv[])
     usage(LUA_QL("-o") " needs argument");
    if (IS("-")) output=NULL;
   }
+/* begin_clink_change */
+  else if (IS("-R"))			/* override (rename) file in debug information */
+  {
+   renamed=argv[++i];
+   if (renamed==NULL || *renamed==0)
+    usage(LUA_QL("-R") " needs argument");
+  }
+/* end_clink_change */
   else if (IS("-p"))			/* parse only */
    dumping=0;
   else if (IS("-s"))			/* strip debug information */
@@ -182,14 +196,8 @@ static int pmain(lua_State* L)
   const char* filename=IS("-") ? NULL : argv[i];
 /* begin_clink_change */
   //if (luaL_loadfile(L,filename)!=LUA_OK) fatal(lua_tostring(L,-1));
-  if (stripping) {
-    char name[128];
-    const char* fname = filename;
-    for (const char* ptr = fname; *ptr; ++ptr)
-        if (*ptr == '/' || *ptr == '\\')
-        fname = ptr + 1;
-    sprintf(name, "{%s}", fname);
-    if (luaL_loadfilexname(L,filename,NULL,name)!=LUA_OK) fatal(lua_tostring(L,-1));
+  if (renamed) {
+    if (luaL_loadfilexname(L,filename,NULL,renamed)!=LUA_OK) fatal(lua_tostring(L,-1));
   } else {
     if (luaL_loadfile(L,filename)!=LUA_OK) fatal(lua_tostring(L,-1));
   }

@@ -767,7 +767,7 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
 /* begin_clink_change */
   if (name) {
     lua_pop(L, 1);
-    lua_pushfstring(L, "=%s", name);
+    lua_pushstring(L, name);
   }
 /* end_clink_change */
   if (skipcomment(&lf, &c))  /* read initial portion */

@@ -44,6 +44,10 @@ local function do_embed(debug_info)
         ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
     }
 
+    if debug_info == nil then
+        debug_info = true -- Include debug info by default.
+    end
+
     local function strip(file)
         return (debug_info or path.getname(file) == "error.lua") and "" or " -s"
     end
@@ -78,11 +82,12 @@ local function do_embed(debug_info)
             file = path.join(root, file)
             print("   "..file)
 
-            for name, arch in spairs(archs) do
-                out:write("#if ARCHITECTURE == "..name.."\n")
+            for archname, arch in spairs(archs) do
+                out:write("#if ARCHITECTURE == "..archname.."\n")
 
                 -- Compile the input Lua script to binary.
-                exec(arch.luac..strip(file).." -o .build/embed_temp "..file)
+                local dbgname = "@~clink~\\"..name..".lua" -- To enable detecting "built in" scripts.
+                exec(arch.luac..strip(file).." -R "..dbgname.." -o .build/embed_temp "..file)
                 local bin_in = io.open(".build/embed_temp", "rb")
                 local bin_data = bin_in:read("*a")
                 bin_in:close()
@@ -102,9 +107,9 @@ local function do_embed(debug_info)
                 out:write("extern const uint8* const "..symbol.." = "..symbol.."_;\n")
                 out:write("extern const int32 "..symbol.."_len = sizeof("..symbol.."_);\n")
 
-                out:write("#endif // ARCHITECTURE == "..name.."\n")
+                out:write("#endif // ARCHITECTURE == "..archname.."\n")
 
-                print("      x"..name.." : "..tostring(#bin_data).." bytes")
+                print("      x"..archname.." : "..tostring(#bin_data).." bytes")
             end
         end
 
@@ -376,6 +381,17 @@ newaction {
     description = "Clink: Update embedded scripts for Clink with debugging info",
     execute = function ()
         do_embed(true--[[debug_info]])
+        do_wildmatch()
+        do_emojis()
+    end
+}
+
+--------------------------------------------------------------------------------
+newaction {
+    trigger = "embed_nodebug",
+    description = "Clink: Update embedded scripts for Clink without debugging info",
+    execute = function ()
+        do_embed(false--[[debug_info]])
         do_wildmatch()
         do_emojis()
     end
