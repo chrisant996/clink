@@ -5,6 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Oops; note the incorrect truncations of descriptions:
+    ```
+    ❯ dirx -a
+    -a        Display all files (even hidden, et…
+    -A        Display all files, except hide . a…
+    -a:attrs  Filter files by attributes
+    ```
 
 ## Unit Tests
 
