@@ -4,7 +4,8 @@
 
 #### v1.6.11
 
-- Changed the built-in embedded scripts to include debug info.  This just enables Lua error messages to be more specific, which is sometimes helpful when troubleshooting failures.
+- Changed the built-in embedded scripts to include debug info.  This enables Lua error messages to be more specific, which is sometimes helpful when troubleshooting failures.
+- Added `srcmap` command in the Lua debugger to override where to find source files.
 
 #### v1.6.10
 
