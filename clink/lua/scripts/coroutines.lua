@@ -892,6 +892,7 @@ function io.popenyield(command, mode)
             return io.open("nul")
         end
         -- Start the popenyield.
+        local pclose
         local file, yieldguard = io.popenyield_internal(command, mode)
         if file and yieldguard then
             set_coroutine_yieldguard(yieldguard)
@@ -902,30 +903,30 @@ function io.popenyield(command, mode)
                 -- running at a time.
             end
             set_coroutine_yieldguard(nil)
-        end
-        -- Make a pclose function.
-        local state = { yg=yieldguard }
-        local pclose = file and yieldguard and function ()
-            -- Only allow to run once.
-            if state.zombie then
-                error("function already used; can only be used once.")
-                return
+            -- Make a pclose function.
+            local state = { yg=yieldguard }
+            pclose = function ()
+                -- Only allow to run once.
+                if state.zombie then
+                    error("function already used; can only be used once.")
+                    return
+                end
+                state.zombie = true
+                -- Close the file.
+                file:close()
+                -- Make ready() wait for process exit.
+                yieldguard:set_need_completion()
+                -- Yield until ready.
+                set_coroutine_yieldguard(yieldguard)
+                while not yieldguard:ready() do
+                    coroutine.yield()
+                    -- Do not allow canceling.  This enforces no more than one spawned
+                    -- background process is running at a time.
+                end
+                set_coroutine_yieldguard(nil)
+                -- Return exit status.
+                return yieldguard:results()
             end
-            state.zombie = true
-            -- Close the file.
-            file:close()
-            -- Make ready() wait for process exit.
-            yieldguard:set_need_completion()
-            -- Yield until ready.
-            set_coroutine_yieldguard(yieldguard)
-            while not yieldguard:ready() do
-                coroutine.yield()
-                -- Do not allow canceling.  This enforces no more than one spawned
-                -- background process is running at a time.
-            end
-            set_coroutine_yieldguard(nil)
-            -- Return exit status.
-            return yieldguard:results()
         end
         return file, pclose
     else
