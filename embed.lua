@@ -86,7 +86,7 @@ local function do_embed(debug_info)
                 out:write("#if ARCHITECTURE == "..archname.."\n")
 
                 -- Compile the input Lua script to binary.
-                local dbgname = "@~clink~\\"..name -- To enable detecting "built in" scripts.
+                local dbgname = "@~clink~/"..manifest.name.."/"..name -- To enable detecting "built in" scripts.
                 exec(arch.luac..strip(file).." -R "..dbgname.." -o .build/embed_temp "..file)
                 local bin_in = io.open(".build/embed_temp", "rb")
                 local bin_data = bin_in:read("*a")

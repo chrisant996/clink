@@ -105,6 +105,7 @@ local ret_file, ret_line, ret_name
 local current_thread = 'main'
 local started = false
 local show_stack = false
+local src_mappings
 local pause_off = false
 local _g      = _G
 local cocreate, cowrap = coroutine.create, coroutine.wrap
@@ -433,6 +434,12 @@ a search for the file in the package[path] is performed using the usual
 Prints the lines from the source file around the given line.
 ]],
 
+srcmap  = [[
+srcmap dir newdir   -- map source files from dir to newdir|
+
+'srcmap' by itself lists any current source mappings.
+]],
+
 exit    = [[
 exit                -- exits debugger, re-start it using pause()|
 ]],
@@ -561,6 +568,16 @@ local function show(file,line,before,after)
 
   if not string.find(file,'%.') then file = file..'.lua' end
 
+  if src_mappings then
+    local dir = path.getdirectory(file)
+    if dir then
+        dir = src_mappings[dir:lower()]
+        if dir then
+            file = path.join(dir, path.getname(file))
+        end
+    end
+  end
+
   local f = io.open(file,'r')
   if not f then
     --{{{  try to find the file in the path
@@ -599,6 +616,15 @@ local function show(file,line,before,after)
 
   f:close()
 
+end
+
+--}}}
+--{{{  local function srcmap( dir, newdir )
+
+local function srcmap( dir, newdir )
+  src_mappings = src_mappings or {}
+  newdir = (newdir ~= "") and newdir or nil
+  src_mappings[dir:lower()] = newdir
 end
 
 --}}}
@@ -1284,6 +1310,23 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
         show(file,line,before,after)
       else
         io_write('Nothing to show\n')
+      end
+
+      --}}}
+
+    elseif command == "srcmap" then
+      --{{{  map source files from dir to newdir
+
+      local dir, newdir = getargs('SS')
+
+      if dir ~= '' then
+        srcmap(dir,newdir)
+      elseif src_mappings then
+        for k,v in pairs(src_mappings) do
+          io_write(k.."  ->  "..v.."\n")
+        end
+      else
+        io_write('No source mappings\n')
       end
 
       --}}}
