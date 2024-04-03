@@ -4,6 +4,7 @@
 
 #### v1.6.11
 
+- Added `os.setalias()` for setting a doskey alias without needing to invoke the doskey.exe program.
 - Fixed a case where match descriptions could be displayed with incorrect padding and truncation.
 - Lua debugging enhancements:
   - Changed the built-in embedded scripts to include debug info, which allows some Lua error messages to be more useful for troubleshooting.
