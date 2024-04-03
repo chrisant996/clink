@@ -86,6 +86,7 @@ bool    expand_env(const char* in, uint32 in_len, str_base& out, int32* point=nu
 bool    get_env(const char* name, str_base& out);
 bool    set_env(const char* name, const char* value);
 bool    get_alias(const char* name, str_base& out);
+bool    set_alias(const char* name, const char* command);
 bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
 bool    get_full_path_name(const char* path, str_base& out, uint32 len=-1);

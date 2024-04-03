@@ -1779,6 +1779,26 @@ int32 get_aliases(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.setalias
+/// -ver:   1.6.11
+/// -arg:   name:string
+/// -arg:   command:string
+/// -ret:   boolean
+/// Sets a doskey alias <span class="arg">name</span> to
+/// <span class="arg">command</span>.  Returns true if successful, or returns
+/// false if not successful.
+int32 set_alias(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    const char* command = checkstring(state, 2);
+    if (!name || !command)
+        return 0;
+
+    lua_pushboolean(state, os::set_alias(name, command));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.resolvealias
 /// -ver:   1.3.12
 /// -arg:   text:string
@@ -2684,6 +2704,7 @@ void os_lua_initialise(lua_state& lua)
         { "getpushddepth", &get_pushd_depth },
         { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
+        { "setalias",    &set_alias },
         { "resolvealias", &resolve_alias },
         { "getscreeninfo", &get_screen_info },
         { "getbatterystatus", &get_battery_status },
