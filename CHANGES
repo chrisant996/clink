@@ -4,8 +4,10 @@
 
 #### v1.6.11
 
-- Changed the built-in embedded scripts to include debug info.  This enables Lua error messages to be more specific, which is sometimes helpful when troubleshooting failures.
-- Added `srcmap` command in the Lua debugger to override where to find source files.
+- Fixed a case where match descriptions could be displayed with incorrect padding and truncation.
+- Lua debugging enhancements:
+  - Changed the built-in embedded scripts to include debug info, which allows some Lua error messages to be more useful for troubleshooting.
+  - Added `srcmap` command in the Lua debugger to override where to find source files.
 
 #### v1.6.10
 
