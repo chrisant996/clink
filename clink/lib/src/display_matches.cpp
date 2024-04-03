@@ -926,7 +926,7 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
                 break;
 
             const int32 col_max = ((show_descriptions && !widths.m_right_justify) ?
-                                   min<int32>(cols - 1, widths.column_width(j)) :
+                                   cols - 1 :
                                    widths.column_width(j)); // Allow to wrap lines.
 
             const match_type type = adapter.get_match_type(l);
