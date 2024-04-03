@@ -246,7 +246,9 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     }
     if (no_right_justify)
         no_right_justify_cols.resize(max_cols);
-    const width_t desc_padding = !has_descriptions ? 0 : !no_right_justify ? 2 : 4;
+    const width_t c_small_padding = 2;
+    const width_t c_large_padding = 4;
+    const width_t desc_padding = !has_descriptions ? 0 : !no_right_justify ? c_small_padding : c_large_padding;
 #ifdef USE_DESC_PARENS
     const width_t paren_cells = no_right_justify ? 0 : 2; // For parentheses around right-justified descriptions.
 #else
@@ -392,16 +394,18 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
                               (widths.num_columns() > 1 || max_match > (screen_width * 4) / 10) &&
                               (widths.m_widths[0] < screen_width - 2));
 
-    if (!no_right_justify && !widths.m_right_justify && variable_widths)
+    if (!no_right_justify && !widths.m_right_justify)
     {
         // Can't right justify after all.
+        const int32 delta_padding = c_large_padding - widths.m_desc_padding;
         widths.m_widths.clear();
+        widths.m_desc_padding = c_large_padding;
         widths.m_max_match_len_in_column.clear();
         const auto& columns_info = s_columns_info[limit - 1];
         for (size_t i = 0; i < limit; ++i)
         {
             const auto& arr = columns_info.col_arr[i];
-            widths.m_widths.push_back(max_match + max_desc);
+            widths.m_widths.push_back(max_match + delta_padding + max_desc);
             widths.m_max_match_len_in_column.push_back(max_match);
         }
     }
