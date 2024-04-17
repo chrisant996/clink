@@ -1588,6 +1588,33 @@ void display_manager::end_prompt_lf()
 }
 
 //------------------------------------------------------------------------------
+static void write_with_clear(FILE* stream, const char* text, int length)
+{
+    int remaining = length;
+    while (remaining > 0)
+    {
+        const char* eol = strpbrk(text, "\r\n");
+        length = eol ? int(eol - text) : remaining;
+        if (length > 0)
+        {
+            rl_fwrite_function(stream, text, length);
+            text += length;
+            remaining -= length;
+        }
+
+        if (eol)
+        {
+            while (remaining > 0 && (*text == '\r' || *text == '\n'))
+                ++text, --remaining;
+            length = int(text - eol);
+            rl_fwrite_function(stream, "\x1b[K", 3);
+            if (length > 0)
+                rl_fwrite_function(stream, eol, length);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_manager::display()
 {
     if (!_rl_echoing_p)
@@ -1662,7 +1689,7 @@ void display_manager::display()
     if (prompt || rl_display_prompt == rl_prompt)
     {
         if (prompt_prefix && forced_display)
-            rl_fwrite_function(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
+            write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
     }
     else
     {
@@ -1676,7 +1703,7 @@ void display_manager::display()
             const int32 pmtlen = int32(prompt - rl_display_prompt);
             if (forced_display)
             {
-                rl_fwrite_function(_rl_out_stream, rl_display_prompt, pmtlen);
+                write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
                 // Make sure we are at column zero even after a newline,
                 // regardless of the state of terminal output processing.
                 if (pmtlen < 2 || prompt[-2] != '\r')
