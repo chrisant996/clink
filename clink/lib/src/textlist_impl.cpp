@@ -1470,6 +1470,13 @@ void textlist_impl::update_display()
             const bool draw_border = (m_prev_displayed < 0) || m_override_title.length() || m_has_override_title;
             m_has_override_title = !m_override_title.empty();
 
+            const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
+            str<> footer;
+            if (show_del)
+                footer.concat("Del=Delete");
+            if (m_history_mode)
+                footer.concat("  Enter=Execute");
+
             int32 longest;
             if (m_pref_width)
             {
@@ -1488,7 +1495,7 @@ void textlist_impl::update_display()
                             longest += 2 + x;
                     }
                 }
-                longest = max<int32>(longest, 40);
+                longest = max<int32>(longest, max<int32>(40, cell_count(footer.c_str())));
             }
 
             longest = max<int32>(longest, cell_count(m_default_title.c_str()) + 4);
@@ -1705,8 +1712,7 @@ void textlist_impl::update_display()
             {
                 rl_crlf();
                 up++;
-                const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
-                make_horz_border(show_del ? "Del=Delete" : nullptr, content_width, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
+                make_horz_border(footer.empty() ? nullptr : footer.c_str(), content_width, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
                 line.clear();
                 line << left << m_color.border << "\xe2\x94\x94";       // └
                 line << horzline;                                       // ─
