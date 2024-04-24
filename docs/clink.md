@@ -458,6 +458,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="clink_max_input_rows"></a>`clink.max_input_rows` | `0` | Limits how many rows the input line can use, up to the terminal height.  When this is `0` (the default), the terminal height is the limit.
 <a name="clink_paste_crlf"></a>`clink.paste_crlf` | `crlf` | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 <a name="clink_dot_path"></a>`clink.path` | | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
+<a name="clink_popup_search_mode"></a>`clink.popup_search_mode` | `find` | When this is `find`, typing in popup lists moves to the next matching item.  When this is `filter`, typing in popup lists filters the list.
 <a name="clink_promptfilter"></a>`clink.promptfilter` | True | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 <a name="clink_update_interval"></a>`clink.update_interval` | `5` | The Clink autoupdater will wait this many days between update checks (see [Automatic Updates](#automatic-updates)).
 <a name="cmd_admin_title_prefix"></a>`cmd.admin_title_prefix` | | When set, this replaces the "Administrator: " console title prefix.
@@ -1592,10 +1593,12 @@ Most of the popup windows also have incremental search:
 Key | Description
 :-:|---
 Typing|Typing does an incremental search.
+<kbd>F1</kbd>|Open this help topic in the default web browser.
 <kbd>F3</kbd>|Go to the next match.
 <kbd>Ctrl</kbd>-<kbd>L</kbd>|Go to the next match.
 <kbd>Shift</kbd>-<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd>|Go to the previous match.
+<kbd>F4</kbd>|Toggle the search mode between "find" and "filter".  When the search mode is filter, typing filters the list instead of doing an incremental search (only in v1.6.13 and higher).  Use the [clink.popup_search_mode](#clink_popup_search_mode) setting to set the default search mode.
 
 The [`win-history-list`](#rlcmd-win-history-list) command has a different search feature.  Typing digits `0`-`9` jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.
 
