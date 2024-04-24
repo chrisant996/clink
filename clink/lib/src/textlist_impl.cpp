@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021 Christopher Antos
+// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -916,8 +916,6 @@ find:
             m_items.erase(m_items.begin() + m_index);
             if (m_has_columns)
                 m_columns.erase_row(m_index);
-            if (m_entries)
-                memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
             if (m_infos)
             {
                 memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
