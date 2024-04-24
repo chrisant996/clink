@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Christopher Antos
+﻿// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -32,6 +32,7 @@
 #include <terminal/terminal_helpers.h>
 #include <terminal/key_tester.h>
 #include <signal.h>
+#include <shellapi.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -70,11 +71,21 @@ enum {
     bind_id_textlist_wheelup,
     bind_id_textlist_wheeldown,
     bind_id_textlist_drag,
+    bind_id_textlist_togglefilter,
+    bind_id_textlist_help,
 
     bind_id_textlist_catchall = binder::id_catchall_only_printable,
 };
 
 //------------------------------------------------------------------------------
+static setting_enum g_popup_search_mode(
+    "clink.popup_search_mode",
+    "Default search mode in popup lists",
+    "When this is 'find', typing in popup lists moves to the next matching item.\n"
+    "When this is 'filter', typing in popup lists filters the list.",
+    "find,filter",
+    0);
+
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
@@ -83,6 +94,8 @@ extern bool host_remove_dir_history(int32 index);
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
 static bool s_standalone = false;
+static int32 s_old_default_popup_search_mode = -1;
+static int32 s_default_popup_search_mode = -1;
 const int32 min_screen_cols = 20;
 
 //------------------------------------------------------------------------------
@@ -453,6 +466,12 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 popup_results textlist_impl::activate(const char* title, const char** entries, int32 count, int32 index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
 {
+    if (s_old_default_popup_search_mode != g_popup_search_mode.get())
+    {
+        s_old_default_popup_search_mode = g_popup_search_mode.get();
+        s_default_popup_search_mode = s_old_default_popup_search_mode;
+    }
+
     reset();
     m_results.clear();
 
@@ -474,26 +493,25 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_entries = entries;
     m_infos = infos;
     m_count = count;
+    m_original_count = count;
 
-    // Make sure there's room.
+    // Initialize the various modes.
     m_reverse = config ? config->reverse : reverse;
     m_pref_height = config ? config->height : 0;
     m_pref_width = config ? config->width : 0;
     m_mode = mode;
     m_history_mode = is_history_mode(mode);
+    m_was_default_search_mode = (!config || config->search_mode < 0);
+    m_filter = (m_was_default_search_mode ? s_default_popup_search_mode : config->search_mode) > 0;
     m_show_numbers = m_history_mode;
     m_win_history = (mode == textlist_mode::win_history);
     m_del_callback = config ? config->del_callback : nullptr;
+
+    // Make sure there's room.
     update_layout();
     if (m_visible_rows <= 0)
     {
-        m_reverse = false;
-        m_pref_height = 0;
-        m_pref_width = 0;
-        m_mode = textlist_mode::general;
-        m_history_mode = false;
-        m_show_numbers = false;
-        m_win_history = false;
+        reset();
         return popup_result::error;
     }
 
@@ -688,6 +706,9 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*B", bind_id_textlist_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_textlist_drag, true/*has_params*/);
 
+    binder.bind(m_bind_group, "\\eOS", bind_id_textlist_togglefilter);  // F4
+    binder.bind(m_bind_group, "\\eOP", bind_id_textlist_help);          // F1
+
     binder.bind(m_bind_group, "", bind_id_textlist_catchall);
 }
 
@@ -731,14 +752,14 @@ static void advance_index(int32& i, int32 direction, int32 max_count)
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::on_input(const input& _input, result& result, const context& /*context*/)
+void textlist_impl::on_input(const input& input, result& result, const context& /*context*/)
 {
     assert(m_active);
 
-    input input = _input;
     bool set_input_clears_needle = true;
     bool from_begin = false;
     bool need_display = false;
+    bool advance_before_find = false;
 
     // Cancel if no room.
     if (m_visible_rows <= 0)
@@ -809,6 +830,7 @@ navigated:
         set_input_clears_needle = false;
         if (m_win_history)
             break;
+        advance_before_find = true;
 find:
         if (m_win_history)
         {
@@ -818,6 +840,15 @@ find:
             rl_ding();
             show_cursor(false);
             lock_cursor(true);
+        }
+        else if (m_filter)
+        {
+            if (filter_items())
+            {
+                m_prev_displayed = -1;
+                m_force_clear = true;
+                update_display();
+            }
         }
         else
         {
@@ -834,13 +865,13 @@ find:
             if (from_begin)
                 i = m_reverse ? m_count - 1 : 0;
 
-            if (input.id == bind_id_textlist_findnext || input.id == bind_id_textlist_findprev)
+            if (advance_before_find)
                 advance_index(i, direction, m_count);
 
             int32 original = i;
             while (true)
             {
-                bool match = strstr_compare(m_needle, m_items[i]);
+                bool match = strstr_compare(m_needle, get_item_text(i));
                 if (m_has_columns)
                 {
                     for (int32 col = 0; !match && col < max_columns; col++)
@@ -858,7 +889,7 @@ find:
                 }
 
                 advance_index(i, direction, m_count);
-                if (i == m_index)
+                if (i == original)
                     break;
             }
 
@@ -878,7 +909,8 @@ find:
     case bind_id_textlist_delete:
         {
             // Remove the entry.
-            const int32 external_index = m_infos ? m_infos[m_index].index : m_index;
+            const int32 original_index = get_original_index(m_index);
+            const int32 external_index = m_infos ? m_infos[original_index].index : original_index;
             if (m_history_mode)
             {
                 m_reset_history_index = true;
@@ -911,19 +943,26 @@ find:
 
             // Remove the item from the popup list.
             const int32 old_rows = min<int32>(m_visible_rows, m_count);
-            int32 move_count = (m_count - 1) - m_index;
-            memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
-            m_items.erase(m_items.begin() + m_index);
+            int32 move_count = (m_original_count - 1) - original_index;
+            memmove(m_entries + original_index, m_entries + original_index + 1, move_count * sizeof(m_entries[0]));
+            m_items.erase(m_items.begin() + original_index);
             if (m_has_columns)
-                m_columns.erase_row(m_index);
+                m_columns.erase_row(original_index);
             if (m_infos)
             {
-                memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
-                for (entry_info* info = m_infos + m_index; move_count--; info++)
-                    info->index--;
+                memmove(m_infos + original_index, m_infos + original_index + 1, move_count * sizeof(m_infos[0]));
+                for (int32 i = m_original_count - 1; i-- > original_index;)
+                    m_infos[i].index--;
+            }
+            if (!m_filtered_items.empty())
+            {
+                m_filtered_items.erase(m_filtered_items.begin() + m_index);
+                for (int32 i = m_count - 1; i-- > m_index;)
+                    m_filtered_items[i]--;
             }
             m_count--;
-            if (!m_count)
+            m_original_count--;
+            if (!m_original_count)
             {
                 cancel(popup_result::cancel);
                 return;
@@ -999,8 +1038,7 @@ do_insert:
                 const int32 row = min<int32>(max<int32>(p1 - m_mouse_offset, 0), rows - 1);
                 m_index = hittest_scroll_car(row, rows, m_count);
                 set_top(min<int32>(max<int32>(m_index - ((rows - 1) / 2), 0), m_count - rows));
-                update_display();
-                break;
+                goto navigated;
             }
 #endif
 
@@ -1018,12 +1056,13 @@ do_insert:
             if (p1 < rows)
             {
                 m_index = p1 + m_top;
-                update_display();
                 if (input.id == bind_id_textlist_doubleclick)
                 {
+                    update_display();
                     cancel(popup_result::use);
                     return;
                 }
+                goto navigated;
             }
             else if (input.id == bind_id_textlist_drag && m_scroll_helper.can_scroll())
             {
@@ -1033,7 +1072,7 @@ do_insert:
                     {
                         set_top(max<int32>(0, m_top - m_scroll_helper.scroll_speed()));
                         m_index = m_top;
-                        update_display();
+                        goto navigated;
                     }
                 }
                 else
@@ -1042,7 +1081,7 @@ do_insert:
                     {
                         set_top(min<int32>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
                         m_index = m_top + rows - 1;
-                        update_display();
+                        goto navigated;
                     }
                 }
             }
@@ -1058,7 +1097,7 @@ do_insert:
                 m_index -= min<uint32>(m_index, p0);
             else
                 m_index += min<uint32>(m_count - 1 - m_index, p0);
-            update_display();
+            goto navigated;
         }
         break;
 
@@ -1085,6 +1124,22 @@ do_insert:
         adjust_horz_offset(+999999);
         break;
 
+    case bind_id_textlist_togglefilter:
+        if (!m_win_history)
+        {
+            if (m_filter)
+                clear_filter();
+            m_filter = !m_filter;
+            if (m_was_default_search_mode)
+                s_default_popup_search_mode = m_filter ? 1 : 0;
+            goto update_needle;
+        }
+        break;
+    case bind_id_textlist_help:
+        AllowSetForegroundWindow(ASFW_ANY);
+        ShellExecute(0, nullptr, "https://chrisant996.github.io/clink/clink.html#popup-windows", 0, 0, SW_NORMAL);
+        break;
+
     case bind_id_textlist_backspace:
     case bind_id_textlist_catchall:
         {
@@ -1109,8 +1164,11 @@ do_insert:
                 if (m_input_clears_needle)
                 {
                     assert(!m_win_history);
-                    m_needle.clear();
-                    m_needle_is_number = false;
+                    if (!m_filter)
+                    {
+                        m_needle.clear();
+                        m_needle_is_number = false;
+                    }
                     m_input_clears_needle = false;
                 }
 
@@ -1157,10 +1215,10 @@ do_insert:
 update_needle:
             if (!m_win_history)
             {
-                input.id = bind_id_textlist_findincr;
+                advance_before_find = false;
                 m_override_title.clear();
                 if (m_needle.length())
-                    m_override_title.format("find: %-10s", m_needle.c_str());
+                    m_override_title.format("%s: %-10s", m_filter ? "filter" : "find", m_needle.c_str());
                 goto find;
             }
             else if (m_needle_is_number)
@@ -1180,7 +1238,7 @@ update_needle:
                         const int32 needlestr_len = int32(strlen(needlestr));
                         while (lookup < m_count)
                         {
-                            _itoa_s(m_infos[lookup].index + 1, lookupstr, 10);
+                            _itoa_s(get_item_info(lookup).index + 1, lookupstr, 10);
                             if (strncmp(needlestr, lookupstr, needlestr_len) == 0)
                             {
                                 i = lookup;
@@ -1213,28 +1271,8 @@ update_needle:
             }
             else if (m_needle.length())
             {
-                str_compare_scope _(str_compare_scope::caseless, true/*fuzzy_accent*/);
-
-                int32 i = m_index;
-                while (true)
-                {
-                    i--;
-                    if (i < 0)
-                        i = m_count - 1;
-                    if (i == m_index)
-                        break;
-
-                    int32 cmp = str_compare(m_needle.c_str(), m_items[i]);
-                    if (cmp == -1 || cmp == m_needle.length())
-                    {
-                        m_index = i;
-                        if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                            m_top = max<int32>(0, min<int32>(m_index, m_count - m_visible_rows));
-                        m_prev_displayed = -1;
-                        refresh = true;
-                        break;
-                    }
-                }
+                advance_before_find = true;
+                goto find;
             }
 
             if (refresh)
@@ -1330,10 +1368,10 @@ void textlist_impl::update_layout()
         m_visible_rows = 0;
 
     m_max_num_cells = 0;
-    if (m_show_numbers && m_count > 0)
+    if (m_show_numbers && m_original_count > 0)
     {
         str<> tmp;
-        tmp.format("%u: ", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
+        tmp.format("%u: ", m_infos ? m_infos[m_original_count - 1].index + 1 : m_original_count);
         m_max_num_cells = tmp.length();
     }
 
@@ -1354,7 +1392,7 @@ void textlist_impl::update_top()
     else
     {
         const int32 rows = min<int32>(m_count, m_visible_rows);
-        int32 top = max<int32>(0, y - (rows - 1));
+        int32 top = max<int32>(0, y - max<int32>(rows - 1, 0));
         if (m_top < top)
             set_top(top);
     }
@@ -1437,7 +1475,8 @@ static void make_horz_border(const char* message, int32 col_width, bool bars, st
 //------------------------------------------------------------------------------
 void textlist_impl::update_display()
 {
-    if (m_visible_rows > 0)
+    const bool is_filter_active = (m_original_count && !m_filter_string.empty());
+    if (m_visible_rows > 0 || is_filter_active)
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
@@ -1461,7 +1500,7 @@ void textlist_impl::update_display()
         bool move_to_end = true;
         const int32 count = m_count;
         str<> line;
-        if (m_active && count > 0)
+        if (m_active && (count > 0 || is_filter_active))
         {
             update_top();
 
@@ -1474,6 +1513,8 @@ void textlist_impl::update_display()
                 footer.concat("Del=Delete");
             if (m_history_mode)
                 footer.concat("  Enter=Execute");
+            if (!m_needle.empty())
+                footer.concat("  F4=Mode");
 
             int32 longest;
             if (m_pref_width)
@@ -1552,7 +1593,7 @@ void textlist_impl::update_display()
                     for (int32 row = 0; row < rows; ++row)
                     {
                         // Expand control characters to "^A" etc.
-                        longest_visible = max<int32>(longest_visible, make_item(m_items[m_top + row], tmp));
+                        longest_visible = max<int32>(longest_visible, make_item(get_item_text(m_top + row), tmp));
                     }
                     m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_item_cells);
                     if (m_has_columns)
@@ -1562,7 +1603,7 @@ void textlist_impl::update_display()
                             longest_visible = 0;
                             for (int32 row = 0; row < rows; ++row)
                             {
-                                const char* col_text = m_columns.get_col_text(m_top + row, col);
+                                const char* col_text = get_col_text(m_top + row, col);
                                 if (col_text)
                                 {
                                     // Expand control characters to "^A" etc.
@@ -1620,8 +1661,8 @@ void textlist_impl::update_display()
 
                     if (m_show_numbers)
                     {
-                        const int32 history_index = m_infos ? m_infos[i].index : i;
-                        const char ismark = (m_infos && m_infos[i].marked);
+                        const int32 history_index = m_infos ? get_item_info(i).index : get_original_index(i);
+                        const char ismark = (m_infos && get_item_info(i).marked);
                         const char mark = ismark ? '*' : ' ';
                         const char* color = !ismark ? "" : (i == m_index) ? m_color.selectmark.c_str() : m_color.mark.c_str();
                         const char* uncolor = !ismark ? "" : (i == m_index) ? m_color.select.c_str() : m_color.items.c_str();
@@ -1638,7 +1679,7 @@ void textlist_impl::update_display()
 
                     int32 cell_len;
                     const char* item_text;
-                    const int32 char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset * m_horz_item_enabled, &tmp, &item_text);
+                    const int32 char_len = limit_cells(get_item_text(i), item_spaces, cell_len, m_horz_offset * m_horz_item_enabled, &tmp, &item_text);
                     line.concat(item_text, char_len);                   // main text
                     spaces -= cell_len;
 
@@ -1665,7 +1706,7 @@ void textlist_impl::update_display()
                             line.concat("  ", min<int32>(col_padding, spaces));
                             spaces -= min<int32>(col_padding, spaces);
 
-                            const char* col_text = m_columns.get_col_text(i, col);
+                            const char* col_text = get_col_text(i, col);
                             const int32 col_len = limit_cells(col_text ? col_text : "", spaces, cell_len, m_horz_offset * m_horz_column_enabled[col], &tmp, &col_text);
 
                             if (first_col)
@@ -1834,8 +1875,6 @@ void textlist_impl::init_colors(const popup_config* config)
 //------------------------------------------------------------------------------
 void textlist_impl::reset()
 {
-    std::vector<const char*> zap_items;
-
     // Don't reset screen row and cols; they stay in sync with the terminal.
 
     m_visible_rows = 0;
@@ -1854,9 +1893,15 @@ void textlist_impl::reset()
     m_count = 0;
     m_entries = nullptr;    // Don't free; is only borrowed.
     m_infos = nullptr;      // Don't free; is only borrowed.
-    m_items = std::move(zap_items);
+    m_items = std::move(std::vector<const char*>());
     m_longest = 0;
     m_columns.clear();
+
+    m_filter_string.clear();
+    m_filter_saved_index = -1;
+    m_filter_saved_top = -1;
+    m_original_count = 0;
+    m_filtered_items = std::move(std::vector<int32>());
 
     m_mode = textlist_mode::general;
     m_pref_height = 0;
@@ -1878,6 +1923,166 @@ void textlist_impl::reset()
     m_input_clears_needle = false;
 
     m_store.clear();
+}
+
+//------------------------------------------------------------------------------
+int32 textlist_impl::get_original_index(int32 index) const
+{
+    if (!m_filter_string.empty())
+        index = m_filtered_items[index];
+    return index;
+}
+
+//------------------------------------------------------------------------------
+const char* textlist_impl::get_item_text(int32 index) const
+{
+    if (!m_filter_string.empty())
+        index = m_filtered_items[index];
+    return m_items[index];
+}
+
+//------------------------------------------------------------------------------
+const char* textlist_impl::get_col_text(int32 index, int32 col) const
+{
+    if (!m_filter_string.empty())
+        index = m_filtered_items[index];
+    return m_columns.get_col_text(index, col);
+}
+
+//------------------------------------------------------------------------------
+const entry_info& textlist_impl::get_item_info(int32 index) const
+{
+    assert(m_infos);
+    if (!m_filter_string.empty())
+        index = m_filtered_items[index];
+    return m_infos[index];
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::clear_filter()
+{
+    if (!m_filter_string.empty())
+    {
+        m_count = m_original_count;
+        m_filter_string.clear();
+        m_filtered_items.clear();
+        m_index = m_filter_saved_index;
+        set_top(m_filter_saved_top);
+#ifdef SHOW_VERT_SCROLLBARS
+        m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
+#endif
+    }
+}
+
+//------------------------------------------------------------------------------
+bool textlist_impl::filter_items()
+{
+    assert(!m_needle_is_number);
+
+    if (m_filter_string.equals(m_needle.c_str()))
+        return false;
+
+    if (m_needle.empty())
+    {
+        clear_filter();
+        return true;
+    }
+
+    int32 mode = g_ignore_case.get();
+    if (mode < 0 || mode >= str_compare_scope::num_scope_values)
+        mode = str_compare_scope::exact;
+    str_compare_scope _(mode, g_fuzzy_accent.get());
+
+    int32 defer_test = 0;
+    int32 tested = 0;
+    auto test_input = [&](){
+        ++tested;
+        defer_test = 128;
+        if (!m_dispatcher.available(0))
+            return false;
+        const uint8 c = m_dispatcher.peek();
+        if (!c)
+            return false;
+        if (c != 0x08 && (c < ' ' || c >= 0xf8))
+        {
+            defer_test = 999999;
+            return false;
+        }
+        return true;
+    };
+
+    // Build new filtered list.
+    std::vector<int32> filtered_items;
+    if (!m_filter_string.empty() && strncmp(m_needle.c_str(), m_filter_string.c_str(), m_filter_string.length()) == 0)
+    {
+        // Further filter the filtered list.
+        for (size_t i = 0; i < m_filtered_items.size(); ++i)
+        {
+            // Interrupt if more input is available.
+            if (!defer_test-- && test_input())
+                return false;
+
+            const int32 original_index = m_filtered_items[i];
+
+            bool match = m_needle.empty() || strstr_compare(m_needle, m_items[original_index]);
+            if (m_has_columns)
+            {
+                for (int32 col = 0; !match && col < max_columns; col++)
+                    match = strstr_compare(m_needle, m_columns.get_col_text(original_index, col));
+            }
+
+            if (match)
+                filtered_items.push_back(original_index);
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < m_items.size(); ++i)
+        {
+            // Interrupt if more input is available.
+            if (!defer_test-- && test_input())
+                return false;
+
+            bool match = m_needle.empty() || strstr_compare(m_needle, m_items[i]);
+            if (m_has_columns)
+            {
+                for (int32 col = 0; !match && col < max_columns; col++)
+                    match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+            }
+
+            if (match)
+                filtered_items.push_back(int32(i));
+        }
+    }
+
+    // Swap new filtered list into place.
+    m_filtered_items = std::move(filtered_items);
+    m_count = int32(m_filtered_items.size());
+
+    // Save selected item if no filtered applied yet.
+    if (m_filter_string.empty())
+    {
+        m_filter_saved_index = m_index;
+        m_filter_saved_top = m_top;
+    }
+
+    // Remember the filter string.
+    m_filter_string = m_needle.c_str();
+
+    // Reset the selected item.
+    if (m_reverse)
+        m_index = max(0, m_count - 1);
+    else
+        m_index = 0;
+    set_top(0);
+    update_top();
+
+#ifdef SHOW_VERT_SCROLLBARS
+    // Update the size of the scroll bar, since m_count may have changed.
+    m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
+#endif
+
+    return true;
 }
 
 

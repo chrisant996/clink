@@ -752,6 +752,7 @@ static bool popup_del_callback(int32 index)
 /// -show:  &nbsp;   height          = 20,       -- Preferred height, not counting the border.
 /// -show:  &nbsp;   width           = 60,       -- Preferred width, not counting the border.
 /// -show:  &nbsp;   reverse         = true,     -- Start at bottom; search upwards.
+/// -show:  &nbsp;   searchmode      = "filter", -- Use "find" or "filter" to override the default search mode (in v1.6.13 and higher).
 /// -show:  &nbsp;   colors = {                  -- Override the popup colors using any colors in this table.
 /// -show:  &nbsp;       items       = "97;44",  -- The items color (e.g. bright white on blue).
 /// -show:  &nbsp;       desc        = "...",    -- The description color.
@@ -892,6 +893,21 @@ static int32 popup_list(lua_State* state)
     config.reverse = lua_toboolean(state, -1);
     if (config.reverse && !has_index)
         index = num_items - 1;
+    lua_pop(state, 1);
+
+    lua_pushliteral(state, "searchmode");
+    lua_rawget(state, argItems);
+    if (lua_isstring(state, -1))
+    {
+        const char* searchmode = lua_tostring(state, -1);
+        if (searchmode)
+        {
+            if (stricmp(searchmode, "find") == 0)
+                config.search_mode = 0;
+            else if (stricmp(searchmode, "filter") == 0)
+                config.search_mode = 1;
+        }
+    }
     lua_pop(state, 1);
 
     lua_pushliteral(state, "colors");

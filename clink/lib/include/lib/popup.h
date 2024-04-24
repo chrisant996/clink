@@ -49,6 +49,7 @@ struct popup_config
     uint32          height = 0;
     uint32          width = 0;
     bool            reverse = false;
+    int32           search_mode = -1; // Values correspond to the "clink.popup_search_mode" enum setting.
     popup_colors    colors;
 };
 

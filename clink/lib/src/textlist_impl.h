@@ -90,6 +90,14 @@ private:
     void            init_colors(const popup_config* config);
     void            reset();
 
+    // Filtering.
+    int32           get_original_index(int32 index) const;
+    const char*     get_item_text(int32 index) const;
+    const char*     get_col_text(int32 index, int32 col) const;
+    const entry_info& get_item_info(int32 index) const;
+    void            clear_filter();
+    bool            filter_items();
+
     // Result.
     popup_results   m_results;
     bool            m_active = false;
@@ -133,6 +141,13 @@ private:
     int32           m_longest = 0;
     addl_columns    m_columns;
 
+    // Filtering.
+    str_moveable    m_filter_string;
+    int32           m_filter_saved_index = -1;
+    int32           m_filter_saved_top = -1;
+    int32           m_original_count = 0;   // Original count of items from caller.
+    std::vector<int32> m_filtered_items;    // Maps filtered index to original index.
+
     // Display.
     int32           m_prev_content_width = 0;
 
@@ -156,6 +171,8 @@ private:
     textlist_mode   m_mode = textlist_mode::general;
     bool            m_reverse = false;
     bool            m_history_mode = false;
+    bool            m_was_default_search_mode = false;
+    bool            m_filter = false;
     bool            m_show_numbers = false;
     bool            m_win_history = false;
     bool            m_has_columns = false;
