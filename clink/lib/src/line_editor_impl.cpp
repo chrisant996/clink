@@ -650,6 +650,22 @@ void line_editor_impl::dispatch(int32 bind_group)
 }
 
 //------------------------------------------------------------------------------
+bool line_editor_impl::available(uint32 timeout)
+{
+    assert(check_flag(flag_init));
+    return m_desc.input->available(timeout);
+}
+
+//------------------------------------------------------------------------------
+uint8 line_editor_impl::peek()
+{
+    assert(check_flag(flag_init));
+    const int32 c = m_desc.input->peek();
+    assert(c < 0xf8);
+    return (c < 0) ? 0 : uint8(c);
+}
+
+//------------------------------------------------------------------------------
 bool line_editor_impl::is_bound(const char* seq, int32 len)
 {
     // Check if clink has a binding; these override Readline.

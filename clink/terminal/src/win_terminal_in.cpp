@@ -693,6 +693,22 @@ int32 win_terminal_in::read()
 }
 
 //------------------------------------------------------------------------------
+int32 win_terminal_in::peek()
+{
+    if (m_buffer_count)
+        return m_buffer[m_buffer_head];
+
+    if (m_has_pending_record)
+    {
+        int32 peeked;
+        if (peek_record(m_pending_record, &peeked))
+            return peeked;
+    }
+
+    return terminal_in::input_none;
+}
+
+//------------------------------------------------------------------------------
 key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 {
     key_tester* ret = m_keys;
@@ -732,7 +748,7 @@ static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
 }
 
 //------------------------------------------------------------------------------
-bool win_terminal_in::peek_record(const INPUT_RECORD& record)
+bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
 {
     bool ret = false;
     const uint32 buffer_count = m_buffer_count;
@@ -742,11 +758,17 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record)
     case KEY_EVENT:
         process_input(record.Event.KeyEvent, true/*peek*/);
         ret = (m_buffer_count > buffer_count);
+        if (peeked)
+            *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
         m_buffer_count = buffer_count; // Revert.
         break;
 
     case MOUSE_EVENT:
-        ret = process_input(record.Event.MouseEvent, true/*peek*/);
+        process_input(record.Event.MouseEvent, true/*peek*/);
+        ret = (m_buffer_count > buffer_count);
+        if (peeked)
+            *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
+        m_buffer_count = buffer_count; // Revert.
         break;
 
     case WINDOW_BUFFER_SIZE_EVENT:
@@ -1378,7 +1400,7 @@ static void verbose_input(MOUSE_EVENT_RECORD const& record, bool log)
 }
 
 //------------------------------------------------------------------------------
-bool win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
+void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
 {
     // Remember the button state, to differentiate press vs release.
     const auto prv = m_prev_mouse_button_state;
@@ -1403,7 +1425,7 @@ bool win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
                                    mouse_input_type::none);
 
     if (mask == mouse_input_type::none)
-        return false;
+        return;
 
     if (!peek)
     {
@@ -1433,7 +1455,7 @@ bool win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
                         LPARAM lParam = MAKELPARAM(pt.x, pt.y);
                         SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
                     }
-                    return true;
+                    return;
                 }
             }
             else if (wheel)
@@ -1447,70 +1469,56 @@ bool win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record, bool peek)
                     SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
                     ScrollConsoleRelative(m_stdout, direction * int32(wheel_scroll_lines), SCR_BYLINE);
                 }
-                return true;
+                return;
             }
         }
-        return false;
+        return;
     }
 
     // Left or right click, or drag.
     if (left_click || right_click || drag)
     {
-        if (!peek)
-        {
-            CONSOLE_SCREEN_BUFFER_INFO csbi;
-            GetConsoleScreenBufferInfo(m_stdout, &csbi);
-
-            str<16> tmp;
-            const char code = (drag ? 'M' :
-                            right_click ? 'R' :
-                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
-            tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X, record.dwMousePosition.Y, code);
-            push(tmp.c_str());
-        }
-        return true;
+        str<16> tmp;
+        const char code = (drag ? 'M' :
+                        right_click ? 'R' :
+                        record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
+        tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X, record.dwMousePosition.Y, code);
+        push(tmp.c_str());
+        return;
     }
 
     // Mouse wheel.
     if (wheel)
     {
-        if (!peek)
-        {
-            // Windows Terminal does NOT support programmatic scrolling.
-            // ConEmu and plain Conhost DO support programmatic scrolling.
-            int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
-            UINT wheel_scroll_lines = 3;
-            SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
+        // Windows Terminal does NOT support programmatic scrolling.
+        // ConEmu and plain Conhost DO support programmatic scrolling.
+        int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+        UINT wheel_scroll_lines = 3;
+        SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
 
-            str<16> tmp;
-            const char code = (direction < 0 ? 'A' : 'B');
-            if (direction < 0)
-                direction = 0 - direction;
-            tmp.format("\x1b[$%u%c", direction * int32(wheel_scroll_lines), code);
-            push(tmp.c_str());
-        }
-        return true;
+        str<16> tmp;
+        const char code = (direction < 0 ? 'A' : 'B');
+        if (direction < 0)
+            direction = 0 - direction;
+        tmp.format("\x1b[$%u%c", direction * int32(wheel_scroll_lines), code);
+        push(tmp.c_str());
+        return;
     }
 
     // Mouse horizontal wheel.
     if (hwheel)
     {
-        if (!peek)
-        {
-            int32 direction = (short(HIWORD(record.dwButtonState))) / 32;
-            UINT hwheel_distance = 1;
+        int32 direction = (short(HIWORD(record.dwButtonState))) / 32;
+        UINT hwheel_distance = 1;
 
-            str<16> tmp;
-            const char code = (direction < 0 ? '<' : '>');
-            if (direction < 0)
-                direction = 0 - direction;
-            tmp.format("\x1b[$%u%c", direction * int32(hwheel_distance), code);
-            push(tmp.c_str());
-        }
-        return true;
+        str<16> tmp;
+        const char code = (direction < 0 ? '<' : '>');
+        if (direction < 0)
+            direction = 0 - direction;
+        tmp.format("\x1b[$%u%c", direction * int32(hwheel_distance), code);
+        push(tmp.c_str());
+        return;
     }
-
-    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -1640,13 +1648,4 @@ uint8 win_terminal_in::pop()
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
 
     return value;
-}
-
-//------------------------------------------------------------------------------
-uint8 win_terminal_in::peek()
-{
-    if (!m_buffer_count)
-        return input_none_byte;
-
-    return m_buffer[m_buffer_head];
 }

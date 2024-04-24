@@ -70,6 +70,8 @@ public:
 
     // input_dispatcher
     virtual void        dispatch(int32 bind_group) override;
+    virtual bool        available(uint32 timeout) override;
+    virtual uint8       peek() override;
 
     // key_tester
     virtual bool        is_bound(const char* seq, int32 len) override;

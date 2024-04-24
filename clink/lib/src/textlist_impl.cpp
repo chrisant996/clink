@@ -1966,6 +1966,8 @@ public:
 
     // input_dispatcher
     void                dispatch(int32 bind_group) override;
+    bool                available(uint32 timeout) override;
+    uint8               peek() override;
 
     // key_tester
     bool                is_bound(const char* seq, int32 len);
@@ -2059,6 +2061,20 @@ void standalone_input::dispatch(int32 bind_group)
     m_dispatching--;
 
     m_bind_resolver.set_group(prev_bind_group);
+}
+
+//------------------------------------------------------------------------------
+bool standalone_input::available(uint32 timeout)
+{
+    return m_terminal.in->available(timeout);
+}
+
+//------------------------------------------------------------------------------
+uint8 standalone_input::peek()
+{
+    const int32 c = m_terminal.in->peek();
+    assert(c < 0xf8);
+    return (c < 0) ? 0 : uint8(c);
 }
 
 //------------------------------------------------------------------------------

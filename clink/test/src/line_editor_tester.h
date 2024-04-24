@@ -27,6 +27,7 @@ public:
     virtual bool            available(uint32 timeout) override { return has_input(); }
     virtual void            select(input_idle*, uint32) override {}
     virtual int32           read() override { return *(uint8*)m_read++; }
+    virtual int32           peek() override { return *(uint8*)m_read; }
     virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }
 
 private:

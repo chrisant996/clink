@@ -3085,7 +3085,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
                                                               else if (old) return old->read();
                                                               else if (s_direct_input) return s_direct_input->read();
                                                               else return 0; }
-        virtual key_tester* set_key_tester(key_tester* keys) override { assert(false); return nullptr; }
+        virtual int32   peek() override                     { assert(false); return 0; }
+        virtual key_tester* set_key_tester(key_tester*) override { assert(false); return nullptr; }
         const char*  data;
         terminal_in* old;
     } term_in(input.keys, s_processed_input);
@@ -3093,10 +3094,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
-//#define USE_RESEND_HACK
-#ifdef USE_RESEND_HACK
-    int32 is_inc_searching = RL_ISSTATE(RL_STATE_ISEARCH);
-#endif
     uint32 len = input.len;
     rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &len);
     rollback<bool> rb_input_more(s_input_more, input.more);
@@ -3143,18 +3140,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
-
-        // Internally Readline tries to resend escape characters but it doesn't
-        // work with how Clink uses Readline. So we do it here instead.
-#ifdef USE_RESEND_HACK
-        if (term_in.data[-1] == 0x1b && is_inc_searching)
-        {
-            assert(!is_quoted_insert);
-            --term_in.data;
-            ++len;
-            is_inc_searching = 0;
-        }
-#endif
     }
 
     g_result = nullptr;
