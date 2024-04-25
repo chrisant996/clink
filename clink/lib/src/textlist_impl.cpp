@@ -618,7 +618,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     popup_results results;
     results.m_result = m_results.m_result;
-    results.m_index = m_results.m_index;
+    results.m_index = get_original_index(m_results.m_index);
     results.m_text = std::move(m_results.m_text);
 
     reset();
