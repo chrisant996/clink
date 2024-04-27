@@ -618,7 +618,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     popup_results results;
     results.m_result = m_results.m_result;
-    results.m_index = get_original_index(m_results.m_index);
+    results.m_index = m_results.m_index;
     results.m_text = std::move(m_results.m_text);
 
     reset();
@@ -1336,8 +1336,9 @@ void textlist_impl::cancel(popup_result result)
     {
         if (m_index >= 0 && m_index < m_count)
         {
-            m_results.m_index = m_index;
-            m_results.m_text = m_entries[m_index];
+            const int32 original_index = get_original_index(m_index);
+            m_results.m_index = original_index;
+            m_results.m_text = m_entries[original_index];
         }
     }
 
