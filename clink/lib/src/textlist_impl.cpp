@@ -1005,11 +1005,15 @@ find:
         return;
 
     case bind_id_textlist_enter:
+        if (m_index < 0 || m_index >= m_count)
+            break;
         cancel(popup_result::use);
         return;
 
     case bind_id_textlist_insert:
 do_insert:
+        if (m_index < 0 || m_index >= m_count)
+            break;
         cancel(popup_result::select);
         return;
 
