@@ -1136,6 +1136,7 @@ do_insert:
             m_filter = !m_filter;
             if (m_was_default_search_mode)
                 s_default_popup_search_mode = m_filter ? 1 : 0;
+            need_display = true;
             goto update_needle;
         }
         break;
