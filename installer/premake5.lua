@@ -4,6 +4,11 @@
 --------------------------------------------------------------------------------
 local any_warnings_or_failures = nil
 local include_arm64 = true
+local msbuild_locations = {
+    "c:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin",
+    "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin",
+    "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin",
+}
 
 --------------------------------------------------------------------------------
 local release_manifest = {
@@ -155,8 +160,18 @@ end
 
 --------------------------------------------------------------------------------
 local function have_required_tool(name, fallback)
-    if exec("where " .. name, true) then
-        return name
+    local vsver
+    if name == "msbuild" then
+        local opt_vsver = _OPTIONS["vsver"]
+        if opt_vsver and opt_vsver:find("^vs") then
+            vsver = opt_vsver:sub(3)
+        end
+    end
+
+    if not vsver then
+        if exec("where " .. name, true) then
+            return name
+        end
     end
 
     if fallback then
@@ -167,9 +182,11 @@ local function have_required_tool(name, fallback)
             t = { fallback }
         end
         for _,dir in ipairs(t) do
-            local file = dir.."\\"..name..".exe"
-            if file_exists(file) then
-                return '"'..file..'"'
+            if not vsver or dir:find(vsver) then
+                local file = dir.."\\"..name..".exe"
+                if file_exists(file) then
+                    return '"'..file..'"'
+                end
             end
         end
     end
@@ -183,7 +200,7 @@ newaction {
     description = "Clink: Creates a pre-release installer for Clink (reltype is debug by default)",
     execute = function()
         local premake = '"'.._PREMAKE_COMMAND..'"'
-        local root_dir = path.getabsolute(".build/vs2019/bin").."/"
+        local root_dir = path.getabsolute(".build/vs2022/bin").."/"
         local code_dir = path.getabsolute(".").."/"
         local config = _OPTIONS["config"] or "debug"
 
@@ -194,7 +211,7 @@ newaction {
         end
 
         -- Check we have the tools we need.
-        local have_msbuild = have_required_tool("msbuild", { "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin", "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin" })
+        local have_msbuild = have_required_tool("msbuild", msbuild_locations)
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         if not have_msbuild then error("MSBUILD NOT FOUND.") end
         if not have_nsis then error("NSIS NOT FOUND.") end
@@ -207,7 +224,7 @@ newaction {
         local build_code = function (target)
             target = target or "build"
 
-            toolchain = _OPTIONS["vsver"] or "vs2019"
+            toolchain = _OPTIONS["vsver"] or "vs2022"
             os.chdir(".build/" .. toolchain)
 
             x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=win32 clink.sln /t:" .. target)
@@ -299,7 +316,7 @@ newaction {
 
         -- Check we have the tools we need.
         print_reverse("Finding tools")
-        local have_msbuild = have_required_tool("msbuild", { "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin", "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin" })
+        local have_msbuild = have_required_tool("msbuild", msbuild_locations)
         local have_mingw = have_required_tool("mingw32-make")
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         local have_7z = have_required_tool("7z", { "c:\\Program Files\\7-Zip", "c:\\Program Files (x86)\\7-Zip" })
@@ -326,7 +343,7 @@ newaction {
             if have_msbuild then
                 target = target or "build"
 
-                toolchain = _OPTIONS["vsver"] or "vs2019"
+                toolchain = _OPTIONS["vsver"] or "vs2022"
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 

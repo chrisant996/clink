@@ -38,9 +38,13 @@ for /f %%a in ('where msbuild.exe 2^>nul') do (
 	goto :gotmsbuild
 )
 
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+if exist %__MSBUILD% goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\17.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\15.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
@@ -59,6 +63,12 @@ rem -- Try to find solution file.
 if exist *.sln (
 	for %%a in (*.sln) do (
 		set __SLN="%%a"
+		goto :gotsln
+	)
+) else if exist .build\vs2022\*.sln (
+	for %%a in (.build\vs2022\*.sln) do (
+		set __SLN="%%a"
+		set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 		goto :gotsln
 	)
 ) else if exist .build\vs2019\*.sln (
@@ -126,9 +136,9 @@ rem	echo   -q               Quit immediately on any error.
 	echo   /rel             Or /release or /shp or /ship.
 	echo   /fin             Or /final.
 	echo.
-	if x%__SLN% == x echo warning: Unable to find VS2019 ^(or VS2017^) clink.sln file.
+	if x%__SLN% == x echo warning: Unable to find VS2022, VS2019, or VS2017 clink.sln file.
 	if not x%__SLN% == x echo Using SLN file:  %__SLN%
-	if not exist %__MSBUILD% echo warning: Unable to find VS2019 ^(or VS2017^) Enterprise installation.
+	if not exist %__MSBUILD% echo warning: Unable to find VS2022, VS2019, or VS2017 Enterprise installation.
 	if exist %__MSBUILD% echo Using MSBuild:   %__MSBUILD%
 	goto :eof
 )
@@ -205,15 +215,15 @@ if not "%__INSTALLTYPE%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% INSTALLING %__INSTALLTYPE% OUTPUTS %POS%%NORM%
 	if "%USERNAME%" == "%chrisant%" (
-		%CP% .build\vs2019\bin\%__INSTALLTYPE%\clink.bat;clink.lua;clink_x*.exe;clink_x*.pdb;clink_dll_x*.dll;clink_dll_x*.pdb "%__INSTALLDIR%"
+		%CP% .build\vs2022\bin\%__INSTALLTYPE%\clink.bat;clink.lua;clink_x*.exe;clink_x*.pdb;clink_dll_x*.dll;clink_dll_x*.pdb "%__INSTALLDIR%"
 		%CP% .build\docs\clink.html "%__INSTALLDIR%"
 	) else (
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink.bat "%__INSTALLDIR%"
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink.lua "%__INSTALLDIR%"
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink_x*.exe "%__INSTALLDIR%"
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink_x*.pdb "%__INSTALLDIR%"
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink_dll_x*.dll "%__INSTALLDIR%"
-		%XCOPY% .build\vs2019\bin\%__INSTALLTYPE%\clink_dll_x*.pdb "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink.bat "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink.lua "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink_x*.exe "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink_x*.pdb "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink_dll_x*.dll "%__INSTALLDIR%"
+		%XCOPY% .build\vs2022\bin\%__INSTALLTYPE%\clink_dll_x*.pdb "%__INSTALLDIR%"
 		%XCOPY% .build\docs\clink.html "%__INSTALLDIR%"
 	)
 )

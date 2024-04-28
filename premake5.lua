@@ -39,19 +39,21 @@ end
 
 --------------------------------------------------------------------------------
 local function setup_cfg(cfg)
-    configuration(cfg)
+    filter {cfg}
         defines("CLINK_"..cfg:upper())
         targetdir(to.."/bin/"..cfg)
         objdir(to.."/obj/")
 
-    configuration({cfg, "x32"})
+    filter {cfg, "architecture:x32"}
         targetsuffix("_x86")
 
-    configuration({cfg, "x64"})
+    filter {cfg, "architecture:x64"}
         targetsuffix("_x64")
 
-    configuration({cfg, "arm64"})
+    filter {cfg, "architecture:arm64"}
         targetsuffix("_arm64")
+
+    filter {}
 end
 
 
@@ -62,9 +64,9 @@ local function clink_project(name)
     flags("fatalwarnings")
     language("c++")
 
-    configuration("vs*")
+    filter "action:vs*"
         buildoptions("-FI\""..path.getabsolute("clink/core/warning.h").."\"")
-    configuration()
+    filter {}
 end
 
 --------------------------------------------------------------------------------
@@ -212,17 +214,19 @@ workspace("clink")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
 
+    includedirs(".build")               -- for clink_commit.h
+
     setup_cfg("final")
     setup_cfg("release")
     setup_cfg("debug")
 
-    configuration("debug")
+    filter "debug"
         rtti("on")
         optimize("off")
         defines("DEBUG")
         defines("_DEBUG")
 
-    configuration("final")
+    filter "final"
         --rtti("off")
         rtti("on")
         optimize("full")
@@ -230,24 +234,24 @@ workspace("clink")
         flags("NoBufferSecurityCheck")
         defines("NDEBUG")
 
-    configuration({"final", "vs*"})
+    filter {"final", "action:vs*"}
         flags("LinkTimeOptimization")
 
-    configuration("release")
+    filter "release"
         --rtti("off")
         rtti("on")
         optimize("full")
         defines("NDEBUG")
 
-    configuration("debug or release")
+    filter "debug or release"
         defines("CLINK_BUILD_ROOT=\""..path.getabsolute(to).."\"")
 
-    configuration("vs*")
+    filter "action:vs*"
         defines("_HAS_EXCEPTIONS=0")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
-    configuration("gmake")
+    filter "action:gmake"
         defines("__MSVCRT_VERSION__=0x0601")
         defines("_WIN32_WINNT=0x0601")
         defines("WINVER=0x0601")
@@ -256,9 +260,6 @@ workspace("clink")
         buildoptions("-ffunction-sections")
         buildoptions("-fdata-sections")
         makesettings { "CC=gcc" }
-
-    configuration("*")
-        includedirs(".build")           -- for clink_commit.h
 
 --------------------------------------------------------------------------------
 project("readline")
@@ -326,7 +327,7 @@ project("detours")
     removefiles("detours/disolia64.cpp")
     removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         buildoptions("-Wno-multichar")
@@ -344,11 +345,11 @@ clink_lib("clink_lib")
     files("clink/lib/include/**")
 
     includedirs("clink/lib/src")
-    configuration("vs*")
+    filter "action:vs*"
         pchheader("pch.h")
         pchsource("clink/lib/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -369,11 +370,11 @@ clink_lib("clink_lua")
     excludes("clink/lua/src/lua_editor_tester.cpp")
 
     includedirs("clink/lua/src")
-    configuration("vs*")
+    filter "action:vs*"
         pchheader("pch.h")
         pchsource("clink/lua/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -384,11 +385,11 @@ clink_lib("clink_core")
     files("clink/core/include/**")
 
     includedirs("clink/core/src")
-    configuration("vs*")
+    filter "action:vs*"
         pchheader("pch.h")
         pchsource("clink/core/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -401,12 +402,12 @@ clink_lib("clink_terminal")
     files("clink/terminal/include/**")
 
     includedirs("clink/terminal/src")
-    configuration("vs*")
+    filter "action:vs*"
         exceptionhandling("on")         -- for std::wregex
         pchheader("pch.h")
         pchsource("clink/terminal/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fexceptions")    -- for std::wregex
         buildoptions("-fpermissive")
         buildoptions("-Wno-multichar")
@@ -420,7 +421,7 @@ clink_lib("clink_process")
     files("clink/process/include/**")
 
     includedirs("clink/process/src")
-    configuration("vs*")
+    filter "action:vs*"
         flags { "NoRuntimeChecks" } -- required for 32 bit by the inject lambda in process::remote_call
         pchheader("pch.h")
         pchsource("clink/process/src/pch.cpp")
@@ -430,7 +431,7 @@ clink_lib("clink_process")
         exceptionhandling("off") -- required by the inject lambda in process::remote_call
         -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -452,11 +453,11 @@ clink_lib("clink_app_common")
     excludes("clink/app/src/dll/main.cpp")
     excludes("clink/app/src/loader/main.cpp")
 
-    configuration("vs*")
+    filter "action:vs*"
         pchheader("pch.h")
         pchsource("clink/app/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -481,10 +482,10 @@ clink_dll("clink_app_dll")
     files("clink/app/src/version.rc")
     files("clink/app/src/manifest.rc")
 
-    configuration("vs*")
+    filter "action:vs*"
         links("dbghelp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
@@ -499,21 +500,21 @@ clink_exe("clink_app_exe")
     files("clink/app/src/version.rc")
     files("clink/app/src/manifest.rc")
 
-    configuration("final")
+    filter "final"
         postbuild_copy("CHANGES", "final")
         postbuild_copy("LICENSE", "final")
         postbuild_copy("clink/app/src/loader/clink.bat", "final")
         postbuild_copy("clink/app/src/loader/clink.lua", "final")
 
-    configuration("release")
+    filter "release"
         postbuild_copy("clink/app/src/loader/clink.bat", "release")
         postbuild_copy("clink/app/src/loader/clink.lua", "release")
 
-    configuration("debug")
+    filter "debug"
         postbuild_copy("clink/app/src/loader/clink.bat", "debug")
         postbuild_copy("clink/app/src/loader/clink.lua", "debug")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -555,11 +556,11 @@ clink_exe("clink_test")
 
     exceptionhandling("on")
 
-    configuration("vs*")
+    filter "action:vs*"
         pchheader("pch.h")
         pchsource("clink/test/src/pch.cpp")
 
-    configuration("gmake")
+    filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
