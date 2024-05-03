@@ -30,10 +30,47 @@ extern setting_color g_color_unrecognized;
 extern setting_color g_color_executable;
 
 //------------------------------------------------------------------------------
+static bool has_file_association(const char* name)
+{
+    const char* ext = path::get_extension(name);
+    if (!ext)
+        return false;
+
+    if (os::get_path_type(name) != os::path_type_file)
+        return false;
+
+    wstr<32> wext(ext);
+    DWORD cchOut = 0;
+    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_EXECUTABLE, wext.c_str(), nullptr, nullptr, &cchOut);
+    if (FAILED(hr) || !cchOut)
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool file_exists(const char* full, str_base& out)
+{
+    if (os::get_path_type(full) == os::path_type_file)
+    {
+        os::get_full_path_name(full, out);
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static bool search_for_extension(str_base& full, const char* word, str_base& out)
 {
     path::append(full, "");
     const uint32 trunc = full.length();
+
+    path::append(full, word);
+    if (has_file_association(full.c_str()))
+    {
+        if (file_exists(full.c_str(), out))
+            return true;
+    }
 
     str<> pathext;
     if (!os::get_env("pathext", pathext))
@@ -56,22 +93,16 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
             {
                 full.truncate(trunc);
                 path::append(full, word);
-                if (os::get_path_type(full.c_str()) == os::path_type_file)
-                {
-                    os::get_full_path_name(full.c_str(), out);
+                if (file_exists(full.c_str(), out))
                     return true;
-                }
             }
         }
 
         full.truncate(trunc);
         path::append(full, word);
         full.concat(start, length);
-        if (os::get_path_type(full.c_str()) == os::path_type_file)
-        {
-            os::get_full_path_name(full.c_str(), out);
+        if (file_exists(full.c_str(), out))
             return true;
-        }
     }
 
     return false;
@@ -132,25 +163,6 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
     }
 
     return false;
-}
-
-//------------------------------------------------------------------------------
-bool has_file_association(const char* name)
-{
-    const char* ext = path::get_extension(name);
-    if (!ext)
-        return false;
-
-    if (os::get_path_type(name) != os::path_type_file)
-        return false;
-
-    wstr<32> wext(ext);
-    DWORD cchOut = 0;
-    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_EXECUTABLE, wext.c_str(), nullptr, nullptr, &cchOut);
-    if (FAILED(hr) || !cchOut)
-        return false;
-
-    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -546,11 +558,8 @@ void recognizer::proc(recognizer* r)
             // Search for executable file.
             str<> found;
             recognition result = recognition::unrecognized;
-            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found) ||
-                has_file_association(entry.m_word.c_str()))
-            {
+            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found))
                 result = recognition::executable;
-            }
 
             // Store result.
             r->store(entry.m_key.c_str(), found.c_str(), result);
