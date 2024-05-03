@@ -29,6 +29,10 @@ settings.add("exec.files", false, "Include files",
 executables in the current directory even when exec.cwd is off.  (See
 exec.enable, and exec.cwd)]])
 
+settings.add("exec.associations", false, "Include launchable documents",
+[[Include files with registered file associations as matches (i.e. launchable
+documents such as '*.pdf' files).  (See exec.enable)]])
+
 settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 [[If the line begins with whitespace then Clink bypasses executable matching
 and will do normal files matching instead.  (See exec.enable)]])
@@ -165,6 +169,32 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
         return any_added
     end
 
+    local associations = {}
+    local add_files_by_association = function(pattern, rooted, include_associations)
+        local any_added = false
+        if ismain or os.getdrivetype(pattern) ~= "remote" then
+            local matches = clink.filematchesexact(pattern)
+            for _, m in ipairs(matches) do
+                if m.type:find("file") then
+                    local add
+                    local ext = path.getextension(m.match):lower()
+                    local has = associations[ext]
+                    if has == nil and include_associations then
+                        has = os._hasfileassociation(m.match)
+                        associations[ext] = has
+                    end
+                    if has then
+                        if not rooted then
+                            m.match = m.match:match("[^/\\]*[/\\]?$")
+                        end
+                        any_added = match_builder:addmatch(m) or any_added
+                    end
+                end
+            end
+        end
+        return any_added
+    end
+
     local added = false
 
     -- Include commands.
@@ -178,18 +208,21 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
         added = add_files(endword.."*", true) or added
     end
 
-    -- Search 'paths' for files ending in 'suffices' and look for matches.
+    -- Search 'paths' for files ending in executable extensions (and/or
+    -- registered file associations) and look for matches.
     local suffices = (os.getenv("pathext") or ""):explode(";")
     for _, suffix in ipairs(suffices) do
-        for _, dir in ipairs(paths) do
-            added = add_files(dir.."*"..suffix, false, true) or added
-        end
+        associations[suffix:lower()] = true
+    end
+    local include_associations = settings.get("exec.associations")
+    for _, dir in ipairs(paths) do
+        added = add_files_by_association(dir.."*", false, include_associations) or added
+    end
 
-        -- Should we also consider the path referenced by 'text'?
-        if match_cwd then
-            -- Pass true because these need to include the base path.
-            added = add_files(endword.."*"..suffix, true, true) or added
-        end
+    -- Should we also consider the path referenced by 'text'?
+    if match_cwd then
+        -- Pass true because these need to include the base path.
+        added = add_files_by_association(endword.."*", true, include_associations) or added
     end
 
     -- Lastly we may wish to consider directories too.

@@ -34,6 +34,7 @@ extern int _rl_match_hidden_files;
 #include <mutex>
 #include <lmcons.h>
 #include <lmshare.h>
+#include <shlwapi.h>
 
 //------------------------------------------------------------------------------
 extern setting_bool g_files_hidden;
@@ -834,6 +835,27 @@ int32 make_dir_globber(lua_State* state)
 int32 make_file_globber(lua_State* state)
 {
     return globber_impl(state, false);
+}
+
+//------------------------------------------------------------------------------
+int32 has_file_association(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    if (!name)
+        return 0;
+
+    const char* ext = path::get_extension(name);
+    if (ext)
+    {
+        wstr<32> wext(ext);
+        DWORD cchOut = 0;
+        HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_EXECUTABLE, wext.c_str(), nullptr, nullptr, &cchOut);
+        if (FAILED(hr) || !cchOut)
+            ext = nullptr;
+    }
+
+    lua_pushboolean(state, !!ext);
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -2731,6 +2753,7 @@ void os_lua_initialise(lua_state& lua)
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
         { "_makedirglobber", &make_dir_globber },
         { "_makefileglobber", &make_file_globber },
+        { "_hasfileassociation", &has_file_association },
     };
 
     lua_State* state = lua.get_state();
