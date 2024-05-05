@@ -8,6 +8,7 @@
   - Press <kbd>F4</kbd> in a popup list to toggle the search mode between "find" and "filter".
   - The `clink.popup_search_mode` setting controls the default search mode.
   - The `clink.popuplist()` function can be told to start in a specific search mode.
+- Added `os.findfiles()` to allow getting files/directories one at a time (versus `os.globfiles()` which collects the entire set all at once into a table).
 - Added `exec.associations` setting to let Executable Completion include files with registered file associations as matches (e.g. launchable documents such as "*.pdf" files).
 - Fixed <kbd>Ctrl</kbd>-<kbd>C</kbd> in a popup list copying the wrong entry after having used <kbd>Del</kbd> to delete an entry.
 - Fixed input line coloring to use `color.executable` also for files included by the `exec.path` setting, if the files have registered file associations.
