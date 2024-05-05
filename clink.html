@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.6.12</title>
+<title>Clink v1.6.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -942,7 +942,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.6.12</div>
+                <div id="title">Clink v1.6.13</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1417,6 +1417,11 @@ $endif
 <td>A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.</td>
 </tr>
 <tr>
+<td align="center"><a class="wlink" href="#clink_popup_search_mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_popup_search_mode"></a><code>clink.popup_search_mode</code></td>
+<td align="center"><code>find</code></td>
+<td>When this is <code>find</code>, typing in popup lists moves to the next matching item.  When this is <code>filter</code>, typing in popup lists filters the list.</td>
+</tr>
+<tr>
 <td align="center"><a class="wlink" href="#clink_promptfilter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_promptfilter"></a><code>clink.promptfilter</code></td>
 <td align="center">True</td>
 <td>Enable <a href="#customising-the-prompt">prompt filtering</a> by Lua scripts.</td>
@@ -1610,6 +1615,11 @@ $endif
 <td align="center"><a class="wlink" href="#exec_aliases"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_aliases"></a><code>exec.aliases</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include doskey aliases.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#exec_associations"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_associations"></a><code>exec.associations</code></td>
+<td align="center">False</td>
+<td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include files with a registered file association (e.g. launchable documents such as &quot;.pdf&quot; files).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#exec_commands"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_commands"></a><code>exec.commands</code></td>
@@ -4003,6 +4013,10 @@ $endif              # end clink-only section
 <td>Typing does an incremental search.</td>
 </tr>
 <tr>
+<td align="center"><kbd>F1</kbd></td>
+<td>Open this help topic in the default web browser.</td>
+</tr>
+<tr>
 <td align="center"><kbd>F3</kbd></td>
 <td>Go to the next match.</td>
 </tr>
@@ -4017,6 +4031,10 @@ $endif              # end clink-only section
 <tr>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd></td>
 <td>Go to the previous match.</td>
+</tr>
+<tr>
+<td align="center"><kbd>F4</kbd></td>
+<td>Toggle the search mode between &quot;find&quot; and &quot;filter&quot;.  When the search mode is filter, typing filters the list instead of doing an incremental search (only in v1.6.13 and higher).  Use the <a href="#clink_popup_search_mode">clink.popup_search_mode</a> setting to set the default search mode.</td>
 </tr>
 </tbody></table>
 <p>The <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.</p>
@@ -6912,6 +6930,7 @@ end</code></pre></div></div><hr/>
 &nbsp;   height          = 20,       -- Preferred height, not counting the border.
 &nbsp;   width           = 60,       -- Preferred width, not counting the border.
 &nbsp;   reverse         = true,     -- Start at bottom; search upwards.
+&nbsp;   searchmode      = "filter", -- Use "find" or "filter" to override the default search mode (in v1.6.13 and higher).
 &nbsp;   colors = {                  -- Override the popup colors using any colors in this table.
 &nbsp;       items       = "97;44",  -- The items color (e.g. bright white on blue).
 &nbsp;       desc        = "...",    -- The description color.
@@ -7173,7 +7192,7 @@ line_state:getrangelength() == 18          --          <----------------></code>
 
 </div><div class="group">
 <h5 id="os" class="group_name"><a class="wlink" href="#os"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>os. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#os.abbreviatepath">abbreviatepath</a></td><td><a href="#os.getclipboardtext">getclipboardtext</a></td><td><a href="#os.getpushddepth">getpushddepth</a></td><td><a href="#os.move">move</a></td></tr><tr><td><a href="#os.chdir">chdir</a></td><td><a href="#os.getcwd">getcwd</a></td><td><a href="#os.getscreeninfo">getscreeninfo</a></td><td><a href="#os.resolvealias">resolvealias</a></td></tr><tr><td><a href="#os.clock">clock</a></td><td><a href="#os.getdrivetype">getdrivetype</a></td><td><a href="#os.getshortpathname">getshortpathname</a></td><td><a href="#os.rmdir">rmdir</a></td></tr><tr><td><a href="#os.copy">copy</a></td><td><a href="#os.getenv">getenv</a></td><td><a href="#os.gettemppath">gettemppath</a></td><td><a href="#os.setalias">setalias</a></td></tr><tr><td><a href="#os.createtmpfile">createtmpfile</a></td><td><a href="#os.getenvnames">getenvnames</a></td><td><a href="#os.globdirs">globdirs</a></td><td><a href="#os.setclipboardtext">setclipboardtext</a></td></tr><tr><td><a href="#os.debugprint">debugprint</a></td><td><a href="#os.geterrorlevel">geterrorlevel</a></td><td><a href="#os.globfiles">globfiles</a></td><td><a href="#os.setenv">setenv</a></td></tr><tr><td><a href="#os.enumshares">enumshares</a></td><td><a href="#os.getfileversion">getfileversion</a></td><td><a href="#os.globmatch">globmatch</a></td><td><a href="#os.sleep">sleep</a></td></tr><tr><td><a href="#os.expandabbreviatedpath">expandabbreviatedpath</a></td><td><a href="#os.getfullpathname">getfullpathname</a></td><td><a href="#os.isdir">isdir</a></td><td><a href="#os.touch">touch</a></td></tr><tr><td><a href="#os.expandenv">expandenv</a></td><td><a href="#os.gethost">gethost</a></td><td><a href="#os.isfile">isfile</a></td><td><a href="#os.unlink">unlink</a></td></tr><tr><td><a href="#os.getalias">getalias</a></td><td><a href="#os.getlongpathname">getlongpathname</a></td><td><a href="#os.issignaled">issignaled</a></td></tr><tr><td><a href="#os.getaliases">getaliases</a></td><td><a href="#os.getnetconnectionname">getnetconnectionname</a></td><td><a href="#os.isuseradmin">isuseradmin</a></td></tr><tr><td><a href="#os.getbatterystatus">getbatterystatus</a></td><td><a href="#os.getpid">getpid</a></td><td><a href="#os.mkdir">mkdir</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#os.abbreviatepath">abbreviatepath</a></td><td><a href="#os.getbatterystatus">getbatterystatus</a></td><td><a href="#os.getpid">getpid</a></td><td><a href="#os.mkdir">mkdir</a></td></tr><tr><td><a href="#os.chdir">chdir</a></td><td><a href="#os.getclipboardtext">getclipboardtext</a></td><td><a href="#os.getpushddepth">getpushddepth</a></td><td><a href="#os.move">move</a></td></tr><tr><td><a href="#os.clock">clock</a></td><td><a href="#os.getcwd">getcwd</a></td><td><a href="#os.getscreeninfo">getscreeninfo</a></td><td><a href="#os.resolvealias">resolvealias</a></td></tr><tr><td><a href="#os.copy">copy</a></td><td><a href="#os.getdrivetype">getdrivetype</a></td><td><a href="#os.getshortpathname">getshortpathname</a></td><td><a href="#os.rmdir">rmdir</a></td></tr><tr><td><a href="#os.createtmpfile">createtmpfile</a></td><td><a href="#os.getenv">getenv</a></td><td><a href="#os.gettemppath">gettemppath</a></td><td><a href="#os.setalias">setalias</a></td></tr><tr><td><a href="#os.debugprint">debugprint</a></td><td><a href="#os.getenvnames">getenvnames</a></td><td><a href="#os.globdirs">globdirs</a></td><td><a href="#os.setclipboardtext">setclipboardtext</a></td></tr><tr><td><a href="#os.enumshares">enumshares</a></td><td><a href="#os.geterrorlevel">geterrorlevel</a></td><td><a href="#os.globfiles">globfiles</a></td><td><a href="#os.setenv">setenv</a></td></tr><tr><td><a href="#os.expandabbreviatedpath">expandabbreviatedpath</a></td><td><a href="#os.getfileversion">getfileversion</a></td><td><a href="#os.globmatch">globmatch</a></td><td><a href="#os.sleep">sleep</a></td></tr><tr><td><a href="#os.expandenv">expandenv</a></td><td><a href="#os.getfullpathname">getfullpathname</a></td><td><a href="#os.isdir">isdir</a></td><td><a href="#os.touch">touch</a></td></tr><tr><td><a href="#os.findfiles">findfiles</a></td><td><a href="#os.gethost">gethost</a></td><td><a href="#os.isfile">isfile</a></td><td><a href="#os.unlink">unlink</a></td></tr><tr><td><a href="#os.getalias">getalias</a></td><td><a href="#os.getlongpathname">getlongpathname</a></td><td><a href="#os.issignaled">issignaled</a></td></tr><tr><td><a href="#os.getaliases">getaliases</a></td><td><a href="#os.getnetconnectionname">getnetconnectionname</a></td><td><a href="#os.isuseradmin">isuseradmin</a></td></tr></table>
 <div class="function"><div class="header"> <div id="os.abbreviatepath" class="name"><a class="wlink" href="#os.abbreviatepath"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.abbreviatepath</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">decide</span>:function], [<span class="arg_name">transform</span>:function] ) : string<br/><div class="version">v1.4.1 and newer</div></div></div><div class="body"><p class="desc">This abbreviates parent directories in <span class="arg">path</span> to the shortest string that uniquely identifies the directory.  The drive, if present, is never abbreviated.  By default, the first and last names in the string are not abbreviated.</p><p class="desc"> For performance reasons, UNC paths and paths on remote or removeable drives are never abbreviated.</p><p class="desc"> The return value is the resulting path after abbreviation.</p><p class="desc"> If an optional <span class="arg">decide</span> function is provided then it is called once for each directory name in <span class="arg">path</span>, and it can control which directories get abbreviated.  The <span class="arg">decide</span> function receives one argument: the path to the directory that may be abbreviated.  The function can return true to try to abbreviate the directory, or false to prevent abbreviating the directory, or nil to allow the default behavior (don't abbreviate the first or last directory names).</p><p class="desc"> If an optional <span class="arg">transform</span> function is provided then it is called once for each directory name in the resulting string.  The <span class="arg">transform</span> function receives two arguments: the string to be appended, and a boolean indicating whether it has been abbreviated.  The function can adjust the string, and should return a string to appended.  If it returns nil, the string is appended as-is.  This is intended to be able to apply ANSI escape color codes, for example to highlight special directories or to show which directory names have been abbreviated.</p><p class="desc"> This function can potentially take some time to complete, but it can be called in a coroutine and yields appropriately.  It is the caller's responsibility to ensure that any <span class="arg">decide</span> or <span class="arg">transform</span> functions are either very fast, yield appropriately, or are not used from a coroutine.</p><pre class="language-lua"><code>-- Suppose only the following directories exist in the D:\xyz directory:
 --  - D:\xyz\bag
 --  - D:\xyz\bookkeeper
@@ -7278,6 +7297,34 @@ expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxes\\file")
 -- returns nil                              -- Is already expanded.</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.expandenv" class="name"><a class="wlink" href="#os.expandenv"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.expandenv</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string<br/><div class="version">v1.2.5 and newer</div></div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: See <a href="#os.getenv">os.getenv()</a> for a list of special variable names.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="os.findfiles" class="name"><a class="wlink" href="#os.findfiles"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.findfiles</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">pattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean], [<span class="arg_name">flags</span>:table] ) : object<br/><div class="version">v1.6.13 and newer</div></div></div><div class="body"><p class="desc">Returns an object that can be used to get files and/or directories matching <span class="arg">pattern</span>.</p><p class="desc"> <strong>Note:</strong> any quotation marks (<code>"</code>) in <span class="arg">pattern</span> are stripped.</p><p class="desc"> Unlike <a href="#os.globfiles">os.globfiles</a>, this only collects matching files or directories one at a time, instead of collecting all matches in a table.</p><p class="desc"> The returned object has the following functions: <ul> <li><strong>next()</strong> - Returns the next file or directory, or nil where there are no more. <li><strong>files()</strong> - Returns a Lua iterator function which can be used in a <strong>for</strong> loop, returning the next file or directory each time. <li><strong>close()</strong> - Releases the OS resources used for the search.  This is automatically called by the Lua garbage collector, but that may not happen quickly enough to avoid interfering with operations such as deleting a parent directory, so it's good to call <code>:close()</code> directly. </ul></p><pre class="language-lua"><code>-- Print the first matching file, without wasting time collecting
+-- the rest of the files, since they aren't needed here.
+local ff = os.findfiles(pattern)
+local name = ff:next()
+print(name)
+ff:close()</code></pre><p class="desc">By default <code>:next()</code> returns a string containing the name of the file or directory.  The optional <span class="arg">extrainfo</span> argument can instead return a table corresponding to one file or directory, with the following scheme:</p><pre class="language-lua"><code>local ff = os.findfiles(pattern, extrainfo)
+local t = ff:next()
+-- Included when extrainfo is true or >= 1:
+--   t.name             -- [string] The file or directory name.
+--   t.type             -- [string] The match type (see below).
+-- Included when extrainfo is 2:
+--   t.size             -- [number] The file size, in bytes.
+--   t.atime            -- [number] The access time, compatible with os.time().
+--   t.mtime            -- [number] The modified time, compatible with os.time().
+--   t.ctime            -- [number] The creation time, compatible with os.time().
+ff:close()</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> The optional <span class="arg">flags</span> argument can be a table with fields that select how finding files should behave.  By default files, directories, hidden files/directories are included, system files/directories are omitted, and directories have a <code>\</code> suffix.</p><pre class="language-lua"><code>local flags = {
+&nbsp;   files = true,       -- True includes files, or false omits them.
+&nbsp;   dirs = true,        -- True includes directories, or false omits them.
+&nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
+&nbsp;   system = false,     -- True includes system files, or false omits them (default).
+&nbsp;   dirsuffix = true,   -- True adds a \ suffix to directories, or false omits it.
+}
+local ff = os.findfiles(pattern, true, flags)
+for t in ff:files() do
+&nbsp;   print(t.name.." ("..t.type..")")
+end
+ff:close()</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.getalias" class="name"><a class="wlink" href="#os.getalias"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.getalias</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.4 and newer</div></div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
 
@@ -7419,7 +7466,7 @@ local t = os.globmatch("docs/**/*.md", true, flags)</code></pre><p class="desc">
 
 <div class="function"><div class="header"> <div id="os.rmdir" class="name"><a class="wlink" href="#os.rmdir"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.rmdir</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="os.setalias" class="name"><a class="wlink" href="#os.setalias"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.setalias</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">command</span>:string ) : boolean<br/><div class="version">v1.6.11 and newer</div></div></div><div class="body"><p class="desc">Sets a doskey alias <span class="arg">name</span> to <span class="arg">command</span>.  Returns true if successful, or returns false if not successful.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="os.setalias" class="name"><a class="wlink" href="#os.setalias"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.setalias</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">command</span>:string ) : boolean<br/><div class="version">v1.6.11 and newer</div></div></div><div class="body"><p class="desc">Sets a doskey alias <span class="arg">name</span> to <span class="arg">command</span>.  Returns true if successful, or returns false if not successful.</p><p class="desc"> <strong>Note:</strong> For more information on the syntax of doskey aliases in Windows read documentation on the <code>doskey</code> command, or run <code>doskey /?</code> for a quick summary.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.setclipboardtext" class="name"><a class="wlink" href="#os.setclipboardtext"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.setclipboardtext</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( string ) : boolean<br/><div class="version">v1.2.32 and newer</div></div></div><div class="body"><p class="desc">This sets the text onto the system clipboard, and returns whether it was successful.</p></div></div><hr/>
 
@@ -8012,6 +8059,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1613"><a class="wlink" href="#v1613"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.13 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Popup lists can now be filtered.<ul>
+<li>Press <kbd>F4</kbd> in a popup list to toggle the search mode between &quot;find&quot; and &quot;filter&quot;.</li>
+<li>The <code>clink.popup_search_mode</code> setting controls the default search mode.</li>
+<li>The <code>clink.popuplist()</code> function can be told to start in a specific search mode.</li>
+</ul>
+</li>
+<li>Added <code>os.findfiles()</code> to allow getting files/directories one at a time (versus <code>os.globfiles()</code> which collects the entire set all at once into a table).</li>
+<li>Added <code>exec.associations</code> setting to let Executable Completion include files with registered file associations as matches (e.g. launchable documents such as &quot;*.pdf&quot; files).</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>C</kbd> in a popup list copying the wrong entry after having used <kbd>Del</kbd> to delete an entry.</li>
+<li>Fixed input line coloring to use <code>color.executable</code> also for files included by the <code>exec.path</code> setting, if the files have registered file associations.</li>
+</ul>
 <h4 id="v1612"><a class="wlink" href="#v1612"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.12 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/597">#597</a>; prompt shows leftover text sometimes (regression introduced in v1.6.10).</li>
