@@ -50,15 +50,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [Smarter Ctrl-W word deletion](https://github.com/mridgers/clink/commit/a385a1695bb425d6f48aae4e587c9c06af8515f6)
 - [Type name style change](https://github.com/mridgers/clink/commit/e6baa31badb8854413dd34988cc33b7aeb68b7e0) -- Huge; renames types from `foo_bar` to `FooBar`.
 
-## Leaning Towards No
-- [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.
-- It could be reasonable to add an iterator version of `os.globfiles()`, but replacing it breaks compatibility.
+## No
+- [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.  And what about `c_` and `s_` and `g_`?  Keeping `m_` seems useful, and avoids a huge amount of churn.
+- It could be reasonable to add an iterator version of `os.globfiles()`, but replacing it breaks compatibility -- The way these commits implemented it is problematic because it relies exclusively on garbage collection to release the OS FindFirstFile handle, and that can create sharing violations which the Lua script cannot fix except by forcing garbage collection.  But something similar to `io.open()` and `:lines()` and `:close()` would be fine, and would be consistent with `opendir()`, `readdir()`, and `closedir()`.
   - [Made Lua's os.glob*() work like an iterator instead of building a table](https://github.com/mridgers/clink/commit/13fc3b68046d2cee0f2188b9c8d54fa0cbc18718)
   - [os.glob*() tests](https://github.com/mridgers/clink/commit/5cfacee2a2b8230968854bc94bc3e1adf6b56bf9)
   - [Fixed "cd \\" Lua error](https://github.com/mridgers/clink/commit/d2ffed58f75597cec08d85e8abf4fafc0b60a067)
   - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6) -- This is inconsistent with `argmatcher:addflags()` and `argmatcher:addarg()`, and is generally non-intuitive.
-
-## No
 - [Use AppData/Local for a the DLL cache as temp can get cleaned](https://github.com/mridgers/clink/commit/8ed3cb0b427970c8082acb238071b26d5e788057) -- Getting cleaned is desirable.  Otherwise DLL versions accumulate without bound.
 - [Don't expect the user to account for a null terminator](https://github.com/mridgers/clink/commit/4583281d464933d9ce021aedcdf3edc5e3fdc189) -- This still requires the user to account for a null terminator, by removing the space for the null terminator, otherwise the block gets sized differently than expected (and can have extra slop allocated).
 - Removing all copyright dates seems problematic.  Isn't it required in copyright notices?  And in the program logo header it provides date context for the program version being used.
@@ -79,7 +77,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [New jmp-style hooking mechanism that is Win11 compatible](https://github.com/mridgers/clink/commit/7ed4c8f0215c45e96f757dd2ea9d4e44b689cf58)
   - [Branch displacement was back-to-front](https://github.com/mridgers/clink/commit/3047b9b91e75131db0243bd6cde4a36fffe42b92)
 - [Use Windows 10's virtual terminal if available](https://github.com/mridgers/clink/commit/530196af81f9981d18888e1326ff37d0bd249d7e) -- SetConsoleMode does not validate flags, so the approach here will not detect when `ENABLE_VIRTUAL_TERMINAL_PROCESSING` is not available.  This was solved in chrisant996/clink by checking the OS version and the ConsoleV2 regkey and etc.
-- [unix-filename-rubout uses forward slashes too](https://github.com/mridgers/clink/commit/d82ad89cb0e353ece72f0ddf399632ca21fdcd5c) -- This was solved in chrisant996/clink by refactoring how Readline handles path separators, and the changes were ratified by Chet Ramey and incorporated into the official Readline distribution.
+- [unix-filename-rubout uses forward slashes too](https://github.com/mridgers/clink/commit/d82ad89cb0e353ece72f0ddf399632ca21fdcd5c) -- This was solved in chrisant996/clink by refactoring how Readline handles path separators, and the changes were ratified by Chet Ramey and incorporated into the official Readline distribution (although subsequent changes in Readline haven't followed the refactored approach and will need further cleanup).
 - [Let's try a different default colour scheme (white on red was too angry)](https://github.com/mridgers/clink/commit/dd5aeb00b1fed954ec12af8e76598e4c74453b88) -- The color scheme in chrisant996/clink already made similarly-motivated changes.
 - [Option to remap ESC to; raw, ctrl-c, or revert-line (line Windows)](https://github.com/mridgers/clink/commit/295a9e4a3628e94b8b889286ae96c9355dc0ad77) -- Conflicts with `terminal.raw_esc` and the chrisant996/clink approach for differentiating <kbd>Esc</kbd> input from the `ESC` character, which allows binding <kbd>Esc</kbd> to anything the user wishes.
 
