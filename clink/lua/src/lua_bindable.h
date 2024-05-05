@@ -139,7 +139,6 @@ void lua_bindable<T>::make_metatable(lua_State* state)
 template <class T>
 void lua_bindable<T>::bind(lua_State* state)
 {
-    assert(!m_owned);
     assert(m_state_unbind == nullptr);
     assert(m_registry_ref == LUA_NOREF);
 
@@ -173,10 +172,7 @@ void lua_bindable<T>::unbind()
 
     lua_rawgeti(m_state_unbind, LUA_REGISTRYINDEX, m_registry_ref);
     if (auto** self = (T**)lua_touserdata(m_state_unbind, -1))
-    {
-        assert(!(*self)->m_owned);
         *self = nullptr;
-    }
     lua_pop(m_state_unbind, 1);
 
     luaL_unref(m_state_unbind, LUA_REGISTRYINDEX, m_registry_ref);
@@ -225,7 +221,7 @@ void lua_bindable<T>::push(lua_State* state)
     int32 top = lua_gettop(state);
 #endif
 
-    if (m_registry_ref == LUA_NOREF && !m_owned)
+    if (m_registry_ref == LUA_NOREF)
         bind(state);
 
     lua_rawgeti(state, LUA_REGISTRYINDEX, m_registry_ref);
