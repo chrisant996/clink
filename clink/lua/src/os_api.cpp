@@ -2021,6 +2021,10 @@ int32 get_aliases(lua_State* state)
 /// Sets a doskey alias <span class="arg">name</span> to
 /// <span class="arg">command</span>.  Returns true if successful, or returns
 /// false if not successful.
+///
+/// <strong>Note:</strong> For more information on the syntax of doskey aliases
+/// in Windows read documentation on the <code>doskey</code> command, or run
+/// <code>doskey /?</code> for a quick summary.
 int32 set_alias(lua_State* state)
 {
     const char* name = checkstring(state, 1);
