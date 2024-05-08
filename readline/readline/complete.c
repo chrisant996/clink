@@ -4037,7 +4037,15 @@ rl_menu_complete (int count, int ignore)
 	  /* If there are so many matches that the user has to be asked
 	     whether or not he wants to see the matches, menu completion
 	     is unwieldy. */
+/* begin_clink_change */
+#if defined (OMIT_DEFAULT_DISPLAY_MATCHES)
+	  if (_rl_display_matches_prompted)
+#else
+/* end_clink_change */
 	  if (rl_completion_query_items > 0 && match_list_size >= rl_completion_query_items)
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 	    {
 	      rl_ding ();
 	      _rl_free_match_list (matches);

@@ -63,6 +63,7 @@ int __stat_char (const char *filename, char match_type);
 extern setting_bool g_match_best_fit;
 extern setting_int g_match_limit_fitted;
 extern line_buffer* g_rl_buffer;
+int _rl_display_matches_prompted = false;
 rl_match_display_filter_func_t *rl_match_display_filter_func = nullptr;
 const char *_rl_description_color = nullptr;
 const char *_rl_filtered_color = nullptr;
@@ -1040,6 +1041,8 @@ static int32 prompt_display_matches(int32 len)
 {
     end_prompt(1/*crlf*/);
 
+    _rl_display_matches_prompted = true;
+
     if (_rl_pager_color)
         _rl_print_pager_color();
     fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
@@ -1061,6 +1064,8 @@ extern "C" void display_matches(char** matches)
     match_adapter adapter;
     char** rebuilt = nullptr;
     char* rebuilt_storage[3];
+
+    _rl_display_matches_prompted = false;
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)

@@ -306,6 +306,9 @@ extern int stat_from_match_type (int, const char*, struct stat*, struct stat*);
 #else
 extern int stat_from_match_type (int, const char*, struct stat*);
 #endif
+#if defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+extern int _rl_display_matches_prompted;
+#endif
 /* end_clink_change */
 
 /* display.c */
