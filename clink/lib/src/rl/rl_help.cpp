@@ -1532,7 +1532,7 @@ static bool funcmac_dumper_internal(bool macros)
         qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector_func);
 
         if (rl_dispatching)
-            end_prompt(false/*crlf*/);
+            end_prompt(true/*crlf*/);
 
         print_warnings(warnings, 0, false/*pager*/);
 
