@@ -6,6 +6,7 @@
 
 - Fixed `menu-complete` to respect `completion-auto-query-items`.
 - Fixed missing line break before `dump-macros`, `dump-variables`, `clink-dump-functions`, and `clink-dump-macros` (regression introduced in v1.6.3).
+- Fixed `rl.getbinding()` to return `clink-select-complete` instead of `clink-popup-complete` (the latter is just an alias; the real command name is `clink-select-complete`).
 
 #### v1.6.13
 
