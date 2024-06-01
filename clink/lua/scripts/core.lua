@@ -77,7 +77,7 @@ end
 -- This returns true if short_src begins with "~clink~\\", which means it's an
 -- internal Clink script.
 function clink._is_internal_script(short_src)
-    return string.find(short_src, "^~clink~\\") and true or nil
+    return string.find(short_src, "^~clink~[/\\]") and true or nil
 end
 
 
