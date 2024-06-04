@@ -9,6 +9,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Unit Tests
 
 ## Normal Priority
+- Event handler enhancements.
+  - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
+  - Allow setting an optional `name` when registering event handlers?  So that scripts can cooperate to share a single named event.  But it's already possible for scripts to cooperate to achieve the same effect, e.g. by having an event handler that executes a function specified by a global variable.
+  - Allow removing an event handler?
+  - Maybe the `clink.onbeginedit()` (etc) functions could return an object with methods for setting priority, replacing the handler, disabling/enabling the handler, removing the handler, etc.
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Some wizard for interactively viewing/modifying color settings.
