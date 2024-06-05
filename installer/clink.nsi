@@ -370,7 +370,7 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 LangString desc_app_files           ${LANG_ENGLISH} "Installs the Clink application files."
-LangString desc_enhanced_defaults   ${LANG_ENGLISH} "Pre-configures Clink with several popular enhancements enabled, including colors and familiar key bindings designed for Windows.  Any of them can be changed after installation."
+LangString desc_enhanced_defaults   ${LANG_ENGLISH} "Pre-configures Clink with several popular enhancements enabled, including colors and some familiar CMD key bindings.  Any of them can be changed after installation.  Refer to the Getting Started docs for more info."
 LangString desc_add_shortcuts       ${LANG_ENGLISH} "Adds Start Menu shortcuts for Clink and its documentation."
 LangString desc_clink_dir           ${LANG_ENGLISH} "Sets %CLINK_DIR% to the Clink install location."
 LangString desc_autorun             ${LANG_ENGLISH} "Configures the CMD.EXE AutoRun regkey to inject Clink when CMD.EXE starts.  This can be convenient, but also makes starting CMD.EXE always a little slower."
