@@ -4,7 +4,6 @@
 # Override built-in default settings with ones that provide a more
 # enhanced Clink experience.
 
-autosuggest.enable                = True
 clink.default_bindings            = windows
 cmd.ctrld_exits                   = False
 color.arginfo                     = sgr 38;5;172
