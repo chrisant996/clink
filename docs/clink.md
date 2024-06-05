@@ -464,7 +464,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="cmd_admin_title_prefix"></a>`cmd.admin_title_prefix` | | When set, this replaces the "Administrator: " console title prefix.
 <a name="cmd_altf4_exits"></a>`cmd.altf4_exits` | True | When set, pressing <kbd>Alt</kbd>-<kbd>F4</kbd> exits the cmd.exe process.
 <a name="cmd_auto_answer"></a>`cmd.auto_answer` | `off` | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.
+<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True [*](#alternatedefault) | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.
 <a name="cmd_get_errorlevel"></a>`cmd.get_errorlevel` | True | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 <a name="color_arg"></a>`color.arg` |  | The color for arguments in the input line when [`clink.colorize_input`](#clink_colorize_input) is enabled.
 <a name="color_arginfo"></a>`color.arginfo` | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
