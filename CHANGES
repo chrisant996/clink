@@ -4,7 +4,7 @@
 
 #### v1.6.15
 
-- Fixed hiding internal script names (regression introduced in v1.6.11).
+- Fixed hiding internal script names in the `clink-diagnostics` output (regression introduced in v1.6.11).
 
 #### v1.6.14
 
