@@ -115,7 +115,7 @@ function cmd_classifier:classify(commands) -- luacheck: no self
     end
 end
 
-local chain = clink.argmatcher():chaincommand()
+local chain = clink.argmatcher():chaincommand("cmdquotes") -- CMD's command line has special handling for qoutes.
 local colors = clink.argmatcher():addarg({fromhistory=true})
 
 local function first_sentence(s)

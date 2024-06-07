@@ -291,6 +291,10 @@ local function parse_chaincommand_modes(modes)
             expand_aliases = true
         elseif m == "cmd" or m == "start" or m == "run" then
             mode = m
+        elseif m == "cmdquotes" then
+            -- Undocumented mode.  CMD's command line parsing has quirks for
+            -- quotes, so special handling is needed.
+            mode = m
         end
     end
     return mode, expand_aliases
@@ -402,6 +406,17 @@ function _argreader:start_chained_command(line_state, word_index, mode, expand_a
         local info = line_state:getwordinfo(i)
         if not info.redir then
             if info.quoted then
+                if mode == "cmdquotes" then
+                    -- CMD has complicated special case handling when the text
+                    -- after /C or /K or /R begins with a quote.  It's so
+                    -- complicated that there's not a good way to accurately
+                    -- predict how to parse it for all possible combinations,
+                    -- so let's just disable input line coloring for the rest
+                    -- of the line whenever that's encountered.
+                    if self._word_classifier then
+                        self._word_classifier:applycolor(info.offset - 1, 999999, settings.get("color.input"))
+                    end
+                end
                 return line_state
             end
             local alias = info.alias
@@ -428,7 +443,7 @@ function _argreader:start_chained_command(line_state, word_index, mode, expand_a
                     end
                 end
             end
-            self._no_cmd = not (mode == "cmd" or mode == "start")
+            self._no_cmd = not (mode == "cmd" or mode == "cmdquotes" or mode == "start")
             break
         end
     end
