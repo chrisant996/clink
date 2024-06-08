@@ -5,6 +5,7 @@
 #### v1.6.15
 
 - Fixed hiding internal script names in the `clink-diagnostics` output (regression introduced in v1.6.11).
+- Fixed [#613](https://github.com/chrisant996/clink/issues/613); wrong input line coloring for `cmd /c "command line"`.
 
 #### v1.6.14
 
