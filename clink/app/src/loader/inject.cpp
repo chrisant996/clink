@@ -78,8 +78,9 @@ static void copy_dll(str_base& dll_path)
     target_path << "\\" CLINK_DLL;
 
 #if !defined(CLINK_FINAL)
-    // The DLL id only changes on a commit-premake cycle. During development this
-    // doesn't work so well so we'll force it through. TODO: check timestamps
+    // The DLL id only changes on a commit-premake cycle. During development
+    // this doesn't work so well so we'll force it through.
+    // TODO: check timestamps and only force when timestamp differs.
     bool always = true;
 #else
     bool always = false;
@@ -235,9 +236,14 @@ private:
 //------------------------------------------------------------------------------
 static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_host=false)
 {
-    // Get path to clink's DLL that we'll inject.
+    // Get path to clink's DLL that we'll inject.  Using _pgmptr favors the
+    // path that was actually uses to spawn the clink process.  This works
+    // around the fact that scoop tries to control app versions and updates
+    // (but scoop can't quite do it correctly if an app has its own updater).
     str<280> dll_path;
-    process().get_file_name(dll_path);
+    dll_path = _pgmptr;
+    if (dll_path.empty() || !strpbrk(dll_path.c_str(), "/\\"))
+        process().get_file_name(dll_path);
     path::get_directory(dll_path);
     path::append(dll_path, CLINK_DLL);
 
