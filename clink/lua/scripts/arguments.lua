@@ -2220,7 +2220,11 @@ local function file_matches_impl(match_word, exact)
         return matches
     end
 
-    local root = (path.getdirectory(word) or ""):gsub("/", "\\")
+    local root = (path.getdirectory(word) or "")
+    if word:find("^/", #root + 1) == #root + 1 then
+        -- Preserve forward slash after the directory part, when present.
+        root = root.."/"
+    end
     if expanded then
         root = rl.collapsetilde(root)
     end
