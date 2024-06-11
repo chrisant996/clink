@@ -92,6 +92,7 @@ public:
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
 
     void                    set_word_break_position(int32 position);
+    void                    set_path_separator(char sep);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
 
@@ -159,6 +160,7 @@ private:
     bool                    m_regen_blocked = false;
     bool                    m_nosort = false;
     bool                    m_volatile = false;
+    char                    m_sep = '\0';
     int32                   m_suppress_quoting = 0;
     int32                   m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;

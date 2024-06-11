@@ -48,6 +48,7 @@ setting_bool g_files_system(
     false);
 
 extern setting_enum g_default_bindings;
+extern setting_enum g_translate_slashes;
 
 
 
@@ -308,6 +309,23 @@ void match_pipeline::generate(
     const auto& state = states.back();
 
     m_matches.set_word_break_position(state.get_end_word_offset());
+
+    char sep = 0;
+    if (g_translate_slashes.get() == 4)
+    {
+        // Detect what kind of slash to use in "auto" mode (4).
+        str<32> endword;
+        state.get_end_word(endword);
+        for (const char* p = endword.c_str(); *p; ++p)
+        {
+            if (*p == '/' || *p == '\\')
+            {
+                sep = *p;
+                break;
+            }
+        }
+    }
+    m_matches.set_path_separator(sep);
 
     match_builder builder(m_matches);
     if (generator)
