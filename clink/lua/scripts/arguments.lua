@@ -2211,7 +2211,7 @@ local function file_matches_impl(match_word, exact)
     local word, expanded = rl.expandtilde(match_word or "")
     local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
 
-    local server = word:match("^\\\\([^\\]+)\\[^\\]*$")
+    local server = word:match("^[/\\][/\\]([^/\\]+)[/\\][^/\\]*$")
     if server then
         local matches = {}
         for share, special in os.enumshares(server, hidden) do
