@@ -5,6 +5,9 @@
 #### v1.6.16
 
 - Added a workaround for how [scoop](https://scoop.sh/) tries to control app versions and updates ([#615](https://github.com/chrisant996/clink/issues/615); scoop causes `clink autorun install` to use a wrong path).
+- Added an `auto` mode for the `matches.translate_slashes` setting.  This mode makes completion translate all slashes to whichever kind occurs first in the word, otherwise to the system path separator.
+- UNC share name completion works with forward slashes now (e.g. `//localhost/`).
+- Fixed the `off` mode for the `matches.translate_slashes` setting (regression introduced in v1.1.23).
 
 #### v1.6.15
 
