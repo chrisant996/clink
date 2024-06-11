@@ -1593,10 +1593,16 @@ static void write_with_clear(FILE* stream, const char* text, int length)
     int remaining = length;
     while (remaining > 0)
     {
+        bool erase_in_line = true;
+
         const char* eol = strpbrk(text, "\r\n");
         length = eol ? int(eol - text) : remaining;
         if (length > 0)
         {
+            measure_columns mc(measure_columns::print);
+            mc.measure(text, length, true/*is_prompt*/);
+            if (!mc.get_column() && mc.get_line_count() > 1)
+                erase_in_line = false;
             rl_fwrite_function(stream, text, length);
             text += length;
             remaining -= length;
@@ -1607,7 +1613,8 @@ static void write_with_clear(FILE* stream, const char* text, int length)
             while (remaining > 0 && (*text == '\r' || *text == '\n'))
                 ++text, --remaining;
             length = int(text - eol);
-            rl_fwrite_function(stream, "\x1b[K", 3);
+            if (erase_in_line)
+                rl_fwrite_function(stream, "\x1b[K", 3);
             if (length > 0)
                 rl_fwrite_function(stream, eol, length);
         }
