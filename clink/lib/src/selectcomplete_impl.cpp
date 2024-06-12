@@ -18,6 +18,7 @@
 #include "line_editor_integration.h"
 #include "rl_integration.h"
 #include "suggestions.h"
+#include "slash_translation.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
 #endif
@@ -1067,6 +1068,14 @@ void selectcomplete_impl::init_matches()
             if (dbg_get_env_int("DEBUG_EXPANDABBREV"))
                 printf("\x1b[s\x1b[H\x1b[97;48;5;22mEXPANDED:  \"%s\" + \"%s\" (%s)\x1b[m\x1b[K\x1b[u", expanded.c_str(), in, disambiguated ? "UNIQUE" : "ambiguous");
 #endif
+            if (disambiguated)
+            {
+                expanded.concat(in);
+                assert(in + strlen(in) == tmp.c_str() + tmp.length());
+            }
+
+            do_slash_translation(expanded, strpbrk(tmp.c_str(), "/\\"));
+
             if (!disambiguated)
             {
 stop:
@@ -1084,8 +1093,6 @@ stop:
             }
             else
             {
-                expanded.concat(in);
-                assert(in + strlen(in) == tmp.c_str() + tmp.length());
                 in = tmp.c_str() + tmp.length();
                 if (path::is_separator(expanded[expanded.length() - 1]))
                     goto stop;

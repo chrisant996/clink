@@ -7,6 +7,7 @@
 #include "match_pipeline.h"
 #include "matches_impl.h"
 #include "display_matches.h"
+#include "slash_translation.h"
 
 #include <core/array.h>
 #include <core/path.h>
@@ -310,19 +311,17 @@ void match_pipeline::generate(
 
     m_matches.set_word_break_position(state.get_end_word_offset());
 
+    // Detect what kind of slash to use in case slash translation mode ends up
+    // being automatic.  Generators can change the mode, so don't check it here.
     char sep = 0;
-    if (g_translate_slashes.get() == 4)
+    str<32> endword;
+    state.get_end_word(endword);
+    for (const char* p = endword.c_str(); *p; ++p)
     {
-        // Detect what kind of slash to use in "auto" mode (4).
-        str<32> endword;
-        state.get_end_word(endword);
-        for (const char* p = endword.c_str(); *p; ++p)
+        if (*p == '/' || *p == '\\')
         {
-            if (*p == '/' || *p == '\\')
-            {
-                sep = *p;
-                break;
-            }
+            sep = *p;
+            break;
         }
     }
     m_matches.set_path_separator(sep);

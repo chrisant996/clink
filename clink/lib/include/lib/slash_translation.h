@@ -23,3 +23,11 @@ enum
 };
 
 }
+
+//------------------------------------------------------------------------------
+class str_base;
+
+//------------------------------------------------------------------------------
+void set_slash_translation(int32 mode);
+int32 get_slash_translation();
+void do_slash_translation(str_base& in_out, const char* sep=nullptr);

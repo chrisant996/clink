@@ -28,11 +28,6 @@ char* __printable_part(char* text);
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static int32 s_slash_translation = slash_translation::off;
-void set_slash_translation(int32 mode) { s_slash_translation = mode; }
-int32 get_slash_translation() { return s_slash_translation; }
-
-//------------------------------------------------------------------------------
 setting_enum g_translate_slashes(
     "match.translate_slashes",
     "Translate slashes and backslashes",
@@ -915,7 +910,7 @@ void matches_impl::reset()
     m_filename_display_desired.reset();
     m_input_line.clear();
 
-    s_slash_translation = g_translate_slashes.get();
+    set_slash_translation(g_translate_slashes.get());
 }
 
 //------------------------------------------------------------------------------
@@ -1113,12 +1108,13 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     // only when `clink.slash_translation` is enabled.  already_normalized means
     // desc has already been normalized to system format, and a performance
     // optimization can skip translation if system format is configured.
-    int32 mode = (s_slash_translation &&
-                (is_match_type(type, match_type::dir) ||
-                 is_match_type(type, match_type::file) ||
-                 (is_match_type(type, match_type::none) &&
-                  m_filename_completion_desired.get()))) ? s_slash_translation : slash_translation::off;
-    bool translate = (mode > slash_translation::off && (mode > slash_translation::system || !already_normalized));
+    const int32 mode = get_slash_translation();
+    const bool translate = (mode > slash_translation::off &&
+                            (mode > slash_translation::system || !already_normalized) &&
+                            (is_match_type(type, match_type::dir) ||
+                             is_match_type(type, match_type::file) ||
+                             (is_match_type(type, match_type::none) &&
+                              m_filename_completion_desired.get())));
 
     str<280> tmp;
     const bool is_none = is_match_type(type, match_type::none);
@@ -1138,16 +1134,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
 
     if (translate)
     {
-        assert(mode > slash_translation::off);
-        int32 sep;
-        switch (mode)
-        {
-        default:                            sep = 0; break;
-        case slash_translation::slash:      sep = '/'; break;
-        case slash_translation::backslash:  sep = '\\'; break;
-        case slash_translation::automatic:  sep = m_sep; break;
-        }
-        path::normalise_separators(tmp, sep);
+        do_slash_translation(tmp, &m_sep);
         match = tmp.c_str();
     }
 
@@ -1224,12 +1211,12 @@ void matches_impl::done_building()
                             (m_filename_completion_desired.get() || !m_filename_completion_desired.is_explicit())))
     {
         char sep = rl_preferred_path_separator;
-        if (s_slash_translation == slash_translation::slash)
-            sep = '/';
-        else if (s_slash_translation == slash_translation::backslash)
-            sep = '\\';
-        else if (s_slash_translation == slash_translation::automatic)
-            sep = m_sep;
+        switch (get_slash_translation())
+        {
+        case slash_translation::slash:      sep = '/'; break;
+        case slash_translation::backslash:  sep = '\\'; break;
+        case slash_translation::automatic:  sep = m_sep; break;
+        }
 
         for (uint32 i = m_count; i--;)
         {
