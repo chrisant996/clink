@@ -5,6 +5,7 @@
 #include "matches_impl.h"
 #include "match_generator.h"
 #include "match_pipeline.h"
+#include "slash_translation.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -27,7 +28,7 @@ char* __printable_part(char* text);
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static int32 s_slash_translation = 0;
+static int32 s_slash_translation = slash_translation::off;
 void set_slash_translation(int32 mode) { s_slash_translation = mode; }
 int32 get_slash_translation() { return s_slash_translation; }
 
@@ -36,14 +37,14 @@ setting_enum g_translate_slashes(
     "match.translate_slashes",
     "Translate slashes and backslashes",
     "File and directory completions can be translated to use consistent slashes.\n"
-    "The default is 'system' to use the appropriate path separator for the OS host\n"
-    "(backslashes on Windows).  Use 'slash' to use forward slashes, or 'backslash'\n"
-    "to use backslashes.  Use 'auto' to use whichever kind of slash occurs first\n"
-    "in the word being completed, or otherwise use the appropriate path separator\n"
-    "for the OS host (backslashes on Windows).  Use 'off' to turn off translating\n"
-    "slashes from custom match generators.",
-    "off,system,slash,backslash,auto",
-    1
+    "The default is 'auto' which translates all slashes in the completed word to\n"
+    "match the first kind of slash in the word (or the system path separator if\n"
+    "the word didn't have any slashes before being completed).  Use 'slash' for\n"
+    "forward slashes, 'backslash' for backslashes, or 'system' for the appropriate\n"
+    "path separator for the OS host (backslashes on Windows).  Use 'off' to turn\n"
+    "off translating slashes.",
+    "off,system,slash,backslash,auto", // IMPORTANT: Keep this in sync with slash_translation.h!
+    slash_translation::automatic
 );
 
 static setting_bool g_substring(
@@ -1116,8 +1117,8 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
                 (is_match_type(type, match_type::dir) ||
                  is_match_type(type, match_type::file) ||
                  (is_match_type(type, match_type::none) &&
-                  m_filename_completion_desired.get()))) ? s_slash_translation : 0;
-    bool translate = (mode > 0 && (mode > 1 || !already_normalized));
+                  m_filename_completion_desired.get()))) ? s_slash_translation : slash_translation::off;
+    bool translate = (mode > slash_translation::off && (mode > slash_translation::system || !already_normalized));
 
     str<280> tmp;
     const bool is_none = is_match_type(type, match_type::none);
@@ -1137,14 +1138,14 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
 
     if (translate)
     {
-        assert(mode > 0);
+        assert(mode > slash_translation::off);
         int32 sep;
         switch (mode)
         {
-        default:    sep = 0; break;
-        case 2:     sep = '/'; break;
-        case 3:     sep = '\\'; break;
-        case 4:     sep = m_sep; break;
+        default:                            sep = 0; break;
+        case slash_translation::slash:      sep = '/'; break;
+        case slash_translation::backslash:  sep = '\\'; break;
+        case slash_translation::automatic:  sep = m_sep; break;
         }
         path::normalise_separators(tmp, sep);
         match = tmp.c_str();
@@ -1223,11 +1224,11 @@ void matches_impl::done_building()
                             (m_filename_completion_desired.get() || !m_filename_completion_desired.is_explicit())))
     {
         char sep = rl_preferred_path_separator;
-        if (s_slash_translation == 2)
+        if (s_slash_translation == slash_translation::slash)
             sep = '/';
-        else if (s_slash_translation == 3)
+        else if (s_slash_translation == slash_translation::backslash)
             sep = '\\';
-        else if (s_slash_translation == 4)
+        else if (s_slash_translation == slash_translation::automatic)
             sep = m_sep;
 
         for (uint32 i = m_count; i--;)

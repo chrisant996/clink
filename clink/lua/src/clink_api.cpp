@@ -32,6 +32,7 @@
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
 #include <lib/suggestions.h>
+#include <lib/slash_translation.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
@@ -1127,6 +1128,7 @@ static int32 get_ansi_host(lua_State* state)
 /// <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr>
 /// <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr>
 /// <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr>
+/// <tr><td><code>4</code></td><td>Translate using the first kind of slash found in the word being completed, or the system path separator if there are no slashes yet.  (Only available in Clink v1.6.16 and higher.)</td></tr>
 /// </table>
 ///
 /// If <span class="arg">mode</span> is omitted, then the function returns the
@@ -1162,8 +1164,8 @@ static int32 translate_slashes(lua_State* state)
         return 0;
     int32 mode = _mode;
 
-    if (mode < 0 || mode > 3)
-        mode = 1;
+    if (mode < slash_translation::off || mode >= slash_translation::max)
+        mode = slash_translation::system;
 
     set_slash_translation(mode);
     return 0;
@@ -1180,7 +1182,7 @@ static int32 translate_slashes(lua_State* state)
 /// <li>0 - to backslashes</li>
 /// <li>1 - to forward slashes</li>
 /// </ul>
-static int32 slash_translation(lua_State* state)
+static int32 api_slash_translation(lua_State* state)
 {
     if (lua_gettop(state) == 0)
         return 0;
@@ -1189,10 +1191,10 @@ static int32 slash_translation(lua_State* state)
         return 0;
 
     int32 mode = int32(lua_tointeger(state, 1));
-    if (mode < 0)           mode = 0;
-    else if (mode == 0)     mode = 3;
-    else if (mode == 1)     mode = 2;
-    else                    mode = 1;
+    if (mode < 0)           mode = slash_translation::off;
+    else if (mode == 0)     mode = slash_translation::backslash;
+    else if (mode == 1)     mode = slash_translation::slash;
+    else                    mode = slash_translation::system;
 
     extern void set_slash_translation(int32 mode);
     set_slash_translation(mode);
@@ -2302,7 +2304,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "get_setting_str",        &get_setting_str },
         { 1,    "is_dir",                 &is_dir },
         { 0,    "is_rl_variable_true",    &is_rl_variable_true },
-        { 0,    "slash_translation",      &slash_translation },
+        { 0,    "slash_translation",      &api_slash_translation },
         { 1,    "split",                  &explode },
         // UNDOCUMENTED; internal use only.
         { 0,    "istransientpromptfilter", &is_transient_prompt_filter },
