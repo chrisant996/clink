@@ -1406,7 +1406,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         assert(wnext.length());
         if (path::is_separator(wnext[wnext.length() - 1]))
         {
-            const wchar_t ch = PATH_SEP_CHAR;
+            const wchar_t ch = wnext[wnext.length() - 1];
             disambiguated.concat(&ch, 1);
             assert(unique);
             break;
@@ -1513,7 +1513,7 @@ close_bail:
         disambiguated.truncate(committed);
         if (path::is_separator(wnext.c_str()[0]))
         {
-            const wchar_t ch = PATH_SEP_CHAR;
+            const wchar_t ch = wnext.c_str()[0];
             disambiguated.concat(&ch, 1);
         }
         disambiguated << wadd;
