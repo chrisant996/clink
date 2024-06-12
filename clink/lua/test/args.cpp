@@ -24,6 +24,9 @@ TEST_CASE("Lua arg parsers")
 {
     fs_fixture fs;
 
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
+
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
@@ -1306,4 +1309,6 @@ TEST_CASE("Lua arg parsers")
             tester.run();
         }
     }
+
+    setting->set();
 }

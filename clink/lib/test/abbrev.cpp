@@ -8,6 +8,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/settings.h>
 #include <core/os.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -117,6 +118,9 @@ TEST_CASE("Abbreviated paths.")
 
     fs_fixture fs(dir_fs);
 
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
+
     lua_state lua;
     line_editor_tester tester;
 
@@ -134,12 +138,12 @@ TEST_CASE("Abbreviated paths.")
 
         static const testcase c_testcases[] =
         {
-            { "x/b/",                   "xyz\\b", "/", false },
-            { "x/boo/l",                "xyz\\bookkeep", "/l", false },
-            { "x/box/l",                "xyz\\box", "/l", true },
-            { "x/boxe/l",               "xyz\\boxes", "/l", true },
-            { "x/r/l",                  "xyz\\repo", "/l", true },
-            { "xy/no/x",                "xyz\\notrepo", "/x", true },
+            { "x/b/",                   "xyz/b", "/", false },
+            { "x/boo/l",                "xyz/bookkeep", "/l", false },
+            { "x/box/l",                "xyz/box", "/l", true },
+            { "x/boxe/l",               "xyz/boxes", "/l", true },
+            { "x/r/l",                  "xyz/repo", "/l", true },
+            { "xy/no/x",                "xyz/notrepo", "/x", true },
             { "x/bag/leaf/x",           "", "x/bag/leaf/x", false },
         };
 
@@ -264,4 +268,6 @@ TEST_CASE("Abbreviated paths.")
                 verify_abbrev(lua, t, out, true/*transform*/);
         }
     }
+
+    setting->set();
 }

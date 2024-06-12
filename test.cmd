@@ -20,7 +20,7 @@ if x%1x == x-x86x set __CPU=x86& goto :nextarg
 if x%1x == x/dbgx set __DBG=call devenv /debugexe& goto:nextarg
 if x%1x == x-dbgx set __DBG=call devenv /debugexe& goto:nextarg
 
-%__DBG% %__ME%.build\vs2019\bin\debug\clink_test_%__CPU%.exe %1 %2 %3
+%__DBG% %__ME%.build\vs2022\bin\debug\clink_test_%__CPU%.exe %1 %2 %3
 goto :eof
 
 :nextarg

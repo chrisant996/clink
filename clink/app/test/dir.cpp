@@ -8,6 +8,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/settings.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -31,6 +32,9 @@ TEST_CASE("Directory match generation.")
     };
 
     fs_fixture fs(dir_fs);
+
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
@@ -153,4 +157,6 @@ TEST_CASE("Directory match generation.")
 
         putenv(home ? home : "HOME=");
     }
+
+    setting->set();
 }

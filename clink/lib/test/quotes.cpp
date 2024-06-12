@@ -6,6 +6,7 @@
 #include "line_editor_tester.h"
 
 #include <core/str_compare.h>
+#include <core/settings.h>
 #include <lib/match_generator.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
@@ -26,6 +27,9 @@ TEST_CASE("Quoting")
     };
 
     fs_fixture fs(space_fs);
+
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
@@ -188,4 +192,6 @@ TEST_CASE("Quoting")
         }
     }
 #endif
+
+    setting->set();
 }

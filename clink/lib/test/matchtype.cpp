@@ -5,6 +5,7 @@
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
 
+#include <core/settings.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -128,6 +129,9 @@ TEST_CASE("Match type : slash")
 {
     fs_fixture fs(matchtype_fs);
 
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
+
     lua_state lua;
     lua_match_generator lua_generator(lua);
     lua.do_string(script, int32(strlen(script)));
@@ -162,12 +166,17 @@ TEST_CASE("Match type : slash")
         tester.set_expected_output("xyzzy foo/bar foo/bark foo/box ");
         tester.run();
     }
+
+    setting->set();
 }
 
 //------------------------------------------------------------------------------
 TEST_CASE("Match type : compound")
 {
     fs_fixture fs(matchtype_fs);
+
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
@@ -203,6 +212,8 @@ TEST_CASE("Match type : compound")
         tester.set_expected_output("xyzzy foo/bar foo/bark ");
         tester.run();
     }
+
+    setting->set();
 }
 
 //------------------------------------------------------------------------------
@@ -241,6 +252,9 @@ TEST_CASE("Match type : files")
 {
     fs_fixture fs(matchtype_fs);
 
+    setting* setting = settings::find("match.translate_slashes");
+    setting->set("system");
+
     lua_state lua;
     lua_match_generator lua_generator(lua);
     lua.do_string(script, int32(strlen(script)));
@@ -261,4 +275,6 @@ TEST_CASE("Match type : files")
         tester.set_expected_output("xyzzy foo/bar foo/bark foo/box ");
         tester.run();
     }
+
+    setting->set();
 }
