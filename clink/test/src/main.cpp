@@ -40,8 +40,6 @@ int32 main(int32 argc, char** argv)
 {
     argc--, argv++;
 
-    bool timer = false;
-
 #ifdef DEBUG
     settings::TEST_set_ever_loaded();
 #endif
@@ -52,6 +50,7 @@ int32 main(int32 argc, char** argv)
 
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
+    bool times = false;
     int32 d_flag = 0;
 
     while (argc > 0)
@@ -62,7 +61,7 @@ int32 main(int32 argc, char** argv)
                  "  -?        Show this help.\n"
                  "  -d        Load Lua debugger.\n"
                  "  -dd       Force break on Lua errors.\n"
-                 "  -t        Show execution time.");
+                 "  -t        Show individual test times.");
             return 1;
         }
         else if (!strcmp(argv[0], "-d"))
@@ -78,7 +77,7 @@ int32 main(int32 argc, char** argv)
         }
         else if (!strcmp(argv[0], "-t"))
         {
-            timer = true;
+            times = true;
         }
         else if (!strcmp(argv[0], "--"))
         {
@@ -96,16 +95,13 @@ int32 main(int32 argc, char** argv)
     clatch::colors::initialize();
 
     const char* prefix = (argc > 0) ? argv[0] : "";
-    int32 result = (clatch::run(prefix) != true);
+    int32 result = (clatch::run(prefix, times) != true);
 
     shutdown_recognizer();
     shutdown_task_manager(true/*final*/);
 
-    if (timer)
-    {
-        DWORD elapsed = GetTickCount() - start;
-        printf("\nElapsed time %u.%03u seconds.\n", elapsed / 1000, elapsed % 1000);
-    }
+    DWORD elapsed = GetTickCount() - start;
+    printf("\nElapsed time %u.%03u seconds.\n", elapsed / 1000, elapsed % 1000);
 
     return result;
 }

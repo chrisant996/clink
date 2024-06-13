@@ -6,6 +6,7 @@
 #include <core/bldopts.h>
 #include <core/base.h>
 
-#include "clatch.h" // Before Windows.h to avoid collision with CALLBACK.
-
 #include <Windows.h>
+
+#include "clatch.h"
+
