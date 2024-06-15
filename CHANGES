@@ -10,6 +10,7 @@
 - Updated the `clink.slash_translation()` function.
 - UNC share name completion works with forward slashes now (e.g. `//localhost/`).
 - Fixed the `off` mode for the `matches.translate_slashes` setting (regression introduced in v1.1.23).
+- Fixed input line coloring of `@` in `for %a in (*) do @whatever`.
 - Fixed crash in `glob-list-expansions` when used on an empty word (regression introduced in v1.3.36).
 
 #### v1.6.15
