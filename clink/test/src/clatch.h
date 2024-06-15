@@ -6,6 +6,8 @@
 #include <exception>
 #include <functional>
 
+#include <core/os.h>
+
 namespace clatch {
 
 //------------------------------------------------------------------------------
@@ -116,10 +118,10 @@ inline bool run(const char* prefix="", bool times=false)
             continue;
 
         ++test_count;
-        printf(".........%s %s", times ? "......" : "", test->m_name);
+        printf(".........%s %s", times ? "........" : "", test->m_name);
 
         section root;
-        const DWORD tick = GetTickCount();
+        const double clock = os::clock();
 
         try
         {
@@ -150,9 +152,9 @@ inline bool run(const char* prefix="", bool times=false)
         printf("\r%sok%s ", colors::get_ok(), colors::get_normal());
         if (times)
         {
-            const DWORD elapsed = GetTickCount() - tick;
+            const uint32 elapsed = uint32((os::clock() - clock) * 1000);
             const char* time_color = (elapsed >= 500) ? colors::get_warning() : colors:: get_normal();
-            printf("%s%3u.%02us%s ", time_color, elapsed / 1000, (elapsed % 1000) / 10, colors::get_normal());
+            printf("%s%5u ms%s ", time_color, elapsed, colors::get_normal());
         }
         printf("\n");
     }
