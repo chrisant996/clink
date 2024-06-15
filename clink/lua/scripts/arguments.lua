@@ -256,6 +256,10 @@ end
 
 --------------------------------------------------------------------------------
 local function get_classify_color(code)
+    if code:find("^m") then
+        return settings.get("color.argmatcher")
+    end
+
     if code == "a" then
         local color = settings.get("color.arg")
         if color ~= "" then
@@ -2478,11 +2482,24 @@ local function attempt_load_argmatcher(command_word, quoted, no_cmd)
 end
 
 --------------------------------------------------------------------------------
+local function sanitize_command_word(command_word)
+    if command_word then
+        if command_word:find("^@") then
+            local cw = command_word:gsub("^@?\"?", "")
+            return cw, true
+        else
+            return command_word, false
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 -- This checks if an argmatcher is already loaded for the specified word.  If
 -- not, then it looks for a Lua script by that name in one of the completions
 -- directories.  If found, the script is loaded, and it checks again whether an
 -- argmatcher is already loaded for the specified word.
 local function _has_argmatcher(command_word, quoted, no_cmd)
+    command_word = sanitize_command_word(command_word)
     if not command_word or command_word == "" then
         return
     end
@@ -2544,6 +2561,9 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd)
     end
 
     local command_word = lookup or line_state:getword(command_word_index)
+    local original_command_word = command_word
+    command_word = sanitize_command_word(command_word)
+
     local info = not lookup and line_state:getwordinfo(command_word_index)
     if not command_word or command_word == "" then
         return
@@ -2589,7 +2609,9 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd)
         end
     end
 
-    local argmatcher = _has_argmatcher(command_word, info and info.quoted, no_cmd)
+    -- Pass original_command_word, otherwise it can end up stripping TWO
+    -- leading @ characters.
+    local argmatcher = _has_argmatcher(original_command_word, info and info.quoted, no_cmd)
     if argmatcher then
         if check_existence then
             argmatcher = nil
@@ -2876,7 +2898,8 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         end
 
         local command_word = line_state:getword(command_word_index) or ""
-        if #command_word > 0 then
+        local cw, sanitized = sanitize_command_word(command_word)
+        if #cw > 0 then
             local info = line_state:getwordinfo(command_word_index)
             local m = has_argmatcher and "m" or ""
             if info.alias then
@@ -2885,7 +2908,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
-                local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
+                local recognized = clink._recognize_command(line_state:getline(), cw, info.quoted)
                 if recognized < 0 then
                     cl = unrecognized_color and "u" or "o"      --unrecognized
                 elseif recognized > 0 then
@@ -2893,10 +2916,18 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 else
                     cl = "o"                                    --other
                 end
-                word_classifier:classifyword(command_word_index, m..cl, false);
+                if sanitized then
+                    word_classifier:applycolor(info.offset + info.length - #cw, #cw, get_classify_color(m..cl))
+                else
+                    word_classifier:classifyword(command_word_index, m..cl, false);
+                end
             else
                 word_classifier:classifyword(command_word_index, m.."o", false); --other
             end
+        end
+        if sanitized then
+            local info = line_state:getwordinfo(command_word_index)
+            word_classifier:applycolor(info.offset, 1, get_classify_color("c"))
         end
 
         if argmatcher then
