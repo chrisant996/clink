@@ -398,7 +398,7 @@ static char* __tilde_expand(const char* in)
 {
     str_moveable tmp;
     path::tilde_expand(in, tmp);
-    return tmp.detach();
+    return tmp.empty() ? nullptr: tmp.detach();
 }
 
 //------------------------------------------------------------------------------

@@ -57,7 +57,8 @@ str_moveable& str_moveable::operator = (str_moveable&& s)
 //------------------------------------------------------------------------------
 char* str_moveable::detach()
 {
-    char* s = data();
+    assert(owns_ptr());
+    char* s = owns_ptr() ? data() : nullptr;
     reset_empty();
     return s;
 }
@@ -116,7 +117,8 @@ wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
 //------------------------------------------------------------------------------
 wchar_t* wstr_moveable::detach()
 {
-    wchar_t* s = data();
+    assert(owns_ptr());
+    wchar_t* s = owns_ptr() ? data() : nullptr;
     reset_empty();
     return s;
 }
