@@ -282,14 +282,17 @@ int32 rl_buffer_lua::get_argument(lua_State* state)
 /// from having 0 as the numeric argument).
 int32 rl_buffer_lua::set_argument(lua_State* state)
 {
-    const auto arg = optinteger(state, LUA_SELF + 1, 0);
-
     _rl_reset_argument();
-    if (arg.isnum())
+
+    if (!lua_isnoneornil(state, LUA_SELF + 1))
     {
-        rl_arg_sign = (arg < 0) ? -1 : 1;
-        rl_explicit_arg = 1;
-        rl_numeric_arg = arg;
+        const auto arg = optinteger(state, LUA_SELF + 1, 0);
+        if (arg.isnum())
+        {
+            rl_arg_sign = (arg < 0) ? -1 : 1;
+            rl_explicit_arg = 1;
+            rl_numeric_arg = arg;
+        }
     }
     return 0;
 }

@@ -567,6 +567,7 @@ Nope:
     }
     else
     {
+        count = rl_numeric_arg;
         for (auto const& word : words)
         {
             if (count-- == 0)
