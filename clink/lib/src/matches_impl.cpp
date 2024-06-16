@@ -904,6 +904,7 @@ void matches_impl::reset()
     m_nosort = false;
     m_volatile = false;
     m_sep = '\0';
+    m_completion_type = 0;
     m_suppress_quoting = 0;
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
@@ -934,6 +935,7 @@ void matches_impl::transfer(matches_impl& from)
     m_nosort = from.m_nosort;
     m_volatile = from.m_volatile;
     m_sep = from.m_sep;
+    m_completion_type = from.m_completion_type;
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
@@ -980,6 +982,7 @@ void matches_impl::copy(const matches_impl& from)
     m_nosort = from.m_nosort;
     m_volatile = from.m_volatile;
     m_sep = from.m_sep;
+    m_completion_type = from.m_completion_type;
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
@@ -992,6 +995,12 @@ void matches_impl::clear()
 {
     reset();
     m_store.clear();
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_completion_type(int32 type)
+{
+    m_completion_type = type;
 }
 
 //------------------------------------------------------------------------------

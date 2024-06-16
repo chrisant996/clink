@@ -95,6 +95,7 @@ public:
     void                    set_path_separator(char sep);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
+    int32                   get_completion_type() const { return m_completion_type; }
 
     void                    set_generator(match_generator* generator);
     void                    done_building();
@@ -115,6 +116,7 @@ private:
     friend class            match_pipeline;
     friend class            match_builder;
     friend class            matches_iter;
+    void                    set_completion_type(int32 type);
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int32 suppress);
@@ -161,6 +163,7 @@ private:
     bool                    m_nosort = false;
     bool                    m_volatile = false;
     char                    m_sep = '\0';
+    int32                   m_completion_type = 0;
     int32                   m_suppress_quoting = 0;
     int32                   m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;

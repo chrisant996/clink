@@ -454,6 +454,7 @@ void match_pipeline::select(const char* needle) const
     {
         match_info_indexer indexer(m_matches.get_infos());
         select_matches(needle, indexer, count);
+        m_matches.set_completion_type(rl_completion_type);
     }
 
     m_matches.coalesce(count);
