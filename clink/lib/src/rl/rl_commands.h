@@ -60,6 +60,7 @@ int32   clink_up_directory(int32 count, int32 invoking_key);
 int32   clink_insert_dot_dot(int32 count, int32 invoking_key);
 int32   clink_shift_space(int32 count, int32 invoking_key);
 int32   clink_magic_suggest_space(int32 count, int32 invoking_key);
+int32   clink_toggle_slashes(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 int32   clink_scroll_line_up(int32 count, int32 invoking_key);
