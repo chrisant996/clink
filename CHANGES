@@ -9,6 +9,7 @@
 - Changed the default to `auto` for the `match.translate_slashes` setting.
 - Updated the `clink.slash_translation()` function.
 - UNC share name completion works with forward slashes now (e.g. `//localhost/`).
+- Added a `clink-toggle-slashes` bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>/</kbd>.  The command toggles between forward and backslashes in the word at the cursor point, or in the <em>N</em>th word if a numeric argument is provided (e.g. by the <kbd>Alt</kbd>-Digit keys).
 - Fixed the `off` mode for the `matches.translate_slashes` setting (regression introduced in v1.1.23).
 - Fixed input line coloring of `@` in `for %a in (*) do @whatever`.
 - Fixed crash in `glob-list-expansions` when used on an empty word (regression introduced in v1.3.36).
