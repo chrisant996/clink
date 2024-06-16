@@ -13,6 +13,8 @@
 - Fixed the `off` mode for the `matches.translate_slashes` setting (regression introduced in v1.1.23).
 - Fixed input line coloring of `@` in `for %a in (*) do @whatever`.
 - Fixed crash in `glob-list-expansions` when used on an empty word (regression introduced in v1.3.36).
+- Fixed wildcard completions when `match.wild` is on and `match.substring` is off.
+- Fixed obscure edge case where match filtering with wildcards could potentially yield inaccurate results immediately after an auto-suggestion was offered.
 
 #### v1.6.15
 
