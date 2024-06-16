@@ -548,8 +548,7 @@ Nope:
     }
 
     std::vector<word> words;
-    if (!collect_words(*g_rl_buffer, words, collect_words_mode::whole_command))
-        goto Nope;
+    collect_words(*g_rl_buffer, words, collect_words_mode::whole_command);
     if (words.empty())
         goto Nope;
 
