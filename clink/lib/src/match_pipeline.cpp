@@ -50,6 +50,7 @@ setting_bool g_files_system(
 
 extern setting_enum g_default_bindings;
 extern setting_enum g_translate_slashes;
+extern setting_bool g_match_wild;
 
 
 
@@ -132,7 +133,7 @@ static void select_matches(const char* needle, INDEXER& indexer, uint32 count)
     uint32 found = 0;
 
     const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
-    if (dot_prefix)
+    if (dot_prefix || g_match_wild.get())
     {
         str<> pat(needle);
         pat << "*";
