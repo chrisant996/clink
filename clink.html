@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.6.15</title>
+<title>Clink v1.6.16</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -942,7 +942,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.6.15</div>
+                <div id="title">Clink v1.6.16</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1818,8 +1818,8 @@ $endif
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#match_translate_slashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_translate_slashes"></a><code>match.translate_slashes</code></td>
-<td align="center"><code>system</code></td>
-<td>File and directory completions can be translated to use consistent slashes.  The default is <code>system</code> to use the appropriate path separator for the OS host (backslashes on Windows).  Use <code>slash</code> to use forward slashes, or <code>backslash</code> to use backslashes.  Use <code>off</code> to turn off translating slashes from custom match generators.</td>
+<td align="center"><code>auto</code></td>
+<td>File and directory completions can be translated to use consistent slashes.  The default is <code>auto</code> which translates all slashes in the completed word to match the first kind of slash in the word (or the system path separator if the word didn&#39;t have any slashes before being completed).  Use <code>slash</code> for forward slashes, <code>backslash</code> for backslashes, or <code>system</code> for the appropriate path separator for the OS host (backslashes on Windows).  Use <code>off</code> to turn off translating slashes.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#match_wild"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_wild"></a><code>match.wild</code></td>
@@ -3615,6 +3615,11 @@ $endif              # end clink-only section
 <td><a class="wlink" href="#rlcmd-clink-show-help-raw"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-show-help-raw"></a><code>clink-show-help-raw</code></td>
 <td align="center"></td>
 <td>Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#rlcmd-clink-toggle-slashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-toggle-slashes"></a><code>clink-toggle-slashes</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>/</kbd></td>
+<td>Toggle between forward and backslashes in the word at the cursor point, or toggle in the <em>n</em>-th word if a numeric argument is provided via the <a href="#rlcmd-digit-argument"><code>digit-argument</code></a> keys.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-up-directory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-up-directory"></a><code>clink-up-directory</code></td>
@@ -6995,7 +7000,7 @@ function doskeyarg:suggest(line, matches)
 &nbsp;   end
 end</code></pre></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.translateslashes" class="name"><a class="wlink" href="#clink.translateslashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.translateslashes</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">mode</span>:integer] ) : integer<br/><div class="version">v1.2.7 and newer</div></div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code><a href="#match_translate_slashes">match.translate_slashes</a></code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">mode</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> If <span class="arg">mode</span> is omitted, then the function returns the current slash translation mode without changing it.</p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
+<div class="function"><div class="header"> <div id="clink.translateslashes" class="name"><a class="wlink" href="#clink.translateslashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.translateslashes</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">mode</span>:integer] ) : integer<br/><div class="version">v1.2.7 and newer</div></div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code><a href="#match_translate_slashes">match.translate_slashes</a></code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">mode</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> <tr><td><code>4</code></td><td>Translate using the first kind of slash found in the word being completed, or the system path separator if there are no slashes yet.  (Only available in Clink v1.6.16 and higher.)</td></tr> </table></p><p class="desc"> If <span class="arg">mode</span> is omitted, then the function returns the current slash translation mode without changing it.</p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
 -- run first and returning false to let generators continue.
 -- To instead affect only one generator, call clink.translateslashes()
 -- in its :generate() function and return true.
@@ -8059,6 +8064,20 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1616"><a class="wlink" href="#v1616"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.16 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added a workaround for how <a href="https://scoop.sh/">scoop</a> tries to control app versions and updates (<a href="https://github.com/chrisant996/clink/issues/615">#615</a>; scoop causes <code>clink autorun install</code> to use a wrong path).</li>
+<li>Added an <code>auto</code> mode for the <code>match.translate_slashes</code> setting.  This mode makes completion translate all slashes in the completed word to match whichever kind occurs first in the word, or to the system path separator if there are no slashes yet (e.g. when completing a directory name).</li>
+<li>Changed the default to <code>auto</code> for the <code>match.translate_slashes</code> setting.</li>
+<li>Updated the <code>clink.slash_translation()</code> function.</li>
+<li>UNC share name completion works with forward slashes now (e.g. <code>//localhost/</code>).</li>
+<li>Added a <code>clink-toggle-slashes</code> bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>/</kbd>.  The command toggles between forward and backslashes in the word at the cursor point, or in the <em>N</em>th word if a numeric argument is provided (e.g. by the <kbd>Alt</kbd>-Digit keys).</li>
+<li>Fixed the <code>off</code> mode for the <code>matches.translate_slashes</code> setting (regression introduced in v1.1.23).</li>
+<li>Fixed input line coloring of <code>@</code> in <code>for %a in (*) do @whatever</code>.</li>
+<li>Fixed crash in <code>glob-list-expansions</code> when used on an empty word (regression introduced in v1.3.36).</li>
+<li>Fixed wildcard completions when <code>match.wild</code> is on and <code>match.substring</code> is off.</li>
+<li>Fixed obscure edge case where match filtering with wildcards could potentially yield inaccurate results immediately after an auto-suggestion was offered.</li>
+</ul>
 <h4 id="v1615"><a class="wlink" href="#v1615"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.15 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed hiding internal script names in the <code>clink-diagnostics</code> output (regression introduced in v1.6.11).</li>
