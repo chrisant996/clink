@@ -164,5 +164,7 @@ int32 testbed(int32 argc, char** argv)
         ret = editline();
     }
 
+    shutdown_recognizer();
+
     return ret;
 }
