@@ -250,13 +250,18 @@ void host_load_app_scripts(lua_state& lua)
 //------------------------------------------------------------------------------
 void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
 {
-    host_cmd::get()->enqueue_lines(lines, hide_prompt, show_line);
+    auto* const host = host_cmd::get();
+    assert(host);
+    if (host)
+        host->enqueue_lines(lines, hide_prompt, show_line);
 }
 
 //------------------------------------------------------------------------------
 void host_cleanup_after_signal()
 {
-    host_cmd::get()->cleanup_after_signal();
+    auto* const host = host_cmd::get();
+    if (host)
+        host->cleanup_after_signal();
 }
 
 
