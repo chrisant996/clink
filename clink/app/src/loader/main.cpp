@@ -55,6 +55,14 @@ __declspec(dllexport) void __stdcall testbed_hook_loop()
     // Trigger initialization to finish.
     SetEnvironmentVariableW(L"clink_testbed", L"");
 
+    // Satisfy importing SetEnvironmentStringsW.
+    LPWCH strings = GetEnvironmentStringsW();
+    if (strings)
+    {
+        SetEnvironmentStringsW(strings);
+        FreeEnvironmentStringsW(strings);
+    }
+
     DWORD num;
     while (true)
     {
