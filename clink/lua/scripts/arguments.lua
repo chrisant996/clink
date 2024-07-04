@@ -2513,7 +2513,7 @@ local function _has_argmatcher(command_word, quoted, no_cmd)
         -- Pass true because argmatcher lookups always treat ^ literally.
         local _, _, file = clink.recognizecommand(command_word, true)
         if file then
-            command_word = file
+            command_word = clink.lower(file)
             recognized = file
         end
     end
@@ -2563,12 +2563,13 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd)
     local command_word = lookup or line_state:getword(command_word_index)
     local original_command_word = command_word
     command_word = sanitize_command_word(command_word)
-
-    local info = not lookup and line_state:getwordinfo(command_word_index)
     if not command_word or command_word == "" then
         return
     end
 
+    command_word = clink.lower(command_word:gsub("/", "\\"))
+
+    local info = not lookup and line_state:getwordinfo(command_word_index)
     if command_word_index == 1 and not lookup and info then
         if info.alias then
             local alias = os.getalias(line_state:getline():sub(info.offset, info.offset + info.length - 1))
