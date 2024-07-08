@@ -2597,11 +2597,11 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     // Language info.
 
-    if (rl_explicit_arg)
+    const DWORD cpid = GetACP();
+    if (rl_explicit_arg || cpid != 1252)
     {
         print_heading("language");
 
-        const DWORD cpid = GetACP();
         const DWORD kbid = LOWORD(GetKeyboardLayout(0));
         WCHAR wide_layout_name[KL_NAMELENGTH * 2];
         if (!GetKeyboardLayoutNameW(wide_layout_name))
