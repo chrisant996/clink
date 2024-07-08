@@ -179,7 +179,7 @@ function clink._filter_transient_prompt(prompt, rprompt, line, cursor, final)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_refilter(arg) -- luacheck: no unused
+function clink._diag_refilter()
     local refilter,redisplay = clink.get_refilter_redisplay_count()
     if refilter > 0 or redisplay > 0 then
         clink.print("\x1b[1mprompt refilter:\x1b[m")

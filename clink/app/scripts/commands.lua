@@ -87,16 +87,16 @@ end
 --------------------------------------------------------------------------------
 function clink._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
-    clink._diag_coroutines(arg)
+    clink._diag_coroutines()
     clink._diag_refilter()
-    clink._diag_events(arg)
+    clink._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
     if arg then
-        clink._diag_argmatchers(arg)
-        clink._diag_prompts(arg)
-        clink._diag_generators(arg)
-        clink._diag_classifiers(arg)
-        clink._diag_suggesters(arg)
-        clink._diag_completions_dirs(arg)
+        clink._diag_argmatchers(arg)        -- When arg >= 2.
+        clink._diag_prompts(arg)            -- When arg >= 1 or lua.debug is set.
+        clink._diag_generators(arg)         -- When arg >= 3.
+        clink._diag_classifiers(arg)        -- When arg >= 2 or lua.debug is set.
+        clink._diag_suggesters(arg)         -- When arg >= 2 or lua.debug is set.
+        clink._diag_completions_dirs(arg)   -- When arg >= 1 or lua.debug is set.
     end
     if clink._diag_custom then
         clink._diag_custom(arg)

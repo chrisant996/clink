@@ -465,7 +465,7 @@ local function spairs(t, order)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_coroutines(arg) -- luacheck: no unused
+function clink._diag_coroutines()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
     local red = "\x1b[31m"          -- Red.
