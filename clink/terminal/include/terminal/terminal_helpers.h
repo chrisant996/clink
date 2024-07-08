@@ -24,6 +24,7 @@ extern "C" DWORD select_mouse_input(DWORD mode);
 extern "C" void terminal_begin_command();
 extern "C" void terminal_end_command();
 extern const char* get_found_ansi_handler();
+extern const char* get_ansicon_problem();
 extern bool get_is_auto_ansi_handler();
 
 //------------------------------------------------------------------------------

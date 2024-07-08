@@ -2533,6 +2533,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     static char bold[] = "\x1b[1m";
     static char norm[] = "\x1b[m";
+    static char err[] = "\x1b[1;91;40m";
     static char lf[] = "\n";
 
     str<> s;
@@ -2615,7 +2616,8 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     // Terminal info.
 
-    if (rl_explicit_arg)
+    const char* const ansicon_problem = get_ansicon_problem();
+    if (rl_explicit_arg || ansicon_problem)
     {
         print_heading("terminal");
 
@@ -2639,6 +2641,17 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
             t = term;
 
         print_value("terminal", t.c_str());
+
+        if (ansicon_problem)
+        {
+            t.format("        %sProblem:  ANSICON detected (%s).%s\n"
+                     "        %sAvoid ANSICON on Windows 8.1 or greater; it's unnecessary,%s\n"
+                     "        %sless functional, and greatly degrades performance.%s\n",
+                     err, ansicon_problem, norm,
+                     err, norm,
+                     err, norm);
+            g_printer->print(t.c_str(), t.length());
+        }
     }
 
     host_call_lua_rl_global_function("clink._diagnostics");

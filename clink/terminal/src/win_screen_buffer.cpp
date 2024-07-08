@@ -30,8 +30,10 @@
 static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
 static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static bool s_has_consolev2 = false;
+static bool s_warn_ansicon = false;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
+static const char* s_ansicon_problem = nullptr;
 static const char* s_in_windows_terminal = nullptr;
 static char s_mode_ansi_handler = 1; // 1 is "emulate"
 bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
@@ -44,6 +46,11 @@ ansi_handler get_native_ansi_handler()
 const char* get_found_ansi_handler()
 {
     return s_found_what;
+}
+
+const char* get_ansicon_problem()
+{
+    return s_ansicon_problem;
 }
 
 bool get_is_auto_ansi_handler()
@@ -225,16 +232,25 @@ void win_screen_buffer::begin()
 #pragma warning(push)
 #pragma warning(disable:4996)
         OSVERSIONINFO ver = { sizeof(ver) };
-        if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
+        if (GetVersionEx(&ver))
         {
-            DWORD type;
-            DWORD data;
-            DWORD size;
-            LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
-            s_has_consolev2 = (status != ERROR_SUCCESS ||
-                               type != REG_DWORD ||
-                               size != sizeof(data) ||
-                               data != 0);
+            if ((ver.dwMajorVersion > 10) ||
+                (ver.dwMajorVersion == 10 && ver.dwBuildNumber >= 15063))
+            {
+                DWORD type;
+                DWORD data;
+                DWORD size;
+                LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
+                s_has_consolev2 = (status != ERROR_SUCCESS ||
+                                type != REG_DWORD ||
+                                size != sizeof(data) ||
+                                data != 0);
+            }
+            if ((ver.dwMajorVersion > 8) ||
+                (ver.dwMajorVersion == 8 && ver.dwMinorVersion >= 3))
+            {
+                s_warn_ansicon = true;
+            }
         }
 #pragma warning(pop)
 
@@ -267,6 +283,14 @@ void win_screen_buffer::begin()
         // Start with Unknown.
         s_found_what = nullptr;
         s_native_ansi_handler = ansi_handler::unknown;
+        s_ansicon_problem = nullptr;
+
+        const char* const ansicon_dll = is_dll_loaded(ansicon_dll_names);
+        if (ansicon_dll && s_warn_ansicon)
+        {
+            LOG("ANSICON detected (%s) -- avoid ANSICON on Windows 8.1 or greater; it's unnecessary, less functional, and greatly degrades performance.", ansicon_dll);
+            s_ansicon_problem = ansicon_dll;
+        }
 
         do
         {
@@ -298,7 +322,7 @@ void win_screen_buffer::begin()
             }
 
             // Check for Ansi dlls loaded.
-            const char* foundwhat = is_dll_loaded(ansicon_dll_names);
+            const char* foundwhat = ansicon_dll;
             if (foundwhat)
             {
                 s_found_what = foundwhat;
