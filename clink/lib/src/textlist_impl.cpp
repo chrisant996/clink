@@ -1518,9 +1518,17 @@ void textlist_impl::update_display()
             if (show_del)
                 footer.concat("Del=Delete");
             if (m_history_mode)
-                footer.concat("  Enter=Execute");
+            {
+                if (!footer.empty())
+                    footer.concat("  ");
+                footer.concat("Enter=Execute");
+            }
             if (!m_needle.empty())
-                footer.concat("  F4=Mode");
+            {
+                if (!footer.empty())
+                    footer.concat("  ");
+                footer.concat("F4=Mode");
+            }
 
             int32 longest;
             if (m_pref_width)
