@@ -186,7 +186,7 @@ local function delayinit(argmatcher)
                 flag = flag:lower()
                 local stripped, arginfo = flag:match("^(/t:)([^%s]*)")
                 flag = stripped or flag
-                if not descriptions[flag][1] then
+                if descriptions[flag] and not descriptions[flag][1] then
                     finish_pending()
                     pending.flag = flag
                     pending.arginfo = arginfo
@@ -223,6 +223,7 @@ local function delayinit(argmatcher)
         "/v:on", "/v:off", "/v:"..onoff["v"], "/V:"..onoff["v"],
         "/x", "/y",
         "/X", "/Y",
+        "/?",
     })
     :nofiles()
     :adddescriptions(descriptions)
@@ -236,6 +237,7 @@ local function delayinit(argmatcher)
         "/x", "/X",
         "/y", "/Y",
         "/r", "/R",
+        "/?",
     })
 end
 
