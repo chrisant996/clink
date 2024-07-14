@@ -7,6 +7,7 @@
 - Added warning in the log file and in `clink-diagnostics` (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd>) when ANSICON is detected on Windows 8.1 or greater (it's unnecessary, less functional, and greatly degrades performance).
 - Added language info in `clink-diagnostics` when the code page is not 1252 (for easier troubleshooting).
 - Fixed finding argmatchers registered with exact names (typing `foo` couldn't find an argmatcher registered as `c:\dir\foo.exe` because it accidentally looked for `c:\dir\foo.EXE`).
+- Fixed [#631](https://github.com/chrisant996/clink/issues/631); script error after `cmd ` when the current language is German.
 
 #### v1.6.16
 
