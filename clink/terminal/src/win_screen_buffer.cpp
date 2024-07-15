@@ -30,7 +30,6 @@
 static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
 static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static bool s_has_consolev2 = false;
-static bool s_warn_ansicon = false;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
 static const char* s_ansicon_problem = nullptr;
@@ -246,11 +245,6 @@ void win_screen_buffer::begin()
                                 size != sizeof(data) ||
                                 data != 0);
             }
-            if ((ver.dwMajorVersion > 8) ||
-                (ver.dwMajorVersion == 8 && ver.dwMinorVersion >= 3))
-            {
-                s_warn_ansicon = true;
-            }
         }
 #pragma warning(pop)
 
@@ -286,9 +280,9 @@ void win_screen_buffer::begin()
         s_ansicon_problem = nullptr;
 
         const char* const ansicon_dll = is_dll_loaded(ansicon_dll_names);
-        if (ansicon_dll && s_warn_ansicon)
+        if (ansicon_dll && s_has_consolev2)
         {
-            LOG("ANSICON detected (%s) -- avoid ANSICON on Windows 8.1 or greater; it's unnecessary, less functional, and greatly degrades performance.", ansicon_dll);
+            LOG("ANSICON detected (%s) -- avoid ANSICON on Windows 10 or greater; it's unnecessary, less functional, and greatly degrades performance.", ansicon_dll);
             s_ansicon_problem = ansicon_dll;
         }
 

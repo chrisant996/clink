@@ -2645,7 +2645,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
         if (ansicon_problem)
         {
             t.format("        %sProblem:  ANSICON detected (%s).%s\n"
-                     "        %sAvoid ANSICON on Windows 8.1 or greater; it's unnecessary,%s\n"
+                     "        %sAvoid ANSICON on Windows 10 or greater; it's unnecessary,%s\n"
                      "        %sless functional, and greatly degrades performance.%s\n",
                      err, ansicon_problem, norm,
                      err, norm,
