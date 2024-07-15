@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.6.18
+
+- Suppress the ANSICON warning in the log file and diagnostics output on Windows 8.1.  The performance problem in ANSICON exists, but apparently there isn't a better alternative before Windows 10.
+
 #### v1.6.17
 
 - Added warning in the log file and in `clink-diagnostics` (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd>) when ANSICON is detected on Windows 8.1 or greater (it's unnecessary, less functional, and greatly degrades performance).
