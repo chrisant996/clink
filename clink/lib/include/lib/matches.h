@@ -32,6 +32,8 @@ enum class match_type : match_type_intrinsic
     hidden      = 0x0040, // Displays file/dir/link matches using the hidden color.
     readonly    = 0x0080, // Displays file/dir/link matches using the readonly color.
     system      = 0x0100, // May filter the file/dir/link depending on the `files.system` setting.
+
+    fromhistory = 0x8000, // Parsed from history; affects dedup (de-deduplication).
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(match_type);

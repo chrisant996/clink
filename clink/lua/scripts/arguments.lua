@@ -713,7 +713,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     if self._fromhistory_matcher then
         if self._fromhistory_matcher == matcher and self._fromhistory_argindex == arg_index then
             if clink.co_state._argmatcher_fromhistory.builder then
-                clink.co_state._argmatcher_fromhistory.builder:addmatch(word, "word")
+                clink.co_state._argmatcher_fromhistory.builder:addmatch(word, "*")
             end
         end
     end

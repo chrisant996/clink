@@ -69,7 +69,11 @@ struct matches_impl::match_lookup_comparator
 {
     bool operator()(const match_lookup& i1, const match_lookup& i2) const
     {
-        return (i1.type == i2.type && strcmp(i1.match, i2.match) == 0);
+        // Two matches are equal if their types and strings are equal.  But if
+        // either match was parsed from history, then dedup it as equal to any
+        // match with the same string, regardless of type.
+        const bool same_type = ((i1.type == i2.type) || ((i1.type | i2.type) & match_type::fromhistory) == match_type::fromhistory);
+        return (same_type && strcmp(i1.match, i2.match) == 0);
     }
 };
 
@@ -174,6 +178,8 @@ match_type to_match_type(const char* type_name)
             type |= match_type::readonly;
         else if (_strnicmp(t, "orphaned", l) == 0)
             type |= match_type::orphaned;
+        else if (_strnicmp(t, "*", l) == 0)
+            type |= match_type::fromhistory;
     }
 
     // Only files and dirs can be links.
