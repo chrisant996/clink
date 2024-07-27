@@ -606,9 +606,12 @@ TEST_CASE("Lua advanced arg parsers")
         tester.run();
 
         tester.set_input("qaz ");
-        // TODO: This seems more correct, but "qqq add -z " yields "md" and
-        // "qqq add -z  " (two spaces at end) yields "mdo".  Is this due to a
-        // pre-existing quirk?
+        // It seems like "md" would be more correct, but even before the
+        // argmatcher next_word refactor in commit 7b46891e76efd6dd077f this
+        // "o" quirk was present:
+        //  - "somealias " yields "mdo".
+        //  - "actualpgm " yields "mo".
+        //  - "actualpgm  " yields "moo".
         // tester.set_expected_classifications("md", true);
         tester.set_expected_classifications("mdo", true);
         tester.set_expected_matches("red", "green", "blue");
