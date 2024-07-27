@@ -371,19 +371,21 @@ function _argreader:start_command(matcher)
 end
 
 --------------------------------------------------------------------------------
-function _argreader:push_line_state(line_state, word_index)
+function _argreader:push_line_state(line_state, word_index, no_onalias)
     -- Only push the current one if it isn't finished.
     if self._word_index <= self._line_state:getwordcount() then
         local extra = self._extra or {}
         table.insert(extra, {
             line_state = self._line_state,
             word_index = self._word_index,
+            no_onalias = self._no_onalias,
         })
         self._extra = extra
     end
 
     self._line_state = line_state
     self._word_index = word_index or 1
+    self._no_onalias = (self._no_onalias or no_onalias) and true or nil
 end
 
 --------------------------------------------------------------------------------
@@ -393,6 +395,7 @@ function _argreader:pop_line_state()
         if popped then
             self._line_state = popped.line_state
             self._word_index = popped.word_index
+            self._no_onalias = popped._no_onalias
         end
         if not self._extra[1] then
             self._extra = nil
@@ -402,8 +405,11 @@ function _argreader:pop_line_state()
 end
 
 --------------------------------------------------------------------------------
-function _argreader:has_more_words()
-    return (self._extra or self._line_state:getwordcount() > self._word_index) and true or false
+function _argreader:has_more_words(word_index)
+    word_index = word_index or self._word_index
+    if self._extra or self._line_state:getwordcount() > word_index then
+        return true
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -417,7 +423,6 @@ function _argreader:next_word(always_last_word)
     local word_count = ls:getwordcount()
     local word_index = self._word_index
 
--- TODO: don't allow onalias in the last word.
     if word_index > word_count then
         if self:pop_line_state() then
             goto retry
@@ -565,7 +570,8 @@ end
 
 --------------------------------------------------------------------------------
 -- When self._extra isn't nil, skip classifying the word.  This only happens
--- when parsing extra words from expanding a doskey alias.
+-- when parsing extra words from expanding a doskey alias, or from an inline
+-- alias returned by an `onalias` callback function.
 --
 -- On return, the _argreader should be primed for generating matches for the
 -- NEXT word in the line.
@@ -637,6 +643,26 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                 if arg.delayinit then
                     do_delayed_init(arg, matcher, 0)
                 end
+                if arg.onalias and
+                        not last_onadvance and
+                        not (self._extra and self._extra.no_onalias) and
+                        self:has_more_words(word_index) then
+                    local expanded, chain = arg.onalias(0, word, word_index, line_state, self._user_data)
+                    if expanded then
+                        local line_states = clink.parseline(expanded)
+                        if line_states and line_states[1].line_state then
+                            if self._word_classifier and not self._extra then
+                                self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+                            end
+                            self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
+                            if chain then
+                                self:start_chained_command(1, "cmd")
+                                return true -- chain
+                            end
+                            return -- next word
+                        end
+                    end
+                end
                 if arg.onarg and clink._in_generate() then
                     arg.onarg(0, word, word_index, line_state, self._user_data)
                 end
@@ -682,6 +708,26 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             end
             if react ~= -1 then
                 react_modes = nil
+            end
+        end
+        if arg.onalias and
+                not last_onadvance and
+                not (self._extra and self._extra.no_onalias) and
+                self:has_more_words(word_index) then
+            local expanded, chain = arg.onalias(arg_index, word, word_index, line_state, self._user_data)
+            if expanded then
+                local line_states = clink.parseline(expanded)
+                if line_states and line_states[1].line_state then
+                    if self._word_classifier and not self._extra then
+                        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+                    end
+                    self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
+                    if chain then
+                        self:start_chained_command(1, "cmd")
+                        return true -- chain
+                    end
+                    return -- next word
+                end
             end
         end
     end
@@ -830,84 +876,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
 
     -- Parse the word type.
     if self._word_classifier and not self._extra then
-        local aidx = is_flag and 0 or arg_index
-        if realmatcher._classify_func and realmatcher._classify_func(aidx, word, word_index, line_state, self._word_classifier, self._user_data) then -- luacheck: ignore 542
-            -- The classifier function says it handled the word.
-        else
-            -- Use the argmatcher's data to classify the word.
-            local t = "o" --other
-            if arg._links and arg._links[word] then
-                t = arg_match_type
-            else
-                -- For performance reasons, don't run argmatcher functions
-                -- during classify.  If that's needed, a script can provide a
-                -- :classify function to complement a :generate function.
-                local matched = false
-                if arg_match_type == "f" then
-                    -- When the word is a flag and ends with : or = then check
-                    -- if the word concatenated with an adjacent following word
-                    -- matches a known flag.  When so, classify both words.
-                    if word:sub(-1):match("[:=]") then
-                        if arg._links and arg._links[word] then
-                            t = arg_match_type
-                        else
-                            local this_info = line_state:getwordinfo(word_index)
-                            local next_info = line_state:getwordinfo(word_index + 1)
-                            if this_info and next_info and this_info.offset + this_info.length == next_info.offset then
-                                local combined_word = word..line_state:getword(word_index + 1)
-                                for _, i in ipairs(arg) do
-                                    if type(i) ~= "function" and i == combined_word then
-                                        t = arg_match_type
-                                        self._word_classifier:classifyword(word_index + 1, t, false)
-                                        matched = true
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                    elseif end_flags then
-                        t = arg_match_type
-                    end
-                end
-                if not matched then
-                    local this_info = line_state:getwordinfo(word_index)
-                    local pos = this_info.offset + this_info.length
-                    local line = line_state:getline()
-                    if line:sub(pos, pos) == "=" then
-                        -- If "word" is immediately followed by an equal sign,
-                        -- then check if "word=" is a recognized argument.
-                        t, matched = is_word_present(word.."=", arg, t, arg_match_type)
-                        if matched then
-                            self._word_classifier:applycolor(pos, 1, get_classify_color(t))
-                        end
-                    end
-                    if not matched then
-                        if arg.loopchars and arg.loopchars ~= "" then
-                            -- If the arg has looping characters defined, then
-                            -- split the word and apply colors to the sub-words.
-                            pos = this_info.offset
-                            local split = string.explode(word, arg.loopchars, '"')
-                            for _, w in ipairs(split) do
-                                t, matched = is_word_present(w, arg, t, arg_match_type)
-                                if matched then
-                                    local i = line:find(w, pos, true)
-                                    if i then
-                                        self._word_classifier:applycolor(i, #w, get_classify_color(t))
-                                        pos = i + #w
-                                    end
-                                end
-                            end
-                            t = nil
-                        else
-                            t, matched = is_word_present(word, arg, t, arg_match_type) -- luacheck: no unused
-                        end
-                    end
-                end
-            end
-            if t then
-                self._word_classifier:classifyword(word_index, t, false)
-            end
-        end
+        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
     end
 
     -- Does the word lead to another matcher?
@@ -935,6 +904,89 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     -- matcher that should be active for the next word.
     if not linked and is_flag then
         self:_pop(next_is_flag)
+    end
+end
+
+--------------------------------------------------------------------------------
+function _argreader:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+    local aidx = is_flag and 0 or arg_index
+    local line_state = self._line_state
+    if realmatcher._classify_func and realmatcher._classify_func(aidx, word, word_index, line_state, self._word_classifier, self._user_data) then -- luacheck: ignore 542
+        -- The classifier function says it handled the word.
+    else
+        -- Use the argmatcher's data to classify the word.
+        local t = "o" --other
+        if arg._links and arg._links[word] then
+            t = arg_match_type
+        else
+            -- For performance reasons, don't run argmatcher functions
+            -- during classify.  If that's needed, a script can provide a
+            -- :classify function to complement a :generate function.
+            local matched = false
+            if arg_match_type == "f" then
+                -- When the word is a flag and ends with : or = then check
+                -- if the word concatenated with an adjacent following word
+                -- matches a known flag.  When so, classify both words.
+                if word:sub(-1):match("[:=]") then
+                    if arg._links and arg._links[word] then
+                        t = arg_match_type
+                    else
+                        local this_info = line_state:getwordinfo(word_index)
+                        local next_info = line_state:getwordinfo(word_index + 1)
+                        if this_info and next_info and this_info.offset + this_info.length == next_info.offset then
+                            local combined_word = word..line_state:getword(word_index + 1)
+                            for _, i in ipairs(arg) do
+                                if type(i) ~= "function" and i == combined_word then
+                                    t = arg_match_type
+                                    self._word_classifier:classifyword(word_index + 1, t, false)
+                                    matched = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                elseif end_flags then
+                    t = arg_match_type
+                end
+            end
+            if not matched then
+                local this_info = line_state:getwordinfo(word_index)
+                local pos = this_info.offset + this_info.length
+                local line = line_state:getline()
+                if line:sub(pos, pos) == "=" then
+                    -- If "word" is immediately followed by an equal sign,
+                    -- then check if "word=" is a recognized argument.
+                    t, matched = is_word_present(word.."=", arg, t, arg_match_type)
+                    if matched then
+                        self._word_classifier:applycolor(pos, 1, get_classify_color(t))
+                    end
+                end
+                if not matched then
+                    if arg.loopchars and arg.loopchars ~= "" then
+                        -- If the arg has looping characters defined, then
+                        -- split the word and apply colors to the sub-words.
+                        pos = this_info.offset
+                        local split = string.explode(word, arg.loopchars, '"')
+                        for _, w in ipairs(split) do
+                            t, matched = is_word_present(w, arg, t, arg_match_type)
+                            if matched then
+                                local i = line:find(w, pos, true)
+                                if i then
+                                    self._word_classifier:applycolor(i, #w, get_classify_color(t))
+                                    pos = i + #w
+                                end
+                            end
+                        end
+                        t = nil
+                    else
+                        t, matched = is_word_present(word, arg, t, arg_match_type) -- luacheck: no unused
+                    end
+                end
+            end
+        end
+        if t then
+            self._word_classifier:classifyword(word_index, t, false)
+        end
     end
 end
 
@@ -1044,6 +1096,9 @@ local function apply_options_to_list(addee, list)
     end
     if type(addee.onadvance) == "function" then
         list.onadvance = addee.onadvance
+    end
+    if type(addee.onalias) == "function" then
+        list.onalias = addee.onalias
     end
     if type(addee.onarg) == "function" then
         list.onarg = addee.onarg
@@ -2873,7 +2928,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             local chain, chainlookup = reader:update(word, word_index, true--[[last_onadvance]])
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
-                if reader:has_more_words() then
+                if reader:has_more_words(word_index) then
                     lookup = chainlookup
                     no_cmd = reader._no_cmd
                     goto do_command
