@@ -629,7 +629,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     -- Check for flags and switch matcher if the word is a flag.
     local is_flag
     local next_is_flag
-    local end_flags
+    local end_flags = nil
     local matcher = self._matcher
     local realmatcher = self._realmatcher
     local pushed_flags
@@ -652,7 +652,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
                             if self._word_classifier and not self._extra then
-                                self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+                                self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
                             end
                             self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
                             if chain then
@@ -719,7 +719,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
                     if self._word_classifier and not self._extra then
-                        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+                        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
                     end
                     self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
                     if chain then
@@ -876,7 +876,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
 
     -- Parse the word type.
     if self._word_classifier and not self._extra then
-        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
     end
 
     -- Does the word lead to another matcher?
@@ -908,7 +908,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
 end
 
 --------------------------------------------------------------------------------
-function _argreader:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type)
+function _argreader:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
     local aidx = is_flag and 0 or arg_index
     local line_state = self._line_state
     if realmatcher._classify_func and realmatcher._classify_func(aidx, word, word_index, line_state, self._word_classifier, self._user_data) then -- luacheck: ignore 542
@@ -1922,9 +1922,9 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     --]]
 
     -- Consume words and use them to move through matchers' arguments.
-    local word, word_index, line_state, last_word, info
+    local word, word_index, line_state, last_word
     while true do
-        word, word_index, line_state, last_word, info = reader:next_word(true--[[always_last_word]])
+        word, word_index, line_state, last_word = reader:next_word(true--[[always_last_word]])
         if last_word then
             break
         end
@@ -1958,7 +1958,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     local hidden
 
     word_index = line_state:getwordcount()
-    info = line_state:getwordinfo(word_index)
+    local info = line_state:getwordinfo(word_index)
     if clink.co_state.use_old_filtering then
         word = line_state:getline():sub(info.offset, line_state:getcursor() - 1)
     else
@@ -2796,7 +2796,7 @@ function clink._generate_from_historyline(line_state)
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
-    lookup = nil
+    lookup = nil -- luacheck: ignore 311
 
     if reader then
         reader:start_command(argmatcher)
@@ -2811,9 +2811,9 @@ function clink._generate_from_historyline(line_state)
     reader._fromhistory_argindex = clink.co_state._argmatcher_fromhistory.argslot
 
     -- Consume words and use them to move through matchers' arguments.
-    local word, word_index, info
+    local word, word_index, last_word, info -- luacheck: no unused
     while true do
-        word, word_index, line_state, _, info = reader:next_word()
+        word, word_index, line_state, last_word, info = reader:next_word() -- luacheck: no unused
         if not word then
             break
         end
@@ -2893,7 +2893,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local reader
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
-    lookup = nil
+    lookup = nil -- luacheck: ignore 311
     if argmatcher then
         if reader then
             reader:start_command(argmatcher)
@@ -2906,9 +2906,9 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         end
 
         -- Consume words and use them to move through matchers' arguments.
-        local word, word_index, last_word, info
+        local word, word_index, last_word
         while true do
-            word, word_index, line_state, last_word, info = reader:next_word(true--[[always_last_word]])
+            word, word_index, line_state, last_word = reader:next_word(true--[[always_last_word]])
             if last_word then
                 break
             end
@@ -2946,8 +2946,8 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         argmatcher = reader._matcher
         local arg = argmatcher._args[reader._arg_index]
         if arg and arg.loopchars then
-            local word = line_state:getendword()
             local pos = 0
+            word = line_state:getendword()
             while true do
                 local next = word:find(arg.loopcharsfind, pos + 1)
                 if not next then
@@ -2963,7 +2963,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         -- There should always be a matcher left on the stack, but the arg_index
         -- could be well out of range.
         if not reader._noflags and argmatcher and argmatcher._flags then
-            local word = line_state:getendword()
+            word = line_state:getendword()
             if argmatcher:_is_flag(word) then
                 -- Accommodate `-flag:text` and `-flag=text` (with or without
                 -- quotes) so that matching can happen for the `text` portion.
@@ -2993,7 +2993,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 
         local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
         local command_word_index = line_state:getcommandwordindex()
-        lookup = nil
+        lookup = nil -- luacheck: ignore 311
 
         local command_word = line_state:getword(command_word_index) or ""
         local cw, sanitized = sanitize_command_word(command_word)
@@ -3042,7 +3042,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 
             -- Consume words and use them to move through matchers' arguments.
             while true do
-                local word, word_index, line_state = reader:next_word()
+                local word, word_index = reader:next_word()
                 if not word then
                     break
                 end
