@@ -5,6 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `onalias` support:
+  - `git dirxw 100 -2` doesn't color `-2` as a flag (classification seems broken, but completion works).
+  - Add tests for `onalias` stuff (both for completion and for classification).
+  - Add documentation and example.
 
 ## Unit Tests
 
