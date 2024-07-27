@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Add tests for `onalias` stuff (both for completion and for classification).
 
 ## Unit Tests
 
