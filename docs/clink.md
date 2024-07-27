@@ -2091,6 +2091,7 @@ Argmatchers can be more involved in parsing the command line, if they wish.
 An argmatcher can supply "on advance" or "on arg" functions to be called when the argmatcher parses an argument position.  The functions can influence parsing the rest of the input line.  For example, the presence of a flag `--only-dirs` might change what match completions should be provided somewhere else in the input line.
 
 - An "[on advance](#the-on-advance-function)" function is called _before_ parsing a word.  It can influence which argument position will parse the word (it can advance to the next position before parsing, or it can repeat the same argument position for parsing both the current word and the next word).
+- An "[on alias](#the-on-alias-function)" function is called _before_ parsing a word.  It can examine the word and return some other text to parse instead.
 - An "[on arg](#the-on-arg-function)" function is called _when_ parsing a word.  It can examine the word and do custom processing.
 - An "[on link](#the-on-link-function)" function is called _after_ parsing a word.  It can examine the word and override what argmatcher it links to (see [Linking Parsers](#argmatcher_linking)).
 
@@ -2106,7 +2107,7 @@ To use this, Clink v1.5.14 or higher is required.
 
 The function receives five arguments:
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
-- `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word` is a string containing the word being parsed.  If it's the word under the cursor, then the string will be empty, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
@@ -2170,6 +2171,27 @@ clink.argmatcher("foo")
 :nofiles()
 ```
 
+##### The "on alias" function
+
+Supply an "on alias" function by including <code>onalias=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can examine the word and return some other text to parse instead.
+
+To use this, Clink v1.6.18 or higher is required.
+
+The function receives five arguments:
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a string containing the word being parsed.
+- `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
+
+If the function returns nothing, then parsing continues as usual.
+
+If the function returns a string, then the words in the string are parsed instead.  When those words are finished being parsed, then parsing continues with the rest of the remaining words from the input line.
+
+If the function returns a string and `true`, then the words in the string are parsed, but they begin a new command (similar to [:chaincommand()](#_argmatcher:chaincommand)).  When those words are finished being parsed, then parsing continues with the rest of the remaining words from the input line.
+
+For example, the `init()` function in the [git.lua](https://github.com/vladimir-kotikov/clink-completions/blob/master/git.lua) script in [clink-completions](https://github.com/vladimir-kotikov/clink-completions) repo uses this to enable completion to work with [custom git aliases](https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases).
+
 ##### The "on arg" function
 
 Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can examine the word and do custom processing.
@@ -2178,7 +2200,7 @@ To use this, Clink v1.3.3 or higher is required.
 
 The function receives five arguments:
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
-- `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word` is a string containing the word being parsed.  If it's the word under the cursor, then the string will be empty, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
@@ -2212,7 +2234,7 @@ To use this, Clink v1.5.14 or higher is required.
 The function receives six arguments:
 - `link` is the linked argmatcher, if any, that will be used if this function returns `nil`.
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
-- `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word` is a string containing the word being parsed.  If it's the word under the cursor, then the string will be empty, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
