@@ -521,6 +521,110 @@ TEST_CASE("Lua advanced arg parsers")
         }
     }
 
+    SECTION("onalias")
+    {
+        const char* script = "\
+            local function expand(arg_index, word, word_index, line_state, user_data)\
+                if word == 'c' then return 'start -x', true end\
+                if word == 'chain' then return 'start -x', true end\
+                if word == 'a' then return 'add' end\
+                if word == 'az' then return 'add -z' end\
+            end\
+            \
+            local xargs = clink.argmatcher():addarg('aaa', 'bbb')\
+            clink.argmatcher('start'):addarg({onadvance=maybe_string}):addflags('-x'..xargs):chaincommand()\
+            \
+            local zflag_parser = clink.argmatcher():addarg({'red', 'green', 'blue'})\
+            local add_parser = clink.argmatcher():addarg({'one', 'two', 'three'}):addflags({'-x', '-y', '-z'..zflag_parser}):nofiles()\
+            \
+            clink.argmatcher('qqq')\
+            :addarg({onalias=expand, 'add'..add_parser, 'chain'})\
+            :addflags({'-a', '-b', '-c'})\
+            :nofiles()\
+        ";
+
+        lua_load_script(lua, app, cmd);
+        lua_load_script(lua, app, dir);
+        lua_load_script(lua, app, exec);
+        lua_word_classifier lua_classifier(lua);
+        tester.get_editor()->set_classifier(lua_classifier);
+
+        doskey doskey("clink_test_harness");
+
+        MAKE_CLEANUP([&doskey](){
+            settings::find("clink.colorize_input")->set("false");
+            settings::find("color.argmatcher")->set();
+            //doskey.remove_alias("qadd_");
+            doskey.remove_alias("qadd");
+            doskey.remove_alias("qa");
+            doskey.remove_alias("qaz");
+        });
+
+        settings::find("clink.colorize_input")->set("true");
+        settings::find("color.argmatcher")->set("92");
+
+        // doskey.add_alias("qadd_", "qqq add");
+        doskey.add_alias("qadd", "qqq add $*");
+        doskey.add_alias("qa", "qqq a $*");
+        doskey.add_alias("qaz", "qqq az $*");
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        tester.set_input("qqq add ");
+        tester.set_expected_classifications("moa", true);
+        tester.set_expected_matches("one", "two", "three");
+        tester.run();
+
+        tester.set_input("qqq a ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_matches("one", "two", "three");
+        tester.run();
+
+        // tester.set_input("qadd_ o");
+        // tester.set_expected_classifications("mo", true);
+        // tester.set_expected_matches("one", "two", "three");
+        // tester.run();
+
+        tester.set_input("qadd o");
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("one");
+        tester.run();
+
+        tester.set_input("qa o");
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("one");
+        tester.run();
+
+        tester.set_input("qqq add -z ");
+        tester.set_expected_classifications("moaf", true);
+        tester.set_expected_matches("red", "green", "blue");
+        tester.run();
+
+        tester.set_input("qqq az ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_matches("red", "green", "blue");
+        tester.run();
+
+        tester.set_input("qaz ");
+        // TODO: This seems more correct, but "qqq add -z " yields "md" and
+        // "qqq add -z  " (two spaces at end) yields "mdo".  Is this due to a
+        // pre-existing quirk?
+        // tester.set_expected_classifications("md", true);
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("red", "green", "blue");
+        tester.run();
+
+        tester.set_input("qqq chain ");
+        tester.set_expected_classifications("moa", true);
+        tester.set_expected_matches("aaa", "bbb");
+        tester.run();
+
+        tester.set_input("qqq c ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_matches("aaa", "bbb");
+        tester.run();
+    }
+
     SECTION("onarg")
     {
         const char* script = "\
