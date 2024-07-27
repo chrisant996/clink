@@ -176,7 +176,6 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
             local matches = clink.filematchesexact(pattern)
             for _, m in ipairs(matches) do
                 if m.type:find("file") then
-                    local add
                     local ext = path.getextension(m.match):lower()
                     local has = associations[ext]
                     if has == nil and include_associations then

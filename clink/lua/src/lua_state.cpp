@@ -515,7 +515,7 @@ void dump_lua_stack(lua_State* L, int32 pos)
         case LUA_TNUMBER:
             {
                 LUA_NUMBER tmp = lua_tonumber(L, pos);
-                printf("%f", tmp);
+                printf("%f\n", tmp);
             }
             break;
         case LUA_TSTRING:

@@ -4,6 +4,7 @@
 
 #### v1.6.18
 
+- Added a new callback function that can be assigned to an argument position in the table given to `:addarg()` via `onalias=` (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information).  The git argmatcher in the [clink-completions](https://github.com/vladimir-kotikov/clink-completions) repo uses this to support git aliases.
 - Suppress the ANSICON warning in the log file and diagnostics output on Windows 8.1.  The performance problem in ANSICON exists, but apparently there isn't a better alternative before Windows 10.
 
 #### v1.6.17
