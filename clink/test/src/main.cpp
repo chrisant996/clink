@@ -8,12 +8,18 @@
 #include <core/os.h>
 #include <lib/recognizer.h>
 #include <lua/lua_task_manager.h>
+#include <terminal/terminal_helpers.h>
 
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 }
+
+extern "C" {
+#define lua_c
+#include <lua.h>
+};
 
 #include <list>
 #include <assert.h>
@@ -34,6 +40,31 @@ bool g_suppress_signal_assert = false;
 void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line) { assert(false); }
 void host_cleanup_after_signal() {}
 void host_set_last_prompt(const char* prompt, uint32 length) { assert(false); }
+
+//------------------------------------------------------------------------------
+void before_read_stdin(lua_saved_console_mode* saved, void* stream)
+{
+    saved->h = 0;
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE h_stream = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
+    if (h_stdin && h_stdin == h_stream)
+    {
+        if (GetConsoleMode(h_stdin, &saved->mode))
+        {
+            saved->h = h_stdin;
+            DWORD new_mode = saved->mode;
+            new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT;
+            new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT);
+            SetConsoleMode(h_stdin, new_mode | ENABLE_PROCESSED_INPUT);
+        }
+    }
+}
+void after_read_stdin(lua_saved_console_mode* saved)
+{
+    if (saved->h)
+        SetConsoleMode(saved->h, saved->mode);
+}
+static lua_clink_callbacks g_lua_callbacks = { before_read_stdin, after_read_stdin };
 
 //------------------------------------------------------------------------------
 int32 main(int32 argc, char** argv)
@@ -89,6 +120,10 @@ int32 main(int32 argc, char** argv)
 
         argc--, argv++;
     }
+
+    // Make console input work, e.g. for the Lua debugger.
+    console_config cc(nullptr, false);
+    __lua_set_clink_callbacks(&g_lua_callbacks);
 
     DWORD start = GetTickCount();
 
