@@ -1939,6 +1939,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -ret:   stop:bool;      When true, stop generating.
+--- -ret:   chain:bool;     When true, chain start a new command.
 --- -ret:   lookup:string;  Word to lookup next argmatcher; restart generation loop with new argmatcher.
 function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     --[[
@@ -1973,6 +1974,12 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         end
     end
     line_state = reader._line_state -- reader:update() can swap to a different line_state.
+
+    -- Disable completion when _stop_after is set, i.e. when a doskey alias
+    -- has no $ tokens.
+    if reader._stop_after then
+        return true
+    end
 
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.

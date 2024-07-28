@@ -613,12 +613,12 @@ TEST_CASE("Lua advanced arg parsers")
 
         // Doskey alias without $ token.
 
-        tester.set_input("qadd_ f");
+        tester.set_input("qadd_ ");
         tester.set_expected_classifications("md", true);
         tester.set_expected_matches();
         tester.run();
 
-        tester.set_input("qdelete_ f");
+        tester.set_input("qdelete_ ");
         tester.set_expected_classifications("md", true);
         tester.set_expected_matches();
         tester.run();
