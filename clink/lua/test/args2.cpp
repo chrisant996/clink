@@ -529,16 +529,20 @@ TEST_CASE("Lua advanced arg parsers")
                 if word == 'chain' then return 'start -x', true end\
                 if word == 'a' then return 'add' end\
                 if word == 'az' then return 'add -z' end\
+                if word == 'd' then return 'delete' end\
+                if word == 'd9' then return 'delete -9' end\
             end\
             \
             local xargs = clink.argmatcher():addarg('aaa', 'bbb')\
             clink.argmatcher('start'):addarg({onadvance=maybe_string}):addflags('-x'..xargs):chaincommand()\
             \
             local zflag_parser = clink.argmatcher():addarg({'red', 'green', 'blue'})\
+            local nineflag_parser = clink.argmatcher():addarg({'yellow', 'cyan', 'magenta'})\
             local add_parser = clink.argmatcher():addarg({'one', 'two', 'three'}):addflags({'-x', '-y', '-z'..zflag_parser}):nofiles()\
+            local delete_parser = clink.argmatcher():addarg({'seven', 'eight', 'nine'}):addflags({'-7', '-8', '-9'..nineflag_parser})\
             \
             clink.argmatcher('qqq')\
-            :addarg({onalias=expand, 'add'..add_parser, 'chain'})\
+            :addarg({onalias=expand, 'add'..add_parser, 'delete'..delete_parser, 'chain'})\
             :addflags({'-a', '-b', '-c'})\
             :nofiles()\
         ";
@@ -554,73 +558,146 @@ TEST_CASE("Lua advanced arg parsers")
         MAKE_CLEANUP([&doskey](){
             settings::find("clink.colorize_input")->set("false");
             settings::find("color.argmatcher")->set();
-            //doskey.remove_alias("qadd_");
+            doskey.remove_alias("qadd_");
             doskey.remove_alias("qadd");
             doskey.remove_alias("qa");
             doskey.remove_alias("qaz");
+            doskey.remove_alias("qdelete_");
+            doskey.remove_alias("qdelete");
+            doskey.remove_alias("qd");
+            doskey.remove_alias("qd9");
         });
 
         settings::find("clink.colorize_input")->set("true");
         settings::find("color.argmatcher")->set("92");
 
-        // doskey.add_alias("qadd_", "qqq add");
+        doskey.add_alias("qadd_", "qqq add");
         doskey.add_alias("qadd", "qqq add $*");
         doskey.add_alias("qa", "qqq a $*");
         doskey.add_alias("qaz", "qqq az $*");
+        doskey.add_alias("qdelete_", "qqq delete");
+        doskey.add_alias("qdelete", "qqq delete $*");
+        doskey.add_alias("qd", "qqq d $*");
+        doskey.add_alias("qd9", "qqq d9 $*");
 
         REQUIRE_LUA_DO_STRING(lua, script);
+
+        // NOTE:  The difference between the "add" and "delete" subcommands is
+        // whether the subparser ends in :nofiles().  The main motivation was
+        // to make sure completion is disabled correctly when a doskey alias
+        // has no $ token, regardless whether :nofiles() is used.
+
+        // Simple usage, without onalias.
 
         tester.set_input("qqq add ");
         tester.set_expected_classifications("moa", true);
         tester.set_expected_matches("one", "two", "three");
         tester.run();
 
+        tester.set_input("qqq delete ");
+        tester.set_expected_classifications("moa", true);
+        tester.set_expected_matches("seven", "eight", "nine");
+        tester.run();
+
+        // Simple usage, with onalias expansion.
+
         tester.set_input("qqq a ");
         tester.set_expected_classifications("moo", true);
         tester.set_expected_matches("one", "two", "three");
         tester.run();
 
-        // tester.set_input("qadd_ o");
-        // tester.set_expected_classifications("mo", true);
-        // tester.set_expected_matches("one", "two", "three");
-        // tester.run();
+        tester.set_input("qqq d ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_matches("seven", "eight", "nine");
+        tester.run();
+
+        // Doskey alias without $ token.
+
+        tester.set_input("qadd_ f");
+        tester.set_expected_classifications("md", true);
+        tester.set_expected_matches();
+        tester.run();
+
+        tester.set_input("qdelete_ f");
+        tester.set_expected_classifications("md", true);
+        tester.set_expected_matches();
+        tester.run();
+
+        // Doskey alias, without onalias.
 
         tester.set_input("qadd o");
         tester.set_expected_classifications("mdo", true);
         tester.set_expected_matches("one");
         tester.run();
 
+        tester.set_input("qdelete s");
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("seven");
+        tester.run();
+
+        // Doskey alias, with onalias expansion.
+
         tester.set_input("qa o");
         tester.set_expected_classifications("mdo", true);
         tester.set_expected_matches("one");
         tester.run();
+
+        tester.set_input("qd s");
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("seven");
+        tester.run();
+
+        // Simple usage with flag, without onalias.
 
         tester.set_input("qqq add -z ");
         tester.set_expected_classifications("moaf", true);
         tester.set_expected_matches("red", "green", "blue");
         tester.run();
 
+        tester.set_input("qqq delete -9 ");
+        tester.set_expected_classifications("moaf", true);
+        tester.set_expected_matches("yellow", "cyan", "magenta");
+        tester.run();
+
+        // Simple usage with flag, with onalias expansion.
+
         tester.set_input("qqq az ");
         tester.set_expected_classifications("moo", true);
         tester.set_expected_matches("red", "green", "blue");
         tester.run();
 
-        tester.set_input("qaz ");
+        tester.set_input("qqq d9 ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_matches("yellow", "cyan", "magenta");
+        tester.run();
+
+        // Doskey alias with flag, with onalias expansion.
+        //
         // It seems like "md" would be more correct, but even before the
         // argmatcher next_word refactor in commit 7b46891e76efd6dd077f this
         // "o" quirk was present:
         //  - "somealias " yields "mdo".
         //  - "actualpgm " yields "mo".
         //  - "actualpgm  " yields "moo".
-        // tester.set_expected_classifications("md", true);
+
+        tester.set_input("qaz ");
         tester.set_expected_classifications("mdo", true);
         tester.set_expected_matches("red", "green", "blue");
         tester.run();
+
+        tester.set_input("qd9 ");
+        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_matches("yellow", "cyan", "magenta");
+        tester.run();
+
+        // Simple usage with chaining, without onalias.
 
         tester.set_input("qqq chain ");
         tester.set_expected_classifications("moa", true);
         tester.set_expected_matches("aaa", "bbb");
         tester.run();
+
+        // Simple usage with chaining, with onalias expansion.
 
         tester.set_input("qqq c ");
         tester.set_expected_classifications("moo", true);

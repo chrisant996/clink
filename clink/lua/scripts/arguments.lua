@@ -371,31 +371,53 @@ function _argreader:start_command(matcher)
 end
 
 --------------------------------------------------------------------------------
-function _argreader:push_line_state(line_state, word_index, no_onalias)
+function _argreader:push_line_state(extra, no_onalias)
     -- Only push the current one if it isn't finished.
-    if self._word_index <= self._line_state:getwordcount() then
-        local extra = self._extra or {}
-        table.insert(extra, {
+    if self._word_index > self._line_state:getwordcount() then
+        if not self._extra then
+            self._original_line_state_exhausted = true
+        end
+    else
+        if not self._extra then
+            self._extra = {}
+        end
+        table.insert(self._extra, {
             line_state = self._line_state,
             word_index = self._word_index,
             no_onalias = self._no_onalias,
+            stop_after = self._stop_after,
         })
-        self._extra = extra
     end
 
-    self._line_state = line_state
-    self._word_index = word_index or 1
+    self._line_state = extra.line_state
+    self._word_index = extra.word_index or 1
+    self._stop_after = extra.stop_after
     self._no_onalias = (self._no_onalias or no_onalias) and true or nil
+
+    if extra.stop_after and not self._original_line_state_exhausted then
+        if self._word_classifier and self._extra and self._extra[1] then
+            -- When stopping parsing, color the rest of the command as
+            -- unexpected to reflect that it isn't being parsed.
+            local ls = self._extra[1].line_state
+            local info = ls:getwordinfo(math.max(1, self._extra[1].word_index - 1))
+            if info then
+                local offset = info.offset + info.length + (info.quoted and 1 or 0)
+                local length = ls:getrangelength() - math.max(0, offset - ls:getrangeoffset())
+                self._word_classifier:applycolor(offset, length, settings.get("color.unexpected"))
+            end
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
 function _argreader:pop_line_state()
-    if self._extra then
+    if self._extra and not self._stop_after then
         local popped = table.remove(self._extra)
         if popped then
             self._line_state = popped.line_state
             self._word_index = popped.word_index
             self._no_onalias = popped._no_onalias
+            self._stop_after = self._stop_after or popped._stop_after
         end
         if not self._extra[1] then
             self._extra = nil
@@ -407,7 +429,9 @@ end
 --------------------------------------------------------------------------------
 function _argreader:has_more_words(word_index)
     word_index = word_index or self._word_index
-    if self._extra or self._line_state:getwordcount() > word_index then
+    if self._extra then
+        return not self._stop_after
+    elseif self._line_state:getwordcount() > word_index then
         return true
     end
 end
@@ -432,7 +456,7 @@ function _argreader:next_word(always_last_word)
 
     self._word_index = word_index + 1
 
-    if not self._extra and word_index >= word_count then
+    if (not self._extra or self._stop_after) and word_index >= word_count then
         self._last_word = true
     end
 
@@ -654,7 +678,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                             if self._word_classifier and not self._extra then
                                 self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
                             end
-                            self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
+                            self:push_line_state(line_states[1], true--[[no_onalias]])
                             if chain then
                                 self:start_chained_command(1, "cmd")
                                 return true -- chain
@@ -721,7 +745,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if self._word_classifier and not self._extra then
                         self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
                     end
-                    self:push_line_state(line_states[1].line_state, 1, true--[[no_onalias]])
+                    self:push_line_state(line_states[1], true--[[no_onalias]])
                     if chain then
                         self:start_chained_command(1, "cmd")
                         return true -- chain
@@ -2708,7 +2732,14 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has
             if alias and alias ~= "" then
                 -- This doesn't even try to handle redirection symbols in the alias
                 -- because the cost/benefit ratio is unappealing.
+                local orig_alias = alias
                 alias = alias:gsub("%$.*$", "")
+                local stop_after = (alias == orig_alias)
+                if not has_extra and stop_after then
+                    -- Append spaces so there's an endword, so that completion
+                    -- works properly.
+                    alias = alias.."  "
+                end
                 local extras = clink.parseline(alias)
                 local extra = extras and extras[#extras]
                 if extra then
@@ -2723,7 +2754,11 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has
                         elseif argmatcher._delayinit_func then
                             do_onuse_callback(argmatcher, eword)
                         end
-                        extra.next_index = ecwi + 1
+                        extra = {
+                            line_state = els,
+                            word_index = ecwi + 1,
+                            stop_after = stop_after,
+                        }
                         return argmatcher, true, extra
                     end
                 end
@@ -2792,7 +2827,7 @@ function clink._generate_from_historyline(line_state)
     local no_cmd
     local reader
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
+    local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
@@ -2803,9 +2838,9 @@ function clink._generate_from_historyline(line_state)
     else
         reader = _argreader(argmatcher, line_state)
     end
-    if alias and not reader._extra then
-        alias.line_state = break_slash(alias.line_state) or alias.line_state
-        reader:push_line_state(alias.line_state, alias.next_index)
+    if extra and not reader._extra then
+        extra.line_state = break_slash(extra.line_state) or extra.line_state
+        reader:push_line_state(extra)
     end
     reader._fromhistory_matcher = clink.co_state._argmatcher_fromhistory.argmatcher
     reader._fromhistory_argindex = clink.co_state._argmatcher_fromhistory.argslot
@@ -2840,7 +2875,7 @@ local function do_generate(line_state, match_builder)
     local no_cmd
     local reader
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
+    local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if argmatcher then
         clink.co_state._argmatcher_fromhistory = {}
@@ -2851,9 +2886,9 @@ local function do_generate(line_state, match_builder)
         else
             reader = _argreader(argmatcher, line_state)
         end
-        if alias and not reader._extra then
-            alias.line_state = break_slash(alias.line_state) or alias.line_state
-            reader:push_line_state(alias.line_state, alias.next_index)
+        if extra and not reader._extra then
+            extra.line_state = break_slash(extra.line_state) or extra.line_state
+            reader:push_line_state(extra)
         end
 
         local ret, chain, chainlookup = argmatcher:_generate(reader, match_builder)
@@ -2892,7 +2927,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local no_cmd
     local reader
 ::do_command::
-    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
+    local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if argmatcher then
         if reader then
@@ -2900,9 +2935,9 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
         else
             reader = _argreader(argmatcher, line_state)
         end
-        if alias and not reader._extra then
-            alias.line_state = break_slash(alias.line_state) or alias.line_state
-            reader:push_line_state(alias.line_state, alias.next_index)
+        if extra and not reader._extra then
+            extra.line_state = break_slash(extra.line_state) or extra.line_state
+            reader:push_line_state(extra)
         end
 
         -- Consume words and use them to move through matchers' arguments.
@@ -2991,7 +3026,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local reader
 ::do_command::
 
-        local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
+        local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil -- luacheck: ignore 311
 
@@ -3035,9 +3070,9 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 reader = _argreader(argmatcher, line_state)
                 reader._word_classifier = word_classifier
             end
-            if alias and not reader._extra then
-                alias.line_state = break_slash(alias.line_state) or alias.line_state
-                reader:push_line_state(alias.line_state, alias.next_index)
+            if extra and not reader._extra then
+                extra.line_state = break_slash(extra.line_state) or extra.line_state
+                reader:push_line_state(extra)
             end
 
             -- Consume words and use them to move through matchers' arguments.
