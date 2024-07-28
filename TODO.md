@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Unit Tests
 
 ## Normal Priority
-- When a doskey alias omits `$*` the argmatcher still parses the rest of the line; e.g. `x`=`git status` and then `x -s` gets colored and parsed as `git status -s`, but gets executed as `git status`.  Maybe the rest of the input could be colored as unexpected, and completions could be disabled?
 - Event handler enhancements.
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow setting an optional `name` when registering event handlers?  So that scripts can cooperate to share a single named event.  But it's already possible for scripts to cooperate to achieve the same effect, e.g. by having an event handler that executes a function specified by a global variable.
