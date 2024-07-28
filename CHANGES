@@ -5,6 +5,7 @@
 #### v1.6.18
 
 - Added a new callback function that can be assigned to an argument position in the table given to `:addarg()` via `onalias=` (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information).  The git argmatcher in the [clink-completions](https://github.com/vladimir-kotikov/clink-completions) repo uses this to support git aliases.
+- When a doskey alias doesn't include any `$` tokens then CMD is guaranteed to ignore the rest of the command line after the alias, so now argmatcher parsing also ignores the rest of the command line and colors it using `color.unexpected`.
 - Suppress the ANSICON warning in the log file and diagnostics output on Windows 8.1.  The performance problem in ANSICON exists, but apparently there isn't a better alternative before Windows 10.
 
 #### v1.6.17
