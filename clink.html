@@ -2082,7 +2082,7 @@ Checks for an updated version of Clink.  If one is available, it is downloaded a
 
 <h2 id="automatic-updates"><a class="wlink" href="#automatic-updates"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Automatic Updates <span class="uplinks"><a href="#configclink">up</a> <a href="#toc">top</a></span></h2>
 <p>By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run <code>clink update</code> when convenient to do so.</p>
-<p>You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.</p>
+<p>The default interval between checks is 5 days, which means after Clink checks for an update it waits at least 5 days before checking again.  You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.</p>
 <p>You can control what happens when an update is available by using <code>clink set <a href="#clink_autoupdate">clink.autoupdate</a> <span class="arg">mode</span></code>, where <span class="arg">mode</span> is one of these:</p>
 <table>
 <thead>
@@ -3299,12 +3299,7 @@ $endif              # end clink-only section
 <tr>
 <td><a class="wlink" href="#rlcmd-execute-named-command"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-execute-named-command"></a><code>execute-named-command</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>x</kbd></td>
-<td>Read a bindable readline command name from the input and execute the function to which it&#39;s bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that</td>
-</tr>
-<tr>
-<td>argument to the function it executes.</td>
-<td align="center"></td>
-<td></td>
+<td>Read a bindable readline command name from the input and execute the function to which it&#39;s bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that argument to the function it executes.</td>
 </tr>
 </tbody></table>
 <h3 id="readline-vi-mode"><a class="wlink" href="#readline-vi-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Readline vi Mode <span class="uplinks"><a href="#bindable-commands">up</a> <a href="#toc">top</a></span></h3>
@@ -6163,14 +6158,86 @@ end
 <td>Starting with a semicolon doesn&#39;t expand a doskey alias but does add to history.</td>
 </tr>
 </tbody></table>
-<p>There are several settings that control how history works.  Run <code>clink set history*</code> to see them all.</p>
+<p>You can list the saved history by running <code>clink history</code> or the <code>history</code> doskey alias that Clink automatically defines.  Use <code>history --help</code> for usage info.</p>
+<p>There are several settings that control how history works.  Run <code>clink set history*</code> to see them all (orsee <a href="">here</a>).</p>
 <p>Run <code>clink info</code> to find the history file.  See <a href="">File Locations</a> for more information.</p>
 <blockquote>
 <p><strong>Note:</strong> If the first word in the line matches one of the words in the <a href="#history_dont_add_to_history_cmds"><code>history.dont_add_to_history_cmds</code></a> setting then the command is not added to history.  By default, <code>history</code> and <code>exit</code> are not added to history.</p>
 </blockquote>
-<h3 id="list-the-history"><a class="wlink" href="#list-the-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>List the history <span class="uplinks"><a href="#saved-command-history">up</a> <a href="#toc">top</a></span></h3>
-<p>Press <kbd>F7</kbd> for a popup list of selectable history entries.</p>
-<p>You can also list the saved history by running <code>clink history</code> or the <code>history</code> doskey alias that Clink automatically defines.  Use <code>history --help</code> for usage info.</p>
+<p><a name="navigating-through-the-history"></a>
+<a name="list-the-history"></a></p>
+<h3 id="navigating-through-the-history"><a class="wlink" href="#navigating-through-the-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Navigating through the history <span class="uplinks"><a href="#saved-command-history">up</a> <a href="#toc">top</a></span></h3>
+<p>The default key bindings for navigating the history are:</p>
+<table>
+<thead>
+<tr>
+<th>Key Binding</th>
+<th>Description</th>
+<th>Command Name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Enter</kbd></td>
+<td>Accept the input line and send it to the shell for execution.  The line may be added to the history for future recall.</td>
+<td><a href="#rlcmd-accept-line"><code>accept-line</code></a></td>
+</tr>
+<tr>
+<td><kbd>Up</kbd></td>
+<td>Move &quot;back&quot; through the history list, fetching the previous command.</td>
+<td><a href="#rlcmd-previous-history"><code>previous-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>Down</kbd></td>
+<td>Move &quot;forward&quot; through the history list, fetching the next command.</td>
+<td><a href="#rlcmd-next-history"><code>next-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>PgUp</kbd></td>
+<td>Search backward through the history for entries matching the typed prefix.</td>
+<td><a href="#rlcmd-history-search-backward"><code>history-search-backward</code></a></td>
+</tr>
+<tr>
+<td><kbd>PgDn</kbd></td>
+<td>Search forward through the history for entries matching the typed prefix.</td>
+<td><a href="#rlcmd-history-search-forward"><code>history-search-forward</code></a></td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>R</kbd></td>
+<td>Perform an incremental search backward through the history.</td>
+<td><a href="#rlcmd-reverse-search-history"><code>reverse-search-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>S</kbd></td>
+<td>Perform an incremental search forward through the history.</td>
+<td><a href="#rlcmd-forward-search-history"><code>forward-search-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd></td>
+<td>Show a popup list of selectable history entries.  Typing searches or filters the list.</td>
+<td><a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>F7</kbd></td>
+<td>Show a popup list of selectable history entries.  Typing a number jumps to the corresponding history entry.</td>
+<td><a href="#rlcmd-win-history"><code>win-history-list</code></a></td>
+</tr>
+<tr>
+<td><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>K</kbd></td>
+<td>Add the current line to the history without executing it, and clear the editing line.</td>
+<td><a href="#rlcmd-add-history"><code>add-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>D</kbd></td>
+<td>While navigating through the history, removes the current history line from the saved history.  Otherwise has no effect.</td>
+<td><a href="#rlcmd-remove-history"><code>remove-history</code></a></td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>O</kbd></td>
+<td>Accept the input line and send it to the shell for execution (without adding it to the history), and then navigate to the next line after it from the saved history.  This can be handy for re-running a series of lines from the history.</td>
+<td><a href="#rlcmd-operate-and-get-next"><code>operate-and-get-next</code></a></td>
+</tr>
+</tbody></table>
+<p>See <a href="#commands-for-manipulating-the-history">Commands for Manipulating The History</a> and <a href="#clink-commands">Clink Commands</a> for more history commands and key bindings.</p>
 <h3 id="the-master-history-file"><a class="wlink" href="#the-master-history-file"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The master history file <span class="uplinks"><a href="#saved-command-history">up</a> <a href="#toc">top</a></span></h3>
 <p>When the <a href="#history_save"><code>history.save</code></a> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
 <p>Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the <a href="#history_max_lines"><code>history.max_lines</code></a> setting.</p>
