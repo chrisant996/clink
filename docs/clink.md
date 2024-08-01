@@ -756,7 +756,7 @@ Checks for an updated version of Clink.  If one is available, it is downloaded a
 
 By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run `clink update` when convenient to do so.
 
-You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
+The default interval between checks is 5 days, which means after Clink checks for an update it waits at least 5 days before checking again.  You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
 
 You can control what happens when an update is available by using <code>clink set <a href="#clink_autoupdate">clink.autoupdate</a> <span class="arg">mode</span></code>, where <span class="arg">mode</span> is one of these:
 
@@ -1358,8 +1358,7 @@ Command | Key | Description
 <a name="rlcmd-dump-functions"></a>`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-variables"></a>`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 <a name="rlcmd-dump-macros"></a>`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
-<a name="rlcmd-execute-named-command"></a>`execute-named-command` | <kbd>Alt</kbd>-<kbd>x</kbd> | Read a bindable readline command name from the input and execute the function to which it's bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that
-argument to the function it executes.
+<a name="rlcmd-execute-named-command"></a>`execute-named-command` | <kbd>Alt</kbd>-<kbd>x</kbd> | Read a bindable readline command name from the input and execute the function to which it's bound, as if the key sequence to which it was bound appeared in the input.  If this function is supplied with a numeric argument, it passes that argument to the function it executes.
 
 ### Readline vi Mode
 
@@ -3020,17 +3019,37 @@ Line|Description
 <code>&nbsp;somecmd</code>|Starting with a space doesn't expand a doskey alias and doesn't add to history.
 `;somecmd`|Starting with a semicolon doesn't expand a doskey alias but does add to history.
 
-There are several settings that control how history works.  Run `clink set history*` to see them all.
+You can list the saved history by running `clink history` or the `history` doskey alias that Clink automatically defines.  Use `history --help` for usage info.
+
+There are several settings that control how history works.  Run `clink set history*` to see them all (orsee [here]()).
 
 Run `clink info` to find the history file.  See [File Locations]() for more information.
 
 > **Note:** If the first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting then the command is not added to history.  By default, `history` and `exit` are not added to history.
 
-### List the history
+<a name="navigating-through-the-history"></a>
+<a name="list-the-history"></a>
 
-Press <kbd>F7</kbd> for a popup list of selectable history entries.
+### Navigating through the history
 
-You can also list the saved history by running `clink history` or the `history` doskey alias that Clink automatically defines.  Use `history --help` for usage info.
+The default key bindings for navigating the history are:
+
+Key Binding | Description | Command Name
+-|-|-
+<kbd>Enter</kbd> | Accept the input line and send it to the shell for execution.  The line may be added to the history for future recall. | [`accept-line`](#rlcmd-accept-line)
+<kbd>Up</kbd> | Move "back" through the history list, fetching the previous command. | [`previous-history`](#rlcmd-previous-history)
+<kbd>Down</kbd> | Move "forward" through the history list, fetching the next command. | [`next-history`](#rlcmd-next-history)
+<kbd>PgUp</kbd> | Search backward through the history for entries matching the typed prefix. | [`history-search-backward`](#rlcmd-history-search-backward)
+<kbd>PgDn</kbd> | Search forward through the history for entries matching the typed prefix. | [`history-search-forward`](#rlcmd-history-search-forward)
+<kbd>Ctrl</kbd>-<kbd>R</kbd> | Perform an incremental search backward through the history. | [`reverse-search-history`](#rlcmd-reverse-search-history)
+<kbd>Ctrl</kbd>-<kbd>S</kbd> | Perform an incremental search forward through the history. | [`forward-search-history`](#rlcmd-forward-search-history)
+<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> | Show a popup list of selectable history entries.  Typing searches or filters the list. | [`clink-popup-history`](#rlcmd-clink-popup-history)
+<kbd>F7</kbd> | Show a popup list of selectable history entries.  Typing a number jumps to the corresponding history entry. | [`win-history-list`](#rlcmd-win-history)
+<kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>K</kbd> | Add the current line to the history without executing it, and clear the editing line. | [`add-history`](#rlcmd-add-history)
+<kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>D</kbd> | While navigating through the history, removes the current history line from the saved history.  Otherwise has no effect. | [`remove-history`](#rlcmd-remove-history)
+<kbd>Ctrl</kbd>-<kbd>O</kbd> | Accept the input line and send it to the shell for execution (without adding it to the history), and then navigate to the next line after it from the saved history.  This can be handy for re-running a series of lines from the history. | [`operate-and-get-next`](#rlcmd-operate-and-get-next)
+
+See [Commands for Manipulating The History](#commands-for-manipulating-the-history) and [Clink Commands](#clink-commands) for more history commands and key bindings.
 
 ### The master history file
 
