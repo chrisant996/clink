@@ -5,6 +5,7 @@
 #### v1.6.19
 
 - Fixed truncated descriptions with `clink set exec.` and then `clink-select-complete` (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).
+- Fixed fully qualified paths from a different local drive accidentally being colored with `color.unrecognized`.
 
 #### v1.6.18
 
