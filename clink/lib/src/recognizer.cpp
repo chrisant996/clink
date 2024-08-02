@@ -123,13 +123,20 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
     // Make list of paths to search.
     str<> tmp;
     str<> paths;
-    if (need_cwd)
-        paths = cwd;
-    if (need_path && os::get_env("PATH", tmp))
+    if (path::is_rooted(_word))
     {
-        if (paths.length() > 0)
-            paths.concat(";", 1);
-        paths.concat(tmp.c_str(), tmp.length());
+        path::get_directory(_word, paths);
+    }
+    else
+    {
+        if (need_cwd)
+            paths = cwd;
+        if (need_path && os::get_env("PATH", tmp))
+        {
+            if (paths.length() > 0)
+                paths.concat(";", 1);
+            paths.concat(tmp.c_str(), tmp.length());
+        }
     }
 
     str<> full;
