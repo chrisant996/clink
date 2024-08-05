@@ -184,6 +184,7 @@ The following sections describe some ways to begin customizing Clink to your tas
 <tr><td><a href="#gettingstarted_colors">Colors</a></td><td>Configure the colors.</td></tr>
 <tr><td><a href="#gettingstarted_keybindings">Key Bindings</a></td><td>Customize your key bindings.</td></tr>
 <tr><td><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td>Optionally enable mouse clicks in the input line, etc.</td></tr>
+<tr><td><a href="#gettingstarted_logo">Startup Message</a></td><td>Control whether the startup message is shown (copyright notice and version info).</td></tr>
 <tr><td><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td>Optional automatic <code>clink_start.cmd</code> script.</td></tr>
 <tr><td><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td>Customizing the command line prompt.</td></tr>
 <tr><td><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td>Notes on upgrading from a very old version of Clink.</td></tr>
@@ -376,6 +377,16 @@ When mouse input is enabled in Clink, then mouse input works a little differentl
 - Windows Terminal treats <kbd>Shift</kbd>-<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
 - In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.
 - In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.
+
+<a name="gettingstarted_logo"></a>
+
+### Startup Message
+
+By default, Clink prints a startup message containing a copyright notice and the program version.  This is shown so it's easy to tell whether Clink is active and what version is being used.
+
+You can make the startup message shorter by running `clink set clink.logo short`.
+
+You can remove the startup message by running `clink set clink.logo none`.
 
 <a name="gettingstarted_startupcmdscript"></a>
 
