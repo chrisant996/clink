@@ -1108,6 +1108,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <tr><td><a href="#gettingstarted_colors">Colors</a></td><td>Configure the colors.</td></tr>
 <tr><td><a href="#gettingstarted_keybindings">Key Bindings</a></td><td>Customize your key bindings.</td></tr>
 <tr><td><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td>Optionally enable mouse clicks in the input line, etc.</td></tr>
+<tr><td><a href="#gettingstarted_logo">Startup Message</a></td><td>Control whether the startup message is shown (copyright notice and version info).</td></tr>
 <tr><td><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td>Optional automatic <code>clink_start.cmd</code> script.</td></tr>
 <tr><td><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td>Customizing the command line prompt.</td></tr>
 <tr><td><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td>Notes on upgrading from a very old version of Clink.</td></tr>
@@ -1297,6 +1298,11 @@ $endif
 <li>In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.</li>
 <li>In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.</li>
 </ul>
+<p><a name="gettingstarted_logo"></a></p>
+<h3 id="startup-message"><a class="wlink" href="#gettingstarted_logo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Message <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
+<p>By default, Clink prints a startup message containing a copyright notice and the program version.  This is shown so it&#39;s easy to tell whether Clink is active and what version is being used.</p>
+<p>You can make the startup message shorter by running <code>clink set clink.logo short</code>.</p>
+<p>You can remove the startup message by running <code>clink set clink.logo none</code>.</p>
 <p><a name="gettingstarted_startupcmdscript"></a></p>
 <h3 id="startup-cmd-script"><a class="wlink" href="#gettingstarted_startupcmdscript"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Cmd Script <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
 <p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected and before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
