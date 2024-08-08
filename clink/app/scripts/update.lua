@@ -95,11 +95,14 @@ local function find_prereqs()
         if not powershell_exe then
             prereq_error = log_info("unable to find PowerShell v5.")
         else
-            local f = io.popen('2>&1 ' .. powershell_exe .. ' -Command "Get-Host | Select-Object Version"')
-            if not f then
+            -- clink.execute() launches powershell without a console window,
+            -- which prevents PowerShell v4.0 on Windows 8.1 from altering the
+            -- host's window title.
+            local o = clink.execute('2>&1 ' .. powershell_exe .. ' -Command "Get-Host | Select-Object Version"')
+            if type(o) ~= "table" then
                 powershell_exe = nil
             else
-                for line in f:lines() do
+                for line in ipairs(o) do
                     local ver = line:match("^ *([0-9]+%.[0-9]+)")
                     if not prereq_error and ver then
                         if is_rhs_version_newer("v" .. ver, "v5.0") then
