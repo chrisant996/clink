@@ -22,6 +22,7 @@
 #include <memory>
 
 extern setting_bool g_enhanced_doskey;
+extern setting_enum g_translate_slashes;
 
 //------------------------------------------------------------------------------
 simple_word_tokeniser::simple_word_tokeniser(const char* delims)
@@ -309,6 +310,36 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             words.push_back(std::move(word(word_offset, unsigned(word_length), first, false/*is_alias*/, token.redir_arg, 0, token.delim)));
 
             first = false;
+        }
+    }
+
+    // Special case for "./" and "../" during completion.
+    if (stop_at_cursor)
+    {
+        const int32 translate = g_translate_slashes.get();
+        if (translate == 1 || translate == 3)
+        {
+            const size_t n = words.size();
+            if (n >= 2)
+            {
+                auto& cword = words[n - 2];
+                if (cword.command_word && cword.length > 0)
+                {
+                    const auto& nword = words[n - 1];
+                    if (nword.length > 0 &&
+                        nword.offset == cword.offset + cword.length &&
+                        line_buffer[nword.offset] == '/' &&
+                        line_buffer[cword.offset] == '.')
+                    {
+                        if (cword.length == 1 || (cword.length == 2 && line_buffer[cword.offset + 1] == '.'))
+                        {
+                            // Merge the command word and the next word.
+                            cword.length += nword.length;
+                            words.pop_back();
+                        }
+                    }
+                }
+            }
         }
     }
 

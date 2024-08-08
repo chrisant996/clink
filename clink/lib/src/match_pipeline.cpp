@@ -49,7 +49,6 @@ setting_bool g_files_system(
     false);
 
 extern setting_enum g_default_bindings;
-extern setting_enum g_translate_slashes;
 extern setting_bool g_match_wild;
 
 
