@@ -5,6 +5,7 @@
 #### v1.6.21
 
 - Reduced the performance overhead of hooked APIs from about 20 microseconds to about 2 microseconds.
+- Fixed [#651](https://github.com/chrisant996/clink/issues/651); completion doesn't work for `./` and `../` anymore in the first word of a command line.  Now when the `match.translate_slashes` setting is `system` or `backslash` then completing `./` and `../` can complete the word as a path, even though CMD does not consider it to be a path.
 
 #### v1.6.20
 
