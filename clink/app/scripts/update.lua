@@ -102,7 +102,7 @@ local function find_prereqs()
             if type(o) ~= "table" then
                 powershell_exe = nil
             else
-                for line in ipairs(o) do
+                for _,line in ipairs(o) do
                     local ver = line:match("^ *([0-9]+%.[0-9]+)")
                     if not prereq_error and ver then
                         if is_rhs_version_newer("v" .. ver, "v5.0") then
@@ -111,7 +111,6 @@ local function find_prereqs()
                         end
                     end
                 end
-                f:close()
             end
         end
     end
