@@ -6,6 +6,7 @@
 
 - Fixed truncated descriptions with `clink set exec.` and then `clink-select-complete` (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).
 - Fixed fully qualified paths from a different local drive accidentally being colored with `color.unrecognized`.
+- Fixed [#648](https://github.com/chrisant996/clink/issues/648); on Windows 8.1 the title bar can get changed to "Windows PowerShell" for the rest of the CMD session.
 
 #### v1.6.18
 
