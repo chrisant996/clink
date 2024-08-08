@@ -9,9 +9,6 @@ class seh_scope
 public:
                 seh_scope();
                 ~seh_scope();
-
-private:
-    void*       m_prev_filter;
 };
 
 //------------------------------------------------------------------------------

@@ -9,12 +9,12 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-static thread_local bool s_filter = false;
+static thread_local int32 s_filter = 0;
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
-    if (!s_filter)
+    if (s_filter <= 0)
         return EXCEPTION_CONTINUE_SEARCH;
 
 #if defined(_MSC_VER)
@@ -119,15 +119,13 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 //------------------------------------------------------------------------------
 seh_scope::seh_scope()
 {
-    s_filter = true;
-    m_prev_filter = (void*)SetUnhandledExceptionFilter(exception_filter);
+    ++s_filter;
 }
 
 //------------------------------------------------------------------------------
 seh_scope::~seh_scope()
 {
-    s_filter = false;
-    SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER(m_prev_filter));
+    --s_filter;
 }
 
 //------------------------------------------------------------------------------
