@@ -415,10 +415,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
                 assert(state == sTxt);
                 in_quote = false;
             }
-            else if (c == '^')
-            {
-                m_iter.next();
-            }
+            // NOTE: '^' inside quotes is a literal '^'.
         }
         else
         {
@@ -559,10 +556,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
                 assert(state == sTxt);
                 in_quote = false;
             }
-            else if (c == '^')
-            {
-                m_iter.next();
-            }
+            // NOTE: '^' inside quotes is a literal '^'.
 
             end_word = m_iter.get_pointer();
         }
