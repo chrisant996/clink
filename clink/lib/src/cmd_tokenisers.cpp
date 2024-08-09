@@ -608,7 +608,9 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             if (!m_iter.more())
                 break;
 
-            if (c == '^')
+            // "^ " in a redirection arg is a literal space in the redirection
+            // arg, without needing quotes.
+            if (c == '^' && !redir_arg)
             {
                 char c2 = *m_iter.get_next_pointer();
                 input_type input2 = get_input_type(c2);
