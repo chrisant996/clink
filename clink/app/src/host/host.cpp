@@ -173,6 +173,7 @@ extern setting_bool g_autosuggest_enable;
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
+extern setting_enum g_expand_mode;
 
 extern bool can_suggest_internal(const line_state& line);
 
@@ -1201,6 +1202,7 @@ skip_errorlevel:
         // Handle history event expansion.  expand() is a static method,
         // so can call it even when m_history is nullptr.
         if (g_history_autoexpand.get() &&
+            g_expand_mode.get() > 0 &&
             history->expand(out.c_str(), out) == history_db::expand_print)
         {
             puts(out.c_str());

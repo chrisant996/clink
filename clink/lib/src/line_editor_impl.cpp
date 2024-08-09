@@ -42,6 +42,7 @@ extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
 extern setting_bool g_autosuggest_enable;
 extern setting_bool g_history_autoexpand;
+extern setting_enum g_expand_mode;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
@@ -128,7 +129,7 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
 {
     list = nullptr;
 
-    if (!g_history_autoexpand.get())
+    if (!g_history_autoexpand.get() || !g_expand_mode.get())
         return;
 
     const char* color = g_color_histexpand.get();
@@ -998,7 +999,7 @@ void line_editor_impl::classify()
 {
     if (!m_classifier)
     {
-        if (g_history_autoexpand.get() && g_history_show_preview.get())
+        if (g_history_autoexpand.get() && g_expand_mode.get() && g_history_show_preview.get())
         {
             command_line_states command_line_states = collect_command_line_states();
             history_expansion* list = nullptr;
@@ -1032,6 +1033,7 @@ void line_editor_impl::classify()
         command_line_states command_line_states = collect_command_line_states();
         m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications);
         if (g_history_autoexpand.get() &&
+            g_expand_mode.get() &&
             (g_history_show_preview.get() ||
              !is_null_or_empty(g_color_histexpand.get())))
         {

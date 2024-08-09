@@ -69,7 +69,7 @@ setting_enum g_dupe_mode(
     "add,ignore,erase_prev",
     2);
 
-static setting_enum g_expand_mode(
+setting_enum g_expand_mode(
     "history.expand_mode",
     "Sets how command history expansion is applied",
     "The '!' character in an entered line can be interpreted to introduce\n"
@@ -108,7 +108,14 @@ static int32 history_expand_control(char* line, int32 marker_pos)
 
     setting = g_expand_mode.get();
     if (setting <= 1)
+    {
+        // Shouldn't even reach here when history.expand_mode is off.  Only
+        // certain history expansion syntax calls this -- for example '^' does
+        // not call this, so this is too late to short circuit out of history
+        // expansion.
+        assert(setting > 0);
         return (setting <= 0);
+    }
 
     // Is marker_pos inside a quote of some kind?
     in_quote = 0;

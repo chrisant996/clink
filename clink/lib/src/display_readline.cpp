@@ -107,6 +107,7 @@ setting_bool g_history_show_preview(
 
 extern setting_bool g_debug_log_terminal;
 extern setting_bool g_history_autoexpand;
+extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;
 #if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
 extern setting_color g_color_suggestion;
@@ -1658,7 +1659,8 @@ void display_manager::display()
     // Is history expansion preview desired?
     const bool want_histexpand_preview = (!g_display_manager_no_comment_row &&
                                           g_history_show_preview.get() &&
-                                          g_history_autoexpand.get());
+                                          g_history_autoexpand.get() &&
+                                          g_expand_mode.get() > 0);
 
     // Max number of rows to use when displaying the input line.
     uint32 max_rows = g_input_rows.get();
