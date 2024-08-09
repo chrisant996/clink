@@ -360,6 +360,14 @@ void line_editor_impl::end_line()
 //------------------------------------------------------------------------------
 bool line_editor_impl::add_module(editor_module& module)
 {
+    // Don't add duplicates.  This mainly matters for the test program.
+    for (const auto& m : m_modules)
+    {
+        if (m == &module)
+            return true;
+    }
+
+    // Add the module at the back of the list.
     editor_module** slot = m_modules.push_back();
     return (slot != nullptr) ? *slot = &module, true : false;
 }

@@ -68,6 +68,8 @@ public:
     void                        set_input(const char* input);
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
     void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
+    template <class ...T> void  set_expected_words(T... t); // T must be const char*
+    void                        set_expected_words_list(const char* const* expected); // The list must be terminated with nullptr.
     void                        set_expected_classifications(const char* classifications, bool mark_argmatchers=false);
     void                        set_expected_faces(const char* faces);
     void                        set_expected_output(const char* expected);
@@ -76,6 +78,7 @@ public:
 private:
     void                        create_line_editor(const line_editor::desc* desc=nullptr);
     void                        expected_matches_impl(int32 dummy, ...);
+    void                        expected_words_impl(int32 dummy, ...);
     bool                        get_line(str_base& line);
     void                        reset_lines();
 
@@ -86,12 +89,14 @@ private:
     collector_tokeniser*        m_command_tokeniser = nullptr;
     collector_tokeniser*        m_word_tokeniser = nullptr;
     std::vector<const char*>    m_expected_matches;
+    std::vector<const char*>    m_expected_words;
     str<>                       m_expected_classifications;
     str<>                       m_expected_faces;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;
     line_editor*                m_editor = nullptr;
     bool                        m_has_matches = false;
+    bool                        m_has_words = false;
     bool                        m_has_classifications = false;
     bool                        m_has_faces = false;
     bool                        m_mark_argmatchers = false;
@@ -102,4 +107,11 @@ template <class ...T>
 void line_editor_tester::set_expected_matches(T... t)
 {
     expected_matches_impl(0, t..., nullptr);
+}
+
+//------------------------------------------------------------------------------
+template <class ...T>
+void line_editor_tester::set_expected_words(T... t)
+{
+    expected_words_impl(0, t..., nullptr);
 }

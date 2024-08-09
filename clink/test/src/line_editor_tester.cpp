@@ -38,21 +38,41 @@ class test_module
     : public empty_module
 {
 public:
+    ~test_module() { delete m_line_state; }
+    void set_need_line_state(bool need);
     const matches*  get_matches() const;
+    const line_state* get_line_state() const;
     const word_classifications* get_classifications() const;
 
 private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const context& context) override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
+    virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     const matches*  m_matches = nullptr;
+    const line_state* m_line_state = nullptr;
     const word_classifications* m_classifications = nullptr;
+    bool            m_need_line_state = false;
 };
+
+//------------------------------------------------------------------------------
+void test_module::set_need_line_state(bool need)
+{
+    delete m_line_state;
+    m_line_state = nullptr;
+    m_need_line_state = need;
+}
 
 //------------------------------------------------------------------------------
 const matches* test_module::get_matches() const
 {
     return m_matches;
+}
+
+//------------------------------------------------------------------------------
+const line_state* test_module::get_line_state() const
+{
+    return m_line_state;
 }
 
 //------------------------------------------------------------------------------
@@ -77,6 +97,16 @@ void test_module::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void test_module::on_input(const input&, result& result, const context& context)
 {
+}
+
+//------------------------------------------------------------------------------
+void test_module::on_matches_changed(const context& context, const line_state& line, const char* needle)
+{
+    if (m_need_line_state)
+    {
+        delete m_line_state;
+        m_line_state = new line_state(line);
+    }
 }
 
 
@@ -181,7 +211,7 @@ static const char* sanitize(const char* text)
 void line_editor_tester::run(bool expectationless)
 {
     bool has_expectations = expectationless;
-    has_expectations |= m_has_matches || m_has_classifications || m_has_faces || (m_expected_output != nullptr);
+    has_expectations |= m_has_matches || m_has_words || m_has_classifications || m_has_faces || (m_expected_output != nullptr);
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
@@ -190,6 +220,8 @@ void line_editor_tester::run(bool expectationless)
     // If we're expecting some matches then add a module to catch the
     // matches object.
     test_module match_catch;
+    if (m_has_words)
+        match_catch.set_need_line_state(true);
     m_editor->add_module(match_catch);
 
     // First update doesn't read input. We do however want to read at least one
@@ -239,6 +271,50 @@ void line_editor_tester::run(bool expectationless)
                 puts("\ngot;");
                 for (matches_iter iter = matches->get_iter(); iter.next();)
                     printf("  %s\n", sanitize(iter.get_match()));
+            });
+        }
+    }
+
+    if (m_has_words)
+    {
+        const line_state* line_state = match_catch.get_line_state();
+        REQUIRE(line_state != nullptr);
+
+        std::vector<str_moveable> words;
+        for (uint32 i = 0; i < line_state->get_word_count(); ++i)
+        {
+            str_moveable s;
+            str_iter iter(line_state->get_word(i));
+            s.concat(iter.get_pointer(), iter.length());
+            words.emplace_back(std::move(s));
+        }
+
+        REQUIRE(m_expected_words.size() == words.size(), [&] () {
+            printf("input; %s#\n", sanitize(m_input));
+
+            puts("\nexpected words;");
+            for (const char* word : m_expected_words)
+                printf("  '%s'\n", sanitize(word));
+
+            puts("\ngot;");
+            for (const auto& word : words)
+                printf("  '%s'\n", sanitize(word.c_str()));
+        });
+
+        for (uint32 i = 0; i < words.size(); ++i)
+        {
+            REQUIRE(strcmp(words[i].c_str(), m_expected_words[i]) == 0, [&] () {
+                printf("word %u (%s) does not match\n", i, sanitize(words[i].c_str()));
+
+                printf("\ninput; %s#\n", sanitize(m_input));
+
+                puts("\nexpected words;");
+                for (const char* word : m_expected_words)
+                    printf("  '%s'\n", sanitize(word));
+
+                puts("\ngot;");
+                for (const auto& word : words)
+                    printf("  '%s'\n", sanitize(word.c_str()));
             });
         }
     }
@@ -333,7 +409,14 @@ void line_editor_tester::run(bool expectationless)
     m_input = nullptr;
     m_expected_output = nullptr;
     m_expected_matches.clear();
+    m_expected_words.clear();
     m_expected_classifications.clear();
+    m_expected_faces.clear();
+
+    m_has_matches = false;
+    m_has_words = false;
+    m_has_classifications = false;
+    m_has_faces = false;
 
     reset_lines();
 }
@@ -362,6 +445,32 @@ void line_editor_tester::set_expected_matches_list(const char* const* expected)
         m_expected_matches.push_back(*(expected++));
 
     m_has_matches = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::expected_words_impl(int32 dummy, ...)
+{
+    m_expected_words.clear();
+
+    va_list arg;
+    va_start(arg, dummy);
+
+    while (const char* match = va_arg(arg, const char*))
+        m_expected_words.push_back(match);
+
+    va_end(arg);
+    m_has_words = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::set_expected_words_list(const char* const* expected)
+{
+    m_expected_words.clear();
+
+    while (*expected)
+        m_expected_words.push_back(*(expected++));
+
+    m_has_words = true;
 }
 
 //------------------------------------------------------------------------------
