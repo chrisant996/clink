@@ -5,7 +5,11 @@
 #### v1.6.21
 
 - Reduced the performance overhead of hooked APIs from about 20 microseconds to about 2 microseconds.
+- Fixed when `history.expand_mode` is `off`; it didn't fully turn off all of the history expansion syntax forms (for example the `^` syntax).
+- Fixed input line coloring when the first word is a device name (e.g. `nul` or `com1:`); it should use `color.unrecognized` for the color.
 - Fixed [#651](https://github.com/chrisant996/clink/issues/651); completion doesn't work for `./` and `../` anymore in the first word of a command line.  Now when the `match.translate_slashes` setting is `system` or `backslash` then completing `./` and `../` can complete the word as a path, even though CMD does not consider it to be a path.
+- Fixed [#653](https://github.com/chrisant996/clink/issues/653); `clink_start.cmd` gets run twice if the binaries directory is the same as the profile directory.
+- Fixed [#654](https://github.com/chrisant996/clink/issues/654); input line coloring doesn't treat `^` correctly inside quotes (and related quirks).
 
 #### v1.6.20
 
