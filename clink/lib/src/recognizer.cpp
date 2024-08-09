@@ -658,9 +658,9 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (!*word)
         return recognition::unknown;
 
-    // Ignore device names.
+    // Device names are always unrecognized.
     if (path::is_device(word))
-        return recognition::unknown;
+        return recognition::unrecognized;
 
     // Ignore UNC paths, because they can take up to 2 minutes to time out.
     // Even running that on a thread would either starve the consumers or
