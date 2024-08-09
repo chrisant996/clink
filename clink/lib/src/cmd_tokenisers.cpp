@@ -525,9 +525,21 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
         while (m_iter.more())
         {
             const int32 c = m_iter.peek();
-            // TODO: Handle '^'?
-            if (!str_chr(get_delims(command_word, redir_arg, false), c))
-                break;
+            if (c == '^')
+            {
+                const char* restore = m_iter.get_pointer();
+                m_iter.next();
+                if (m_iter.peek() != ' ')
+                {
+                    m_iter.reset_pointer(restore);
+                    break;
+                }
+            }
+            else
+            {
+                if (!str_chr(get_delims(command_word, redir_arg, false), c))
+                    break;
+            }
             m_iter.next();
         }
         // Set offset and end of word.
@@ -586,7 +598,6 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
                 state = sSpc;
                 start_new_word();
                 c = m_iter.peek();
-                // TODO: Handle '^'?
                 input = get_input_type(c);
                 new_state = c_transition[state][input];
                 if (new_state == sBREAK) // 'rem' can lead to this.
