@@ -5,11 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Unit tests for all the `^` and `@` and `"` quirks that were just fixed.
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 
 ## Unit Tests
 
 ## Normal Priority
+- `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?
 - Event handler enhancements.
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow setting an optional `name` when registering event handlers?  So that scripts can cooperate to share a single named event.  But it's already possible for scripts to cooperate to achieve the same effect, e.g. by having an event handler that executes a function specified by a global variable.
