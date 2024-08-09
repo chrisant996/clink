@@ -2645,10 +2645,10 @@ local function attempt_load_argmatcher(command_word, quoted, no_cmd)
 end
 
 --------------------------------------------------------------------------------
-local function sanitize_command_word(command_word)
+local function sanitize_command_word(command_word, quoted)
     if command_word then
-        if command_word:find("^@") then
-            local cw = command_word:gsub("^@?\"?", "")
+        if not quoted and command_word:find("^@") then
+            local cw = command_word:gsub("^@\"?", "")
             return cw, true
         else
             return command_word, false
@@ -3037,10 +3037,10 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil -- luacheck: ignore 311
 
+        local info = line_state:getwordinfo(command_word_index)
         local command_word = line_state:getword(command_word_index) or ""
-        local cw, sanitized = sanitize_command_word(command_word)
+        local cw, sanitized = sanitize_command_word(command_word, info.quoted)
         if #cw > 0 then
-            local info = line_state:getwordinfo(command_word_index)
             local m = has_argmatcher and "m" or ""
             if info.alias then
                 word_classifier:classifyword(command_word_index, m.."d", false); --doskey
@@ -3066,7 +3066,6 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             end
         end
         if sanitized then
-            local info = line_state:getwordinfo(command_word_index)
             word_classifier:applycolor(info.offset, 1, get_classify_color("c"))
         end
 

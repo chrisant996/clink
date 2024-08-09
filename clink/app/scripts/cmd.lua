@@ -91,7 +91,7 @@ function cmd_classifier:classify(commands) -- luacheck: no self
             end
             for word_index = 1, line_state:getwordcount(), 1 do
                 local info = line_state:getwordinfo(word_index)
-                if word_index == 1 then
+                if word_index == 1 and not info.quoted then
                     color_before_first_word(line, line_state:getrangeoffset(), info.offset - 1, classifications)
                 end
                 if info.redir then
