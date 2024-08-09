@@ -201,15 +201,22 @@ void app_context::get_autostart_command(str_base& out) const
     {
         str<> file;
 
-        get_binaries_dir(file);
-        path::append(file, "clink_start.cmd");
-        if (os::get_path_type(file.c_str()) == os::path_type_file)
-            out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+        str<> binaries_dir;
+        get_binaries_dir(binaries_dir);
+        if (path::join(binaries_dir.c_str(), "clink_start.cmd", file))
+        {
+            if (os::get_path_type(file.c_str()) == os::path_type_file)
+                out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+        }
 
-        get_state_dir(file);
-        path::append(file, "clink_start.cmd");
-        if (os::get_path_type(file.c_str()) == os::path_type_file)
-            out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+        str<> state_dir;
+        get_state_dir(state_dir);
+        if (path::join(state_dir.c_str(), "clink_start.cmd", file) &&
+            !binaries_dir.iequals(state_dir.c_str()))
+        {
+            if (os::get_path_type(file.c_str()) == os::path_type_file)
+                out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+        }
     }
     else if (out.iequals("nul") || out.iequals("\"nul\""))
     {
