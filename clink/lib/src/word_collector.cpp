@@ -365,8 +365,25 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
 
         int32 start_quoted = (start[0] == get_opening_quote());
         int32 end_quoted = 0;
-        if (word.length > 1)
-            end_quoted = (start[word.length - 1] == get_closing_quote());
+        if (start_quoted && word.length > 1 && start[word.length - 1] == get_closing_quote())
+        {
+            bool quoted = true;
+            uint32 last_end_quote = 0;
+            for (uint32 i = 1; i < word.length; ++i)
+            {
+                if (start[i] == '"')
+                {
+                    if (quoted)
+                        last_end_quote = i;
+                    quoted = !quoted;
+                }
+                else if (!quoted && start[i] == '^')
+                {
+                    ++i;
+                }
+            }
+            end_quoted = (!quoted && last_end_quote + 1 == word.length);
+        }
 
         word.offset += start_quoted;
         word.length -= start_quoted + end_quoted;
