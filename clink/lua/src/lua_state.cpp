@@ -460,9 +460,7 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     if (modeIn != afterIn)
     {
         SetConsoleMode(hIn, modeIn);
-#ifdef DEBUG
-        debug_show_console_mode(nullptr, "pcall");
-#endif
+        debug_show_console_mode(nullptr, "Lua pcall");
     }
     return ret;
 }

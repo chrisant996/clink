@@ -366,9 +366,7 @@ extern "C" void use_host_input_mode(void)
         if (s_host_input_mode != -1 && s_host_input_mode != mode)
         {
             SetConsoleMode(h, s_host_input_mode);
-#ifdef DEBUG
             debug_show_console_mode(nullptr, "host");
-#endif
         }
     }
 }
@@ -386,9 +384,7 @@ extern "C" void use_clink_input_mode(void)
         if (s_clink_input_mode != -1 && s_clink_input_mode != mode)
         {
             SetConsoleMode(h, s_clink_input_mode);
-#ifdef DEBUG
             debug_show_console_mode(nullptr, "clink");
-#endif
         }
     }
 }
@@ -463,6 +459,7 @@ static bool strstri(const char* needle, const char* haystack)
 }
 
 //------------------------------------------------------------------------------
+static int32 s_debug_console_mode = 0;
 #ifdef DEBUG
 int32 console_config::s_nested = 0;
 #endif
@@ -475,6 +472,10 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     ++s_nested;
     assert(s_nested == 1);
 #endif
+
+    str<16> value;
+    os::get_env("CLINK_DEBUG_CONSOLE_MODE", value);
+    s_debug_console_mode = atoi(value.c_str());
 
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
@@ -502,9 +503,7 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     if (mode != m_prev_mode)
     {
         SetConsoleMode(m_handle, mode);
-#ifdef DEBUG
         debug_show_console_mode(&m_prev_mode, "config");
-#endif
     }
 }
 
@@ -517,9 +516,7 @@ console_config::~console_config()
     if (mode != m_prev_mode)
     {
         SetConsoleMode(m_handle, m_prev_mode);
-#ifdef DEBUG
         debug_show_console_mode(nullptr, "~config");
-#endif
     }
 
     g_accept_mouse_input = m_prev_accept_mouse_input;
@@ -588,11 +585,16 @@ bool console_config::no_mouse_modifiers()
 }
 
 //------------------------------------------------------------------------------
-#ifdef DEBUG
 void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 {
     str<> value;
-    if (os::get_env("DEBUG_CONSOLE_MODE", value) && atoi(value.c_str()) != 0)
+    if (s_debug_console_mode)
+        value.format("%d", s_debug_console_mode);
+#ifdef DEBUG
+    else
+        os::get_env("DEBUG_CONSOLE_MODE", value);
+#endif
+    if (atoi(value.c_str()) != 0)
     {
         assert(g_printer);
         if (g_printer)
@@ -647,7 +649,6 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
         }
     }
 }
-#endif
 
 
 
