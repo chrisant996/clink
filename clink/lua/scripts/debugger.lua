@@ -438,6 +438,11 @@ srcmap  = [[
 srcmap dir newdir   -- map source files from dir to newdir|
 
 'srcmap' by itself lists any current source mappings.
+
+'srcmap dir -' removes any source mapping for dir.
+
+'srcmap dir' assumes that dir is the path to a Clink repo, and
+automatically adds source mappings for Clink scripts within the repo.
 ]],
 
 exit    = [[
@@ -1319,14 +1324,25 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
 
       local dir, newdir = getargs('SS')
 
-      if dir ~= '' then
-        srcmap(dir,newdir)
-      elseif src_mappings then
-        for k,v in pairs(src_mappings) do
-          io_write(k.."  ->  "..v.."\n")
+      if dir == '' then
+        if src_mappings then
+          for k,v in pairs(src_mappings) do
+            io_write(k.."  ->  "..v.."\n")
+          end
+        else
+          io_write('No source mappings\n')
         end
+      elseif newdir == '-' then
+        srcmap(dir,nil)
+      elseif newdir == '' then
+        local libdir = path.join(dir, "clink\\lua\\scripts")
+        local appdir = path.join(dir, "clink\\app\\scripts")
+        srcmap("~clink~/lib",libdir)
+        srcmap("~clink~/app",appdir)
+        io_write("~clink~/lib  ->  "..libdir.."\n")
+        io_write("~clink~/app  ->  "..appdir.."\n")
       else
-        io_write('No source mappings\n')
+        srcmap(dir,newdir)
       end
 
       --}}}
