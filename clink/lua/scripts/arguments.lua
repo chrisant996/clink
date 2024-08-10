@@ -3038,35 +3038,37 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         lookup = nil -- luacheck: ignore 311
 
         local info = line_state:getwordinfo(command_word_index)
-        local command_word = line_state:getword(command_word_index) or ""
-        local cw, sanitized = sanitize_command_word(command_word, info.quoted)
-        if #cw > 0 then
-            local m = has_argmatcher and "m" or ""
-            if info.alias then
-                word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-            elseif not info.quoted and not no_cmd and clink.is_cmd_command(command_word) then
-                word_classifier:classifyword(command_word_index, m.."c", false); --command
-            elseif unrecognized_color or executable_color then
-                local cl
-                local recognized = clink._recognize_command(line_state:getline(), cw, info.quoted)
-                if recognized < 0 then
-                    cl = unrecognized_color and "u" or "o"      --unrecognized
-                elseif recognized > 0 then
-                    cl = executable_color and "x" or "o"        --executable
+        if info then
+            local command_word = line_state:getword(command_word_index) or ""
+            local cw, sanitized = sanitize_command_word(command_word, info.quoted)
+            if #cw > 0 then
+                local m = has_argmatcher and "m" or ""
+                if info.alias then
+                    word_classifier:classifyword(command_word_index, m.."d", false); --doskey
+                elseif not info.quoted and not no_cmd and clink.is_cmd_command(command_word) then
+                    word_classifier:classifyword(command_word_index, m.."c", false); --command
+                elseif unrecognized_color or executable_color then
+                    local cl
+                    local recognized = clink._recognize_command(line_state:getline(), cw, info.quoted)
+                    if recognized < 0 then
+                        cl = unrecognized_color and "u" or "o"      --unrecognized
+                    elseif recognized > 0 then
+                        cl = executable_color and "x" or "o"        --executable
+                    else
+                        cl = "o"                                    --other
+                    end
+                    if sanitized then
+                        word_classifier:applycolor(info.offset + info.length - #cw, #cw, get_classify_color(m..cl))
+                    else
+                        word_classifier:classifyword(command_word_index, m..cl, false);
+                    end
                 else
-                    cl = "o"                                    --other
+                    word_classifier:classifyword(command_word_index, m.."o", false); --other
                 end
-                if sanitized then
-                    word_classifier:applycolor(info.offset + info.length - #cw, #cw, get_classify_color(m..cl))
-                else
-                    word_classifier:classifyword(command_word_index, m..cl, false);
-                end
-            else
-                word_classifier:classifyword(command_word_index, m.."o", false); --other
             end
-        end
-        if sanitized then
-            word_classifier:applycolor(info.offset, 1, get_classify_color("c"))
+            if sanitized then
+                word_classifier:applycolor(info.offset, 1, get_classify_color("c"))
+            end
         end
 
         if argmatcher then
