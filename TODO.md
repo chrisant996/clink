@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Unit Tests
 
 ## Normal Priority
-- `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 - Event handler enhancements.
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
@@ -110,6 +109,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?  Any `^` combined with redirection before the command word seems to go awry one way or another.  It looks like a bug in the CMD parser.  _Trying to accurately predict how the bug will behave in all possible contexts seems unrealistic._
+  - `^>xyz` occurring before the command word loses the `xyz` and pulls the _next_ token as the redirection target.
+  - `^2>&1 whatever` fails to duplicate a handle.
+  - `2^>&1 whatever` says `&` was unexpected.
+  - Etc.
 - Issue #554.  Consider adding some way to configure Clink to try to run as a "portable program" in the sense that it doesn't write to any OS default locations (such as %TEMP%) and instead writes only to places that are specifically configured.  But Lua scripts and programs they launch would need to also have their own special "portable program" support to avoid writing to OS default locations (especially %TEMP%).  And what size of temporary files are ok to redirect to a "portable storage"?  And who maintains/purges files from the portable storage?  Because Clink runs scripts and other programs, trying to support a "portable program" mode is more complicated than it might sound at first.  _No; it's not feasible._
 - Clink's `win_terminal_in` keyboard driver generates some things differently than VT220:
   - Ideally it might have mapped `CTRL-SPC`->0x00(`^@`), `CTRL--`->0x0d(`^M`), `CTRL-/`->0x1f(`^_`), `CTRL-?`->0x7f(`^?` aka `Rubout`).  But I think Clink's approach is overall better for those keys.
