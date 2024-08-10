@@ -38,7 +38,7 @@ TEST_CASE("Slash translation")
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
 
-    // Pass 0 is with basic tokenisers.
+    // Pass 0 is with simple tokenisers.
     // Pass 1 is with cmd_* tokenisers.
     for (uint32 ii = 0; ii < 2; ++ii)
     {
