@@ -597,6 +597,9 @@ int32 win_terminal_in::begin(bool can_hide_cursor)
     if (m_cursor_visibility && can_hide_cursor)
         show_cursor(false);
 
+    if (!m_began)
+        debug_show_console_mode(nullptr, "termbegin");
+
     ++m_began;
     return m_began;
 }

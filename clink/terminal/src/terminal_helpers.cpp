@@ -619,7 +619,7 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
             tag = (row < 0) ? tag : nullptr;
             if (csbi.dwSize.X >= 40)
             {
-                const uint32 rlen = 19 + (tag ? 3 + uint32(strlen(tag)) : 0);
+                const uint32 rlen = 15 + (tag ? 3 + uint32(strlen(tag)) : 0);
                 part.format("\x1b[%uG", csbi.dwSize.X - rlen);
                 value.concat(part.c_str());
                 if (tag)
@@ -628,14 +628,14 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
                     value.concat(tag);
                     value.concat(" \x1b[m ");
                 }
-                part.format("\x1b[0%s;90m origmode %08x \x1b[m\x1b[G", color, s_host_input_mode);
+                part.format("\x1b[0%s;90m orig %08x \x1b[m\x1b[G", color, s_host_input_mode);
                 value.concat(part.c_str());
             }
-            part.format("\x1b[0%sm quickedit %u, currmode %08x", color, !!s_quick_edit, mode);
+            part.format("\x1b[0%sm quickedit %u, curr %08x", color, !!s_quick_edit, mode);
             value.concat(part.c_str());
             if (prev_mode)
             {
-                part.format(", prevmode %08x", *prev_mode);
+                part.format(", prev %08x", *prev_mode);
                 value.concat(part.c_str());
             }
             value.concat(" \x1b[m");
