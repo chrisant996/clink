@@ -2262,6 +2262,9 @@ LUnlinkFile:
     SetConsoleMode(std_handles[0], (prev_mode[0] | ENABLE_PROCESSED_INPUT) & ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT));
     bool was_visible = show_cursor(true);
     rl_clear_signals();
+#ifdef DEBUG
+    debug_show_console_mode(&prev_mode[0]);
+#endif
 
     // Build editor command.
     str<> editor;
@@ -2281,6 +2284,9 @@ LUnlinkFile:
     for (size_t i = 0; i < _countof(std_handles); ++i)
         SetConsoleMode(std_handles[i], prev_mode[i]);
     rl_set_signals();
+#ifdef DEBUG
+    debug_show_console_mode();
+#endif
 
     // Was the editor launched successfully?
     if (exit_code < 0)

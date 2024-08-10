@@ -359,12 +359,17 @@ extern "C" void use_host_input_mode(void)
     HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
     if (h && h != INVALID_HANDLE_VALUE)
     {
-        DWORD mode;
+        DWORD mode = 0;
         if (GetConsoleMode(h, &mode))
             s_clink_input_mode = cleanup_console_input_mode(mode);
 
-        if (s_host_input_mode != -1)
+        if (s_host_input_mode != -1 && s_host_input_mode != mode)
+        {
             SetConsoleMode(h, s_host_input_mode);
+#ifdef DEBUG
+            debug_show_console_mode(nullptr, "host");
+#endif
+        }
     }
 }
 
@@ -374,12 +379,17 @@ extern "C" void use_clink_input_mode(void)
     HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
     if (h && h != INVALID_HANDLE_VALUE)
     {
-        DWORD mode;
-        if (s_host_input_mode == -1 && GetConsoleMode(h, &mode))
+        DWORD mode = 0;
+        if (GetConsoleMode(h, &mode) && s_host_input_mode == -1)
             s_host_input_mode = mode;
 
-        if (s_clink_input_mode != -1)
+        if (s_clink_input_mode != -1 && s_clink_input_mode != mode)
+        {
             SetConsoleMode(h, s_clink_input_mode);
+#ifdef DEBUG
+            debug_show_console_mode(nullptr, "clink");
+#endif
+        }
     }
 }
 
@@ -453,9 +463,19 @@ static bool strstri(const char* needle, const char* haystack)
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+int32 console_config::s_nested = 0;
+#endif
+
+//------------------------------------------------------------------------------
 console_config::console_config(HANDLE handle, bool accept_mouse_input)
     : m_handle(handle ? handle : GetStdHandle(STD_INPUT_HANDLE))
 {
+#ifdef DEBUG
+    ++s_nested;
+    assert(s_nested == 1);
+#endif
+
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
 
@@ -478,14 +498,35 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     mode |= ENABLE_WINDOW_INPUT;
     mode = select_mouse_input(mode);
     mode = cleanup_console_input_mode(mode);
-    SetConsoleMode(m_handle, mode);
+
+    if (mode != m_prev_mode)
+    {
+        SetConsoleMode(m_handle, mode);
+#ifdef DEBUG
+        debug_show_console_mode(&m_prev_mode, "config");
+#endif
+    }
 }
 
 //------------------------------------------------------------------------------
 console_config::~console_config()
 {
-    SetConsoleMode(m_handle, m_prev_mode);
+    DWORD mode = 0;
+    GetConsoleMode(m_handle, &mode);
+
+    if (mode != m_prev_mode)
+    {
+        SetConsoleMode(m_handle, m_prev_mode);
+#ifdef DEBUG
+        debug_show_console_mode(nullptr, "~config");
+#endif
+    }
+
     g_accept_mouse_input = m_prev_accept_mouse_input;
+
+#ifdef DEBUG
+    --s_nested;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -545,6 +586,68 @@ bool console_config::no_mouse_modifiers()
             !(GetKeyState(VK_CONTROL) < 0) &&
             !(GetKeyState(VK_MENU) < 0));
 }
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
+{
+    str<> value;
+    if (os::get_env("DEBUG_CONSOLE_MODE", value) && atoi(value.c_str()) != 0)
+    {
+        assert(g_printer);
+        if (g_printer)
+        {
+            DWORD mode = 0;
+            CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
+            GetConsoleScreenBufferInfo(hOut, &csbi);
+
+            const int32 row = atoi(value.c_str());
+            const char* color = (row > 0) ? ";7" : ";7;90";
+            str<> part;
+
+            if (row > 0)
+                value.format("\x1b[s\x1b[%uH\x1b[K", row);
+            else if (csbi.dwCursorPosition.X > 0)
+                value = "\n";
+            else if (!g_printer->get_line_text(csbi.dwCursorPosition.Y, part) || part.length())
+                value = "\n";
+
+            tag = (row < 0) ? tag : nullptr;
+            if (csbi.dwSize.X >= 40)
+            {
+                const uint32 rlen = 19 + (tag ? 3 + uint32(strlen(tag)) : 0);
+                part.format("\x1b[%uG", csbi.dwSize.X - rlen);
+                value.concat(part.c_str());
+                if (tag)
+                {
+                    value.concat("\x1b[0;7;36m ");
+                    value.concat(tag);
+                    value.concat(" \x1b[m ");
+                }
+                part.format("\x1b[0%s;90m origmode %08x \x1b[m\x1b[G", color, s_host_input_mode);
+                value.concat(part.c_str());
+            }
+            part.format("\x1b[0%sm quickedit %u, currmode %08x", color, !!s_quick_edit, mode);
+            value.concat(part.c_str());
+            if (prev_mode)
+            {
+                part.format(", prevmode %08x", *prev_mode);
+                value.concat(part.c_str());
+            }
+            value.concat(" \x1b[m");
+
+            if (row > 0)
+                value.concat("\x1b[u");
+            else
+                value.concat("\n");
+
+            g_printer->print(value.c_str(), value.length());
+        }
+    }
+}
+#endif
 
 
 

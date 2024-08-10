@@ -26,6 +26,9 @@ extern "C" void terminal_end_command();
 extern const char* get_found_ansi_handler();
 extern const char* get_ansicon_problem();
 extern bool get_is_auto_ansi_handler();
+#ifdef DEBUG
+extern void debug_show_console_mode(const DWORD* prev_mode=nullptr, const char* tag=nullptr);
+#endif
 
 //------------------------------------------------------------------------------
 // Scoped configuration of console mode.
@@ -47,6 +50,10 @@ private:
     const HANDLE    m_handle;
     DWORD           m_prev_mode;
     bool            m_prev_accept_mouse_input;
+
+#ifdef DEBUG
+    static int32    s_nested;
+#endif
 };
 
 //------------------------------------------------------------------------------

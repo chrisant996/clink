@@ -452,8 +452,18 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     lua_remove(L, hpos);
 
     // Restore the console mode.
-    SetConsoleMode(hIn, modeIn);
-    SetConsoleMode(hOut, modeOut);
+    DWORD afterIn, afterOut;
+    GetConsoleMode(hIn, &afterIn);
+    GetConsoleMode(hOut, &afterOut);
+    if (modeOut != afterOut)
+        SetConsoleMode(hOut, modeOut);
+    if (modeIn != afterIn)
+    {
+        SetConsoleMode(hIn, modeIn);
+#ifdef DEBUG
+        debug_show_console_mode(nullptr, "pcall");
+#endif
+    }
     return ret;
 }
 

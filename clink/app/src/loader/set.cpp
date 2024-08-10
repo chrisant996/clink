@@ -309,6 +309,10 @@ int32 set(int32 argc, char** argv)
     argc -= optind;
     argv += optind;
 
+    terminal term = terminal_create();
+    printer printer(*term.out);
+    printer_context printer_context(term.out, &printer);
+
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
     // Load the settings from disk.
@@ -331,10 +335,6 @@ int32 set(int32 argc, char** argv)
         (optind < argc) ? list_options(lua, argv[0]) : list_keys();
         return 0;
     }
-
-    terminal term = terminal_create();
-    printer printer(*term.out);
-    printer_context printer_context(term.out, &printer);
 
     DWORD dummy;
     if (!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dummy))

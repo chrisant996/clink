@@ -613,6 +613,9 @@ int32 win_terminal_in::end(bool can_show_cursor)
     if (!m_began)
     {
         SetConsoleMode(m_stdin, m_prev_mode);
+#ifdef DEBUG
+        debug_show_console_mode(nullptr, "termend");
+#endif
         m_stdin = nullptr;
         m_stdout = nullptr;
     }
@@ -730,7 +733,12 @@ void win_terminal_in::fix_console_input_mode()
             console_config::fix_quick_edit_mode(mode);
 
         if (mode != modeIn)
+        {
             SetConsoleMode(m_stdin, mode);
+#ifdef DEBUG
+            debug_show_console_mode(nullptr, "fixin");
+#endif
+        }
     }
 }
 
