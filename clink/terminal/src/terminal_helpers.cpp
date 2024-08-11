@@ -6,6 +6,7 @@
 #include "terminal_out.h"
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
+#include "ecma48_iter.h"
 #include "cielab.h"
 
 #include <core/settings.h>
@@ -585,6 +586,38 @@ bool console_config::no_mouse_modifiers()
 }
 
 //------------------------------------------------------------------------------
+static void append_mode(str_base& out, DWORD mode, bool bits=false)
+{
+    str<16> tmp;
+    if (mode == -1 || mode <= 0xffff)
+        tmp.format("%04x", mode);
+    else
+        tmp.format("%08x", mode);
+    out.concat(tmp.c_str());
+
+    static const struct { DWORD bit; const char* name; } c_bits[] =
+    {
+        { ENABLE_VIRTUAL_TERMINAL_INPUT,    "V" }, // 0x0200
+        { ENABLE_AUTO_POSITION,             "A" }, // 0x0100
+        { ENABLE_EXTENDED_FLAGS,            "X" }, // 0x0080
+        { ENABLE_QUICK_EDIT_MODE,           "Q" }, // 0x0040
+        { ENABLE_INSERT_MODE,               "I" }, // 0x0020
+        { ENABLE_MOUSE_INPUT,               "M" }, // 0x0010
+        { ENABLE_WINDOW_INPUT,              "W" }, // 0x0008
+        { ENABLE_ECHO_INPUT,                "E" }, // 0x0004
+        { ENABLE_LINE_INPUT,                "L" }, // 0x0002
+        { ENABLE_PROCESSED_INPUT,           "P" }, // 0x0001
+    };
+
+    if (bits)
+    {
+        out.concat(" ");
+        for (const auto& b : c_bits)
+            out.concat((mode & b.bit) ? b.name : "-");
+    }
+}
+
+//------------------------------------------------------------------------------
 void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 {
     str<> value;
@@ -607,38 +640,47 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 
             const int32 row = atoi(value.c_str());
             const char* color = (row > 0) ? ";7" : ";7;90";
-            str<> part;
+            str<> tmp;
 
             if (row > 0)
                 value.format("\x1b[s\x1b[%uH\x1b[K", row);
             else if (csbi.dwCursorPosition.X > 0)
                 value = "\n";
-            else if (!g_printer->get_line_text(csbi.dwCursorPosition.Y, part) || part.length())
+            else if (!g_printer->get_line_text(csbi.dwCursorPosition.Y, tmp) || tmp.length())
                 value = "\n";
 
             tag = (row < 0) ? tag : nullptr;
             if (csbi.dwSize.X >= 40)
             {
-                const uint32 rlen = 15 + (tag ? 3 + uint32(strlen(tag)) : 0);
-                part.format("\x1b[%uG", csbi.dwSize.X - rlen);
-                value.concat(part.c_str());
+                str<> rtext;
                 if (tag)
                 {
-                    value.concat("\x1b[0;7;36m ");
-                    value.concat(tag);
-                    value.concat(" \x1b[m ");
+                    rtext.concat("\x1b[0;7;36m ");
+                    rtext.concat(tag);
+                    rtext.concat(" \x1b[m ");
                 }
-                part.format("\x1b[0%s;90m orig %08x \x1b[m\x1b[G", color, s_host_input_mode);
-                value.concat(part.c_str());
+                rtext.concat("\x1b[0");
+                rtext.concat(color);
+                rtext.concat(";90m orig ");
+                append_mode(rtext, s_host_input_mode, (csbi.dwSize.X >= 72));
+                rtext.concat(" \x1b[m\x1b[G");
+
+                const uint32 rlen = cell_count(rtext.c_str());
+                tmp.format("\x1b[%uG", csbi.dwSize.X - rlen);
+                value.concat(tmp.c_str());
+                value.concat(rtext.c_str());
             }
-            part.format("\x1b[0%sm quickedit %u, curr %08x", color, !!s_quick_edit, mode);
-            value.concat(part.c_str());
+            tmp.format("\x1b[0%sm qe %u \x1b[m \x1b[0%sm curr ", color, !!s_quick_edit, color);
+            value.concat(tmp.c_str());
+            append_mode(value, mode, (csbi.dwSize.X >= 72));
+            value.concat(" \x1b[m");
             if (prev_mode)
             {
-                part.format(", prev %08x", *prev_mode);
-                value.concat(part.c_str());
+                tmp.format(" \x1b[0%s;90m prev ", color);
+                value.concat(tmp.c_str());
+                append_mode(value, *prev_mode);
+                value.concat(" \x1b[m");
             }
-            value.concat(" \x1b[m");
 
             if (row > 0)
                 value.concat("\x1b[u");
