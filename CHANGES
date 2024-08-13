@@ -5,6 +5,8 @@
 #### v1.6.21
 
 - Reduced the performance overhead of hooked APIs from about 20 microseconds to about 2 microseconds.
+- Enhanced the executable recognition to avoid flickering red (or `color.unrecognized`) for an executable name that was already recognized in a recent previous input line.
+- Enhanced the `srcmap` command in the Lua debugger so that `srcmap dir` automatically sets up source mappings for Clink's built in scripts using `dir` as the repo root.
 - Fixed when `history.expand_mode` is `off`; it didn't fully turn off all of the history expansion syntax forms (for example the `^` syntax).
 - Fixed input line coloring when the first word is a device name (e.g. `nul` or `com1:`); it should use `color.unrecognized` for the color.
 - Fixed [#651](https://github.com/chrisant996/clink/issues/651); completion doesn't work for `./` and `../` anymore in the first word of a command line.  Now when the `match.translate_slashes` setting is `system` or `backslash` then completing `./` and `../` can complete the word as a path, even though CMD does not consider it to be a path.
