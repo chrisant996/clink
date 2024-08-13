@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.6.20</title>
+<title>Clink v1.6.21</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -942,7 +942,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.6.20</div>
+                <div id="title">Clink v1.6.21</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -8153,6 +8153,17 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1621"><a class="wlink" href="#v1621"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.21 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Reduced the performance overhead of hooked APIs from about 20 microseconds to about 2 microseconds.</li>
+<li>Enhanced the executable recognition to avoid flickering red (or <code>color.unrecognized</code>) for an executable name that was already recognized in a recent previous input line.</li>
+<li>Enhanced the <code>srcmap</code> command in the Lua debugger so that <code>srcmap dir</code> automatically sets up source mappings for Clink&#39;s built in scripts using <code>dir</code> as the repo root.</li>
+<li>Fixed when <code>history.expand_mode</code> is <code>off</code>; it didn&#39;t fully turn off all of the history expansion syntax forms (for example the <code>^</code> syntax).</li>
+<li>Fixed input line coloring when the first word is a device name (e.g. <code>nul</code> or <code>com1:</code>); it should use <code>color.unrecognized</code> for the color.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/651">#651</a>; completion doesn&#39;t work for <code>./</code> and <code>../</code> anymore in the first word of a command line.  Now when the <code>match.translate_slashes</code> setting is <code>system</code> or <code>backslash</code> then completing <code>./</code> and <code>../</code> can complete the word as a path, even though CMD does not consider it to be a path.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/653">#653</a>; <code>clink_start.cmd</code> gets run twice if the binaries directory is the same as the profile directory.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/654">#654</a>; input line coloring doesn&#39;t treat <code>^</code> correctly inside quotes (and related quirks).</li>
+</ul>
 <h4 id="v1620"><a class="wlink" href="#v1620"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.20 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/652">#652</a>; error when trying to update again after updating to v1.6.20 (regression introduced in v1.6.19).</li>
