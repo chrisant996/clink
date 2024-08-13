@@ -11,6 +11,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
+#include <core/str_transform.h>
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/linear_allocator.h>
@@ -188,8 +189,11 @@ class recognizer
 
     struct cache_entry
     {
+        char*               m_key; // Owns lifetime of the key in m_cache or m_pending.
         str_moveable        m_file;
+        time_t              m_age;
         recognition         m_recognition;
+        bool                m_outofdate;
     };
 
     struct entry
@@ -208,7 +212,7 @@ public:
     void                    shutdown();
     void                    clear();
     int32                   find(const char* key, recognition& cached, str_base* file) const;
-    bool                    enqueue(const char* key, const char* word, const char* cwd, recognition* cached=nullptr);
+    bool                    enqueue(const char* key, const char* word, const char* cwd, const recognition* cached=nullptr);
     bool                    need_refresh();
     void                    end_line();
 
@@ -224,7 +228,6 @@ private:
     static void             proc(recognizer* r);
 
 private:
-    linear_allocator        m_heap;
     str_unordered_map<cache_entry> m_cache;
     str_unordered_map<cache_entry> m_pending;
     entry                   m_queue;
@@ -252,7 +255,6 @@ void recognizer::entry::clear()
 
 //------------------------------------------------------------------------------
 recognizer::recognizer()
-: m_heap(1024)
 {
 #ifdef DEBUG
     // Singleton; assert if there's ever more than one.
@@ -270,15 +272,45 @@ void recognizer::clear()
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     m_queue.clear();
-    m_cache.clear();
-    m_pending.clear();
-    m_heap.reset();
+
+    for (auto& iter = m_pending.begin(); iter != m_pending.end();)
+    {
+        char* key = iter->second.m_key;
+        iter = m_pending.erase(iter);
+        free(key);
+    }
+    assert(m_pending.empty());
+
+#ifdef DEBUG
+    const time_t threshold = 60/*secinmin*/ * 1/*minutes*/;
+#else
+    const time_t threshold = 60/*secinmin*/ * 60/*mininhour*/ * 1/*hours*/;
+#endif
+    const time_t age = time(nullptr) - threshold;
+
+    for (auto& iter = m_cache.begin(); iter != m_cache.end();)
+    {
+        if (iter->second.m_age < age)
+        {
+            char* key = iter->second.m_key;
+            iter = m_cache.erase(iter);
+            free(key);
+        }
+        else
+        {
+            iter->second.m_outofdate = true;
+            ++iter;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 int32 recognizer::find(const char* key, recognition& cached, str_base* file) const
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    // Start out assuming unrecognized.
+    cached = recognition::unrecognized;
 
     if (usable())
     {
@@ -288,7 +320,10 @@ int32 recognizer::find(const char* key, recognition& cached, str_base* file) con
             cached = iter->second.m_recognition;
             if (file)
                 *file = iter->second.m_file.c_str();
-            return 1;
+            // If the cached entry is out of date, don't return yet; instead
+            // continue and check if there's a pending entry.
+            if (!iter->second.m_outofdate)
+                return 1;
         }
     }
 
@@ -304,11 +339,13 @@ int32 recognizer::find(const char* key, recognition& cached, str_base* file) con
         }
     }
 
+    // This can happen if the key wasn't found, or if the key was found but
+    // its entry is out of date and a new enqueue() is needed.
     return 0;
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::enqueue(const char* key, const char* word, const char* cwd, recognition* cached)
+bool recognizer::enqueue(const char* key, const char* word, const char* cwd, const recognition* cached)
 {
     if (!key || !*key || !word || !*word)
     {
@@ -337,14 +374,14 @@ bool recognizer::enqueue(const char* key, const char* word, const char* cwd, rec
             m_thread = std::make_unique<std::thread>(&proc, this);
         }
 
-        m_queue.m_key = key;
-        m_queue.m_word = word;
-        m_queue.m_cwd = cwd;
+        {
+            dbg_ignore_scope(snapshot, "Recognizer queue");
+            m_queue.m_key = key;
+            m_queue.m_word = word;
+            m_queue.m_cwd = cwd;
+        }
 
-        // Assume unrecognized at first.
-        store(key, nullptr, recognition::unrecognized, true/*pending*/);
-        if (cached)
-            *cached = recognition::unrecognized;
+        store(key, nullptr, cached ? *cached : recognition::unrecognized, true/*pending*/);
 
         SetEvent(m_event);  // Signal thread there is work to do.
     }
@@ -428,6 +465,10 @@ bool recognizer::busy() const
 //------------------------------------------------------------------------------
 bool recognizer::store(const char* word, const char* file, recognition cached, bool pending)
 {
+    assert(*word);
+    if (!*word)
+        return false;
+
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     if (!usable())
@@ -435,25 +476,30 @@ bool recognizer::store(const char* word, const char* file, recognition cached, b
 
     auto& map = pending ? m_pending : m_cache;
 
+    dbg_ignore_scope(snapshot, "Recognizer");
+
+    cache_entry entry;
+    entry.m_file = file;
+    entry.m_age = time(nullptr);
+    entry.m_recognition = cached;
+    entry.m_outofdate = false;
+
     auto const iter = map.find(word);
     if (iter != map.end())
     {
-        cache_entry entry;
-        entry.m_file = file;
-        entry.m_recognition = cached;
+        assert(iter->first == iter->second.m_key);
+        entry.m_key = iter->second.m_key;
         map.insert_or_assign(iter->first, std::move(entry));
         set_result_available(true);
         return true;
     }
 
-    dbg_ignore_scope(snapshot, "Recognizer");
-    const char* key = m_heap.store(word);
+    char* key = static_cast<char*>(malloc(strlen(word) + 1));
     if (!key)
         return false;
 
-    cache_entry entry;
-    entry.m_file = file;
-    entry.m_recognition = cached;
+    strcpy(key, word);
+    entry.m_key = key;
     map.emplace(key, std::move(entry));
     set_result_available(true);
     return true;
@@ -658,6 +704,13 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (!*word)
         return recognition::unknown;
 
+    // Make sure the recognizer is always dealing with lowercase names.
+    wstr<> win, wout;
+    win = word;
+    str_transform(win.c_str(), win.length(), wout, transform_mode::lower);
+    tmp = wout.c_str();
+    word = tmp.c_str();
+
     // Device names are always unrecognized.
     if (path::is_device(word))
         return recognition::unrecognized;
@@ -681,7 +734,7 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     }
 
     // Check for cached result.
-    recognition cached;
+    recognition cached = recognition::unrecognized;
     const int32 found = s_recognizer.find(word, cached, file);
     if (found)
     {
