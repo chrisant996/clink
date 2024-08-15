@@ -2251,8 +2251,7 @@ The function receives six arguments:
 
 The function may return any of the following:
 - Return an argmatcher to override subsequent parsing and use the specified argmatcher.
-- Return `false` to override subsequent parsing and continue using the current argmatcher.
-- Return `nil` to allow parsing to behave normally.
+- Return `false` or `nil` to allow parsing to continue normally.
 
 > **Note:** Avoid creating new argmatchers in "on link" functions; instead return cached argmatchers that were previously created.  The "on link" functions may be called frequently, and creating new argmatchers every time can create responsiveness problems while typing.
 
