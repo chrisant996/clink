@@ -42,7 +42,7 @@ static bool has_file_association(const char* name)
 
     wstr<32> wext(ext);
     DWORD cchOut = 0;
-    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_EXECUTABLE, wext.c_str(), nullptr, nullptr, &cchOut);
+    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_FRIENDLYAPPNAME, wext.c_str(), nullptr, nullptr, &cchOut);
     if (FAILED(hr) || !cchOut)
         return false;
 
