@@ -14,7 +14,7 @@
 
 #define CLINK_VERSION_MAJOR     1
 #define CLINK_VERSION_MINOR     6
-#define CLINK_VERSION_PATCH     21
+#define CLINK_VERSION_PATCH     22
 
 #define ORIGINAL_COPYRIGHT_STR  "Copyright (c) 2012-2018 Martin Ridgers"
 #define CLINK_COPYRIGHT_STR     "Copyright (c) 2012-2018 Martin Ridgers, Portions Copyright (c) 2020-2024 Christopher Antos"
