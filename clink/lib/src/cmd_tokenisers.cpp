@@ -619,7 +619,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             {
                 char c2 = *m_iter.get_next_pointer();
                 input_type input2 = get_input_type(c2);
-                if (input2 == sSpc)
+                if (input2 == iSpc)
                 {
                     c = c2;
                     input = input2;

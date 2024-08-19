@@ -1148,8 +1148,6 @@ do_insert:
     case bind_id_textlist_backspace:
     case bind_id_textlist_catchall:
         {
-            bool refresh = false;
-
             set_input_clears_needle = false;
 
             if (input.id == bind_id_textlist_backspace)
@@ -1160,7 +1158,6 @@ do_insert:
                 m_needle.truncate(point);
                 need_display = true;
                 from_begin = !m_win_history;
-                refresh = true;
                 goto update_needle;
             }
 
@@ -1184,7 +1181,6 @@ do_insert:
                     uint32 c = iter.next();
                     if (!m_win_history)
                     {
-                        refresh = m_has_override_title;
                         m_override_title.clear();
                         m_needle.concat(seq, int32(iter.get_pointer() - seq));
                         need_display = true;
@@ -1193,7 +1189,7 @@ do_insert:
                     {
                         if (!m_needle_is_number)
                         {
-                            refresh = m_has_override_title;
+                            need_display = need_display || m_has_override_title;
                             m_override_title.clear();
                             m_needle.clear();
                             m_needle_is_number = true;
@@ -1206,7 +1202,7 @@ do_insert:
                     }
                     else
                     {
-                        refresh = m_has_override_title;
+                        need_display = need_display || m_has_override_title;
                         m_override_title.clear();
                         m_needle.clear();
                         m_needle.concat(seq, int32(iter.get_pointer() - seq));
@@ -1230,7 +1226,7 @@ update_needle:
             {
                 if (m_needle.length())
                 {
-                    refresh = true;
+                    need_display = true;
                     m_override_title.clear();
                     m_override_title.format("enter history number: %-6s", m_needle.c_str());
                     int32 i = atoi(m_needle.c_str());
@@ -1265,12 +1261,12 @@ update_needle:
                         if (m_index < m_top || m_index >= m_top + m_visible_rows)
                             m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
                         m_prev_displayed = -1;
-                        refresh = true;
+                        need_display = true;
                     }
                 }
                 else if (m_override_title.length())
                 {
-                    refresh = true;
+                    need_display = true;
                     m_override_title.clear();
                 }
             }
@@ -1280,7 +1276,7 @@ update_needle:
                 goto find;
             }
 
-            if (refresh)
+            if (need_display)
                 update_display();
         }
         break;

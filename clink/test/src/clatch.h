@@ -214,8 +214,8 @@ void fail(const char* expr, const char* file, int32 line, callback&& cb)
     static clatch::section CLATCH_IDENT(section);\
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section), name))
 
-#define MAKE_CLEANUP(...)\
-    clatch::cleanup CLATCH_IDENT(cleanup)(std::move(##__VA_ARGS__));
+#define MAKE_CLEANUP(lambda)\
+    clatch::cleanup CLATCH_IDENT(cleanup)(std::move(lambda));
 
 
 #define SECTIONNAME()\
