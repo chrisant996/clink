@@ -5,6 +5,7 @@
 #### v1.6.22
 
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
+- Fixed delay when typing `X:` and it's a remote drive.
 
 #### v1.6.21
 
