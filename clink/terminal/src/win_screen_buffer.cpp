@@ -944,7 +944,7 @@ bool win_screen_buffer::ensure_chars_buffer(int32 width) const
         m_chars = chars;
         m_chars_capacity = width;
 #ifdef USE_MEMORY_TRACKING
-        dbgsetignore(chars, 1);
+        dbgsetignore(chars);
         dbgsetlabel(chars, "win_screen_buffer::m_chars", false);
 #endif
     }

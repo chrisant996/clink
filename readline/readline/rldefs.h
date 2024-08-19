@@ -48,6 +48,14 @@
 #  endif
 #endif
 
+/* begin_clink_change */
+#undef TERMIOS_TTY_DRIVER
+#undef TERMIO_TTY_DRIVER
+#undef NEW_TTY_DRIVER
+#undef NO_TTY_DRIVER
+#define NO_TTY_DRIVER
+/* end_clink_change */
+
 /* Posix macro to check file in statbuf for directory-ness.
    This requires that <sys/stat.h> be included before this test. */
 #if defined (S_IFDIR) && !defined (S_ISDIR)

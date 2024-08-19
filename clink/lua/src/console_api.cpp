@@ -853,7 +853,7 @@ static int32 get_color_table(lua_State* state)
     const char* theme = nullptr;
     switch (get_console_theme())
     {
-    case console_theme::default:    theme = "default"; break;
+    case console_theme::system:     theme = "default"; break;
     case console_theme::dark:       theme = "dark"; break;
     case console_theme::light:      theme = "light"; break;
     }

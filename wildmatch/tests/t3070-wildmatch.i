@@ -28,8 +28,8 @@ static const char* const c_cases[] = {
 "match 1 1 foo foo",                                    // case #1
 "match 0 0 foo bar",                                    // case #2
 "match 1 1 '' \"\"",                                    // case #3
-"match 1 1 foo '???'",                                  // case #4
-"match 0 0 foo '??'",                                   // case #5
+"match 1 1 foo '\?\?\?'",                               // case #4
+"match 0 0 foo '\?\?'",                                 // case #5
 "match 1 1 foo '*'",                                    // case #6
 "match 1 1 foo 'f*'",                                   // case #7
 "match 0 0 foo '*f'",                                   // case #8
@@ -39,7 +39,7 @@ static const char* const c_cases[] = {
 "match 1 1 'foo*' 'foo\\*'",                            // case #12
 "match 0 0 foobar 'foo\\*bar'",                         // case #13
 "match 1 1 'f\\oo' 'f\\\\oo'",                          // case #14
-"match 1 1 ball '*[al]?'",                              // case #15
+"match 1 1 ball '*[al]\?'",                             // case #15
 "match 0 0 ten '[ten]'",                                // case #16
 "match 0 1 ten '**[!te]'",                              // case #17
 "match 0 0 ten '**[!ten]'",                             // case #18
@@ -64,7 +64,7 @@ static const char* const c_cases[] = {
 "match 1 0 'foo/b/a/z/bar' 'foo/**/**/bar'",            // case #35
 "match 1 0 'foo/bar' 'foo/**/bar'",                     // case #36
 "match 1 0 'foo/bar' 'foo/**/**/bar'",                  // case #37
-"match 0 0 'foo/bar' 'foo?bar'",                        // case #38
+"match 0 0 'foo/bar' 'foo\?bar'",                       // case #38
 "match 0 0 'foo/bar' 'foo[/]bar'",                      // case #39
 "match 0 0 'foo/bar' 'foo[^a-z]bar'",                   // case #40  **ADDITIONAL**
 "match 0 0 'foo/bar' 'f[^eiu][^eiu][^eiu][^eiu][^eiu]r'",  // case #41
@@ -102,7 +102,7 @@ static const char* const c_cases[] = {
 "match 0 x '[ab]' '[[::]ab]'",                          // case #71
 "match 1 x '[ab]' '[[:digit]ab]'",                      // case #72
 "match 1 x '[ab]' '[\\[:]ab]'",                         // case #73
-"match 1 1 '?a?b' '\\??\\?b'",                          // case #74
+"match 1 1 '\?a\?b' '\\\?\?\\\?b'",                     // case #74
 "match 1 1 'abc' '\\a\\b\\c'",                          // case #75
 "match 0 0 'foo' ''",                                   // case #76
 "match 1 0 'foo/bar/baz/to' '**/t[o]'",                 // case #77
@@ -209,7 +209,7 @@ static const char* const c_cases[] = {
 "pathmatch 1 foo/bba/arr 'foo/**arr'",                  // case #171
 "pathmatch 0 foo/bba/arr 'foo/*z'",                     // case #172
 "pathmatch 0 foo/bba/arr 'foo/**z'",                    // case #173
-"pathmatch 1 foo/bar 'foo?bar'",                        // case #174
+"pathmatch 1 foo/bar 'foo\?bar'",                       // case #174
 "pathmatch 1 foo/bar 'foo[/]bar'",                      // case #175
 "pathmatch 1 foo/bar 'foo[^a-z]bar'",                   // case #176  **ADDITIONAL**
 "pathmatch 0 foo '*/*/*'",                              // case #177

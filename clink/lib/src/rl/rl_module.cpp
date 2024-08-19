@@ -1870,7 +1870,7 @@ static void safe_replace_keymap(Keymap replace, Keymap with)
             }
             break;
         case ISMACR:
-            free(replace[i].function);
+            free((void*)replace[i].function);
             break;
         }
 

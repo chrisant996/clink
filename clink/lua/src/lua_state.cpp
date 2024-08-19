@@ -864,7 +864,7 @@ extern "C" DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size
     pv = dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak);
     if (pv)
     {
-        dbgsetignore(pv, true);
+        dbgsetignore(pv);
         dbgsetlabel(pv, "LUA alloc", false);
     }
     return pv;

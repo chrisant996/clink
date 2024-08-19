@@ -67,7 +67,14 @@
 //
 // The operation was blocked as the process prohibits dynamic code generation.
 //
+/* begin_clink_change
+ * MINGW complains about redefinition. */
+#ifndef ERROR_DYNAMIC_CODE_BLOCKED
+/* end_clink_change */
 #define ERROR_DYNAMIC_CODE_BLOCKED       1655L
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 #endif // DETOURS_INTERNAL
 

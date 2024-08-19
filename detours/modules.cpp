@@ -17,6 +17,13 @@
 #error detours.h version mismatch
 #endif
 
+/* begin_clink_change */
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#undef NULL
+#define NULL 0
+#endif
+/* end_clink_change */
+
 #define CLR_DIRECTORY OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR]
 #define IAT_DIRECTORY OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IAT]
 

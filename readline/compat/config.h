@@ -39,7 +39,7 @@ int     hooked_stat(const char*, struct hooked_stat*);
 int     hooked_lstat(const char*, struct hooked_stat*);
 int     hooked_fstat(int, struct hooked_stat*);
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #   undef fwrite
 #   undef fprintf
 #   undef putc
@@ -53,7 +53,9 @@ int     hooked_fstat(int, struct hooked_stat*);
 
     // We compile Readline the same way MSVC does for consistency.
 #   if defined(BUILD_READLINE)
+#       define __BUILD_READLINE_MINGW__
 #       undef __MINGW32__
+#       undef __MINGW64__
 #   endif
 
 #   define RL_LIBRARY_VERSION "8.1"
@@ -103,7 +105,10 @@ typedef unsigned short      mode_t;
 #define HAVE_STRCASECMP 1
 #define HAVE_WCWIDTH 1
 #define HAVE_DIRENT_H 1
+
+#if !(defined(__MINGW32__) || defined(__MINGW64__) || defined(__BUILD_READLINE_MINGW__))
 #define WCHAR_T_BROKEN 1            // Visual Studio uses 2 byte wchar_t; Readline expects 4 byte wchar_t.
+#endif
 
 typedef int wcwidth_t (char32_t);
 extern wcwidth_t *wcwidth;

@@ -18,6 +18,10 @@
 #define REPORT_REDISPLAY
 #endif
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#undef REPORT_REDISPLAY
+#endif
+
 #include "display_readline.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
@@ -966,7 +970,7 @@ void display_lines::set_top(uint32 top)
 //------------------------------------------------------------------------------
 void display_lines::set_comment_row(str_moveable&& s, comment_row_type type)
 {
-#ifdef DEBUG
+#if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
     if (!s.empty())
         dbgsetignore(s.c_str());
 #endif

@@ -20,7 +20,7 @@ class match_details
 {
 public:
                             match_details(const char* match, const match_extra* extra);
-    operator                bool() const { return m_match; }
+    operator                bool() const { return !!m_match; }
     match_type              get_type() const { return m_extra->type; }
     const char*             get_match() const { return m_match; }
     const char*             get_display() const { return m_match ? m_match + m_extra->display_offset : nullptr; }

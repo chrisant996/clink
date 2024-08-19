@@ -81,22 +81,6 @@
 /* end of multibyte capability checks for I18N  */
 /************************************************/
 
-/* begin_clink_change */
-#ifdef WCHAR_T_BROKEN
-#  define WCHAR_T char32_t
-#  define MBRTOWC mbrtoc32
-#  define WCRTOMB c32rtomb
-#else
-#  define WCHAR_T wchar_t
-#  define MBRTOWC mbrtowc
-#  define WCRTOMB wcrtomb
-#endif
-#undef mbrtowc
-#undef wcrtobc
-#define mbrtowc __use_MBRTOWC_instead__
-#define wcrtomb __use_WCRTOMB_instead__
-/* end_clink_change */
-
 /*
  * wchar_t doesn't work for 32-bit values on Windows using MSVC
  */
@@ -104,6 +88,12 @@
 #  define WCHAR_T char32_t
 #  define MBRTOWC mbrtoc32
 #  define WCRTOMB c32rtomb
+/* begin_clink_change */
+#  undef mbrtowc
+#  undef wcrtobc
+#  define mbrtowc __use_MBRTOWC_instead__
+#  define wcrtomb __use_WCRTOMB_instead__
+/* end_clink_change */
 #else	/* normal systems */
 #  define WCHAR_T wchar_t
 #  define MBRTOWC mbrtowc

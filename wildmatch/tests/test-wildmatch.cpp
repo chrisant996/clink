@@ -8,6 +8,10 @@
 
 #include "wildmatch.h"
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#include <clatch.h> // Because MINGW (or premake5 gmake?) gets the include directory order wrong.
+#endif
+
 static void xxx_hack(int32 caseNum, const char* line, const char*& str)
 {
     REQUIRE(str[0] != '/', [&] () {

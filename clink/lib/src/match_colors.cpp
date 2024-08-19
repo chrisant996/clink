@@ -167,7 +167,7 @@ static char* s_colors[C_NUM_INDICATORS_EXTENDED] = {};
 static const char* s_error_context = nullptr;
 
 //------------------------------------------------------------------------------
-bool is_colored(indicator_no colored_filetype)
+bool is_colored(enum_indicator_no colored_filetype)
 {
     char const* s = s_colors[colored_filetype];
     if (!s || !*s)          return false;   // Empty.
@@ -370,7 +370,10 @@ concat_numeric:
                 if (verbatim)
                     goto concat_text;
                 WCHAR wc = num;
-                to_utf8(token, wstr_iter(&wc, 1));
+                {
+                    wstr_iter iter(&wc, 1); // Because MINGW can't handle it inline.
+                    to_utf8(token, iter);
+                }
             }
             break;
 
@@ -483,7 +486,7 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
 
     str<> token;
     bool ever_any = false;
-    bool not = false;
+    bool not_operator = false;
     while (iter.more())
     {
         bool quoted;
@@ -494,7 +497,7 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
 
         if (token.iequals("not"))
         {
-            not = true;
+            not_operator = true;
             continue;
         }
 
@@ -507,7 +510,7 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
                 {
                     num_flags++;
                     rlind = ind.rlind;
-                    if (not)
+                    if (not_operator)
                         rule.m_not_cflags |= ind.cflag;
                     else
                         rule.m_cflags |= ind.cflag;
@@ -532,12 +535,12 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
             pat.m_pattern.concat(token.c_str(), token.length());
             //pat.m_only_filename = !strpbrk(token.c_str(), "/\\");
             pat.m_only_filename = true;
-            pat.m_not = not;
+            pat.m_not = not_operator;
 // printf("pat '%s'%s\n", pat.m_pattern.c_str(), not ? " (not)" : "");
             rule.m_patterns.emplace_back(std::move(pat));
         }
 
-        not = false;
+        not_operator = false;
     }
 
     // Readonly by itself should set CFLAG_READONLY|CFLAG_FILE so by itself it
@@ -726,7 +729,8 @@ void parse_match_colors()
                 else
                 {
                     color_rule rule;
-                    if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
+                    str_iter token_iter(token.c_str(), token.length()); // Because MINGW can't handle it inline.
+                    if (parse_rule(token_iter, value, rule))
                     {
                         s_colored_stats = true;
                         s_color_rules.emplace_back(std::move(rule));
@@ -756,7 +760,7 @@ bool using_match_colors()
 }
 
 //------------------------------------------------------------------------------
-static void ls_concat_color_indicator(enum indicator_no colored_filetype, str_base& out)
+static void ls_concat_color_indicator(enum_indicator_no colored_filetype, str_base& out)
 {
     const struct bin_str *ind = &LS_COLORS_indicator[colored_filetype];
     out.concat(ind->string, ind->len);
@@ -788,7 +792,7 @@ void make_color(const char* seq, str_base& out)
 //------------------------------------------------------------------------------
 static bool get_ls_color(const char *f, match_type type, str_base& out)
 {
-    enum indicator_no colored_filetype;
+    enum_indicator_no colored_filetype;
     COLOR_EXT_TYPE *ext; // Color extension.
     size_t len;          // Length of name.
 
@@ -1013,7 +1017,7 @@ bool get_match_color(const char* f, match_type type, str_base& out)
 
     // Identify flags for matching, and identify default color type.
     int32 cflags;
-    indicator_no colored_filetype;
+    enum_indicator_no colored_filetype;
     if (linkok == -1 && s_colors[C_MISSING] != nullptr)
     {
         colored_filetype = C_MISSING;
@@ -1072,13 +1076,13 @@ bool get_match_color(const char* f, match_type type, str_base& out)
             {
                 if (is_match_type_readonly(type))
                 {
-                    colored_filetype = indicator_no(C_READONLY);
+                    colored_filetype = (enum_indicator_no)(C_READONLY);
                     cflags |= CFLAG_READONLY;
                 }
                 // Hidden takes precedence over Readonly, if no rules match.
                 if (is_match_type_hidden(type))
                 {
-                    colored_filetype = indicator_no(C_HIDDEN);
+                    colored_filetype = (enum_indicator_no)(C_HIDDEN);
                     cflags |= CFLAG_HIDDEN;
                 }
             }
@@ -1100,8 +1104,8 @@ bool get_match_color(const char* f, match_type type, str_base& out)
         }
         name = tmp.c_str();
         // Directory takes precedence over Readonly, if no rules match.
-        if (colored_filetype == indicator_no(C_READONLY))
-            colored_filetype = indicator_no(C_DIR);
+        if (colored_filetype == (enum_indicator_no)(C_READONLY))
+            colored_filetype = (enum_indicator_no)(C_DIR);
     }
 
     // Look for a matching rule.  First match wins.
@@ -1164,7 +1168,7 @@ next_rule:
 }
 
 //------------------------------------------------------------------------------
-const char* get_indicator_color(indicator_no colored_filetype)
+const char* get_indicator_color(enum_indicator_no colored_filetype)
 {
     return s_colors[colored_filetype];
 }

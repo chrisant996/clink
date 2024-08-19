@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "lua_input_idle.h"
+#include "lua_task_manager.h"
 #include "async_lua_task.h"
 
 #include <core/os.h>

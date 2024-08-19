@@ -68,7 +68,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-enum class console_theme : uint8 { unknown, default, dark, light };
+enum class console_theme : uint8 { unknown, system, dark, light };
 void detect_console_theme();
 uint8 get_console_faint_text();
 uint8 get_console_default_attr();

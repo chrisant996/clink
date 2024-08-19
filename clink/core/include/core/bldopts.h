@@ -42,6 +42,8 @@
 //#define DEBUG_RESOLVEIMPL
 //#define USE_OS_UTF_CONVERSION
 //#define REPORT_READLINE_UNDO_LIST_LEAKS
+#endif
+#if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
 #define UNDO_LIST_HEAP_DIAGNOSTICS
 #endif
 

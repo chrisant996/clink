@@ -1310,6 +1310,10 @@ printf("enum -> '%ls' '%ls'\n", reinterpret_cast<NETRESOURCEW*>(buffer)->lpLocal
 
 #else // !USE_WNETOPENENUM
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define STYPE_MASK              0x000000FF
+#endif
+
 void enumshares_async_lua_task::do_work()
 {
     static bool s_has_netapi = delayload_netapi();
@@ -1539,7 +1543,10 @@ static int32 enum_shares(lua_State* state)
     enumshares_lua* es = enumshares_lua::make_new(state, task);
     if (!es)
         return 0;
-    add_async_lua_task(std::shared_ptr<async_lua_task>(task));
+    {
+        std::shared_ptr<async_lua_task> add(task); // Because MINGW can't handle it inline.
+        add_async_lua_task(add);
+    }
 
     // If a timeout was given and this is the main coroutine, wait for
     // completion until the timeout, and then cancel the task if not yet
@@ -2193,7 +2200,7 @@ int32 get_battery_status(lua_State* state)
 #if defined( VER_PRODUCTMAJORVERSION ) && VER_PRODUCTMAJORVERSION >= 10
     lua_pushboolean(state, ((status.SystemStatusFlag & 1) == 1));
 #else
-    lua_pushboolean(state, ((status.Reserved1 & 1) == 1));
+    lua_pushboolean(state, ((reinterpret_cast<BYTE*>(&status)[3] & 1) == 1));
 #endif
     lua_rawset(state, -3);
 
@@ -2806,7 +2813,7 @@ os_stringresult:
             {
                 if (c_qualifiers[ii].dw == LOWORD(dwFileOS))
                 {
-                    lua_pushlightuserdata(state, "osqualifier");
+                    lua_pushlightuserdata(state, (void*)"osqualifier");
                     lua_pushstring(state, c_qualifiers[ii].psz);
                     lua_rawset(state, -3);
                     break;

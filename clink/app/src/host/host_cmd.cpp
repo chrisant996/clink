@@ -484,8 +484,14 @@ BOOL WINAPI host_cmd::read_console(
     void* _chars,
     DWORD max_chars,
     LPDWORD read_in,
-    __CONSOLE_READCONSOLE_CONTROL* control)
+    __CONSOLE_READCONSOLE_CONTROL* __control)
 {
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    const CONSOLE_READCONSOLE_CONTROL* const control = reinterpret_cast<CONSOLE_READCONSOLE_CONTROL*>(__control);
+#else
+    const CONSOLE_READCONSOLE_CONTROL* const control = __control;
+#endif
+
     seh_scope seh;
     wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
 
@@ -494,7 +500,7 @@ BOOL WINAPI host_cmd::read_console(
 
     // if the input handle isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
 
     host_cmd* const hc = host_cmd::get();
 
@@ -529,7 +535,7 @@ BOOL WINAPI host_cmd::read_console(
         // Default behaviour.
         if (hc->dequeue_char(chars))
             return TRUE;
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
     }
 
     s_answered = 0;
@@ -583,7 +589,7 @@ BOOL WINAPI host_cmd::read_console(
             // it ended with a newline.
             return true;
         }
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
     }
 
     // Respond with a queued line, if available.
@@ -708,7 +714,10 @@ static void update_pushd_depth(const wchar_t* chars, int32 char_count)
     {
         str<> expanded;
         str<> captured;
-        to_utf8(captured, wstr_iter(chars, char_count));
+        {
+            wstr_iter iter(chars, char_count); // Because MINGW can't handle it inline.
+            to_utf8(captured, iter);
+        }
         if (prompt_utils::expand_prompt_codes(var.c_str(), expanded, expand_prompt_flags::omit_pushd) &&
             expanded.length() <= captured.length())
         {

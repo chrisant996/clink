@@ -152,8 +152,8 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
 
         // 'key = value'?
         was_comment = false;
-        char* value = strchr(line_data, '=');
-        if (value == nullptr)
+        char* key_end = strchr(line_data, '=');
+        if (key_end == nullptr)
         {
             if (!maybe_clink_set)
                 continue;
@@ -165,17 +165,17 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
             // troubleshooting purposes; it isn't the real file format, and it
             // may not work properly if a setting name contains a space, etc.
             //
-            value = strchr(line_data, ' ');
-            if (value == nullptr)
+            key_end = strchr(line_data, ' ');
+            if (key_end == nullptr)
                 continue;
         }
 
-        *value++ = '\0';
+        *key_end = '\0';
+        const char* value = key_end + 1;
 
         // Trim whitespace.
-        char* key_end = value - 2;
-        while (key_end >= line_data && isspace(*key_end))
-            --key_end;
+        while (--key_end >= line_data && isspace(*key_end))
+        {}
         key_end[1] = '\0';
 
         while (*value && isspace(*value))

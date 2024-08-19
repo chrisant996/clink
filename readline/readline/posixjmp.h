@@ -21,7 +21,14 @@
 #ifndef _POSIXJMP_H_
 #define _POSIXJMP_H_
 
-#include <setjmp.h>
+/* begin_clink_change */
+//#include <setjmp.h>
+#if defined(__MINGW32__) || defined(__MINGW64__) || defined(__BUILD_READLINE_MINGW__)
+#  include <setjmpex.h>
+#else
+#  include <setjmp.h>
+#endif
+/* end_clink_change */
 
 /* This *must* be included *after* config.h */
 

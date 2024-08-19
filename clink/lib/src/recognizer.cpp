@@ -273,7 +273,7 @@ void recognizer::clear()
 
     m_queue.clear();
 
-    for (auto& iter = m_pending.begin(); iter != m_pending.end();)
+    for (auto iter = m_pending.begin(); iter != m_pending.end();)
     {
         char* key = iter->second.m_key;
         iter = m_pending.erase(iter);
@@ -288,7 +288,7 @@ void recognizer::clear()
 #endif
     const time_t age = time(nullptr) - threshold;
 
-    for (auto& iter = m_cache.begin(); iter != m_cache.end();)
+    for (auto iter = m_cache.begin(); iter != m_cache.end();)
     {
         if (iter->second.m_age < age)
         {

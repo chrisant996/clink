@@ -48,6 +48,7 @@ extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
 // TODO: line_editor_impl vs rl_module.
 extern int32 g_suggestion_offset;
+void before_display_readline();
 
 
 

@@ -206,7 +206,7 @@ void detect_console_theme()
         case ansi_handler::winconsolev2:
             break;
         default:
-            s_console_theme = console_theme::default;
+            s_console_theme = console_theme::system;
             s_faint_text = 0x80;
             return;
         }

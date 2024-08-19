@@ -6,6 +6,15 @@
 #include "word_collector.h"
 
 //------------------------------------------------------------------------------
+#ifndef _ENUM_FLAG_CONSTEXPR // Because MINGW is missing this.
+# if _MSC_VER >= 1900
+#  define _ENUM_FLAG_CONSTEXPR constexpr
+# else
+#  define _ENUM_FLAG_CONSTEXPR
+# endif
+#endif
+
+//------------------------------------------------------------------------------
 enum tokeniser_state : int32;
 
 //------------------------------------------------------------------------------

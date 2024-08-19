@@ -53,7 +53,12 @@ extern "C" {
 static int rangematch(const char *, char, int, const char **);
 
 /* begin_clink_change */
-inline int is_slash(char ch, int flags)
+#if defined(__MINGW32__) || defined(__MINGW64__)
+static
+#else
+inline
+#endif
+int is_slash(char ch, int flags)
 {
     return (ch == '/') || (check_flag(flags, WM_SLASHFOLD) && ch == '\\');
 }

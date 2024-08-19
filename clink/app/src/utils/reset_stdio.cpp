@@ -22,7 +22,7 @@
     another way to encounter the problems is by async prompt filtering.
 */
 
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
+#if !(defined(__MINGW32__) || defined(__MINGW64__))
 
 //------------------------------------------------------------------------------
 static bool s_can_reset = true;

@@ -149,7 +149,7 @@ local function write_clink_manifest_file()
     local manifest_string =
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'..
         '<assembly xmlns="urn:schemas-microsoft-com:asm.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" manifestVersion="1.0">'..
-        '<assemblyIdentity version="'..maj..'.'..min..'.'..pat..'.0" processorArchitecture="*" name="Microsoft.Source Depot.SDVDiff" type="win32"/>'..
+        '<assemblyIdentity version="'..maj..'.'..min..'.'..pat..'.0" processorArchitecture="*" name="chrisant996.Clink" type="win32"/>'..
         '<description>Clink</description>'..
         '<asmv3:application><asmv3:windowsSettings>'..
             --'<dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">True</dpiAware>'..
@@ -277,6 +277,11 @@ project("readline")
     excludes("readline/readline/emacs_keymap.c")    -- #included by readline/keymaps.c
     excludes("readline/readline/vi_keymap.c")       -- #included by readline/keymaps.c
     excludes("readline/readline/support/wcwidth.c") -- superseded by clink/terminal/src/wcwidth.cpp
+
+    filter "action:gmake"
+        buildoptions("-Wno-discarded-qualifiers")
+        buildoptions("-Wno-implicit-function-declaration")
+        buildoptions("-Wno-endif-labels")
 
 --------------------------------------------------------------------------------
 project("getopt")

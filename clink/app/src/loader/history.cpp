@@ -128,7 +128,7 @@ static void translate_history_line(str_base& out, const char* in, uint32 len)
             out.concat(begin, int32(walk - begin));
         if (!len)
             break;
-        char ctrl[3] = { '^', *walk + 'A' - 1 };
+        char ctrl[3] = { '^', char(*walk + 'A' - 1) };
         out.concat(ctrl, 2);
         ++walk, --len;
     }

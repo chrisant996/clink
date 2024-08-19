@@ -17,6 +17,12 @@
 // Define this to disable Readline's sigwinch terminal resize, which goes haywire.
 #define NO_READLINE_RESIZE_TERMINAL
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define HAVE_TIMEVAL 1
+#include <_timeval.h>
+#include <time.h>
+#endif
+
 #if !defined(S_IFLNK)
 static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
 static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
@@ -60,7 +66,7 @@ void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
 
 #define HAVE_GETTIMEOFDAY 1
-int gettimeofday(struct timeval *, void *);
+int gettimeofday(struct timeval *, struct timezone *);
 
 // These are implemented in rl_commands.cpp.
 extern const int c_clink_version;

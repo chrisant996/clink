@@ -603,14 +603,14 @@ _rl_internal_char_cleanup (void)
     _rl_erase_entire_line ();
 }
 
-STATIC_CALLBACK int
 #if defined (READLINE_CALLBACKS)
+static int readline_internal_char_internal (void);
+STATIC_CALLBACK int
 readline_internal_char (void)
 /* begin_clink_change */
 {
-  static int readline_internal_char_internal (void);
   int r;
-  assert(!s_in_internal_char);
+  assert (!s_in_internal_char);
   s_in_internal_char = 1;
   s_displayed = 0;
   r = readline_internal_char_internal ();
@@ -621,6 +621,7 @@ static int
 readline_internal_char_internal (void)
 /* end_clink_change */
 #else
+STATIC_CALLBACK int
 readline_internal_charloop (void)
 #endif
 {

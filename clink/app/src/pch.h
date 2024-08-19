@@ -10,7 +10,7 @@
 #include <io.h>
 #include <locale.h>
 #include <stdlib.h>
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #   include <stdint.h>
 #endif
 
@@ -23,7 +23,7 @@
 #   pragma warning(disable : 4091)
 #endif
 #include <Shlobj.h>
-#ifndef __MINGW32__
+#if !(defined(__MINGW32__) || defined(__MINGW64__))
 #   include <DbgHelp.h>
 #endif
 #ifdef _MSC_VER
