@@ -1468,12 +1468,17 @@ void line_editor_impl::try_suggest()
                 bool no_matches = path::is_unc(end_word);
                 if (!no_matches)
                 {
-                    str<> full;
-                    if (os::get_full_path_name(end_word, full, m_buffer.get_length() - word.offset))
+                    str<> drive;
+                    if (!path::get_drive(end_word, drive))
                     {
-                        path::get_drive(full);
-                        path::append(full, ""); // Because get_drive_type() requires a trailing path separator.
-                        no_matches = (os::get_drive_type(full.c_str()) < os::drive_type_removable);
+                        str<> cwd;
+                        os::get_current_dir(cwd);
+                        path::get_drive(cwd.c_str(), drive);
+                    }
+                    if (!drive.empty())
+                    {
+                        path::append(drive, ""); // Because get_drive_type() requires a trailing path separator.
+                        no_matches = (os::get_drive_type(drive.c_str()) < os::drive_type_removable);
                     }
                 }
                 if (no_matches)
