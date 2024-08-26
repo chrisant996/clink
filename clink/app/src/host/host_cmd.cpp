@@ -584,9 +584,9 @@ BOOL WINAPI host_cmd::read_console(
                 __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
                 __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
             }
-            // When edit_line is true the line should be editable.  But when not
-            // using the Readline editor, give up and treat the line as though
-            // it ended with a newline.
+            // When the edit_line flag is set the line should be editable.
+            // But when not using the Readline editor, give up and treat the
+            // line as though it ended with a newline.
             return true;
         }
         return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);

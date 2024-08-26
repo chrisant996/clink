@@ -72,6 +72,12 @@
 
 extern bool g_color_emoji;
 
+/* In the Windows console subsystem, combining marks actually have a column */
+/* width of 1, not 0 as the original wcwidth implementation expected. */
+static const int32 s_combining_mark_width = 1;
+
+static bool s_only_ucs2 = false;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -209,7 +215,7 @@ static int32 mk_wcwidth(char32_t ucs)
 
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
-    return 0;
+    return s_combining_mark_width;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   return 1 +
@@ -226,6 +232,37 @@ static int32 mk_wcwidth(char32_t ucs)
       (ucs >= 0xffe0 && ucs <= 0xffe6) ||
       (ucs >= 0x20000 && ucs <= 0x2fffd) ||
       (ucs >= 0x30000 && ucs <= 0x3fffd)));
+}
+
+static int32 mk_wcwidth_ucs2(char32_t ucs)
+{
+  /* test for 8-bit control characters */
+  if (ucs == 0)
+    return 0;
+  if (ucs < 32)
+    return -1;
+  if (ucs <= 0x7e)
+    return 1;
+  if (ucs < 0xa0)
+    return -1;
+
+  /* binary search in table of non-spacing characters */
+  if (bisearch(ucs, combining, _countof(combining) - 1))
+    return s_combining_mark_width;
+
+  /* if we arrive here, ucs is not a combining or C0/C1 control character */
+  return 1 +
+    (ucs >= 0x1100 &&
+     (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
+      ucs == 0x2329 || ucs == 0x232a ||
+      (ucs >= 0x2e80 && ucs <= 0xa4cf &&
+       ucs != 0x303f) ||                  /* CJK ... Yi */
+      (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
+      (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
+      (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
+      (ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
+                                          /* ...ignore Fullwidth Forms... */
+      (ucs >= 0x10000)));                 /* UCS2 on Windows 8.1 and lower */
 }
 
 
@@ -320,6 +357,15 @@ static int32 mk_wcwidth_cjk(char32_t ucs)
     return resolve_ambiguous_wcwidth(ucs);
 
   return mk_wcwidth(ucs);
+}
+
+static int32 mk_wcwidth_cjk_ucs2(char32_t ucs)
+{
+  /* binary search in table of ambiguous width chars in CJK codepages */
+  if (bisearch(ucs, ambiguous, _countof(ambiguous) - 1))
+    return resolve_ambiguous_wcwidth(ucs);
+
+  return mk_wcwidth_ucs2(ucs);
 }
 
 
@@ -561,16 +607,16 @@ static void init_cached_font()
   SelectObject(s_hdc, s_hfont);
   if (s_cell <= 0)
   {
-      TEXTMETRICW tm;
-      if (!GetTextMetricsW(s_hdc, &tm))
-      {
-        ERR("unable to get font metrics");
-        s_cell = 0;
-        return;
-      }
+    TEXTMETRICW tm;
+    if (!GetTextMetricsW(s_hdc, &tm))
+    {
+      ERR("unable to get font metrics");
+      s_cell = 0;
+      return;
+    }
 
-      s_cell = tm.tmAveCharWidth;
-      s_cell_rounding = tm.tmAveCharWidth / 2;
+    s_cell = tm.tmAveCharWidth;
+    s_cell_rounding = tm.tmAveCharWidth / 2;
   }
 
   str<> name(info.FaceName);
@@ -586,6 +632,20 @@ int32 is_CJK_codepage(UINT cp)
 void reset_wcwidths()
 {
     int32 use_cjk = true;
+
+    {
+        static bool s_inited_only_ucs2 = false;
+        if (!s_inited_only_ucs2)
+        {
+#pragma warning(push)
+#pragma warning(disable:4996)
+            OSVERSIONINFO ver = { sizeof(ver) };
+            if (GetVersionEx(&ver))
+                s_only_ucs2 = (ver.dwMajorVersion < 10);
+            s_inited_only_ucs2 = true;
+        }
+#pragma warning(pop)
+    }
 
     s_resolve = g_terminal_east_asian_ambiguous.get();
 
@@ -616,7 +676,7 @@ void reset_wcwidths()
 
     if (use_cjk)
     {
-        wcwidth = mk_wcwidth_cjk;
+        wcwidth = s_only_ucs2 ? mk_wcwidth_cjk_ucs2 : mk_wcwidth_cjk;
 #if 0
         wcswidth = mk_wcswidth_cjk;
 #endif
@@ -624,7 +684,7 @@ void reset_wcwidths()
     }
     else
     {
-        wcwidth = mk_wcwidth;
+        wcwidth = s_only_ucs2 ? mk_wcwidth_ucs2 : mk_wcwidth;
 #if 0
         wcswidth = mk_wcswidth;
 #endif
