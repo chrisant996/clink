@@ -65,6 +65,8 @@ function cmd_classifier:classify(commands) -- luacheck: no self
                     if line:find("^[^0-9]", i+1) then
                         color = settings.get("color.unrecognized")
                         err = true
+                    else
+                        i = i + 1
                     end
                 end
                 if not err and line:sub(x-1,x-1):find("^[0-9]") then
