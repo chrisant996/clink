@@ -45,7 +45,7 @@ Once installed, there are several ways to start Clink.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
 3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
 
-    > If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
+    > If the Clink install directory isn't in the PATH, then use <code><em>install_dir</em>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
 
 You can use Clink right away without configuring anything:
 
@@ -69,8 +69,8 @@ Clink can be extended through its Lua API which allows easy creation of context 
 Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutions or makefiles for MinGW. Note that Premake >= 5.0.0-beta1 is required.
 
 1. Cd to your clone of Clink.
-2. Run <code>premake5.exe <span class="arg">toolchain</span></code> (where <span class="arg">toolchain</span> is one of Premake's actions - see `premake5.exe --help`)
-3. Build scripts will be generated in <code>.build\<span class="arg">toolchain</span></code>. For example `.build\vs2022\clink.sln`.
+2. Run <code>premake5.exe <em>toolchain</em></code> (where <em>toolchain</em> is one of Premake's actions - see `premake5.exe --help`)
+3. Build scripts will be generated in <code>.build\\<em>toolchain</em></code>. For example `.build\vs2022\clink.sln`.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
 ### Building Documentation
