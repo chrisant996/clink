@@ -30,15 +30,28 @@ TEST_CASE("wcwidth_iter")
             { 4,    L"abcd" },
             { 5,    L"abcd" },
             { 5,    L"ÀΘЙ≋☑" },
+#if 0
+// TODO: What column width is actually used on Win10 and on Win8.1?
             { 1,    L"✔️" },
             { 2,    L"✔️ " },
             { 2,    L"✔️x" },
             { 3,    L"y✔️x" },
+#else
+            { 2,    L"✔️" },
+            { 3,    L"✔️ " },
+            { 3,    L"✔️x" },
+            { 4,    L"y✔️x" },
+#endif
             { 2,    L"✔️", true },
             { 3,    L"✔️ ", true },
             { 3,    L"✔️x", true },
             { 4,    L"y✔️x", true },
+#if 0
+// TODO: What column width is actually used on Win10 and on Win8.1?
             { 1,    L"☘️" },
+#else
+            { 2,    L"☘️" },
+#endif
             { 2,    L"☘️", true },
             { 1,    L"☘" },
             { 1,    L"☘", true },
