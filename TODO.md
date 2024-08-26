@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
 
