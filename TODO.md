@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Unit Tests
 
 ## Normal Priority
-- Compensate in wcwidth.cpp for UCS2 and Full Width limitations on Windows 8.1.
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 - Event handler enhancements.
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
