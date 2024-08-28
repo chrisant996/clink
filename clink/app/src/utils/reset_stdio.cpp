@@ -150,6 +150,31 @@ static void reset_handle(intptr_t& h, int32 fh)
 #endif
 }
 
+#if 0
+//------------------------------------------------------------------------------
+// Verify one lowio handle.  It logs if the handle is mismatched.
+bool verify_handle(int32 fh)
+{
+    static const char* const c_handle_name[] = { "stdin", "stdout", "stderr" };
+
+    assert(fh >= 0);
+    assert(fh < 3);
+
+    const intptr_t osfhnd = _get_osfhandle(fh);
+
+    // Verify that the C runtime's cached handle matches the corresponding
+    // actual handle.
+    const intptr_t curr = reinterpret_cast<intptr_t>(GetStdHandle(STD_INPUT_HANDLE - fh));
+    if (osfhnd != curr)
+    {
+        LOG("WARNING: mismatched %s handle; output will likely get dropped", c_handle_name[fh]);
+        return false;
+    }
+
+    return true;
+}
+#endif
+
 //------------------------------------------------------------------------------
 void reset_stdio_handles()
 {
