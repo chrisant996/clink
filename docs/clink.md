@@ -535,7 +535,6 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="lua_break_on_traceback"></a>`lua.break_on_traceback` | False | Breaks into Lua debugger on `traceback()`.
 <a name="lua_debug"></a>`lua.debug` | False | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling [pause()](#pause).
 <a name="lua_path"></a>`lua.path` | | Value to append to the [`package.path`](https://www.lua.org/manual/5.2/manual.html#pdf-package.path) Lua variable. Used to search for Lua scripts specified in `require()` statements.
-<a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 <a name="lua_strict"></a>`lua.strict` | True | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 <a name="lua_traceback_on_error"></a>`lua.traceback_on_error` | False | Prints stack trace on Lua errors.
 <a name="match_coloring_rules"></a>`match.coloring_rules` | | Provides a series of color definitions used when displaying match completions.  See [Completion Colors](#completioncolors) for details.
@@ -1629,7 +1628,7 @@ Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to custo
 <tr><td><a href="#matchgenerators">Match Generators</a></td><td>How to write match generators, or custom completion providers.</td></tr>
 <tr><td><a href="#classifywords">Coloring the Input Text</a></td><td>How to make a match generator or argument matcher override the input coloring.</td></tr>
 <tr><td><a href="#customisingtheprompt">Customizing the Prompt</a></td><td>How to write custom prompt filters.</td></tr>
-<tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom suggestion generators.</td></tr>
+<tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom [suggestion](#auto-suggest) generators.</td></tr>
 </table>
 
 <a name="lua-scripts-location"></a>
@@ -1642,7 +1641,7 @@ Clink loads all Lua scripts it finds in these directories:
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 4. All directories registered by the `clink installscripts` command.
 
-Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the [`clink-reload`](#rlcmd-clink-reload) command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the [`lua.reload_scripts`](#lua_reload_scripts) setting changes (or is True).
+Lua scripts are loaded once and are only reloaded if forced because the scripts locations change or the [`clink-reload`](#rlcmd-clink-reload) command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).
 
 Run `clink info` to see the script paths for the current session.
 
