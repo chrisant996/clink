@@ -4,6 +4,22 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # IMPROVEMENTS
 
+## Mystery Issue
+There's some kind of case where `accept-line` doesn't print a newline before returning the input line to CMD.  Maybe somehow involving modmark.  I've hit it several times.
+
+Actually it almost looks like _after_ printing the transient prompt and `rl_crlf()`, something may have gotten a chance to force `clink.refilterprompt()` and print a normal prompt again out of turn, leaving the cursor at the end of that and thus output from the command began at that cursor position?  A command that I definitely only ran _once_ shows up in a transient prompt, immediately followed by a normal prompt plus input line, then followed by command output immediately at the end of the displayed input line.  But maybe the transient prompt is present because I hit UP then typed `value`, then hit CTRL-X,CTRL-R which prints transient prompt, then I hit UP again and typed `value` again and finally hit ENTER?
+
+    ```
+    > xx run -long_flags_that_make_command_wrap args -flags value
+
+     reponame  branchname ↓415  12345 14 hours ago             Tue 11:40
+    *> xx run -long_flags_that_make_command_wrap args -flags valueThis XX command is using the *XX Workflow* If you are testing changes in xx client code...
+    ```
+
+- Instrumentation seems to indicate it cannot hit `read_console()` again after the `rl_crlf()`, so on-idle coroutines shouldn't be involved.
+- Could some `onfoo` callback have forced `clink.refilterprompt()` out of turn?
+- Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
+
 ## High Priority
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
