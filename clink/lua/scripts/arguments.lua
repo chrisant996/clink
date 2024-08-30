@@ -1271,7 +1271,11 @@ end
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
+--- <tr><td><code>nowordbreakchars=true</code></td><td>See <a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a>.</td><td class="version">v1.5.17 and newer</td></tr>
+--- <tr><td><code>onadvance=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.5.14 and newer</td></tr>
+--- <tr><td><code>onalias=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.6.18 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
+--- <tr><td><code>onlink=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.5.14 and newer</td></tr>
 --- </table></p>
 --- <strong>Note:</strong>  Arguments are positional in an argmatcher.  Using
 --- <code>:addarg()</code> multiple times adds multiple argument positions, in
