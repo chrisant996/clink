@@ -16,9 +16,9 @@ if settings.get("lua.debug") or clink.DEBUG then
 end
 
 --------------------------------------------------------------------------------
--- This global variable tracks which generator function, if any, stopped the
--- most recent generate pass.  It's useful for diagnostic purposes; the file and
--- number can be retrieved by:
+-- This global variable tracks which classifier function, if any, stopped the
+-- most recent classify pass.  It's useful for diagnostic purposes; the file and
+-- line number can be retrieved by:
 --      local info = debug.getinfo(clink.classifier_stopped, 'S')
 --      print("file: "..info.short_src)
 --      print("line: "..info.linedefined)

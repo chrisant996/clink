@@ -186,7 +186,7 @@ end
 --------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
 -- most recent generate pass.  It's useful for diagnostic purposes; the file and
--- number can be retrieved by:
+-- line number can be retrieved by:
 --      local info = debug.getinfo(clink.generator_stopped, 'S')
 --      print("file: "..info.short_src)
 --      print("line: "..info.linedefined)

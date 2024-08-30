@@ -1112,11 +1112,22 @@ end
 
 --------------------------------------------------------------------------------
 local function apply_options_to_list(addee, list)
+    if type(addee.delayinit) == "function" then
+        list.delayinit = addee.delayinit
+    end
+    if addee.fromhistory then
+        list.fromhistory = true
+    end
+    if type(addee.loopchars) == "string" then
+        -- Apply looping characters, but avoid duplicates.
+        list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
+    end
     if addee.nosort then
         list.nosort = true
     end
-    if type(addee.delayinit) == "function" then
-        list.delayinit = addee.delayinit
+    if type(addee.nowordbreakchars) == "string" then
+        -- Apply non-wordbreak characters, but avoid duplicates.
+        list.nowordbreakchars = append_uniq_chars(list.nowordbreakchars, nil, addee.nowordbreakchars)
     end
     if type(addee.onadvance) == "function" then
         list.onadvance = addee.onadvance
@@ -1129,17 +1140,6 @@ local function apply_options_to_list(addee, list)
     end
     if type(addee.onlink) == "function" then
         list.onlink = addee.onlink
-    end
-    if addee.fromhistory then
-        list.fromhistory = true
-    end
-    if type(addee.loopchars) == "string" then
-        -- Apply looping characters, but avoid duplicates.
-        list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
-    end
-    if type(addee.nowordbreakchars) == "string" then
-        -- Apply non-wordbreak characters, but avoid duplicates.
-        list.nowordbreakchars = append_uniq_chars(list.nowordbreakchars, nil, addee.nowordbreakchars)
     end
 end
 
