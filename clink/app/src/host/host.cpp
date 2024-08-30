@@ -121,14 +121,6 @@ setting_bool g_history_autoexpand(
     "'clink-expand-history' Alt-^, or 'clink-expand-line' Alt-Ctrl-E).",
     true);
 
-static setting_bool g_reload_scripts(
-    "lua.reload_scripts",
-    "Reload scripts on every prompt",
-    "When true, Lua scripts are reloaded on every prompt.  When false, Lua scripts\n"
-    "are loaded once.  This setting can be changed while Clink is running and takes\n"
-    "effect at the next prompt.",
-    false);
-
 static setting_bool g_get_errorlevel(
     "cmd.get_errorlevel",
     "Retrieve last exit code",
@@ -872,30 +864,22 @@ skip_errorlevel:
     if (init_editor)
         update_last_cwd();
 
-    // Set up Lua.
-    bool local_lua = g_reload_scripts.get();
-    bool reload_lua = local_lua || (m_lua && m_lua->is_script_path_changed());
-    std::unique_ptr<host_lua> tmp_lua;
-    std::unique_ptr<prompt_filter> tmp_prompt_filter;
-    if (reload_lua || local_lua)
+    // Delete Lua if the script path has changed, to reinitialize Lua.
+    if (m_lua && m_lua->is_script_path_changed())
     {
-        // Chicken and egg problem:
-        //  1.  Must load settings to know whether to delete Lua.
-        //  2.  Must delete Lua before loading settings so that the loaded map
-        //      can contain deferred setting values for settings defined by Lua
-        //      scripts.
-        // Reloading settings again after deleting Lua resolves the problem.
-        const bool reload_settings = !!m_lua;
         delete m_prompt_filter;
         delete m_suggester;
         delete m_lua;
         m_prompt_filter = nullptr;
         m_suggester = nullptr;
         m_lua = nullptr;
-        if (reload_settings)
-            settings::load(settings_file.c_str(), default_settings_file.c_str());
+        // Delete Lua before reloading settings so the loaded map can contain
+        // deferred setting values for settings defined by Lua scripts.
+        settings::load(settings_file.c_str(), default_settings_file.c_str());
     }
-    if (!local_lua && m_lua)
+
+    // Set up Lua.
+    if (m_lua)
         init_scripts = false;
     {
         dbg_ignore_scope(snapshot, "Initialization overhead");
@@ -1345,16 +1329,6 @@ skip_errorlevel:
         m_queued_lines.emplace_front(std::move(*it));
 
     line_editor_destroy(editor);
-
-    if (local_lua)
-    {
-        delete m_prompt_filter;
-        delete m_suggester;
-        delete m_lua;
-        m_prompt_filter = nullptr;
-        m_suggester = nullptr;
-        m_lua = nullptr;
-    }
 
     m_prompt = nullptr;
     m_rprompt = nullptr;
