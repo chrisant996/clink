@@ -41,6 +41,8 @@ local function prepare()
 end
 
 --------------------------------------------------------------------------------
+local elapsed_this_pass = 0
+local force_diag_classifiers
 local function log_cost(tick, classifier)
     local elapsed = (os.clock() - tick) * 1000
     local cost = classifier.cost
@@ -55,6 +57,8 @@ local function log_cost(tick, classifier)
     if cost.peak < elapsed then
         cost.peak = elapsed
     end
+
+    elapsed_this_pass = elapsed_this_pass + elapsed
 end
 
 --------------------------------------------------------------------------------
@@ -70,6 +74,7 @@ end
 function clink._classify(commands)
     local impl = function ()
         clink.classifier_stopped = nil
+        elapsed_this_pass = 0
 
         for _, classifier in ipairs(_classifiers) do
             if classifier.classify then
@@ -83,6 +88,10 @@ function clink._classify(commands)
                     return true
                 end
             end
+        end
+
+        if elapsed_this_pass > 0.05 then
+            force_diag_classifiers = true
         end
 
         return false
@@ -132,7 +141,7 @@ end
 --------------------------------------------------------------------------------
 function clink._diag_classifiers(arg)
     arg = (arg and arg >= 2)
-    if not arg and not settings.get("lua.debug") then
+    if not arg and not settings.get("lua.debug") and not force_diag_classifiers then
         return
     end
 
