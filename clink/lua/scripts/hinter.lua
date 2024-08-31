@@ -82,7 +82,7 @@ function clink._gethint(line_state)
             besthint = besthint:gsub("[\r\n]", " ")
         end
 
-        if elapsed_this_pass > 0.05 then
+        if elapsed_this_pass > 0.010 then
             force_diag_hinters = true
         end
 

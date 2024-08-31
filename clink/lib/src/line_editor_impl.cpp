@@ -20,6 +20,11 @@
 #include "recognizer.h"
 #include "hinter.h"
 
+#ifdef DEBUG
+#include "ellipsify.h"
+#include "terminal/ecma48_iter.h"
+#endif
+
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
@@ -1121,7 +1126,44 @@ void line_editor_impl::before_display_readline()
             set_history_expansions(list);
         }
 
+#ifdef DEBUG
+        const double clock = os::clock();
+#endif
+
         m_hinter->get_hint(command_line_states.get_linestate(m_buffer), m_input_hint);
+
+#ifdef DEBUG
+        const int32 dbgrow = dbg_get_env_int("DEBUG_HINTER");
+        if (dbgrow)
+        {
+            static uint32 s_executed = 0;
+            const double elapsed = os::clock() - clock;
+            ++s_executed;
+
+            str<> format;
+            if (m_input_hint.empty())
+                format.format("%u  HINT (none), elapsed %0.04f sec", s_executed, elapsed);
+            else
+                format.format("%u  HINT \"%%s\" pos %u, elapsed %0.04f sec", s_executed, m_input_hint.pos(), elapsed);
+
+            str<> expanded;
+            const int32 limit = (m_input_hint.empty() || dbgrow < 0) ? 9999 : _rl_screenwidth - 1 - cell_count(format.c_str());
+            if (limit > 0)
+            {
+                ellipsify(m_input_hint.c_str(), max(1, limit), expanded, true);
+                if (dbgrow < 0)
+                {
+                    printf("%s\n", format.c_str());
+                }
+                else
+                {
+                    printf("\x1b[s\x1b[%uH", dbgrow);
+                    printf(format.c_str(), expanded.c_str());
+                    printf("\x1b[m\x1b[K\x1b[u");
+                }
+            }
+        }
+#endif
 
         if (!old_hint.equals(m_input_hint))
             m_buffer.set_need_draw();
