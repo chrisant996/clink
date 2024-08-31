@@ -26,10 +26,7 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "line_editor_integration.h"
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-#include "rl/rl_commands.h"
-#include "suggestions.h"
-#endif
+#include "hinter.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -113,7 +110,7 @@ extern setting_bool g_debug_log_terminal;
 extern setting_bool g_history_autoexpand;
 extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;
-#if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
+#ifdef USE_SUGGESTION_HINT_INLINE
 extern setting_color g_color_suggestion;
 extern setting_bool g_autosuggest_hint;
 #endif
@@ -383,9 +380,6 @@ struct display_line
 
     bool                m_newline = false;  // Line ends with LF.
     bool                m_toeol = false;    // Line extends to right edge of terminal (an optimization for clearing spaces).
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-    bool                m_has_suggestion = false; // Line contains one or more characters using FACE_SUGGESTION.
-#endif
     signed char         m_scroll_mark = 0;  // Number of columns for scrolling indicator (positive at left, negative at right).
 
 private:
@@ -428,9 +422,6 @@ void display_line::clear()
 
     m_newline = false;
     m_toeol = false;
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-    m_has_suggestion = false;
-#endif
     m_scroll_mark = 0;
 }
 
@@ -470,10 +461,6 @@ void display_line::append(char c, char face)
 {
     assert(!c || !m_trail);
     appendinternal(c, face);
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-    if (face == FACE_SUGGESTION)
-        m_has_suggestion = true;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -493,17 +480,6 @@ void display_line::appendnul()
 
 
 //------------------------------------------------------------------------------
-enum class comment_row_type
-{
-    custom,
-    expanded,
-#if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
-    autosuggest,
-#endif
-    MAX
-};
-
-//------------------------------------------------------------------------------
 class display_lines
 {
 public:
@@ -514,7 +490,7 @@ public:
     void                horz_parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 point, uint32 len, const display_lines& ref);
     void                apply_scroll_markers(uint32 top, uint32 bottom);
     void                set_top(uint32 top);
-    void                set_comment_row(str_moveable&& s, comment_row_type type);
+    void                set_comment_row(str_moveable&& s);
     void                clear_comment_row();
     void                swap(display_lines& d);
     void                clear();
@@ -526,10 +502,6 @@ public:
     bool                is_horz_scrolled() const;
     bool                get_horz_offset(int32& bytes, int32& column) const;
     const char*         get_comment_row() const;
-    comment_row_type    get_comment_row_type() const;
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-    bool                has_suggestion() const;
-#endif
 
     uint32              vpos() const { return m_vpos; }
     uint32              cpos() const { return m_cpos; }
@@ -551,7 +523,6 @@ private:
     uint32              m_horz_start = 0;
     bool                m_horz_scroll = false;
     str_moveable        m_comment_row;
-    comment_row_type    m_comment_row_type = comment_row_type::custom;
 };
 
 //------------------------------------------------------------------------------
@@ -968,14 +939,13 @@ void display_lines::set_top(uint32 top)
 }
 
 //------------------------------------------------------------------------------
-void display_lines::set_comment_row(str_moveable&& s, comment_row_type type)
+void display_lines::set_comment_row(str_moveable&& s)
 {
 #if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
     if (!s.empty())
         dbgsetignore(s.c_str());
 #endif
     m_comment_row = std::move(s);
-    m_comment_row_type = type;
 }
 
 //------------------------------------------------------------------------------
@@ -1067,29 +1037,6 @@ const char* display_lines::get_comment_row() const
 {
     return m_comment_row.c_str();
 }
-
-//------------------------------------------------------------------------------
-comment_row_type display_lines::get_comment_row_type() const
-{
-    return m_comment_row_type;
-}
-
-//------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-bool display_lines::has_suggestion() const
-{
-    // Can check only the last 2 lines.  Must check 2 instead of 1 because
-    // wrapping might cause the last line to be completely empty, in which
-    // case the second to the last line is where the suggestion will be.
-    for (uint32 i = std::max<int32>(0, int32(m_lines.size()) - 2); i < m_lines.size(); ++i)
-    {
-        if (m_lines[i].m_has_suggestion)
-            return true;
-    }
-
-    return false;
-}
-#endif
 
 //------------------------------------------------------------------------------
 display_line* display_lines::next_line(uint32 start)
@@ -1962,54 +1909,45 @@ void display_manager::display()
         _rl_vis_botlin = new_botlin;
     }
 
-    // Maybe show history expansion.
-    if (can_show_histexpand && _rl_vis_botlin < _rl_screenheight)
+    // Maybe show input hint.
+    if (_rl_vis_botlin < _rl_screenheight)
     {
-        const char* expanded = nullptr;
-        const history_expansion* e;
-        for (e = m_histexpand; e; e = e->next)
+        str_moveable in;
+        const input_hint* hint = get_input_hint();
+        const int32 pos = hint ? hint->pos() : -1;
+
+        if (can_show_histexpand)
         {
-            if (e->start <= rl_point && rl_point <= e->start + e->len)
+            const history_expansion* e;
+            for (e = m_histexpand; e; e = e->next)
             {
-                expanded = e->result;
-                if (!expanded || !*expanded)
-                    expanded = "(empty)";
-                break;
+                if (e->start <= rl_point && rl_point <= e->start + e->len)
+                {
+                    if (e->start >= pos)
+                    {
+                        const char* expanded = e->result;
+                        if (!expanded || !*expanded)
+                            expanded = "(empty)";
+                        in << "History expansion for \"";
+                        append_expand_ctrl(in, rl_line_buffer + e->start, e->len);
+                        in << "\": ";
+                        append_expand_ctrl(in, expanded);
+                    }
+                    break;
+                }
             }
         }
 
-        if (expanded)
+        if (hint || !in.empty())
         {
             dbg_ignore_scope(snapshot, "display_readline");
 
-            str_moveable in;
-            in << "History expansion for \"";
-            append_expand_ctrl(in, rl_line_buffer + e->start, e->len);
-            in << "\": ";
-            append_expand_ctrl(in, expanded);
-
+            if (hint && in.empty())
+                in = hint->c_str();
 #undef m_next
-            m_next.set_comment_row(std::move(in), comment_row_type::expanded);
+            m_next.set_comment_row(std::move(in));
 #define m_next __use_next_instead__
         }
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-        else if (next->has_suggestion() && can_show_suggestion_hint())
-        {
-            static const char c_reverse[] = "\x1b[7m";
-            static const char c_unreverse[] = "\x1b[27m";
-            static const char c_hyperlink[] = "\x1b]8;;";
-            static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-            static const char c_BEL[] = "\a";
-
-            str_moveable in;
-            in << c_reverse << "Right" << c_unreverse << "=";
-            in << c_hyperlink << c_doc_autosuggest << c_BEL << "Accept Suggestion" << c_hyperlink << c_BEL;
-
-#undef m_next
-            m_next.set_comment_row(std::move(in), comment_row_type::autosuggest);
-#define m_next __use_next_instead__
-        }
-#endif
     }
 
     if (strcmp(m_curr.get_comment_row(), next->get_comment_row()) || new_botlin != old_botlin)
@@ -2030,22 +1968,6 @@ void display_manager::display()
 
                 str<16> color;
                 const char* color_comment_row = g_color_comment_row.get();
-
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-                if (next->get_comment_row_type() == comment_row_type::autosuggest)
-                {
-                    const uint32 cols = cell_count(out.c_str());
-                    if (cols < limit)
-                    {
-                        str_moveable spaces;
-                        make_spaces(limit - cols, spaces);
-                        print(spaces.c_str(), spaces.size());
-                    }
-
-                    color_comment_row = g_color_suggestion.get();
-                }
-#endif
-
                 color << "\x1b[" << color_comment_row << "m";
 
                 print(color.c_str(), color.length());
@@ -2063,11 +1985,6 @@ void display_manager::display()
             _rl_last_c_pos = 0;
         }
     }
-
-#ifdef USE_SUGGESTION_HINT_COMMENTROW
-    if (_rl_last_v_pos < _rl_vis_botlin + 1 && next->get_comment_row_type() == comment_row_type::autosuggest)
-        move_to_row(_rl_vis_botlin + 1);
-#endif
 
     // If the right side prompt is not shown and should be, display it.
     if (!_rl_rprompt_shown_len && can_show_rprompt)

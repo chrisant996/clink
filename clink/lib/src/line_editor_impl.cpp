@@ -18,6 +18,7 @@
 #include "line_editor_integration.h"
 #include "suggestions.h"
 #include "recognizer.h"
+#include "hinter.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -307,6 +308,7 @@ void line_editor_impl::begin_line()
 
     m_prev_generate.clear();
     m_prev_plain = false;
+    m_prev_cursor = 0;
     m_prev_classify.clear();
     m_prev_command_word.clear();
     m_prev_command_word_offset = -1;
@@ -320,7 +322,7 @@ void line_editor_impl::begin_line()
     m_override_words.clear();
     m_override_command_line_states.clear();
 
-    rl_before_display_function = before_display_readline;
+    rl_before_display_function = ::before_display_readline;
 
     editor_module::context context = get_context();
     for (auto module : m_modules)
@@ -379,6 +381,12 @@ void line_editor_impl::set_generator(match_generator& generator)
     m_generator = &generator;
     m_regen_matches.set_generator(&generator);
     m_matches.set_generator(&generator);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::set_hinter(hinter& hinter)
+{
+    m_hinter = &hinter;
 }
 
 //------------------------------------------------------------------------------
@@ -838,7 +846,7 @@ bool line_editor_impl::update_input()
         }
         else
         {
-            classify();
+            before_display_readline();
 
             if (result.flags & result_impl::flag_done)
             {
@@ -1004,106 +1012,128 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::classify()
+void line_editor_impl::before_display_readline()
 {
-    if (!m_classifier)
-    {
-        if (g_history_autoexpand.get() && g_expand_mode.get() && g_history_show_preview.get())
-        {
-            command_line_states command_line_states = collect_command_line_states();
-            history_expansion* list = nullptr;
-            calc_history_expansions(m_buffer, list);
-            set_history_expansions(list);
-        }
-        return;
-    }
-
+    // Temporarily strip off suggestions.
     rollback<int32> rb_end(rl_end);
     if (g_suggestion_offset >= 0)
         rl_end = g_suggestion_offset;
 
     // Skip parsing if the line buffer hasn't changed.
     const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
-    if (m_prev_plain == plain && m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
+    const bool plain_changed = (m_prev_plain != plain);
+    const bool buffer_changed = (plain_changed || !m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()));
+    const bool skip_classifier = (!buffer_changed);
+    const bool skip_hinter = (!buffer_changed && m_prev_cursor == m_buffer.get_cursor());
+    if (skip_classifier && skip_hinter)
         return;
 
-    // Hang on to the old classifications so it's possible to detect changes.
-    word_classifications old_classifications(std::move(m_classifications));
-    m_classifications.init(m_buffer.get_length(), &old_classifications);
+    bool calced_history_expansions = false;
+    history_expansion* list = nullptr;
+    command_line_states command_line_states = ((!skip_classifier && !plain) || (!skip_hinter)) ? collect_command_line_states() : ::command_line_states();
 
-    if (plain)
+    if (!skip_classifier)
     {
-        m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
-        m_classifications.finish(m_module.is_showing_argmatchers());
-    }
-    else
-    {
-        // Use the full line; don't stop at the cursor.
-        command_line_states command_line_states = collect_command_line_states();
-        m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications);
-        if (g_history_autoexpand.get() &&
-            g_expand_mode.get() &&
-            (g_history_show_preview.get() ||
-             !is_null_or_empty(g_color_histexpand.get())))
-        {
-            history_expansion* list = nullptr;
-            calc_history_expansions(m_buffer, list);
-            classify_history_expansions(list, m_classifications);
-            set_history_expansions(list);
-        }
-        m_classifications.finish(m_module.is_showing_argmatchers());
-    }
+        // Hang on to the old classifications so it's possible to detect changes.
+        word_classifications old_classifications(std::move(m_classifications));
+        m_classifications.init(m_buffer.get_length(), &old_classifications);
 
-#ifdef DEBUG
-    const int32 dbgrow = dbg_get_env_int("DEBUG_CLASSIFY");
-    if (dbgrow)
-    {
-        str<> c;
-        str<> f;
-        str<> tmp;
-        static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
-        static_assert(sizeof_array(word_class_name) == int32(word_class::max), "word_class flag count mismatch");
-        word_class wc;
-        for (uint32 i = 0; i < m_classifications.size(); ++i)
+        if (plain)
         {
-            if (m_classifications.get_word_class(i, wc))
-            {
-                tmp.format(" \x1b[90m%d\x1b[m\x1b[7m%c\x1b[m", i + 1, word_class_name[int32(wc)][0]);
-                c.concat(tmp.c_str(), tmp.length());
-            }
-        }
-        for (uint32 i = 0; i < m_classifications.length(); ++i)
-        {
-            char face = m_classifications.get_face(i);
-            f.concat("\x1b[7m");
-            if (face >= 0x20 && face <= 0x7f)
-                f.concat(&face, 1);
-            else
-            {
-                tmp.format("%X", uint8(face));
-                f.concat(tmp.c_str(), tmp.length());
-            }
-            f.concat("\x1b[m");
-        }
-        if (dbgrow < 0)
-        {
-            printf("CLASSIFICATIONS %s  FACES \"%s\"\n", c.c_str(), f.c_str());
+            m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
+            m_classifications.finish(m_module.is_showing_argmatchers());
         }
         else
         {
-            printf("\x1b[s");
-            printf("\x1b[%uHCLASSIFICATIONS %s\x1b[m\x1b[K", dbgrow, c.c_str());
-            printf("\x1b[%uHFACES            %s\x1b[m\x1b[K", dbgrow + 1, f.c_str());
-            printf("\x1b[u");
+            // Use the full line; don't stop at the cursor.
+            m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications);
+            if (g_history_autoexpand.get() &&
+                g_expand_mode.get() &&
+                (g_history_show_preview.get() ||
+                !is_null_or_empty(g_color_histexpand.get())))
+            {
+                calc_history_expansions(m_buffer, list);
+                classify_history_expansions(list, m_classifications);
+                set_history_expansions(list);
+                calced_history_expansions = true;
+            }
+            m_classifications.finish(m_module.is_showing_argmatchers());
         }
-    }
+
+#ifdef DEBUG
+        const int32 dbgrow = dbg_get_env_int("DEBUG_CLASSIFY");
+        if (dbgrow)
+        {
+            str<> c;
+            str<> f;
+            str<> tmp;
+            static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
+            static_assert(sizeof_array(word_class_name) == int32(word_class::max), "word_class flag count mismatch");
+            word_class wc;
+            for (uint32 i = 0; i < m_classifications.size(); ++i)
+            {
+                if (m_classifications.get_word_class(i, wc))
+                {
+                    tmp.format(" \x1b[90m%d\x1b[m\x1b[7m%c\x1b[m", i + 1, word_class_name[int32(wc)][0]);
+                    c.concat(tmp.c_str(), tmp.length());
+                }
+            }
+            for (uint32 i = 0; i < m_classifications.length(); ++i)
+            {
+                char face = m_classifications.get_face(i);
+                f.concat("\x1b[7m");
+                if (face >= 0x20 && face <= 0x7f)
+                    f.concat(&face, 1);
+                else
+                {
+                    tmp.format("%X", uint8(face));
+                    f.concat(tmp.c_str(), tmp.length());
+                }
+                f.concat("\x1b[m");
+            }
+            if (dbgrow < 0)
+            {
+                printf("CLASSIFICATIONS %s  FACES \"%s\"\n", c.c_str(), f.c_str());
+            }
+            else
+            {
+                printf("\x1b[s");
+                printf("\x1b[%uHCLASSIFICATIONS %s\x1b[m\x1b[K", dbgrow, c.c_str());
+                printf("\x1b[%uHFACES            %s\x1b[m\x1b[K", dbgrow + 1, f.c_str());
+                printf("\x1b[u");
+            }
+        }
 #endif
 
-    m_prev_plain = plain;
-    m_prev_classify.set(m_buffer.get_buffer(), m_buffer.get_length());
+        if (!old_classifications.equals(m_classifications))
+            m_buffer.set_need_draw();
+    }
 
-    if (!old_classifications.equals(m_classifications))
-        m_buffer.set_need_draw();
+    if (!skip_hinter)
+    {
+        // Hang on to the old hint so it's possible to detect changes.
+        const input_hint old_hint(std::move(m_input_hint));
+
+        if (!calced_history_expansions && g_history_autoexpand.get() && g_expand_mode.get() && g_history_show_preview.get())
+        {
+            history_expansion* list = nullptr;
+            calc_history_expansions(m_buffer, list);
+            set_history_expansions(list);
+        }
+
+        m_hinter->get_hint(command_line_states.get_linestate(m_buffer), m_input_hint);
+
+        if (!old_hint.equals(m_input_hint))
+            m_buffer.set_need_draw();
+    }
+    else
+    {
+        m_input_hint.clear();
+    }
+
+    m_prev_plain = plain;
+    m_prev_cursor = m_buffer.get_cursor();
+    m_prev_classify.set(m_buffer.get_buffer(), m_buffer.get_length());
 }
 
 //------------------------------------------------------------------------------
@@ -1196,6 +1226,7 @@ void line_editor_impl::reclassify(reclassify_reason why)
     if (refresh || why == reclassify_reason::force)
     {
         m_prev_plain = false;
+        m_prev_cursor = 0;
         m_prev_classify.clear();
         m_buffer.set_need_draw();
         m_buffer.draw();
@@ -1226,7 +1257,7 @@ editor_module::context line_editor_impl::get_context() const
     auto& pter = const_cast<printer&>(m_printer);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, m_desc.rprompt, pter, pger, buffer, m_matches, m_classifications };
+    return { m_desc.prompt, m_desc.rprompt, pter, pger, buffer, m_matches, m_classifications, m_input_hint };
 }
 
 //------------------------------------------------------------------------------
@@ -1516,4 +1547,10 @@ bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 uint32 line_editor_impl::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
     return m_collector.collect_words(buffer, words, mode, nullptr);
+}
+
+//------------------------------------------------------------------------------
+const input_hint* line_editor_impl::get_input_hint() const
+{
+    return &m_input_hint;
 }

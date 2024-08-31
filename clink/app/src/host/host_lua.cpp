@@ -61,6 +61,7 @@ static const lua_clink_callbacks g_lua_callbacks =
 //------------------------------------------------------------------------------
 host_lua::host_lua()
 : m_generator(m_state)
+, m_hinter(m_state)
 , m_classifier(m_state)
 , m_idle(m_state)
 {
@@ -89,6 +90,12 @@ host_lua::operator lua_state& ()
 host_lua::operator match_generator& ()
 {
     return m_generator;
+}
+
+//------------------------------------------------------------------------------
+host_lua::operator hinter& ()
+{
+    return m_hinter;
 }
 
 //------------------------------------------------------------------------------

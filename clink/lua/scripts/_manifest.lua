@@ -12,6 +12,7 @@ return {
         "generator.lua",
         "arguments.lua",
         "classifier.lua",
+        "hinter.lua",
         "debugger.lua",
     }
 }

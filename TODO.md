@@ -21,6 +21,21 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- Allow Lua to set the comment row for the input line.
+  - Design for these cases:
+    - Environment variable expansion.
+    - Doskey alias expansion.
+    - History expansion.
+    - Argmatcher usage hints for the current word at the cursor.
+      - Let each arg slot specify constant hint text?
+      - Or use a callback function to specify dynamic hint text?
+      - Can it automatically provide usage hints based on arginfo from preceding linked argmatcher?
+  - Need a simple and reliable trigger for clearing the comment row later (don't add this capability without that!).
+    - ~~Maybe `clink.onaftercommand()` is enough?~~
+    - Maybe make it part of the classifier, and then if it isn't set during `:classify()` then that means it's been cleared.
+  - Settings:
+    - Reserve space for comment row.
+    - Show argmatcher usage hints (off by default).
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
@@ -49,10 +64,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
     local remove = clink.onbeginedit(func) -- add func
     remove()                               -- remove func
     ```
-- Allow Lua to set the comment row for the input line?
-  - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
-  - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
-  - Argmatcher could maybe automatically show syntax hints for the current word.
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
 ## Follow Up

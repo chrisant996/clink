@@ -1029,6 +1029,7 @@ skip_errorlevel:
     {
         editor = line_editor_create(desc);
         editor->set_generator(lua);
+        editor->set_hinter(lua);
         if (g_classify_words.get())
             editor->set_classifier(lua);
         editor->set_input_idle(lua);

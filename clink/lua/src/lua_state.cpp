@@ -275,6 +275,7 @@ void lua_state::initialise(lua_state_flags flags)
     {
         lua_load_script(self, lib, generator);
         lua_load_script(self, lib, classifier);
+        lua_load_script(self, lib, hinter);
         lua_load_script(self, lib, arguments);
     }
 

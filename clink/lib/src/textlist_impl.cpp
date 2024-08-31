@@ -2296,7 +2296,7 @@ uint8 standalone_input::peek()
 editor_module::context standalone_input::get_context()
 {
     assert(g_printer);
-    module::context context = { nullptr, nullptr, *g_printer, *(pager*)nullptr, *(line_buffer*)nullptr, *(matches*)nullptr, *(word_classifications*)nullptr };
+    module::context context = { nullptr, nullptr, *g_printer, *(pager*)nullptr, *(line_buffer*)nullptr, *(matches*)nullptr, *(word_classifications*)nullptr, *(input_hint*)nullptr };
     return context;
 }
 

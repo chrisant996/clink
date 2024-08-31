@@ -17,6 +17,7 @@ class lua_state;
 class str_base;
 class host_lua;
 class prompt_filter;
+class hinter;
 class suggester;
 class printer_context;
 

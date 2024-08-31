@@ -1629,6 +1629,7 @@ Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to custo
 <tr><td><a href="#classifywords">Coloring the Input Text</a></td><td>How to make a match generator or argument matcher override the input coloring.</td></tr>
 <tr><td><a href="#customisingtheprompt">Customizing the Prompt</a></td><td>How to write custom prompt filters.</td></tr>
 <tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom [suggestion](#auto-suggest) generators.</td></tr>
+<tr><td><a href="#showinginputhints">Showing Input Hints</a></td><td>How to write custom input hint providers (input hints can be displayed below the input line).</td></tr>
 </table>
 
 <a name="lua-scripts-location"></a>
@@ -1702,6 +1703,7 @@ Clink provides a framework for writing complex argument match generators in Lua.
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_linking">Linking Parsers</a></td><td>How to link a parser to a word or flag.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_hint">Show a Usage Hint</a></td><td>How to show a usage hint for the argument under the cursor.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
@@ -1898,6 +1900,12 @@ Function | Description
 :-: | ---
 [clink.dirmatches](#clink.dirmatches) | Generates directory matches.
 [clink.filematches](#clink.filematches) | Generates file matches.
+
+<a name="addarg_hint"></a>
+
+#### Show a Usage Hint
+
+_... TBD ... To Be Documented ..._
 
 <a name="addarg_fromhistory"></a>
 
@@ -2814,6 +2822,12 @@ This example illustrates how to make a suggestion generator that returns the lon
 ```lua
 #INCLUDE [docs\examples\ex_suggest.lua]
 ```
+
+<a name="showinginputhints"></a>
+
+## Showing Input Hints
+
+_... TBD ... To Be Documented ..._
 
 # Miscellaneous
 

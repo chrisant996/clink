@@ -4,10 +4,6 @@
 #include <core/str.h>
 #include <vector>
 
-// Define USE_SUGGESTION_HINT_COMMENTROW to show "[Right]=Accept Suggestion"
-// (with a hyperlink) in the comment row when there's suggestion text.
-//#define USE_SUGGESTION_HINT_COMMENTROW
-
 // Define USE_SUGGESTION_HINT_INLINE to show "[Right]=Accept Suggestion" (with a hyperlink)
 // inline when there's suggestion text.
 // Define RIGHT_ALIGN_SUGGESTION_HINT to show the hint right aligned, dropping
@@ -34,7 +30,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient);
 extern bool g_display_manager_no_comment_row;
 
 //------------------------------------------------------------------------------
-#if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
+#ifdef USE_SUGGESTION_HINT_INLINE
 #define DOC_HYPERLINK_AUTOSUGGEST "https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest"
 #endif
 

@@ -12,6 +12,7 @@ class line_buffer;
 class line_state;
 class matches;
 class word_classifications;
+class input_hint;
 
 //------------------------------------------------------------------------------
 class editor_module
@@ -44,6 +45,7 @@ public:
         line_buffer&        buffer;
         const matches&      matches;
         const word_classifications& classifications;
+        const input_hint&   input_hint;
     };
 
     struct binder

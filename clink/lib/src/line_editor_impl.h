@@ -15,6 +15,7 @@
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
+#include "hinter.h"
 #include "word_classifier.h"
 #include "word_classifications.h"
 #include "word_collector.h"
@@ -56,6 +57,7 @@ public:
     // line_editor
     virtual bool        add_module(editor_module& module) override;
     virtual void        set_generator(match_generator& generator) override;
+    virtual void        set_hinter(hinter& hinter) override;
     virtual void        set_classifier(word_classifier& classifier) override;
     virtual void        set_input_idle(input_idle* idle) override;
     virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false) override;
@@ -87,6 +89,7 @@ public:
     bool                notify_matches_ready(int32 generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
     uint32              collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const;
+    const input_hint*   get_input_hint() const;
 
 private:
     typedef editor_module                       module;
@@ -124,7 +127,7 @@ private:
     void                collect_words();
     command_line_states collect_command_line_states();
     uint32              collect_words(words& words, matches_impl* matches, collect_words_mode mode, command_line_states& command_line_states);
-    void                classify();
+    void                before_display_readline();
     void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
@@ -147,10 +150,12 @@ private:
     word_collector      m_collector;
     modules             m_modules;
     match_generator*    m_generator = nullptr;
+    hinter*             m_hinter = nullptr;
     word_classifier*    m_classifier = nullptr;
     input_idle*         m_idle = nullptr;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
+    input_hint          m_input_hint;
     word_classifications m_classifications;
     matches_impl        m_regen_matches;
     matches_impl        m_matches;
@@ -169,6 +174,7 @@ private:
     command_line_states m_command_line_states;
 
     bool                m_prev_plain = false;
+    int32               m_prev_cursor = 0;
     prev_buffer         m_prev_classify;
     words               m_classify_words;
 

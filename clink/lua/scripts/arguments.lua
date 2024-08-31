@@ -1112,11 +1112,16 @@ end
 
 --------------------------------------------------------------------------------
 local function apply_options_to_list(addee, list)
+    local t
     if type(addee.delayinit) == "function" then
         list.delayinit = addee.delayinit
     end
     if addee.fromhistory then
         list.fromhistory = true
+    end
+    t = type(addee.hint)
+    if t == "string" or t == "function" then
+        list.hint = addee.hint
     end
     if type(addee.loopchars) == "string" then
         -- Apply looping characters, but avoid duplicates.
@@ -1269,6 +1274,7 @@ end
 --- <tr><th>Entry</th><th>More Info</th><th>Version</th></tr>
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
+--- <tr><td><code>hint=<span class="arg">string_or_function</span></code></td><td>See <a href="#addarg_fromhistory">Show a Usage Hint</a>.</td><td class="version">v1.6.22 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>nowordbreakchars=true</code></td><td>See <a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a>.</td><td class="version">v1.5.17 and newer</td></tr>
@@ -3106,6 +3112,9 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 
     return false -- continue
 end
+
+--------------------------------------------------------------------------------
+-- TODO:  Hook up clink.hinter(...).
 
 
 

@@ -388,7 +388,21 @@ void before_display_readline()
 {
     assert(s_editor);
     if (s_editor)
-        s_editor->classify();
+        s_editor->before_display_readline();
+}
+
+//------------------------------------------------------------------------------
+const input_hint* get_input_hint()
+{
+    assert(s_editor);
+    if (!s_editor)
+        return nullptr;
+
+    const input_hint* hint = s_editor->get_input_hint();
+    if (!hint || hint->empty())
+        return nullptr;
+
+    return hint;
 }
 
 //------------------------------------------------------------------------------
