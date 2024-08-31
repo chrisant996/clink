@@ -2885,6 +2885,7 @@ end
 clink.argmatcher_generator_priority = 24
 local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority)
 local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priority)
+local argmatcher_hinter = clink.hinter(clink.argmatcher_generator_priority)
 
 --------------------------------------------------------------------------------
 local function do_generate(line_state, match_builder)
@@ -3114,7 +3115,78 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
--- TODO:  Hook up clink.hinter(...).
+function argmatcher_hinter:gethint(line_state) -- luacheck: no self
+    local besthint
+    local bestpos
+    local cursorpos = line_state:getcursor()
+
+    local lookup
+    local no_cmd
+    local reader
+::do_command::
+
+    local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
+    local command_word_index = line_state:getcommandwordindex()
+    lookup = nil -- luacheck: ignore 311
+
+    if argmatcher then
+        if reader then
+            reader:start_command(argmatcher)
+        else
+            reader = _argreader(argmatcher, line_state)
+            reader._word_classifier = word_classifier
+        end
+        if extra and not reader._extra then
+            extra.line_state = break_slash(extra.line_state) or extra.line_state
+            reader:push_line_state(extra)
+        end
+
+        -- Consume words and use them to move through matchers' arguments.
+        while true do
+            local word, word_index = reader:next_word()
+            if not word then
+                break
+            end
+            local arg_index = reader._arg_index
+            local chain, chainlookup = reader:update(word, word_index)
+            if chain then
+                line_state = reader._line_state -- reader:update() can swap to a different line_state.
+                lookup = chainlookup
+                no_cmd = reader._no_cmd
+                goto do_command
+            end
+            if not reader._extra then
+                local info = line_state:getwordinfo(word_index)
+                if not info or cursorpos < info.offset then
+                    break
+                elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
+                    local args
+                    if not reader._noflags and argmatcher._flags and argmatcher:_is_flag(word) then
+                        arg_index = 0
+                        args = argmatcher._flags._args[1]
+                    else
+                        args = argmatcher._args[arg_index]
+                    end
+                    if args then
+                        local hint = args.hint
+                        if type(hint) == "string" then
+                            besthint = hint
+                            bestpos = info.offset
+                        elseif type(hint) == "function" then
+                            local h,p = hint(arg_index, word, word_index, line_state, reader._user_data)
+                            if h then
+                                besthint = h
+                                bestpos = p or info.offset
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        return besthint, bestpos
+    end
+end
 
 
 

@@ -60,6 +60,7 @@ function clink._gethint(line_state)
 
         for _, hinter in ipairs(_hinters) do
             if hinter.gethint then
+                line_state:_reset_shift()
                 local tick = os.clock()
                 local hint, pos = hinter:gethint(line_state)
                 log_cost(tick, hinter)
