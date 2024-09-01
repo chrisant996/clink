@@ -90,6 +90,7 @@ extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static bool s_ever_input_hint = false;
+static bool s_suppress_comment_row = false;
 bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
@@ -1577,6 +1578,9 @@ static void write_with_clear(FILE* stream, const char* text, int length)
 //------------------------------------------------------------------------------
 void display_manager::display()
 {
+    const bool suppress_comment_row = s_suppress_comment_row;
+    s_suppress_comment_row = false;
+
     if (!_rl_echoing_p)
         return;
 
@@ -1912,7 +1916,7 @@ void display_manager::display()
 
     // Maybe show input hint.
     bool force_comment_row = false;
-    if (_rl_vis_botlin < _rl_screenheight)
+    if (_rl_vis_botlin < _rl_screenheight && !suppress_comment_row)
     {
         str_moveable in;
         const input_hint* hint = get_input_hint();
@@ -2595,9 +2599,14 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
     _rl_last_c_pos = 0;
 
     if (transient)
+    {
         s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
+        s_suppress_comment_row = true;
+    }
     else if (is_sparse_prompt_spacing())
+    {
         s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
+    }
 }
 #endif
 
