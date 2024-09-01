@@ -89,6 +89,7 @@ extern int _rl_rprompt_shown_len;
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
+static bool s_ever_input_hint = false;
 bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
@@ -1910,6 +1911,7 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
+    bool force_comment_row = false;
     if (_rl_vis_botlin < _rl_screenheight)
     {
         str_moveable in;
@@ -1943,24 +1945,33 @@ void display_manager::display()
             dbg_ignore_scope(snapshot, "display_readline");
 
             if (hint && in.empty())
+            {
                 in = hint->c_str();
+                if (!in.empty())
+                    s_ever_input_hint = true;
+            }
 #undef m_next
             m_next.set_comment_row(std::move(in));
 #define m_next __use_next_instead__
         }
+
+        // To avoid recurring jitter on the bottom row, if an input hint has
+        // been shown in this session before, then force reserving space for
+        // the comment row even if it's blank.
+        force_comment_row = s_ever_input_hint;
     }
 
-    if (strcmp(m_curr.get_comment_row(), next->get_comment_row()) || new_botlin != old_botlin)
+    if (strcmp(m_curr.get_comment_row(), next->get_comment_row()) || new_botlin != old_botlin || force_comment_row)
     {
         bool reset_col = false;
         const char* comment = next->get_comment_row();
 
-        if (m_pending_wrap || *comment || *m_curr.get_comment_row())
+        if (m_pending_wrap || *comment || *m_curr.get_comment_row() || force_comment_row)
         {
             move_to_row(_rl_vis_botlin + 1);
             move_to_column(0);
 
-            if (*comment)
+            if (*comment || force_comment_row)
             {
                 str<> out;
                 const int32 limit = _rl_screenwidth - 1;
