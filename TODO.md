@@ -22,20 +22,10 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 
 ## High Priority
 - Allow Lua to set the comment row for the input line.
-  - Design for these cases:
-    - Environment variable expansion.
-    - Doskey alias expansion.
-    - History expansion.
-    - Argmatcher usage hints for the current word at the cursor.
-      - Let each arg slot specify constant hint text?
-      - Or use a callback function to specify dynamic hint text?
-      - Can it automatically provide usage hints based on arginfo from preceding linked argmatcher?
-  - Need a simple and reliable trigger for clearing the comment row later (don't add this capability without that!).
-    - ~~Maybe `clink.onaftercommand()` is enough?~~
-    - Maybe make it part of the classifier, and then if it isn't set during `:classify()` then that means it's been cleared.
-  - Settings:
-    - Reserve space for comment row.
-    - Show argmatcher usage hints (off by default).
+  - [ ] Need some way for `:gethint()` to work with coroutines and override the optimization and call it again.
+  - [ ] Setting to show argmatcher usage hints (off by default?).
+  - [ ] Or a setting to enable/disable all comment row usage hints (other than history expansion)?
+  - FUTURE:  Can argmatcher.lua automatically provide usage hints based on arginfo from preceding linked argmatcher?
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
