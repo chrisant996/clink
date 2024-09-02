@@ -2659,9 +2659,9 @@ static void suppress_redisplay()
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
+void rl_module::set_prompt(const char* const prompt, const char* const rprompt, const bool _redisplay, const bool transient)
 {
-    redisplay = redisplay && (g_rl_buffer && g_printer);
+    const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -2725,24 +2725,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         // Count the number of lines the prompt takes to display.
         int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
 
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-        if (use_display_manager())
-        {
-            clear_lines = lines;
-        }
-        else
-#endif
-        {
-            // Clear the input line and the prompt prefix.
-            // BUGBUG: This can't walk up past the top of the visible area of
-            // the terminal display, so short windows will effectively corrupt
-            // the scrollback history.
-            // REVIEW: What if the visible area is only one line tall?  Are ANSI
-            // codes able to manipulate it adequately?
-            rl_clear_visible_line();
-            while (lines-- > 0)
-                g_printer->print("\x1b[A\x1b[2K");
-        }
+        clear_lines = lines;
     }
 
     // Update the prompt.

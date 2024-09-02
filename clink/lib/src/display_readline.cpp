@@ -79,8 +79,6 @@ extern int _rl_rprompt_shown_len;
 
 } // extern "C"
 
-#ifdef INCLUDE_CLINK_DISPLAY_READLINE
-
 #ifndef HANDLE_MULTIBYTE
 #error HANDLE_MULTIBYTE is required.
 #endif
@@ -2550,38 +2548,15 @@ void display_manager::finish_pending_wrap()
     m_pending_wrap = false;
 }
 
-#endif // INCLUDE_CLINK_DISPLAY_READLINE
-
 
 
 //------------------------------------------------------------------------------
-static bool s_use_display_manager = false;
-
-//------------------------------------------------------------------------------
-bool use_display_manager()
-{
-#if defined (OMIT_DEFAULT_DISPLAY_READLINE)
-    s_use_display_manager = true;
-#elif defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    str<> env;
-    if (os::get_env("USE_DISPLAY_MANAGER", env))
-        s_use_display_manager = !!atoi(env.c_str());
-    else
-        s_use_display_manager = true;
-#endif
-    return s_use_display_manager;
-}
-
-//------------------------------------------------------------------------------
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
 void clear_comment_row()
 {
     s_display_manager.clear_comment_row();
 }
-#endif
 
 //------------------------------------------------------------------------------
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
 void defer_clear_lines(uint32 prompt_lines, bool transient)
 {
     str<16> up;
@@ -2599,15 +2574,11 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
     else if (is_sparse_prompt_spacing())
         s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
 }
-#endif
 
 //------------------------------------------------------------------------------
 extern "C" void host_on_new_line()
 {
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    if (use_display_manager())
-        s_display_manager.on_new_line();
-#endif
+    s_display_manager.on_new_line();
 
 #ifdef REPORT_REDISPLAY
     s_calls = 0;
@@ -2620,22 +2591,16 @@ extern "C" void host_on_new_line()
 }
 
 //------------------------------------------------------------------------------
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
 extern "C" void end_prompt_lf()
 {
-    if (use_display_manager())
-        s_display_manager.end_prompt_lf();
+    s_display_manager.end_prompt_lf();
 }
-#endif
 
 //------------------------------------------------------------------------------
 void reset_readline_display()
 {
     clear_to_end_of_screen();
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    if (use_display_manager())
-        s_display_manager.clear();
-#endif
+    s_display_manager.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -2658,33 +2623,13 @@ void refresh_terminal_size()
 //------------------------------------------------------------------------------
 void display_readline()
 {
-#if defined (OMIT_DEFAULT_DISPLAY_READLINE) && !defined (INCLUDE_CLINK_DISPLAY_READLINE)
-#error Must have at least one display implementation defined.
-#endif
-
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-#if !defined (HANDLE_MULTIBYTE)
-#error INCLUDE_CLINK_DISPLAY_READLINE requires HANDLE_MULTIBYTE.
-#endif
-    if (use_display_manager())
-    {
-        s_display_manager.display();
-        return;
-    }
-#endif
-
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-    rl_redisplay();
-#endif
+    s_display_manager.display();
 }
 
 //------------------------------------------------------------------------------
 void set_history_expansions(history_expansion* list)
 {
-    if (use_display_manager())
-        s_display_manager.set_history_expansions(list);
-    else
-        history_free_expansions(&list);
+    s_display_manager.set_history_expansions(list);
 }
 
 //------------------------------------------------------------------------------
@@ -2717,30 +2662,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 
     // Measure what was previously displayed.
     measure_columns mc(measure_columns::resize);
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    if (use_display_manager())
-    {
-        s_display_manager.measure(mc);
-    }
-    else
-#endif
-    {
-        // Measure the lines for the prompt segment.
-#if defined(NO_READLINE_RESIZE_TERMINAL)
-        mc.measure(prompt, true);
-#else
-        const char* last_prompt_line = strrchr(prompt, '\n');
-        if (last_prompt_line)
-            ++last_prompt_line;
-        else
-            last_prompt_line = prompt;
-        mc.measure(last_prompt_line, true);
-#endif
-
-        // Measure the new number of lines to the cursor position.
-        const char* buffer_ptr = buffer.get_buffer();
-        mc.measure(buffer_ptr, buffer.get_cursor(), false);
-    }
+    s_display_manager.measure(mc);
     int32 cursor_line = mc.get_line_count() - 1;
 
     // WORKAROUND FOR OS ISSUE:  If the buffer ends with one trailing space and
@@ -2796,11 +2718,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 //------------------------------------------------------------------------------
 uint32 get_readline_display_top_offset()
 {
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    if (use_display_manager())
-        return s_display_manager.top_offset();
-#endif
-    return 0;
+    return s_display_manager.top_offset();
 }
 
 //------------------------------------------------------------------------------
@@ -2831,13 +2749,8 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
     int32 prefix = rl_get_prompt_prefix_visible();
     int32 point = 0;
 
-#ifdef INCLUDE_CLINK_DISPLAY_READLINE
-    if (use_display_manager())
-    {
-        if (s_display_manager.get_horz_offset(offset, prefix))
-            point = offset;
-    }
-#endif
+    if (s_display_manager.get_horz_offset(offset, prefix))
+        point = offset;
 
     wcwidth_iter iter(rl_line_buffer + offset, rl_end);
     for (uint32 i = 0; i <= v_pos; i++)

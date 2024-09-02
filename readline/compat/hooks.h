@@ -3,16 +3,11 @@
 
 #pragma once
 
-//#ifndef DEBUG
 // Define this to omit Readline's default display routines for the Readline input buffer.
 #define OMIT_DEFAULT_DISPLAY_READLINE
-//#endif
 
 // Define this to omit Readline's match display routines.
 #define OMIT_DEFAULT_DISPLAY_MATCHES
-
-// Define this to include Clink's custom display routines for the Readline input buffer.
-#define INCLUDE_CLINK_DISPLAY_READLINE
 
 // Define this to disable Readline's sigwinch terminal resize, which goes haywire.
 #define NO_READLINE_RESIZE_TERMINAL
