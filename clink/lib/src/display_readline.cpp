@@ -506,8 +506,6 @@ public:
     uint32              cpos() const { return m_cpos; }
     uint32              top() const { return m_top; }
 
-    void                shift_CJK_cursor(int32 cpos);
-
 private:
     display_line*       next_line(uint32 start);
     bool                adjust_columns(uint32& point, int32 delta, const char* buffer, uint32 len) const;
@@ -2653,12 +2651,10 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     display_accumulator coalesce;
 #endif
 
-#if defined(NO_READLINE_RESIZE_TERMINAL)
     // Update Readline's perception of the terminal dimensions.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     get_console_screen_buffer_info(&csbi);
     refresh_terminal_size();
-#endif
 
     // Measure what was previously displayed.
     measure_columns mc(measure_columns::resize);
@@ -2697,7 +2693,6 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     // Clear to end of screen.
     reset_readline_display();
 
-#if defined(NO_READLINE_RESIZE_TERMINAL)
     // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
     // very well at responding to terminal resize events.  Apparently Clink must
     // take care of it manually.  Calling rl_set_prompt() recalculates the
@@ -2706,13 +2701,6 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     rl_set_rprompt(_rprompt && *_rprompt ? _rprompt : nullptr);
     g_prompt_redisplay++;
     rl_forced_update_display();
-#else
-    // Let Readline update its display.
-    rl_resize_terminal();
-
-    if (g_debug_log_terminal.get())
-        LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
-#endif
 }
 
 //------------------------------------------------------------------------------

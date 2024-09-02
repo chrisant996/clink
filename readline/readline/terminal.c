@@ -417,7 +417,7 @@ _rl_sigwinch_resize_terminal (void)
   _rl_get_screen_size (fileno (rl_instream), 1);
 }
 	
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE) && !defined (NO_READLINE_RESIZE_TERMINAL)
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 void
 rl_resize_terminal (void)
 {

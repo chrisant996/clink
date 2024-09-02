@@ -9,9 +9,6 @@
 // Define this to omit Readline's match display routines.
 #define OMIT_DEFAULT_DISPLAY_MATCHES
 
-// Define this to disable Readline's sigwinch terminal resize, which goes haywire.
-#define NO_READLINE_RESIZE_TERMINAL
-
 #if defined(__MINGW32__) || defined(__MINGW64__)
 #define HAVE_TIMEVAL 1
 #include <_timeval.h>
