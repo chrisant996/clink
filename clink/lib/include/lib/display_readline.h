@@ -14,6 +14,7 @@
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
+void reset_display_readline();
 void refresh_terminal_size();
 void display_readline();
 void set_history_expansions(history_expansion* list=nullptr);

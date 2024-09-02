@@ -731,6 +731,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
 {
     assert(!m_prompt); // Reentrancy not supported!
 
+    reset_display_readline();
+
     const app_context* app = app_context::get();
     bool reset = app->update_env();
 

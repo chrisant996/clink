@@ -489,7 +489,7 @@ public:
     void                horz_parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 point, uint32 len, const display_lines& ref);
     void                apply_scroll_markers(uint32 top, uint32 bottom);
     void                set_top(uint32 top);
-    void                set_comment_row(str_moveable&& s);
+    void                set_comment_row(str_moveable&& s, bool force);
     void                clear_comment_row();
     void                swap(display_lines& d);
     void                clear();
@@ -497,10 +497,12 @@ public:
     const display_line* get(uint32 index) const;
     uint32              count() const;
     uint32              width() const;
+    uint32              height() const;
     bool                can_show_rprompt() const;
     bool                is_horz_scrolled() const;
     bool                get_horz_offset(int32& bytes, int32& column) const;
     const char*         get_comment_row() const;
+    bool                has_comment_row() const { return m_has_comment_row; }
 
     uint32              vpos() const { return m_vpos; }
     uint32              cpos() const { return m_cpos; }
@@ -519,6 +521,7 @@ private:
     uint32              m_top = 0;
     uint32              m_horz_start = 0;
     bool                m_horz_scroll = false;
+    bool                m_has_comment_row = false;
     str_moveable        m_comment_row;
 };
 
@@ -936,19 +939,21 @@ void display_lines::set_top(uint32 top)
 }
 
 //------------------------------------------------------------------------------
-void display_lines::set_comment_row(str_moveable&& s)
+void display_lines::set_comment_row(str_moveable&& s, bool force)
 {
 #if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
     if (!s.empty())
         dbgsetignore(s.c_str());
 #endif
     m_comment_row = std::move(s);
+    m_has_comment_row = force || !m_comment_row.empty();
 }
 
 //------------------------------------------------------------------------------
 void display_lines::clear_comment_row()
 {
     m_comment_row.clear();
+    m_has_comment_row = false;
 }
 
 //------------------------------------------------------------------------------
@@ -964,6 +969,7 @@ void display_lines::swap(display_lines& d)
     std::swap(m_horz_start, d.m_horz_start);
     std::swap(m_horz_scroll, d.m_horz_scroll);
     std::swap(m_comment_row, d.m_comment_row);
+    std::swap(m_has_comment_row, d.m_has_comment_row);
 }
 
 //------------------------------------------------------------------------------
@@ -1000,6 +1006,12 @@ uint32 display_lines::count() const
 uint32 display_lines::width() const
 {
     return m_width;
+}
+
+//------------------------------------------------------------------------------
+uint32 display_lines::height() const
+{
+    return m_count + m_has_comment_row;
 }
 
 //------------------------------------------------------------------------------
@@ -1397,6 +1409,7 @@ private:
     display_lines       m_curr;
     history_expansion*  m_histexpand = nullptr;
     uint32              m_top = 0;      // Vertical scrolling; index to top displayed line.
+    uint32              m_prompt_prefix_lines = 0;
     str_moveable        m_last_prompt_line;
     int32               m_last_prompt_line_width = -1;
     int32               m_last_prompt_line_botlin = -1;
@@ -1427,6 +1440,7 @@ void display_manager::clear()
     m_curr.clear();
     // m_histexpand is only cleared in on_new_line().
     // m_top is only cleared in on_new_line().
+    m_prompt_prefix_lines = 0;
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
@@ -1537,9 +1551,10 @@ void display_manager::end_prompt_lf()
 }
 
 //------------------------------------------------------------------------------
-static void write_with_clear(FILE* stream, const char* text, int length)
+static uint32 write_with_clear(FILE* stream, const char* text, int length)
 {
-    int remaining = length;
+    int32 remaining = length;
+    uint32 lines = 0;
     while (remaining > 0)
     {
         bool erase_in_line = true;
@@ -1550,6 +1565,8 @@ static void write_with_clear(FILE* stream, const char* text, int length)
         {
             measure_columns mc(measure_columns::print);
             mc.measure(text, length, true/*is_prompt*/);
+            if (eol)
+                lines += mc.get_line_count();
             if (!mc.get_column() && mc.get_line_count() > 1)
                 erase_in_line = false;
             rl_fwrite_function(stream, text, length);
@@ -1568,6 +1585,7 @@ static void write_with_clear(FILE* stream, const char* text, int length)
                 rl_fwrite_function(stream, eol, length);
         }
     }
+    return lines;
 }
 
 //------------------------------------------------------------------------------
@@ -1624,12 +1642,14 @@ void display_manager::display()
 
     const char* prompt = rl_get_local_prompt();
     const char* prompt_prefix = rl_get_local_prompt_prefix();
+    const uint32 old_prompt_prefix_lines = m_prompt_prefix_lines;
 
     bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
 
     if (s_defer_clear_lines > 0)
     {
+        s_defer_clear_lines = max(s_defer_clear_lines, old_prompt_prefix_lines + m_curr.height());
         // Clear the lines within the display_accumulator scope.
         for (int32 lines = s_defer_clear_lines; lines--;)
             rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", lines ? 5 : 4);
@@ -1646,7 +1666,7 @@ void display_manager::display()
     if (prompt || rl_display_prompt == rl_prompt)
     {
         if (prompt_prefix && forced_display)
-            write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
+            m_prompt_prefix_lines = write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
     }
     else
     {
@@ -1660,7 +1680,7 @@ void display_manager::display()
             const int32 pmtlen = int32(prompt - rl_display_prompt);
             if (forced_display)
             {
-                write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
+                m_prompt_prefix_lines = write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
                 // Make sure we are at column zero even after a newline,
                 // regardless of the state of terminal output processing.
                 if (pmtlen < 2 || prompt[-2] != '\r')
@@ -1907,7 +1927,6 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
-    bool force_comment_row = false;
     if (_rl_vis_botlin < _rl_screenheight && !g_display_manager_no_comment_row)
     {
         str_moveable in;
@@ -1936,7 +1955,7 @@ void display_manager::display()
             }
         }
 
-        if (hint || !in.empty())
+        if (hint || !in.empty() || s_ever_input_hint)
         {
             dbg_ignore_scope(snapshot, "display_readline");
 
@@ -1947,31 +1966,30 @@ void display_manager::display()
                     s_ever_input_hint = true;
             }
 #undef m_next
-            m_next.set_comment_row(std::move(in));
+            // To avoid recurring jitter on the bottom row, if an input hint
+            // has been shown in this session before, then force reserving
+            // space for the comment row even if it's blank.
+            m_next.set_comment_row(std::move(in), s_ever_input_hint);
 #define m_next __use_next_instead__
         }
-
-        // To avoid recurring jitter on the bottom row, if an input hint has
-        // been shown in this session before, then force reserving space for
-        // the comment row even if it's blank.
-        force_comment_row = s_ever_input_hint;
     }
 
-    if (strcmp(m_curr.get_comment_row(), next->get_comment_row()) || new_botlin != old_botlin || force_comment_row)
+    if (m_curr.has_comment_row() != next->has_comment_row() ||
+        strcmp(m_curr.get_comment_row(), next->get_comment_row()) ||
+        new_botlin != old_botlin)
     {
         bool reset_col = false;
-        const char* comment = next->get_comment_row();
 
-        if (m_pending_wrap || *comment || *m_curr.get_comment_row() || force_comment_row)
+        if (m_pending_wrap || next->has_comment_row())
         {
             move_to_row(_rl_vis_botlin + 1);
             move_to_column(0);
 
-            if (*comment || force_comment_row)
+            if (next->has_comment_row())
             {
                 str<> out;
                 const int32 limit = _rl_screenwidth - 1;
-                ellipsify(comment, limit, out, false);
+                ellipsify(next->get_comment_row(), limit, out, false);
 
                 str<16> color;
                 const char* color_comment_row = g_color_comment_row.get();
@@ -1990,6 +2008,27 @@ void display_manager::display()
         {
             print("\r", 1);
             _rl_last_c_pos = 0;
+        }
+    }
+
+    // Erase lingering extra lines.  This handles when the number of lines
+    // used by the prompt prefix shrinks (e.g. from 1 line to 0 lines).
+    {
+        const uint32 old_height = min<uint32>(_rl_screenheight, old_prompt_prefix_lines + m_curr.height());
+        const uint32 next_height = m_prompt_prefix_lines + next->height();
+        if (old_height > next_height)
+        {
+            move_to_row(_rl_vis_botlin + next->has_comment_row() + 1);
+            move_to_column(0);
+            const int32 delta = old_height - next_height;
+            for (int32 lines = delta; lines--;)
+                print("\x1b[K\n", lines ? 4 : 3);
+            if (delta > 1)
+            {
+                str<16> tmp;
+                tmp.format("\x1b[%uA", delta - 1);
+                print(tmp.c_str(), tmp.length());
+            }
         }
     }
 
@@ -2574,7 +2613,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void host_on_new_line()
+void reset_display_readline()
 {
     s_display_manager.on_new_line();
 
@@ -2592,13 +2631,6 @@ extern "C" void host_on_new_line()
 extern "C" void end_prompt_lf()
 {
     s_display_manager.end_prompt_lf();
-}
-
-//------------------------------------------------------------------------------
-void reset_readline_display()
-{
-    clear_to_end_of_screen();
-    s_display_manager.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -2691,7 +2723,8 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     _rl_last_c_pos = 0;
 
     // Clear to end of screen.
-    reset_readline_display();
+    clear_to_end_of_screen();
+    s_display_manager.clear();
 
     // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
     // very well at responding to terminal resize events.  Apparently Clink must
