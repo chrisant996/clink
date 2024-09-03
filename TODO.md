@@ -21,8 +21,11 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- Allow Lua to set the comment row for the input line.
+- **input_hinter:**
+  - [ ] **BUG:** The input line gets cleared after `Alt-=`.
+  - [ ] **BUG:** The input line gets cleared (or partially cleared) after `Alt-C` (fzf integration).
   - [ ] Need some way for `:gethint()` to work with coroutines and override the optimization and call it again.
+  - [ ] Need some way to either trigger `:gethint()` after some delay, or to show the comment row after a delay, to allow reducing flicker while typing quickly -- maybe this should be a built-in setting, instead of expecting individual hinters to build their own custom implementations (which would behave differently and have different bugs, creating an overall inconsistent experience).
   - [ ] Setting to show argmatcher usage hints (off by default?).
   - [ ] Or a setting to enable/disable all comment row usage hints (other than history expansion)?
   - FUTURE:  Can argmatcher.lua automatically provide usage hints based on arginfo from preceding linked argmatcher?
