@@ -87,6 +87,7 @@ extern int _rl_rprompt_shown_len;
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
+static uint32 s_defer_erase_extra_lines = 0;
 static bool s_ever_input_hint = false;
 bool g_display_manager_no_comment_row = false;
 
@@ -1409,7 +1410,6 @@ private:
     display_lines       m_curr;
     history_expansion*  m_histexpand = nullptr;
     uint32              m_top = 0;      // Vertical scrolling; index to top displayed line.
-    uint32              m_prompt_prefix_lines = 0;
     str_moveable        m_last_prompt_line;
     int32               m_last_prompt_line_width = -1;
     int32               m_last_prompt_line_botlin = -1;
@@ -1436,11 +1436,13 @@ display_manager::display_manager()
 //------------------------------------------------------------------------------
 void display_manager::clear()
 {
+    assert(!s_defer_clear_lines);
+    assert(!s_defer_erase_extra_lines);
+
     m_next.clear();
     m_curr.clear();
     // m_histexpand is only cleared in on_new_line().
     // m_top is only cleared in on_new_line().
-    m_prompt_prefix_lines = 0;
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
@@ -1551,10 +1553,10 @@ void display_manager::end_prompt_lf()
 }
 
 //------------------------------------------------------------------------------
-static uint32 write_with_clear(FILE* stream, const char* text, int length)
+static int32 write_with_clear(FILE* stream, const char* text, int length)
 {
     int32 remaining = length;
-    uint32 lines = 0;
+    int32 lines = 0;
     while (remaining > 0)
     {
         bool erase_in_line = true;
@@ -1642,14 +1644,12 @@ void display_manager::display()
 
     const char* prompt = rl_get_local_prompt();
     const char* prompt_prefix = rl_get_local_prompt_prefix();
-    const uint32 old_prompt_prefix_lines = m_prompt_prefix_lines;
 
     bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
 
     if (s_defer_clear_lines > 0)
     {
-        s_defer_clear_lines = max(s_defer_clear_lines, old_prompt_prefix_lines + m_curr.height());
         // Clear the lines within the display_accumulator scope.
         for (int32 lines = s_defer_clear_lines; lines--;)
             rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", lines ? 5 : 4);
@@ -1663,10 +1663,11 @@ void display_manager::display()
         s_defer_clear_lines = 0;
     }
 
+    int32 prompt_prefix_lines = 0;
     if (prompt || rl_display_prompt == rl_prompt)
     {
         if (prompt_prefix && forced_display)
-            m_prompt_prefix_lines = write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
+            prompt_prefix_lines = write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
     }
     else
     {
@@ -1680,7 +1681,7 @@ void display_manager::display()
             const int32 pmtlen = int32(prompt - rl_display_prompt);
             if (forced_display)
             {
-                m_prompt_prefix_lines = write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
+                prompt_prefix_lines = write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
                 // Make sure we are at column zero even after a newline,
                 // regardless of the state of terminal output processing.
                 if (pmtlen < 2 || prompt[-2] != '\r')
@@ -2013,13 +2014,20 @@ void display_manager::display()
 
     // Erase lingering extra lines.  This handles when the number of lines
     // used by the prompt prefix shrinks (e.g. from 1 line to 0 lines).
+    if (s_defer_erase_extra_lines)
     {
-        const uint32 old_height = min<uint32>(_rl_screenheight, old_prompt_prefix_lines + m_curr.height());
-        const uint32 next_height = m_prompt_prefix_lines + next->height();
+        assert(forced_display);
+        const uint32 old_height = min<uint32>(_rl_screenheight, s_defer_erase_extra_lines + m_curr.height());
+        const uint32 next_height = prompt_prefix_lines + next->height();
         if (old_height > next_height)
         {
             move_to_row(_rl_vis_botlin + next->has_comment_row() + 1);
             move_to_column(0);
+#ifdef DEBUG
+            const int32 dbgrow = dbg_get_env_int("DEBUG_ERASE_EXTRA_LINES");
+            if (dbgrow > 0)
+                dbg_printf_row(dbgrow, "old_height %u (%u), next_height %u (%u)", old_height, s_defer_erase_extra_lines, next_height, prompt_prefix_lines);
+#endif
             const int32 delta = old_height - next_height;
             for (int32 lines = delta; lines--;)
                 print("\x1b[K\n", lines ? 4 : 3);
@@ -2030,6 +2038,7 @@ void display_manager::display()
                 print(tmp.c_str(), tmp.length());
             }
         }
+        s_defer_erase_extra_lines = 0;
     }
 
     // If the right side prompt is not shown and should be, display it.
@@ -2607,9 +2616,16 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
     _rl_last_c_pos = 0;
 
     if (transient)
+    {
         s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
-    else if (is_sparse_prompt_spacing())
-        s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
+        s_defer_erase_extra_lines = 0;
+    }
+    else
+    {
+        if (is_sparse_prompt_spacing())
+            s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
+        s_defer_erase_extra_lines = prompt_lines;
+    }
 }
 
 //------------------------------------------------------------------------------
