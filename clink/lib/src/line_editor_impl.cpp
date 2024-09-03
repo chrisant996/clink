@@ -1028,8 +1028,8 @@ void line_editor_impl::before_display_readline()
     const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
     const bool plain_changed = (m_prev_plain != plain);
     const bool buffer_changed = (plain_changed || !m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()));
-    const bool skip_classifier = (!buffer_changed);
-    const bool skip_hinter = (!buffer_changed && m_prev_cursor == m_buffer.get_cursor());
+    const bool skip_classifier = (!m_classifier || !buffer_changed);
+    const bool skip_hinter = (!m_hinter || (!buffer_changed && m_prev_cursor == m_buffer.get_cursor()));
     if (skip_classifier && skip_hinter)
         return;
 
