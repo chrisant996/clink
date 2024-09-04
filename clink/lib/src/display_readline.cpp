@@ -2026,7 +2026,10 @@ void display_manager::display()
 #ifdef DEBUG
             const int32 dbgrow = dbg_get_env_int("DEBUG_ERASE_EXTRA_LINES");
             if (dbgrow > 0)
+            {
                 dbg_printf_row(dbgrow, "old_height %u (%u), next_height %u (%u)", old_height, s_defer_erase_extra_lines, next_height, prompt_prefix_lines);
+                dbg_printf_row(dbgrow + 1, "%s", prompt_prefix);
+            }
 #endif
             const int32 delta = old_height - next_height;
             for (int32 lines = delta; lines--;)
@@ -2669,6 +2672,13 @@ void refresh_terminal_size()
 //------------------------------------------------------------------------------
 void display_readline()
 {
+    // Terminal shell integration.  The caller doesn't have to worry about
+    // redundant calls; the terminal_begin_command and terminal_end_command
+    // functions internally track the state and ensure that only one begin
+    // code is printed, and that an end code is only printed if a command
+    // scope is currently active (begin without end yet).
+    terminal_end_command();
+
     s_display_manager.display();
 }
 

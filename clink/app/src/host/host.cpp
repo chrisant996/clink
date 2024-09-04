@@ -606,6 +606,9 @@ void host::filter_transient_prompt(bool final)
     {
 cant:
         update_last_cwd();
+        // Must ensure display_manager gets reset, so it doesn't try to
+        // optimize away printing the new prompt.
+        reset_display_readline();
         return;
     }
 
@@ -619,6 +622,9 @@ cant:
     if (!prompt)
         goto cant;
 
+    // Passing true for transient always ensures display_manager gets reset,
+    // and at the right point (after the transient prompt, but before setting
+    // the new normal prompt).
     set_prompt(prompt, rprompt, true/*redisplay*/, true/*transient*/);
 
     if (final)

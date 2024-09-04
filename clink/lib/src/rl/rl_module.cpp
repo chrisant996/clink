@@ -2661,6 +2661,7 @@ static void suppress_redisplay()
 //------------------------------------------------------------------------------
 void rl_module::set_prompt(const char* const prompt, const char* const rprompt, const bool _redisplay, const bool transient)
 {
+    assertimplies(transient, _redisplay);
     const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
 
     // Readline needs to be told about parts of the prompt that aren't visible
@@ -2707,7 +2708,8 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         s_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
     }
 
-    if (m_rl_prompt.equals(prev_prompt.c_str()) &&
+    if (!transient &&
+        m_rl_prompt.equals(prev_prompt.c_str()) &&
         m_rl_rprompt.equals(prev_rprompt.c_str()))
         return;
 
@@ -2763,6 +2765,8 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
     if (redisplay)
     {
         g_prompt_redisplay++;
+        if (transient)
+            reset_display_readline();
         defer_clear_lines(clear_lines, transient);
         rl_forced_update_display();
 
@@ -2770,6 +2774,9 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         if (was_visible)
             show_cursor(true);
     }
+
+    if (transient)
+        reset_display_readline();
 }
 
 //------------------------------------------------------------------------------
