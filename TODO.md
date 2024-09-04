@@ -44,10 +44,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
-- Popping flag matchers has a quirk that can be desirable or undesirable based on context.
-  - `git diff -O -D` colors `-D` as a flag, but `-I` is supposed to take a required argument.  This is arguably desirable in the case where an argument is optional (e.g. things like `-X [optional_arg]`, which do exist in some option parsers).  Maybe ideally it would default to not popping for flags when there are arg slots remaining by no flag prefix characters, and maybe there could be a way to explicitly enable popping like it currently does?  But that's subtle and hard to explain -- which is the better default?
-  - `git diff -O -` `TAB` pops back out to the `diff` argmatcher and tries to complete the `-` as a `diff` flag.
-  - There is no way to give `git diff -O` a file whose name begins with `-` and have Clink realize it's a file not a flag.
 - line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
