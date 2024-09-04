@@ -2730,6 +2730,9 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         clear_lines = lines;
     }
 
+    // Larger scope than the others to affect rl_forced_update_display().
+    rollback<bool> dmncr(g_display_manager_no_comment_row, transient);
+
     // Update the prompt.
     if (transient)
     {
@@ -2741,7 +2744,6 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
         rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
         rollback<int32> mml(_rl_mark_modified_lines, 0);
-        rollback<bool> dmncr(g_display_manager_no_comment_row, true);
 
         rl_set_prompt(m_rl_prompt.c_str());
         rl_set_rprompt(m_rl_rprompt.c_str());

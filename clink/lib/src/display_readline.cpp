@@ -986,7 +986,7 @@ void display_lines::clear()
     m_top = 0;
     m_horz_start = 0;
     m_horz_scroll = false;
-    m_comment_row.clear();
+    clear_comment_row();
 }
 
 //------------------------------------------------------------------------------
@@ -1393,6 +1393,7 @@ public:
     bool                get_horz_offset(int32& bytes, int32& column) const;
     bool                has_comment_row() const;
     void                clear_comment_row();
+    bool                is_displayed() const;
 
 private:
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
@@ -1568,7 +1569,7 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
             measure_columns mc(measure_columns::print);
             mc.measure(text, length, true/*is_prompt*/);
             if (eol)
-                lines += mc.get_line_count();
+                lines += mc.get_line_count() - 1;
             if (!mc.get_column() && mc.get_line_count() > 1)
                 erase_in_line = false;
             rl_fwrite_function(stream, text, length);
@@ -1578,6 +1579,7 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
 
         if (eol)
         {
+            ++lines;
             while (remaining > 0 && (*text == '\r' || *text == '\n'))
                 ++text, --remaining;
             length = int(text - eol);
@@ -1742,17 +1744,18 @@ void display_manager::display()
 
     // Prepare data structures for displaying the input line.
     const display_lines* next = &m_curr;
+    display_lines* update_next = nullptr;
     m_pending_wrap_display = &m_curr;
     if (need_update)
     {
-        next = &m_next;
+        next = update_next = &m_next;
         if (m_horz_scroll)
-            m_next.horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
+            update_next->horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
         else
-            m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
-        assert(m_next.count() > 0);
+            update_next->parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
+        assert(update_next->count() > 0);
     }
-#define m_next __use_next_instead__
+#define m_next __use_next_instead__ // Or use update_next if need_update is true.
     const int32 input_botlin_offset = max<int32>(0,
         min<int32>(min<int32>(next->count() - 1 - m_last_prompt_line_botlin, max_rows - 1), _rl_screenheight - 1));
     const int32 new_botlin = m_last_prompt_line_botlin + input_botlin_offset;
@@ -1789,11 +1792,7 @@ void display_manager::display()
 
     // Apply scroll markers.
     if (need_update && !m_horz_scroll)
-    {
-#undef m_next
-        m_next.apply_scroll_markers(m_top, m_top + input_botlin_offset);
-#define m_next __use_next_instead__
-    }
+        update_next->apply_scroll_markers(m_top, m_top + input_botlin_offset);
 
     // Display the last line of the prompt.
     const bool old_horz_scrolled = m_curr.is_horz_scrolled();
@@ -1802,6 +1801,8 @@ void display_manager::display()
                                                old_top != m_top ||
                                                old_horz_scrolled != is_horz_scrolled))
     {
+        assert(need_update); // See is_CJK_codepage usage below...
+
         move_to_row(0);
         move_to_column(0, true/*force*/);
 
@@ -1842,6 +1843,7 @@ void display_manager::display()
             {
                 m_last_prompt_line_width = csbi.dwCursorPosition.X;
 #undef m_next
+                // TODO: Is this correct when !need_update?
                 if (m_horz_scroll)
                     m_next.horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
                 else
@@ -1928,7 +1930,7 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
-    if (_rl_vis_botlin < _rl_screenheight && !g_display_manager_no_comment_row)
+    if (need_update && _rl_vis_botlin < _rl_screenheight && !g_display_manager_no_comment_row)
     {
         str_moveable in;
         const input_hint* hint = get_input_hint();
@@ -1960,18 +1962,14 @@ void display_manager::display()
         {
             dbg_ignore_scope(snapshot, "display_readline");
 
+            if (in.empty())    // History expansion doesn't count.
+                s_ever_input_hint = true;
             if (hint && in.empty())
-            {
                 in = hint->c_str();
-                if (!in.empty())
-                    s_ever_input_hint = true;
-            }
-#undef m_next
             // To avoid recurring jitter on the bottom row, if an input hint
             // has been shown in this session before, then force reserving
             // space for the comment row even if it's blank.
-            m_next.set_comment_row(std::move(in), s_ever_input_hint);
-#define m_next __use_next_instead__
+            update_next->set_comment_row(std::move(in), s_ever_input_hint);
         }
     }
 
@@ -1981,25 +1979,22 @@ void display_manager::display()
     {
         bool reset_col = false;
 
-        if (m_pending_wrap || next->has_comment_row())
+        move_to_row(_rl_vis_botlin + 1);
+        move_to_column(0);
+
+        if (next->has_comment_row())
         {
-            move_to_row(_rl_vis_botlin + 1);
-            move_to_column(0);
+            str<> out;
+            const int32 limit = _rl_screenwidth - 1;
+            ellipsify(next->get_comment_row(), limit, out, false);
 
-            if (next->has_comment_row())
-            {
-                str<> out;
-                const int32 limit = _rl_screenwidth - 1;
-                ellipsify(next->get_comment_row(), limit, out, false);
+            str<16> color;
+            const char* color_comment_row = g_color_comment_row.get();
+            color << "\x1b[" << color_comment_row << "m";
 
-                str<16> color;
-                const char* color_comment_row = g_color_comment_row.get();
-                color << "\x1b[" << color_comment_row << "m";
-
-                print(color.c_str(), color.length());
-                print(out.c_str(), out.length());
-                reset_col = true;
-            }
+            print(color.c_str(), color.length());
+            print(out.c_str(), out.length());
+            reset_col = true;
         }
 
         print("\x1b[m", 3);
@@ -2025,10 +2020,24 @@ void display_manager::display()
             move_to_column(0);
 #ifdef DEBUG
             const int32 dbgrow = dbg_get_env_int("DEBUG_ERASE_EXTRA_LINES");
-            if (dbgrow > 0)
+            if (dbgrow)
             {
                 dbg_printf_row(dbgrow, "old_height %u (%u), next_height %u (%u)", old_height, s_defer_erase_extra_lines, next_height, prompt_prefix_lines);
-                dbg_printf_row(dbgrow + 1, "%s", prompt_prefix);
+                if (dbgrow < 0)
+                {
+                    dbg_printf_row(dbgrow, "%s", prompt_prefix);
+                }
+                else
+                {
+                    // Note: this is printed through the display accumulator,
+                    // so bugs in the erase loop below can potentially affect
+                    // what row it ends up on.
+                    str<16> tmp;
+                    tmp.format("\x1b[s\x1b[%uH", dbgrow + 1);
+                    print(tmp.c_str(), tmp.length());
+                    write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
+                    print("\x1b[u", 3);
+                }
             }
 #endif
             const int32 delta = old_height - next_height;
@@ -2197,6 +2206,12 @@ void display_manager::clear_comment_row()
 
         clear_comment_row_internal();
     }
+}
+
+//------------------------------------------------------------------------------
+bool display_manager::is_displayed() const
+{
+    return m_curr.count() > 0;
 }
 
 //------------------------------------------------------------------------------
@@ -2627,7 +2642,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
     {
         if (is_sparse_prompt_spacing())
             s_defer_clear_lines = max<uint32>(s_defer_clear_lines, 1);
-        s_defer_erase_extra_lines = prompt_lines;
+        s_defer_erase_extra_lines = s_display_manager.is_displayed() ? prompt_lines : 0;
     }
 }
 
