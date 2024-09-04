@@ -272,7 +272,7 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
         sys_info.dwPageSize
     );
 #endif
-    DEFER_LOG("Version: %s", CLINK_VERSION_STR);
+    DEFER_LOG("Version: %s", CLINK_VERSION_STR_WITH_BRANCH);
     DEFER_LOG("Arch: %s", AS_STR(ARCHITECTURE_NAME));
     DEFER_LOG("DLL: %s", dll_path.c_str());
 

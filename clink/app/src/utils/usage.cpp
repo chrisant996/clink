@@ -14,14 +14,14 @@
 
 //------------------------------------------------------------------------------
 static constexpr const char* const c_clink_header =
-    "Clink v" CLINK_VERSION_STR "\n"
+    "Clink v" CLINK_VERSION_STR_WITH_BRANCH "\n"
     ORIGINAL_COPYRIGHT_STR "\n"
     PORTIONS_COPYRIGHT_STR "\n"
     "https://github.com/chrisant996/clink\n"
     ;
 
 static constexpr const char* const c_clink_header_abbr =
-    "Clink v" CLINK_VERSION_STR " (https://github.com/chrisant996/clink)\n"
+    "Clink v" CLINK_VERSION_STR_WITH_BRANCH " (https://github.com/chrisant996/clink)\n"
     ;
 
 static setting_enum s_clink_logo(

@@ -2568,7 +2568,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     print_heading("version");
 
-    print_value("version", CLINK_VERSION_STR);
+    print_value("version", CLINK_VERSION_STR_WITH_BRANCH);
     print_value("binaries", context.binaries.c_str());
 
     if (rl_explicit_arg)

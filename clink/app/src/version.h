@@ -31,6 +31,17 @@
                                 AS_LSTR(CLINK_VERSION_MINOR) ## L"." ##\
                                 AS_LSTR(CLINK_VERSION_PATCH) ## L"." ##\
                                 AS_LSTR(CLINK_COMMIT)
+#   undef CLINK_VERSION_STR_WITH_BRANCH
+#   ifdef CLINK_BRANCH
+#       define CLINK_VERSION_STR_WITH_BRANCH \
+                                AS_STR(CLINK_VERSION_MAJOR) ## "." ##\
+                                AS_STR(CLINK_VERSION_MINOR) ## "." ##\
+                                AS_STR(CLINK_VERSION_PATCH) ## "." ##\
+                                AS_STR(CLINK_COMMIT) ## "." ##\
+                                AS_STR(CLINK_BRANCH)
+#   else
+#       define CLINK_VERSION_STR_WITH_BRANCH CLINK_VERSION_STR
+#   endif
 #endif
 
 #define ENCODE_CLINK_VERSION(major, minor, patch) (major * 10000000 + minor * 10000 + patch)

@@ -256,6 +256,9 @@ newaction {
             error("Failed to extract version from build executables")
         end
         local docversion = version:match("%d+%.%d+%.%d+")
+        if clink_git_name ~= "master" and clink_git_name ~= "main" then
+            docversion = docversion.."<br/>("..clink_git_name..")"
+        end
 
         -- Create the output directory.
         local dest = path.getabsolute(".build/nsis").."/"

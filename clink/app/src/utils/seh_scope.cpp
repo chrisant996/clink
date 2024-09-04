@@ -34,9 +34,9 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     const DWORD pid = GetCurrentProcessId();
     fputs("\n!!! CLINK'S CRASHED!", stderr);
 #ifdef _WIN64
-    fputs("\n!!! v" CLINK_VERSION_STR " (x64)", stderr);
+    fputs("\n!!! v" CLINK_VERSION_STR_WITH_BRANCH " (x64)", stderr);
 #else
-    fputs("\n!!! v" CLINK_VERSION_STR " (x86)", stderr);
+    fputs("\n!!! v" CLINK_VERSION_STR_WITH_BRANCH " (x86)", stderr);
 #endif
     fprintf(stderr, "\n!!! process id %u (0x%x)", pid, pid);
     fputs("\n!!!", stderr);

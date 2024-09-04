@@ -243,7 +243,7 @@ int32 interpreter(int32 argc, char** argv)
             now.wYear, now.wMonth, now.wDay,
             now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
 
-        LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+        LOG("Clink version %s (%s)", CLINK_VERSION_STR_WITH_BRANCH, AS_STR(ARCHITECTURE_NAME));
         LOG(LUA_COPYRIGHT);
     }
 
@@ -277,7 +277,7 @@ int32 interpreter(int32 argc, char** argv)
 
     if (show_version)
     {
-        printf("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+        printf("Clink version %s (%s)", CLINK_VERSION_STR_WITH_BRANCH, AS_STR(ARCHITECTURE_NAME));
         puts("");
     }
     if (show_version || go_interactive)

@@ -504,7 +504,7 @@ void app_context::start_logger() const
                     (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" :
                     ((system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) ? "arm64" : "x86"));
             }
-            LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+            LOG("Clink version %s (%s)", CLINK_VERSION_STR_WITH_BRANCH, AS_STR(ARCHITECTURE_NAME));
 #pragma warning(pop)
         }
     }
