@@ -22,8 +22,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 
 ## High Priority
 - **input_hinter:**
-  - [ ] **BUG:** The input line gets cleared after `Alt-=`.
-  - [ ] **BUG:** The input line gets cleared (or partially cleared) after `Alt-C` (fzf integration).
   - [ ] **BUG:** Sometimes display_readline adds a _second_ reserved blank line when refiltering the prompt.  Happens in both conhost and Windows Terminal, but maybe more common in conhost?
   - [ ] Need some way for `:gethint()` to work with coroutines and override the optimization and call it again.
   - [ ] Need some way to either trigger `:gethint()` after some delay, or to show the comment row after a delay, to allow reducing flicker while typing quickly -- maybe this should be a built-in setting, instead of expecting individual hinters to build their own custom implementations (which would behave differently and have different bugs, creating an overall inconsistent experience).
