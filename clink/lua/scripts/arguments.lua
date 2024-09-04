@@ -650,12 +650,45 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
 
+    -- Merge two adjacent words separated only by nowordbreakchars.
+    local matcher = self._matcher
+    local realmatcher = self._realmatcher
+    if not self._cmd_wordbreak then
+        local is_flag = matcher:_is_flag(word)
+        local arg = is_flag and matcher._flags._args[1] or matcher._args[self._arg_index]
+        if arg and (arg.nowordbreakchars or is_flag) then
+            -- Internal CMD commands and Batch scripts never use nowordbreakchars.
+            -- Flags in other commands default to certain punctuation marks as
+            -- nowordbreakchars.  This more accurately reflects how the command
+            -- line will actually be parsed, especially for commas.
+            --
+            -- UNLESS the character is immediately preceded by ":", so that e.g.
+            -- "-Q:+x" can still be interpreted as two words, "-Q:" and "+x".
+            -- This exception is handled inside _unbreak_word() itself.
+            local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
+            local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
+            if adjusted then
+                self._line_state = adjusted
+                line_state = adjusted
+                if self._word_classifier then
+                    self._word_classifier:_unbreak_word(word_index, len, skip_word)
+                end
+                if skip_word then
+                    if is_flag then
+                        local next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
+                        self:_pop(next_is_flag)
+                    end
+                    return
+                end
+                word = line_state:getword(word_index)
+            end
+        end
+    end
+
     -- Check for flags and switch matcher if the word is a flag.
     local is_flag
     local next_is_flag
     local end_flags = nil
-    local matcher = self._matcher
-    local realmatcher = self._realmatcher
     local pushed_flags
     if not self._noflags then
         -- Don't treat a flag prefix character by itself as a flag unless it's in the end word.
@@ -767,35 +800,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
-
-    -- Merge two adjacent words separated only by nowordbreakchars.
-    if arg and (arg.nowordbreakchars or is_flag) and not self._cmd_wordbreak then
-        -- Internal CMD commands and Batch scripts never use nowordbreakchars.
-        -- Flags in other commands default to certain punctuation marks as
-        -- nowordbreakchars.  This more accurately reflects how the command
-        -- line will actually be parsed, especially for commas.
-        --
-        -- UNLESS the character is immediately preceded by ":", so that e.g.
-        -- "-Q:+x" can still be interpreted as two words, "-Q:" and "+x".
-        -- This exception is handled inside _unbreak_word() itself.
-        local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
-        local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
-        if adjusted then
-            self._line_state = adjusted
-            line_state = adjusted
-            if self._word_classifier then
-                self._word_classifier:_unbreak_word(word_index, len, skip_word)
-            end
-            if skip_word then
-                if is_flag then
-                    next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
-                    self:_pop(next_is_flag)
-                end
-                return
-            end
-            word = line_state:getword(word_index)
-        end
-    end
 
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
@@ -3129,8 +3133,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local reader
 ::do_command::
 
-    local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
-    local command_word_index = line_state:getcommandwordindex()
+    local argmatcher, _, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
     lookup = nil -- luacheck: ignore 311
 
     if argmatcher then
@@ -3138,7 +3141,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             reader:start_command(argmatcher)
         else
             reader = _argreader(argmatcher, line_state)
-            reader._word_classifier = word_classifier
         end
         if extra and not reader._extra then
             extra.line_state = break_slash(extra.line_state) or extra.line_state

@@ -379,6 +379,10 @@ TEST_CASE("Lua advanced arg parsers")
         SECTION("Comma : auto bat")
         {
             tester.set_input("bat_thing -,");
+            tester.set_expected_matches("bat_thing.bat");
+            tester.run();
+
+            tester.set_input("bat_thing -ghi,");
             tester.set_expected_matches("abc", "3ohnoes");
             tester.run();
 
