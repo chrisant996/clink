@@ -655,7 +655,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     local realmatcher = self._realmatcher
     if not self._cmd_wordbreak then
         local is_flag = matcher:_is_flag(word)
-        local arg = is_flag and matcher._flags._args[1] or matcher._args[self._arg_index]
+        local arg = is_flag and matcher._flags and matcher._flags._args[1] or matcher._args[self._arg_index]
         if arg and (arg.nowordbreakchars or is_flag) then
             -- Internal CMD commands and Batch scripts never use nowordbreakchars.
             -- Flags in other commands default to certain punctuation marks as
@@ -693,7 +693,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     if not self._noflags then
         -- Don't treat a flag prefix character by itself as a flag unless it's in the end word.
         -- For example, Perforce `p4 -x - command`.
-        is_flag = matcher:_is_flag(word) and (word:byte(2) or word_index == line_state:getwordcount()) and true or nil
+        is_flag = matcher:_is_flag(word) and matcher._flags and (word:byte(2) or word_index == line_state:getwordcount()) and true or nil
     end
     if is_flag then
         if matcher._flags and not last_onadvance then
