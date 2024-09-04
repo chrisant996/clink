@@ -891,5 +891,38 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
+    SECTION("Dash special cases")
+    {
+        const char* script = "\
+            clink.argmatcher('argcmd')\
+            :addflags('-a', '-z'..clink.argmatcher():addarg('x', 'y'))\
+            :addarg({'one'})\
+            :addarg({'two'})\
+        ";
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        SECTION("by itself at end")
+        {
+            tester.set_input("argcmd -z -");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("by itself as arg")
+        {
+            tester.set_input("argcmd -z - o");
+            tester.set_expected_matches("one");
+            tester.run();
+        }
+
+        SECTION("no flags in linked parser")
+        {
+            tester.set_input("argcmd -z -a o");
+            tester.set_expected_matches("one");
+            tester.run();
+        }
+    }
+
     setting->set();
 }
