@@ -658,7 +658,9 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     local realmatcher = self._realmatcher
     local pushed_flags
     if not self._noflags then
-        is_flag = matcher:_is_flag(word)
+        -- Don't treat a flag prefix character by itself as a flag unless it's in the end word.
+        -- For example, Perforce `p4 -x - command`.
+        is_flag = matcher:_is_flag(word) and (word:byte(2) or word_index == line_state:getwordcount()) and true or nil
     end
     if is_flag then
         if matcher._flags and not last_onadvance then
@@ -705,7 +707,9 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     if not is_flag and realmatcher._flagsanywhere == false then
         self._noflags = true
     elseif not self._noflags then
-        next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
+        -- Don't treat a flag prefix character by itself as a flag unless it's in the end word.
+        local next_word = line_state:getword(word_index + 1)
+        next_is_flag = matcher:_is_flag(next_word) and (next_word:byte(2) or word_index + 1 == line_state:getwordcount()) and true or nil
     end
 
     -- Update matcher after possible _push.
@@ -1763,7 +1767,7 @@ function _argmatcher:_is_flag(word)
     if first_char == "/" and clink.translateslashes() == 2 then
         -- When slash translation is set to forward slashes, then disable
         -- recognizing forward slash as a flag character so that path completion
-        -- can work.  See https://github.com/chrisant996/clink/issues/114.
+        -- can work.  See https://github.com/chrisant996/clink/issues/113.
         return false
     end
 
