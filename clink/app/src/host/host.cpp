@@ -935,10 +935,6 @@ skip_errorlevel:
         adjust_prompt_spacing();
 
         lua.send_event("onbeginedit");
-
-        // Terminal shell integration.  Happens after any Lua scripts so that
-        // it corresponds most cleanly to end of command output.
-        terminal_end_command();
     }
 
     // Send onprovideline event.
