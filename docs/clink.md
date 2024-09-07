@@ -17,7 +17,7 @@ Clink offers suggestions as you type based on history, files, and completions.
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).
+Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color).
 
 See [Auto-Suggest](#gettingstarted_autosuggest) to learn more.
 
@@ -130,7 +130,7 @@ Starting Clink injects it into a `cmd.exe` process, where it intercepts a handfu
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions.
-- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion.
+- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
@@ -143,7 +143,7 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 
 "Completion" is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.
 
-"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
+"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
 
 Some examples of what completions can offer:
 - File names,
@@ -276,7 +276,7 @@ Clink can suggest command lines as you type, based on command history and comple
 
 You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.
 
-When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
+When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
 Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
 
@@ -288,11 +288,11 @@ Later, you start to type a new command, and it matches the earlier command from 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
+The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
 If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers a suggestion for a whole input line, and the suggestion can come from the saved command history or from the list of possible completions.  There can be many possible completions available, but there is never more than one auto-suggestion available.
 
-The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Accept Suggestion` usage hint when a suggestion is available.
+The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Insert Suggestion` usage hint when a suggestion is available.
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
 
@@ -457,9 +457,9 @@ The following table describes the available Clink settings:
 Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
 <a name="autosuggest_async"></a>`autosuggest.async` | True | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
-<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
-<a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a usage hint `[Right]=Accept Suggestion` to help make the feature more discoverable and easy to use.  Set this to `false` to hide the usage hint.
-<a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
+<a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a usage hint `[Right]=Insert Suggestion` to help make the feature more discoverable and easy to use.  Set this to `false` to hide the usage hint.
+<a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), inserting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the [`history.dupe_mode`](#history_dupe_mode) setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 <a name="clink_autoupdate"></a>`clink.autoupdate` | `check` | Clink can periodically check for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
@@ -2573,7 +2573,7 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 <tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_arg">color.arg</span></td><td class="right_gray">'color.arg' is defined as an argument for 'clink set'</td></tr>
 <tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_unexpected">abc.xyz</span></td><td class="right_gray">'abc.xyz' is not a recognized argument for 'clink set'</td></tr>
 <tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s needle haystack\*</span></td><td class="right_gray">if 'findstr' has no argmatcher, all words use 'color.input'</td></tr>
-<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to accept an auto-suggestion</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to insert an auto-suggestion</td></tr>
 </table></code></pre>
 
 ### More Advanced Stuff
@@ -2807,7 +2807,7 @@ Additionally, individual prompt filters may want to add escape codes surrounding
 
 Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.
 
-Turn on [automatic suggestions](#autosuggest_enable) with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
+Turn on [automatic suggestions](#autosuggest_enable) with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you insert them.
 
 Scripts can provide custom suggestion generators, in addition to the built-in options:
 1. Create a new suggestion generator by calling [clink.suggester()](#clink.suggester) along with a name that identifies the suggestion generator, and can be added to the <code><a href="#autosuggest_strategy">autosuggest.strategy</a></code> setting.
@@ -2815,7 +2815,7 @@ Scripts can provide custom suggestion generators, in addition to the built-in op
 
 The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
 
-The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole accepted suggestion (even the part that's already been typed).
+The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
 
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
