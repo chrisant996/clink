@@ -105,6 +105,7 @@ private:
 CRITICAL_SECTION dbghelp::s_cs;
 HANDLE dbghelp::s_process;
 
+#ifdef DEBUG
 static void __dbghelp_assert(const char* file, uint32 line, const char* message)
 {
     wchar_t wmessage[1024];
@@ -124,6 +125,7 @@ static void __dbghelp_assert(const char* file, uint32 line, const char* message)
     case IDRETRY:   DebugBreak(); break;
     }
 }
+#endif
 
 #ifdef DEBUG
 #define dbghelp_assert(expr) do { if (!(expr)) __dbghelp_assert(__FILE__, __LINE__, #expr); } while (false)
