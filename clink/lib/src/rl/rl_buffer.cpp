@@ -150,7 +150,8 @@ void rl_buffer::redraw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    printf("\r");
+    _rl_cr();
+    _rl_last_c_pos = 0;
     rl_forced_update_display();
 }
 

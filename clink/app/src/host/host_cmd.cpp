@@ -18,6 +18,7 @@
 #include <core/path.h>
 #include <core/linear_allocator.h>
 #include <core/debugheap.h>
+#include <core/callstack.h>
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
@@ -35,21 +36,28 @@
 using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lpValue);
 using func_SetEnvironmentStringsW = BOOL (WINAPI*)(LPWSTR NewEnvironment);
 using func_WriteConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleOutput, CONST VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+using func_WriteFile_t = BOOL (WINAPI*)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, __CONSOLE_READCONSOLE_CONTROL* pInputControl);
 using func_GetEnvironmentVariableW_t = DWORD (WINAPI*)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 using func_SetConsoleTitleW_t = BOOL (WINAPI*)(LPCWSTR lpConsoleTitle);
-func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
-func_SetEnvironmentStringsW __Real_SetEnvironmentStringsW = SetEnvironmentStringsW;
-func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
-func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
-func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
-func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
+static func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
+static func_SetEnvironmentStringsW __Real_SetEnvironmentStringsW = SetEnvironmentStringsW;
+static func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
+static func_WriteConsoleW_t __Detoured_WriteConsoleW = WriteConsoleW; // For debug.log_terminal setting.
+static func_WriteFile_t __Detoured_WriteFile = WriteFile; // For debug.log_terminal setting.
+static func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
+static func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
+static func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
+static bool s_detoured_write_console = false;
+static int32 s_in_read_console = 0;
 
 //------------------------------------------------------------------------------
 extern printer* g_printer;
 
 //------------------------------------------------------------------------------
 extern setting_bool g_ctrld_exits;
+extern setting_bool g_debug_log_terminal;
+extern setting_bool g_debug_log_output_callstacks;
 
 static setting_enum g_autoanswer(
     "cmd.auto_answer",
@@ -267,6 +275,16 @@ void host_cleanup_after_signal()
 
 
 //------------------------------------------------------------------------------
+class read_console_scope
+{
+public:
+    read_console_scope() { ++s_in_read_console; }
+    ~read_console_scope() { --s_in_read_console; }
+};
+
+
+
+//------------------------------------------------------------------------------
 host_cmd::host_cmd()
 : host("cmd.exe")
 , m_doskey(os::get_shellname())
@@ -283,6 +301,103 @@ int32 host_cmd::validate()
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWORD to_write, LPDWORD written, LPVOID reserved)
+{
+    if (g_debug_log_terminal.get() &&
+        s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
+        !suppress_implicit_write_console_logging::is_suppressed())
+    {
+        const char* context = nullptr;
+        if (handle == GetStdHandle(STD_OUTPUT_HANDLE))
+            context = "CONOUT";
+        else if (handle == GetStdHandle(STD_ERROR_HANDLE))
+            context = "CONERR";
+        if (context)
+        {
+            const WCHAR* const chars = static_cast<const WCHAR*>(_chars);
+
+            str_moveable s;
+            wstr_iter iter(chars, to_write);
+            to_utf8(s, iter);
+
+            bool all_ascii = (to_write == s.length());
+            if (all_ascii)
+            {
+                const WCHAR* const end = chars + to_write;
+                for (const WCHAR* p = chars; p < end; ++p)
+                {
+                    if (*p < 0 || *p > 0x7e)
+                    {
+                        all_ascii = false;
+                        break;
+                    }
+                }
+            }
+
+            LOGCURSORPOS(handle);
+            if (all_ascii)
+                LOG("%s \"%.*s\", %d", context, s.length(), s.c_str(), s.length());
+            else
+                LOG("%s \"%.*s\", %d utf8, %d utf16", context, s.length(), s.c_str(), s.length(), to_write);
+            if (g_debug_log_output_callstacks.get())
+            {
+                char stk[8192];
+                format_callstack(2, 20, stk, sizeof(stk), false);
+                LOG("%s", stk);
+            }
+        }
+    }
+
+    return __Detoured_WriteConsoleW(handle, _chars, to_write, written, reserved);
+}
+
+//------------------------------------------------------------------------------
+static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD to_write, LPDWORD written, LPOVERLAPPED overlapped)
+{
+    if (g_debug_log_terminal.get() &&
+        s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
+        !suppress_implicit_write_console_logging::is_suppressed())
+    {
+        const char* context = nullptr;
+        if (handle == GetStdHandle(STD_OUTPUT_HANDLE))
+            context = "FILESTDOUT";
+        else if (handle == GetStdHandle(STD_ERROR_HANDLE))
+            context = "FILESTDERR";
+        if (context)
+        {
+            const char* const buffer = static_cast<const char*>(_buffer);
+            LOGCURSORPOS(handle);
+            LOG("%s \"%.*s\", %d", context, to_write, buffer, to_write);
+            if (g_debug_log_output_callstacks.get())
+            {
+                char stk[8192];
+                format_callstack(2, 20, stk, sizeof(stk), false);
+                LOG("%s", stk);
+            }
+        }
+    }
+
+    return __Detoured_WriteFile(handle, _buffer, to_write, written, overlapped);
+}
+
+//------------------------------------------------------------------------------
+static void maybe_detour_write_console()
+{
+    if (s_detoured_write_console || !g_debug_log_terminal.get())
+        return;
+
+    s_detoured_write_console = true;
+
+    if (get_hook_type() != iat)
+        return;
+
+    hook_setter hooks;
+    hooks.attach(detour, "kernel32.dll", "WriteConsoleW", &write_console_logging, &__Detoured_WriteConsoleW);
+    hooks.attach(detour, "kernel32.dll", "WriteFile", &write_file_logging, &__Detoured_WriteFile);
+    hooks.commit();
 }
 
 //------------------------------------------------------------------------------
@@ -310,7 +425,11 @@ bool host_cmd::initialise()
     if (!hooks.attach(type, module, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
         return false;
 
-    return hooks.commit();
+    if (!hooks.commit())
+        return false;
+
+    maybe_detour_write_console();
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -412,6 +531,9 @@ void host_cmd::add_aliases(bool force)
 //------------------------------------------------------------------------------
 void host_cmd::edit_line(wchar_t* chars, int32 max_chars, bool edit)
 {
+    // If debug.log_terminal is set, ensure detour for logging is installed.
+    maybe_detour_write_console();
+
     // Exiting a nested CMD will remove the aliases, so re-add them if missing.
     // But don't overwrite them if they already exist: let the user override
     // them if so desired.
@@ -493,6 +615,8 @@ BOOL WINAPI host_cmd::read_console(
 #endif
 
     seh_scope seh;
+    read_console_scope reading;
+
     wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
 
     const bool more_continuation = s_more_continuation;

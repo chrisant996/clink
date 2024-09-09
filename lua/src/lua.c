@@ -50,6 +50,13 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 #endif
 /* end_clink_change */
 
+/* begin_clink_change */
+void lua_fwrite(const void* buffer, size_t size, size_t count, FILE* stream)
+{
+    fwrite(buffer, size, count, stream);
+}
+/* end_clink_change */
+
 
 /*
 ** lua_stdin_is_tty detects whether the standard input is a 'tty' (that

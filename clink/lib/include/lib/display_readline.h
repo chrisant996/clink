@@ -83,6 +83,9 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #define FACE_NONE           'n'
 
 //------------------------------------------------------------------------------
+// The display_accumulator can be disabled:
+// In release builds with `set CLINK_NO_DISPLAY_ACCUMULATOR=1`.
+// Or in debug builds also with `set DEBUG_NO_DISPLAY_ACCUMULATOR=1`.
 class display_accumulator
 {
 public:

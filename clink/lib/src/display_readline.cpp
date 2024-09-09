@@ -107,6 +107,7 @@ setting_bool g_history_show_preview(
     true);
 
 extern setting_bool g_debug_log_terminal;
+extern setting_bool g_debug_log_output_callstacks;
 extern setting_bool g_history_autoexpand;
 extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;
@@ -1312,19 +1313,28 @@ display_accumulator::display_accumulator()
 
     ++s_nested;
 
-#ifdef DEBUG
     if (s_nested == 1)
     {
         str<> value;
-        if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value) && atoi(value.c_str()) != 0)
-            return;
+#ifdef DEBUG
+        if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value))
+        {
+            if (atoi(value.c_str()) != 0)
+                return;
+        }
+        else
+#endif
+        if (os::get_env("CLINK_NO_DISPLAY_ACCUMULATOR", value))
+        {
+            if (atoi(value.c_str()) != 0)
+                return;
+        }
     }
     else
     {
         if (!s_active)
             return;
     }
-#endif
 
     s_active = true;
 
@@ -1614,9 +1624,7 @@ void display_manager::display()
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
 
-#ifndef LOG_OUTPUT_CALLSTACKS
     display_accumulator coalesce;
-#endif
 
     m_pending_wrap = false;
 
@@ -2084,9 +2092,7 @@ void display_manager::display()
 
     rl_display_fixed = 0;
 
-#ifndef LOG_OUTPUT_CALLSTACKS
     coalesce.flush();
-#endif
 
 #ifdef REPORT_REDISPLAY
     {
@@ -2720,9 +2726,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     // between the OS async terminal resize and cursor movement while refreshing
     // the Readline display.  The result is near-perfect resize behavior; but
     // perfection is beyond reach, due to the inherent async execution.
-#ifndef LOG_OUTPUT_CALLSTACKS
     display_accumulator coalesce;
-#endif
 
     // Update Readline's perception of the terminal dimensions.
     CONSOLE_SCREEN_BUFFER_INFO csbi;

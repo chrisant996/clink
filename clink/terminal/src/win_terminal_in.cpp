@@ -67,6 +67,13 @@ setting_bool g_debug_log_terminal(
     "the log file.",
     false);
 
+setting_bool g_debug_log_output_callstacks(
+    "debug.log_output_callstacks",
+    "Include callstack when logging output",
+    "When debug.log_terminal is enabled, this logs the corresponding callstacks.\n"
+    "Otherwise this has no effect.\n",
+    false);
+
 extern setting_bool g_adjust_cursor_style;
 extern setting_enum g_default_bindings;
 
@@ -1043,6 +1050,8 @@ static void verbose_input(KEY_EVENT_RECORD const& record, bool log)
     }
     else
     {
+        suppress_implicit_write_console_logging nolog;
+
         const char* pro = (s_verbose_input > 1) ? "\x1b[s\x1b[H" : "";
         const char* epi = (s_verbose_input > 1) ? "\x1b[K\x1b[u" : "\n";
 
@@ -1392,6 +1401,8 @@ static void verbose_input(MOUSE_EVENT_RECORD const& record, bool log)
     }
     else
     {
+        suppress_implicit_write_console_logging nolog;
+
         printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
                 record.dwMousePosition.X,
                 record.dwMousePosition.Y,

@@ -7,6 +7,7 @@
 #include "version.h"
 
 #include <core/str.h>
+#include <terminal/terminal_helpers.h>
 
 //------------------------------------------------------------------------------
 static thread_local int32 s_filter = 0;
@@ -30,6 +31,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     buffer << "\\clink.dmp";
 
     wstr<> wpath(buffer.c_str());
+
+    suppress_implicit_write_console_logging nolog;
 
     const DWORD pid = GetCurrentProcessId();
     fputs("\n!!! CLINK'S CRASHED!", stderr);

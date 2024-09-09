@@ -12,6 +12,8 @@
 #define LOG(...)    logger::info(__FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define ERR(...)    logger::error(__FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define DEFER_LOG(...) logger::defer_info(__FUNCTION__, __LINE__, ##__VA_ARGS__)
+void LOGCURSORPOS();
+void LOGCURSORPOS(HANDLE h);
 
 //------------------------------------------------------------------------------
 class logger

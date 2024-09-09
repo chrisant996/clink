@@ -489,6 +489,9 @@ void app_context::start_logger() const
         get_binaries_dir(dll_path);
         LOG("DLL path is '%s'", dll_path.c_str());
 
+        const void* const base = vm().get_alloc_base((void*)"");
+        LOG("DLL base is %p", base);
+
         {
 #pragma warning(push)
 #pragma warning(disable:4996)

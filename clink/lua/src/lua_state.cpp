@@ -13,11 +13,14 @@
 #include <core/str_tokeniser.h>
 #include <core/os.h>
 #include <core/debugheap.h>
+#include <core/callstack.h>
+#include <core/log.h>
 #include <lib/cmd_tokenisers.h>
 #include <lib/recognizer.h>
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 
 #include <memory>
 #include <assert.h>
@@ -77,6 +80,9 @@ setting_bool g_lua_strict(
     "In that case you can try turning this off, but please alert the script owner\n"
     "about the issue so they can fix the script.",
     true);
+
+extern setting_bool g_debug_log_terminal;
+extern setting_bool g_debug_log_output_callstacks;
 
 
 
@@ -855,6 +861,62 @@ void set_lua_terminal(terminal_in* in, terminal_out* out)
 }
 terminal_in* get_lua_terminal_input() { return s_lua_term_in; }
 terminal_out* get_lua_terminal_output() { return s_lua_term_out; }
+
+//------------------------------------------------------------------------------
+extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream)
+{
+    // The C runtime implementation of fwrite has two undesirable
+    // characteristics when printing a UTF8 string:  it performs one
+    // WriteConsoleW call PER CHARACTER and it cannot print non-ASCII
+    // codepoints (nor can printf or fprintf).
+    //
+    // This replacement for fwrite adds optional logging and converts from
+    // UTF8 to UTF16 when writing to a console handle.
+
+    if ((stream == stderr || stream == stdout) && size == 1 && !(count & ~uint32(0x7fffffff)))
+    {
+        suppress_implicit_write_console_logging nolog;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            // Maybe log.
+            if (g_debug_log_terminal.get())
+            {
+                LOGCURSORPOS(h);
+                LOG("%s \"%.*s\", %d", (stream == stderr) ? "LUACONERR" : "LUACONOUT", count, buffer, count);
+                if (g_debug_log_output_callstacks.get())
+                {
+                    char stk[8192];
+                    format_callstack(2, 20, stk, sizeof(stk), false);
+                    LOG("%s", stk);
+                }
+            }
+
+            // g_printer is needed for terminal emulation.
+            assertimplies(stream != stderr, g_printer);
+
+            // Print the buffer.
+            if (stream != stderr && g_printer)
+            {
+                g_printer->print(static_cast<const char*>(buffer), uint32(count));
+            }
+            else
+            {
+                // Convert to UTF16.
+                wstr<32> s;
+                str_iter tmpi(static_cast<const char*>(buffer), uint32(count));
+                to_utf16(s, tmpi);
+                // Write in a single OS console call.
+                WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+            }
+            return;
+        }
+    }
+
+    fwrite(buffer, size, count, stream);
+}
 
 
 

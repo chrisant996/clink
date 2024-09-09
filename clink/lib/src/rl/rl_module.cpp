@@ -33,6 +33,7 @@
 #include <core/settings.h>
 #include <core/log.h>
 #include <core/debugheap.h>
+#include <core/callstack.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/printer.h>
@@ -41,10 +42,6 @@
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/scroll.h>
-
-#ifdef LOG_OUTPUT_CALLSTACKS
-#include <core/callstack.h>
-#endif
 
 #include <signal.h>
 #include <unordered_set>
@@ -357,6 +354,7 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_debug_log_terminal;
+extern setting_bool g_debug_log_output_callstacks;
 extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
@@ -376,17 +374,6 @@ static void __cdecl dummy_display_matches_hook(char**, int32, int32)
     // integrated into Readline.
 }
 #endif
-
-
-
-//------------------------------------------------------------------------------
-static void LOGCURSORPOS()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (GetConsoleScreenBufferInfo(h, &csbi))
-        LOG("CURSORPOS %d,%d", csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
-}
 
 
 
@@ -726,17 +713,19 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int32 char_cou
 static int32 s_puts_face = 0;
 static void terminal_log_write(FILE* stream, const char* chars, int32 char_count)
 {
+    suppress_implicit_write_console_logging nolog;
+
     if (stream == out_stream)
     {
         assert(g_printer);
         LOGCURSORPOS();
-#ifdef LOG_OUTPUT_CALLSTACKS
-        char stk[8192];
-        format_callstack(2, 20, stk, sizeof(stk), false);
-        LOG("%s \"%.*s\", %d -- %s", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count, stk);
-#else
         LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
-#endif
+        if (g_debug_log_output_callstacks.get())
+        {
+            char stk[8192];
+            format_callstack(2, 20, stk, sizeof(stk), false);
+            LOG("%s", stk);
+        }
         g_printer->print(chars, char_count);
         return;
     }
@@ -753,7 +742,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
         HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
         if (GetConsoleMode(h, &dw))
         {
-            LOGCURSORPOS();
+            LOGCURSORPOS(h);
             LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
             wstr<32> s;
             str_iter tmpi(chars, char_count);
