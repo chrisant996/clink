@@ -354,7 +354,9 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_debug_log_terminal;
+#ifdef _MSC_VER
 extern setting_bool g_debug_log_output_callstacks;
+#endif
 extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
@@ -720,12 +722,14 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
         assert(g_printer);
         LOGCURSORPOS();
         LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
+#ifdef _MSC_VER
         if (g_debug_log_output_callstacks.get())
         {
             char stk[8192];
             format_callstack(2, 20, stk, sizeof(stk), false);
             LOG("%s", stk);
         }
+#endif
         g_printer->print(chars, char_count);
         return;
     }

@@ -107,7 +107,6 @@ setting_bool g_history_show_preview(
     true);
 
 extern setting_bool g_debug_log_terminal;
-extern setting_bool g_debug_log_output_callstacks;
 extern setting_bool g_history_autoexpand;
 extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;

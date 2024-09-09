@@ -182,21 +182,3 @@ private:
 #endif
 
 #endif // !USE_MEMORY_TRACKING
-
-//------------------------------------------------------------------------------
-// Debug helpers.
-
-#ifdef DEBUG
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-size_t dbgcchcopy(char* to, size_t max, const char* from);
-size_t dbgcchcat(char* to, size_t max, const char* from);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // DEBUG

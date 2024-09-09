@@ -67,12 +67,14 @@ setting_bool g_debug_log_terminal(
     "the log file.",
     false);
 
+#ifdef _MSC_VER
 setting_bool g_debug_log_output_callstacks(
     "debug.log_output_callstacks",
     "Include callstack when logging output",
     "When debug.log_terminal is enabled, this logs the corresponding callstacks.\n"
     "Otherwise this has no effect.\n",
     false);
+#endif
 
 extern setting_bool g_adjust_cursor_style;
 extern setting_enum g_default_bindings;

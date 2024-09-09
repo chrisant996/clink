@@ -82,7 +82,9 @@ setting_bool g_lua_strict(
     true);
 
 extern setting_bool g_debug_log_terminal;
+#ifdef _MSC_VER
 extern setting_bool g_debug_log_output_callstacks;
+#endif
 
 
 
@@ -886,12 +888,14 @@ extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* 
             {
                 LOGCURSORPOS(h);
                 LOG("%s \"%.*s\", %d", (stream == stderr) ? "LUACONERR" : "LUACONOUT", count, buffer, count);
+#ifdef _MSC_VER
                 if (g_debug_log_output_callstacks.get())
                 {
                     char stk[8192];
                     format_callstack(2, 20, stk, sizeof(stk), false);
                     LOG("%s", stk);
                 }
+#endif
             }
 
             // g_printer is needed for terminal emulation.

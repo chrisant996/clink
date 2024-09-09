@@ -7,7 +7,7 @@
 
 #include "pch.h"
 
-#if defined(DEBUG) && defined(_MSC_VER)
+#ifdef _MSC_VER
 
 #include "callstack.h"
 #include "debugheap.h"
@@ -125,7 +125,12 @@ static void __dbghelp_assert(const char* file, uint32 line, const char* message)
     }
 }
 
+#ifdef DEBUG
 #define dbghelp_assert(expr) do { if (!(expr)) __dbghelp_assert(__FILE__, __LINE__, #expr); } while (false)
+#else
+#define dbghelp_assert(expr) do {} while (false)
+#endif
+
 #undef assert
 #undef assertimplies
 
@@ -211,6 +216,42 @@ static bool get_module_filename(HANDLE process, void* address, char* buffer, DWO
     return *buffer;
 }
 
+static size_t cchcopy(char* to, size_t max, char const* from)
+{
+    if (!max)
+        return 0;
+
+    size_t copied = 0;
+    while (--max && *from)
+    {
+        *(to++) = *(from++);
+        copied++;
+    }
+    *to = '\0';
+    return copied;
+}
+
+static size_t cchcat(char* to, size_t max, char const* from)
+{
+    if (!max)
+        return 0;
+
+    max--;
+
+    size_t len = strlen(to);
+    if (len > max)
+        len = max;
+    to += len;
+
+    while (len < max && *from)
+    {
+        *(to++) = *(from++);
+        len++;
+    }
+    *to = '\0';
+    return len;
+}
+
 void dbghelp::init(function_table& ft)
 {
     char sympath[MAX_PATH * 4];
@@ -222,41 +263,41 @@ void dbghelp::init(function_table& ft)
     if (get_module_filename(s_process, init, env, _countof(env)))
     {
         if (sympath[0])
-            dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
+            cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
     }
 
     // Process module's path.
     if (get_module_filename(s_process, nullptr, env, _countof(env)))
     {
         if (sympath[0])
-            dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
+            cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
     }
 
     // Append environment variable _NT_SYMBOL_PATH.
     if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", env, _countof(env)))
     {
-        dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
+        cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
     }
 
     // Append environment variable _NT_ALTERNATE_SYMBOL_PATH.
     if (GetEnvironmentVariableA("_NT_ALTERNATE_SYMBOL_PATH", env, _countof(env)))
     {
-        dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
+        cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
     }
 
     // Append environment variable SYSTEMROOT.
     if (GetEnvironmentVariableA("SYSTEMROOT", env, _countof(env)))
     {
-        dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
+        cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
         // And SYSTEMROOT\System32.
-        dbgcchcat(sympath, _countof(sympath), ";");
-        dbgcchcat(sympath, _countof(sympath), env);
-        dbgcchcat(sympath, _countof(sympath), "\\System32");
+        cchcat(sympath, _countof(sympath), ";");
+        cchcat(sympath, _countof(sympath), env);
+        cchcat(sympath, _countof(sympath), "\\System32");
     }
 
     // Initialize DBGHELP DLL.
@@ -353,14 +394,18 @@ function_access dbghelp::lock(bool lock)
 void dbghelp::lock_internal()
 {
     EnterCriticalSection(&s_cs);
+#ifdef DEBUG
     ++m_locked;
     dbghelp_assert(m_locked == 1); // Performance alert; lock scopes will be broader than intended.
+#endif
 }
 
 void dbghelp::unlock_internal()
 {
+#ifdef DEBUG
     dbghelp_assert(m_locked);
     --m_locked;
+#endif
     LeaveCriticalSection(&s_cs);
 }
 
@@ -410,7 +455,7 @@ static void get_symbol_info(void* frame, symbol_info& info)
 
         if (fa.call().SymGetModuleInfo(process, DWORD_PTR(frame), &mi))
         {
-            dbgcchcopy(info.module, _countof(info.module), mi.ModuleName);
+            cchcopy(info.module, _countof(info.module), mi.ModuleName);
             for (char *upper = info.module; *upper; ++upper)
                 *upper = (char)toupper(uint8(*upper));
         }
@@ -444,7 +489,7 @@ static void get_symbol_info(void* frame, symbol_info& info)
                 name = symbol.Name;
                 if (fa.call().SymUnDName(&symbol, undecorated, _countof(undecorated) - 1))
                     name = undecorated;
-                dbgcchcopy(info.symbol, _countof(info.symbol), name);
+                cchcopy(info.symbol, _countof(info.symbol), name);
                 if (strlen(info.symbol) == _countof(info.symbol) - 1)
                     memset(info.symbol + _countof(info.symbol) - 4, '.', 3);
             }
@@ -744,7 +789,7 @@ CALLSTACK_EXTERN_C size_t format_frames(int32 total_frames, void* const* frames,
             tmp[used++] = '\0';
         }
 
-        const size_t copied = dbgcchcopy(buffer, max, tmp);
+        const size_t copied = cchcopy(buffer, max, tmp);
         buffer += copied;
         max -= copied;
 
@@ -861,11 +906,11 @@ CALLSTACK_EXTERN_C void dbgtracef(const char* fmt, ...)
     int32 used = _snprintf_s(buffer, size, _TRUNCATE, "%u\t", GetCurrentThreadId());
     used += vsnprintf_s(buffer + used, size - used, _TRUNCATE, fmt, args);
     buffer[_countof(buffer) - 5] = '\0';
-    dbgcchcat(buffer + used, size - used, "\r\n");
+    cchcat(buffer + used, size - used, "\r\n");
 
     OutputDebugStringA(buffer);
 
     va_end(args);
 }
 
-#endif // DEBUG && _MSC_VER
+#endif // _MSC_VER

@@ -57,7 +57,9 @@ extern printer* g_printer;
 //------------------------------------------------------------------------------
 extern setting_bool g_ctrld_exits;
 extern setting_bool g_debug_log_terminal;
+#ifdef _MSC_VER
 extern setting_bool g_debug_log_output_callstacks;
+#endif
 
 static setting_enum g_autoanswer(
     "cmd.auto_answer",
@@ -342,12 +344,14 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
                 LOG("%s \"%.*s\", %d", context, s.length(), s.c_str(), s.length());
             else
                 LOG("%s \"%.*s\", %d utf8, %d utf16", context, s.length(), s.c_str(), s.length(), to_write);
+#ifdef _MSC_VER
             if (g_debug_log_output_callstacks.get())
             {
                 char stk[8192];
                 format_callstack(2, 20, stk, sizeof(stk), false);
                 LOG("%s", stk);
             }
+#endif
         }
     }
 
@@ -371,12 +375,14 @@ static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD 
             const char* const buffer = static_cast<const char*>(_buffer);
             LOGCURSORPOS(handle);
             LOG("%s \"%.*s\", %d", context, to_write, buffer, to_write);
+#ifdef _MSC_VER
             if (g_debug_log_output_callstacks.get())
             {
                 char stk[8192];
                 format_callstack(2, 20, stk, sizeof(stk), false);
                 LOG("%s", stk);
             }
+#endif
         }
     }
 
