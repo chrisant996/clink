@@ -25,6 +25,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
   - [ ] Have a setting to trigger `:gethint()` after some delay, or to show the comment row after a delay, to allow reducing flicker while typing quickly.
   - [ ] Setting to enable/disable comment row usage hints (other than history expansion).  I think it needs to be off by default.
   - [ ] Setting to show argmatcher usage hints.
+  - [ ] Ability to build argmatcher hints from arginfo, e.g. `Argument expected:  n` and `Argument expected:  file` and etc.
   - _NOTE:  If there's a global enable/disable setting for comment row usage hints, then it might be reasonable for some hinter settings to be on by default._
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
@@ -129,7 +130,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 ## Punt
 - Input hinter:
   - Need some way for `:gethint()` to work with coroutines and override the optimization and call it again.  _[No:  that would lead to hints cycling through multiple values at the same cursor position.  Once a hint is shown, it shouldn't change until at least another keypress occurs.]_
-  - FUTURE:  Can argmatcher.lua automatically provide usage hints based on arginfo from preceding linked argmatcher?  _[Not really.  It could simply show the arginfo, e.g. "`n`" from `--max n`, but that's too cryptic.]_
 - `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?  Any `^` combined with redirection before the command word seems to go awry one way or another.  It looks like a bug in the CMD parser.  _Trying to accurately predict how the bug will behave in all possible contexts seems unrealistic._
   - `^>xyz` occurring before the command word loses the `xyz` and pulls the _next_ token as the redirection target.
   - `^2>&1 whatever` fails to duplicate a handle.
