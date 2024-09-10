@@ -5,7 +5,9 @@
 #include "lua_hinter.h"
 
 #include <core/base.h>
+#include <core/settings.h>
 #include <lib/line_state.h>
+#include <lib/display_readline.h>
 #include "lua_state.h"
 #include "line_state_lua.h"
 
@@ -16,10 +18,24 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+#define DEFAULT_INPUT_HINT_DELAY    500
+#define MAXIMUM_INPUT_HINT_DELAY    3000
+
+//------------------------------------------------------------------------------
+static setting_int s_comment_row_hint_delay(
+    "comment_row.hint_delay",
+    "Delay before showing input hints",
+    "Specifies a delay in milliseconds before showing input hints.\n"
+    "The delay can be up to " AS_STR(MAXIMUM_INPUT_HINT_DELAY) " milliseconds, or 0 for no delay.\n"
+    "The default is " AS_STR(DEFAULT_INPUT_HINT_DELAY) " milliseconds.",
+    DEFAULT_INPUT_HINT_DELAY);
+
+//------------------------------------------------------------------------------
 void input_hint::clear()
 {
     m_hint.free();
     m_pos = -1;
+    m_defer = 0;
     m_empty = true;
 }
 
@@ -35,6 +51,10 @@ void input_hint::set(const char* hint, int32 pos)
     m_hint = hint;
     m_pos = pos;
     m_empty = false;
+
+    m_defer = GetTickCount();
+    if (!m_defer)
+        ++m_defer;
 }
 
 //------------------------------------------------------------------------------
@@ -43,6 +63,31 @@ bool input_hint::equals(const input_hint& other) const
     return (m_empty == other.m_empty &&
             m_pos == other.m_pos &&
             m_hint.equals(other.m_hint.c_str()));
+}
+
+//------------------------------------------------------------------------------
+DWORD input_hint::get_timeout() const
+{
+    if (!m_defer)
+        return INFINITE;
+
+    int32 input_hint_delay = s_comment_row_hint_delay.get();
+    if (input_hint_delay < 0)
+        input_hint_delay = DEFAULT_INPUT_HINT_DELAY;
+    else if (input_hint_delay > MAXIMUM_INPUT_HINT_DELAY)
+        input_hint_delay = MAXIMUM_INPUT_HINT_DELAY;
+
+    const DWORD elapsed = GetTickCount() - m_defer;
+    if (elapsed >= DWORD(input_hint_delay))
+        return 0;
+
+    return input_hint_delay - elapsed;
+}
+
+//------------------------------------------------------------------------------
+void input_hint::clear_timeout()
+{
+    m_defer = 0;
 }
 
 

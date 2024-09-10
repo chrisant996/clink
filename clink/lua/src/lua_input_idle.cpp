@@ -79,35 +79,46 @@ bool lua_input_idle::is_enabled()
 uint32 lua_input_idle::get_timeout()
 {
     // When terminal resize handling is active, it controls the timeout.
-    // Coroutines are not resumed while the terminal is being resized.
+    // While the terminal is being resized, coroutines are not resumed and
+    // input hinters are not run.
     if (s_terminal_resized)
     {
         const DWORD timeout = c_terminal_resize_refilter_delay - (GetTickCount() - s_terminal_resized);
         return (timeout < c_terminal_resize_refilter_delay) ? timeout : 0;
     }
 
-    m_iterations++;
+    DWORD timeout = INFINITE;
 
-    if (!is_enabled())
-        return INFINITE;
+    {
+        const DWORD t = host_get_input_hint_timeout();
+        timeout = min(timeout, t);
+    }
 
-    lua_State* state = m_state.get_state();
-    save_stack_top ss(state);
+    if (is_enabled())
+    {
+        m_iterations++;
 
-    // Call to Lua to check for coroutines.
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_wait_duration");
-    lua_rawget(state, -2);
+        lua_State* state = m_state.get_state();
+        save_stack_top ss(state);
 
-    if (m_state.pcall(state, 0, 1) != 0)
-        return INFINITE;
+        // Call to Lua to check for coroutines.
+        lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_wait_duration");
+        lua_rawget(state, -2);
 
-    int32 isnum;
-    double sec = lua_tonumberx(state, -1, &isnum);
-    if (!isnum)
-        return INFINITE;
+        if (m_state.pcall(state, 0, 1) == 0)
+        {
+            int32 isnum;
+            double sec = lua_tonumberx(state, -1, &isnum);
+            if (isnum)
+            {
+                const DWORD t = (sec > 0) ? uint32(sec * 1000) : 0;
+                timeout = min(timeout, t);
+            }
+        }
+    }
 
-    return (sec > 0) ? uint32(sec * 1000) : 0;
+    return timeout;
 }
 
 //------------------------------------------------------------------------------
@@ -183,10 +194,13 @@ void lua_input_idle::on_idle()
         host_invalidate_matches();
     }
 
-    if (s_signaled_reclassify)
+    const bool input_hinter_due = (host_get_input_hint_timeout() == 0);
+    if (s_signaled_reclassify || input_hinter_due)
     {
         s_signaled_reclassify = false;
-        reclassify(reclassify_reason::force);
+        if (input_hinter_due)
+            host_clear_input_hint_timeout();
+        reclassify(s_signaled_reclassify ? reclassify_reason::force : reclassify_reason::hinter);
     }
 }
 

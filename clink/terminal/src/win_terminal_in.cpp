@@ -926,15 +926,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
             if (callback)
             {
-                if (waited >= WAIT_OBJECT_0 + index_callback_events &&
-                    waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events)
-                {
+                const bool is_event = (waited >= WAIT_OBJECT_0 + index_callback_events &&
+                                       waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events);
+                if (is_event)
                     callback->on_wait_event(waited - (WAIT_OBJECT_0 + index_callback_events));
-                }
                 else
-                {
                     callback->on_idle();
-                }
             }
 
             if (has_mode)

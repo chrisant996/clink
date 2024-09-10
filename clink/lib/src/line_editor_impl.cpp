@@ -44,6 +44,11 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+static setting_bool s_comment_row_show_hints(
+    "comment_row.show_hints",
+    "Allow showing input hints in the comment row",
+    false);
+
 extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
 extern setting_bool g_autosuggest_enable;
@@ -1029,7 +1034,7 @@ void line_editor_impl::before_display_readline()
     const bool plain_changed = (m_prev_plain != plain);
     const bool buffer_changed = (plain_changed || !m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()));
     const bool skip_classifier = (!m_classifier || !buffer_changed);
-    const bool skip_hinter = (!m_hinter || (!buffer_changed && m_prev_cursor == m_buffer.get_cursor()));
+    const bool skip_hinter = (!m_hinter || !s_comment_row_show_hints.get() || (!buffer_changed && m_prev_cursor == m_buffer.get_cursor()));
     if (skip_classifier && skip_hinter)
         return;
 
@@ -1265,11 +1270,14 @@ void line_editor_impl::reclassify(reclassify_reason why)
         maybe_send_oncommand_event();
     }
 
-    if (refresh || why == reclassify_reason::force)
+    if (refresh || why == reclassify_reason::force || why == reclassify_reason::hinter)
     {
-        m_prev_plain = false;
-        m_prev_cursor = 0;
-        m_prev_classify.clear();
+        if (why == reclassify_reason::force)
+        {
+            m_prev_plain = false;
+            m_prev_cursor = 0;
+            m_prev_classify.clear();
+        }
         m_buffer.set_need_draw();
         m_buffer.draw();
     }
@@ -1589,6 +1597,18 @@ bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 uint32 line_editor_impl::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
     return m_collector.collect_words(buffer, words, mode, nullptr);
+}
+
+//------------------------------------------------------------------------------
+DWORD line_editor_impl::get_input_hint_timeout() const
+{
+    return m_input_hint.get_timeout();
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::clear_input_hint_timeout()
+{
+    m_input_hint.clear_timeout();
 }
 
 //------------------------------------------------------------------------------

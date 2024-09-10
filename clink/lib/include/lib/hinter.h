@@ -17,9 +17,14 @@ public:
     bool            equals(const input_hint& other) const;
     const char*     c_str() const { return m_hint.c_str(); }
     int32           pos() const { return m_pos; }
+
+    DWORD           get_timeout() const;
+    void            clear_timeout();
+
 private:
     str_moveable    m_hint;
     int32           m_pos = -1;
+    DWORD           m_defer = 0;
     bool            m_empty = true;
 };
 
