@@ -14,7 +14,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 Clink offers suggestions as you type based on history, files, and completions.
 
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
 Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color).
@@ -1908,7 +1908,44 @@ Function | Description
 
 #### Show a Usage Hint
 
-_... TBD ... To Be Documented ..._
+A usage hint can be shown in the comment row (below the input line).  Usage hints for argmatchers are only shown if both [comment_row.show_hints](#comment_row_show_hints) (off by default) and [argmatcher.show_hints](#argmatcher_show_hints) (on by default) are enabled.
+
+To supply a usage hint, include either `hint="text"` or <code>hint=<em>function_name</em></code> in the argument table.
+
+```lua
+clink.argmatcher("foo")
+:addarg({ clink.filematches, hint="Argument expected:  filename" })
+```
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected:  filename</span>
+</code></pre>
+
+If a function name is supplied, then the function is passed five arguments:
+
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a string containing the word being parsed.
+- `word_index` is the word index in `line_state`, corresponding to the word being parsed.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
+
+The function returns a hint string, and an optional position in the line text where the hint refers to.  If the position is omitted, then the offset to the beginning of the word is assumed.
+
+```lua
+local function foo_hint_func(arg_index, word, word_index, line_state, user_data)
+    local hint = "Argument expected for '"..line_state:getword(word_index - 1).."':  filename"
+    local pos = line_state:getwordinfo(word_index).offset   -- Shown for completeness, but this is automatically assumed if omitted.
+    return hint, pos
+end
+
+clink.argmatcher("foo")
+:addarg({ "add", "remove" })
+:addarg({ clink.filematches, hint=foo_hint_func })
+```
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="color_arg">add</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected for 'add':  filename</span>
+</code></pre>
 
 <a name="addarg_fromhistory"></a>
 
