@@ -606,6 +606,8 @@ void host::filter_transient_prompt(bool final)
     {
 cant:
         update_last_cwd();
+        // Erase comment row if present.
+        clear_comment_row();
         // Must ensure display_manager gets reset, so it doesn't try to
         // optimize away printing the new prompt.
         reset_display_readline();
