@@ -22,8 +22,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 
 ## High Priority
 - **input_hinter:**
-  - [ ] Have a setting to trigger `:gethint()` after some delay, or to show the comment row after a delay, to allow reducing flicker while typing quickly.
-  - [ ] Setting to enable/disable comment row usage hints (other than history expansion).  I think it needs to be off by default.
   - [ ] Setting to show argmatcher usage hints.
   - [ ] Ability to build argmatcher hints from arginfo, e.g. `Argument expected:  n` and `Argument expected:  file` and etc.
   - _NOTE:  If there's a global enable/disable setting for comment row usage hints, then it might be reasonable for some hinter settings to be on by default._
