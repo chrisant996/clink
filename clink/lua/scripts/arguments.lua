@@ -3123,6 +3123,23 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
+local function between_words(argmatcher, arg_index, word_index, line_state, user_data)
+    local args = argmatcher._args[arg_index]
+    if args then
+        local hint = args.hint
+        if type(hint) == "string" then
+            return hint, line_state:getcursor()
+        elseif type(hint) == "function" then
+            local h,p = hint(arg_index, "", word_index, line_state, user_data)
+            if h then
+                p = p or line_state:getcursor()
+                return h, p
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local besthint
     local bestpos
@@ -3148,9 +3165,15 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
         end
 
         -- Consume words and use them to move through matchers' arguments.
+        local prev_info
         while true do
             local word, word_index = reader:next_word()
             if not word then
+                -- Handle case where cursor is past the last word.
+                local endinfo = line_state:getwordinfo(line_state:getwordcount())
+                if endinfo and cursorpos > endinfo.offset + endinfo.length then
+                    return between_words(argmatcher, reader._arg_index, line_state:getwordcount() + 1, line_state, reader._user_data)
+                end
                 break
             end
             local arg_index = reader._arg_index
@@ -3163,7 +3186,13 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             end
             if not reader._extra then
                 local info = line_state:getwordinfo(word_index)
-                if not info or cursorpos < info.offset then
+                if not info then
+                    break
+                elseif cursorpos < info.offset then
+                    if prev_info and prev_info.offset + prev_info.length < cursorpos then
+                        -- Cursor is between words.
+                        return between_words(argmatcher, arg_index, word_index, line_state, reader._user_data)
+                    end
                     break
                 elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
                     local args
@@ -3187,6 +3216,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         end
                     end
                 end
+                prev_info = info
             end
         end
 
