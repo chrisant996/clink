@@ -21,10 +21,9 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- `myteamsc2rinstaller debug` is not reclassifying after it delay inits, so the `debug` part stays colored as `color.input` instead of `color.arg`.
 - **input_hinter:**
-  - [ ] Setting to show argmatcher usage hints.
   - [ ] Ability to build argmatcher hints from arginfo, e.g. `Argument expected:  n` and `Argument expected:  file` and etc.
-  - _NOTE:  If there's a global enable/disable setting for comment row usage hints, then it might be reasonable for some hinter settings to be on by default._
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
