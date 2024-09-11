@@ -892,7 +892,7 @@ int32 get_command_bindings(lua_State* state)
 /// -ret:   table
 /// Returns information about the current prompt and input line.
 ///
-/// Note: the <span class="arg">promptline</span> and
+/// <strong>Note:</strong> The <span class="arg">promptline</span> and
 /// <span class="arg">inputline</span> fields may be skewed if any additional
 /// terminal output has occurred (for example if any
 /// <a href="#https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a>
@@ -1121,7 +1121,7 @@ static int32 get_history_count(lua_State* state)
 /// -show:  -- h.line       [string] The item's command line string.
 /// -show:  -- h.time       [integer or nil] The item's time, compatible with os.time().
 ///
-/// <strong>Note:</strong> the time field is omitted if the history item does
+/// <strong>Note:</strong> The time field is omitted if the history item does
 /// not have an associated time.
 static int32 get_history_items(lua_State* state)
 {

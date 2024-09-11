@@ -113,8 +113,8 @@ static int32 scroll(lua_State* state)
 /// <span class="arg">text</span> string were output to the console, accounting
 /// for any ANSI escape codes that may be present in the text.
 ///
-/// Note: backspace characters and line endings are counted as visible character
-/// cells and will skew the resulting count.
+/// <strong>Note:</strong> Backspace characters and line endings are counted
+/// as visible character cells and will skew the resulting count.
 static int32 get_cell_count(lua_State* state)
 {
     const char* in = checkstring(state, 1);
@@ -136,8 +136,8 @@ static int32 get_cell_count(lua_State* state)
 /// removed, and the count of visible character cells that would be consumed
 /// if the text were output to the console.
 ///
-/// Note: backspace characters and line endings are counted as visible character
-/// cells and will skew the resulting count.
+/// <strong>Note:</strong> Backspace characters and line endings are counted
+/// as visible character cells and will skew the resulting count.
 static int32 get_plain_text(lua_State* state)
 {
     const char* in = checkstring(state, 1);

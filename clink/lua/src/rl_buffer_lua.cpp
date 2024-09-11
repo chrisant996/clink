@@ -140,8 +140,9 @@ int32 rl_buffer_lua::get_anchor(lua_State* state)
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line
 /// because the cursor can be positioned just past the end of the input line.
 ///
-/// Note:  the input line is UTF8, and setting the cursor position inside a
-/// multi-byte Unicode character may have undesirable results.
+/// <strong>Note:</strong> The input line is UTF8, and setting the cursor
+/// position inside a multi-byte Unicode character may have undesirable
+/// results.
 ///
 /// <strong>Note:</strong> In v1.1.20 through v1.6.0 this accidentally didn't
 /// return the previous cursor position.  In v1.6.1 and higher it returns the
@@ -188,8 +189,8 @@ int32 rl_buffer_lua::insert(lua_State* state)
 /// If <span class="arg">from</span> is greater than <span class="arg">to</span>
 /// then the positions are swapped before removing text.
 ///
-/// Note:  the input line is UTF8, and removing only part of a multi-byte
-/// Unicode character may have undesirable results.
+/// <strong>Note:</strong>  The input line is UTF8, and removing only part of
+/// a multi-byte Unicode character may have undesirable results.
 int32 rl_buffer_lua::remove(lua_State* state)
 {
     auto from = checkinteger(state, LUA_SELF + 1);
@@ -221,9 +222,9 @@ int32 rl_buffer_lua::begin_undo_group(lua_State* state)
 /// Ends an undo group.  This is useful for grouping together multiple
 /// editing actions into a single undo operation.
 ///
-/// Note:  all undo groups are automatically ended when a key binding finishes
-/// execution, so this function is only needed if a key binding needs to create
-/// more than one undo group.
+/// <strong>Note:</strong>  All undo groups are automatically ended when a key
+/// binding finishes execution, so this function is only needed if a key
+/// binding needs to create more than one undo group.
 int32 rl_buffer_lua::end_undo_group(lua_State* state)
 {
     if (m_num_undo > 0)

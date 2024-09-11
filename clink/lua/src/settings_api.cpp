@@ -117,9 +117,9 @@ static int32 get(lua_State* state)
 /// string value.
 /// </ul>
 ///
-/// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
-/// that, it was necessary to separately use <code>clink set</code> to update
-/// the settings file.
+/// <strong>Note:</strong> Beginning in Clink v1.2.31 this updates the
+/// settings file.  Prior to that, it was necessary to separately use
+/// <code>clink set</code> to update the settings file.
 static int32 set(lua_State* state)
 {
     const char* key = checkstring(state, 1);
