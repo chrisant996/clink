@@ -244,10 +244,24 @@ local function is_word_present(word, arg, t, arg_match_type)
         if it == "function" then
             t = 'o' --other (placeholder; superseded by :classifyword).
         elseif i == word or (it == "table" and i.match == word) then
-            return arg_match_type, true
+            return arg_match_type, true, i.arginfo
         end
     end
     return t, false
+end
+
+--------------------------------------------------------------------------------
+local function get_word_arginfo(word, arg, matcher)
+    local arginfo = is_word_present(word, arg)
+    if arginfo then
+        return arginfo
+    end
+    if matcher._descriptions then
+        local desc = matcher._descriptions[word]
+        if desc and desc[2] then
+            return desc[1]
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -608,6 +622,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
     self._cycle_detection = nil
+    self._arginfo = nil
     if self._disabled then
         return
     end
@@ -712,8 +727,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
-                            if self._word_classifier and not self._extra then
-                                self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                            if self._word_classifier then
+                                if not self._extra then
+                                    self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                                end
+                            elseif self._need_arginfo then
+                                self._arginfo = get_word_arginfo(word, arg, realmatcher)
                             end
                             self:push_line_state(line_states[1], true--[[no_onalias]])
                             if chain then
@@ -781,8 +800,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
-                    if self._word_classifier and not self._extra then
-                        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                    if self._word_classifier then
+                        if not self._extra then
+                            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                        end
+                    elseif self._need_arginfo then
+                        self._arginfo = get_word_arginfo(word, arg, realmatcher)
                     end
                     self:push_line_state(line_states[1], true--[[no_onalias]])
                     if chain then
@@ -909,8 +932,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     end
 
     -- Parse the word type.
-    if self._word_classifier and not self._extra then
-        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+    if self._word_classifier then
+        if not self._extra then
+            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+        end
+    elseif self._need_arginfo then
+        self._arginfo = get_word_arginfo(word, arg, realmatcher)
     end
 
     -- Does the word lead to another matcher?
@@ -3125,7 +3152,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
-local function between_words(argmatcher, arg_index, word_index, line_state, user_data)
+local function between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
     local args = argmatcher._args[arg_index]
     if args then
         local hint = args.hint
@@ -3136,6 +3163,11 @@ local function between_words(argmatcher, arg_index, word_index, line_state, user
             if h then
                 p = p or line_state:getcursor()
                 return h, p
+            end
+        elseif prev_arginfo then
+            local h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+            if h then
+                return h, line_state:getcursor()
             end
         end
     end
@@ -3164,6 +3196,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             reader:start_command(argmatcher)
         else
             reader = _argreader(argmatcher, line_state)
+            reader._need_arginfo = true
         end
         if extra and not reader._extra then
             extra.line_state = break_slash(extra.line_state) or extra.line_state
@@ -3172,13 +3205,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
         -- Consume words and use them to move through matchers' arguments.
         local prev_info
+        local prev_arginfo
         while true do
             local word, word_index = reader:next_word()
             if not word then
                 -- Handle case where cursor is past the last word.
                 local endinfo = line_state:getwordinfo(line_state:getwordcount())
                 if endinfo and cursorpos > endinfo.offset + endinfo.length then
-                    return between_words(argmatcher, reader._arg_index, line_state:getwordcount() + 1, line_state, reader._user_data)
+                    return between_words(argmatcher, reader._arg_index, line_state:getwordcount() + 1, line_state, reader._user_data, prev_arginfo)
                 end
                 break
             end
@@ -3197,7 +3231,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 elseif cursorpos < info.offset then
                     if prev_info and prev_info.offset + prev_info.length < cursorpos then
                         -- Cursor is between words.
-                        return between_words(argmatcher, arg_index, word_index, line_state, reader._user_data)
+                        return between_words(argmatcher, arg_index, word_index, line_state, reader._user_data, prev_arginfo)
                     end
                     break
                 elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
@@ -3219,11 +3253,15 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                                 besthint = h
                                 bestpos = p or info.offset
                             end
+                        elseif prev_arginfo then
+                            besthint = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+                            bestpos = info.offset
                         end
                     end
                 end
                 prev_info = info
             end
+            prev_arginfo = reader._arginfo
         end
 
         return besthint, bestpos
