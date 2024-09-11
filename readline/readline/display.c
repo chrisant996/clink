@@ -3019,6 +3019,7 @@ rl_on_new_line (void)
   return 0;
 }
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 /* Clear all screen lines occupied by the current readline line buffer
    (visible line) */
 int
@@ -3043,6 +3044,7 @@ rl_clear_visible_line (void)
 
   return 0;
 }
+#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 /* Tell the update routines that we have moved onto a new line with the
    prompt already displayed.  Code originally from the version of readline
@@ -3121,6 +3123,7 @@ rl_forced_update_display (void)
   return 0;
 }
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 /* Redraw only the last line of a multi-line prompt. */
 void
 rl_redraw_prompt_last_line (void)
@@ -3134,7 +3137,6 @@ rl_redraw_prompt_last_line (void)
     rl_forced_update_display ();
 }
 
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 /* Move the cursor from _rl_last_c_pos to NEW, which are buffer indices.
    (Well, when we don't have multibyte characters, _rl_last_c_pos is a
    buffer index.)
@@ -3948,7 +3950,6 @@ _rl_current_display_line (void)
 
   return ret;
 }
-#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 void
 _rl_refresh_line (void)
@@ -3957,6 +3958,7 @@ _rl_refresh_line (void)
   rl_redraw_prompt_last_line ();
   rl_keep_mark_active ();
 }
+#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 #if defined (HANDLE_MULTIBYTE)
 /* Calculate the number of screen columns occupied by STR from START to END.
