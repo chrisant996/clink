@@ -1924,8 +1924,8 @@ clink.argmatcher("foo")
 If a function name is supplied, then the function is passed five arguments:
 
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
-- `word` is a string containing the word being parsed.
-- `word_index` is the word index in `line_state`, corresponding to the word being parsed.
+- `word` is a string containing the word being parsed.  **Note:** when the cursor is between words or after the last word then `word` is an empty string.
+- `word_index` is the word index in `line_state`, corresponding to the word being parsed.  **Note:** when the cursor is between words then `word_index` is the index of the _next_ word after the cursor, or when the cursor is after the last word then `word_index` is greater than `line_state:getwordcount()`.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
 
