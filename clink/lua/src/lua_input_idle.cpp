@@ -197,10 +197,11 @@ void lua_input_idle::on_idle()
     const bool input_hinter_due = (host_get_input_hint_timeout() == 0);
     if (s_signaled_reclassify || input_hinter_due)
     {
+        const reclassify_reason reason = s_signaled_reclassify ? reclassify_reason::force : reclassify_reason::hinter;
         s_signaled_reclassify = false;
         if (input_hinter_due)
             host_clear_input_hint_timeout();
-        reclassify(s_signaled_reclassify ? reclassify_reason::force : reclassify_reason::hinter);
+        reclassify(reason);
     }
 }
 
