@@ -27,12 +27,14 @@ setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
 
 
 --------------------------------------------------------------------------------
+local _enable_hints
 local _delayinit_generation = 0
 local _clear_onuse_coroutine = {}
 local _clear_delayinit_coroutine = {}
 
 --------------------------------------------------------------------------------
 clink.onbeginedit(function ()
+    _enable_hints = settings.get("argmatcher.show_hints")
     _delayinit_generation = _delayinit_generation + 1
 
     -- Clear dangling coroutine references in matchers.  Otherwise if a
@@ -3141,6 +3143,10 @@ end
 
 --------------------------------------------------------------------------------
 function argmatcher_hinter:gethint(line_state) -- luacheck: no self
+    if not _enable_hints then
+        return
+    end
+
     local besthint
     local bestpos
     local cursorpos = line_state:getcursor()
