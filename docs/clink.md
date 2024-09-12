@@ -2883,7 +2883,7 @@ Clink can show contextual input hints while you type.  Lua scripts can provide i
 </code></pre>
 
 
-To turn on input hints, run <code>clink set <a href="#comment_row_show_hints">comment_row.show_hints</a> true</code>.  Clink doesn't have any input hinters built in, but Lua scripts can add hinters to do things like show the value of an environment variable under the cursor, or show the value of a doskey macro, or show a hint about what kind of argument a command expects to be entered next, or other things.
+To turn on input hints, run <code>clink set <a href="#comment_row_show_hints">comment_row.show_hints</a> true</code>.  Lua scripts can add hinters to do things like show the value of an environment variable under the cursor, or show the value of a doskey macro, or show a hint about what kind of argument a command expects to be entered next, or other things.  The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) repo has some scripts that add hinters.
 
 Scripts can provide custom input hint generators:
 1. Create a new hint generator by calling [clink.hinter()](#clink.hinter) along with an optional priority id which dictates the order in which hinters are called. Lower priority ids are called first.
@@ -2892,6 +2892,8 @@ Scripts can provide custom input hint generators:
 The function takes a [line_state](#line_state) argument that contains the input line.
 
 If the function returns nil, the next hint generator is called.  If the function returns a string (even an empty string), then the string is used as a hint candidate.  The function can optionally return a string and a position in the line text where the hint refers to (for example, the offset to the beginning of a word).  The hint string with the highest position not exceeding the cursor position is used as the "best hint" (if a hint is returned without a position, then the beginning of the line is assumed).
+
+> **Note:** The `:gethint` callback function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.
 
 This example illustrates how to make an input hint generator that shows the offset of the start of the word under the cursor.
 
