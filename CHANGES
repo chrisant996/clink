@@ -5,9 +5,19 @@
 #### v1.7.0
 
 - Added workaround for Unicode limitations in Windows 8.1 and earlier (improves cursor position accuracy on Windows 8.1).
+- Added the ability to show input hints in the comment row (below the input line).
+  - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
+  - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
+  - Lua scripts can create custom hinters; see [Showing Input Hints](#showinginputhints) for more information.
+- Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` are (1) background compatibility or (2) wanting to use `NONL` to suppress printing a line ending.
+- Changed phrasing from "Accept Suggestion" to "Insert Suggestion".
+- Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
+  - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
+  - Also added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
 - Fixed delay when typing `X:` and it's a remote drive.
 - Fixed coloring `2>&1`; the `1` wasn't colored.
+- Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
 
