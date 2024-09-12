@@ -34,7 +34,8 @@ static setting_bool s_argmatcher_show_hints(
     "argmatcher.show_hints",
     "Show input hints from argmatchers",
     "When both the comment_row.show_hints and argmatcher.show_hints settings are\n"
-    "enabled, argmatchers can show usage hints in the comment row.",
+    "enabled, argmatchers can show usage hints in the comment row (below the input\n"
+    "line).",
     true);
 
 //------------------------------------------------------------------------------

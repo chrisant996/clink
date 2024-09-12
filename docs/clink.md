@@ -456,6 +456,7 @@ The following table describes the available Clink settings:
 
 Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
+<a name="argmatcher_show_hints"></a>`argmatcher.show_hints` | True | When both the [`comment_row.show_hints`](#comment_row_show_hints) and `argmatcher.show_hints` settings are enabled, [argmatchers](#argumentcompletion) can show usage hints in the comment row (below the input line).
 <a name="autosuggest_async"></a>`autosuggest.async` | True | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
 <a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
 <a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a usage hint `[Right]=Insert Suggestion` to help make the feature more discoverable and easy to use.  Set this to `false` to hide the usage hint.
@@ -2875,7 +2876,7 @@ This example illustrates how to make a suggestion generator that returns the lon
 
 ## Showing Input Hints
 
-Clink can show contextual input hints while you type.  Lua scripts can provide input hints.  When a hint is available, it's shown in the comment row below the input line.  For example:
+Clink can show contextual input hints while you type.  Lua scripts can provide input hints.  When a hint is available, it's shown in the comment row (below the input line).  For example:
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="cursor">_</span></span>
 <span class="color_comment_row">Argument expected:  filename</span>
