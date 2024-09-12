@@ -1580,8 +1580,6 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
         // Reset buffer, discarding the chord.
         m_buffer_count = buffer_count;
     }
-
-    m_keys->set_keyseq_len(m_buffer_count);
 }
 
 //------------------------------------------------------------------------------

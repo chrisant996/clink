@@ -2188,7 +2188,6 @@ public:
     bool                is_bound(const char* seq, int32 len);
     bool                accepts_mouse_input(mouse_input_type type);
     bool                translate(const char* seq, int32 len, str_base& out);
-    void                set_keyseq_len(int32 len);
 
 private:
     module::context     get_context();
@@ -2483,11 +2482,6 @@ bool standalone_input::accepts_mouse_input(mouse_input_type type)
 bool standalone_input::translate(const char* seq, int32 len, str_base& out)
 {
     return false;
-}
-
-//------------------------------------------------------------------------------
-void standalone_input::set_keyseq_len(int32 len)
-{
 }
 
 //------------------------------------------------------------------------------

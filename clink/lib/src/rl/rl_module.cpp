@@ -2639,12 +2639,6 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_keyseq_len(int32 len)
-{
-    // TODO:  This may be dead code, and may be removable.
-}
-
-//------------------------------------------------------------------------------
 static void suppress_redisplay()
 {
     // Do nothing.  This is used to suppress the rl_redisplay_function call in
@@ -3099,8 +3093,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     rollback<bool> rb_input_more(s_input_more, input.more);
     while (len && !m_done)
     {
-        bool is_quoted_insert = rl_is_insert_next_callback_pending();
-
         // Reset the scroll mode right before handling input so that "scroll
         // mode" can be deduced based on whether the most recently invoked
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
@@ -3140,6 +3132,19 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
+
+        // NOTE:  There's ambiguity for quoted-insert.  Ideally the whole
+        // console input key sequence could be inserted as quoted text (e.g.
+        // CTRL-Q then UP).  But in a recorded key macro there's no way to
+        // know how many characters should be quoted.  For consistency between
+        // direct console input and recorded macros, the implementation here
+        // no longer quotes the whole console input key sequence.
+        //
+        // Related commits:
+        //  - 3a64c92f55ab8d55a979c6f9515eba99a82bb4a8, 2022/09/21 15:43:42
+        //  - 62c44d2c75f998242c59af11db9cac78059189a5, 2021/09/18 11:22:51
+        //  - f28e6018aa6b6b1e26c3a734ec82719abdf0109e, 2021/09/18  3:23:16
+        //  - 7a2236ad48e742be6552a60e32ed26a11581dd8c, 2020/10/07 18:14:49
     }
 
     g_result = nullptr;

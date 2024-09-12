@@ -79,7 +79,6 @@ public:
     virtual bool        is_bound(const char* seq, int32 len) override;
     virtual bool        accepts_mouse_input(mouse_input_type type) override;
     virtual bool        translate(const char* seq, int32 len, str_base& out) override;
-    virtual void        set_keyseq_len(int32 len) override;
 
     void                reset_generate_matches();
     void                reselect_matches();

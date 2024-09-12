@@ -727,12 +727,6 @@ bool line_editor_impl::translate(const char* seq, int32 len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_keyseq_len(int32 len)
-{
-    m_module.set_keyseq_len(len);
-}
-
-//------------------------------------------------------------------------------
 // Returns false when a chord is in progress, otherwise returns true.  This is
 // to help dispatch() be able to dispatch an entire chord.
 bool line_editor_impl::update_input()

@@ -46,7 +46,6 @@ public:
     bool            is_bound(const char* seq, int32 len);
     bool            accepts_mouse_input(mouse_input_type type);
     bool            translate(const char* seq, int32 len, str_base& out);
-    void            set_keyseq_len(int32 len);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false);
 
     bool            is_input_pending();
