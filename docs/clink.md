@@ -1911,7 +1911,9 @@ Function | Description
 
 A usage hint can be shown in the comment row (below the input line).  Usage hints for argmatchers are only shown if both [comment_row.show_hints](#comment_row_show_hints) (off by default) and [argmatcher.show_hints](#argmatcher_show_hints) (on by default) are enabled.
 
-To supply a usage hint, include either `hint="text"` or <code>hint=<em>function_name</em></code> in the argument table.
+Argmatchers can automatically supply input hints based on `arginfo` fields from match completions.
+
+To supply a custom usage hint, an argmatcher can include either `hint="text"` or <code>hint=<em>function_name</em></code> in the argument table.
 
 ```lua
 clink.argmatcher("foo")
