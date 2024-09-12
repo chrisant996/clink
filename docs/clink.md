@@ -2403,7 +2403,9 @@ Here is an example script that supplies git branch names as matches for `git che
 
 If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
 
-The function takes a <span class="arg">line_state</span> [line_state](#line_state) object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+The function takes a <span class="arg">line_state</span> argument which is a [line_state](#line_state) object that has information about the current line.
+
+If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
 
@@ -2500,9 +2502,9 @@ However, older versions of Clink don't support those fields.  And in some cases 
 
 A [match generator](#matchgenerators) or [argmatcher](#argumentcompletion) or [luafunc: key binding](#luakeybindings) can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
-The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
+The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
 
-The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
+The return value is a table with the input matches filtered as required by the match generator.  The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
 
 Filtering the match display can affect completing matches: the `match` field is what gets inserted.  It can also affect displaying matches: the `display` field is displayed if present, otherwise the `match` field is displayed.
 
@@ -2703,7 +2705,9 @@ Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:filter()` function on the returned prompt filter.
 
-The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The filter function takes a string argument that contains the filtered prompt so far.
+
+If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 ```lua
 local p = clink.promptfilter(30)
@@ -2753,7 +2757,9 @@ Clink expands CMD prompt `$` codes in `%CLINK_RPROMPT%`, with a few exceptions: 
 
 The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to [clink.promptfilter()](#clink.promptfilter).  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
 
-The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.  If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.
+
+If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 This example modifies the right side prompt by prepending the current date:
 
@@ -2803,7 +2809,9 @@ The transient prompt can be customized by a prompt filter:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:transientfilter()` function on the returned prompt filter.
 
-The transient filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The transient filter function takes a string argument that contains the filtered prompt so far.
+
+If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 A transient right side prompt is also possible (similar to the usual [right side prompt](#rightprompt)).  The `%CLINK_TRANSIENT_RPROMPT%` environment variable (note the `R` in `_RPROMPT`) provides the initial prompt string for the transient right side prompt, which can be customized by a `:transientrightfilter()` function on a prompt filter.
 
@@ -2853,9 +2861,9 @@ Scripts can provide custom suggestion generators, in addition to the built-in op
 1. Create a new suggestion generator by calling [clink.suggester()](#clink.suggester) along with a name that identifies the suggestion generator, and can be added to the <code><a href="#autosuggest_strategy">autosuggest.strategy</a></code> setting.
 2. Define a `:suggest()` function on the returned suggestion generator.
 
-The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
+The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.
 
-The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
+If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.  The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
 
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
@@ -2867,7 +2875,28 @@ This example illustrates how to make a suggestion generator that returns the lon
 
 ## Showing Input Hints
 
-_... TBD ... To Be Documented ..._
+Clink can show contextual input hints while you type.  Lua scripts can provide input hints.  When a hint is available, it's shown in the comment row below the input line.  For example:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected:  filename</span>
+</code></pre>
+
+
+To turn on input hints, run <code>clink set <a href="#comment_row_show_hints">comment_row.show_hints</a> true</code>.  Clink doesn't have any input hinters built in, but Lua scripts can add hinters to do things like show the value of an environment variable under the cursor, or show the value of a doskey macro, or show a hint about what kind of argument a command expects to be entered next, or other things.
+
+Scripts can provide custom input hint generators:
+1. Create a new hint generator by calling [clink.hinter()](#clink.hinter) along with an optional priority id which dictates the order in which hinters are called. Lower priority ids are called first.
+2. Define a `:gethint()` function on the returned hint generator.
+
+The function takes a [line_state](#line_state) argument that contains the input line.
+
+If the function returns nil, the next hint generator is called.  If the function returns a string (even an empty string), then the string is used as a hint candidate.  The function can optionally return a string and a position in the line text where the hint refers to (for example, the offset to the beginning of a word).  The hint string with the highest position not exceeding the cursor position is used as the "best hint" (if a hint is returned without a position, then the beginning of the line is assumed).
+
+This example illustrates how to make an input hint generator that shows the offset of the start of the word under the cursor.
+
+```lua
+#INCLUDE [docs\examples\ex_hinter.lua]
+```
 
 # Miscellaneous
 
