@@ -216,6 +216,25 @@ newaction {
         if not have_msbuild then error("MSBUILD NOT FOUND.") end
         if not have_nsis then error("NSIS NOT FOUND.") end
 
+        local clink_git_name
+        do
+            local git_cmd = "git branch --verbose --no-color 2>nul"
+            local f = io.popen(git_cmd)
+            for line in f:lines() do
+                local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)%s")
+                if name and commit then
+                    clink_git_name = name
+                    break
+                end
+                _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)%s")
+                if name and commit then
+                    clink_git_name = name
+                    break
+                end
+            end
+            f:close()
+        end
+
         -- Build the code.
         local x86_ok = true
         local x64_ok = true
@@ -256,8 +275,10 @@ newaction {
             error("Failed to extract version from build executables")
         end
         local docversion = version:match("%d+%.%d+%.%d+")
+        local tagversion = docversion
         if clink_git_name ~= "master" and clink_git_name ~= "main" then
             docversion = docversion.."<br/>("..clink_git_name..")"
+            tagversion = version
         end
 
         -- Create the output directory.
@@ -291,7 +312,7 @@ newaction {
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
-            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. docversion
+            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. tagversion
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
@@ -336,6 +357,25 @@ newaction {
             error("Failed to chdir to '" .. code_dir .. "'")
         end
         exec("git checkout " .. (_OPTIONS["commit"] or "HEAD"))
+
+        local clink_git_name
+        do
+            local git_cmd = "git branch --verbose --no-color 2>nul"
+            local f = io.popen(git_cmd)
+            for line in f:lines() do
+                local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)%s")
+                if name and commit then
+                    clink_git_name = name
+                    break
+                end
+                _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)%s")
+                if name and commit then
+                    clink_git_name = name
+                    break
+                end
+            end
+            f:close()
+        end
 
         -- Build the code.
         local x86_ok = true
@@ -461,6 +501,11 @@ newaction {
             error("Failed to extract version from build executables")
         end
         local docversion = version:match("%d+%.%d+%.%d+")
+        local tagversion = docversion
+        if clink_git_name ~= "master" and clink_git_name ~= "main" then
+            docversion = docversion.."<br/>("..clink_git_name..")"
+            tagversion = version
+        end
 
         -- Now we know the version we can create our output directory.
         print_reverse("Copy release files")
@@ -494,7 +539,7 @@ newaction {
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
-            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. docversion
+            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. tagversion
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             print_reverse("Build setup program")
