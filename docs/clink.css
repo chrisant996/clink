@@ -270,7 +270,15 @@ kbd {
 #header #title {
     font: 2.5rem Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: bold;
-    margin-bottom: 0.4rem;
+}
+
+#header #branch {
+    font: 1.5rem Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
+    font-style: italic;
+}
+
+#header #url {
+    margin-top: 0.5rem;
 }
 
 #content {

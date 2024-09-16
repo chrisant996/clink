@@ -274,12 +274,9 @@ newaction {
         if not version then
             error("Failed to extract version from build executables")
         end
+        local ismain = (clink_git_name == "master" or clink_git_name == "main")
         local docversion = version:match("%d+%.%d+%.%d+")
-        local tagversion = docversion
-        if clink_git_name ~= "master" and clink_git_name ~= "main" then
-            docversion = docversion.."<br/>("..clink_git_name..")"
-            tagversion = version
-        end
+        local tagversion = ismain and docversion or version
 
         -- Create the output directory.
         local dest = path.getabsolute(".build/nsis").."/"
@@ -303,7 +300,11 @@ newaction {
 
         -- Generate documentation.
         print()
-        exec(premake .. " docs --docver="..docversion)
+        local doc_cmd = premake .. " docs --docver="..docversion
+        if not ismain then
+            doc_cmd = doc_cmd .. " --docbranch="..clink_git_name
+        end
+        exec(doc_cmd)
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
@@ -500,12 +501,9 @@ newaction {
         if not version then
             error("Failed to extract version from build executables")
         end
+        local ismain = (clink_git_name == "master" or clink_git_name == "main")
         local docversion = version:match("%d+%.%d+%.%d+")
-        local tagversion = docversion
-        if clink_git_name ~= "master" and clink_git_name ~= "main" then
-            docversion = docversion.."<br/>("..clink_git_name..")"
-            tagversion = version
-        end
+        local tagversion = ismain and docversion or version
 
         -- Now we know the version we can create our output directory.
         print_reverse("Copy release files")
@@ -530,7 +528,11 @@ newaction {
 
         -- Generate documentation.
         print_reverse("Generate documentation")
-        exec(premake .. " docs --docver="..docversion)
+        local doc_cmd = premake .. " docs --docver="..docversion
+        if not ismain then
+            doc_cmd = doc_cmd .. " --docbranch="..clink_git_name
+        end
+        exec(doc_cmd)
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
@@ -611,13 +613,6 @@ newoption {
    trigger     = "vsver",
    value       = "VER",
    description = "Clink: Version of Visual Studio to build release with"
-}
-
---------------------------------------------------------------------------------
-newoption {
-   trigger     = "docver",
-   value       = "DOCVER",
-   description = "Clink: Clink version to inject in documentation"
 }
 
 --------------------------------------------------------------------------------

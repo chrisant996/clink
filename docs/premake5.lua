@@ -60,6 +60,7 @@ end
 local function generate_file(source_path, out, weblinks)
     print("  << " .. source_path)
     local docver = _OPTIONS["docver"] or clink_git_name:upper()
+    local docbranch = _OPTIONS["docbranch"] or ""
     local last_name
 
     local outline_stack = {}
@@ -98,6 +99,7 @@ local function generate_file(source_path, out, weblinks)
                 markdown_file(md, out)
             else
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
+                line = line:gsub("%$%(CLINK_BRANCH%)", docbranch)
                 line = line:gsub("<br>", "&lt;br&gt;")
                 line = line:gsub("<!%-%- NEXT PASS INCLUDE (.*) %-%->", "$(INCLUDE %1)")
                 local n, hopen, htext, hclose, table_id
@@ -479,6 +481,20 @@ local function do_docs()
 end
 
 
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "docver",
+   value       = "DOCVER",
+   description = "Clink: Clink version to inject in documentation"
+}
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "docbranch",
+   value       = "DOCBRANCH",
+   description = "Clink: Clink branch to inject in documentation"
+}
 
 --------------------------------------------------------------------------------
 newaction {
