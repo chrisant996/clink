@@ -1911,6 +1911,8 @@ Function | Description
 
 A usage hint can be shown in the comment row (below the input line).  Usage hints for argmatchers are only shown if both [comment_row.show_hints](#comment_row_show_hints) (off by default) and [argmatcher.show_hints](#argmatcher_show_hints) (on by default) are enabled.
 
+To use this, Clink v1.7.0 or higher is required.
+
 Argmatchers can automatically supply input hints based on `arginfo` fields from match completions.
 
 To supply a custom usage hint, an argmatcher can include either `hint="text"` or <code>hint=<em>function_name</em></code> in the argument table.
@@ -2884,6 +2886,7 @@ Clink can show contextual input hints while you type.  Lua scripts can provide i
 <span class="color_comment_row">Argument expected:  filename</span>
 </code></pre>
 
+To use this, Clink v1.7.0 or higher is required.
 
 To turn on input hints, run <code>clink set <a href="#comment_row_show_hints">comment_row.show_hints</a> true</code>.  Lua scripts can add hinters to do things like show the value of an environment variable under the cursor, or show the value of a doskey macro, or show a hint about what kind of argument a command expects to be entered next, or other things.  The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) repo has some scripts that add hinters.
 
