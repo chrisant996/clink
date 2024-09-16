@@ -252,7 +252,7 @@ end
 
 --------------------------------------------------------------------------------
 local function get_word_arginfo(word, arg, matcher)
-    local arginfo = is_word_present(word, arg)
+    local _, _, arginfo = is_word_present(word, arg)
     if arginfo then
         return arginfo
     end
@@ -3207,16 +3207,17 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
         local prev_info
         local prev_arginfo
         while true do
+            local arg_index = reader._arg_index
+            argmatcher = reader._realmatcher
             local word, word_index = reader:next_word()
             if not word then
                 -- Handle case where cursor is past the last word.
                 local endinfo = line_state:getwordinfo(line_state:getwordcount())
                 if endinfo and cursorpos > endinfo.offset + endinfo.length then
-                    return between_words(argmatcher, reader._arg_index, line_state:getwordcount() + 1, line_state, reader._user_data, prev_arginfo)
+                    return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, reader._user_data, prev_arginfo)
                 end
                 break
             end
-            local arg_index = reader._arg_index
             local chain, chainlookup = reader:update(word, word_index)
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
