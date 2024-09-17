@@ -10,6 +10,7 @@
 #include <core/settings.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
+#include <lua/lua_hinter.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lib/cmd_tokenisers.h>
@@ -19,16 +20,25 @@ extern "C" {
 #include <lua.h>
 }
 
+#define CTRL_A "\x01"           // beginning-of-line
+#define CTRL_B "\x02"           // backward-char
+#define CTRL_E "\x05"           // end-of-line
+#define CTRL_F "\x06"           // forward-char
+#define META_B "\033b"          // backward-word
+#define META_F "\033f"          // forward-word
+
 //------------------------------------------------------------------------------
 TEST_CASE("Lua arg parsers")
 {
     fs_fixture fs;
 
-    setting* setting = settings::find("match.translate_slashes");
-    setting->set("system");
+    setting* const translate_slashes = settings::find("match.translate_slashes");
+    setting* const show_hints = settings::find("comment_row.show_hints");
+    translate_slashes->set("system");
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+    lua_hinter lua_hinter(lua);
 
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
@@ -38,6 +48,7 @@ TEST_CASE("Lua arg parsers")
     desc.word_tokeniser = &word_tokeniser;
     line_editor_tester tester(desc, nullptr, nullptr);
     tester.get_editor()->set_generator(lua_generator);
+    tester.get_editor()->set_hinter(lua_hinter);
 
     SECTION("Main")
     {
@@ -924,5 +935,167 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
-    setting->set();
+    show_hints->set("true");
+    lua.send_event("onbeginedit");  // So arguments.lua can detect the show_hints setting.
+
+    SECTION("Basic input hints")
+    {
+        const char* script = "\
+            local function argtwohint()\
+                return 'arg two'\
+            end\
+            \
+            clink.argmatcher('foo')\
+            :addflags({'-qq'})\
+            :addarg({'aa', 'bb', 'cc', hint='arg one'})\
+            :addarg({'dd', 'ee', 'ff', hint=argtwohint})\
+        ";
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        SECTION("at end")
+        {
+            tester.set_input("foo");
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("foo ");
+            tester.set_expected_hint("arg one");
+            tester.run();
+
+            tester.set_input("foo xx");
+            tester.set_expected_hint("arg one");
+            tester.run();
+
+            tester.set_input("foo xx ");
+            tester.set_expected_hint("arg two");
+            tester.run();
+
+            tester.set_input("foo xx yy");
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+
+        SECTION("between words")
+        {
+            tester.set_input("foo   xx yy" CTRL_A META_F CTRL_F);
+            tester.set_expected_hint("arg one");
+            tester.run();
+
+            tester.set_input("foo xx   yy" META_B CTRL_B CTRL_B);
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+
+        SECTION("in word")
+        {
+            tester.set_input("foo xx" CTRL_B);
+            tester.set_expected_hint("arg one");
+            tester.run();
+
+            tester.set_input("foo xx yy" CTRL_B);
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+    }
+
+    SECTION("Nested input hints")
+    {
+        const char* script = "\
+            local x = clink.argmatcher():addarg({'x'})\
+            local y = clink.argmatcher():addarg({'y', hint='y!'})\
+            clink.argmatcher('foo')\
+            :addflags({'-a'..x})\
+            :addflags({'-b'..x})\
+            :addflags({'-c'..y})\
+            :addflags({'-d'..y})\
+            :addflags({'-e'..x})\
+            :addflags({'-f'..y})\
+            :addarg({'aa', 'bb', 'cc'})\
+            :addarg({'dd', 'ee', 'ff', hint='arg two'})\
+            :adddescriptions({\
+                ['-b']={'xx!', ''},\
+                ['-d']={'yy!', ''},\
+                ['-e']={'earg', ''},\
+                ['-f']={'farg', ''},\
+            })\
+        ";
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        SECTION("at end")
+        {
+            tester.set_input("foo -b ");
+            tester.set_expected_hint("Argument expected:  xx!");
+            tester.run();
+
+            tester.set_input("foo -b 123 aa");
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("foo aa");
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("foo aa -a ");
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("foo aa -b ");
+            tester.set_expected_hint("Argument expected:  xx!");
+            tester.run();
+
+            tester.set_input("foo aa -c ");
+            tester.set_expected_hint("y!");
+            tester.run();
+
+            tester.set_input("foo aa -d ");
+            tester.set_expected_hint("y!");
+            tester.run();
+
+            tester.set_input("foo aa -e ");
+            tester.set_expected_hint("Argument expected:  earg");
+            tester.run();
+
+            tester.set_input("foo aa -f ");
+            tester.set_expected_hint("y!");
+            tester.run();
+
+            tester.set_input("foo aa -b 123 -e ");
+            tester.set_expected_hint("Argument expected:  earg");
+            tester.run();
+
+            tester.set_input("foo aa dd");
+            tester.set_expected_hint("arg two");
+            tester.run();
+
+            tester.set_input("foo aa -b 123 ");
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+
+        SECTION("between words")
+        {
+            tester.set_input("foo xx -e   yy" META_B CTRL_B CTRL_B);
+            tester.set_expected_hint("Argument expected:  earg");
+            tester.run();
+            tester.set_input("foo xx -e 123   yy" META_B CTRL_B CTRL_B);
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+
+        SECTION("in word")
+        {
+            tester.set_input("foo -e 123" CTRL_B);
+            tester.set_expected_hint("Argument expected:  earg");
+            tester.run();
+
+            tester.set_input("foo xx -e 123 yy" CTRL_B);
+            tester.set_expected_hint("arg two");
+            tester.run();
+        }
+    }
+
+    translate_slashes->set();
+    show_hints->set();
 }

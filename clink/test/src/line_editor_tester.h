@@ -72,6 +72,7 @@ public:
     void                        set_expected_words_list(const char* const* expected); // The list must be terminated with nullptr.
     void                        set_expected_classifications(const char* classifications, bool mark_argmatchers=false);
     void                        set_expected_faces(const char* faces);
+    void                        set_expected_hint(const char* expected);
     void                        set_expected_output(const char* expected);
     void                        run(bool expectationless=false);
 
@@ -92,6 +93,7 @@ private:
     std::vector<const char*>    m_expected_words;
     str<>                       m_expected_classifications;
     str<>                       m_expected_faces;
+    const char*                 m_expected_hint = nullptr;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;
     line_editor*                m_editor = nullptr;
@@ -99,6 +101,7 @@ private:
     bool                        m_has_words = false;
     bool                        m_has_classifications = false;
     bool                        m_has_faces = false;
+    bool                        m_has_hint = false;
     bool                        m_mark_argmatchers = false;
 };
 

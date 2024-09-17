@@ -9,6 +9,7 @@
 #include <core/str.h>
 #include <lib/editor_module.h>
 #include <lib/matches.h>
+#include <lib/hinter.h>
 #include <lib/word_classifier.h>
 #include <lib/word_classifications.h>
 #include <lib/word_collector.h>
@@ -43,6 +44,7 @@ public:
     const matches*  get_matches() const;
     const line_state* get_line_state() const;
     const word_classifications* get_classifications() const;
+    const char* get_input_hint() const;
 
 private:
     virtual void    bind_input(binder& binder) override;
@@ -52,6 +54,7 @@ private:
     const matches*  m_matches = nullptr;
     const line_state* m_line_state = nullptr;
     const word_classifications* m_classifications = nullptr;
+    const input_hint* m_input_hint = nullptr;
     bool            m_need_line_state = false;
 };
 
@@ -82,6 +85,12 @@ const word_classifications* test_module::get_classifications() const
 }
 
 //------------------------------------------------------------------------------
+const char* test_module::get_input_hint() const
+{
+    return (m_input_hint && !m_input_hint->empty()) ? m_input_hint->c_str() : nullptr;
+}
+
+//------------------------------------------------------------------------------
 void test_module::bind_input(binder& binder)
 {
     rl_bind_keyseq("\t", rl_named_function("complete"));
@@ -92,11 +101,13 @@ void test_module::on_begin_line(const context& context)
 {
     m_matches = &(context.matches);
     m_classifications = &(context.classifications);
+    m_input_hint = &(context.input_hint);
 }
 
 //------------------------------------------------------------------------------
 void test_module::on_input(const input&, result& result, const context& context)
 {
+    assert(&(context.input_hint) == m_input_hint);
 }
 
 //------------------------------------------------------------------------------
@@ -211,7 +222,7 @@ static const char* sanitize(const char* text)
 void line_editor_tester::run(bool expectationless)
 {
     bool has_expectations = expectationless;
-    has_expectations |= m_has_matches || m_has_words || m_has_classifications || m_has_faces || (m_expected_output != nullptr);
+    has_expectations |= m_has_matches || m_has_words || m_has_classifications || m_has_faces || m_has_hint || m_expected_output;
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
@@ -394,6 +405,39 @@ void line_editor_tester::run(bool expectationless)
         });
     }
 
+    if (m_has_hint)
+    {
+        const char* hint = match_catch.get_input_hint();
+        if (m_expected_hint && !hint)
+        {
+            REQUIRE(hint, [&]() {
+                printf(" input; %s\n", sanitize(m_input));
+
+                puts("expected input hint but got none");
+            });
+        }
+        else if (!m_expected_hint && hint)
+        {
+            REQUIRE(!hint, [&]() {
+                printf(" input; %s\n", sanitize(m_input));
+
+                printf("expected no input hint but got \"%s\"\n", hint);
+            });
+        }
+        else if (m_expected_hint && hint)
+        {
+            REQUIRE(strcmp(m_expected_hint, hint) == 0,[&] () {
+                printf(" input; %s#\n", sanitize(m_input));
+
+                puts("\nexpected input hint;");
+                printf("  \"%s\"\n", m_expected_hint);
+
+                puts("\ngot;");
+                printf("  \"%s\"\n", hint);
+            });
+        }
+    }
+
     // Check the output is as expected.
     if (m_expected_output != nullptr)
     {
@@ -412,11 +456,13 @@ void line_editor_tester::run(bool expectationless)
     m_expected_words.clear();
     m_expected_classifications.clear();
     m_expected_faces.clear();
+    m_expected_hint = nullptr;
 
     m_has_matches = false;
     m_has_words = false;
     m_has_classifications = false;
     m_has_faces = false;
+    m_has_hint = false;
 
     reset_lines();
 }
@@ -508,4 +554,11 @@ void line_editor_tester::set_expected_faces(const char* faces)
 {
     m_expected_faces = faces;
     m_has_faces = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::set_expected_hint(const char* hint)
+{
+    m_expected_hint = hint;
+    m_has_hint = true;
 }
