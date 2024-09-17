@@ -2538,7 +2538,6 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     static char err[] = "\x1b[1;91;40m";
     static char lf[] = "\n";
 
-    str<> s;
     str<> t;
     const char* p;
     const int32 spacing = 16;
@@ -2547,19 +2546,19 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     host_context context;
     host_get_app_context(id, context);
 
+    str<> _lambda_s;
     auto print_heading = [&](const char* text)
     {
-        s.clear();
-        s << bold << text << ":" << norm << lf;
-        g_printer->print(s.c_str(), s.length());
+        _lambda_s.clear();
+        _lambda_s << bold << text << ":" << norm << lf;
+        g_printer->print(_lambda_s.c_str(), _lambda_s.length());
     };
-
     auto print_value = [&](const char* name, const char* value)
     {
         if (value && *value)
         {
-            s.format("  %-*s  %s\n", spacing, name, value);
-            g_printer->print(s.c_str(), s.length());
+            _lambda_s.format("  %-*s  %s\n", spacing, name, value);
+            g_printer->print(_lambda_s.c_str(), _lambda_s.length());
         }
     };
 
@@ -2578,7 +2577,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     print_heading("session");
 
     t.format("%d", id);
-    print_value("session", s.c_str());
+    print_value("session", t.c_str());
     print_value("profile", context.profile.c_str());
     print_value("log", file_logger::get_path());    // ACTUAL FILE IN USE.
     print_value("default_settings", context.default_settings.c_str());
