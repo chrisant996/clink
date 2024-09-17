@@ -752,19 +752,27 @@ TEST_CASE("Lua advanced arg parsers")
             end\
             \
             local function onarg1(arg_index, word, word_index, line_state, user_data)\
-                table.insert(data, { 1, arg_index, word, word_index })\
+                if clink._in_generate() then\
+                    table.insert(data, { 1, arg_index, word, word_index })\
+                end\
             end\
             \
             local function onarg2(arg_index, word, word_index, line_state, user_data)\
-                table.insert(data, { 2, arg_index, word, word_index })\
+                if clink._in_generate() then\
+                    table.insert(data, { 2, arg_index, word, word_index })\
+                end\
             end\
             \
             local function onarg3(arg_index, word, word_index, line_state, user_data)\
-                table.insert(data, { 3, arg_index, word, word_index })\
+                if clink._in_generate() then\
+                    table.insert(data, { 3, arg_index, word, word_index })\
+                end\
             end\
             \
             local function onflag(arg_index, word, word_index, line_state, user_data)\
-                table.insert(data, { 0, arg_index, word, word_index })\
+                if clink._in_generate() then\
+                    table.insert(data, { 0, arg_index, word, word_index })\
+                end\
             end\
             \
             clink.argmatcher('qqq')\
@@ -781,6 +789,7 @@ TEST_CASE("Lua advanced arg parsers")
 
         REQUIRE_LUA_DO_STRING(lua, script);
 
+        SECTION("one arg")
         {
             static const onarg_case c_cases[] =
             {
@@ -795,6 +804,7 @@ TEST_CASE("Lua advanced arg parsers")
             verify_data(lua, nullptr, 0);
         }
 
+        SECTION("two args")
         {
             static const onarg_case c_cases[] =
             {
@@ -810,6 +820,7 @@ TEST_CASE("Lua advanced arg parsers")
             verify_data(lua, c_cases, _countof(c_cases) - 1);
         }
 
+        SECTION("args and flags")
         {
             static const onarg_case c_cases[] =
             {
@@ -827,6 +838,7 @@ TEST_CASE("Lua advanced arg parsers")
             verify_data(lua, c_cases, _countof(c_cases) - 1);
         }
 
+        SECTION("many args and flags")
         {
             static const onarg_case c_cases[] =
             {
