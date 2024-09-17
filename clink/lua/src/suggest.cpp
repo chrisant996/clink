@@ -61,6 +61,8 @@ nosuggest:
     lua_pushliteral(state, "_suggest");
     lua_rawget(state, -2);
 
+    os::cwd_restorer cwd;
+
     // If matches not supplied, then use a coroutine to generates matches on
     // demand (if matches are not accessed, they will not be generated).
     if (matches)

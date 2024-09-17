@@ -5,6 +5,7 @@
 #include "lua_hinter.h"
 
 #include <core/base.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <lib/line_state.h>
 #include <lib/display_readline.h>
@@ -126,6 +127,8 @@ nohint:
 
     line_state_lua line_lua(line);
     line_lua.push(state);
+
+    os::cwd_restorer cwd;
 
     if (m_lua.pcall(state, 1, 2) != 0)
         goto nohint;

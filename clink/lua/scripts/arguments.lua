@@ -743,7 +743,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                         end
                     end
                 end
-                if arg.onarg and clink._in_generate() then
+                if arg.onarg then
                     arg.onarg(0, word, word_index, line_state, self._user_data)
                 end
             end
@@ -917,7 +917,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
         end
-        if arg.onarg and clink._in_generate() then
+        if arg.onarg then
             arg.onarg(arg_index, word, word_index, line_state, self._user_data)
         end
     end
