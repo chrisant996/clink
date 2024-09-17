@@ -2759,11 +2759,12 @@ end
 --  exists      = True if argmatcher exists (even if too few words to use it).
 --  extra       = Extra line_state to run through reader before continuing.
 --  no_cmd      = Don't find argmatchers for CMD builtin commands.
-local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra)
-    -- Running an argmatcher only makes sense if there's two or more words.
+local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force)
+    -- Running an argmatcher only makes sense if there's two or more words,
+    -- but allowing forcing it to be returned when getting input hints.
     local word_count = line_state:getwordcount()
     local command_word_index = line_state:getcommandwordindex()
-    if word_count < command_word_index + ((check_existence or has_extra) and 0 or 1) then
+    if word_count < command_word_index + ((check_existence or has_extra or force) and 0 or 1) then
         return
     end
     if word_count > command_word_index then
@@ -3188,7 +3189,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local reader
 ::do_command::
 
-    local argmatcher, _, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
+    local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
 
     if argmatcher then
@@ -3230,7 +3231,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 if not info then
                     break
                 elseif cursorpos < info.offset then
-                    if prev_info and prev_info.offset + prev_info.length < cursorpos then
+                    if not prev_info or prev_info.offset + prev_info.length < cursorpos then
                         -- Cursor is between words.
                         return between_words(argmatcher, arg_index, word_index, line_state, reader._user_data, prev_arginfo)
                     end
