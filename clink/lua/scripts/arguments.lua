@@ -622,7 +622,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
     self._cycle_detection = nil
-    self._arginfo = nil
     if self._disabled then
         return
     end
@@ -1059,7 +1058,7 @@ function _argreader:_push(matcher, realmatcher)
     -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
-        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data })
+        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data, self._arginfo })
         --[[
         self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
     else
@@ -1075,6 +1074,9 @@ function _argreader:_push(matcher, realmatcher)
     if not realmatcher then -- Don't start new user data when switching to flags matcher.
         self._user_data = { shared_user_data=self._shared_user_data }
     end
+    if realmatcher or matcher._is_flag_matcher then -- Clear arginfo if not linked.
+        self._arginfo = nil
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1089,7 +1091,9 @@ function _argreader:_pop(next_is_flag)
             return false
         end
 
-        self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data = table.unpack(table.remove(self._stack))
+        -- Since self._arginfo can be nil, the extents of the table must now
+        -- be specified explicitly (..., 1, 6).
+        self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data, self._arginfo = table.unpack(table.remove(self._stack), 1, 6)
 
         if self._matcher._loop then
             -- Matcher is looping; stop popping so it can handle the argument.
@@ -3209,12 +3213,12 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
         -- Consume words and use them to move through matchers' arguments.
         local prev_info
-        local prev_arginfo
         while true do
             -- Capture parser state BEFORE calling reader:update(), which
             -- advances the parser and sets up state for the NEXT pass.
             local arg_index = reader._arg_index
             local user_data = reader._user_data
+            local prev_arginfo = reader._arginfo
             local noflags = reader._noflags
             argmatcher = reader._realmatcher
 
@@ -3258,6 +3262,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                     if not noflags and argmatcher._flags and argmatcher:_is_flag(word) then
                         arg_index = 0
                         args = argmatcher._flags._args[1]
+                        prev_arginfo = nil
                     else
                         args = argmatcher._args[arg_index]
                     end
@@ -3280,8 +3285,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 end
                 prev_info = info
             end
-
-            prev_arginfo = reader._arginfo
         end
 
         return besthint, bestpos
