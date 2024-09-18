@@ -3212,6 +3212,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             -- advances the parser and sets up state for the NEXT pass.
             local arg_index = reader._arg_index
             local user_data = reader._user_data
+            local noflags = reader._noflags
             argmatcher = reader._realmatcher
 
             -- Get the next word.
@@ -3251,7 +3252,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                     break
                 elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
                     local args
-                    if not reader._noflags and argmatcher._flags and argmatcher:_is_flag(word) then
+                    if not noflags and argmatcher._flags and argmatcher:_is_flag(word) then
                         arg_index = 0
                         args = argmatcher._flags._args[1]
                     else
