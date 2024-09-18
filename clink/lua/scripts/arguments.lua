@@ -3194,7 +3194,10 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
     if argmatcher then
         if reader then
+            local last_word = reader._last_word
+            reader._last_word = nil
             reader:start_command(argmatcher)
+            reader._last_word = last_word
         else
             reader = _argreader(argmatcher, line_state)
             reader._need_arginfo = true
