@@ -3214,8 +3214,12 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             if not word then
                 -- Handle case where cursor is past the last word.
                 local endinfo = line_state:getwordinfo(line_state:getwordcount())
-                if endinfo and cursorpos > endinfo.offset + endinfo.length then
-                    return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, reader._user_data, prev_arginfo)
+                if endinfo then
+                    local nextposafterendword = endinfo.offset + endinfo.length
+                    if (cursorpos > nextposafterendword) or
+                            (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                        return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, reader._user_data, prev_arginfo)
+                    end
                 end
                 break
             end
