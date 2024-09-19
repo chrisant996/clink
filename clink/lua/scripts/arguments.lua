@@ -911,14 +911,18 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         return
     end
 
-    -- Run delayinit and onarg (is_flag runs them further above).
-    if not is_flag then
-        if arg.delayinit then
-            do_delayed_init(arg, realmatcher, arg_index)
+    -- Run delayinit (is_flag runs it further above).
+    if not is_flag and arg.delayinit then
+        do_delayed_init(arg, realmatcher, arg_index)
+    end
+
+    -- Parse the word type.
+    if self._word_classifier then
+        if not self._extra then
+            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
         end
-        if arg.onarg then
-            arg.onarg(arg_index, word, word_index, line_state, self._user_data)
-        end
+    elseif self._need_arginfo then
+        self._arginfo = get_word_arginfo(word, arg, realmatcher)
     end
 
     -- Generate matches from history.
@@ -930,13 +934,11 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
 
-    -- Parse the word type.
-    if self._word_classifier then
-        if not self._extra then
-            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
-        end
-    elseif self._need_arginfo then
-        self._arginfo = get_word_arginfo(word, arg, realmatcher)
+    -- Run onarg (is_flag runs it further above).  Must run classify_word
+    -- BEFORE onarg, otherwise for example onarg can change the current
+    -- directory before classify_word has a chance to process the word.
+    if not is_flag and arg.onarg then
+        arg.onarg(arg_index, word, word_index, line_state, self._user_data)
     end
 
     -- Does the word lead to another matcher?
