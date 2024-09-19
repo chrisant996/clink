@@ -201,11 +201,13 @@ static int32 overlay(lua_State* state)
     if (!lua_istable(state, 1))
         return luaL_argerror(state, 1, "must be a table");
 
+    const bool in_memory_only = lua_toboolean(state, 2);
+
     std::vector<settings::setting_name_value> pairs;
 
-    for (int32 i = 1, n = int32(lua_rawlen(state, 2)); i <= n; ++i)
+    for (int32 i = 1, n = int32(lua_rawlen(state, 1)); i <= n; ++i)
     {
-        lua_rawgeti(state, -1, i);
+        lua_rawgeti(state, 1, i);
 
         if (!lua_istable(state, -1))
         {
@@ -244,7 +246,7 @@ static int32 overlay(lua_State* state)
     }
 
     settings::overlay(pairs);
-    bool ok = settings::sandboxed_overlay(pairs);
+    const bool ok = in_memory_only || settings::sandboxed_overlay(pairs);
 
     lua_pushboolean(state, ok == true);
     return 1;
@@ -580,7 +582,7 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "set",         &set },
         { 1, "add",         &add },
         // UNDOCUMENTED; internal use only.
-        { -1, "load",       &load },
+        { 1, "load",       &load },
         { 1, "list",        &list },
         { 1, "match",       &match },
         { 1, "_parseini",   &parse_ini },
