@@ -594,23 +594,28 @@ The Clink color [settings](#clinksettings) are the ones whose names begin with `
 <code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code>
 
 Optional attributes (can be abbreviated to 3 letters):
-- `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already).
-- `underline` or `nounderline` adds or removes an underline.
+- `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already; some terminal programs may also/instead use a bolder font weight).
+- `underline` adds an underline (some terminal programs cannot display underlines).
+- `italic` adds italics (some terminal programs cannot display italics).
+- `reverse` swaps the foreground and background colors.
 
 Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):
 - `default` or `normal` uses the default color as defined by the current color theme in the console window.
 - `black`, `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `white` are the basic colors names.
 - `bright` can be combined with any of the other color names to make them bright (high intensity).
+- `#XXXXXX` specifies a color using 24-bit RGB hex format; the first two digits are the red value, the next two digits are the green value, and the last two digits are the blue value (some terminal programs cannot display 24-bit colors, and will try to instead use the closest supported color).
+- `#XXX` specifies a color using a short RGB hex format; each digit is doubled so `#3fc` means `#33ffcc`.
 
 Examples (specific results may depend on the console host program):
 - `bri yel` for bright yellow foreground on default background color.
 - `bold` for bright default foreground on default background color.
-- `underline bright black on white` for dark gray (bright black) foreground on light gray (white) background.
+- `underline bright black on white` for dark gray (bright black) foreground with underline on light gray (white) background.
 - `default on blue` for default foreground color on blue background.
+- `bold underline green on #222` for bright green with underline on a dark gray background.
 
 ### Alternative SGR Syntax
 
-It's also possible to set any ANSI [SGR escape code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
+It's also possible to set any ANSI [SGR escape code](https://wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
 
 Be careful, since some escape code sequences might behave strangely.
 
