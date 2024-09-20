@@ -75,7 +75,12 @@ static int32 get(lua_State* state)
         {
             str<> value;
             if (lua_isboolean(state, 2) && lua_toboolean(state, 2))
-                setting->get_descriptive(value);
+            {
+                // The third parameter is undocumented; it's a compatibility
+                // kludge intended for internal use.
+                const bool latest = (lua_isboolean(state, 3) && lua_toboolean(state, 3));
+                setting->get_descriptive(value, latest);
+            }
             else
                 setting->get(value);
             lua_pushlstring(state, value.c_str(), value.length());

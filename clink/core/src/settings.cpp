@@ -1346,15 +1346,15 @@ static bool parse24bit(str_tokeniser& parts, str_iter& part, char* buf)
 
     if (!parts.next(part)) return false;
     const int32 r = int_from_str_iter(part);
-    if (r < 0) return false;
+    if (r < 0 || r > 255) return false;
 
     if (!parts.next(part)) return false;
     const int32 g = int_from_str_iter(part);
-    if (g < 0) return false;
+    if (g < 0 || g > 255) return false;
 
     if (!parts.next(part)) return false;
     const int32 b = int_from_str_iter(part);
-    if (b < 0) return false;
+    if (b < 0 || b > 255) return false;
 
     sprintf(buf, "#%02.2X%02.2X%02.2X", r, g, b);
     return true;
@@ -1381,7 +1381,7 @@ void setting_color::set()
 }
 
 //------------------------------------------------------------------------------
-void setting_color::get_descriptive(str_base& out) const
+void setting_color::get_descriptive(str_base& out, bool latest) const
 {
     str<> tmp;
     get(tmp);
@@ -1453,7 +1453,7 @@ nope:
             out << color_names[x - 30] << " ";
             any_fg = true;
         }
-        else if (x == 38)
+        else if (x == 38 && latest)
         {
             if (expected > fg_token) goto nope;
             expected = fg_token + 1;
@@ -1484,7 +1484,7 @@ nope:
             }
             out << color_names[x - 30] << " ";
         }
-        else if (x == 48)
+        else if (x == 48 && latest)
         {
             if (expected > bg_token) goto nope;
             expected = bg_token + 1;
