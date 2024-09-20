@@ -146,6 +146,8 @@ local function color_handler(word_index, line_state, classify)
     local include_bold = true
     local include_bright = true
     local include_underline = true
+    local include_italic = true
+    local include_reverse = true
     local include_color = true
     local include_on = true
     local include_sgr = true
@@ -189,6 +191,8 @@ local function color_handler(word_index, line_state, classify)
             include_bold = false
             include_bright = true
             include_underline = false
+            include_italic = false
+            include_reverse = false
             include_color = true
             include_on = false
         elseif is_prefix3(word, "bold", "nobold", "dim") then
@@ -209,6 +213,18 @@ local function color_handler(word_index, line_state, classify)
                 break
             end
             include_underline = false
+        elseif is_prefix3(word, "reverse") then
+            if not include_reverse then
+                invalid = true
+                break
+            end
+            include_reverse = false
+        elseif is_prefix3(word, "italic") then
+            if not include_italic then
+                invalid = true
+                break
+            end
+            include_italic = false
         elseif is_prefix3(word, "default", "normal", "black", "red", "green",
                           "yellow", "blue", "cyan", "magenta", "white") then
             if not include_color then
@@ -218,6 +234,19 @@ local function color_handler(word_index, line_state, classify)
             include_bold = false
             include_bright = false
             include_underline = false
+            include_italic = false
+            include_reverse = false
+            include_color = false
+        elseif word:find("^#%x%x%x$") or word:find("^#%x%x%x%x%x%x$") then
+            if not include_color or not include_bright then
+                invalid = true
+                break
+            end
+            include_bold = false
+            include_bright = false
+            include_underline = false
+            include_italic = false
+            include_reverse = false
             include_color = false
         elseif word == "sgr" then
             if not include_sgr then
@@ -267,6 +296,12 @@ local function color_handler(word_index, line_state, classify)
             table.insert(list, "underline")
             table.insert(list, "nounderline")
         end
+        if include_italic then
+            table.insert(list, "italic")
+        end
+        if include_reverse then
+            table.insert(list, "reverse")
+        end
         if include_color then
             table.insert(list, "default")
             table.insert(list, "normal")
@@ -288,7 +323,10 @@ local function color_handler(word_index, line_state, classify)
     end
 
     if classify and invalid then
-        if word then
+        if word:find("^#%x*$") then
+            classify:classifyword(i, "o") --other
+            return {}
+        elseif word then
             local len = #word
             for _, s in ipairs(list) do
                 if s:sub(1, len) == word then

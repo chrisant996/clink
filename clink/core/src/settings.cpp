@@ -1030,6 +1030,47 @@ static bool imatch3(const str<16>& a, const char* b)
 }
 
 //------------------------------------------------------------------------------
+static int32 parsehexdigit(char c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return 10 + (c - 'a');
+    if (c >= 'A' && c <= 'F')
+        return 10 + (c - 'A');
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+static int32 parsehex(const str<16>& a)
+{
+    if (*a.c_str() != '#')
+        return -1;
+
+    const uint32 len = a.length();
+    if (len != 4 && len != 7)
+        return -1;
+
+    const bool double_digits = (len == 4);
+    int32 value = 0;
+    for (const char* s = a.c_str() + 1; *s; ++s)
+    {
+        int32 h = parsehexdigit(*s);
+        if (h < 0)
+            return -1;
+        value <<= 4;
+        value += h;
+        if (double_digits)
+        {
+            value <<= 4;
+            value += h;
+        }
+    }
+
+    return value;
+}
+
+//------------------------------------------------------------------------------
 setting_color::setting_color(const char* name, const char* short_desc, const char* default_value)
 : setting_str(name, short_desc, default_value)
 {
@@ -1061,10 +1102,15 @@ bool setting_color::parse(const char* value, store<const char*>& out)
     str<16> token;
     int32 fg = -1;
     int32 bg = -1;
+    bool fg_hex = false;
+    bool bg_hex = false;
     int32 bold = -1;
     int32 bright = -1;
     int32 underline = -1;
+    bool italic = false;
+    bool reverse = false;
     int32* pcolor = &fg;
+    bool* phex = &fg_hex;
     bool saw_default = false;
     bool first_part = true;
 
@@ -1091,9 +1137,10 @@ bool setting_color::parse(const char* value, store<const char*>& out)
         if (strcmpi(token.c_str(), "on") == 0)
         {
             if (pcolor == &bg) return false; // can't use "on" more than once
-            if (bright > 0)
+            if (!*phex && bright > 0)
                 fg += 8;
             pcolor = &bg;
+            phex = &bg_hex;
             bright = -1;
             saw_default = false;
             continue;
@@ -1104,6 +1151,7 @@ bool setting_color::parse(const char* value, store<const char*>& out)
             if (*pcolor >= 0) return false; // disallow combinations
             if (saw_default) return false;
             *pcolor = -1;
+            *phex = false;
             saw_default = true;
             continue;
         }
@@ -1118,6 +1166,7 @@ bool setting_color::parse(const char* value, store<const char*>& out)
 
         if (imatch3(token, "bright"))
         {
+            if (*phex) return false; // disallow combinations
             if (bright >= 0) return false; // disallow combinations
             bright = imatch3(token, "bright");
             continue;
@@ -1127,7 +1176,34 @@ bool setting_color::parse(const char* value, store<const char*>& out)
         {
             if (pcolor == &bg) return false; // only applies to fg
             if (underline >= 0) return false; // disallow combinations
+            // "nounderline" is still recognized for backward compatibility,
+            // but it has no effect.
             underline = imatch3(token, "underline");
+            continue;
+        }
+
+        if (imatch3(token, "italic"))
+        {
+            if (pcolor == &bg) return false; // only applies to fg
+            if (italic) return false; // disallow combinations
+            italic = true;
+            continue;
+        }
+
+        if (imatch3(token, "reverse"))
+        {
+            if (reverse) return false; // disallow combinations
+            reverse = true;
+            continue;
+        }
+
+        const int32 h = parsehex(token);
+        if (h >= 0)
+        {
+            if (*pcolor >= 0) return false; // disallow combinations
+            if (bright >= 0) return false; // disallow combinations
+            *pcolor = h;
+            *phex = true;
             continue;
         }
 
@@ -1144,39 +1220,73 @@ bool setting_color::parse(const char* value, store<const char*>& out)
             return false;
     }
 
-    if (*pcolor >= 0 && bright > 0)
+    if (*pcolor >= 0 && !*phex && bright > 0)
         (*pcolor) += 8;
 
     code = "0";
+
+    if (reverse)
+        code << ";7";
 
     if (bold > 0)
         code << ";1";
     else if (bold == 0)
         code << ";22";
 
+    if (italic)
+        code << ";3";
+
     if (underline > 0)
         code << ";4";
-    else if (underline == 0)
-        code << ";24";
 
     if (fg >= 0)
     {
-        if (fg >= 8)
-            fg += 60 - 8;
-        fg += 30;
-        char buf[10];
-        itoa(fg, buf, 10);
-        code << ";" << buf;
+        if (fg_hex)
+        {
+            char r[10];
+            char g[10];
+            char b[10];
+            itoa(fg & 0xff, b, 10);
+            fg >>= 8;
+            itoa(fg & 0xff, g, 10);
+            fg >>= 8;
+            itoa(fg, r, 10);
+            code << ";38;2;" << r << ";" << g << ";" << b;
+        }
+        else
+        {
+            if (fg >= 8)
+                fg += 60 - 8;
+            fg += 30;
+            char buf[10];
+            itoa(fg, buf, 10);
+            code << ";" << buf;
+        }
     }
 
     if (bg >= 0)
     {
-        if (bg >= 8)
-            bg += 60 - 8;
-        bg += 40;
-        char buf[10];
-        itoa(bg, buf, 10);
-        code << ";" << buf;
+        if (bg_hex)
+        {
+            char r[10];
+            char g[10];
+            char b[10];
+            itoa(bg & 0xff, b, 10);
+            bg >>= 8;
+            itoa(bg & 0xff, g, 10);
+            bg >>= 8;
+            itoa(bg, r, 10);
+            code << ";48;2;" << r << ";" << g << ";" << b;
+        }
+        else
+        {
+            if (bg >= 8)
+                bg += 60 - 8;
+            bg += 40;
+            char buf[10];
+            itoa(bg, buf, 10);
+            code << ";" << buf;
+        }
     }
 
     out.value = code.c_str();
@@ -1196,6 +1306,28 @@ static int32 int_from_str_iter(const str_iter& iter)
         x += *p - '0';
     }
     return x;
+}
+
+//------------------------------------------------------------------------------
+static bool parse24bit(str_tokeniser& parts, str_iter& part, char* buf)
+{
+    if (!parts.next(part)) return false;
+    if (int_from_str_iter(part) != 2) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 r = int_from_str_iter(part);
+    if (r < 0) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 g = int_from_str_iter(part);
+    if (g < 0) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 b = int_from_str_iter(part);
+    if (b < 0) return false;
+
+    sprintf(buf, "#%02.2X%02.2X%02.2X", r, g, b);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -1228,7 +1360,7 @@ void setting_color::get_descriptive(str_base& out) const
     if (tmp.empty())
         return;
 
-    enum { reset_token, bold_token, underline_token, fg_token, bg_token, nomore_tokens };
+    enum { reset_token, reverse_token, bold_token, italic_token, underline_token, fg_token, bg_token, nomore_tokens };
     int32 expected = reset_token;
     str_iter part;
     str_tokeniser parts(tmp.c_str(), ";");
@@ -1255,17 +1387,29 @@ nope:
             if (expected > reset_token) goto nope;
             expected = reset_token + 1;
         }
+        else if (x == 7)
+        {
+            if (expected > reverse_token) goto nope;
+            expected = reverse_token + 1;
+            out << "reverse ";
+        }
         else if (x == 1 || x == 22)
         {
             if (expected > bold_token) goto nope;
             expected = bold_token + 1;
             out << ((x == 1) ? "bold " : "nobold ");
         }
-        else if (x == 4 || x == 24)
+        else if (x == 3)
+        {
+            if (expected > italic_token) goto nope;
+            expected = italic_token + 1;
+            out << "italic ";
+        }
+        else if (x == 4)
         {
             if (expected > underline_token) goto nope;
             expected = underline_token + 1;
-            out << ((x == 4) ? "underline " : "nounderline ");
+            out << "underline ";
         }
         else if ((x >= 30 && x < 38) || (x >= 90 && x < 98))
         {
@@ -1277,6 +1421,15 @@ nope:
                 x -= 60;
             }
             out << color_names[x - 30] << " ";
+            any_fg = true;
+        }
+        else if (x == 38)
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            char buf[10];
+            if (!parse24bit(parts, part, buf)) goto nope;
+            out << buf << " ";
             any_fg = true;
         }
         else if (x == 39)
@@ -1300,6 +1453,17 @@ nope:
                 x -= 60;
             }
             out << color_names[x - 30] << " ";
+        }
+        else if (x == 48)
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            char buf[10];
+            if (!parse24bit(parts, part, buf)) goto nope;
+            if (!any_fg)
+                out << "default ";
+            out << "on ";
+            out << buf << " ";
         }
         else if (x == 49)
         {

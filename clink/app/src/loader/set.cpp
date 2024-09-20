@@ -71,7 +71,8 @@ static void list_options(lua_state& lua, const char* key)
         {
             static const char* const color_keywords[] =
             {
-                "bold", "nobold", "underline", "nounderline",
+                "bold", "nobold", "underline",
+                "reverse", "italic",
                 "bright", "default", "normal", "on",
                 "black", "red", "green", "yellow",
                 "blue", "cyan", "magenta", "white",
@@ -132,8 +133,7 @@ static bool print_value(bool describe, const char* key, bool list=false)
     if (setting->get_type() == setting::type_enum)
         printf("     Options: %s\n", ((setting_enum*)setting)->get_options());
     else if (setting->get_type() == setting::type_color)
-        printf("      Syntax: 'sgr SGR_params' or '[underline bright] color on [bright] color'\n");
-
+        printf("      Syntax: [bold italic underline reverse] [bright] color on [bright] color\n");
 
     str<> value;
     setting->get_descriptive(value);
@@ -142,6 +142,9 @@ static bool print_value(bool describe, const char* key, bool list=false)
     const char* long_desc = setting->get_long_desc();
     if (long_desc != nullptr && *long_desc)
         printf("\n%s\n", setting->get_long_desc());
+
+    if (setting->get_type() == setting::type_color)
+        printf("\nVisit https://chrisant996.github.io/clink/clink.html#color-settings\nfor details on setting colors.\n");
 
     return true;
 }
