@@ -8,6 +8,7 @@
   - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
   - Lua scripts can create custom hinters; see [Showing Input Hints](#showinginputhints) for more information.
+- Enhanced the syntax for setting colors; added `italic` and `reverse`, and added `#XXXXXX` and `#XXX` shortcuts for specifying 24-bit color values.
 - Changed phrasing from "Accept Suggestion" to "Insert Suggestion" in the documentation and in the auto-suggestions usage hint text.
 - Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` instead of `print()` are (1) background compatibility or (2) using `NONL` to suppress printing a line ending.
 - Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
@@ -17,6 +18,7 @@
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
 - Fixed delay when typing `X:` and it's a remote drive.
 - Fixed coloring `2>&1`; the `1` wasn't colored.
+- Fixed color of leading blank lines in a prompt string (use the terminal's default color, not the `color.prompt` color).
 - Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
