@@ -163,7 +163,6 @@ static setting_bool g_debug_heap_stats(
 
 extern setting_bool g_autosuggest_enable;
 extern setting_bool g_classify_words;
-extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
 extern setting_enum g_expand_mode;
 

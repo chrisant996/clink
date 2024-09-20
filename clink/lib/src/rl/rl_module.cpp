@@ -266,7 +266,7 @@ setting_color g_color_popup_desc(
     "If not set, a color is chosen to complement the console's popup colors.",
     "");
 
-setting_color g_color_prompt(
+static setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",
     "When set, this is used as the default color for the prompt.  But it's\n"
@@ -2646,7 +2646,7 @@ static void suppress_redisplay()
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* const prompt, const char* const rprompt, const bool _redisplay, const bool transient)
+void rl_module::set_prompt(const char* prompt, const char* const rprompt, const bool _redisplay, const bool transient)
 {
     assertimplies(transient, _redisplay);
     const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
@@ -2670,7 +2670,13 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
         if (prompt_color)
         {
-            m_rl_prompt.format("\x01%s\x02", prompt_color);
+            str<16> leading_newlines;
+            while (*prompt == '\r' || *prompt == '\n')
+            {
+                leading_newlines.concat(prompt, 1);
+                ++prompt;
+            }
+            m_rl_prompt.format("%s\x01%s\x02", leading_newlines.c_str(), prompt_color);
             if (rprompt)
                 m_rl_rprompt.format("\x01%s\x02", prompt_color);
         }
