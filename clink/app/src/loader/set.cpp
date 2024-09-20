@@ -280,7 +280,7 @@ static void print_help()
         "matching the prefix are listed.  The --info flag includes detailed info\n"
         "for each listed setting.\n"
         "\n"
-        "The -C flag selects backward-compatible mode when printing color setting\n"
+        "The --compat flag selects backward-compatible mode when printing color setting\n"
         "values.  This is only needed when the output from the command will be used as\n"
         "input to an older version that doesn't support newer color syntax.");
 }

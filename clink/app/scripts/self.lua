@@ -346,6 +346,12 @@ local function color_handler(word_index, line_state, classify)
 end
 
 --------------------------------------------------------------------------------
+local function set_onarg(_, word, _, _, user_data)
+    -- Remember the setting name for use by value_handler().
+    user_data.setting_name = word
+end
+
+--------------------------------------------------------------------------------
 local function set_handler(match_word, word_index, line_state) -- luacheck: no unused
     local list = settings.list()
     local desc_color = settings.get("color.description")
@@ -394,20 +400,24 @@ local function set_handler(match_word, word_index, line_state) -- luacheck: no u
 end
 
 --------------------------------------------------------------------------------
-local function value_handler(match_word, word_index, line_state, builder, classify) -- luacheck: no unused
-    if word_index <= 3 then
-        return
+local function value_onarg(_, _, word_index, _, user_data)
+    -- Remember the index of the first word in the value.
+    if not user_data.value_word_index then
+        user_data.value_word_index = word_index
     end
+end
 
-    -- Use relative positioning to get the word, in case flags were used.
-    local name = line_state:getword(word_index - 1)
+--------------------------------------------------------------------------------
+local function value_handler(_, word_index, line_state, builder, user_data)
+    local name = user_data.setting_name
     local info = settings.list(name)
     if not info then
         return
     end
 
+    local value_word_index = user_data.value_word_index or word_index
     if info.type == "color" then
-        return color_handler(word_index, line_state)
+        return color_handler(value_word_index, line_state)
     elseif info.type == "string" then
         if name == "autosuggest.strategy" then
             return clink._list_suggesters()
@@ -415,8 +425,10 @@ local function value_handler(match_word, word_index, line_state, builder, classi
             builder:setfullyqualify()
             return clink.filematches(line_state:getendword())
         end
-    else
+    elseif value_word_index == word_index then
         return info.values
+    else
+        return {}
     end
 end
 
@@ -492,16 +504,32 @@ local function classify_handler(arg_index, _, word_index, line_state, classify)
 end
 
 --------------------------------------------------------------------------------
+local set_flags = {
+    "-h", "-d", "-i", "-C", "-?",
+    "--help", "--describe", "--info", "--compat",
+}
+
+local function make_hide_flags(flags)
+    local t = {}
+    for _, f in ipairs(flags) do
+        if f:sub(1, 2) ~= "--" then
+            table.insert(t, f)
+        end
+    end
+    return t
+end
+
 local set = clink.argmatcher()
-:addflags("-h", "-d", "-i", "-?")
-:hideflags("-h", "-d", "-i", "-?")
-:addflags("--help", "--describe", "--info")
+:addflags(set_flags)
+:hideflags(make_hide_flags(set_flags))
 :adddescriptions({
     ["--help"] = "Show help",
     ["--describe"] = "Show descriptions of settings (instead of values)",
-    ["--info"] = "Show detailed info for each setting when '*' is used"})
-:addarg(set_handler)
-:addarg(value_handler)
+    ["--info"] = "Show detailed info for each setting when '*' is used",
+    ["--compat"] = "Print backward-compatible color setting values",
+})
+:addarg({set_handler, onarg=set_onarg})
+:addarg({value_handler, onarg=value_onarg}):loop(2)
 :setclassifier(classify_handler)
 
 --------------------------------------------------------------------------------
@@ -692,50 +720,3 @@ clink.argmatcher(
     ["uninstallscripts"] = "Remove a path to search for scripts",
     ["set"]         = "Adjust Clink's settings"})
 :nofiles()
-
---------------------------------------------------------------------------------
-local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)
-
-function set_generator:generate(line_state, match_builder) -- luacheck: no self
-    local first_word = clink.lower(path.getname(line_state:getword(1)))
-    if path.getbasename(first_word) ~= "clink" and first_word ~= "clink_x64.exe" and first_word ~= "clink_x86.exe" then
-        return
-    end
-
-    local index = 2
-    while index < line_state:getwordcount() do
-        local word = line_state:getword(index)
-        if word == "--help" or word == "-h" or word == "-?" then -- luacheck: ignore 542
-        elseif word == "--version" or word == "-v" then -- luacheck: ignore 542
-        elseif word == "--profile" or word == "-p" then
-            index = index + 1
-        else
-            break
-        end
-        index = index + 1
-    end
-
-    if line_state:getword(index) ~= "set" then
-        return
-    end
-
-    index = index + 1
-    while true do
-        local word = line_state:getword(index)
-        if word ~= "--help" and word ~= "-h" and word ~= "-?" and word ~= "--describe" and word ~= "-d" then
-            break
-        end
-        index = index + 1
-    end
-
-    if index == line_state:getwordcount() then
-        return
-    end
-
-    index = index + 1
-    local matches = value_handler(line_state:getword(index), index, line_state, match_builder)
-    if matches then
-        match_builder:addmatches(matches, "arg")
-    end
-    return true
-end
