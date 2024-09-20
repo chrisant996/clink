@@ -714,6 +714,34 @@ void get_settings_file(str_base& out)
 }
 
 //------------------------------------------------------------------------------
+class rollback_settings_values
+{
+public:
+    rollback_settings_values()
+    {
+        str_moveable value;
+        for (auto& i : get_map())
+        {
+            setting* iter = i.second;
+            iter->get(value);
+            m_restore.emplace(iter->get_name(), std::move(value));
+        }
+    }
+    ~rollback_settings_values()
+    {
+        for (auto& r : m_restore)
+        {
+            setting* iter = settings::find(r.first.c_str());
+            assert(iter); // (It was there a moment ago!)
+            if (iter)
+                iter->set(r.second.c_str());
+        }
+    }
+private:
+    std::map<std::string, str_moveable> m_restore;
+};
+
+//------------------------------------------------------------------------------
 bool sandboxed_set_setting(const char* name, const char* value)
 {
     if (!g_last_file)
@@ -721,8 +749,9 @@ bool sandboxed_set_setting(const char* name, const char* value)
     const char* file = g_last_file->c_str();
 
     // Swap real settings data structures with new temporary versions.
-    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
-    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+    loaded_settings_map tmp_loaded_map;
+    rollback_settings_values rb_settings;
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
     // Load settings.
     return (load(file) &&
@@ -741,8 +770,9 @@ bool sandboxed_overlay(const std::vector<setting_name_value>& overlay)
     const char* file = g_last_file->c_str();
 
     // Swap real settings data structures with new temporary versions.
-    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
-    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+    loaded_settings_map tmp_loaded_map;
+    rollback_settings_values rb_settings;
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
     if (!load(file))
         return false;
