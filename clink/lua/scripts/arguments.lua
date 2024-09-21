@@ -2591,6 +2591,7 @@ local function add_dirs_from_var(t, var, subdir)
     if var and var ~= "" then
         local dirs = string.explode(var, ";", '"')
         for _,d in ipairs(dirs) do
+            d = d:gsub("^%s+", ""):gsub("%s+$", "")
             d = rl.expandtilde(d:gsub('"', ""))
             if subdir then
                 d = path.join(d, "completions")
@@ -2603,19 +2604,20 @@ local function add_dirs_from_var(t, var, subdir)
 end
 
 --------------------------------------------------------------------------------
+local _completion_dirs_env = ""
 local _completion_dirs_str = ""
 local _completion_dirs_list = {}
 function clink._set_completion_dirs(str)
-    if str ~= _completion_dirs_str then
+    local env = os.getenv("CLINK_COMPLETIONS_DIR")
+    if env ~= _completion_dirs_env or str ~= _completion_dirs_str then
         local dirs = {}
 
+        _completion_dirs_env = env
         _completion_dirs_str = str
         _completion_dirs_list = dirs
 
-        add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"), false)
-        for _,d in ipairs(string.explode(str, ";", '"')) do
-            add_dirs_from_var(dirs, d, true)
-        end
+        add_dirs_from_var(dirs, env, false)
+        add_dirs_from_var(dirs, str, true)
     end
 end
 

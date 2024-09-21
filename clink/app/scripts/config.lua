@@ -2,6 +2,27 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+local function add_dirs_from_var(t, var, subdir)
+    if var and var ~= "" then
+        local dirs = string.explode(var, ";", '"')
+        for _,d in ipairs(dirs) do
+            d = d:gsub("^%s+", ""):gsub("%s+$", "")
+            d = rl.expandtilde(d:gsub('"', ""))
+            if subdir then
+                d = path.join(d, "themes")
+            end
+            d = path.getdirectory(path.join(d, "")) -- Makes sure no trailing path separator.
+            local key = clink.lower(d)
+            if not t[key] then
+                t[key] = true
+                table.insert(t, d)
+            end
+        end
+        return true
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.getthemes
 --- -ver:   1.7.0
 --- -arg:   [theme:string]
@@ -40,18 +61,16 @@ function clink.getthemes(theme)
 
     theme = theme and clink.lower(theme) or nil
 
+    -- Order matters:  if the same theme name exists in two directories, the
+    -- first one in the scripts path wins.
     local dirs = {}
-    for _,dir in ipairs(string.explode(clink._get_scripts_path(), ";")) do
-        dir = clink.lower(dir)
-        local dir_themes = path.join(dir, "themes")
-        dirs[dir] = true
-        dirs[dir_themes] = true
-    end
+    local env = os.getenv("CLINK_THEMES_DIR")
+    add_dirs_from_var(dirs, env, false)
+    add_dirs_from_var(dirs, clink._get_scripts_path(), true)
 
     local list = {}
     local indexed = {}
-    for dir,_ in pairs(dirs) do
-        dir = dir:gsub("^%s+", ""):gsub("%s+$", "")
+    for _,dir in ipairs(dirs) do
         local t = os.globfiles(path.join(dir, "*.clinktheme"), true)
         if t then
             for _,entry in ipairs(t) do
