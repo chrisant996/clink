@@ -3,6 +3,7 @@ return {
     files = {
         "cmd.lua",
         "commands.lua",
+        "config.lua",
         "dir.lua",
         "env.lua",
         "exec.lua",
