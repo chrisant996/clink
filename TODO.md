@@ -21,6 +21,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- [ ] Document the color theme system, and the `clink config` etc commands.
 - [x] **colors** -- Expand the color settings syntax to allow `#XXX` and `#XXXXXX` and `italic` and `reverse`.
 - [x] **.clinktheme files** -- A way to load and save color themes.
 - [ ] **.clinkprompt files** -- A way to load a specific prompt script, to make it easy to choose a prompt and/or switch between different prompts.
