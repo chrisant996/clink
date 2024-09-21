@@ -78,8 +78,9 @@ static int32 get(lua_State* state)
             {
                 // The third parameter is undocumented; it's a compatibility
                 // kludge intended for internal use.
-                const bool latest = (lua_isboolean(state, 3) && lua_toboolean(state, 3));
-                setting->get_descriptive(value, latest);
+                // -arg:    compat:boolean (defaults to true when nil)
+                const bool compat = (!lua_isboolean(state, 3) || lua_toboolean(state, 3));
+                setting->get_descriptive(value, compat);
             }
             else
                 setting->get(value);
@@ -405,6 +406,75 @@ static int32 add(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  settings.parsecolor
+/// -ver:   1.7.0
+/// -arg:   color:string
+/// -ret:   string | nil
+/// Parses a color setting string <span class="arg">color</span> into an ANSI
+/// color code, suitable for use in an ANSI escape sequence.  The string is
+/// parsed the same way as <code>clink set color.foo <em>string</em></code>
+/// would parse it.
+///
+/// Returns the ANSI color code if successful, or nil if unsuccessful.
+///
+/// See <a href="#color-settings">Color Settings</a> for more information.
+/// -show:  settings.parsecolor("bold")                 -- Returns "0;1"
+/// -show:  settings.parsecolor("underline green")      -- Returns "0;4;32"
+/// -show:  settings.parsecolor("bri whi on blu")       -- Returns "0;97;44"
+static int32 api_parse_color(lua_State* state)
+{
+    const char* color = checkstring(state, 1);
+    if (!color)
+        return 0;
+
+    str<64> out;
+    if (!settings::parse_color(color, out))
+        return 0;
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  settings.formatcolor
+/// -ver:   1.7.0
+/// -arg:   code:string
+/// -arg:   [compat:boolean]
+/// -ret:   string | nil
+/// Formats an ANSI color code <span class="arg">code</span> into a color
+/// setting string suitable for use with <code>clink set color.foo</code>.
+///
+/// Returns the formatted color setting string if successful, or nil if
+/// unsuccessful.
+///
+/// If <span class="arg">compat</span> is true, then the formatted string uses
+/// the most compatible format.  This can be useful if the string needs to be
+/// usable by older versions of Clink.
+///
+/// See <a href="#color-settings">Color Settings</a> for more information.
+/// -show:  -- Fully defined color codes:
+/// -show:  settings.formatcolor("0;1")                 -- Returns "bold"
+/// -show:  settings.formatcolor("0;4;32")              -- Returns "underline green"
+/// -show:  settings.formatcolor("0;97;44")             -- Returns "bright white on blue"
+/// -show:  -- Partial color codes:
+/// -show:  settings.formatcolor("1")                   -- Returns "sgr 1"
+/// -show:  settings.formatcolor("4;32")                -- Returns "sgr 4;32"
+/// -show:  settings.formatcolor("97;44")               -- Returns "sgr 97;44"
+static int32 api_format_color(lua_State* state)
+{
+    const char* code = checkstring(state, 1);
+    bool compat = lua_toboolean(state, 2);
+    if (!code)
+        return 0;
+
+    str<64> out;
+    settings::format_color(code, out, compat);
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static void table_add_string(lua_State* state, const char* s, int32& count)
 {
     lua_pushstring(state, s);
@@ -586,6 +656,8 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "get",         &get },
         { 1, "set",         &set },
         { 1, "add",         &add },
+        { 1, "parsecolor",  &api_parse_color },
+        { 1, "formatcolor", &api_format_color },
         // UNDOCUMENTED; internal use only.
         { 1, "load",       &load },
         { 1, "list",        &list },

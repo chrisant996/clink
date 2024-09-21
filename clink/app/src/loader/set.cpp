@@ -89,7 +89,7 @@ static void list_options(lua_state& lua, const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool print_value(bool describe, const char* key, bool latest, bool list=false)
+static bool print_value(bool describe, const char* key, bool compat, bool list=false)
 {
     const setting* setting = settings::find(key);
     if (setting == nullptr)
@@ -105,7 +105,7 @@ static bool print_value(bool describe, const char* key, bool latest, bool list=f
                     puts("");
                 else
                     printed = true;
-                ret = print_value(describe, pair.name.c_str(), latest) && ret;
+                ret = print_value(describe, pair.name.c_str(), compat) && ret;
             }
             return ret;
         }
@@ -136,7 +136,7 @@ static bool print_value(bool describe, const char* key, bool latest, bool list=f
         printf("      Syntax: [bold italic underline reverse] [bright] color on [bright] color\n");
 
     str<> value;
-    setting->get_descriptive(value, latest);
+    setting->get_descriptive(value, compat);
     printf("       Value: %s\n", value.c_str());
 
     const char* long_desc = setting->get_long_desc();
@@ -150,7 +150,7 @@ static bool print_value(bool describe, const char* key, bool latest, bool list=f
 }
 
 //------------------------------------------------------------------------------
-static bool print_keys(bool describe, bool details, bool latest, const char* prefix=nullptr)
+static bool print_keys(bool describe, bool details, bool compat, const char* prefix=nullptr)
 {
     size_t prefix_len = prefix ? strlen(prefix) : 0;
 
@@ -187,7 +187,7 @@ static bool print_keys(bool describe, bool details, bool latest, const char* pre
                 }
                 else
                 {
-                    next->get_descriptive(value, latest);
+                    next->get_descriptive(value, compat);
                     col2 = value.c_str();
                 }
                 printf("%-*s  %s\n", longest, name, col2);
@@ -199,7 +199,7 @@ static bool print_keys(bool describe, bool details, bool latest, const char* pre
 }
 
 //------------------------------------------------------------------------------
-static bool set_value_impl(const char* key, const char* value, bool latest)
+static bool set_value_impl(const char* key, const char* value, bool compat)
 {
     setting* setting = settings::find(key);
     if (setting == nullptr)
@@ -209,7 +209,7 @@ static bool set_value_impl(const char* key, const char* value, bool latest)
         {
             bool ret = true;
             for (const auto& pair : migrated_settings)
-                ret = set_value_impl(pair.name.c_str(), pair.value.c_str(), latest) && ret;
+                ret = set_value_impl(pair.name.c_str(), pair.value.c_str(), compat) && ret;
             return ret;
         }
 
@@ -231,16 +231,16 @@ static bool set_value_impl(const char* key, const char* value, bool latest)
     }
 
     str<> result;
-    setting->get_descriptive(result, latest);
+    setting->get_descriptive(result, compat);
     printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
     return true;
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(const char* key, bool latest, char** argv=nullptr, int32 argc=0)
+static bool set_value(const char* key, bool compat, char** argv=nullptr, int32 argc=0)
 {
     if (!argc)
-        return set_value_impl(key, nullptr, latest);
+        return set_value_impl(key, nullptr, compat);
 
     str<> value;
     for (int32 c = argc; c--;)
@@ -251,7 +251,7 @@ static bool set_value(const char* key, bool latest, char** argv=nullptr, int32 a
         argv++;
     }
 
-    return set_value_impl(key, value.c_str(), latest);
+    return set_value_impl(key, value.c_str(), compat);
 }
 
 //------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ int32 set(int32 argc, char** argv)
     bool complete = false;
     bool describe = false;
     bool details = false;
-    bool latest = true;
+    bool compat = false;
     int32 i;
     while ((i = getopt_long(argc, argv, "+?hldiC", options, nullptr)) != -1)
     {
@@ -313,7 +313,7 @@ int32 set(int32 argc, char** argv)
         case 'l': complete = true;  break;
         case 'd': describe = true;  break;
         case 'i': details = true;   break;
-        case 'C': latest = false;   break;
+        case 'C': compat = true;    break;
         }
     }
 
@@ -354,24 +354,24 @@ int32 set(int32 argc, char** argv)
     switch (argc)
     {
     case 0:
-        return (print_keys(describe, false, latest) != true);
+        return (print_keys(describe, false, compat) != true);
 
     case 1:
         if (argv[0][0] && argv[0][strlen(argv[0]) - 1] == '*')
         {
             str<> prefix(argv[0]);
             prefix.truncate(prefix.length() - 1);
-            return (print_keys(describe, details, latest, prefix.c_str()) != true);
+            return (print_keys(describe, details, compat, prefix.c_str()) != true);
         }
-        return (print_value(describe, argv[0], latest) != true);
+        return (print_value(describe, argv[0], compat) != true);
 
     default:
         if (_stricmp(argv[1], "clear") == 0)
         {
-            if (set_value(argv[0], latest))
+            if (set_value(argv[0], compat))
                 return settings::save(settings_file.c_str()), 0;
         }
-        else if (set_value(argv[0], latest, argv + 1, argc - 1))
+        else if (set_value(argv[0], compat, argv + 1, argc - 1))
             return settings::save(settings_file.c_str()), 0;
     }
 
