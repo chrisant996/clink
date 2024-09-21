@@ -4,6 +4,9 @@
 
 #### v1.7.0
 
+- Added color themes; see [TODO: Document Color Themes](#TODO_document_color_themes) for more information.
+  - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
+  - Several new Lua APIs:  `clink.getthemes()`, `clink.readtheme()`, `clink.applytheme()`, `settings.parsecolor()`, and `settings.formatcolor()`.
 - Added the ability to show input hints in the comment row (below the input line).
   - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
@@ -11,7 +14,6 @@
 - Enhanced the syntax for setting colors; added `italic` and `reverse`, and added `#XXXXXX` and `#XXX` shortcuts for specifying 24-bit color values.
 - Changed phrasing from "Accept Suggestion" to "Insert Suggestion" in the documentation and in the auto-suggestions usage hint text.
 - Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` instead of `print()` are (1) background compatibility or (2) using `NONL` to suppress printing a line ending.
-- Added `settings.parsecolor()` and `settings.formatcolor()`.
 - Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
   - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
   - Added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
