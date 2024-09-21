@@ -7,6 +7,7 @@ return {
         "dir.lua",
         "env.lua",
         "exec.lua",
+        "loader_config.lua",
         "prompt.lua",
         "self.lua",
         "set.lua",

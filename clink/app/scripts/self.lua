@@ -680,12 +680,107 @@ local function filter_hidden()
 end
 
 --------------------------------------------------------------------------------
+local function clinktheme_matches(word)
+    local u = {}
+    local t = clink.filematches(word)
+    for _, m in ipairs(t) do
+        local keep
+        if m.type:find("dir") then
+            keep = true
+        else
+            local ext = path.getextension(m.match)
+            keep = ext and ext:lower() == ".clinktheme"
+        end
+        if keep then
+            table.insert(u, m)
+        end
+    end
+    return u
+end
+
+local function get_clink_themes(word, _, _, builder, _)
+    local themes = clink.getthemes()
+    builder:setnosort(true)
+    builder:setforcequoting(true)
+    builder:addmatches(themes, "alias")
+    return clinktheme_matches(word)
+end
+
+local theme_list = clink.argmatcher()
+:addflags({
+    "-f", "--full",
+    "-s", "--samples",
+})
+:nofiles()
+:adddescriptions({
+    ["-f"] = "List full path names of themes",
+    ["-s"] = "Print color samples from themes",
+})
+
+local theme_load = clink.argmatcher()
+:addarg(get_clink_themes)
+:nofiles()
+
+local theme_save = clink.argmatcher()
+:addarg(clinktheme_matches)
+:addflags({
+    "-a", "--all",
+    "-r", "--rules",
+    "-y", "--yes",
+})
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Save ALL color settings",
+    ["-r"] = "Also save match coloring rules",
+    ["-y"] = "Allow overwriting an existing file",
+})
+
+local theme_show = clink.argmatcher()
+:addarg(get_clink_themes)
+:nofiles()
+
+local theme_print = clink.argmatcher()
+:addarg(get_clink_themes)
+:addflags({
+    "-a", "--all",
+    "-n", "--no-samples",
+})
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Print ALL colors from current theme",
+    ["-n"] = "Don't print samples",
+})
+
+local theme_commands = clink.argmatcher()
+:addarg({
+    "list"..theme_list,
+    "load"..theme_load,
+    "save"..theme_save,
+    "show"..theme_show,
+    "print"..theme_print,
+})
+:adddescriptions({
+    ["list"] = "List color themes",
+    ["load"] = {" theme", "Load a color theme"},
+    ["save"] = {" theme", "Save the current color theme"},
+    ["show"] = {" [theme]", "Show what the theme looks like"},
+    ["print"] = {" [theme]", "Print a color theme"},
+})
+
+local config = clink.argmatcher()
+:addarg("theme"..theme_commands)
+:adddescriptions({
+    ["theme"] = {"Configure the color theme for Clink"},
+})
+
+--------------------------------------------------------------------------------
 clink.argmatcher(
     "clink",
     "clink_x86.exe",
     "clink_x64.exe")
 :addarg(
     "autorun"   .. autorun,
+    "config"    .. config,
     "echo"      .. echo,
     "history"   .. history,
     "info"      .. nothing,
@@ -711,6 +806,7 @@ clink.argmatcher(
     ["--session"]   = { " id", "Override the session id (for history and info)" },
     ["--version"]   = "Print Clink's version",
     ["autorun"]     = "Manage Clink's entry in cmd.exe's autorun",
+    ["config"]      = "Configuration commands for Clink",
     ["echo"]        = "Echo key sequences for use in .inputrc files",
     ["history"]     = "List and operate on the command history",
     ["info"]        = "Prints information about Clink",
