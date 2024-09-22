@@ -239,46 +239,6 @@ local function list_color_themes(args)
 end
 
 --------------------------------------------------------------------------------
-local function load_color_theme(args)
-    local file
-    if type(args) == "table" then
--- TODO: a flag to reset colors first.
--- TODO: and a flag to reset ALL colors?
--- TODO: help text.
-        file = args[1]
-    else
-        file = args
-    end
-    args = nil -- luacheck: no unused
-
-    if not file then
-        printerror("No theme specified.")
-        return
-    end
-
-    file = file:gsub('"', '')
-
-    local fullname = clink.getthemes(file)
-    if not fullname then
-        printerror("Theme '"..file.."' not found.")
-        return
-    end
-    file = fullname
-
--- TODO: Automatically save the current theme first, to some kind of
--- "Previous.clinktheme" file, in case the load was an accident.
-    local ini, message = clink.applytheme(file)
-    if message then
-        printerror(message)
-        message = nil
-    end
-    if not ini then
-        return
-    end
-    return ini, message
-end
-
---------------------------------------------------------------------------------
 local function write_color_theme(o, all, rules)
     o:write("[set]\n")
 
@@ -294,7 +254,7 @@ local function write_color_theme(o, all, rules)
     end
 end
 
-local function save_color_theme(args)
+local function save_color_theme(args, silent)
     local file
     local yes
     local all
@@ -315,7 +275,9 @@ local function save_color_theme(args)
     end
 
     if not file then
-        printerror("No output file specified.")
+        if not silent then
+            printerror("No output file specified.")
+        end
         return
     end
 
@@ -326,18 +288,29 @@ local function save_color_theme(args)
         file = file..".clinktheme"
     end
 
--- TODO: What should be the default location if no path is given?  Maybe the profile directory?
--- TODO: There will need to be a CLINK_THEMES_DIR variable, similar to CLINK_COMPLETIONS_DIR.
+    local dir = path.getdirectory(file)
+    if not dir or dir == "" then
+        local profile = os.getenv("=clink.profile")
+        if profile and profile ~= "" then
+            local themes_dir = path.join(profile, "themes")
+            os.mkdir(themes_dir)
+            file = path.join(themes_dir, file)
+        end
+    end
 
-    if os.isfile(file) and not yes then
-        printerror("File '"..file.."' already exists.")
-        printerror("Add '--yes' flag to overwrite the file.")
+    if not yes and os.isfile(file) then
+        if not silent then
+            printerror("File '"..file.."' already exists.")
+            printerror("Add '--yes' flag to overwrite the file.")
+        end
         return
     end
 
     local o = io.open(file, "w")
     if not o then
-        printerror("Unable to open '"..file.."' for write.")
+        if not silent then
+            printerror("Unable to open '"..file.."' for write.")
+        end
         return
     end
 
@@ -345,6 +318,58 @@ local function save_color_theme(args)
 
     o:close()
     return true
+end
+
+--------------------------------------------------------------------------------
+local function load_color_theme(args)
+    local file
+    local nosave
+    if type(args) == "table" then
+        for i = 1, #args do
+            local arg = args[i]
+            if arg == "-n" or arg == "--no-save" then
+                nosave = true
+            elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+-- TODO: help text.
+            elseif not file then
+                file = arg
+            end
+        end
+    else
+        file = args
+    end
+    args = nil -- luacheck: no unused
+
+    if not file then
+        printerror("No theme specified.")
+        return
+    end
+
+    file = file:gsub('"', '')
+
+    local fullname = clink.getthemes(file)
+    if not fullname then
+        printerror("Theme '"..file.."' not found.")
+        return
+    end
+    file = fullname
+
+    if not nosave and not save_color_theme({"--yes", "Previous Theme"}, true--[[silent]]) then
+        printerror("Unable to save current theme as 'Previous Theme'.")
+        printerror("Add '--no-save' flag to load a theme without saving the current theme.")
+        return
+    end
+
+-- TODO: a flag to reset colors first.
+    local ini, message = clink.applytheme(file)
+    if message then
+        printerror(message)
+        message = nil
+    end
+    if not ini then
+        return
+    end
+    return ini, message
 end
 
 --------------------------------------------------------------------------------
@@ -505,7 +530,6 @@ local function do_theme_command(args)
         -- TODO: Reset all color.* settings when --all is given.
         -- TODO: Reset match.coloring_rules when --rules is given.
         -- TODO: How to reset colors that aren't loaded yet?
-        -- TODO: This is probably better as a flag to "load".
         -- Maybe `settings.clearcolors()`?
         --  1.  For effiency.  Otherwise each individual clear will
         --      read + write the entire settings file.

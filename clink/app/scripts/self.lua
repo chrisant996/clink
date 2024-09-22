@@ -719,7 +719,13 @@ local theme_list = clink.argmatcher()
 
 local theme_load = clink.argmatcher()
 :addarg(get_clink_themes)
+:addflags({
+    "-n", "--no-save",
+})
 :nofiles()
+:adddescriptions({
+    ["-n"] = "Don't save the current theme first"
+})
 
 local theme_save = clink.argmatcher()
 :addarg(clinktheme_matches)
