@@ -710,21 +710,27 @@ local theme_list = clink.argmatcher()
 :addflags({
     "-f", "--full",
     "-s", "--samples",
+    "-h", "--help", "-?",
 })
+:hideflags("-?")
 :nofiles()
 :adddescriptions({
     ["-f"] = "List full path names of themes",
     ["-s"] = "Print color samples from themes",
+    ["-h"] = "Show help text",
 })
 
 local theme_load = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
     "-n", "--no-save",
+    "-h", "--help", "-?",
 })
+:hideflags("-?")
 :nofiles()
 :adddescriptions({
-    ["-n"] = "Don't save the current theme first"
+    ["-n"] = "Don't save the current theme first",
+    ["-h"] = "Show help text",
 })
 
 local theme_save = clink.argmatcher()
@@ -733,28 +739,41 @@ local theme_save = clink.argmatcher()
     "-a", "--all",
     "-r", "--rules",
     "-y", "--yes",
+    "-h", "--help", "-?",
 })
+:hideflags("-?")
 :nofiles()
 :adddescriptions({
     ["-a"] = "Save ALL color settings",
     ["-r"] = "Also save match coloring rules",
     ["-y"] = "Allow overwriting an existing file",
+    ["-h"] = "Show help text",
 })
 
 local theme_show = clink.argmatcher()
 :addarg(get_clink_themes)
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
 :nofiles()
+:adddescriptions({
+    ["-h"] = "Show help text",
+})
 
 local theme_print = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
     "-a", "--all",
     "-n", "--no-samples",
+    "-h", "--help", "-?",
 })
+:hideflags("-?")
 :nofiles()
 :adddescriptions({
     ["-a"] = "Print ALL colors from current theme",
-    ["-n"] = "Don't print samples",
+    ["-n"] = "Don't print color samples",
+    ["-h"] = "Show help text",
 })
 
 local theme_commands = clink.argmatcher()
@@ -765,18 +784,30 @@ local theme_commands = clink.argmatcher()
     "show"..theme_show,
     "print"..theme_print,
 })
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
 :adddescriptions({
     ["list"] = "List color themes",
     ["load"] = {" theme", "Load a color theme"},
     ["save"] = {" theme", "Save the current color theme"},
     ["show"] = {" [theme]", "Show what the theme looks like"},
     ["print"] = {" [theme]", "Print a color theme"},
+    ["-h"] = "Show help text",
 })
 
 local config = clink.argmatcher()
 :addarg("theme"..theme_commands)
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
 :adddescriptions({
     ["theme"] = {"Configure the color theme for Clink"},
+    ["-h"] = "Show help text",
 })
 
 --------------------------------------------------------------------------------

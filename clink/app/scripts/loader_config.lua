@@ -165,6 +165,9 @@ end
 local function list_color_themes(args)
     local fullnames
     local samples
+    if not args or not args[1] then
+        args = {""}
+    end
     for i = 1, #args do
         local arg = args[i]
         if arg == "-f" or arg == "--full" then
@@ -172,7 +175,18 @@ local function list_color_themes(args)
         elseif arg == "-s" or arg == "--samples" then
             samples = true
         elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
--- TODO: help text.
+            print("Usage:  clink config theme list")
+            print()
+            print("  This lists the installed color themes.")
+            print()
+            print("  Color themes can be found in a themes\\ subdirectory under each directory")
+            print("  listed in the \"scripts\" section of the output from running 'clink info'.")
+            print()
+            print("Options:")
+            print("  -f, --full        Show the full path name for each theme.")
+            print("  -s, --samples     Show color samples from each theme.")
+            print("  -h, --help        Show this help text.")
+            return
         end
     end
 
@@ -259,16 +273,32 @@ local function save_color_theme(args, silent)
     local yes
     local all
     local rules
+    if not args or not args[1] then
+        args = {""}
+    end
     for i = 1, #args do
         local arg = args[i]
-        if arg == "-y" or arg == "--yes" then
-            yes = true
-        elseif arg == "-a" or arg == "--all" then
+        if arg == "-a" or arg == "--all" then
             all = true
         elseif arg == "-r" or arg == "--rules" then
             rules = true
+        elseif arg == "-y" or arg == "--yes" then
+            yes = true
         elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
--- TODO: help text.
+            print("Usage:  clink config theme save <name>")
+            print()
+            print("  This saves the current theme settings into the named theme.")
+            print()
+            print("  If the <name> includes a file path, then the theme is saved there.  If it")
+            print("  doesn't, then the theme is saved in the \"themes\" subdirectory under the")
+            print("  current Clink profile directory.")
+            print()
+            print("Options:")
+            print("  -a, --all         Save ALL color settings.")
+            print("  -r, --rules       Also save match coloring rules.")
+            print("  -y, --yes         Allow overwriting an existing file.")
+            print("  -h, --help        Show this help text.")
+            return
         elseif not file then
             file = arg
         end
@@ -324,13 +354,32 @@ end
 local function load_color_theme(args)
     local file
     local nosave
+    if not args or (type(args) == "table" and not args[1]) then
+        args = {""}
+    end
     if type(args) == "table" then
         for i = 1, #args do
             local arg = args[i]
             if arg == "-n" or arg == "--no-save" then
                 nosave = true
             elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
--- TODO: help text.
+                print("Usage:  clink config theme load <name>")
+                print()
+                print("  This loads the named theme and updates the current Clink profile's settings.")
+                print("  The loaded theme applies to all Clink sessions using the current Clink")
+                print("  profile directory.")
+                print()
+                print("  If the <name> includes a file path, then the theme is loaded from there.  If")
+                print("  it doesn't, then \"themes\" subdirectories are searched to find the named")
+                print("  theme.")
+                print()
+                print("  The current theme is first saved to a theme named 'Previous Theme' in the")
+                print("  \"themes\" subdirectory under the current Clink profile directory.")
+                print()
+                print("Options:")
+                print("  -n, --no-save     Don't save the current theme first.")
+                print("  -h, --help        Show this help text.")
+                return
             elseif not file then
                 file = arg
             end
@@ -339,11 +388,6 @@ local function load_color_theme(args)
         file = args
     end
     args = nil -- luacheck: no unused
-
-    if not file then
-        printerror("No theme specified.")
-        return
-    end
 
     file = file:gsub('"', '')
 
@@ -374,8 +418,26 @@ end
 
 --------------------------------------------------------------------------------
 local function show_color_theme(args)
--- TODO: help text.
-    local name = args[1]
+    local name
+    if not args or not args[1] then
+        args = {""}
+    end
+    for i = 1, #args do
+        local arg = args[i]
+        if not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+            print("Usage:  clink config theme show [<name>]")
+            print()
+            print("  This shows a sample of what the named theme looks like.  If no name is")
+            print("  provided, it shows a sample of what the current theme looks like.")
+            print()
+            print("Options:")
+            print("  -h, --help        Show this help text.")
+            return
+        elseif not name then
+            name = arg
+        end
+    end
+
     local file
     if name then
         name = name:gsub('"', '')
@@ -424,7 +486,16 @@ local function print_color_theme(args)
         elseif arg == "-n" or arg == "--no-samples" then
             nosamples = true
         elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
--- TODO: help text.
+            print("Usage:  clink config theme print [<name>]")
+            print()
+            print("  This prints a list of the settings in the named theme.  If no them name is")
+            print("  provided, it prints a list of the current theme settings.")
+            print()
+            print("Options:")
+            print("  -a, --all         Print ALL colors from current theme.")
+            print("  -n, --no-samples  Don't print color samples.")
+            print("  -h, --help        Show this help text.")
+            return
         else
             file = arg
         end
@@ -548,6 +619,9 @@ local function do_theme_command(args)
         print("  save <theme>      Save the current color theme.")
         print("  show [<theme>]    Show what the theme looks like.")
         print("  print [<theme>]   Print a color theme.")
+        print()
+        print("Options:")
+        print("  -h, --help        Show this help text.")
     else
         printerror("Unrecognized 'clink config theme "..command.."' command.")
     end
@@ -567,6 +641,9 @@ function config_loader.do_config(args)
         print()
         print("Commands:")
         print("  theme             Configure the color theme for Clink.")
+        print()
+        print("Options:")
+        print("  -h, --help        Show this help text.")
     else
         printerror("Unrecognized 'clink config "..command.."' command.")
     end
