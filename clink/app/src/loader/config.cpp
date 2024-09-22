@@ -91,7 +91,7 @@ int32 config(int32 argc, char** argv)
     };
 
     int32 i;
-    while ((i = getopt_long(argc, argv, "?h", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?h", options, nullptr)) != -1)
     {
         switch (i)
         {
