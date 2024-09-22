@@ -148,7 +148,7 @@ end
 
 local function show_demo(title)
     if title then
-        clink.print(norm..bold..italic..underline..title..norm)
+        clink.print(norm..underline..title..norm)
     end
 
     local base_color = norm
