@@ -21,11 +21,11 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- [ ] Document the color theme system, and the `clink config` etc commands.
-- [x] **colors** -- Expand the color settings syntax to allow `#XXX` and `#XXXXXX` and `italic` and `reverse`.
-- [x] **.clinktheme files** -- A way to load and save color themes.
-- [ ] **.clinkprompt files** -- A way to load a specific prompt script, to make it easy to choose a prompt and/or switch between different prompts.
-  - The tricky part will be disabling a previous .clinkprompt script.  It would probably need to be done by having a way to enable/disable specific prompt filters.  And then the challenge is how to accurately uniquely identify prompt filters (and other callbacks!) associated with a .clinkprompt script, but that can probably be accomplished with some global scoped state around the load call.
+- [ ] Updater needs to deal with files in the `themes\` directory under the install directory.
+  - [ ] **IMPORTANT:** And if it doesn't already handle that, then it needs to have a post-processing step that uses the NEWLY UPDATED updater code to deal with the `themes\` directory, otherwise no one will actually **_GET_** the new themes and prompts!
+- [ ] Document the clinktheme system.
+- [ ] Document the clinkprompt system.
+- [ ] Maybe `clink._show_prompt_demo()` can run the actual prompt filter(s) if there's no exports table or `demo` function?
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
