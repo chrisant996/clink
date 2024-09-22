@@ -33,6 +33,10 @@ Licensed under the [MIT License](https://github.com/microsoft/Detours/blob/e5400
 Match completion display uses column width calculations from GNU coreutils [ls.c](https://github.com/coreutils/coreutils/blob/master/src/ls.c).<br/>
 Licensed under the terms of the [GNU General Public License, version 3](http://www.gnu.org/licenses/gpl.html).
 
+The Dracula color theme (https://draculatheme.com).<br/>
+Copyright (c) 2018 Dracula Theme.<br/>
+Licensed under the [MIT License](https://github.com/dracula/fish/blob/master/LICENSE).
+
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br/>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
 
