@@ -4,10 +4,13 @@
 
 #### v1.7.0
 
-- Added color themes; see [TODO: Document Color Themes](#TODO_document_color_themes) for more information.
+- Added support for `*.clinktheme` color theme files; see [TODO: document .clinktheme files](#TODO_document_clinktheme_files) for more information.
   - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
   - The famous "[Dracula](https://draculatheme.com)" theme is included.
-  - Added several new Lua APIs:  `clink.getthemes()`, `clink.readtheme()`, `clink.applytheme()`, `settings.parsecolor()`, and `settings.formatcolor()`.
+- Added support for `*.clinkprompt` custom prompt module files; see [TODO: document .clinkprompt files](#TODO_document_clinkprompt_files) for more information.
+  - This makes it easy to share custom prompts, and to have a library of many different custom prompts and switch between them quickly and easily.
+  - One custom prompt module can be active at a time; activating one deactivates any others.
+  - Use <code>clink config prompt use <span class="arg">name</span></code> to activate a custom prompt module.
 - Added the ability to show input hints in the comment row (below the input line).
   - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
@@ -19,10 +22,12 @@
   - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
   - Added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
 - Added a workaround for Unicode limitations in Windows 8.1 and earlier (improves cursor position accuracy on Windows 8.1).
+- Added several new Lua APIs:  [clink.getprompts()](#clink.getprompts), [clink.applyprompt()](#clink.applyprompt), [clink.getthemes()](#clink.getthemes), [clink.readtheme()](#clink.readtheme), [clink.applytheme()](#clink.applytheme), [settings.clear()](#settings.clear), [settings.parsecolor()](#settings.parsecolor), [settings.formatcolor()](#settings.formatcolor).
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
 - Fixed delay when typing `X:` and it's a remote drive.
 - Fixed coloring `2>&1`; the `1` wasn't colored.
 - Fixed color of leading blank lines in a prompt string (use the terminal's default color, not the `color.prompt` color).
+- Fixed `rl.collapsetilde()` which just didn't do its job.
 - Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
