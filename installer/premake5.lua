@@ -23,6 +23,9 @@ local release_manifest = {
     "clink_dll_x*.pdb",
     "_default_settings",
     "_default_inputrc",
+    "Dracula.clinktheme",
+    "Enhanced Defaults.clinktheme",
+    "Plain.clinktheme",
 }
 
 if include_arm64 then
@@ -288,6 +291,8 @@ newaction {
             local from = src
             if mask == "CHANGES" or mask == "LICENSE" or mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask:match(".*%.clinktheme") then
+                from = code_dir.."clink/app/themes/"
             elseif mask == "clink*.ico" then
                 from = code_dir.."clink/app/resources/"
             elseif mask:sub(-4) == ".pdb" then
@@ -520,6 +525,8 @@ newaction {
             local from = src
             if mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask:match(".*%.clinktheme") then
+                from = code_dir.."clink/app/themes/"
             elseif mask:match("clink.*%.ico") then
                 from = code_dir.."clink/app/resources/"
             end
