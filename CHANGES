@@ -6,7 +6,8 @@
 
 - Added color themes; see [TODO: Document Color Themes](#TODO_document_color_themes) for more information.
   - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
-  - Several new Lua APIs:  `clink.getthemes()`, `clink.readtheme()`, `clink.applytheme()`, `settings.parsecolor()`, and `settings.formatcolor()`.
+  - The famous "[Dracula](https://draculatheme.com)" theme is included.
+  - Added several new Lua APIs:  `clink.getthemes()`, `clink.readtheme()`, `clink.applytheme()`, `settings.parsecolor()`, and `settings.formatcolor()`.
 - Added the ability to show input hints in the comment row (below the input line).
   - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
