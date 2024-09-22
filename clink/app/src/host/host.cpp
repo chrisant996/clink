@@ -68,6 +68,12 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
+static setting_str g_customprompt(
+    "clink.customprompt",
+    "A .clinkprompt file to use for the prompt",
+// TODO: long description.
+    "");
+
 enum prompt_spacing { normal, compact, sparse, MAX };
 static setting_enum s_prompt_spacing(
     "prompt.spacing",

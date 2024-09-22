@@ -17,11 +17,18 @@ end
 --------------------------------------------------------------------------------
 local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
+local active_clinkprompt = ""           -- Currently active .clinkprompt module, or "" if none.
+local clinkprompt_module = ""           -- Lowercase copy of active_clinkprompt, for module comparisons.
 
 --------------------------------------------------------------------------------
 local bold = "\x1b[1m"                  -- Bold (bright).
 local header = "\x1b[36m"               -- Cyan.
 local norm = "\x1b[m"                   -- Normal.
+
+--------------------------------------------------------------------------------
+function clink._get_clinkprompt_module()
+    return clinkprompt_module
+end
 
 --------------------------------------------------------------------------------
 local function set_current_prompt_filter(filter)
@@ -50,6 +57,22 @@ local function log_cost(tick, filter, func_name)
 end
 
 --------------------------------------------------------------------------------
+local function ipairs_active(list)
+    local i = 0
+    return function()
+        i = i + 1
+        local value = list[i]
+        while value and value._clinkprompt_module and value._clinkprompt_module ~= clinkprompt_module do
+            i = i + 1
+            value = list[i]
+        end
+        if value then
+            return i, value
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Sort by priority if required.
     if prompt_filters_unsorted then
@@ -71,7 +94,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt) -- luacheck: ignore 432
         local filtered, onwards
-        for _, filter in ipairs(prompt_filters) do
+        for _, filter in ipairs_active(prompt_filters) do
             set_current_prompt_filter(filter)
 
             -- Always call :filter() to help people to write backward compatible
@@ -210,6 +233,7 @@ function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
     local ret = { _priority = priority }
+    ret._clinkprompt_module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
     table.insert(prompt_filters, ret)
 
     prompt_filters_unsorted = true
@@ -341,6 +365,38 @@ function clink._diag_prompts(arg)
 end
 
 
+
+--------------------------------------------------------------------------------
+function clink._activate_clinkprompt_module()
+    local new_clinkprompt = settings.get("clink.customprompt")
+    if active_clinkprompt == new_clinkprompt then
+        return
+    end
+
+    active_clinkprompt = new_clinkprompt
+    clinkprompt_module = clink.lower(new_clinkprompt)
+    if new_clinkprompt == "" then
+        return
+    end
+
+    local ret
+    local file = clink.getprompts(new_clinkprompt)
+    if not file then
+        print("Unable to find custom prompt '"..new_clinkprompt.."'.")
+        return
+    end
+
+    local ok, err = pcall(function() ret = require(file) end)
+    if not ok or type(ret) == "string" then
+        if err then
+            print(err)
+        elseif type(ret) == "string" then
+            print(ret)
+        end
+        print("Error while activating custom prompt '"..new_clinkprompt.."'.")
+        return
+    end
+end
 
 --------------------------------------------------------------------------------
 local function clear_prompt_coroutines()

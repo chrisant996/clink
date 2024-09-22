@@ -680,31 +680,83 @@ local function filter_hidden()
 end
 
 --------------------------------------------------------------------------------
-local function clinktheme_matches(word)
-    local u = {}
-    local t = clink.filematches(word)
-    for _, m in ipairs(t) do
+local function get_matches_by_ext(builder, func, word, ext)
+    local t = func()
+    builder:setnosort(true)
+    builder:setforcequoting(true)
+    builder:addmatches(t, "alias")
+
+    t = {}
+    for _, m in ipairs(clink.filematches(word)) do
         local keep
         if m.type:find("dir") then
             keep = true
         else
-            local ext = path.getextension(m.match)
-            keep = ext and ext:lower() == ".clinktheme"
+            local x = path.getextension(m.match)
+            keep = x and x:lower() == ext
         end
         if keep then
-            table.insert(u, m)
+            table.insert(t, m)
         end
     end
-    return u
+    return t
+end
+
+local function get_clink_prompts(word, _, _, builder, _)
+    return get_matches_by_ext(builder, clink.getprompts, word, ".clinkprompt")
 end
 
 local function get_clink_themes(word, _, _, builder, _)
-    local themes = clink.getthemes()
-    builder:setnosort(true)
-    builder:setforcequoting(true)
-    builder:addmatches(themes, "alias")
-    return clinktheme_matches(word)
+    return get_matches_by_ext(builder, clink.getthemes, word, ".clinktheme")
 end
+
+-- TODO: delayinit the `clink config` stuff...
+
+local prompt_list = clink.argmatcher()
+:addflags({
+    "-f", "--full",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-f"] = "List full path names of custom prompts",
+    ["-h"] = "Show help text",
+})
+
+local prompt_use = clink.argmatcher()
+:addarg(get_clink_prompts)
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-h"] = "Show help text",
+})
+
+local prompt_show = clink.argmatcher()
+:addarg(get_clink_prompts)
+:addflags({
+    "-n", "--only-named",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-n"] = "Show only the named prompt",
+    ["-h"] = "Show help text",
+})
+
+local prompt_clear = clink.argmatcher()
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-h"] = "Show help text",
+})
 
 local theme_list = clink.argmatcher()
 :addflags({
@@ -720,7 +772,7 @@ local theme_list = clink.argmatcher()
     ["-h"] = "Show help text",
 })
 
-local theme_load = clink.argmatcher()
+local theme_use = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
     "-n", "--no-save",
@@ -734,7 +786,7 @@ local theme_load = clink.argmatcher()
 })
 
 local theme_save = clink.argmatcher()
-:addarg(clinktheme_matches)
+:addarg(get_clink_themes)
 :addflags({
     "-a", "--all",
     "-r", "--rules",
@@ -753,11 +805,13 @@ local theme_save = clink.argmatcher()
 local theme_show = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
+    "-n", "--only-named",
     "-h", "--help", "-?",
 })
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
+    ["-n"] = "Show only the named theme",
     ["-h"] = "Show help text",
 })
 
@@ -776,10 +830,30 @@ local theme_print = clink.argmatcher()
     ["-h"] = "Show help text",
 })
 
+local prompt_commands = clink.argmatcher()
+:addarg({
+    "list"..prompt_list,
+    "use"..prompt_use,
+    "show"..prompt_show,
+    "clear"..prompt_clear,
+})
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["list"] = "List custom prompts",
+    ["use"] = {" prompt", "Use a custom prompt"},
+    ["show"] = {" [prompt]", "Show what the custom prompt looks like"},
+    ["clear"] = "Clear the custom prompt",
+    ["-h"] = "Show help text",
+})
+
 local theme_commands = clink.argmatcher()
 :addarg({
     "list"..theme_list,
-    "load"..theme_load,
+    "use"..theme_use,
     "save"..theme_save,
     "show"..theme_show,
     "print"..theme_print,
@@ -791,7 +865,7 @@ local theme_commands = clink.argmatcher()
 :nofiles()
 :adddescriptions({
     ["list"] = "List color themes",
-    ["load"] = {" theme", "Load a color theme"},
+    ["use"] = {" theme", "Use a color theme"},
     ["save"] = {" theme", "Save the current color theme"},
     ["show"] = {" [theme]", "Show what the theme looks like"},
     ["print"] = {" [theme]", "Print a color theme"},
@@ -799,14 +873,18 @@ local theme_commands = clink.argmatcher()
 })
 
 local config = clink.argmatcher()
-:addarg("theme"..theme_commands)
+:addarg({
+    "prompt"..prompt_commands,
+    "theme"..theme_commands,
+})
 :addflags({
     "-h", "--help", "-?",
 })
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
-    ["theme"] = {"Configure the color theme for Clink"},
+    ["prompt"] = {"Choose a custom prompt for Clink"},
+    ["theme"] = {"Choose a color theme for Clink"},
     ["-h"] = "Show help text",
 })
 

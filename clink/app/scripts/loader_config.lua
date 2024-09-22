@@ -143,7 +143,7 @@ local function demo_print(s, base_color)
         i = i + 1
     end
     table.insert(t, norm)
-    clink.print("  "..table.concat(t))
+    clink.print(table.concat(t))
 end
 
 local function show_demo(title)
@@ -203,35 +203,35 @@ local function list_color_themes(args)
         {"color.suggestion", "Su"},
     }
 
-    local themes, indexed = clink.getthemes()
-    if themes then
+    local names, indexed = clink.getthemes()
+    if names then
         local maxlen
         if samples then
             maxlen = 1
-            for _,name in ipairs(themes) do
+            for _,n in ipairs(names) do
                 if fullnames then
-                    name = indexed[clink.lower(name)] or name
+                    n = indexed[clink.lower(n)] or n
                 end
-                maxlen = math.max(maxlen, console.cellcount(name))
+                maxlen = math.max(maxlen, console.cellcount(n))
             end
         end
 
-        for _,name in ipairs(themes) do
+        for _,n in ipairs(names) do
             if fullnames then
-                name = indexed[clink.lower(name)] or name
+                n = indexed[clink.lower(n)] or n
             end
 
             local s = {}
-            table.insert(s, name)
+            table.insert(s, n)
             if samples then
-                local ini = clink.readtheme(indexed[clink.lower(name)])
+                local ini = clink.readtheme(indexed[clink.lower(n)])
                 if ini then
                     local has = {}
                     for _,e in ipairs(ini) do
                         has[e.name] = true
                     end
 
-                    table.insert(s, string.rep(" ", maxlen + 4 - console.cellcount(name)))
+                    table.insert(s, string.rep(" ", maxlen + 4 - console.cellcount(n)))
                     for _,e in ipairs(sample_colors) do
                         if has[e[1]] then
                             table.insert(s, get_settings_color(e[1], ini))
@@ -348,7 +348,7 @@ local function save_color_theme(args, silent)
 end
 
 --------------------------------------------------------------------------------
-local function load_color_theme(args)
+local function use_color_theme(args)
     local file
     local nosave
     if not args or (type(args) == "table" and not args[1]) then
@@ -360,7 +360,7 @@ local function load_color_theme(args)
             if arg == "-n" or arg == "--no-save" then
                 nosave = true
             elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
-                print("Usage:  clink config theme load <name>")
+                print("Usage:  clink config theme use <name>")
                 print()
                 print("  This loads the named theme and updates the current Clink profile's settings.")
                 print("  The loaded theme applies to all Clink sessions using the current Clink")
@@ -405,26 +405,25 @@ local function load_color_theme(args)
     local ini, message = clink.applytheme(file)
     if message then
         printerror(message)
-        message = nil
     end
-    if not ini then
-        return
-    end
-    return ini, message
 end
 
 --------------------------------------------------------------------------------
 local function show_color_theme(args)
     local name
+    local onlynamed
     for i = 1, #args do
         local arg = args[i]
-        if arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+        if arg == "-n" or arg == "--only-named" then
+            onlynamed = true
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme show [<name>]")
             print()
             print("  This shows a sample of what the named theme looks like.  If no name is")
             print("  provided, it shows a sample of what the current theme looks like.")
             print()
             print("Options:")
+            print("  -n, --only-named  Show only the named theme (don't compare with current).")
             print("  -h, --help        Show this help text.")
             return
         elseif not name then
@@ -451,9 +450,10 @@ local function show_color_theme(args)
             return
         end
 
-        show_demo("Current Theme")
-
-        print()
+        if not onlynamed then
+            show_demo("Current Theme")
+            print()
+        end
 
         -- Must temporarily load the theme in order for rl.getmatchcolor() to
         -- represent colors properly.
@@ -574,14 +574,213 @@ local function print_color_theme(args)
 end
 
 --------------------------------------------------------------------------------
+local function list_custom_prompts(args)
+    local fullnames
+    local samples
+    for i = 1, #args do
+        local arg = args[i]
+        if arg == "-f" or arg == "--full" then
+            fullnames = true
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+            print("Usage:  clink config prompt list")
+            print()
+            print("  This lists the installed custom prompts.")
+            print()
+            print("  Custom prompts can be found in a themes\\ subdirectory under each directory")
+            print("  listed in the \"scripts\" section of the output from running 'clink info'.")
+            print()
+            print("Options:")
+            print("  -f, --full        Show the full path name for each custom prompt.")
+            print("  -h, --help        Show this help text.")
+            return
+        end
+    end
+
+    local names, indexed = clink.getprompts()
+    if names then
+        for _,n in ipairs(names) do
+            if fullnames then
+                n = indexed[clink.lower(n)] or n
+            end
+            print(n)
+-- TODO: maybe --samples could load each one and call clink._show_prompt_demo() for each?
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function use_custom_prompt(args)
+    local file
+    if not args or (type(args) == "table" and not args[1]) then
+        args = {""}
+    end
+    if type(args) == "table" then
+        for i = 1, #args do
+            local arg = args[i]
+            if not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+                print("Usage:  clink config prompt use <prompt>")
+                print()
+                print("  This loads the named custom prompt and updates the current Clink profile's")
+                print("  settings.  The loaded prompt applies to all Clink sessions using the current")
+                print("  Clink profile directory.")
+                print()
+                print("  If the <name> includes a file path, then the custom prompt is loaded from")
+                print("  there.  If it doesn't, then \"themes\" subdirectories are searched to find")
+                print("  the named custom prompt.")
+                print()
+                print("Options:")
+                print("  -h, --help        Show this help text.")
+                return
+            elseif not file then
+                file = arg
+            end
+        end
+    else
+        file = args
+    end
+    args = nil -- luacheck: no unused
+
+    file = file:gsub('"', '')
+
+    local fullname = clink.getprompts(file)
+    if not fullname then
+        printerror("Custom prompt '"..file.."' not found.")
+        return
+    end
+    file = fullname
+
+    local ok, err = pcall(function() require(file) end)
+    if not ok then
+        if err then
+            printerror(err)
+        end
+        printerror("Unable to load custom prompt '"..name.."'.")
+        return
+    end
+
+    settings.set("clink.customprompt", file)
+end
+
+--------------------------------------------------------------------------------
+local function show_custom_prompt(args)
+    local name
+    local onlynamed
+    for i = 1, #args do
+        local arg = args[i]
+        if arg == "-n" or arg == "--only-named" then
+            onlynamed = true
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+            print("Usage:  clink config prompt show [<name>]")
+            print()
+            print("  This shows a sample of what the named custom prompt looks like.  If no name")
+            print("  is provided, it shows a sample of what the current prompt looks like.")
+            print()
+            print("Options:")
+            print("  -n, --only-named  Show only the named prompt (don't compare with current).")
+            print("  -h, --help        Show this help text.")
+            return
+        elseif not name then
+            name = arg
+        end
+    end
+
+    local file
+    if name then
+        name = name:gsub('"', '')
+        file = clink.getprompts(name)
+        if not file then
+            printerror("Custom prompt '"..name.."' not found.")
+            return
+        end
+    end
+
+    if file then
+        local ret
+        local ok, err = pcall(function() ret = require(file) end)
+        if not ok or type(ret) ~= "table" then
+            if err then
+                printerror(err)
+            end
+            printerror("Unable to load custom prompt '"..name.."'.")
+            return
+        end
+    end
+
+    if not file or not onlynamed then
+        if file then
+            clink.print(norm..underline.."Current Prompt"..norm)
+        end
+        clink._show_prompt_demo()
+        if file then
+            clink.print()
+        end
+    end
+
+    if file then
+        clink.print(norm..underline..name..norm)
+        clink._show_prompt_demo(file)
+    end
+end
+
+--------------------------------------------------------------------------------
+local function clear_custom_prompt(args)
+    local name
+    for i = 1, #args do
+        local arg = args[i]
+        if arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+            print("Usage:  clink config prompt clear")
+            print()
+            print("  This clears the custom prompt.")
+            print("")
+            print("  This is the same as running 'clink set clink.customprompt clear'.")
+            print()
+            print("Options:")
+            print("  -h, --help        Show this help text.")
+            return
+        end
+    end
+
+    settings.clear("clink.customprompt")
+end
+
+--------------------------------------------------------------------------------
+local function do_prompt_command(args)
+    local command = args[1]
+    table.remove(args, 1)
+
+    if command == "list" then
+        list_custom_prompts(args)
+    elseif command == "use" then
+        use_custom_prompt(args)
+    elseif command == "show" then
+        show_custom_prompt(args)
+    elseif command == "clear" then
+        clear_custom_prompt(args)
+    elseif not command or command == "" or command == "--help" or command == "-h" or command == "-?" then
+        print("Usage:  clink config prompt [command]")
+        print()
+        print("Commands:")
+        print("  list              List custom prompts.")
+        print("  use <prompt>      Use a custom prompt.")
+        print("  show [<prompt>]   Show what the prompt looks like.")
+        print("  clear             Clear the custom prompt.")
+        print()
+        print("Options:")
+        print("  -h, --help        Show this help text.")
+    else
+        printerror("Unrecognized 'clink config prompt "..command.."' command.")
+    end
+end
+
+--------------------------------------------------------------------------------
 local function do_theme_command(args)
     local command = args[1]
     table.remove(args, 1)
 
     if command == "list" then
         list_color_themes(args)
-    elseif command == "load" then
-        load_color_theme(args)
+    elseif command == "use" then
+        use_color_theme(args)
     elseif command == "save" then
         save_color_theme(args)
     elseif command == "show" then
@@ -609,7 +808,7 @@ local function do_theme_command(args)
         print()
         print("Commands:")
         print("  list              List color themes.")
-        print("  load <theme>      Load a color theme.")
+        print("  use <theme>       Use a color theme.")
         print("  save <theme>      Save the current color theme.")
         print("  show [<theme>]    Show what the theme looks like.")
         print("  print [<theme>]   Print a color theme.")
@@ -628,12 +827,15 @@ function config_loader.do_config(args)
     local command = args[1]
     table.remove(args, 1)
 
-    if command == "theme" then
+    if command == "prompt" then
+        return do_prompt_command(args)
+    elseif command == "theme" then
         return do_theme_command(args)
     elseif not command or command == "" or command == "--help" or command == "-h" or command == "-?" then
         print("Usage:  clink config [command]")
         print()
         print("Commands:")
+        print("  prompt            Configure the custom prompt for Clink.")
         print("  theme             Configure the color theme for Clink.")
         print()
         print("Options:")

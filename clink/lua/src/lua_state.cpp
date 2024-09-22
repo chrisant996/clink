@@ -567,6 +567,21 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
     int32 pos = top - nargs;
     assert(pos >= 0);
 
+    if (strcmp(event_name, "onbeginedit") == 0)
+    {
+        // Activate a clinkprompt module BEFORE sending onbeginedit, so the
+        // module can receive the initial onbeginedit.
+        lua_getglobal(L, "clink");
+        lua_pushliteral(L, "_activate_clinkprompt_module");
+        lua_rawget(L, -2);
+        if (lua_isnil(L, -1))
+            lua_pop(L, 1);
+        else
+            pcall(L, 0, 0);
+        lua_pop(L, 1);
+        assert(lua_gettop(L) == top);
+    }
+
     // Push the global _send_event function.
     lua_getglobal(L, "clink");
     lua_pushstring(L, event_mechanism);

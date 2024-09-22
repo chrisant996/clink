@@ -165,6 +165,42 @@ static int32 set(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  settings.clear
+/// -ver:   1.7.0
+/// -arg:   name:string
+/// Clears the <span class="arg">name</span> Clink setting and reverts to its
+/// default value.
+///
+/// <strong>Note:</strong> This updates the settings file.
+static int32 clear(lua_State* state)
+{
+    const char* key = checkstring(state, 1);
+    if (!key)
+        return 0;
+
+    setting* setting = settings::find(key);
+    if (setting == nullptr)
+        return 0;
+
+    // Update the settings file and the in-memory setting.
+    setting->set();
+    settings::sandboxed_set_setting(key, nullptr);
+
+    if (lua_state::is_interpreter() &&
+        strcmp(setting->get_name(), "terminal.emulation") == 0)
+    {
+        terminal_out* out = get_lua_terminal_output();
+        if (out)
+        {
+            out->end();
+            out->begin();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int32 parse_ini(lua_State* state)
 {
     const char* file = checkstring(state, 1);
@@ -656,6 +692,7 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "get",         &get },
         { 1, "set",         &set },
         { 1, "add",         &add },
+        { 1, "clear",       &clear },
         { 1, "parsecolor",  &api_parse_color },
         { 1, "formatcolor", &api_format_color },
         // UNDOCUMENTED; internal use only.
