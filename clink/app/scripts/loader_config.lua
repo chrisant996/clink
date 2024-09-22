@@ -165,16 +165,13 @@ end
 local function list_color_themes(args)
     local fullnames
     local samples
-    if not args or not args[1] then
-        args = {""}
-    end
     for i = 1, #args do
         local arg = args[i]
         if arg == "-f" or arg == "--full" then
             fullnames = true
         elseif arg == "-s" or arg == "--samples" then
             samples = true
-        elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme list")
             print()
             print("  This lists the installed color themes.")
@@ -419,12 +416,9 @@ end
 --------------------------------------------------------------------------------
 local function show_color_theme(args)
     local name
-    if not args or not args[1] then
-        args = {""}
-    end
     for i = 1, #args do
         local arg = args[i]
-        if not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+        if arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme show [<name>]")
             print()
             print("  This shows a sample of what the named theme looks like.  If no name is")
@@ -485,7 +479,7 @@ local function print_color_theme(args)
             all = true
         elseif arg == "-n" or arg == "--no-samples" then
             nosamples = true
-        elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme print [<name>]")
             print()
             print("  This prints a list of the settings in the named theme.  If no them name is")
