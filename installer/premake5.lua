@@ -70,6 +70,24 @@ local function print_reverse(msg, prolog)
 end
 
 --------------------------------------------------------------------------------
+local function path_normalize(pathname, quote)
+    local pre = ""
+    pathname = pathname:gsub("\"", "")
+    pathname = pathname:gsub("/", "\\")
+    local pre = pathname:match("^\\") or ""
+    pathname = pathname:sub(#pre + 1)
+    pathname = pathname:gsub("\\+", "\\")
+    pathname = pre .. pathname
+    if quote then
+        if pathname:find("\\$") then
+            pathname = pathname .. "\\"
+        end
+        pathname = '"' .. pathname .. '"'
+    end
+    return pathname
+end
+
+--------------------------------------------------------------------------------
 local exec_lead = "\n"
 local function exec(cmd, silent)
     print(exec_lead .. "## EXEC: " .. cmd)
@@ -118,7 +136,8 @@ local function mkdir(dir)
         return
     end
 
-    local ret = exec("md " .. path.translate(dir), true)
+    dir = path_normalize(dir, true)
+    local ret = exec("md " .. dir, true)
     if not ret then
         error("Failed to create directory '" .. dir .. "' ("..tostring(ret)..")", 2)
     end
@@ -130,24 +149,26 @@ local function rmdir(dir)
         return
     end
 
-    return exec("rd /q /s " .. path.translate(dir), true)
+    dir = path_normalize(dir, true)
+    return exec("rd /q /s " .. dir, true)
 end
 
 --------------------------------------------------------------------------------
 local function unlink(file)
-    return exec("del /q " .. path.translate(file), true)
+    file = path_normalize(file, true)
+    return exec("del /q " .. file, true)
 end
 
 --------------------------------------------------------------------------------
 local function copy(src, dest)
-    src = path.translate(src)
-    dest = path.translate(dest)
+    src = path_normalize(src, true)
+    dest = path_normalize(dest, true)
     return exec("copy /y " .. src .. " " .. dest, true)
 end
 
 --------------------------------------------------------------------------------
 local function rename(src, dest)
-    src = path.translate(src)
+    src = path_normalize(src, true)
     return exec("ren " .. src .. " " .. dest, true)
 end
 
@@ -442,13 +463,13 @@ newaction {
             print_reverse("Run Clink tests")
         end
         if x86_ok then
-            test_exe = path.translate(src.."/clink_test_x86.exe")
+            test_exe = path_normalize(src.."/clink_test_x86.exe")
             if not exec(test_exe) then
                 error("x86 tests failed")
             end
         end
         if x64_ok then
-            test_exe = path.translate(src.."/clink_test_x64.exe")
+            test_exe = path_normalize(src.."/clink_test_x64.exe")
             if not exec(test_exe) then
                 error("x64 tests failed")
             end

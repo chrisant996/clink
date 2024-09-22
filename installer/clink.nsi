@@ -145,9 +145,9 @@ Section "!Application files" app_files_id
 
     CreateDirectory $INSTDIR\themes
     SetOutPath $INSTDIR\themes
-    File ${CLINK_BUILD}\Dracula.clinktheme
-    File ${CLINK_BUILD}\Enhanced Defaults.clinktheme
-    File ${CLINK_BUILD}\Plain.clinktheme
+    File "${CLINK_BUILD}\Dracula.clinktheme"
+    File "${CLINK_BUILD}\Enhanced Defaults.clinktheme"
+    File "${CLINK_BUILD}\Plain.clinktheme"
     SetOutPath $INSTDIR
 
     ; Clean up previous uninstallers.
@@ -355,9 +355,9 @@ Section "!un.Application files" section_un_app_files
     Delete $INSTDIR\LICENSE
     Delete $INSTDIR\default_settings
     Delete $INSTDIR\default_inputrc
-    Delete $INSTDIR\themes\Dracula.clinktheme
-    Delete $INSTDIR\themes\Enhanced Defaults.clinktheme
-    Delete $INSTDIR\themes\Plain.clinktheme
+    Delete "$INSTDIR\themes\Dracula.clinktheme"
+    Delete "$INSTDIR\themes\Enhanced Defaults.clinktheme"
+    Delete "$INSTDIR\themes\Plain.clinktheme"
     RMDir /REBOOTOK $INSTDIR\themes
     RMDir /REBOOTOK $INSTDIR
 
