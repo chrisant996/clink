@@ -730,6 +730,20 @@ See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
 <p>
+<dt>clink config prompt</dt>
+<dd>
+Configures Clink to use a custom prompt module.<br/>
+See <code>clink config prompt --help</code> or [TODO: document .clinkprompt files](#TODO_document_clinkprompt_files) for more information.</dd>
+</p>
+
+<p>
+<dt>clink config theme</dt>
+<dd>
+Configures Clink to use a color theme.<br/>
+See <code>clink config theme --help</code> or [TODO: document .clinktheme files](#TODO_document_clinktheme_files) for more information.</dd>
+</p>
+
+<p>
 <dt>clink installscripts</dt>
 <dd>
 Adds a path to search for Lua scripts.<br/>
