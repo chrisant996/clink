@@ -163,6 +163,7 @@ static setting_bool g_debug_heap_stats(
 
 extern setting_bool g_autosuggest_enable;
 extern setting_bool g_classify_words;
+extern setting_bool g_debug_log_terminal;
 extern setting_bool g_prompt_async;
 extern setting_enum g_expand_mode;
 
@@ -934,6 +935,23 @@ skip_errorlevel:
     if (send_event)
     {
         adjust_prompt_spacing();
+
+        // Remind if logging is on.
+        {
+            static bool s_remind = true;
+            if (s_remind)
+            {
+                s_remind = false;
+                if (g_debug_log_terminal.get())
+                {
+                    str<> s;
+                    s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
+                            "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
+                            "\n", g_debug_log_terminal.get_name());
+                    g_printer->print(s.c_str(), s.length());
+                }
+            }
+        }
 
         lua.send_event("onbeginedit");
     }

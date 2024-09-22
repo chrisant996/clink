@@ -2840,26 +2840,9 @@ void rl_module::on_begin_line(const context& context)
     // it now.
     refresh_terminal_size();
 
-    {
-        // Remind if logging is on.
-        static bool s_remind = true;
-        if (s_remind)
-        {
-            s_remind = false;
-            if (log_terminal)
-            {
-                str<> s;
-                s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
-                         "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
-                         "\n", g_debug_log_terminal.get_name());
-                context.printer.print(s.c_str(), s.length());
-            }
-        }
-
-        // Reset the fwrite function so logging changes can take effect immediately.
-        rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
-        rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
-    }
+    // Reset the fwrite function so logging changes can take effect immediately.
+    rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
+    rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up
