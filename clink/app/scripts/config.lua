@@ -230,8 +230,12 @@ end
 
 --------------------------------------------------------------------------------
 function clink._show_prompt_demo(module)
-    module = module or settings.get("clink.customprompt") or ""
-    local m = loaded_clinkprompts[clink.lower(module)]
+    local m
+    if not module then
+        module = clink.getprompts(settings.get("clink.customprompt")) or ""
+    end
+    pcall(function() m = require(module) end)
+
     clink.print("\x1b[m", NONL)
     if not m or not m.demo then
         print("Demo not available.")
