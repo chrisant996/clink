@@ -384,6 +384,123 @@ BOOL delay_load_version::VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVO
 
 
 //------------------------------------------------------------------------------
+static class delay_load_rpcrt4
+{
+public:
+                        delay_load_rpcrt4();
+    bool                init();
+    int32               UuidCreate(UUID* out);
+    int32               UuidCreateSequential(UUID* out);
+    bool                UuidToStringA(const UUID* id, str_base& out);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    union
+    {
+        FARPROC         proc[4];
+        struct {
+            RPC_STATUS (RPC_ENTRY* UuidCreate)(UUID* out);
+            RPC_STATUS (RPC_ENTRY* UuidCreateSequential)(UUID* out);
+            RPC_STATUS (RPC_ENTRY* UuidToStringA)(const UUID* id, RPC_CSTR* out);
+            RPC_STATUS (RPC_ENTRY* RpcStringFreeA)(RPC_CSTR* inout);
+        };
+    } m_procs;
+} s_rpcrt4;
+
+//------------------------------------------------------------------------------
+delay_load_rpcrt4::delay_load_rpcrt4()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_rpcrt4::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        HMODULE hlib = LoadLibrary("rpcrt4.dll");
+        if (hlib)
+        {
+            m_procs.proc[0] = GetProcAddress(hlib, "UuidCreate");
+            m_procs.proc[1] = GetProcAddress(hlib, "UuidCreateSequential");
+            m_procs.proc[2] = GetProcAddress(hlib, "UuidToStringA");
+            m_procs.proc[3] = GetProcAddress(hlib, "RpcStringFreeA");
+        }
+
+        m_ok = true;
+        for (auto const& proc : m_procs.proc)
+        {
+            if (!proc)
+            {
+                m_ok = false;
+                break;
+            }
+        }
+    }
+
+assert(m_ok);
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+int32 delay_load_rpcrt4::UuidCreate(UUID* out)
+{
+    if (init())
+    {
+        RPC_STATUS status = m_procs.UuidCreate(out);
+        switch (status)
+        {
+        case RPC_S_OK:
+            return 0;
+        case RPC_S_UUID_LOCAL_ONLY:
+        case RPC_S_UUID_NO_ADDRESS:
+            return 1;
+        }
+    }
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+int32 delay_load_rpcrt4::UuidCreateSequential(UUID* out)
+{
+    if (init())
+    {
+        RPC_STATUS status = m_procs.UuidCreateSequential(out);
+        switch (status)
+        {
+        case RPC_S_OK:
+            return 0;
+        case RPC_S_UUID_LOCAL_ONLY:
+        case RPC_S_UUID_NO_ADDRESS:
+            return 1;
+        }
+    }
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_rpcrt4::UuidToStringA(const UUID* id, str_base& out)
+{
+    if (init())
+    {
+        RPC_CSTR ps = nullptr;
+        RPC_STATUS status = m_procs.UuidToStringA(id, &ps);
+        if (status == RPC_S_OK)
+        {
+            out.clear();
+            out.concat(reinterpret_cast<const char*>(ps));
+        }
+        if (ps)
+            m_procs.RpcStringFreeA(&ps);
+        return (status == RPC_S_OK);
+    }
+    return false;
+}
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  os.chdir
 /// -ver:   1.0.0
 /// -arg:   path:string
@@ -1902,6 +2019,49 @@ static int32 get_errorlevel(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.createguid
+/// -ver:   1.7.0
+/// -arg:   [faster:boolean]
+/// -ret:   string, boolean
+/// Generates a 128-bit unique ID represented as 32 hexadecimal characters.
+///
+/// By default, this uses the OS `UuidCreate()` API to create a unique ID.
+///
+/// When the optional <span class="arg">faster</span> argument is
+/// <code>true</code> then this uses `UuidCreateSequential()` instead, which
+/// is faster but can potentially be traced back to the ethernet address of
+/// the computer.
+///
+/// If successful, this returns a 32 digit hexadecimal string and a boolean
+/// value.  When the boolean value is true then the ID is only locally unique,
+/// and cannot safely be used to uniquely identify an object that is not
+/// strictly local to your computer.
+///
+/// If an error occurs, this returns nil.
+///
+/// **IMPORTANT:** Not all of the 128 bits necessarily have the same degree of
+/// entropy on each computer.  If you discard any bits from the string then
+/// you could accidentally greatly reduce the uniqueness of the ID (even on
+/// the same computer), or even completely remove all entropy.
+static int32 create_guid(lua_State* state)
+{
+    const bool faster = !!lua_toboolean(state, 1);
+
+    UUID uuid;
+    const int32 status = faster ? s_rpcrt4.UuidCreateSequential(&uuid) : s_rpcrt4.UuidCreate(&uuid);
+    if (status < 0)
+        return 0;
+
+    str<48> out;
+    if (!s_rpcrt4.UuidToStringA(&uuid, out))
+        return 0;
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    lua_pushboolean(state, !!status);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 #ifdef CAPTURE_PUSHD_STACK
 //! WARNING -- DOCUMENTATION WILL NOT INCLUDE THIS.
 //! -name:  os.getpushdstack
@@ -2944,6 +3104,7 @@ void os_lua_initialise(lua_state& lua)
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
         { "geterrorlevel", &get_errorlevel },
+        { "createguid",  &create_guid },
 #ifdef CAPTURE_PUSHD_STACK
         { "getpushdstack", &get_pushd_stack },
 #endif
