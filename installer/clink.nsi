@@ -145,9 +145,9 @@ Section "!Application files" app_files_id
 
     CreateDirectory $INSTDIR\themes
     SetOutPath $INSTDIR\themes
-    File "${CLINK_BUILD}\Dracula.clinktheme"
-    File "${CLINK_BUILD}\Enhanced Defaults.clinktheme"
-    File "${CLINK_BUILD}\Plain.clinktheme"
+    File "${CLINK_BUILD}\themes\Dracula.clinktheme"
+    File "${CLINK_BUILD}\themes\Enhanced Defaults.clinktheme"
+    File "${CLINK_BUILD}\themes\Plain.clinktheme"
     SetOutPath $INSTDIR
 
     ; Clean up previous uninstallers.

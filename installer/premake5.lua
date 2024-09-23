@@ -304,23 +304,27 @@ newaction {
 
         -- Create the output directory.
         local dest = path.getabsolute(".build/nsis").."/"
+        rmdir(dest.."themes/")
         rmdir(dest)
         mkdir(dest)
+        mkdir(dest.."themes/")
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
             local from = src
+            local to = dest
             if mask == "CHANGES" or mask == "LICENSE" or mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
-            elseif mask:match(".*%.clinktheme") then
+            elseif mask:match(".*%.clinktheme") or mask:match(".*%.clinkprompt") then
                 from = code_dir.."clink/app/themes/"
+                to = dest.."themes/"
             elseif mask == "clink*.ico" then
                 from = code_dir.."clink/app/resources/"
             elseif mask:sub(-4) == ".pdb" then
                 from = nil
             end
             if from then
-                copy(from .. mask, dest)
+                copy(from .. mask, to)
             end
         end
 
@@ -540,18 +544,21 @@ newaction {
         local clink_suffix = "clink."..version
         local dest = target_dir..clink_suffix.."/"
         mkdir(dest)
+        mkdir(dest.."themes/")
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
             local from = src
+            local to = dest
             if mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
-            elseif mask:match(".*%.clinktheme") then
+            elseif mask:match(".*%.clinktheme") or mask:match(".*%.clinkprompt") then
                 from = code_dir.."clink/app/themes/"
+                to = dest.."themes/"
             elseif mask:match("clink.*%.ico") then
                 from = code_dir.."clink/app/resources/"
             end
-            copy(from .. mask, dest)
+            copy(from .. mask, to)
         end
 
         -- Generate documentation.
