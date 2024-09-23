@@ -238,11 +238,23 @@ function clink._show_prompt_demo(module)
 
     clink.print("\x1b[m", NONL)
     if not m or not m.demo then
-        print("Demo not available.")
+        local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
+        local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
+        left, right = clink._filter_prompt(left, right, "", 1)
+        left = left or ""
+        right = right or ""
+        local left_width = console.cellcount(left:gsub("^.*\n", ""))
+        local right_width = console.cellcount(right)
+        if right_width <= 0 or left_width + right_width + 4 >= console.getwidth() then
+            right = ""
+        else
+            right = string.rep(" ", console.getwidth() - 1 - left_width - right_width)..right
+        end
+        clink.print(left..right)
     else
         m.demo()
-        clink.print("\x1b[m\x1b[K", NONL)
     end
+    clink.print("\x1b[m\x1b[K", NONL)
 end
 
 --------------------------------------------------------------------------------

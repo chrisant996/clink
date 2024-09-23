@@ -125,6 +125,17 @@ int32 config(int32 argc, char** argv)
     lua_load_script(lua, app, loader_config);
     lua.load_scripts();
 
+    // Make prompt.async appear off, so that prompt filters don't think async
+    // prompt filtering is available in this context (cuz it's not!).
+    const char* const script =
+    "local old_get = settings.get\n"
+    "settings.get = function(name, descriptive)\n"
+    "   if name == 'prompt.async' then return false\n"
+    "   else return old_get(name, descriptive)\n"
+    "   end\n"
+    "end";
+    static_cast<lua_state&>(lua).do_string(script, -1);
+
     parse_match_colors();
 
     DWORD dummy;

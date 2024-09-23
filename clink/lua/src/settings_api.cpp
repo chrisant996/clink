@@ -46,6 +46,10 @@ extern setting_bool g_lua_strict;
 /// -show:  print(settings.get("color.doskey", true))   -- Can print "bold cyan"
 static int32 get(lua_State* state)
 {
+    // WARNING!
+    // WARNING!     Update the override in config.cpp if you change this!
+    // WARNING!
+
     const char* key = checkstring(state, 1);
     if (!key)
         return 0;
@@ -696,7 +700,7 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "parsecolor",  &api_parse_color },
         { 1, "formatcolor", &api_format_color },
         // UNDOCUMENTED; internal use only.
-        { 1, "load",       &load },
+        { 1, "load",        &load },
         { 1, "list",        &list },
         { 1, "match",       &match },
         { 1, "_parseini",   &parse_ini },
