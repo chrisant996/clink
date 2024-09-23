@@ -1171,7 +1171,7 @@ skip_errorlevel:
                 //      the temporary file.
                 // NOTE:  %errorlevel% will expand to 0 unless command
                 // extensions were enabled at the time of the error.
-                out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+                out.format(" set clink_dummy_capture_env=& echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
             }
             resolved = true;
             ret = true;
