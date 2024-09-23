@@ -340,6 +340,9 @@ int32 set(int32 argc, char** argv)
     host_load_app_scripts(lua);
     lua.load_scripts();
 
+    // Load the clink.customprompt module so its settings are available.
+    static_cast<lua_state&>(lua).activate_clinkprompt_module(static_cast<lua_state&>(lua).get_state());
+
     // List or set Clink's settings.
     if (complete)
     {

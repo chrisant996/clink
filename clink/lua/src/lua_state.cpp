@@ -555,6 +555,22 @@ void dump_lua_stack(lua_State* L, int32 pos)
 #endif
 
 //------------------------------------------------------------------------------
+void lua_state::activate_clinkprompt_module(lua_State* L)
+{
+    lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_activate_clinkprompt_module");
+    lua_rawget(L, -2);
+    if (!lua_isnil(L, -1))
+    {
+        pcall(L, 0, 1);
+        const char* err = lua_isstring(L, -1) ? lua_tostring(L, -1) : nullptr;
+        if (err && *err)
+            puts(err);
+    }
+    lua_pop(L, 2);
+}
+
+//------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.  Arguments can be
 // passed by passing nargs equal to the number of pushed arguments.  On success,
 // the stack is left with nret return values.  On error, the stack is popped to
@@ -571,14 +587,7 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
     {
         // Activate a clinkprompt module BEFORE sending onbeginedit, so the
         // module can receive the initial onbeginedit.
-        lua_getglobal(L, "clink");
-        lua_pushliteral(L, "_activate_clinkprompt_module");
-        lua_rawget(L, -2);
-        if (lua_isnil(L, -1))
-            lua_pop(L, 1);
-        else
-            pcall(L, 0, 0);
-        lua_pop(L, 1);
+        activate_clinkprompt_module(L);
         assert(lua_gettop(L) == top);
     }
 

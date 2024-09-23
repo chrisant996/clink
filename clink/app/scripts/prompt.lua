@@ -394,20 +394,16 @@ function clink._activate_clinkprompt_module()
 
     local file = clink.getprompts(new_clinkprompt)
     if not file then
-        print("Unable to find custom prompt '"..new_clinkprompt.."'.")
-        return
+        return "Unable to find custom prompt '"..new_clinkprompt.."'."
     end
 
     local ret
     local ok, err = pcall(function() ret = require(file) end)
     if not ok or type(ret) == "string" then
-        if err then
-            print(err)
-        elseif type(ret) == "string" then
-            print(ret)
-        end
-        print("Error while activating custom prompt '"..new_clinkprompt.."'.")
-        return
+        local msg = err or (type(ret) == "string" and ret) or nil
+        msg = msg and msg.."\n" or ""
+        msg = msg.."Error while activating custom prompt '"..new_clinkprompt.."'."
+        return msg
     end
 
     if type(ret) == "table" and type(ret.dependson) == "string" then
