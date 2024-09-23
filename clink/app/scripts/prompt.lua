@@ -20,6 +20,7 @@ end
 local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
 local active_clinkprompt = ""           -- Currently active .clinkprompt module, or "" if none.
+local clinkprompt_exports = nil         -- Export table from active .clinkprompt module (may be nil).
 local clinkprompt_module = ""           -- Lowercase copy of active_clinkprompt, for module comparisons.
 local clinkprompt_dependson = {}        -- Index of clinkprompt module(s) the current module depends on (e.g. "flexprompt").
 -- luacheck: pop
@@ -405,30 +406,44 @@ function clink._activate_clinkprompt_module()
         return
     end
 
+    local ret
+    local old_clinkprompt_exports = clinkprompt_exports
+
     active_clinkprompt = new_clinkprompt
+    clinkprompt_exports = nil
     clinkprompt_module = clink.lower(new_clinkprompt)
     clinkprompt_dependson = {}
-    if new_clinkprompt == "" then
-        return
+
+    if new_clinkprompt ~= "" then
+        local file = clink.getprompts(new_clinkprompt)
+        if not file then
+            return "Unable to find custom prompt '"..new_clinkprompt.."'."
+        end
+
+        local ok, err = pcall(function() ret = require(file) end)
+        if not ok or type(ret) == "string" then
+            local msg = err or (type(ret) == "string" and ret) or nil
+            msg = msg and msg.."\n" or ""
+            msg = msg.."Error while activating custom prompt '"..new_clinkprompt.."'."
+            return msg
+        end
     end
 
-    local file = clink.getprompts(new_clinkprompt)
-    if not file then
-        return "Unable to find custom prompt '"..new_clinkprompt.."'."
+    if old_clinkprompt_exports then
+        if type(old_clinkprompt_exports.ondeactivate) == "function" then
+            old_clinkprompt_exports.ondeactivate()
+        end
     end
 
-    local ret
-    local ok, err = pcall(function() ret = require(file) end)
-    if not ok or type(ret) == "string" then
-        local msg = err or (type(ret) == "string" and ret) or nil
-        msg = msg and msg.."\n" or ""
-        msg = msg.."Error while activating custom prompt '"..new_clinkprompt.."'."
-        return msg
-    end
-
-    if type(ret) == "table" and type(ret.dependson) == "string" then
-        for _,n in ipairs(string.explode(ret.dependson, ";", '"')) do
-            clinkprompt_dependson[clink.lower(path.getbasename(n))] = true
+    if type(ret) == "table" then
+        clinkprompt_exports = ret
+        if type(ret.dependson) == "string" then
+            for _,n in ipairs(string.explode(ret.dependson, ";", '"')) do
+                clinkprompt_dependson[clink.lower(path.getbasename(n))] = true
+            end
+        end
+        if type(ret.onactivate) == "function" then
+            ret.onactivate()
         end
     end
 end
