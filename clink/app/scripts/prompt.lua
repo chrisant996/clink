@@ -15,11 +15,14 @@ end
 
 
 --------------------------------------------------------------------------------
+-- luacheck: push
+-- luacheck: no max line length
 local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
 local active_clinkprompt = ""           -- Currently active .clinkprompt module, or "" if none.
 local clinkprompt_module = ""           -- Lowercase copy of active_clinkprompt, for module comparisons.
 local clinkprompt_dependson = {}        -- Index of clinkprompt module(s) the current module depends on (e.g. "flexprompt").
+-- luacheck: pop
 
 --------------------------------------------------------------------------------
 local bold = "\x1b[1m"                  -- Bold (bright).
@@ -404,7 +407,7 @@ function clink._activate_clinkprompt_module()
 
     active_clinkprompt = new_clinkprompt
     clinkprompt_module = clink.lower(new_clinkprompt)
-    clinkprompt_depends = {}
+    clinkprompt_dependson = {}
     if new_clinkprompt == "" then
         return
     end

@@ -2,9 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 local norm = "\x1b[m"
-local italic = "\x1b[3m"
+--local bold = "\x1b[1m"
+--local italic = "\x1b[3m"
 local underline = "\x1b[4m"
-local bold = "\x1b[1m"
 --local reverse = "\x1b[7m"
 --local noreverse = "\x1b[27m"
 
@@ -402,7 +402,7 @@ local function use_color_theme(args)
     end
 
 -- TODO: a flag to reset colors first.
-    local ini, message = clink.applytheme(file)
+    local ini, message = clink.applytheme(file) -- luacheck: no unused
     if message then
         printerror(message)
     end
@@ -576,7 +576,6 @@ end
 --------------------------------------------------------------------------------
 local function list_custom_prompts(args)
     local fullnames
-    local samples
     for i = 1, #args do
         local arg = args[i]
         if arg == "-f" or arg == "--full" then
@@ -654,7 +653,7 @@ local function use_custom_prompt(args)
         if err then
             printerror(err)
         end
-        printerror("Unable to load custom prompt '"..name.."'.")
+        printerror("Unable to load custom prompt '"..file.."'.")
         return
     end
 
@@ -724,7 +723,6 @@ end
 
 --------------------------------------------------------------------------------
 local function clear_custom_prompt(args)
-    local name
     for i = 1, #args do
         local arg = args[i]
         if arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
