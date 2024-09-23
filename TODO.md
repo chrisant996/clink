@@ -21,8 +21,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- [ ] Updater needs to deal with files in the `themes\` directory under the install directory.
-  - [ ] **IMPORTANT:** And if it doesn't already handle that, then it needs to have a post-processing step that uses the NEWLY UPDATED updater code to deal with the `themes\` directory, otherwise no one will actually **_GET_** the new themes and prompts!
 - [ ] Document the clinktheme system.
 - [ ] Document the clinkprompt system.
 - [ ] Maybe `clink._show_prompt_demo()` can run the actual prompt filter(s) if there's no exports table or `demo` function?
