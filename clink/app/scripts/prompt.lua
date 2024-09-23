@@ -27,12 +27,29 @@ local header = "\x1b[36m"               -- Cyan.
 local norm = "\x1b[m"                   -- Normal.
 
 --------------------------------------------------------------------------------
+--- -name:  clink.getclinkprompt
+--- -ver:   1.7.0
+--- -ret:   string, string, string, table
+--- Returns four values related to the current clinkprompt module, if any:
+---
+--- <ul>
+--- <li>A string containing the lowercase name (e.g. <code>"myprompt"</code>).
+--- <li>A string containing the full path name of the current clinkprompt
+--- module (e.g. <code>"C:\MyScripts\themes\MyPrompt.clinkprompt"</code>).
+--- <li>Lowercase full path name of the current clinkprompt module.
+--- <li>A table of other clinkprompt modules that the current module depends
+--- on.  The keys are the lowercase names (not full paths) of modules, and
+--- the values are all <code>true</code>.
+--- <ul>
+---
+--- If no clinkprompt module is currently active, then the return values are
+--- three empty strings and an empty table.
 function clink.getclinkprompt()
     local dependson = {}
     for k,v in pairs(clinkprompt_dependson) do
         dependson[k] = v
     end
-    return clinkprompt_module, active_clinkprompt, dependson
+    return path.getbasename(clinkprompt_module), active_clinkprompt, clinkprompt_module, dependson
 end
 
 --------------------------------------------------------------------------------

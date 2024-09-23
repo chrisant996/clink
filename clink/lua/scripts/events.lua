@@ -30,7 +30,10 @@ end
 --------------------------------------------------------------------------------
 local function ipairs_active(list)
     local i = 0
-    local clinkprompt_module = clink.getclinkprompt and clink.getclinkprompt()
+    local clinkprompt_module
+    if clink.getclinkprompt then
+        _, _, clinkprompt_module = clink.getclinkprompt()
+    end
     return function()
         i = i + 1
         local value = list[i]
