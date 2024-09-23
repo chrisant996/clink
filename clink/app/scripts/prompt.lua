@@ -19,6 +19,7 @@ local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
 local active_clinkprompt = ""           -- Currently active .clinkprompt module, or "" if none.
 local clinkprompt_module = ""           -- Lowercase copy of active_clinkprompt, for module comparisons.
+local clinkprompt_dependson = {}        -- Index of clinkprompt module(s) the current module depends on (e.g. "flexprompt").
 
 --------------------------------------------------------------------------------
 local bold = "\x1b[1m"                  -- Bold (bright).
@@ -26,8 +27,12 @@ local header = "\x1b[36m"               -- Cyan.
 local norm = "\x1b[m"                   -- Normal.
 
 --------------------------------------------------------------------------------
-function clink._get_clinkprompt_module()
-    return clinkprompt_module
+function clink.getclinkprompt()
+    local dependson = {}
+    for k,v in pairs(clinkprompt_dependson) do
+        dependson[k] = v
+    end
+    return clinkprompt_module, active_clinkprompt, dependson
 end
 
 --------------------------------------------------------------------------------
@@ -62,7 +67,10 @@ local function ipairs_active(list)
     return function()
         i = i + 1
         local value = list[i]
-        while value and value._clinkprompt_module and value._clinkprompt_module ~= clinkprompt_module do
+        while value and
+                value._clinkprompt_module and
+                value._clinkprompt_module ~= clinkprompt_module and
+                not clinkprompt_dependson[value._clinkprompt_module] do
             i = i + 1
             value = list[i]
         end
@@ -233,7 +241,11 @@ function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
     local ret = { _priority = priority }
-    ret._clinkprompt_module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+    local module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+    if module then
+        ret._clinkprompt_module = module
+        ret._clinkprompt_basename = path.getbasename(module)
+    end
     table.insert(prompt_filters, ret)
 
     prompt_filters_unsorted = true
@@ -375,17 +387,18 @@ function clink._activate_clinkprompt_module()
 
     active_clinkprompt = new_clinkprompt
     clinkprompt_module = clink.lower(new_clinkprompt)
+    clinkprompt_depends = {}
     if new_clinkprompt == "" then
         return
     end
 
-    local ret
     local file = clink.getprompts(new_clinkprompt)
     if not file then
         print("Unable to find custom prompt '"..new_clinkprompt.."'.")
         return
     end
 
+    local ret
     local ok, err = pcall(function() ret = require(file) end)
     if not ok or type(ret) == "string" then
         if err then
@@ -395,6 +408,12 @@ function clink._activate_clinkprompt_module()
         end
         print("Error while activating custom prompt '"..new_clinkprompt.."'.")
         return
+    end
+
+    if type(ret) == "table" and type(ret.dependson) == "string" then
+        for _,n in ipairs(string.explode(ret.dependson, ";", '"')) do
+            clinkprompt_dependson[clink.lower(path.getbasename(n))] = true
+        end
     end
 end
 
