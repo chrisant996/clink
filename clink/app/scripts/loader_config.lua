@@ -183,7 +183,7 @@ local function list_color_themes(args)
             print("  -f, --full        Show the full path name for each theme.")
             print("  -s, --samples     Show color samples from each theme.")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         end
     end
 
@@ -247,6 +247,7 @@ local function list_color_themes(args)
             clink.print(table.concat(s))
         end
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -295,7 +296,7 @@ local function save_color_theme(args, silent)
             print("  -r, --rules       Also save match coloring rules.")
             print("  -y, --yes         Allow overwriting an existing file.")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         elseif not file then
             file = arg
         end
@@ -376,7 +377,7 @@ local function use_color_theme(args)
                 print("Options:")
                 print("  -n, --no-save     Don't save the current theme first.")
                 print("  -h, --help        Show this help text.")
-                return
+                return true
             elseif not file then
                 file = arg
             end
@@ -405,7 +406,9 @@ local function use_color_theme(args)
     local ini, message = clink.applytheme(file) -- luacheck: no unused
     if message then
         printerror(message)
+        return
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -425,7 +428,7 @@ local function show_color_theme(args)
             print("Options:")
             print("  -n, --only-named  Show only the named theme (don't compare with current).")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         elseif not name then
             name = arg
         end
@@ -466,6 +469,7 @@ local function show_color_theme(args)
     else
         show_demo()
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -489,7 +493,7 @@ local function print_color_theme(args)
             print("  -a, --all         Print ALL colors from current theme.")
             print("  -n, --no-samples  Don't print color samples.")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         else
             file = arg
         end
@@ -570,7 +574,9 @@ local function print_color_theme(args)
     if message then
         print()
         printerror(message)
+        return
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -591,7 +597,7 @@ local function list_custom_prompts(args)
             print("Options:")
             print("  -f, --full        Show the full path name for each custom prompt.")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         end
     end
 
@@ -605,6 +611,7 @@ local function list_custom_prompts(args)
 -- TODO: maybe --samples could load each one and call clink._show_prompt_demo() for each?
         end
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -629,7 +636,7 @@ local function use_custom_prompt(args)
                 print()
                 print("Options:")
                 print("  -h, --help        Show this help text.")
-                return
+                return true
             elseif not file then
                 file = arg
             end
@@ -658,6 +665,7 @@ local function use_custom_prompt(args)
     end
 
     settings.set("clink.customprompt", file)
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -677,7 +685,7 @@ local function show_custom_prompt(args)
             print("Options:")
             print("  -n, --only-named  Show only the named prompt (don't compare with current).")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         elseif not name then
             name = arg
         end
@@ -719,6 +727,7 @@ local function show_custom_prompt(args)
         clink.print(norm..underline..name..norm)
         clink._show_prompt_demo(file)
     end
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -734,11 +743,12 @@ local function clear_custom_prompt(args)
             print()
             print("Options:")
             print("  -h, --help        Show this help text.")
-            return
+            return true
         end
     end
 
     settings.clear("clink.customprompt")
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -747,13 +757,13 @@ local function do_prompt_command(args)
     table.remove(args, 1)
 
     if command == "list" then
-        list_custom_prompts(args)
+        return list_custom_prompts(args)
     elseif command == "use" then
-        use_custom_prompt(args)
+        return use_custom_prompt(args)
     elseif command == "show" then
-        show_custom_prompt(args)
+        return show_custom_prompt(args)
     elseif command == "clear" then
-        clear_custom_prompt(args)
+        return clear_custom_prompt(args)
     elseif not command or command == "" or command == "--help" or command == "-h" or command == "-?" then
         print("Usage:  clink config prompt [command]")
         print()
@@ -765,6 +775,7 @@ local function do_prompt_command(args)
         print()
         print("Options:")
         print("  -h, --help        Show this help text.")
+        return true
     else
         printerror("Unrecognized 'clink config prompt "..command.."' command.")
     end
@@ -776,15 +787,15 @@ local function do_theme_command(args)
     table.remove(args, 1)
 
     if command == "list" then
-        list_color_themes(args)
+        return list_color_themes(args)
     elseif command == "use" then
-        use_color_theme(args)
+        return use_color_theme(args)
     elseif command == "save" then
-        save_color_theme(args)
+        return save_color_theme(args)
     elseif command == "show" then
-        show_color_theme(args)
+        return show_color_theme(args)
     elseif command == "print" then
-        print_color_theme(args)
+        return print_color_theme(args)
     elseif command == "reset" then
         print("RESET COLORS IS NYI")
         -- TODO: This will require a Lua API -- but I think it already exists?
@@ -813,6 +824,7 @@ local function do_theme_command(args)
         print()
         print("Options:")
         print("  -h, --help        Show this help text.")
+        return true
     else
         printerror("Unrecognized 'clink config theme "..command.."' command.")
     end
@@ -838,6 +850,7 @@ function config_loader.do_config(args)
         print()
         print("Options:")
         print("  -h, --help        Show this help text.")
+        return true
     else
         printerror("Unrecognized 'clink config "..command.."' command.")
     end
