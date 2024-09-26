@@ -68,7 +68,7 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
-static setting_str g_customprompt(
+setting_str g_customprompt(
     "clink.customprompt",
     "A .clinkprompt file to use for the prompt",
 // TODO: long description.
@@ -958,6 +958,12 @@ skip_errorlevel:
                 }
             }
         }
+
+        // Activate a clinkprompt module BEFORE sending onbeginedit, so the
+        // module can receive the initial onbeginedit.
+        str_moveable customprompt;
+        g_customprompt.get(customprompt);
+        lua.activate_clinkprompt_module(customprompt.c_str());
 
         lua.send_event("onbeginedit");
     }

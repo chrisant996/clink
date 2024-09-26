@@ -257,6 +257,12 @@ bool host_lua::is_script_path_changed() const
 }
 
 //------------------------------------------------------------------------------
+void host_lua::activate_clinkprompt_module(const char* module)
+{
+    m_state.activate_clinkprompt_module(module);
+}
+
+//------------------------------------------------------------------------------
 bool host_lua::send_event(const char* event_name, int32 nargs)
 {
     return m_state.send_event(event_name, nargs);

@@ -24,6 +24,8 @@ public:
     void                load_scripts();
     bool                is_script_path_changed() const;
 
+    void                activate_clinkprompt_module(const char* module=nullptr);
+
     bool                send_event(const char* event_name, int32 nargs=0);
     bool                send_event_string_out(const char* event_name, str_base& out, int32 nargs=0);
     bool                send_event_cancelable(const char* event_name, int32 nargs=0);

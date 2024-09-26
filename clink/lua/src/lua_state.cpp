@@ -555,19 +555,30 @@ void dump_lua_stack(lua_State* L, int32 pos)
 #endif
 
 //------------------------------------------------------------------------------
-void lua_state::activate_clinkprompt_module(lua_State* L)
+void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
 {
     lua_getglobal(L, "clink");
     lua_pushliteral(L, "_activate_clinkprompt_module");
     lua_rawget(L, -2);
     if (!lua_isnil(L, -1))
     {
-        pcall(L, 0, 1);
+        if (module)
+            lua_pushstring(L, module);
+        pcall(L, module ? 1 : 0, 1);
         const char* err = lua_isstring(L, -1) ? lua_tostring(L, -1) : nullptr;
-        if (err && *err)
+        if (err)
+        {
+            assert(*err);
             puts(err);
+        }
     }
     lua_pop(L, 2);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::activate_clinkprompt_module(const char* module)
+{
+    activate_clinkprompt_module(get_state(), module);
 }
 
 //------------------------------------------------------------------------------
@@ -582,14 +593,6 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
     int32 top = lua_gettop(L);
     int32 pos = top - nargs;
     assert(pos >= 0);
-
-    if (strcmp(event_name, "onbeginedit") == 0)
-    {
-        // Activate a clinkprompt module BEFORE sending onbeginedit, so the
-        // module can receive the initial onbeginedit.
-        activate_clinkprompt_module(L);
-        assert(lua_gettop(L) == top);
-    }
 
     // Push the global _send_event function.
     lua_getglobal(L, "clink");

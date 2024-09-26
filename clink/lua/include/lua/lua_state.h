@@ -80,8 +80,9 @@ public:
     int32           pcall(int32 nargs, int32 nresults, str_base* error=nullptr) { return pcall(m_state, nargs, nresults, error); }
     int32           pcall_silent(int32 nargs, int32 nresults) { return pcall_silent(m_state, nargs, nresults); }
 
-    static void     activate_clinkprompt_module(lua_State* L);
+    static void     activate_clinkprompt_module(lua_State* L, const char* module);
     static bool     send_event(lua_State* L, const char* event_name, int32 nargs=0);
+    void            activate_clinkprompt_module(const char* module);
     bool            send_event(const char* event_name, int32 nargs=0);
     bool            send_event_string_out(const char* event_name, str_base& out, int32 nargs=0);
     bool            send_event_cancelable(const char* event_name, int32 nargs=0);

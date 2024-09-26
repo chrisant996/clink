@@ -21,6 +21,7 @@
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
+extern setting_str g_customprompt;
 
 //------------------------------------------------------------------------------
 static void list_keys()
@@ -327,8 +328,8 @@ int32 set(int32 argc, char** argv)
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
     // Load the settings from disk.
-    str<280> settings_file;
-    str<280> default_settings_file;
+    str_moveable settings_file;
+    str_moveable default_settings_file;
     app_context::get()->get_settings_path(settings_file);
     app_context::get()->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
@@ -341,7 +342,9 @@ int32 set(int32 argc, char** argv)
     lua.load_scripts();
 
     // Load the clink.customprompt module so its settings are available.
-    static_cast<lua_state&>(lua).activate_clinkprompt_module(static_cast<lua_state&>(lua).get_state());
+    str_moveable customprompt;
+    g_customprompt.get(customprompt);
+    lua.activate_clinkprompt_module(customprompt.c_str());
 
     // List or set Clink's settings.
     if (complete)

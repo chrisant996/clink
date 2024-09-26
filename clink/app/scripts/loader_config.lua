@@ -704,7 +704,7 @@ local function show_custom_prompt(args)
     if file then
         local ret
         local ok, err = pcall(function() ret = require(file) end)
-        if not ok or type(ret) ~= "table" then
+        if not ok or not ret then
             if err then
                 printerror(err)
             end
@@ -717,7 +717,7 @@ local function show_custom_prompt(args)
         if file then
             clink.print(norm..underline.."Current Prompt"..norm)
         end
-        clink._show_prompt_demo()
+        clink._show_prompt_demo(settings.get("clink.customprompt"))
         if file then
             clink.print()
         end

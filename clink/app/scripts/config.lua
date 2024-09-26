@@ -230,14 +230,14 @@ end
 
 --------------------------------------------------------------------------------
 function clink._show_prompt_demo(module)
-    local m
-    if not module then
-        module = clink.getprompts(settings.get("clink.customprompt")) or ""
+    local m = clink._activate_clinkprompt_module(module)
+    if type(m) == "string" then
+        print(m)
+        return
     end
-    pcall(function() m = require(module) end)
-
+-- FUTURE: Does this need to send onbeginedit? Could that cause more harm than good?
     clink.print("\x1b[m", NONL)
-    if not m or not m.demo then
+    if type(m) ~= "table" or not m.demo then
         local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
         local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
         left, right = clink._filter_prompt(left, right, "", 1)
@@ -254,6 +254,7 @@ function clink._show_prompt_demo(module)
     else
         m.demo()
     end
+-- FUTURE: Does this need to send onendedit?
     clink.print("\x1b[m\x1b[K", NONL)
 end
 

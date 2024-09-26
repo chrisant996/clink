@@ -400,8 +400,8 @@ end
 
 
 --------------------------------------------------------------------------------
-function clink._activate_clinkprompt_module()
-    local new_clinkprompt = settings.get("clink.customprompt")
+function clink._activate_clinkprompt_module(module)
+    local new_clinkprompt = module or ""
     if active_clinkprompt == new_clinkprompt then
         return
     end
