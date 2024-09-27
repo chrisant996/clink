@@ -599,15 +599,15 @@ The Clink color [settings](#clinksettings) are the ones whose names begin with `
 Optional attributes (can be abbreviated to 3 letters):
 - `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already; some terminal programs may also/instead use a bolder font weight).
 - `underline` adds an underline (some terminal programs cannot display underlines).
-- `italic` adds italics (some terminal programs cannot display italics).
-- `reverse` swaps the foreground and background colors.
+- `italic` adds italics (some terminal programs cannot display italics).  This keyword requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 3`.
+- `reverse` swaps the foreground and background colors.  This keyword requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 7`.
 
 Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):
 - `default` or `normal` uses the default color as defined by the current color theme in the console window.
 - `black`, `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `white` are the basic colors names.
 - `bright` can be combined with any of the other color names to make them bright (high intensity).
-- `#XXXXXX` specifies a color using 24-bit RGB hex format; the first two digits are the red value, the next two digits are the green value, and the last two digits are the blue value (some terminal programs cannot display 24-bit colors, and will try to instead use the closest supported color).
-- `#XXX` specifies a color using a short RGB hex format; each digit is doubled so `#3fc` means `#33ffcc`.
+- `#XXXXXX` specifies a color using 24-bit RGB hex format; the first two digits are the red value, the next two digits are the green value, and the last two digits are the blue value (some terminal programs cannot display 24-bit colors, and will try to instead use the closest supported color).  Requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 38;2;255;80;160`.
+- `#XXX` specifies a color using a short RGB hex format; each digit is doubled so `#3fc` means `#33ffcc`.  Requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 38;2;255;80;160`.
 
 Examples (specific results may depend on the console host program):
 - `bri yel` for bright yellow foreground on default background color.
@@ -624,15 +624,25 @@ Be careful, since some escape code sequences might behave strangely.
 
 ### Color Themes
 
-TODO: document .clinktheme files.
+**TODO: document .clinktheme files.**
+- Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
+- Emphasize the difference between terminal color themes versus Clink color themes.
+- List the .clinktheme files included with Clink itself.
+- Create a repo with color themes, and encourage people to add pull requests to share their own color themes in it.
+- Describe how to save a color theme, and how to manually edit a color theme.
+- Describe the `clink config theme` commands.
 
 See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
 
 ## Custom Prompts
 
-TODO: document .clinkprompt files.
+**TODO: document .clinkprompt files.**
+- Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
+- List the .clinkprompt files included with Clink itself.
+- Create a repo with custom prompts, and encourage people to add pull requests to share their own custom prompts in it.
+- Describe the `clink config prompt` commands.
 
-See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts.
+See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts and optionally packaging them as "*.clinkprompt" files.
 
 <a name="filelocations"></a>
 
@@ -2793,7 +2803,9 @@ Here are a couple of links with more information about ANSI escape codes:
 
 ### Sharing Custom Prompts
 
-TODO: how to package a prompt in a .clinkprompt file.
+**TODO: how to package a prompt in a .clinkprompt file.**
+- Most existing prompt script .lua files can simply be renamed to .clinkprompt and moved to a `themes\` directory.
+- Exports table: `onactivate`, `ondeactivate`, `demo`, `dependson`.
 
 ### More Advanced Stuff
 
@@ -3589,6 +3601,8 @@ The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script
 
 It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfiltering) to make prompts show up instantly, even in large git repos, for example.
 
+**TODO: mention that it includes various predefined .clinkprompt files.**
+
 ### clink-fzf
 
 The [clink-fzf](https://github.com/chrisant996/clink-fzf) script integrates the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
@@ -3608,6 +3622,8 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 ### oh-my-posh
 
 The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
+
+**TODO: document how to use `clink config prompt use oh-my-posh` and how to use `clink set ohmyposh.exepath` and `clink set ohmyposh.theme` to configure it.**
 
 Integrating oh-my-posh with Clink is easy: just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `oh-my-posh.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you're good to go.
 
