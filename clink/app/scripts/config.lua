@@ -134,7 +134,8 @@ end
 --- -show:  -- Could return "c:\myclink\scripts\themes\My Prompt Name.clinkprompt" if that exists.
 --- -show:  -- Etc.
 ---
---- TODO: Document how .clinkprompt files work, and link to that section.
+--- Refer to <a href="#customisingtheprompt">Customizing the Prompt</a> for
+--- more information.
 function clink.getprompts(name)
     return get_theme_files(name, ".clinkprompt")
 end
@@ -164,7 +165,7 @@ end
 --- -show:  -- Could return "c:\myclink\scripts\themes\My Theme Name.clinktheme" if that exists.
 --- -show:  -- Etc.
 ---
---- TODO: Document how .clinktheme files work, and link to that section.
+--- Refer to <a href="#color-themes">Color Themes</a> for more information.
 function clink.getthemes(name)
     return get_theme_files(name, ".clinktheme")
 end
@@ -180,7 +181,7 @@ end
 --- <span class="arg">theme</span> can be a filename or the title of an
 --- installed theme.
 ---
---- TODO: Document how color themes work, and link to that section.
+--- Refer to <a href="#color-themes">Color Themes</a> for more information.
 function clink.readtheme(theme)
     local fullname = clink.getthemes(theme)
     if not fullname then
@@ -219,6 +220,8 @@ end
 ---
 --- If successful, it returns true.  If unsuccessful, it returns nil followed
 --- by a message describing the failure.
+---
+--- Refer to <a href="#color-themes">Color Themes</a> for more information.
 function clink.applytheme(file)
     local ini, message = clink.readtheme(file)
     if not ini then

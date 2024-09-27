@@ -465,6 +465,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 <a name="clink_autoupdate"></a>`clink.autoupdate` | `check` | Clink can periodically check for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
 <a name="clink_colorize_input"></a>`clink.colorize_input` | True | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
+<a name="clink_customprompt"></a>`clink.customprompt` | | *.clinkprompt files contain customizations for the prompt.  Setting this to the name of a .clinkprompt file causes it to be loaded and used for displaying the prompt (see [Customizing the Prompt](#customisingtheprompt)).
 <a name="default_bindings"><a name="clink_default_bindings"></a></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.
 <a name="clink_logo"></a>`clink.logo` | `full` | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 <a name="clink_max_input_rows"></a>`clink.max_input_rows` | `0` | Limits how many rows the input line can use, up to the terminal height.  When this is `0` (the default), the terminal height is the limit.
@@ -573,7 +574,9 @@ Name                         | Default [*](#alternatedefault) | Description
 
 <a name="alternatedefault"></a>
 
-**&ast;** Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
+> **Note:**
+>
+> Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a [`clink-reset-line`](#rlcmd-clink-reset-line) command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) for more information.
@@ -618,6 +621,18 @@ Examples (specific results may depend on the console host program):
 It's also possible to set any ANSI [SGR escape code](https://wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
 
 Be careful, since some escape code sequences might behave strangely.
+
+### Color Themes
+
+TODO: document .clinktheme files.
+
+See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
+
+## Custom Prompts
+
+TODO: document .clinkprompt files.
+
+See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts.
 
 <a name="filelocations"></a>
 
@@ -733,14 +748,14 @@ See <code>clink autorun --help</code> for more information.</dd>
 <dt>clink config prompt</dt>
 <dd>
 Configures Clink to use a custom prompt module.<br/>
-See <code>clink config prompt --help</code> or [TODO: document .clinkprompt files](#TODO_document_clinkprompt_files) for more information.</dd>
+See <code>clink config prompt --help</code> or [Custom Prompts](#custom-prompts) for more information.</dd>
 </p>
 
 <p>
 <dt>clink config theme</dt>
 <dd>
 Configures Clink to use a color theme.<br/>
-See <code>clink config theme --help</code> or [TODO: document .clinktheme files](#TODO_document_clinktheme_files) for more information.</dd>
+See <code>clink config theme --help</code> or [Color Themes](#color-themes) for more information.</dd>
 </p>
 
 <p>
@@ -799,6 +814,8 @@ Mode | Description
 `check` | This is the default; Clink periodically checks for updates and prints a message when an update is available.
 `prompt` | Clink periodically checks for updates and if one is available then it shows a window to prompt whether to install the update.
 `auto` | Clink periodically checks for updates and also attempts to automatically install an update.  If elevation is needed then it pops up a prompt window, otherwise it automatically installs the update.
+
+<br/>
 
 > **Notes:**
 > - The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
@@ -1092,7 +1109,7 @@ Name | Sequence | Description
 `Space` | | The <kbd>Space</kbd> key.
 | `"Space"` | The series of five keys <kbd>S</kbd> <kbd>p</kbd> <kbd>a</kbd> <kbd>c</kbd> <kbd>e</kbd>.
 
-Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"`.  See [Discovering Clink key sequences](#discovering-clink-key-sequences) and [Binding special keys](#specialkeys) for how to find the <span class="arg">keyname</span> for the key you want to bind.
+Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as `"\e[A"`.  See [Discovering Clink key sequences](#discovering-clink-key-sequences) and [Binding special keys](#specialkeys) for how to find the <span class="arg">keyname</span> for the key you want to bind.
 
 <p>
 <dt>Key bindings</dt>
@@ -1510,7 +1527,7 @@ Command | Key | Description
 
 <a name="alternatedefaultcommand"></a>
 
-**&ast;** Some commands have alternative default key bindings when Clink is installed with "Use enhanced default settings" checked in the setup program or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`.
+> **Note:** Some commands have alternative default key bindings when Clink is installed with "Use enhanced default settings" checked in the setup program or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`.
 
 <a name="completioncolors"></a>
 
@@ -2569,6 +2586,8 @@ end
 
 When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.  When the setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.
 
+See [Color Themes](#color-themes) for information on loading and saving color theme files (whose names end with ".clinktheme").
+
 <table class="linkmenu">
 <tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
 <tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
@@ -2712,9 +2731,12 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 
 Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).
 
+See [Custom Prompts](#custom-prompts) for information on loading custom prompt files (whose names end with ".clinkprompt").
+
 <table class="linkmenu">
 <tr><td><a href="#promptfilter_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
 <tr><td><a href="#escapecodes">ANSI escape codes in the prompt string</a></td><td>How special characters are colored.</td></tr>
+<tr><td><a href="#sharing-custom-prompts">Sharing Custom Prompts</a></td><td>How to share your custom prompt with other people as a *.clinkprompt file.</td></tr>
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
 <tr><td style="padding-left: 2rem"><a href="#rightprompt">Right Side Prompt</a></td><td>How to add prompt text at the right edge of the terminal.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a></td><td>How to make the prompt show up instantly.</td></tr>
@@ -2768,6 +2790,10 @@ Readline needs to be told which characters in the prompt are unprintable or invi
 Here are a couple of links with more information about ANSI escape codes:
 - [Wikipedia - ANSI Escape Code](https://en.wikipedia.org/wiki/ANSI_escape_code)
 - [Console Virtual Terminal Sequences](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences)
+
+### Sharing Custom Prompts
+
+TODO: how to package a prompt in a .clinkprompt file.
 
 ### More Advanced Stuff
 

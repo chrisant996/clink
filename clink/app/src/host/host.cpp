@@ -71,7 +71,9 @@ static setting_bool g_filter_prompt(
 setting_str g_customprompt(
     "clink.customprompt",
     "A .clinkprompt file to use for the prompt",
-// TODO: long description.
+    ".clinkprompt files contain customizations for the prompt.  Setting this to the\n"
+    "name of a .clinkprompt file causes it to be loaded and used for displaying the\n"
+    "prompt.",
     "");
 
 enum prompt_spacing { normal, compact, sparse, MAX };
