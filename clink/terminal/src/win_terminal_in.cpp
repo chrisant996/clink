@@ -688,7 +688,7 @@ int32 win_terminal_in::read()
         {
             const INPUT_RECORD record = m_pending_record;
             m_has_pending_record = false;
-            process_record(record, nullptr);
+            process_record(record);
         }
 
         if (!m_buffer_count)
@@ -796,7 +796,7 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
 }
 
 //------------------------------------------------------------------------------
-bool win_terminal_in::process_record(const INPUT_RECORD& record, CONSOLE_SCREEN_BUFFER_INFO* csbi)
+bool win_terminal_in::process_record(const INPUT_RECORD& record)
 {
     const uint32 buffer_count = m_buffer_count;
 
@@ -816,14 +816,8 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record, CONSOLE_SCREEN_
         // wrapping adjustments.  If the width changes then return to give
         // editor modules a chance to respond to the width change.
         reset_wcwidths();
-
-        {
-            CONSOLE_SCREEN_BUFFER_INFO csbiNew;
-            GetConsoleScreenBufferInfo(m_stdout, &csbiNew);
-            if (!csbi || csbi->dwSize.X != csbiNew.dwSize.X)
-                return true;
-            *csbi = csbiNew; // Update for next time.
-        }
+        if (get_dimensions() != m_dimensions)
+            return true;
         break;
 
     default:
@@ -845,7 +839,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         {
             const INPUT_RECORD record = m_pending_record;
             m_has_pending_record = false;
-            process_record(record, nullptr);
+            process_record(record);
         }
         return;
     }
@@ -967,7 +961,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         }
         else
         {
-            if (process_record(record, &csbi))
+            if (process_record(record))
                 return;
         }
     }

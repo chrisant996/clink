@@ -10,6 +10,7 @@
 #include <core/base.h>
 #include <lib/reclassify.h>
 #include <lib/line_editor_integration.h>
+#include <lib/display_readline.h>
 
 #include <assert.h>
 
@@ -170,6 +171,7 @@ void lua_input_idle::on_idle()
         if (GetTickCount() - s_terminal_resized >= c_terminal_resize_refilter_delay)
         {
             s_terminal_resized = 0;
+            clear_to_end_of_screen_on_next_display();
             host_filter_prompt();
         }
     }
