@@ -28,7 +28,7 @@ private:
     void            fix_console_input_mode();
     void            read_console(input_idle* callback=nullptr, DWORD timeout=INFINITE, bool peek=false);
     bool            peek_record(const INPUT_RECORD& record, int32* peeked=nullptr);
-    bool            process_record(const INPUT_RECORD& record, CONSOLE_SCREEN_BUFFER_INFO* csbi);
+    bool            process_record(const INPUT_RECORD& record);
     void            process_input(const KEY_EVENT_RECORD& key_event, bool peek);
     void            process_input(const MOUSE_EVENT_RECORD& mouse_event, bool peek);
     void            filter_unbound_input(uint32 buffer_count);

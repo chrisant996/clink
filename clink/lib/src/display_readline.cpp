@@ -1396,6 +1396,7 @@ public:
     uint32              top_buffer_start() const;
     void                on_new_line();
     void                end_prompt_lf();
+    void                clear_to_end_of_screen_on_next_display();
     void                display();
     void                set_history_expansions(history_expansion* list=nullptr);
     void                measure(measure_columns& mc);
@@ -1426,6 +1427,7 @@ private:
     int32               m_last_point = -1;
     bool                m_last_modmark = false;
     bool                m_horz_scroll = false;
+    bool                m_clear_to_end_of_screen_on_next_display = false;
 
     const bool          m_autowrap_bug;
     HANDLE              m_horizpos_workaround = nullptr;
@@ -1563,6 +1565,12 @@ void display_manager::end_prompt_lf()
 }
 
 //------------------------------------------------------------------------------
+void display_manager::clear_to_end_of_screen_on_next_display()
+{
+    m_clear_to_end_of_screen_on_next_display = true;
+}
+
+//------------------------------------------------------------------------------
 static int32 write_with_clear(FILE* stream, const char* text, int length)
 {
     int32 remaining = length;
@@ -1656,6 +1664,12 @@ void display_manager::display()
 
     bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
+
+    if (m_clear_to_end_of_screen_on_next_display)
+    {
+        m_clear_to_end_of_screen_on_next_display = false;
+        clear_to_end_of_screen();
+    }
 
     if (s_defer_clear_lines > 0)
     {
@@ -2698,6 +2712,12 @@ void refresh_terminal_size()
         if (g_debug_log_terminal.get())
             LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
     }
+}
+
+//------------------------------------------------------------------------------
+void clear_to_end_of_screen_on_next_display()
+{
+    s_display_manager.clear_to_end_of_screen_on_next_display();
 }
 
 //------------------------------------------------------------------------------

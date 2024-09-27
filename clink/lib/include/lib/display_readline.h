@@ -16,6 +16,7 @@ typedef struct _history_expansion history_expansion;
 
 void reset_display_readline();
 void refresh_terminal_size();
+void clear_to_end_of_screen_on_next_display();
 void display_readline();
 void set_history_expansions(history_expansion* list=nullptr);
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
