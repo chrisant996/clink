@@ -4,11 +4,11 @@
 
 #### v1.7.0
 
-- Added support for `*.clinktheme` color theme files; see [TODO: document .clinktheme files](#TODO_document_clinktheme_files) for more information.
+- Added support for `*.clinktheme` color theme files; see [Color Themes](#color-themes) for more information.
   - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
   - The famous [Dracula](https://draculatheme.com) and [Solarized Dark](https://github.com/altercation/solarized) (and Light) themes are included.
   - Use <code>clink config theme use <span class="arg">name</span></code> to apply a color theme.
-- Added support for `*.clinkprompt` custom prompt module files; see [TODO: document .clinkprompt files](#TODO_document_clinkprompt_files) for more information.  This makes it easy to share custom prompts, and to have a library of many different custom prompts and switch between them quickly and easily.  One custom prompt module can be active at a time; activating one deactivates any others.
+- Added support for `*.clinkprompt` custom prompt module files; see [Custom Prompts](#custom-prompts) for more information.  This makes it easy to share custom prompts, and to have a library of many different custom prompts and switch between them quickly and easily.  One custom prompt module can be active at a time; activating one deactivates any others.
   - Added several `clink config prompt` commands for custom prompt modules (run `clink config prompt --help`).
   - The famous [Agnoster](https://github.com/agnoster/agnoster-zsh-theme) prompt is included (ported from zsh to Clink).
   - Use <code>clink config prompt use <span class="arg">name</span></code> to activate a custom prompt module.
