@@ -2039,10 +2039,10 @@ static int32 get_errorlevel(lua_State* state)
 ///
 /// If an error occurs, this returns nil.
 ///
-/// **IMPORTANT:** Not all of the 128 bits necessarily have the same degree of
-/// entropy on each computer.  If you discard any bits from the string then
-/// you could accidentally greatly reduce the uniqueness of the ID (even on
-/// the same computer), or even completely remove all entropy.
+/// <strong>IMPORTANT:</string> Not all of the 128 bits necessarily have the
+/// same degree of entropy on each computer.  If you discard any bits from the
+/// string then you could accidentally greatly reduce the uniqueness of the ID
+/// (even on the same computer), or even completely remove all entropy.
 static int32 create_guid(lua_State* state)
 {
     const bool faster = !!lua_toboolean(state, 1);
