@@ -454,7 +454,7 @@ function git.getstatus(no_untracked, include_submodules)
     local line
 
     line = file:read("*l")
-    if not line then return end
+    if not line or not line:find("^## ") then return end
 
     unpublished = not line:find("^## (.+)%.%.%.")
     ahead = tonumber(line:match(" %[ahead (%d)+") or "0")
@@ -462,11 +462,9 @@ function git.getstatus(no_untracked, include_submodules)
     ahead = ahead > 0 and ahead or nil
     behind = behind > 0 and behind or nil
 
-    local any
     while true do
         line = file:read("*l")
         if not line then break end
-        any = true
 
         local kindStaged, kind = string.match(line, "(.)(.) ")
 
@@ -493,8 +491,6 @@ function git.getstatus(no_untracked, include_submodules)
         end
     end
     file:close()
-
-    if not any then return end
 
     local working
     local staged
