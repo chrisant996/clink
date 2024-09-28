@@ -21,6 +21,7 @@
 /// is used to delimit path elements, otherwise a system-specific delimiter is
 /// used.
 /// -show:  path.normalise("a////b/\\/c/")  -- returns "a\\b\\c\\"
+/// -show:  path.normalise("./foo/../bar")  -- returns "bar"
 /// -show:  path.normalise("")              -- returns ""
 static int32 normalise(lua_State* state)
 {
