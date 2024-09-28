@@ -6,23 +6,23 @@ local loaded_clinkprompts = {}
 local clinkprompt_wrapping_module
 
 local function clinkprompt_loader(module)
-    local ret
     local lower_module = clink.lower(module)
-    assert(not loaded_clinkprompts[lower_module])
+    local ret = loaded_clinkprompts[lower_module]
+    if not ret then
+        local func, loaderr = loadfile(module)
+        if func then
+            local old = clinkprompt_wrapping_module
+            clinkprompt_wrapping_module = lower_module
 
-    local func, loaderr = loadfile(module)
-    if func then
-        local old = clinkprompt_wrapping_module
-        clinkprompt_wrapping_module = lower_module
+            local ok, funcerr = pcall(function() ret = func() end)
 
-        local ok, funcerr = pcall(function() ret = func() end)
-
-        clinkprompt_wrapping_module = old
-        ret = ok and (ret or true) or funcerr or false
-    else
-        ret = loaderr or false
+            clinkprompt_wrapping_module = old
+            ret = ok and (ret or true) or funcerr or false
+        else
+            ret = loaderr or false
+        end
+        loaded_clinkprompts[lower_module] = ret
     end
-    loaded_clinkprompts[lower_module] = ret
     return ret
 end
 
