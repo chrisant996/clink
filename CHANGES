@@ -19,6 +19,7 @@
 - Enhanced the syntax for setting colors; added `italic` and `reverse`, and added `#XXXXXX` and `#XXX` shortcuts for specifying 24-bit color values.
 - Changed phrasing from "Accept Suggestion" to "Insert Suggestion" in the documentation and in the auto-suggestions usage hint text.
 - Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` instead of `print()` are (1) background compatibility or (2) using `NONL` to suppress printing a line ending.
+- Changed the `:rightfilter()` function for prompt filters:  normally the right side prompt is padded on the right by 1 space to avoid potential word wrapping issues, but now a prompt filter can disable the padding by prepending `"\033[C"` to the returned string.
 - Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
   - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
   - Added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
@@ -31,6 +32,7 @@
 - Fixed color of leading blank lines in a prompt string (use the terminal's default color, not the `color.prompt` color).
 - Fixed `rl.collapsetilde()` which just didn't do its job.
 - Fixed `%clink_dummy_capture_env%` to stop accidentally leaking into the environment variables collection.
+- Fixed an infinite loop when `prompt.async` was false.
 - Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
