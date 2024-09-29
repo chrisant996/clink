@@ -2853,6 +2853,8 @@ Typically the motivation to use asynchronous prompt filtering is that one or mor
 
 The following example illustrates running `git status` in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.
 
+**Note:**  This is for illustration purposes and works when no other custom prompt filters are installed.  If another custom prompt filter is present and runs earlier and chooses to halt further prompt filtering, then this example code might not get reached.
+
 ```lua
 #INCLUDE [docs\examples\ex_async_prompt.lua]
 ```
