@@ -23,7 +23,8 @@
   - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
   - Added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
 - Added a workaround for Unicode limitations in Windows 8.1 and earlier (improves cursor position accuracy on Windows 8.1).
-- Added several new Lua APIs:  [clink.getprompts()](#clink.getprompts), [clink.applyprompt()](#clink.applyprompt), [clink.getclinkprompt()](#clink.getclinkprompt), [clink.getthemes()](#clink.getthemes), [clink.readtheme()](#clink.readtheme), [clink.applytheme()](#clink.applytheme), [settings.clear()](#settings.clear), [settings.parsecolor()](#settings.parsecolor), [settings.formatcolor()](#settings.formatcolor), [os.createguid()](#os.createguid).
+- Added several new Lua APIs for color themes and custom prompts:  [clink.getprompts()](#clink.getprompts), [clink.applyprompt()](#clink.applyprompt), [clink.getclinkprompt()](#clink.getclinkprompt), [clink.getthemes()](#clink.getthemes), [clink.readtheme()](#clink.readtheme), [clink.applytheme()](#clink.applytheme), [settings.clear()](#settings.clear), [settings.parsecolor()](#settings.parsecolor), [settings.formatcolor()](#settings.formatcolor), [os.createguid()](#os.createguid).
+- Added [git Lua APIs](#git) for use by custom prompts.
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
 - Fixed a case where the `match.coloring_rules` setting could have no effect.
 - Fixed delay when typing `X:` and it's a remote drive.
