@@ -127,6 +127,19 @@ end
 
 
 --------------------------------------------------------------------------------
+--- -name:  git.getsystemname
+--- -ver:   1.7.0
+--- -arg:   [dir:string]
+--- -ret:   string | nil
+--- Checks whether <span class="arg">dir</span> is under git source
+--- control, and returns <code>"git"</code> if it is.  Otherwise returns nil.
+function git.getsystemname(dir)
+    if git.getgitdir(dir) then
+        return "git"
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  git.makecommand
 --- -ver:   1.7.0
 --- -arg:   command:string
