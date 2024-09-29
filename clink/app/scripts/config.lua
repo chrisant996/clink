@@ -238,6 +238,20 @@ function clink._show_prompt_demo(module)
         print(m)
         return
     end
+    git._fake = {
+        branch = "main",
+        remote = "origin",
+        stashes = true,
+        status = {
+            dirty = true,
+            behind = 19,
+            working = {
+                modify = 3,
+                untracked = 1,
+            },
+            untracked = true,
+        },
+    }
 -- FUTURE: Does this need to send onbeginedit? Could that cause more harm than good?
     clink.print("\x1b[m", NONL)
     if type(m) ~= "table" or not m.demo then
@@ -259,6 +273,7 @@ function clink._show_prompt_demo(module)
     end
 -- FUTURE: Does this need to send onendedit?
     clink.print("\x1b[m\x1b[K", NONL)
+    git._fake = nil
 end
 
 --------------------------------------------------------------------------------

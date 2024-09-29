@@ -172,6 +172,11 @@ end
 --- -show:  git.isgitdir("c:/worktree")
 --- -show:  -- Returns:  "c:\repo\.git\worktrees\worktree", "c:\worktree\.git", "c:\worktree"
 function git.isgitdir(dir)
+    if git._fake then
+        local git_dir = path.join(dir, ".git")
+        return git_dir, git_dir, dir
+    end
+
     local function has_git_file(dir) -- luacheck: ignore 432
         local dotgit = path.join(dir, ".git")
         local gitfile
@@ -288,6 +293,8 @@ end
 --- If unable to get the branch info, then nil is returned.
 --- -show:  local branch, detached = git.getbranch()
 function git.getbranch(git_dir)
+    if git._fake then return git._fake.branch end
+
     git_dir = git_dir or git.getgitdir()
     if not git_dir then return end
 
@@ -323,6 +330,8 @@ end
 ---
 --- Returns nil if the current branch cannot be found.
 function git.getremote(git_dir)
+    if git._fake then return git._fake.remote end
+
     git_dir = git_dir or git.getgitdir()
     if not git_dir then return end
 
@@ -354,6 +363,8 @@ end
 ---
 --- Returns false if there are no conflicts, otherwise it returns true.
 function git.getconflictstatus()
+    if git._fake then return git._fake.status and git._fake.status.untracked end
+
     local file = io.popen(git.makecommand("diff --name-only --diff-filter=U"))
     if not file then return false end
 
@@ -380,14 +391,20 @@ end
 ---
 --- Or when unsuccessful it returns nil.
 function git.getaheadbehind()
-    local file = io.popen(git.makecommand("rev-list --count --left-right @{upstream}...HEAD"))
-    if not file then return end
-
     local ahead, behind
-    for line in file:lines() do
-        ahead, behind = string.match(line, "(%d+)[^%d]+(%d+)")
+
+    if git._fake then
+        ahead = git._fake.status and git._fake.status.ahead
+        behind = git._fake.status and git._fake.status.behind
+    else
+        local file = io.popen(git.makecommand("rev-list --count --left-right @{upstream}...HEAD"))
+        if not file then return end
+
+        for line in file:lines() do
+            ahead, behind = string.match(line, "(%d+)[^%d]+(%d+)")
+        end
+        file:close()
     end
-    file:close()
 
     return ahead or "0", behind or "0"
 end
@@ -437,6 +454,8 @@ end
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
 function git.getstatus(no_untracked, include_submodules)
+    if git._fake then return git._fake.status end
+
     local flags = ""
     if no_untracked then
         flags = flags .. "-uno "
@@ -523,6 +542,22 @@ function git.getstatus(no_untracked, include_submodules)
     status.untracked = (w_unt > 0) and true or nil
     status.conflict = (w_con > 0) and true or nil
     return status
+end
+
+--------------------------------------------------------------------------------
+--- -name:  git.hasstash
+--- -ver:   1.7.0
+--- -ret:   boolean | nil
+--- Returns whether any stashes exist for the repo or worktree associated with
+--- the current working directory.
+function git.hasstash()
+    if git._fake then return git._fake.stashes end
+
+    local file = io.popen(git.makecommand("rev-parse --verify refs/stash"))
+    if not file then return end
+
+    local line = file:read("*l") or ""
+    return line ~= ""
 end
 
 
