@@ -19,6 +19,7 @@ return {
         "coroutine.override_isgenerator",
         "coroutine.override_isprompt",
         "coroutine.override_src",
+        "git",
         "io",
         "log",
         "NONL",
