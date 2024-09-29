@@ -8,6 +8,12 @@ git = {}
 
 
 --------------------------------------------------------------------------------
+local function nilwhenzero(x)
+    if x and tonumber(x) > 0 then
+        return x
+    end
+end
+
 local function get_parent(dir)
     local parent = path.toparent(dir)
     if parent and parent ~= "" and parent ~= dir then
@@ -455,6 +461,9 @@ end
 ---
 --- Otherwise it returns a table with the following scheme:
 --- -show:  {
+--- -show:  &nbsp;   branch = ...                -- branch name, or commit hash if detached
+--- -show:  &nbsp;   detached = ...              -- true if HEAD is detached, otherwise nil
+--- -show:  &nbsp;   upstream = ...              -- upstream name, other nil
 --- -show:  &nbsp;   dirty = ...                 -- true if working and/or staged changes, otherwise nil
 --- -show:  &nbsp;   ahead = ...                 -- number of commits ahead, otherwise nil
 --- -show:  &nbsp;   behind = ...                -- number of commits behind, otherwise nil
@@ -470,7 +479,7 @@ end
 --- -show:  &nbsp;       conflict = ...          -- number of conflicted files
 --- -show:  &nbsp;       untracked = ...         -- number of untracked files or directories
 --- -show:  &nbsp;   }
---- -show:  &nbsp;   staged = {                 -- nil if no working changes
+--- -show:  &nbsp;   staged = {                  -- nil if no working changes
 --- -show:  &nbsp;       add = ...               -- number of added files
 --- -show:  &nbsp;       modify = ...            -- number of modified files
 --- -show:  &nbsp;       delete = ...            -- number of deleted files
@@ -487,6 +496,18 @@ end
 --- -show:  else
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
+---
+--- **Compatibility Note:** This requires a version of git that supports
+--- <code>git status --porcelain=v2</code>.  Porcelain v2 format has existed
+--- for a long time, so that isn't expected to be a limitation in practice.
+---
+--- <fieldset><legend>Warning</legend>
+--- This runs slowly.  To keep a custom prompt responsive, run this in a
+--- coroutine so that it runs in the background (the prompt will automatically
+--- refresh when the background operation finishes).  See
+--- <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for more
+--- information.
+--- </fieldset>
 -- luacheck: pop
 function git.getstatus(no_untracked, include_submodules)
     if git._fake then return git._fake.status end
@@ -499,57 +520,56 @@ function git.getstatus(no_untracked, include_submodules)
         flags = flags .. "--ignore-submodules=none "
     end
 
-    local file = io.popen(git.makecommand("status "..flags.." --branch --porcelain"))
+    local file = io.popen(git.makecommand("status "..flags.." --branch --porcelain=v2"))
     if not file then return end
 
     local w_add, w_mod, w_del, w_con, w_unt = 0, 0, 0, 0, 0
     local s_add, s_mod, s_del, s_ren = 0, 0, 0, 0
     local onlystaged = 0
-    local unpublished, ahead, behind
-    local line
 
-    line = file:read("*l")
-    if not line or not line:find("^## ") then return end
+    local hasheader
+    local header = {}
 
-    unpublished = not line:find("^## (.+)%.%.%.")
-    ahead = tonumber(line:match(" %[ahead (%d)+") or "0")
-    behind = tonumber(line:match("behind (%d)+%]") or "0")
-    ahead = ahead > 0 and ahead or nil
-    behind = behind > 0 and behind or nil
+    for line in file:lines() do
+        if line:find("^# ") then
+            local k, v = line:match("^#%sbranch%.([^%s]+)%s(.*)$")
+            if k then
+                hasheader = true
+                header[k] = v
+            end
+        else
+            local kindStaged, kind = string.match(line, "(.)(.) ")
 
-    while true do
-        line = file:read("*l")
-        if not line then break end
+            if kind == "A" then
+                w_add = w_add + 1
+            elseif kind == "M" or kind == "T" then
+                w_mod = w_mod + 1
+            elseif kind == "D" then
+                w_del = w_del + 1
+            elseif kind == "U" then
+                w_con = w_con + 1
+            elseif kind == "?" then
+                w_unt = w_unt + 1
+            end
 
-        local kindStaged, kind = string.match(line, "(.)(.) ")
+            if kindStaged == "A" then
+                s_add = s_add + 1
+            elseif kindStaged == "M" or kindStaged == "T" then
+                s_mod = s_mod + 1
+            elseif kindStaged == "D" then
+                s_del = s_del + 1
+            elseif kindStaged == "R" then
+                s_ren = s_ren + 1
+            end
 
-        if kind == "A" then
-            w_add = w_add + 1
-        elseif kind == "M" or kind == "T" then
-            w_mod = w_mod + 1
-        elseif kind == "D" then
-            w_del = w_del + 1
-        elseif kind == "U" then
-            w_con = w_con + 1
-        elseif kind == "?" then
-            w_unt = w_unt + 1
-        end
-
-        if kindStaged == "A" then
-            s_add = s_add + 1
-        elseif kindStaged == "M" or kindStaged == "T" then
-            s_mod = s_mod + 1
-        elseif kindStaged == "D" then
-            s_del = s_del + 1
-        elseif kindStaged == "R" then
-            s_ren = s_ren + 1
-        end
-
-        if kindStaged ~= " " and kind == " " then
-            onlystaged = onlystaged + 1
+            if kindStaged ~= " " and kind == " " then
+                onlystaged = onlystaged + 1
+            end
         end
     end
     file:close()
+
+    if not hasheader then return end
 
     local working
     local staged
@@ -573,9 +593,12 @@ function git.getstatus(no_untracked, include_submodules)
 
     local status = {}
     status.dirty = (working or staged) and true or nil
-    status.unpublished = unpublished
-    status.ahead = ahead
-    status.behind = behind
+    status.unpublished = not header.upstream
+    status.ahead = nilwhenzero(header.ab and header.ab:match("%+(%d+)"))
+    status.behind = nilwhenzero(header.ab and header.ab:match("%-(%d+)"))
+    status.detached = (header.head == "(detached)") and true or nil
+    status.branch = status.detached and header.oid or header.head or nil
+    status.upstream = header.upstream
     status.working = working
     status.staged = staged
     status.onlystaged = (onlystaged > 0) and onlystaged or nil
