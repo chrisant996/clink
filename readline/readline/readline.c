@@ -200,6 +200,7 @@ int rl_visible_prompt_length = 0;
 /* begin_clink_change */
 /* Optional right-justified prompt string. */
 char *rl_rprompt = (char *)NULL;
+int rl_rprompt_padding = 0;
 int rl_visible_rprompt_length = 0;
 /* end_clink_change */
 

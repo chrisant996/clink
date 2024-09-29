@@ -619,6 +619,7 @@ extern char *rl_display_prompt;
 /* The right-justified prompt string, if any.  This is set by
    rl_set_rprompt (), and should not be assigned to directly. */
 extern char *rl_rprompt;
+extern int rl_rprompt_padding;
 extern int rl_visible_rprompt_length;
 /* end_clink_change */
 
