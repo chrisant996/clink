@@ -697,15 +697,11 @@ rl_set_rprompt (const char *rprompt)
 
   if (rprompt && *rprompt)
     {
-      rl_rprompt_padding = (strncmp (rprompt, "\x1b[C", 3) == 0) ? 0 : 1;
-      if (!rl_rprompt_padding)
-	rprompt += 3;
       rl_rprompt = expand_prompt (rprompt, PMT_RPROMPT, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
     }
   else
     {
       rl_rprompt = (char *)NULL;
-      rl_rprompt_padding = 0;
       rl_visible_rprompt_length = 0;
     }
 

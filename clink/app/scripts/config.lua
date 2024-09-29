@@ -262,10 +262,10 @@ function clink._show_prompt_demo(module)
         right = right or ""
         local left_width = console.cellcount(left:gsub("^.*\n", ""))
         local right_width = console.cellcount(right)
-        if right_width <= 0 or left_width + right_width + 4 >= console.getwidth() then
+        if right_width <= 0 or left_width + right_width + 4 > console.getwidth() then
             right = ""
         else
-            right = string.rep(" ", console.getwidth() - 1 - left_width - right_width)..right
+            right = string.rep(" ", console.getwidth() - left_width - right_width)..right
         end
         clink.print(left..right)
     else

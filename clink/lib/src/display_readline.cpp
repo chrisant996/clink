@@ -1022,7 +1022,7 @@ bool display_lines::can_show_rprompt() const
             (_rl_term_forward_char || _rl_term_ch) && // has termcap
             rl_display_prompt == rl_prompt &&         // displaying the real prompt
             m_count == 1 &&                           // only one line
-            (m_lines[0].m_lastcol + 1 + rl_visible_rprompt_length < _rl_screenwidth + 1 - rl_rprompt_padding)); // fits
+            (m_lines[0].m_lastcol + 1 + rl_visible_rprompt_length < _rl_screenwidth)); // fits
 }
 
 //------------------------------------------------------------------------------
@@ -2540,7 +2540,7 @@ void display_manager::print(const char* chars, uint32 len)
 //------------------------------------------------------------------------------
 void display_manager::print_rprompt(const char* s)
 {
-    const int32 col = _rl_screenwidth + 1 - rl_rprompt_padding - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
+    const int32 col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
     if (col <= 0 || col >= _rl_screenwidth)
         return;
 
