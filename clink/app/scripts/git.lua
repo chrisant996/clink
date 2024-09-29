@@ -124,7 +124,22 @@ local function load_ini(fileName)
     return data
 end
 
--- Function that builds a command line for running the specified git command.
+
+
+--------------------------------------------------------------------------------
+--- -name:  git.makecommand
+--- -ver:   1.7.0
+--- -arg:   command:string
+--- -arg:   [include_stderr:boolean]
+--- -ret:   string | nil
+--- Returns a command line for running the specified git command.  The command
+--- line automatically prepends <code>git</code> to the input
+--- <span class="arg">command</span> string, plus disables git's optional
+--- locks and advice messages.  Unless <span class="arg">include_stderr</span>
+--- is true, it also includes <code>2>nul</code> to hide stderr output.
+---
+--- If <span class="arg">command</span> is missing or empty, it returns nil.
+--- -show:  git.makecommand("rev-parse HEAD")
 function git.makecommand(command, include_stderr)
     if not command or command == "" then return end
 
@@ -135,8 +150,6 @@ function git.makecommand(command, include_stderr)
     command = "set GIT_OPTIONAL_LOCKS=0&set GIT_ADVICE=0&"..command
     return command
 end
-
-
 
 --------------------------------------------------------------------------------
 --- -name:  git.isgitdir
