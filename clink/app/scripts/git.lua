@@ -426,9 +426,10 @@ end
 --- -show:  &nbsp;   ahead = ...                 -- number of commits ahead, otherwise nil
 --- -show:  &nbsp;   behind = ...                -- number of commits behind, otherwise nil
 --- -show:  &nbsp;   unpublished = ...           -- true if unpublished, otherwise nil
---- -show:  &nbsp;   tracked = ...               -- true if any changes in tracked files, otherwise nil
---- -show:  &nbsp;   untracked = ...             -- true if any untracked files or directories, otherwise nil
---- -show:  &nbsp;   conflict = ...              -- true if any conflicted files, otherwise nil
+--- -show:  &nbsp;   onlystaged = ...            -- number of changes only in staged files not in working files, otherwise nil
+--- -show:  &nbsp;   tracked = ...               -- number of changes in tracked working files, otherwise nil
+--- -show:  &nbsp;   untracked = ...             -- number of untracked files or directories, otherwise nil
+--- -show:  &nbsp;   conflict = ...              -- number of conflicted files, otherwise nil
 --- -show:  &nbsp;   working = {                 -- nil if no working changes
 --- -show:  &nbsp;       add = ...               -- number of added files
 --- -show:  &nbsp;       modify = ...            -- number of modified files
@@ -469,6 +470,7 @@ function git.getstatus(no_untracked, include_submodules)
 
     local w_add, w_mod, w_del, w_con, w_unt = 0, 0, 0, 0, 0
     local s_add, s_mod, s_del, s_ren = 0, 0, 0, 0
+    local onlystaged = 0
     local unpublished, ahead, behind
     local line
 
@@ -508,6 +510,10 @@ function git.getstatus(no_untracked, include_submodules)
         elseif kindStaged == "R" then
             s_ren = s_ren + 1
         end
+
+        if kindStaged ~= " " and kind == " " then
+            onlystaged = onlystaged + 1
+        end
     end
     file:close()
 
@@ -538,9 +544,10 @@ function git.getstatus(no_untracked, include_submodules)
     status.behind = behind
     status.working = working
     status.staged = staged
-    status.tracked = (w_add + w_mod + w_del + w_con > 0) and true or nil
-    status.untracked = (w_unt > 0) and true or nil
-    status.conflict = (w_con > 0) and true or nil
+    status.onlystaged = (onlystaged > 0) and onlystaged or nil
+    status.tracked = (w_add + w_mod + w_del + w_con > 0) and (w_add + w_mod + w_del + w_con) or nil
+    status.untracked = (w_unt > 0) and w_unt or nil
+    status.conflict = (w_con > 0) and w_con or nil
     return status
 end
 
@@ -551,13 +558,29 @@ end
 --- Returns whether any stashes exist for the repo or worktree associated with
 --- the current working directory.
 function git.hasstash()
-    if git._fake then return git._fake.stashes end
+    if git._fake then return git._fake.stashes > 0 end
 
     local file = io.popen(git.makecommand("rev-parse --verify refs/stash"))
     if not file then return end
 
     local line = file:read("*l") or ""
     return line ~= ""
+end
+
+--------------------------------------------------------------------------------
+--- -name:  git.getstashcount
+--- -ver:   1.7.0
+--- -ret:   number | nil
+--- Returns the number of stashes that exist for the repo or worktree
+--- associated with the current working directory.
+function git.getstashcount()
+    if git._fake then return git._fake.stashes end
+
+    local file = io.popen(git.makecommand("rev-list --walk-reflogs --count refs/stash"))
+    if not file then return end
+
+    local line = file:read("*l") or "0"
+    return tonumber(line)
 end
 
 

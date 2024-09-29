@@ -241,7 +241,7 @@ function clink._show_prompt_demo(module)
     git._fake = {
         branch = "main",
         remote = "origin",
-        stashes = true,
+        stashes = 27,
         status = {
             dirty = true,
             behind = 19,
@@ -249,7 +249,7 @@ function clink._show_prompt_demo(module)
                 modify = 3,
                 untracked = 1,
             },
-            untracked = true,
+            untracked = 1,
         },
     }
 -- FUTURE: Does this need to send onbeginedit? Could that cause more harm than good?
