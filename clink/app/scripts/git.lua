@@ -167,10 +167,11 @@ end
 --------------------------------------------------------------------------------
 --- -name:  git.isgitdir
 --- -ver:   1.7.0
---- -arg:   dir:string
+--- -arg:   [dir:string]
 --- -ret:   string, string, string | nil
 --- Tests whether <span class="arg">dir</span> is a git repo root, or a
---- workspace dir, or asubmodule dir.
+--- workspace dir, or a submodule dir.  If <span class="arg">dir</span> is
+--- omitted then it assumes the current working directory.
 ---
 --- In a git repo, it returns three strings:
 --- <ol>
@@ -198,6 +199,8 @@ end
 --- -show:  git.isgitdir("c:/worktree")
 --- -show:  -- Returns:  "c:\repo\.git\worktrees\worktree", "c:\worktree\.git", "c:\worktree"
 function git.isgitdir(dir)
+    dir = dir or os.getcwd()
+
     if git._fake then
         local git_dir = path.join(dir, ".git")
         return git_dir, git_dir, dir
@@ -261,9 +264,11 @@ end
 --------------------------------------------------------------------------------
 --- -name:  git.getgitdir
 --- -ver:   1.7.0
---- -arg:   dir:string
+--- -arg:   [dir:string]
 --- -ret:   string, string, string | nil
---- Tests whether <span class="arg">dir</span> is part of a git repo.
+--- Tests whether <span class="arg">dir</span> is part of a git repo.  If
+--- <span class="arg">dir</span> is omitted then it assumes the current
+--- working directory.
 ---
 --- In a git repo, it returns three strings:
 --- <ol>
