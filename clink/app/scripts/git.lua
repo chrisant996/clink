@@ -470,7 +470,7 @@ function git.getstatus(no_untracked, include_submodules)
 
         if kind == "A" then
             w_add = w_add + 1
-        elseif kind == "M" or w_kind == "T" then
+        elseif kind == "M" or kind == "T" then
             w_mod = w_mod + 1
         elseif kind == "D" then
             w_del = w_del + 1
