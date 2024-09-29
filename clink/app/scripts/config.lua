@@ -1,6 +1,8 @@
 -- Copyright (c) 2024 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+-- luacheck: globals git
+
 --------------------------------------------------------------------------------
 local loaded_clinkprompts = {}
 local clinkprompt_wrapping_module

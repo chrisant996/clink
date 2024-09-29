@@ -409,6 +409,8 @@ function git.getaheadbehind()
     return ahead or "0", behind or "0"
 end
 
+-- luacheck: push
+-- luacheck: no max line length
 --------------------------------------------------------------------------------
 --- -name:  git.getstatus
 --- -ver:   1.7.0
@@ -454,6 +456,7 @@ end
 --- -show:  else
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
+-- luacheck: pop
 function git.getstatus(no_untracked, include_submodules)
     if git._fake then return git._fake.status end
 

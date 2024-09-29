@@ -932,12 +932,12 @@ function io.popenyield(command, mode)
         return file, pclose
     else
         in_popenyield = true
-        local a, b, c = io.popen(command, mode)
+        local x, y, z = io.popen(command, mode)
         in_popenyield = nil
-        if b or c then
-            return a, b, c
+        if y or z then
+            return x, y, z
         else
-            return a
+            return x
         end
     end
 end
