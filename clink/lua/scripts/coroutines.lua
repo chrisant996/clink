@@ -800,21 +800,6 @@ end
 
 
 --------------------------------------------------------------------------------
--- MAGIC:  Redirect io.popen to io.popenyield when used in read mode, so that
--- match generators automatically yield in coroutines.
-local old_io_popen = io.popen
-io.popen = function (command, mode)
-    if not mode or not mode:find("w") then
-        local _, ismain = coroutine.running()
-        if not ismain then
-            return io.popenyield(command, mode)
-        end
-    end
-
-    return old_io_popen(command, mode)
-end
-
---------------------------------------------------------------------------------
 --- -name:  io.popenyield
 --- -ver:   1.2.10
 --- -arg:   command:string
@@ -872,6 +857,7 @@ end
 --- -show:  if file then
 --- -show:  &nbsp;   local ok, what, code = pclose()
 --- -show:  end
+local in_popenyield
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     local c, ismain = coroutine.running()
@@ -945,8 +931,30 @@ function io.popenyield(command, mode)
         end
         return file, pclose
     else
-        return old_io_popen(command, mode)
+        in_popenyield = true
+        local a, b, c = io.popen(command, mode)
+        in_popenyield = nil
+        if b or c then
+            return a, b, c
+        else
+            return a
+        end
     end
+end
+
+--------------------------------------------------------------------------------
+-- MAGIC:  Redirect io.popen to io.popenyield when used in read mode, so that
+-- match generators automatically yield in coroutines.
+local old_io_popen = io.popen
+io.popen = function (command, mode)
+    if not in_popenyield and (not mode or not mode:find("w")) then
+        local _, ismain = coroutine.running()
+        if not ismain then
+            return io.popenyield(command, mode)
+        end
+    end
+
+    return old_io_popen(command, mode)
 end
 
 --------------------------------------------------------------------------------
