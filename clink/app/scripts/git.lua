@@ -642,16 +642,17 @@ function git.getstatus(no_untracked, include_submodules)
         total = {}
         total.add = t_add
         total.modify = t_mod
-        total.delete = t_delete
+        total.delete = t_del
     end
 
     local status = {}
+    local oid = header.oid and header.oid:find("^[0-9a-fA-F]") and header.oid:sub(1, 7) or header.oid
     status.dirty = (working or staged) and true or nil
     status.unpublished = not header.upstream
     status.ahead = nilwhenzero(header.ab and header.ab:match("%+(%d+)"))
     status.behind = nilwhenzero(header.ab and header.ab:match("%-(%d+)"))
     status.detached = (header.head == "(detached)") and true or nil
-    status.branch = status.detached and header.oid or header.head or nil
+    status.branch = status.detached and oid or header.head or nil
     status.HEAD = header.oid
     status.upstream = header.upstream
     status.working = working
