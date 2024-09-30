@@ -549,13 +549,13 @@ function git.getstatus(no_untracked, include_submodules)
                 header[k] = v
             end
         else
-            local mode, kindStaged, kind = string.match(line, "(.) (.)(.) ")
-
+            local mode = string.match(line, "^([uU12?]) ")
             if mode == "?" then
                 w_unt = w_unt + 1
             elseif mode == "u" or mode == "U" then
                 w_con = w_con + 1
             elseif mode == "1" or mode == "2" then
+                local kindStaged, kind = string.match(line, "^(.)(.) ", 3)
                 local added, modified, deleted
 
                 local w = true
@@ -601,9 +601,10 @@ function git.getstatus(no_untracked, include_submodules)
                 elseif modified then
                     t_mod = t_mod + 1
                 end
-            end
-            if kindStaged ~= "." and kind == "." then
-                onlystaged = onlystaged + 1
+
+                if kindStaged ~= "." and kind == "." then
+                    onlystaged = onlystaged + 1
+                end
             end
         end
         processed = processed + 1
