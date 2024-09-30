@@ -462,6 +462,7 @@ end
 --- Otherwise it returns a table with the following scheme:
 --- -show:  {
 --- -show:  &nbsp;   branch = ...                -- branch name, or commit hash if detached
+--- -show:  &nbsp;   HEAD = ...                  -- HEAD commit hash, or "(initial)"
 --- -show:  &nbsp;   detached = ...              -- true if HEAD is detached, otherwise nil
 --- -show:  &nbsp;   upstream = ...              -- upstream name, other nil
 --- -show:  &nbsp;   dirty = ...                 -- true if working and/or staged changes, otherwise nil
@@ -479,11 +480,18 @@ end
 --- -show:  &nbsp;       conflict = ...          -- number of conflicted files
 --- -show:  &nbsp;       untracked = ...         -- number of untracked files or directories
 --- -show:  &nbsp;   }
---- -show:  &nbsp;   staged = {                  -- nil if no working changes
+--- -show:  &nbsp;   staged = {                  -- nil if no staged changes
 --- -show:  &nbsp;       add = ...               -- number of added files
 --- -show:  &nbsp;       modify = ...            -- number of modified files
 --- -show:  &nbsp;       delete = ...            -- number of deleted files
 --- -show:  &nbsp;       rename = ...            -- number of renamed files
+--- -show:  &nbsp;   }
+--- -show:  &nbsp;   total = {                   -- nil if neither working nor staged
+--- -show:  &nbsp;       -- This counts files uniquely; if a file "foo" is deleted in working and
+--- -show:  &nbsp;       -- also in staged, it counts as only 1 deleted file.  Etc.
+--- -show:  &nbsp;       add = ...               -- total added files
+--- -show:  &nbsp;       modify = ...            -- total modified files
+--- -show:  &nbsp;       delete = ...            -- total deleted files
 --- -show:  &nbsp;   }
 --- -show:  }
 ---
@@ -525,11 +533,14 @@ function git.getstatus(no_untracked, include_submodules)
 
     local w_add, w_mod, w_del, w_con, w_unt = 0, 0, 0, 0, 0
     local s_add, s_mod, s_del, s_ren = 0, 0, 0, 0
+    local t_add, t_mod, t_del = 0, 0, 0
     local onlystaged = 0
 
     local hasheader
     local header = {}
 
+    local tick = os.clock()
+    local processed = 0
     for line in file:lines() do
         if line:find("^# ") then
             local k, v = line:match("^#%sbranch%.([^%s]+)%s(.*)$")
@@ -538,33 +549,68 @@ function git.getstatus(no_untracked, include_submodules)
                 header[k] = v
             end
         else
-            local kindStaged, kind = string.match(line, "(.)(.) ")
+            local mode, kindStaged, kind = string.match(line, "(.) (.)(.) ")
 
-            if kind == "A" then
-                w_add = w_add + 1
-            elseif kind == "M" or kind == "T" then
-                w_mod = w_mod + 1
-            elseif kind == "D" then
-                w_del = w_del + 1
-            elseif kind == "U" then
-                w_con = w_con + 1
-            elseif kind == "?" then
+            if mode == "?" then
                 w_unt = w_unt + 1
-            end
+            elseif mode == "u" or mode == "U" then
+                w_con = w_con + 1
+            elseif mode == "1" or mode == "2" then
+                local added, modified, deleted
 
-            if kindStaged == "A" then
-                s_add = s_add + 1
-            elseif kindStaged == "M" or kindStaged == "T" then
-                s_mod = s_mod + 1
-            elseif kindStaged == "D" then
-                s_del = s_del + 1
-            elseif kindStaged == "R" then
-                s_ren = s_ren + 1
-            end
+                local w = true
+                if kind == "A" or kind == "C" then
+                    w_add = w_add + 1
+                    added = true
+                elseif kind == "M" or kind == "T" or kind == "R" then
+                    w_mod = w_mod + 1
+                    modified = true
+                elseif kind == "D" then
+                    w_del = w_del + 1
+                    deleted = true
+                else
+                    w = false
+                end
 
-            if kindStaged ~= " " and kind == " " then
+                if kindStaged == "A" or kindStaged == "C" then
+                    s_add = s_add + 1
+                    if not w then
+                        added = true
+                    end
+                elseif kindStaged == "M" or kindStaged == "T" then
+                    s_mod = s_mod + 1
+                    if not w then
+                        modified = true
+                    end
+                elseif kindStaged == "D" then
+                    s_del = s_del + 1
+                    if not w then
+                        deleted = true
+                    end
+                elseif kindStaged == "R" then
+                    s_ren = s_ren + 1
+                    if not w then
+                        modified = true
+                    end
+                end
+
+                if added then
+                    t_add = t_add + 1
+                elseif deleted then
+                    t_del = t_del + 1
+                elseif modified then
+                    t_mod = t_mod + 1
+                end
+            end
+            if kindStaged ~= "." and kind == "." then
                 onlystaged = onlystaged + 1
             end
+        end
+        processed = processed + 1
+        if processed > 10 and os.clock() - tick > 0.015 then
+            coroutine.yield()
+            processed = 0
+            tick = os.clock()
         end
     end
     file:close()
@@ -573,6 +619,7 @@ function git.getstatus(no_untracked, include_submodules)
 
     local working
     local staged
+    local total
 
     if w_add + w_mod + w_del + w_con + w_unt > 0 then
         working = {}
@@ -591,6 +638,13 @@ function git.getstatus(no_untracked, include_submodules)
         staged.rename = s_ren
     end
 
+    if t_add + t_mod + t_del > 0 then
+        total = {}
+        total.add = t_add
+        total.modify = t_mod
+        total.delete = t_delete
+    end
+
     local status = {}
     status.dirty = (working or staged) and true or nil
     status.unpublished = not header.upstream
@@ -598,9 +652,11 @@ function git.getstatus(no_untracked, include_submodules)
     status.behind = nilwhenzero(header.ab and header.ab:match("%-(%d+)"))
     status.detached = (header.head == "(detached)") and true or nil
     status.branch = status.detached and header.oid or header.head or nil
+    status.HEAD = header.oid
     status.upstream = header.upstream
     status.working = working
     status.staged = staged
+    status.total = total
     status.onlystaged = (onlystaged > 0) and onlystaged or nil
     status.tracked = (w_add + w_mod + w_del + w_con > 0) and (w_add + w_mod + w_del + w_con) or nil
     status.untracked = (w_unt > 0) and w_unt or nil

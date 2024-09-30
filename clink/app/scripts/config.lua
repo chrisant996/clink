@@ -251,6 +251,9 @@ function clink._show_prompt_demo(module)
                 modify = 3,
                 untracked = 1,
             },
+            total = {
+                modify = 3,
+            },
             untracked = 1,
         },
     }
