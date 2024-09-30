@@ -74,11 +74,15 @@ static void putc_face (int, int, char *);
 static void puts_face (const char *, const char *, int);
 static void norm_face (char *, int);
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void update_line (char *, char *, char *, char *, int, int, int, int);
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 static void space_to_eol (int);
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void delete_chars (int);
 static void insert_some_chars (char *, int, int);
 static void open_some_spaces (int);
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 static void cr (void);
 static void redraw_prompt (char *);
 static void _rl_move_cursor_relative (int, const char *, const char *);
@@ -708,7 +712,8 @@ rl_set_rprompt (const char *rprompt)
   return 0;
 }
 
-void
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
+static void
 tputs_rprompt (const char *s)
 {
   int col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
@@ -751,6 +756,7 @@ tputs_rprompt (const char *s)
 
   _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
 }
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 /* end_clink_change */
 
 /*
@@ -3006,11 +3012,6 @@ rl_on_new_line (void)
   if (visible_line)
     visible_line[0] = '\0';
 
-/* begin_clink_change */
-  /* The right side prompt is only shown on the first line. */
-  _rl_rprompt_shown_len = 0;
-/* end_clink_change */
-
   _rl_last_c_pos = _rl_last_v_pos = 0;
   _rl_vis_botlin = last_lmargin = 0;
   if (vis_lbreaks)
@@ -3681,6 +3682,7 @@ _rl_clear_screen (int clrscr)
 #endif /* __DJGPP__ */
 }
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 /* Insert COUNT characters from STRING to the output stream at column COL. */
 static void
 insert_some_chars (char *string, int count, int col)
@@ -3763,6 +3765,7 @@ delete_chars (int count)
     }
 #endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
 }
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 
 void
 _rl_update_final (void)

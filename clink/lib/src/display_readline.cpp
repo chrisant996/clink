@@ -1397,6 +1397,7 @@ public:
     void                on_new_line();
     void                end_prompt_lf();
     void                clear_to_end_of_screen_on_next_display();
+    void                reset_rprompt_shown();
     void                display();
     void                set_history_expansions(history_expansion* list=nullptr);
     void                measure(measure_columns& mc);
@@ -1421,6 +1422,7 @@ private:
     display_lines       m_curr;
     history_expansion*  m_histexpand = nullptr;
     uint32              m_top = 0;      // Vertical scrolling; index to top displayed line.
+    str_moveable        m_last_rprompt;
     str_moveable        m_last_prompt_line;
     int32               m_last_prompt_line_width = -1;
     int32               m_last_prompt_line_botlin = -1;
@@ -1557,6 +1559,7 @@ void display_manager::end_prompt_lf()
 
     // Print CRLF to end the prompt.
     rl_crlf();
+    reset_rprompt_shown();
     _rl_last_v_pos = 0;
     _rl_last_c_pos = 0;
     _rl_vis_botlin = 0;
@@ -2078,8 +2081,9 @@ void display_manager::display()
         s_defer_erase_extra_lines = 0;
     }
 
-    // If the right side prompt is not shown and should be, display it.
-    if (!_rl_rprompt_shown_len && can_show_rprompt)
+    // Display the right side prompt if it's not shown, or if it's shown but
+    // has changed.
+    if (can_show_rprompt && (!_rl_rprompt_shown_len || !m_last_rprompt.equals(rl_rprompt)))
         print_rprompt(rl_rprompt);
 
     // Move cursor to the rl_point position.
@@ -2540,7 +2544,7 @@ void display_manager::print(const char* chars, uint32 len)
 //------------------------------------------------------------------------------
 void display_manager::print_rprompt(const char* s)
 {
-    const int32 col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
+    const int32 col = _rl_screenwidth - (s ? max(rl_visible_rprompt_length, _rl_rprompt_shown_len) : _rl_rprompt_shown_len);
     if (col <= 0 || col >= _rl_screenwidth)
         return;
 
@@ -2549,6 +2553,12 @@ void display_manager::print_rprompt(const char* s)
 
     if (s)
     {
+        if (_rl_rprompt_shown_len > rl_visible_rprompt_length)
+        {
+            str<32> tmp;
+            make_spaces(_rl_rprompt_shown_len - rl_visible_rprompt_length, tmp);
+            tputs(tmp.c_str());
+        }
         tputs(s);
         _rl_last_c_pos = _rl_screenwidth;
     }
@@ -2557,11 +2567,21 @@ void display_manager::print_rprompt(const char* s)
         _rl_clear_to_eol(_rl_rprompt_shown_len);
     }
 
+    dbg_ignore_scope(snapshot, "display_readline");
+
     _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
+    m_last_rprompt = s;
 
     // Win10 and higher don't need to deal with pending wrap from rprompt.
     if (m_autowrap_bug)
         detect_pending_wrap();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::reset_rprompt_shown()
+{
+    _rl_rprompt_shown_len = 0;
+    m_last_rprompt.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -2794,6 +2814,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
         tputs(tmp);
     }
     _rl_cr();
+    s_display_manager.reset_rprompt_shown();
     _rl_last_v_pos = 0;
     _rl_last_c_pos = 0;
 
