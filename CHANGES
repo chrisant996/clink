@@ -25,6 +25,7 @@
 - Added a workaround for Unicode limitations in legacy console windows and legacy terminals (improves cursor position accuracy when Unicode surrogate pairs are present).
 - Added several new Lua APIs for color themes and custom prompts:  [clink.getprompts()](#clink.getprompts), [clink.applyprompt()](#clink.applyprompt), [clink.getclinkprompt()](#clink.getclinkprompt), [clink.getthemes()](#clink.getthemes), [clink.readtheme()](#clink.readtheme), [clink.applytheme()](#clink.applytheme), [settings.clear()](#settings.clear), [settings.parsecolor()](#settings.parsecolor), [settings.formatcolor()](#settings.formatcolor), [os.createguid()](#os.createguid).
 - Added [git Lua APIs](#git) for use by custom prompts.
+- Added optional `cookie` argument to [clink.promptcoroutine()](#clink.promptcoroutine) to make it simple for *.clinkprompt files to allow customization that makes use of asynchronous prompt filtering without needing modifications to the main *.clinkprompt file.
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
 - Fixed a case where updating the right side prompt could leave stray characters behind.
 - Fixed a case where the `match.coloring_rules` setting could have no effect.
