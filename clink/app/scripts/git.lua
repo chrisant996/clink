@@ -539,6 +539,8 @@ function git.getstatus(no_untracked, include_submodules)
     local hasheader
     local header = {}
 
+    local _, ismain = coroutine.running()
+
     local tick = os.clock()
     local processed = 0
     for line in file:lines() do
@@ -607,11 +609,13 @@ function git.getstatus(no_untracked, include_submodules)
                 end
             end
         end
-        processed = processed + 1
-        if processed > 10 and os.clock() - tick > 0.015 then
-            coroutine.yield()
-            processed = 0
-            tick = os.clock()
+        if not ismain then
+            processed = processed + 1
+            if processed > 10 and os.clock() - tick > 0.015 then
+                coroutine.yield()
+                processed = 0
+                tick = os.clock()
+            end
         end
     end
     file:close()
