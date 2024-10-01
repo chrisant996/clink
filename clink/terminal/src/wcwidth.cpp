@@ -69,6 +69,7 @@
 
 #include "screen_buffer.h"
 #include "ecma48_iter.h"
+#include "wcwidth.h"
 
 extern bool g_color_emoji;
 
@@ -77,6 +78,26 @@ extern bool g_color_emoji;
 static const int32 s_combining_mark_width = 1;
 
 static bool s_only_ucs2 = false;
+
+void detect_ucs2_limitation(bool force)
+{
+    static bool s_inited_only_ucs2 = false;
+    if (force)
+    {
+        s_only_ucs2 = true;
+        s_inited_only_ucs2 = true;
+    }
+    else if (!s_inited_only_ucs2)
+    {
+#pragma warning(push)
+#pragma warning(disable:4996)
+        OSVERSIONINFO ver = { sizeof(ver) };
+        if (GetVersionEx(&ver))
+            s_only_ucs2 = (ver.dwMajorVersion < 10);
+        s_inited_only_ucs2 = true;
+    }
+#pragma warning(pop)
+}
 
 #if defined(__cplusplus)
 extern "C" {
@@ -633,19 +654,7 @@ void reset_wcwidths()
 {
     int32 use_cjk = true;
 
-    {
-        static bool s_inited_only_ucs2 = false;
-        if (!s_inited_only_ucs2)
-        {
-#pragma warning(push)
-#pragma warning(disable:4996)
-            OSVERSIONINFO ver = { sizeof(ver) };
-            if (GetVersionEx(&ver))
-                s_only_ucs2 = (ver.dwMajorVersion < 10);
-            s_inited_only_ucs2 = true;
-        }
-#pragma warning(pop)
-    }
+    detect_ucs2_limitation();
 
     s_resolve = g_terminal_east_asian_ambiguous.get();
 
