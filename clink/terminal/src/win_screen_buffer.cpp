@@ -5,6 +5,7 @@
 #include "win_screen_buffer.h"
 #include "find_line.h"
 #include "terminal_helpers.h"
+#include "wcwidth.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -294,6 +295,10 @@ void win_screen_buffer::begin()
             {
                 s_found_what = s_conemu_dll;
                 s_native_ansi_handler = ansi_handler::conemu;
+                // ConEmu has problems with surrogate pairs.  It renders them
+                // as one cell but consumes two cells of width, throwing off
+                // vertical alignment.
+                detect_ucs2_limitation(true/*force*/);
                 break;
             }
 
@@ -314,6 +319,9 @@ void win_screen_buffer::begin()
                 s_native_ansi_handler = ansi_handler::wezterm;
                 break;
             }
+
+            // Other terminals encounter limitations with surrogate pairs.
+            detect_ucs2_limitation(true/*force*/);
 
             // Check for Ansi dlls loaded.
             const char* foundwhat = ansicon_dll;

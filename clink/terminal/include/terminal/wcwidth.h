@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 typedef int32 wcwidth_t (char32_t);
 extern "C" wcwidth_t *wcwidth;
+extern void detect_ucs2_limitation(bool force=false);
 extern "C" void reset_wcwidths();
 extern "C" int32 test_ambiguous_width_char(char32_t ucs, str_iter* iter);
 extern "C" void reset_cached_font();
