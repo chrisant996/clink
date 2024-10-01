@@ -44,7 +44,7 @@ local norm = "\x1b[m"                   -- Normal.
 --- <li>A table of other clinkprompt modules that the current module depends
 --- on.  The keys are the lowercase names (not full paths) of modules, and
 --- the values are all <code>true</code>.
---- <ul>
+--- </ul>
 ---
 --- If no clinkprompt module is currently active, then the return values are
 --- three empty strings and an empty table.
