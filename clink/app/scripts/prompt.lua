@@ -301,6 +301,7 @@ function clink.prompt.register_filter(filter, priority)
         local stop = filter(the_prompt)
         return clink.prompt.value, not stop
     end
+    o._deprecated_filter = filter -- So collect_filter_src can get the right source reference.
 end
 
 --------------------------------------------------------------------------------
@@ -327,6 +328,9 @@ local function collect_filter_src(t, type)
     local longest = 24
     for _,prompt in ipairs (prompt_filters) do
         local func = prompt[type]
+        if prompt._deprecated_filter and type == "filter" then
+            func = prompt._deprecated_filter
+        end
         if func then
             local info = debug.getinfo(func, 'S')
             if not clink._is_internal_script(info.short_src) then
