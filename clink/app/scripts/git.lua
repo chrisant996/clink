@@ -677,7 +677,7 @@ end
 --- Returns whether any stashes exist for the repo or worktree associated with
 --- the current working directory.
 function git.hasstash()
-    if git._fake then return git._fake.stashes > 0 end
+    if git._fake then return (git._fake.stashes or 0) > 0 end
 
     local file = io.popen(git.makecommand("rev-parse --verify refs/stash"))
     if not file then return end
@@ -693,7 +693,7 @@ end
 --- Returns the number of stashes that exist for the repo or worktree
 --- associated with the current working directory.
 function git.getstashcount()
-    if git._fake then return git._fake.stashes end
+    if git._fake then return git._fake.stashes or 0 end
 
     local file = io.popen(git.makecommand("rev-list --walk-reflogs --count refs/stash"))
     if not file then return end
