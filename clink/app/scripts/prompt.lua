@@ -478,6 +478,7 @@ end
 --- -name:  clink.promptcoroutine
 --- -ver:   1.2.10
 --- -arg:   func:function
+--- -arg:   [cookie:string]
 --- -ret:   [return value from func]
 --- Creates a coroutine to run the <span class="arg">func</span> function in the
 --- background.  Clink will automatically resume the coroutine repeatedly while
@@ -489,6 +490,17 @@ end
 --- during a given input line session.  Subsequent calls reuse the
 --- already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input
 --- line session.)
+---
+--- <fieldset><legend>Compatibility Note:</legend>
+--- Starting in v1.7.0, the optional <span class="arg">cookie</span> argument
+--- can be included to allow a prompt filter to have multiple different
+--- coroutines during a given input line session.  Subsequent calls for a given
+--- <span class="arg">cookie</span> value reuse the already-created coroutine
+--- associated with that cookie value.  This greatly simplifies the use of
+--- <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a>.  When
+--- <span class="arg">cookie</span> is omitted, then <code>"default"</code> is
+--- assumed as the cookie value.
+--- </fieldset>
 ---
 --- The API returns nil until the <span class="arg">func</span> function has
 --- finished.  After that, the API returns whatever the
@@ -507,18 +519,19 @@ end
 ---
 --- <strong>Note:</strong> each prompt filter can have at most one prompt
 --- coroutine.
-function clink.promptcoroutine(func)
+function clink.promptcoroutine(func, cookie)
     if not prompt_filter_current then
         error("clink.promptcoroutine can only be used in a prompt filter", 2)
     end
 
-    local entry = prompt_filter_coroutines[prompt_filter_current]
+    local key = string.format("%s/%s", prompt_filter_current, (cookie or "default"))
+    local entry = prompt_filter_coroutines[key]
     if entry == nil then
         local info = debug.getinfo(func, 'S')
         local src=info.short_src..":"..info.linedefined
 
         entry = { done=false, refilter=false, result=nil, src=src }
-        prompt_filter_coroutines[prompt_filter_current] = entry
+        prompt_filter_coroutines[key] = entry
 
         -- Wrap the supplied function to track completion and end result.
         coroutine.override_src(func)
