@@ -241,10 +241,11 @@ function clink._show_prompt_demo(module)
         return
     end
     git._fake = {
-        branch = "main",
-        remote = "origin",
-        stashes = 27,
         status = {
+            branch = "main",
+            HEAD = "a1b2c3d",
+            upstream = "origin",
+            stashes = 27,
             dirty = true,
             behind = 19,
             working = {
@@ -254,6 +255,7 @@ function clink._show_prompt_demo(module)
             total = {
                 modify = 3,
             },
+            tracked = 3,
             untracked = 1,
         },
     }
