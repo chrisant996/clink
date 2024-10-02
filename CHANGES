@@ -37,6 +37,7 @@ Clink now supports color theme files and custom prompt files.  These enable pack
 - Fixed `rl.collapsetilde()` which just didn't do its job.
 - Fixed `%clink_dummy_capture_env%` to stop accidentally leaking into the environment variables collection.
 - Fixed an infinite loop when `prompt.async` was false.
+- Fixed <kbd>F9</kbd> to stop jumping one past the actual entered history number.
 - Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
