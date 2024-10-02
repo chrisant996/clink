@@ -262,10 +262,11 @@ function clink._show_prompt_demo(module)
 -- FUTURE: Does this need to send onbeginedit? Could that cause more harm than good?
     clink.print("\x1b[m", NONL)
     if type(m) ~= "table" or not m.demo then
+        local simulated_cursor = "\x1b[0;7m \x1b[m"
         local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
         local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
         left, right = clink._filter_prompt(left, right, "", 1)
-        left = left or ""
+        left = (left or "")..simulated_cursor
         right = right or ""
         local left_width = console.cellcount(left:gsub("^.*\n", ""))
         local right_width = console.cellcount(right)
