@@ -28,6 +28,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 ## Unit Tests
 
 ## Normal Priority
+- Windows Terminal has changed how it renders various emoji; need to update the emoji width tables, but maybe not until the changes reach official releases (they're just in preview at the moment).
 - Remove the RPROMPT stuff from Readline; move it entirely into Clink code.  The only part of Readline that actually needs it is the stuff for clearing to the end of the line, which is mostly omitted now anyway.  Most of it can be moved easily, but one spot will need special consideration (maybe a callback?):  `_rl_erase_entire_line()` inside `_rl_internal_char_cleanup()`.
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 - Event handler enhancements.
