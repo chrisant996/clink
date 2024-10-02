@@ -235,11 +235,6 @@ end
 
 --------------------------------------------------------------------------------
 function clink._show_prompt_demo(module)
-    local m = clink._activate_clinkprompt_module(module)
-    if type(m) == "string" then
-        print(m)
-        return
-    end
     git._fake = {
         status = {
             branch = "main",
@@ -259,9 +254,14 @@ function clink._show_prompt_demo(module)
             untracked = 1,
         },
     }
--- FUTURE: Does this need to send onbeginedit? Could that cause more harm than good?
+
     clink.print("\x1b[m", NONL)
-    if type(m) ~= "table" or not m.demo then
+
+    local m = clink._activate_clinkprompt_module(module)
+
+    if type(m) == "string" then
+        print(m)
+    elseif type(m) ~= "table" or not m.demo then
         local simulated_cursor = "\x1b[0;7m \x1b[m"
         local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
         local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
@@ -279,8 +279,11 @@ function clink._show_prompt_demo(module)
     else
         m.demo()
     end
--- FUTURE: Does this need to send onendedit?
+
+    clink._activate_clinkprompt_module(nil)
+
     clink.print("\x1b[m\x1b[K", NONL)
+
     git._fake = nil
 end
 
