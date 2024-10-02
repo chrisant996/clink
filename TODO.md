@@ -21,6 +21,8 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- [ ] Make sure the clink bundle can include and update clinktheme and clinkprompt files.
+- [ ] Warn to not edit the clinktheme and clinkprompt files; copy them and edit the copy instead (any edits to the original will be lost when updating Clink to a newer version).
 - [ ] Document the clinktheme system.  Explain how to use `%CLINK_SETTINGS%` to have two different Dark and Light settings files in the same Clink profile.
 - [ ] Document the clinkprompt system.
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
