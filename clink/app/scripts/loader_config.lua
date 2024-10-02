@@ -726,6 +726,9 @@ local function show_custom_prompt(args)
     if file then
         clink.print(norm..underline..name..norm)
         clink._show_prompt_demo(file)
+        if name then
+            clink.print()
+        end
     end
     return true
 end
