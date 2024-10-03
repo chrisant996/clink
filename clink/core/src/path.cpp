@@ -536,6 +536,29 @@ bool is_device(const char* _path)
 }
 
 //------------------------------------------------------------------------------
+bool is_unix_hidden(const char* in, bool ignore_trailing_separators)
+{
+#if defined(PLATFORM_WINDOWS)
+    // Skip UNC root, \\?\ prefix, and/or drive letter.  This is important so
+    // that they are not misinterpreted as a file name.
+    in = past_drive(in);
+#endif
+
+    const char* fname = in + strlen(in);
+    // Maybe skip trailing slashes; this is needed when checking completion
+    // matches, where directories include a trailing separator.
+    if (ignore_trailing_separators)
+        while (fname > in && path::is_separator(fname[-1]))
+            --fname;
+    // Skip non-slashes.
+    while (fname > in && !path::is_separator(fname[-1]))
+        --fname;
+
+    // Unix version of a hidden file.  Could be different on other systems.
+    return (*fname == '.');
+}
+
+//------------------------------------------------------------------------------
 bool join(const char* lhs, const char* rhs, str_base& out)
 {
     if (out.c_str() != lhs)

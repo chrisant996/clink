@@ -80,6 +80,7 @@ static uint32 prefix_selector(
     INDEXER& indexer,
     int32 count)
 {
+    const bool include_hidden = (_rl_match_hidden_files || *path::get_name(needle) == '.');
     int32 select_count = 0;
     for (int32 i = 0; i < count; ++i)
     {
@@ -87,7 +88,7 @@ static uint32 prefix_selector(
         const char* const name = info.match;
         const int32 j = str_compare(needle, name);
         const bool select = ((j < 0 || !needle[j]) &&
-                             (_rl_match_hidden_files || !HIDDEN_FILE(name)) &&
+                             (include_hidden || !path::is_unix_hidden(name, true)) &&
                              include_match_type(info.type));
         info.select = select;
         if (select)
@@ -105,6 +106,7 @@ static uint32 pattern_selector(
     bool dot_prefix)
 {
     const int32 needle_len = strlen(needle);
+    const bool include_hidden = (_rl_match_hidden_files || *path::get_name(needle) == '.');
     int32 select_count = 0;
     for (int32 i = 0; i < count; ++i)
     {
@@ -115,7 +117,7 @@ static uint32 pattern_selector(
             match_len--;
 
         const path::star_matches_everything flag = (is_pathish(info.type) ? path::at_end : path::yes);
-        const bool select = ((_rl_match_hidden_files || !HIDDEN_FILE(match)) &&
+        const bool select = ((include_hidden || !path::is_unix_hidden(match, true)) &&
                              include_match_type(info.type) &&
                              path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), dot_prefix, flag));
         info.select = select;
