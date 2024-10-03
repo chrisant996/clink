@@ -624,23 +624,28 @@ Be careful, since some escape code sequences might behave strangely.
 
 ### Color Themes
 
+Clink has many [color settings](#color_arg) which can be set with <code>clink set color.<span class="arg">setting_name</span> <span class="arg"><a href="#friendly-color-names">color_value</a></span></code>.
+
+Predefined color setting values can be grouped into a .clinktheme file to make it easy to save, apply, and share different color themes for Clink.
+
 **TODO: document .clinktheme files.**
-- Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
-- Emphasize the difference between terminal color themes versus Clink color themes.
-- List the .clinktheme files included with Clink itself.
-- Create a repo with color themes, and encourage people to add pull requests to share their own color themes in it.
-- Describe how to save a color theme, and how to manually edit a color theme.
-- Describe the `clink config theme` commands.
+- [ ] Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
+- [x] Emphasize the difference between terminal color themes versus Clink color themes.
+- [ ] List the .clinktheme files included with Clink itself.
+- [ ] Describe how to save a color theme, and how to manually edit a color theme.
+- [ ] Describe the `clink config theme` commands.
 
 See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
+
+> **Note:** The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
 
 ## Custom Prompts
 
 **TODO: document .clinkprompt files.**
-- Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
-- List the .clinkprompt files included with Clink itself.
-- Create a repo with custom prompts, and encourage people to add pull requests to share their own custom prompts in it.
-- Describe the `clink config prompt` commands.
+- [ ] Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
+- [ ] List the .clinkprompt files included with Clink itself.
+- [ ] Create a repo with custom prompts, and encourage people to add pull requests to share their own custom prompts in it.
+- [ ] Describe the `clink config prompt` commands.
 
 See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts and optionally packaging them as "*.clinkprompt" files.
 
@@ -656,6 +661,8 @@ Settings and history are persisted to disk from session to session. By default C
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
+
+Also see [Location of Lua Scripts](#lua-scripts-location) for details on where Clink looks for Lua scripts, and [Themes Directories](#themes-directories) for details on where Clink looks for color theme files (\*.clinktheme) and custom prompt files (\*.clinkprompt).
 
 > **Notes:**
 > - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOME%` or `%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
@@ -2804,8 +2811,8 @@ Here are a couple of links with more information about ANSI escape codes:
 ### Sharing Custom Prompts
 
 **TODO: how to package a prompt in a .clinkprompt file.**
-- Most existing prompt script .lua files can simply be renamed to .clinkprompt and moved to a `themes\` directory.
-- Exports table: `onactivate`, `ondeactivate`, `demo`, `dependson`.
+- [ ] Most existing prompt script .lua files can simply be renamed to .clinkprompt and moved to a `themes\` directory.
+- [ ] Exports table: `onactivate`, `ondeactivate`, `demo`, `dependson`.
 
 ### More Advanced Stuff
 
@@ -3603,7 +3610,8 @@ The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script
 
 It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfiltering) to make prompts show up instantly, even in large git repos, for example.
 
-**TODO: mention that it includes various predefined .clinkprompt files.**
+**TODO:**
+- [ ] Mention that it includes various predefined .clinkprompt files.**
 
 ### clink-fzf
 
@@ -3621,18 +3629,23 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 - The `luaexec.lua` script which has various features handy for Clink Lua script authors.
 - And more.
 
+### clink-themes
+
+The [clink-themes](https://github.com/chrisant996/clink-themes) repository contains some [color themes](#color-themes) and [custom prompts](#custom-prompts) which can be used with Clink.  If you have one you want to share, this can be a good place to share it.
+
+**TODO:**
+- [x] Create a repo with color themes and custom prompts, and encourage people to add pull requests to share their own creations there.
+- [ ] Add instructions for how to install them.
+- [ ] Add instructions for how to add pull requests.
+
 ### oh-my-posh
 
 The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
 
-**TODO: document how to use `clink config prompt use oh-my-posh` and how to use `clink set ohmyposh.exepath` and `clink set ohmyposh.theme` to configure it.**
-
-Integrating oh-my-posh with Clink is easy: just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `oh-my-posh.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you're good to go.
-
-```lua
--- oh-my-posh.lua
-load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --init --shell cmd'):read("*a"))()
-```
+**TODO:**
+- [ ] Document how to use `clink config prompt use oh-my-posh`.
+- [ ] Document how to use `clink set ohmyposh.exepath`.
+- [ ] Document how to use `clink set ohmyposh.theme` to configure it.
 
 ### starship
 
