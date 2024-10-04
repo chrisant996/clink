@@ -3635,17 +3635,19 @@ The [clink-themes](https://github.com/chrisant996/clink-themes) repository conta
 
 **TODO:**
 - [x] Create a repo with color themes and custom prompts, and encourage people to add pull requests to share their own creations there.
-- [ ] Add instructions for how to install them.
-- [ ] Add instructions for how to add pull requests.
+- [ ] Add instructions in the repo's README.md for how to install them.
+- [ ] Add instructions in the repo's README.md for how to add pull requests.
 
 ### oh-my-posh
 
-The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
+The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for installation instructions, sample themes, and more information.
 
-**TODO:**
-- [ ] Document how to use `clink config prompt use oh-my-posh`.
-- [ ] Document how to use `clink set ohmyposh.exepath`.
-- [ ] Document how to use `clink set ohmyposh.theme` to configure it.
+But in Clink v1.7.0 and newer, don't create a Lua script for oh-my-posh.
+
+Instead do the following:
+1. Run `clink config prompt use oh-my-posh` to activate oh-my-posh as the custom prompt.
+2. If the oh-my-posh.exe file is not in the system PATH, then run <code>clink set ohmyposh.exepath "<span class="arg">full_path_to_oh-my-posh.exe</span>"</code> to tell Clink where to find the oh-my-posh program file.
+3. To configure oh-my-posh to use a particular prompt theme, run <code>clink set ohmyposh.theme "<span class="arg">full_path_to_theme_file</span>.omp.json"</code> to select the theme file.
 
 ### starship
 
