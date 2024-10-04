@@ -469,6 +469,7 @@ end
 --- -show:  &nbsp;   ahead = ...                 -- number of commits ahead, otherwise nil
 --- -show:  &nbsp;   behind = ...                -- number of commits behind, otherwise nil
 --- -show:  &nbsp;   unpublished = ...           -- true if unpublished, otherwise nil
+--- -show:  &nbsp;   submodule = ...             -- true if in a submodule, otherwise nil
 --- -show:  &nbsp;   onlystaged = ...            -- number of changes only in staged files not in working files, otherwise nil
 --- -show:  &nbsp;   tracked = ...               -- number of changes in tracked working files, otherwise nil
 --- -show:  &nbsp;   untracked = ...             -- number of untracked files or directories, otherwise nil
@@ -527,6 +528,9 @@ function git.getstatus(no_untracked, include_submodules)
     if include_submodules then
         flags = flags .. "--ignore-submodules=none "
     end
+
+    local git_dir, wks_dir = git.getgitdir()
+    local submodule = git_dir and (git_dir:lower():find(path.join(wks_dir:lower(), "modules\\"), 1, true) == 1) and true or nil
 
     local file = io.popen(git.makecommand("status "..flags.." --branch --porcelain=v2"))
     if not file then return end
@@ -658,6 +662,7 @@ function git.getstatus(no_untracked, include_submodules)
     status.behind = nilwhenzero(header.ab and header.ab:match("%-(%d+)"))
     status.detached = (header.head == "(detached)") and true or nil
     status.branch = status.detached and oid or header.head or nil
+    status.submodule = submodule
     status.HEAD = header.oid
     status.upstream = header.upstream
     status.working = working
