@@ -21,6 +21,7 @@
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
 #include <lib/intercept.h>
 #include <lib/clink_ctrlevent.h>
 #include <lib/clink_rl_signal.h>
@@ -885,6 +886,8 @@ skip_errorlevel:
     // Delete Lua if the script path has changed, to reinitialize Lua.
     if (m_lua && m_lua->is_script_path_changed())
     {
+force_reload_lua:
+        clear_force_reload_scripts();
         delete m_prompt_filter;
         delete m_suggester;
         delete m_lua;
@@ -968,6 +971,12 @@ skip_errorlevel:
         lua.activate_clinkprompt_module(customprompt.c_str());
 
         lua.send_event("onbeginedit");
+
+        if (is_force_reload_scripts())
+        {
+            init_scripts = true;
+            goto force_reload_lua;
+        }
     }
 
     // Send onprovideline event.
