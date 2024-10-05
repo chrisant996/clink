@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -2724,7 +2724,7 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
     }
 
     // Larger scope than the others to affect rl_forced_update_display().
-    rollback<bool> dmncr(g_display_manager_no_comment_row, transient);
+    rollback<bool> dmncr(g_display_manager_no_comment_row, transient || g_display_manager_no_comment_row);
 
     // Update the prompt.
     if (transient)
