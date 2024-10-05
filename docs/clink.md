@@ -499,7 +499,12 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_interact"></a>`color.interact` | `bold` | The color for prompts such as a pager's `--More?--` prompt.
 <a name="color_message"></a>`color.message` | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 <a name="color_popup"></a>`color.popup` | | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
+<a name="color_popup_border"></a>`color.popup_border` | | When set, this is used as the color popup list borders.  If no color is set, then the color from `color.popup` is used.
 <a name="color_popup_desc"></a>`color.popup_desc` | | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
+<a name="color_popup_footer"></a>`color.popup_footer` | | When set, this is used as the color for popup list footer message text.  If no color is set, then the color from `color.popup_border` is used.
+<a name="color_popup_header"></a>`color.popup_header` | | When set, this is used as the color for popup list title text.  If no color is set, then the color from `color.popup_border` is used.
+<a name="color_popup_select"></a>`color.popup_select` | | When set, this is used as the color for the selected popup list item.  If no color is set, a color is chosen by swapping the foreground and background colors from `color.popup`.
+<a name="color_popup_selectdesc"></a>`color.popup_selectdesc` | | When set, this is used as the color for the selected popup list item's description text.  If no color is set, a color is chosen by swapping the foreground and background colors from `color.popup`.
 <a name="color_prompt"></a>`color.prompt` | | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | [*](#alternatedefault) | Used when displaying file completions with the "readonly" attribute.
 <a name="color_selected_completion"></a>`color.selected_completion` | [*](#alternatedefault) | The color for the selected completion with the [`clink-select-complete`](#rlcmd-clink-select-complete) command.  If no color is set, then bright reverse video is used.
