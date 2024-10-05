@@ -19,6 +19,7 @@ Clink now supports color theme files and custom prompt files.  These enable pack
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
   - Lua scripts can create custom hinters; see [Showing Input Hints](#showinginputhints) for more information.
 - Enhanced the syntax for setting colors; added `italic` and `reverse`, and added `#XXXXXX` and `#XXX` shortcuts for specifying 24-bit color values.
+- Added more popup list colors:  `color.popup_border`, `color.popup_header`, `color.popup_footer`, `color.popup_select`, and `color.popup_selectdesc`.
 - Changed phrasing from "Accept Suggestion" to "Insert Suggestion" in the documentation and in the auto-suggestions usage hint text.
 - Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` instead of `print()` are (1) background compatibility or (2) using `NONL` to suppress printing a line ending.
 - Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
