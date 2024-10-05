@@ -71,8 +71,51 @@ static setting_str g_mouse_modifier(
     "then Clink will also respond to mouse input when no modifier keys are held.",
     "");
 
-extern setting_color g_color_popup;
-extern setting_color g_color_popup_desc;
+static setting_color g_color_popup(
+    "color.popup",
+    "Color for popup lists and messages",
+    "Used when Clink shows a text mode popup list or message, for example when\n"
+    "using the win-history-list command bound by default to F7.  If not set, the\n"
+    "console's popup colors are used.",
+    "");
+
+static setting_color g_color_popup_desc(
+    "color.popup_desc",
+    "Color for popup description column(s)",
+    "Used when Clink shows multiple columns of text in a text mode popup list.\n"
+    "If not set, a color is chosen to complement the console's popup colors.",
+    "");
+
+static setting_color g_color_popup_border(
+    "color.popup_border",
+    "Color for popup border",
+    "If not set, the color from color.popup is used.",
+    "");
+
+static setting_color g_color_popup_header(
+    "color.popup_header",
+    "Color for popup title text",
+    "If not set, the color from color.popup_border is used.",
+    "");
+
+static setting_color g_color_popup_footer(
+    "color.popup_footer",
+    "Color for popup footer message",
+    "If not set, the color from color.popup_border is used.",
+    "");
+
+static setting_color g_color_popup_select(
+    "color.popup_select",
+    "Color for selected item in popup list",
+    "If not set, a color is chosen by swapping the foreground and background\n"
+    "colors from color.popup.",
+    "");
+
+static setting_color g_color_popup_selectdesc(
+    "color.popup_selectdesc",
+    "Color for selected item in popup list",
+    "If not set, the color from color.popup_select is used.",
+    "");
 
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
@@ -314,6 +357,111 @@ const char* get_popup_desc_colors()
         dim = 90;
     s_popup_desc.format("0;%u;%u", dim, c_colors[(attr & 0xf0) >> 4] + 10);
     return s_popup_desc.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_border_colors(const char* preferred)
+{
+    static str<32> s_popup_border;
+
+    if (preferred && *preferred)
+    {
+        s_popup_border = preferred;
+    }
+    else
+    {
+        str<32> tmp;
+        g_color_popup_border.get(tmp);
+        if (!tmp.empty())
+            s_popup_border.format("0;%s", tmp.c_str());
+        else
+            s_popup_border = get_popup_colors();
+    }
+    return s_popup_border.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_header_colors(const char* preferred)
+{
+    static str<32> s_popup_header;
+
+    if (preferred && *preferred)
+    {
+        s_popup_header = preferred;
+    }
+    else
+    {
+        str<32> tmp;
+        g_color_popup_header.get(tmp);
+        if (!tmp.empty())
+            s_popup_header.format("0;%s", tmp.c_str());
+        else
+            s_popup_header = get_popup_border_colors();
+    }
+    return s_popup_header.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_footer_colors(const char* preferred)
+{
+    static str<32> s_popup_footer;
+
+    if (preferred && *preferred)
+    {
+        s_popup_footer = preferred;
+    }
+    else
+    {
+        str<32> tmp;
+        g_color_popup_footer.get(tmp);
+        if (!tmp.empty())
+            s_popup_footer.format("0;%s", tmp.c_str());
+        else
+            s_popup_footer = get_popup_border_colors();
+    }
+    return s_popup_footer.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_select_colors(const char* preferred)
+{
+    static str<32> s_popup_select;
+
+    if (preferred && *preferred)
+    {
+        s_popup_select.format("0;%s;7", preferred);
+    }
+    else
+    {
+        str<32> tmp;
+        g_color_popup_select.get(tmp);
+        if (!tmp.empty())
+            s_popup_select.format("0;%s", tmp.c_str());
+        else
+            s_popup_select.format("0;%s;7", get_popup_colors());
+    }
+    return s_popup_select.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_selectdesc_colors(const char* preferred)
+{
+    static str<32> s_popup_selectdesc;
+
+    if (preferred && *preferred)
+    {
+        s_popup_selectdesc = preferred;
+    }
+    else
+    {
+        str<32> tmp;
+        g_color_popup_selectdesc.get(tmp);
+        if (!tmp.empty())
+            s_popup_selectdesc.format("0;%s", tmp.c_str());
+        else
+            s_popup_selectdesc = get_popup_select_colors();
+    }
+    return s_popup_selectdesc.c_str();
 }
 
 

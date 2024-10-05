@@ -1836,47 +1836,43 @@ void textlist_impl::adjust_horz_offset(int32 delta)
 }
 
 //------------------------------------------------------------------------------
-static void init_color(const str_base* first, const str_base& second, str_base& out)
+static void init_color(const str_base* first, const char* second, str_base& out)
 {
     if (first && first->length())
-        out.format("\x1b[0;%sm", first->c_str());
+        out = first->c_str();
     else
-        out = second.c_str();
+        out = second;
+}
+
+//------------------------------------------------------------------------------
+static void wrap_color(str_base& color)
+{
+    str<32> tmp;
+    tmp = color.c_str();
+    color.format("\x1b[%sm", tmp.c_str());
 }
 
 //------------------------------------------------------------------------------
 void textlist_impl::init_colors(const popup_config* config)
 {
-    str<32> popup;
-    str<32> popupdesc;
+    init_color(config ? &config->colors.items : nullptr, get_popup_colors(), m_color.items);
+    init_color(config ? &config->colors.desc : nullptr, get_popup_desc_colors(), m_color.desc);
+    init_color(config ? &config->colors.border : nullptr, get_popup_border_colors(config && !config->colors.items.empty() ? m_color.items.c_str() : nullptr), m_color.border);
+    init_color(config ? &config->colors.header : nullptr, get_popup_header_colors(config && (!config->colors.items.empty() || !config->colors.border.empty()) ? m_color.border.c_str() : nullptr), m_color.header);
+    init_color(config ? &config->colors.footer : nullptr, get_popup_footer_colors(config && (!config->colors.items.empty() || !config->colors.border.empty()) ? m_color.border.c_str() : nullptr), m_color.footer);
+    init_color(config ? &config->colors.select : nullptr, get_popup_select_colors(config && !config->colors.items.empty() ? m_color.items.c_str() : nullptr), m_color.select);
+    init_color(config ? &config->colors.selectdesc : nullptr, get_popup_selectdesc_colors(config && (!config->colors.items.empty() || !config->colors.select.empty()) ? m_color.select.c_str() : nullptr), m_color.selectdesc);
+    init_color(config ? &config->colors.mark : nullptr, m_color.desc.c_str(), m_color.mark);
 
-    if (config && config->colors.items.length())
-        popup.format("0;%s", config->colors.items.c_str());
-    else
-        popup = get_popup_colors();
-    if (config && config->colors.desc.length())
-        popupdesc.format("0;%s", config->colors.desc.c_str());
-    else
-        popupdesc = get_popup_desc_colors();
-
-    m_color.items.format("\x1b[%sm", popup.c_str());
-    m_color.desc.format("\x1b[%sm", popupdesc.c_str());
-
-    init_color(config ? &config->colors.border : nullptr, m_color.items, m_color.border);
-    init_color(config ? &config->colors.header : nullptr, m_color.border, m_color.header);
-    init_color(config ? &config->colors.footer : nullptr, m_color.border, m_color.footer);
-
-    init_color(config ? &config->colors.mark : nullptr, m_color.desc, m_color.mark);
-
-    if (config && config->colors.select.length())
-        m_color.select.format("\x1b[0;%sm", config->colors.select.c_str());
-    else
-        m_color.select.format("\x1b[0;%s;7m", popup.c_str());
-
-    if (config && config->colors.selectdesc.length())
-        m_color.selectdesc.format("\x1b[0;%sm", config->colors.selectdesc.c_str());
-    else
-        ecma48_processor(m_color.desc.c_str(), &m_color.selectdesc, nullptr, ecma48_processor_flags::colorless);
+    str<32> tmp;
+    wrap_color(m_color.items);
+    wrap_color(m_color.desc);
+    wrap_color(m_color.border);
+    wrap_color(m_color.header);
+    wrap_color(m_color.footer);
+    wrap_color(m_color.select);
+    wrap_color(m_color.selectdesc);
+    wrap_color(m_color.mark);
 
     // Not supported yet; the mark is only used internally.
     m_color.selectmark.clear();

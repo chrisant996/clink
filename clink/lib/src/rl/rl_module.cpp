@@ -251,21 +251,6 @@ static setting_color g_color_modmark(
     "mark-modified-lines is set.",
     "");
 
-setting_color g_color_popup(
-    "color.popup",
-    "Color for popup lists and messages",
-    "Used when Clink shows a text mode popup list or message, for example when\n"
-    "using the win-history-list command bound by default to F7.  If not set, the\n"
-    "console's popup colors are used.",
-    "");
-
-setting_color g_color_popup_desc(
-    "color.popup_desc",
-    "Color for popup description column(s)",
-    "Used when Clink shows multiple columns of text in a text mode popup list.\n"
-    "If not set, a color is chosen to complement the console's popup colors.",
-    "");
-
 setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",

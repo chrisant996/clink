@@ -984,9 +984,18 @@ static int32 popup_list(lua_State* state)
 /// -ret:   table
 /// Returns the default popup colors in a table with the following scheme:
 /// -show:  {
-/// -show:      items   = "...",    -- The SGR parameters for the items color.
-/// -show:      desc    = "...",    -- The SGR parameters for the description color.
+/// -show:  &nbsp;   items      = "...",   -- The SGR parameters for the items color.
+/// -show:  &nbsp;   desc       = "...",   -- The SGR parameters for the description color.
+/// -show:  &nbsp;   -- Clink v1.7.0 adds the following colors to the table:
+/// -show:  &nbsp;   border     = "...",   -- The SGR parameters for the border color.
+/// -show:  &nbsp;   header     = "...",   -- The SGR parameters for the title color.
+/// -show:  &nbsp;   footer     = "...",   -- The SGR parameters for the footer message color.
+/// -show:  &nbsp;   select     = "...",   -- The SGR parameters for the selected item color.
+/// -show:  &nbsp;   selectdesc = "...",   -- The SGR parameters for the selected item description color.
 /// -show:  }
+/// See
+/// <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a>
+/// for more information on ANSI escape codes for colors.
 static int32 get_popup_list_colors(lua_State* state)
 {
     struct table_t {
@@ -994,11 +1003,16 @@ static int32 get_popup_list_colors(lua_State* state)
         const char* value;
     };
 
-    lua_createtable(state, 0, 4);
+    lua_createtable(state, 0, 7);
     {
         struct table_t table[] = {
             { "items", get_popup_colors() },
             { "desc", get_popup_desc_colors() },
+            { "border", get_popup_border_colors() },
+            { "header", get_popup_header_colors() },
+            { "footer", get_popup_footer_colors() },
+            { "select", get_popup_select_colors() },
+            { "selectdesc", get_popup_selectdesc_colors() },
         };
 
         for (uint32 i = 0; i < sizeof_array(table); ++i)
