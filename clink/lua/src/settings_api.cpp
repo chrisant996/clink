@@ -212,6 +212,7 @@ static int32 parse_ini(lua_State* state)
         return 0;
 
     std::vector<settings::setting_name_value> pairs;
+    int32 num_preferred = 0;
 
     if (!settings::parse_ini(file, pairs))
         return 0;
@@ -221,14 +222,21 @@ static int32 parse_ini(lua_State* state)
     for (uint32 i = 0; i < pairs.size(); ++i)
     {
         const auto& el = pairs[i];
+        const bool set = (el.section == settings::section::set);
+        const bool clear = (el.section == settings::section::clear);
+        if (!set && !clear)
+        {
+            ++num_preferred;
+            continue;
+        }
 
-        lua_createtable(state, el.clear ? 1 : 2, 0);
+        lua_createtable(state, clear ? 1 : 2, 0);
 
         lua_pushliteral(state, "name");
         lua_pushlstring(state, el.name.c_str(), el.name.length());
         lua_rawset(state, -3);
 
-        if (!el.clear)
+        if (!clear)
         {
             lua_pushliteral(state, "value");
             lua_pushlstring(state, el.value.c_str(), el.value.length());
@@ -236,6 +244,25 @@ static int32 parse_ini(lua_State* state)
         }
 
         lua_rawseti(state, -2, i + 1);
+    }
+
+    if (num_preferred)
+    {
+        lua_pushliteral(state, "preferred");
+        lua_createtable(state, 0, num_preferred);
+
+        for (uint32 i = 0; i < pairs.size(); ++i)
+        {
+            const auto& el = pairs[i];
+            if (el.section != settings::section::preferred)
+                continue;
+
+            lua_pushlstring(state, el.name.c_str(), el.name.length());
+            lua_pushlstring(state, el.value.c_str(), el.value.length());
+            lua_rawset(state, -3);
+        }
+
+        lua_rawset(state, -3);
     }
 
     return 1;
@@ -286,7 +313,7 @@ static int32 overlay(lua_State* state)
         }
         lua_pop(state, 1);
 
-        pairs.emplace_back(name, value, !value/*clear*/);
+        pairs.emplace_back(name, value, value ? settings::section::set : settings::section::clear);
 
         lua_pop(state, 1);
     }

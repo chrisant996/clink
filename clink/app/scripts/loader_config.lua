@@ -73,7 +73,26 @@ local function get_from_ini_or_settings(name, ini)
     return ini and ini[name] or settings.get(name) or ""
 end
 
-local function get_settings_color(name, ini)
+local function sgr(code)
+    return "\x1b["..(code or "").."m"
+end
+
+local function insert_sgr(code, prefix)
+    if prefix then
+        local orig = code
+        code = code:match("^\x1b%[(.*)m$") or orig
+        local hadesc = (orig ~= code)
+        code = code:gsub("^0;", "")
+        code = prefix..code
+        code = code:gsub(";+$", "")
+        if hadesc then
+            code = sgr(code)
+        end
+    end
+    return code
+end
+
+local function get_settings_color(name, ini, zero)
     local color = get_from_ini_or_settings(name, ini)
     if color == "" then
         if name == "color.argmatcher" then
@@ -84,7 +103,7 @@ local function get_settings_color(name, ini)
         elseif name == "color.popup_desc" then
             local t = clink.getpopuplistcolors()
             color = t.desc
-        elseif name == "color.selected" then
+        elseif name == "color.selected_completion" then
             color = "0;1;7"
         elseif name == "color.selection" then
             color = get_from_ini_or_settings("color.input", ini)
@@ -96,67 +115,90 @@ local function get_settings_color(name, ini)
             color = "0;90"
         end
     end
-    color = color or ""
+    color = insert_sgr(color, zero)
     if color:byte(1) ~= 27 then
-        color = "\x1b["..color.."m"
+        color = sgr(color)
     end
     return color
 end
 
-local function get_demo_color(c, ini)
+local function get_demo_color(c, ini, zero)
     local color
     local name = demo_colors[c]
     if name then
         if name == "cursor" then
-            color = "0;1"
+            color = zero.."1"
         elseif name == "dir" then
-            color = rl.getmatchcolor("foo", name)
+            color = insert_sgr(rl.getmatchcolor("foo", name), zero)
         elseif name == "hidden" or name == "readonly" then
-            color = rl.getmatchcolor("foo", "file,"..name) or ""
+            color = insert_sgr(rl.getmatchcolor("foo", "file,"..name) or "", zero)
         else
-            color = get_settings_color(name, ini)
+            color = get_settings_color(name, ini, zero)
         end
     end
-    color = color or ""
+    color = color or zero:gsub(";+$", "")
     if color:byte(1) ~= 27 then
-        color = "\x1b["..color.."m"
+        color = sgr(color)
     end
     return color
 end
 
-local function demo_print(s, base_color)
+local function demo_print(s, base_color, zero)
     local t = {}
     local i = 1
     local n = #s
-    table.insert(t, base_color)
+    table.insert(t, insert_sgr(base_color, zero))
     while i <= n do
         local c = s:sub(i, i)
         if c == "{" then
             i = i + 1
             c = s:sub(i, i)
-            table.insert(t, get_demo_color(c))
+            table.insert(t, get_demo_color(c, nil, zero))
         elseif c == "}" then
-            table.insert(t, base_color)
+            table.insert(t, insert_sgr(base_color, zero))
         else
             table.insert(t, c)
         end
         i = i + 1
     end
-    table.insert(t, norm)
+    table.insert(t, "\x1b[K")
+    table.insert(t, insert_sgr(norm, zero))
     clink.print(table.concat(t))
 end
 
-local function show_demo(title)
+local function show_demo(title, preferred, use_preferred)
+    local zero = "0;"
+    if preferred and use_preferred then
+        if preferred.background then
+            zero = zero..(settings.parsecolor("on "..preferred.background):gsub("^0;", ""))..";"
+        end
+        if preferred.foreground then
+            zero = zero..(settings.parsecolor(preferred.foreground):gsub("^0;", ""))..";"
+        end
+    end
+
     if title then
-        clink.print(norm..underline..title..norm)
+        local pref = ""
+        if preferred and preferred.background then
+            if use_preferred then
+                pref = "  (shown using the preferred background color)"
+            else
+                pref = "  (preferred background: "..sgr(settings.parsecolor("on "..preferred.background)).."[      ]"..norm..")"
+            end
+        end
+        clink.print(norm..underline..title..norm..pref)
+    end
+
+    if not use_preferred then
+        preferred = nil
     end
 
     local base_color = norm
     for _,s in ipairs(demo_strings) do
         if s:sub(1, 1) == "!" then
-            base_color = get_demo_color(s:sub(2, 2))
+            base_color = get_demo_color(s:sub(2, 2), nil, zero)
         else
-            demo_print(s, base_color)
+            demo_print(s, base_color, zero)
         end
     end
 end
@@ -415,10 +457,13 @@ end
 local function show_color_theme(args)
     local name
     local onlynamed
+    local preferred
     for i = 1, #args do
         local arg = args[i]
         if arg == "-n" or arg == "--only-named" then
             onlynamed = true
+        elseif arg == "-p" or arg == "--preferred" then
+            preferred = true
         elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme show [<name>]")
             print()
@@ -427,6 +472,7 @@ local function show_color_theme(args)
             print()
             print("Options:")
             print("  -n, --only-named  Show only the named theme (don't compare with current).")
+            print("  -p, --preferred   Simulate the preferred terminal colors.")
             print("  -h, --help        Show this help text.")
             return true
         elseif not name then
@@ -461,7 +507,7 @@ local function show_color_theme(args)
         -- Must temporarily load the theme in order for rl.getmatchcolor() to
         -- represent colors properly.
         settings._overlay(ini, true--[[in_memory_only]])
-        show_demo(path.getbasename(file) or name)
+        show_demo(path.getbasename(file) or name, ini.preferred, preferred)
 
         -- Skip reloading for performance, since this is running in the
         -- standalone exe.

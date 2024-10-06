@@ -739,12 +739,14 @@ local prompt_show = clink.argmatcher()
 :addarg(get_clink_prompts)
 :addflags({
     "-n", "--only-named",
+    "-p", "--preferred",
     "-h", "--help", "-?",
 })
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
     ["-n"] = "Show only the named prompt",
+    ["-p"] = "Simulate the preferred terminal colors",
     ["-h"] = "Show help text",
 })
 

@@ -32,25 +32,20 @@ namespace settings
 const uint32 c_max_len_name = 32;
 const uint32 c_max_len_short_desc = 48;
 
+enum class section { ignore, set, clear, preferred };
+
 struct setting_name_value
 {
-    setting_name_value(const char* name, const char* value)
+    setting_name_value(const char* name, const char* value, section section=section::set)
     : name(name)
     , value(value)
-    , clear(false)
-    {
-    }
-
-    setting_name_value(const char* name, const char* value, bool clear)
-    : name(name)
-    , value(value)
-    , clear(clear)
+    , section(section)
     {
     }
 
     str_moveable    name;
     str_moveable    value;
-    bool            clear;
+    section         section;
 };
 
 setting_iter        first();

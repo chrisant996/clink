@@ -222,8 +222,7 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
     fclose(in);
     data[size] = '\0';
 
-    enum section { ignore, set, clear };
-    section section = ignore;
+    settings::section section = settings::section::ignore;
     bool valid = false;
 
     // Split at new lines.
@@ -247,25 +246,31 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
         {
             if (_strnicmp(line_data, "[set]", 5) == 0)
             {
-                section = set;
+                section = settings::section::set;
                 valid = true;
             }
             else if (_strnicmp(line_data, "[clear]", 7) == 0)
             {
-                section = clear;
+                section = settings::section::clear;
+                valid = true;
+            }
+            else if (_strnicmp(line_data, "[preferred]", 11) == 0)
+            {
+                section = settings::section::preferred;
                 valid = true;
             }
             else
-                section = ignore;
+                section = settings::section::ignore;
             continue;
         }
 
-        if (section == ignore)
+        if (section == settings::section::ignore)
             continue;
 
         // 'key = value'?
         char* value = nullptr;
-        if (section == set)
+        if (section == settings::section::set ||
+            section == settings::section::preferred)
         {
             value = strchr(line_data, '=');
             if (value == nullptr)
@@ -279,14 +284,14 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
             while (*value && isspace(*value))
                 ++value;
 
-            out.emplace_back(key.c_str(), value);
+            out.emplace_back(key.c_str(), value, section);
         }
         else
         {
             key = line_data;
             key.trim();
 
-            out.emplace_back(key.c_str(), nullptr, true/*clear*/);
+            out.emplace_back(key.c_str(), nullptr, section);
         }
     }
 
@@ -685,10 +690,15 @@ void overlay(const std::vector<setting_name_value>& overlay)
 {
     for (const auto& o : overlay)
     {
-        if (o.clear)
+        switch (o.section)
+        {
+        case section::clear:
             clear_setting(o.name.c_str());
-        else
+            break;
+        case section::set:
             set_setting(o.name.c_str(), o.value.c_str());
+            break;
+        }
     }
 }
 
