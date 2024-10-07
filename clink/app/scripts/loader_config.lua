@@ -183,14 +183,11 @@ local function show_demo(title, preferred, use_preferred)
             if use_preferred then
                 pref = "  (shown using the preferred background color)"
             else
-                pref = "  (preferred background: "..sgr(settings.parsecolor("on "..preferred.background)).."[      ]"..norm..")"
+                local c = settings.parsecolor("on "..preferred.background)
+                pref = "  (preferred background: "..sgr(c).."[      ]"..norm..")"
             end
         end
         clink.print(norm..underline..title..norm..pref)
-    end
-
-    if not use_preferred then
-        preferred = nil
     end
 
     local base_color = norm
