@@ -86,6 +86,17 @@ local function scan_upwards(dir, scan_func)
     until not dir
 end
 
+-- Reads the first line from a file.
+local function read_from_file(fileName)
+    local file = io.open(fileName, 'r')
+    if not file then return nil end
+
+    local line = file:read()
+    if not line or line == "" then return nil end
+
+    return line
+end
+
 -- Loads the specified git config file and returns a table with the parsed
 -- content.  The returned table has a <code>:get(section, param)</code>
 -- function to make it convenient to look up config parameters.
@@ -453,6 +464,7 @@ end
 --- -ver:   1.7.0
 --- -arg:   [no_untracked:boolean]
 --- -arg:   [include_submodules:boolean]
+--- -arg:   [include_action:boolean]
 --- -ret:   table | nil
 --- This runs <code>git status</code> to collect status information for the
 --- repo or worktree associated with the current working directory.
@@ -466,6 +478,7 @@ end
 --- -show:  &nbsp;   detached = ...              -- true if HEAD is detached, otherwise nil
 --- -show:  &nbsp;   upstream = ...              -- upstream name, other nil
 --- -show:  &nbsp;   dirty = ...                 -- true if working and/or staged changes, otherwise nil
+--- -show:  &nbsp;   action = ...                -- (see futher below for details)
 --- -show:  &nbsp;   ahead = ...                 -- number of commits ahead, otherwise nil
 --- -show:  &nbsp;   behind = ...                -- number of commits behind, otherwise nil
 --- -show:  &nbsp;   unpublished = ...           -- true if unpublished, otherwise nil
@@ -506,6 +519,27 @@ end
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
 ---
+--- If the <span class="arg">include_action</span> argument is present and
+--- true, then the returned table may also include a <code>action</code> field
+--- with one of the following values:
+--- <ul>
+--- <li><code>"rebase-i"</code>: a rebase -i is in progress.
+--- <li><code>"rebase-m"</code>: a rebase -m is in progress.
+--- <li><code>"rebase"</code>: a rebase is in progress.
+--- <li><code>"am"</code>: a "git am" is in progress.
+--- <li><code>"am/rebase"</code>: a "git am" is in progress.
+--- <li><code>"merge"</code>: a merge is in progress.
+--- <li><code>"cherry-pick"</code>: a cherry-pick is in progress.
+--- <li><code>"revert"</code>: a revert is in progress.
+--- <li><code>"bisect"</code>: a bisect is in progress.
+--- </ul>
+---
+--- With any of the rebasing actions (rebase-i, rebase-m, rebase, am, and
+--- am/rebase), the returned table may also include a <code>step</code> field
+--- with the format
+--- <code>"<span class="arg">step</span>/<span class="arg">total</span>"</code>
+--- indicating the current step and the total steps.
+---
 --- **Compatibility Note:** This requires a version of git that supports
 --- <code>git status --porcelain=v2</code>.  Porcelain v2 format has existed
 --- for a long time, so that isn't expected to be a limitation in practice.
@@ -518,7 +552,7 @@ end
 --- information.
 --- </fieldset>
 -- luacheck: pop
-function git.getstatus(no_untracked, include_submodules)
+function git.getstatus(no_untracked, include_submodules, include_action)
     if git._fake then return git._fake.status end
 
     local flags = ""
@@ -530,7 +564,11 @@ function git.getstatus(no_untracked, include_submodules)
     end
 
     local git_dir, wks_dir = git.getgitdir()
-    local submodule = git_dir and (git_dir:lower():find(path.join(wks_dir:lower(), "modules\\"), 1, true) == 1) and true or nil
+    local submodule
+    if git_dir then
+        submodule = (git_dir:lower():find(path.join(wks_dir:lower(), "modules\\"), 1, true) == 1)
+        submodule = submodule and true or nil
+    end
 
     local file = io.popen(git.makecommand("status "..flags.." --branch --porcelain=v2"))
     if not file then return end
@@ -654,6 +692,41 @@ function git.getstatus(no_untracked, include_submodules)
         total.delete = t_del
     end
 
+    local action, step, num_steps
+    if include_action then
+        if os.isdir(path.join(git_dir, "rebase-merge")) then
+            -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-merge/head-name"))
+            step = read_from_file(path.join(git_dir, "rebase-merge/msgnum"))
+            num_steps = read_from_file(path.join(git_dir, "rebase-merge/end"))
+            if os.isfile(path.join(git_dir, "rebase-merge/interactive") ) then
+                action = "rebase-i"
+            else
+                action = "rebase-m"
+            end
+        else
+            if os.isdir(path.join(git_dir, "rebase-apply")) then
+                step = read_from_file(path.join(git_dir, "rebase-apply/next"))
+                num_steps = read_from_file(path.join(git_dir, "rebase-apply/last"))
+                if os.isfile(path.join(git_dir, "rebase-apply/rebasing")) then
+                    -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-apply/head-name"))
+                    action = "rebase"
+                elseif os.isfile(path.join(git_dir, "rebase-apply/applying")) then
+                    action = "am"
+                else
+                    action = "am/rebase"
+                end
+            elseif os.isfile(path.join(git_dir, "MERGE_HEAD")) then
+                action = "merging"
+            elseif os.isfile(path.join(git_dir, "CHERRY_PICK_HEAD")) then
+                action = "cherry-picking"
+            elseif os.isfile(path.join(git_dir, "REVERT_HEAD")) then
+                action = "reverting"
+            elseif os.isfile(path.join(git_dir, "BISECT_LOG")) then
+                action = "bisecting"
+            end
+        end
+    end
+
     local status = {}
     local oid = header.oid and header.oid:find("^[0-9a-fA-F]") and header.oid:sub(1, 7) or header.oid
     status.dirty = (working or staged) and true or nil
@@ -672,6 +745,12 @@ function git.getstatus(no_untracked, include_submodules)
     status.tracked = (w_add + w_mod + w_del + w_con > 0) and (w_add + w_mod + w_del + w_con) or nil
     status.untracked = (w_unt > 0) and w_unt or nil
     status.conflict = (w_con > 0) and w_con or nil
+    if action then
+        status.action = action
+        if step and num_steps then
+            status.step = string.format("%d/%d", step, num_steps)
+        end
+    end
     return status
 end
 
