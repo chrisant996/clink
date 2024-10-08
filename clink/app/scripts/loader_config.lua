@@ -331,7 +331,7 @@ local function save_color_theme(args, silent)
             print("  current Clink profile directory.")
             print()
             print("Options:")
-            print("  -a, --all         Save ALL color settings.")
+            print("  -a, --all         Save all color settings, even colors added by Lua scripts.")
             print("  -r, --rules       Also save match coloring rules.")
             print("  -y, --yes         Allow overwriting an existing file.")
             print("  -h, --help        Show this help text.")
@@ -390,6 +390,7 @@ end
 --------------------------------------------------------------------------------
 local function use_color_theme(args)
     local file
+    local clearall
     local nosave
     if not args or (type(args) == "table" and not args[1]) then
         args = {""}
@@ -397,7 +398,9 @@ local function use_color_theme(args)
     if type(args) == "table" then
         for i = 1, #args do
             local arg = args[i]
-            if arg == "-n" or arg == "--no-save" then
+            if arg == "-c" or arg == "--clear-all" then
+                clearall = true
+            elseif arg == "-n" or arg == "--no-save" then
                 nosave = true
             elseif not arg or arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
                 print("Usage:  clink config theme use <name>")
@@ -413,7 +416,12 @@ local function use_color_theme(args)
                 print("  The current theme is first saved to a theme named 'Previous Theme' in the")
                 print("  \"themes\" subdirectory under the current Clink profile directory.")
                 print()
+                print("  The built-in color settings are cleared back to their default values before")
+                print("  applying the theme.  The -c flag also clears any color settings added by Lua")
+                print("  scripts.")
+                print()
                 print("Options:")
+                print("  -c, --clear-all   Clear all color settings before using the named theme.")
                 print("  -n, --no-save     Don't save the current theme first.")
                 print("  -h, --help        Show this help text.")
                 return true
@@ -435,14 +443,13 @@ local function use_color_theme(args)
     end
     file = fullname
 
-    if not nosave and not save_color_theme({"--yes", "Previous Theme"}, true--[[silent]]) then
+    if not nosave and not save_color_theme({"--all", "--rules", "--yes", "Previous Theme"}, true--[[silent]]) then
         printerror("Unable to save current theme as 'Previous Theme'.")
         printerror("Add '--no-save' flag to load a theme without saving the current theme.")
         return
     end
 
--- TODO: a flag to reset colors first.
-    local ini, message = clink.applytheme(file) -- luacheck: no unused
+    local ini, message = clink.applytheme(file, clearall) -- luacheck: no unused
     if message then
         printerror(message)
         return
@@ -503,6 +510,7 @@ local function show_color_theme(args)
 
         -- Must temporarily load the theme in order for rl.getmatchcolor() to
         -- represent colors properly.
+        clink._add_clear_colors(ini)
         settings._overlay(ini, true--[[in_memory_only]])
         show_demo(path.getbasename(file) or name, ini.preferred, preferred)
 
@@ -529,11 +537,12 @@ local function print_color_theme(args)
         elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config theme print [<name>]")
             print()
-            print("  This prints a list of the settings in the named theme.  If no them name is")
+            print("  This prints a list of the settings in the named theme.  If no theme name is")
             print("  provided, it prints a list of the current theme settings.")
             print()
             print("Options:")
-            print("  -a, --all         Print ALL colors from current theme.")
+            print("  -a, --all         Print all colors from current theme, even colors added")
+            print("                    by Lua scripts.")
             print("  -n, --no-samples  Don't print color samples.")
             print("  -h, --help        Show this help text.")
             return true
@@ -564,6 +573,7 @@ local function print_color_theme(args)
             end
         end
     end
+    clink._add_clear_colors(ini, all)
 
     local anyset
     local anyclear
@@ -623,6 +633,33 @@ local function print_color_theme(args)
 end
 
 --------------------------------------------------------------------------------
+local function clear_color_theme(args)
+    local all
+    local rules
+    for i = 1, #args do
+        local arg = args[i]
+        if arg == "-a" or arg == "--all" then
+            all = true
+        elseif arg == "-r" or arg == "--rules" then
+            rules = true
+        elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
+            print("Usage:  clink config theme clear")
+            print()
+            print("  This resets color settings to their default values.")
+            print()
+            print("Options:")
+            print("  -a, --all         Clear all color settings, even colors added by Lua scripts.")
+            print("  -r, --rules       Also clear match coloring rules.")
+            print("  -h, --help        Show this help text.")
+            return true
+        end
+    end
+
+    clink._clear_colors(all, rules)
+    return true
+end
+
+--------------------------------------------------------------------------------
 local function list_custom_prompts(args)
     local fullnames
     for i = 1, #args do
@@ -651,7 +688,6 @@ local function list_custom_prompts(args)
                 n = indexed[clink.lower(n)] or n
             end
             print(n)
--- TODO: maybe --samples could load each one and call clink._show_prompt_demo() for each?
         end
     end
     return true
@@ -842,22 +878,8 @@ local function do_theme_command(args)
         return show_color_theme(args)
     elseif command == "print" then
         return print_color_theme(args)
-    elseif command == "reset" then
-        print("RESET COLORS IS NYI")
-        -- TODO: This will require a Lua API -- but I think it already exists?
-        -- TODO: Reset only built-in colors by default.
-        -- TODO: Reset all color.* settings when --all is given.
-        -- TODO: Reset match.coloring_rules when --rules is given.
-        -- TODO: How to reset colors that aren't loaded yet?
-        -- Maybe `settings.clearcolors()`?
-        --  1.  For effiency.  Otherwise each individual clear will
-        --      read + write the entire settings file.
-        --  2.  This is tricky because it requires directly reading the
-        --      clink_settings file and removing "color." entries even
-        --      if a corresponding setting hasn't been added yet.
-        --      REVIEW:  The [clear] section of settings._overlay() should
-        --      already handle that, if it can be told the settings that
-        --      haven't been loaded yet.
+    elseif command == "clear" then
+        return clear_color_theme(args)
     elseif not command or command == "" or command == "--help" or command == "-h" or command == "-?" then
         print("Usage:  clink config theme [command]")
         print()
@@ -867,6 +889,7 @@ local function do_theme_command(args)
         print("  save <name>       Save the current color theme.")
         print("  show [<name>]     Show what the theme looks like.")
         print("  print [<name>]    Print a color theme.")
+        print("  clear             Reset to the default colors.")
         print()
         print("Options:")
         print("  -h, --help        Show this help text.")

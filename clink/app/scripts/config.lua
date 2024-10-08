@@ -215,6 +215,7 @@ end
 --- -name:  clink.applytheme
 --- -ver:   1.7.0
 --- -arg:   theme:string
+--- -arg:   [clearall:boolean]
 --- -ret:   table, message
 --- Finds the <span class="arg">theme</span> and tries to apply its setting
 --- (which are saved in the current profile settings, which affects all Clink
@@ -223,14 +224,50 @@ end
 --- If successful, it returns true.  If unsuccessful, it returns nil followed
 --- by a message describing the failure.
 ---
+--- Applying a color theme clears the built-in color settings to their default
+--- values before loading the theme.  If the optional
+--- <span class="arg">clearall</span> argument is true, then it also clears
+--- any color settings added by Lua scripts.
+---
 --- Refer to <a href="#color-themes">Color Themes</a> for more information.
-function clink.applytheme(file)
+function clink.applytheme(file, clearall)
     local ini, message = clink.readtheme(file)
     if not ini then
         return nil, message
     end
+
+    -- FUTURE: what about match coloring rules?
+    clink._add_clear_colors(ini, clearall, false)
     settings._overlay(ini)
     return ini
+end
+
+--------------------------------------------------------------------------------
+function clink._add_clear_colors(ini, all, rules)
+    local has = {}
+    for _,t in ipairs(ini) do
+        if t.name then
+            has[t.name] = true
+        end
+    end
+    for _,e in ipairs(settings.list()) do
+        if not has[e.match] then
+            if e.match:find("^color%.") then
+                if all or not e.source then
+                    table.insert(ini, {name=e.match})
+                end
+            elseif rules and e.match == "match.coloring_rules" then
+                table.insert(ini, {name=e.match})
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink._clear_colors(all, rules)
+    local ini = {}
+    clink._add_clear_colors(ini, all, rules)
+    settings._overlay(ini)
 end
 
 --------------------------------------------------------------------------------

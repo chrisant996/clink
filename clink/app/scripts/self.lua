@@ -796,7 +796,7 @@ local theme_save = clink.argmatcher()
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
-    ["-a"] = "Save ALL color settings",
+    ["-a"] = "Save all color settings, even colors added by Lua scripts",
     ["-r"] = "Also save match coloring rules",
     ["-y"] = "Allow overwriting an existing file",
     ["-h"] = "Show help text",
@@ -827,8 +827,22 @@ local theme_print = clink.argmatcher()
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
-    ["-a"] = "Print ALL colors from current theme",
+    ["-a"] = "Print all colors from current theme, even colors added by Lua scripts",
     ["-n"] = "Don't print color samples",
+    ["-h"] = "Show help text",
+})
+
+local theme_clear = clink.argmatcher()
+:addflags({
+    "-a", "--all",
+    "-r", "--rules",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Clear all colors, even colors added by Lua scripts",
+    ["-r"] = "Also clear match coloring rules",
     ["-h"] = "Show help text",
 })
 
@@ -859,6 +873,7 @@ local theme_commands = clink.argmatcher()
     "save"..theme_save,
     "show"..theme_show,
     "print"..theme_print,
+    "clear"..theme_clear,
 })
 :addflags({
     "-h", "--help", "-?",
@@ -871,6 +886,7 @@ local theme_commands = clink.argmatcher()
     ["save"] = {" theme", "Save the current color theme"},
     ["show"] = {" [theme]", "Show what the theme looks like"},
     ["print"] = {" [theme]", "Print a color theme"},
+    ["clear"] = "Reset to the default colors",
     ["-h"] = "Show help text",
 })
 
