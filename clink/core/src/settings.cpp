@@ -33,6 +33,7 @@ static setting_map* g_setting_map = nullptr;
 static loaded_settings_map* g_loaded_settings = nullptr;
 static loaded_settings_map* g_custom_defaults = nullptr;
 static str_moveable* g_last_file = nullptr;
+static str_moveable* g_last_default_file = nullptr;
 
 bool g_force_break_on_error = false;
 
@@ -528,8 +529,15 @@ bool load(const char* file, const char* default_file)
     {
         if (!g_last_file)
             g_last_file = new str_moveable;
-        if (file != g_last_file->c_str())
+        if (!g_last_file->equals(file))
             *g_last_file = file;
+    }
+    if (default_file)
+    {
+        if (!g_last_default_file)
+            g_last_default_file = new str_moveable;
+        if (!g_last_default_file->equals(default_file))
+            *g_last_default_file = default_file;
     }
 
     load_custom_defaults(default_file);
@@ -757,6 +765,7 @@ bool sandboxed_set_setting(const char* name, const char* value)
     if (!g_last_file)
         return false;
     const char* file = g_last_file->c_str();
+    const char* default_file = g_last_default_file ? g_last_default_file->c_str() : nullptr;
 
     // Swap real settings data structures with new temporary versions.
     loaded_settings_map tmp_loaded_map;
@@ -764,7 +773,7 @@ bool sandboxed_set_setting(const char* name, const char* value)
     rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
     // Load settings.
-    return (load(file) &&
+    return (load(file, default_file) &&
             set_setting(name, value) &&
             save(file));
 }
@@ -778,17 +787,28 @@ bool sandboxed_overlay(const std::vector<setting_name_value>& overlay)
     if (!g_last_file)
         return false;
     const char* file = g_last_file->c_str();
+    const char* default_file = g_last_default_file ? g_last_default_file->c_str() : nullptr;
 
     // Swap real settings data structures with new temporary versions.
     loaded_settings_map tmp_loaded_map;
     rollback_settings_values rb_settings;
     rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
-    if (!load(file))
+    if (!load(file, default_file))
         return false;
 
     for (const auto& o : overlay)
-        set_setting(o.name.c_str(), o.value.c_str());
+    {
+        switch (o.section)
+        {
+        case section::set:
+            set_setting(o.name.c_str(), o.value.c_str());
+            break;
+        case section::clear:
+            clear_setting(o.name.c_str());
+            break;
+        }
+    }
 
     if (!save(file))
         return false;
