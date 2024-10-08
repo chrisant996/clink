@@ -1,0 +1,41 @@
+[preferred]
+background=#ffffff
+foreground=#4d4d4c
+
+[set]
+color.arg=#4271ae
+color.arginfo=#f5871f
+color.argmatcher=#9ec400
+color.cmd=#8959a8
+color.cmdredir=#f5871f
+color.cmdsep=#f5871f
+color.comment_row=#4271ae on #efefef
+color.common_match_prefix=#b777e0
+color.description=#718c00
+color.doskey=#3e999f
+color.envvars=#54ced6 on #efefef
+color.escapetilde=#54ced6 on #efefef
+color.executable=#4271ae
+color.filtered=#000000
+color.flag=#eab700
+# color.hidden=
+color.histexpand=#b777e0 on #efefef
+color.horizscroll=reverse
+color.input=#4d4d4c
+color.interact=#000000
+color.message=#c82829 on #efefef
+color.modmark=#54ced6
+color.popup=#4d4d4c on #efefef
+color.popup_border=#bebebe on #efefef
+color.popup_desc=#4271ae on #efefef
+color.popup_footer=#8e908c on #efefef
+color.popup_header=#eab700 on #efefef
+color.popup_select=#4d4d4c on #d6d6d6
+color.popup_selectdesc=#4271ae on #d6d6d6
+# color.prompt=
+# color.readonly=
+color.selected_completion=#4d4d4c on #d6d6d6
+color.selection=#4d4d4c on #d6d6d6
+color.suggestion=#c9c9c9
+color.unexpected=#828281
+color.unrecognized=#c82829

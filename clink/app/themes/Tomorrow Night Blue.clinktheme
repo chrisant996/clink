@@ -1,0 +1,41 @@
+[preferred]
+background=#002451
+foreground=#ffffff
+
+[set]
+color.arg=#bbdaff
+color.arginfo=#ffc58f
+color.argmatcher=#9ec400
+color.cmd=#ebbbff
+color.cmdredir=#ffc58f
+color.cmdsep=#ffc58f
+color.comment_row=#bbdaff on #00346e
+color.common_match_prefix=#b777e0
+color.description=#d1f1a9
+color.doskey=#99ffff
+color.envvars=#54ced6 on #00346e
+color.escapetilde=#54ced6 on #00346e
+color.executable=#bbdaff
+color.filtered=#000000
+color.flag=#ffeead
+# color.hidden=
+color.histexpand=#b777e0 on #00346e
+color.horizscroll=reverse
+color.input=#ffffff
+color.interact=#000000
+color.message=#ff9da4 on #00346e
+color.modmark=#54ced6
+color.popup=#ffffff on #00346e
+color.popup_border=#4c7099 on #00346e
+color.popup_desc=#bbdaff on #00346e
+color.popup_footer=#7285b7 on #00346e
+color.popup_header=#ffeead on #00346e
+color.popup_select=#ffffff on #003f8e
+color.popup_selectdesc=#bbdaff on #003f8e
+# color.prompt=
+# color.readonly=
+color.selected_completion=#ffffff on #003f8e
+color.selection=#ffffff on #003f8e
+color.suggestion=#4c6585
+color.unexpected=#b2bdca
+color.unrecognized=#ff9da4
