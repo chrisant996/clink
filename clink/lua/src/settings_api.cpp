@@ -219,6 +219,7 @@ static int32 parse_ini(lua_State* state)
 
     lua_createtable(state, int32(pairs.size()), 0);
 
+    uint32 num = 0;
     for (uint32 i = 0; i < pairs.size(); ++i)
     {
         const auto& el = pairs[i];
@@ -243,7 +244,7 @@ static int32 parse_ini(lua_State* state)
             lua_rawset(state, -3);
         }
 
-        lua_rawseti(state, -2, i + 1);
+        lua_rawseti(state, -2, ++num);
     }
 
     if (num_preferred)
