@@ -166,7 +166,7 @@ local function demo_print(s, base_color, zero)
     clink.print(table.concat(t))
 end
 
-local function show_demo(title, preferred, use_preferred)
+local function make_zero(preferred, use_preferred)
     local zero = "0;"
     if preferred and use_preferred then
         if preferred.background then
@@ -176,6 +176,11 @@ local function show_demo(title, preferred, use_preferred)
             zero = zero..(settings.parsecolor(preferred.foreground):gsub("^0;", ""))..";"
         end
     end
+    return zero
+end
+
+local function show_demo(title, preferred, use_preferred)
+    local zero = make_zero(preferred, use_preferred)
 
     if title then
         local pref = ""
@@ -208,6 +213,8 @@ local function list_color_themes(args)
         local arg = args[i]
         if arg == "-f" or arg == "--full" then
             fullnames = true
+        elseif arg == "-p" or arg == "--preferred" then
+            preferred = true
         elseif arg == "-s" or arg == "--samples" then
             samples = true
         elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
@@ -220,6 +227,7 @@ local function list_color_themes(args)
             print()
             print("Options:")
             print("  -f, --full        Show the full path name for each theme.")
+            print("  -p, --preferred   Simulate the preferred terminal colors for each theme.")
             print("  -s, --samples     Show color samples from each theme.")
             print("  -h, --help        Show this help text.")
             return true
@@ -242,6 +250,7 @@ local function list_color_themes(args)
         {"color.suggestion", "Su"},
     }
 
+    local use_preferred = preferred
     local names, indexed = clink.getthemes()
     if names then
         local maxlen
@@ -270,14 +279,25 @@ local function list_color_themes(args)
                         has[e.name] = true
                     end
 
+                    local zero = make_zero(ini.preferred, use_preferred)
+                    local justzero = zero:gsub(";+$", "")
+
                     table.insert(s, string.rep(" ", maxlen + 4 - console.cellcount(n)))
                     for _,e in ipairs(sample_colors) do
                         if has[e[1]] then
-                            table.insert(s, get_settings_color(e[1], ini))
+                            table.insert(s, get_settings_color(e[1], ini, zero))
                             table.insert(s, e[2])
-                            table.insert(s, norm)
+                            table.insert(s, sgr(justzero))
                         else
-                            table.insert(s, "  ")
+                            table.insert(s, sgr(justzero).."  ")
+                        end
+                    end
+                    table.insert(s, norm)
+
+                    if not use_preferred and ini.preferred and ini.preferred.background then
+                        local pref = make_zero(ini.preferred, true)
+                        if pref and pref ~= "0;" then
+                            table.insert(s, "    (preferred background: "..sgr(pref:gsub(";+$", "")).."[      ]"..norm..")")
                         end
                     end
                 end

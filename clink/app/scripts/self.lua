@@ -761,6 +761,7 @@ local prompt_clear = clink.argmatcher()
 local theme_list = clink.argmatcher()
 :addflags({
     "-f", "--full",
+    "-p", "--preferred",
     "-s", "--samples",
     "-h", "--help", "-?",
 })
@@ -768,6 +769,7 @@ local theme_list = clink.argmatcher()
 :nofiles()
 :adddescriptions({
     ["-f"] = "List full path names of themes",
+    ["-p"] = "Simulate the preferred terminal colors",
     ["-s"] = "Print color samples from themes",
     ["-h"] = "Show help text",
 })
