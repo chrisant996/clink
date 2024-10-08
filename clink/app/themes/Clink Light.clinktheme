@@ -1,3 +1,7 @@
+[preferred]
+background=#ffffff
+foreground=#808080
+
 [set]
 color.arg=black
 color.arginfo=sgr 38;5;172;4
