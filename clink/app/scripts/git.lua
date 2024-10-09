@@ -87,13 +87,17 @@ local function scan_upwards(dir, scan_func)
 end
 
 -- Reads the first line from a file.
-local function read_from_file(fileName)
+local function read_from_file(fileName, as_num)
     local file = io.open(fileName, 'r')
     if not file then return nil end
 
     local line = file:read()
     if not line or line == "" then return nil end
 
+    if as_num then
+        line = tonumber(line)
+        if not line or line == 0 then return nil end
+    end
     return line
 end
 
@@ -464,7 +468,6 @@ end
 --- -ver:   1.7.0
 --- -arg:   [no_untracked:boolean]
 --- -arg:   [include_submodules:boolean]
---- -arg:   [include_action:boolean]
 --- -ret:   table | nil
 --- This runs <code>git status</code> to collect status information for the
 --- repo or worktree associated with the current working directory.
@@ -478,7 +481,6 @@ end
 --- -show:  &nbsp;   detached = ...              -- true if HEAD is detached, otherwise nil
 --- -show:  &nbsp;   upstream = ...              -- upstream name, other nil
 --- -show:  &nbsp;   dirty = ...                 -- true if working and/or staged changes, otherwise nil
---- -show:  &nbsp;   action = ...                -- (see futher below for details)
 --- -show:  &nbsp;   ahead = ...                 -- number of commits ahead, otherwise nil
 --- -show:  &nbsp;   behind = ...                -- number of commits behind, otherwise nil
 --- -show:  &nbsp;   unpublished = ...           -- true if unpublished, otherwise nil
@@ -519,27 +521,6 @@ end
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
 ---
---- If the <span class="arg">include_action</span> argument is present and
---- true, then the returned table may also include a <code>action</code> field
---- with one of the following values:
---- <ul>
---- <li><code>"rebase-i"</code>: a rebase -i is in progress.
---- <li><code>"rebase-m"</code>: a rebase -m is in progress.
---- <li><code>"rebase"</code>: a rebase is in progress.
---- <li><code>"am"</code>: a "git am" is in progress.
---- <li><code>"am/rebase"</code>: a "git am" is in progress.
---- <li><code>"merge"</code>: a merge is in progress.
---- <li><code>"cherry-pick"</code>: a cherry-pick is in progress.
---- <li><code>"revert"</code>: a revert is in progress.
---- <li><code>"bisect"</code>: a bisect is in progress.
---- </ul>
----
---- With any of the rebasing actions (rebase-i, rebase-m, rebase, am, and
---- am/rebase), the returned table may also include a <code>step</code> field
---- with the format
---- <code>"<span class="arg">step</span>/<span class="arg">total</span>"</code>
---- indicating the current step and the total steps.
----
 --- **Compatibility Note:** This requires a version of git that supports
 --- <code>git status --porcelain=v2</code>.  Porcelain v2 format has existed
 --- for a long time, so that isn't expected to be a limitation in practice.
@@ -552,7 +533,7 @@ end
 --- information.
 --- </fieldset>
 -- luacheck: pop
-function git.getstatus(no_untracked, include_submodules, include_action)
+function git.getstatus(no_untracked, include_submodules)
     if git._fake then return git._fake.status end
 
     local flags = ""
@@ -692,41 +673,6 @@ function git.getstatus(no_untracked, include_submodules, include_action)
         total.delete = t_del
     end
 
-    local action, step, num_steps
-    if include_action then
-        if os.isdir(path.join(git_dir, "rebase-merge")) then
-            -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-merge/head-name"))
-            step = read_from_file(path.join(git_dir, "rebase-merge/msgnum"))
-            num_steps = read_from_file(path.join(git_dir, "rebase-merge/end"))
-            if os.isfile(path.join(git_dir, "rebase-merge/interactive") ) then
-                action = "rebase-i"
-            else
-                action = "rebase-m"
-            end
-        else
-            if os.isdir(path.join(git_dir, "rebase-apply")) then
-                step = read_from_file(path.join(git_dir, "rebase-apply/next"))
-                num_steps = read_from_file(path.join(git_dir, "rebase-apply/last"))
-                if os.isfile(path.join(git_dir, "rebase-apply/rebasing")) then
-                    -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-apply/head-name"))
-                    action = "rebase"
-                elseif os.isfile(path.join(git_dir, "rebase-apply/applying")) then
-                    action = "am"
-                else
-                    action = "am/rebase"
-                end
-            elseif os.isfile(path.join(git_dir, "MERGE_HEAD")) then
-                action = "merging"
-            elseif os.isfile(path.join(git_dir, "CHERRY_PICK_HEAD")) then
-                action = "cherry-picking"
-            elseif os.isfile(path.join(git_dir, "REVERT_HEAD")) then
-                action = "reverting"
-            elseif os.isfile(path.join(git_dir, "BISECT_LOG")) then
-                action = "bisecting"
-            end
-        end
-    end
-
     local status = {}
     local oid = header.oid and header.oid:find("^[0-9a-fA-F]") and header.oid:sub(1, 7) or header.oid
     status.dirty = (working or staged) and true or nil
@@ -745,13 +691,96 @@ function git.getstatus(no_untracked, include_submodules, include_action)
     status.tracked = (w_add + w_mod + w_del + w_con > 0) and (w_add + w_mod + w_del + w_con) or nil
     status.untracked = (w_unt > 0) and w_unt or nil
     status.conflict = (w_con > 0) and w_con or nil
-    if action then
-        status.action = action
-        if step and num_steps then
-            status.step = string.format("%d/%d", step, num_steps)
+    return status
+end
+
+--------------------------------------------------------------------------------
+--- -name:  git.getaction
+--- -ver:   1.7.0
+--- -ret:   string, number, number | nil
+--- This checks for git actions in progress, and returns the action name.  For
+--- certain actions it may also return the current step number and the total
+--- number of steps.
+---
+--- If unsuccessful, this returns nil.
+---
+--- The possible returned actions are:
+--- <ul>
+--- <li><code>"rebase-i"</code>: a rebase -i is in progress (includes step and total).
+--- <li><code>"rebase-m"</code>: a rebase -m is in progress (includes step and total).
+--- <li><code>"rebase"</code>: a rebase is in progress (includes step and total).
+--- <li><code>"am"</code>: a "git am" is in progress (includes step and total).
+--- <li><code>"am/rebase"</code>: a "git am" is in progress (includes step and total).
+--- <li><code>"merge"</code>: a merge is in progress.
+--- <li><code>"cherry-pick"</code>: a cherry-pick is in progress.
+--- <li><code>"revert"</code>: a revert is in progress.
+--- <li><code>"bisect"</code>: a bisect is in progress.
+--- </ul>
+---
+--- -show:  local action, step, total = git.getaction()
+--- -show:  if action then
+--- -show:  &nbsp;   print("current git action is '"..action.."'")
+--- -show:  &nbsp;   if step and total then
+--- -show:  &nbsp;       print(string.format("... step %d of %d", step, total))
+--- -show:  &nbsp;   end
+--- -show:  else
+--- -show:  &nbsp;   print("no git action currently in progress")
+--- -show:  end
+function git.getaction()
+    if git._fake then
+        if not git._fake.action then
+            return
+        elseif git._fake.action_step and git._fake.action_total then
+            return git._fake.action, git._fake.action_step, git._fake.action_total
+        else
+            return git._fake.action
         end
     end
-    return status
+
+    local git_dir = git.getgitdir()
+    if os.isdir(path.join(git_dir, "rebase-merge")) then
+        local action
+        -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-merge/head-name"))
+        local step = read_from_file(path.join(git_dir, "rebase-merge/msgnum"), true--[[as_num]])
+        local num_steps = read_from_file(path.join(git_dir, "rebase-merge/end"), true--[[as_num]])
+        if os.isfile(path.join(git_dir, "rebase-merge/interactive") ) then
+            action = "rebase-i"
+        else
+            action = "rebase-m"
+        end
+        if step and num_steps then
+            return action, step, num_steps
+        else
+            return action
+        end
+    end
+
+    if os.isdir(path.join(git_dir, "rebase-apply")) then
+        local action
+        local step = read_from_file(path.join(git_dir, "rebase-apply/next"), true--[[as_num]])
+        local num_steps = read_from_file(path.join(git_dir, "rebase-apply/last"), true--[[as_num]])
+        if os.isfile(path.join(git_dir, "rebase-apply/rebasing")) then
+            -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-apply/head-name"))
+            action = "rebase"
+        elseif os.isfile(path.join(git_dir, "rebase-apply/applying")) then
+            action = "am"
+        else
+            action = "am/rebase"
+        end
+        if step and num_steps then
+            return action, step, num_steps
+        else
+            return action
+        end
+    elseif os.isfile(path.join(git_dir, "MERGE_HEAD")) then
+        return "merging"
+    elseif os.isfile(path.join(git_dir, "CHERRY_PICK_HEAD")) then
+        return "cherry-picking"
+    elseif os.isfile(path.join(git_dir, "REVERT_HEAD")) then
+        return "reverting"
+    elseif os.isfile(path.join(git_dir, "BISECT_LOG")) then
+        return "bisecting"
+    end
 end
 
 --------------------------------------------------------------------------------
