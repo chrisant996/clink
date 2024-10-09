@@ -25,6 +25,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - [ ] Warn to not edit the clinktheme and clinkprompt files; copy them and edit the copy instead (any edits to the original will be lost when updating Clink to a newer version).
 - [ ] Document the clinktheme system.  Explain how to use `%CLINK_SETTINGS%` to have two different Dark and Light settings files in the same Clink profile.
 - [ ] Document the clinkprompt system.
+- [ ] Can `git.getstatus()` be simplified even further, so it automatically handles `clink.promptcoroutine()`?  Maybe a `git.getstatusasync()` function?
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
