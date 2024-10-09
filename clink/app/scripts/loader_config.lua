@@ -208,6 +208,7 @@ end
 --------------------------------------------------------------------------------
 local function list_color_themes(args)
     local fullnames
+    local preferred
     local samples
     for i = 1, #args do
         local arg = args[i]
@@ -297,7 +298,8 @@ local function list_color_themes(args)
                     if not use_preferred and ini.preferred and ini.preferred.background then
                         local pref = make_zero(ini.preferred, true)
                         if pref and pref ~= "0;" then
-                            table.insert(s, "    (preferred background: "..sgr(pref:gsub(";+$", "")).."[      ]"..norm..")")
+                            local color = sgr(pref:gsub(";+$", ""))
+                            table.insert(s, "    (preferred background: "..color.."[      ]"..norm..")")
                         end
                     end
                 end
