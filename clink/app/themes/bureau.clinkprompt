@@ -1,0 +1,252 @@
+-- Based on bureau.zsh-theme at https://github.com/ohmyzsh/ohmyzsh
+-- MIT License
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- In the right side prompt you see git status and (if you use nvm) the
+-- Node.js version.
+--
+-- To activate this prompt, run `clink config prompt use bureau`.
+-- To deactivate it, run `clink config prompt clear`.
+
+-- To customize this prompt, make a copy of this file and edit the copy.
+
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF BUREAU PROMPT
+
+
+local reset=";0"
+local bold=";1"
+local nobold=";22"
+local red=";31"
+local green=";32"
+local yellow=";33"
+local blue=";34"
+local magenta=";35"
+local cyan=";36"
+local white=";37"
+
+local function sgr(...)
+    return "\x1b["..(table.concat({...}):gsub("^;+", "")).."m"
+end
+
+local reset_color=sgr()
+
+local function command(cmd)
+    local f = io.popen("2>nul "..cmd)
+    if f then
+        local s = f:read() or ""
+        f:close()
+        if s ~= "" then
+            return s
+        end
+    end
+end
+
+--- NVM
+
+local NVM_PROMPT_PREFIX=sgr(bold).."󰋙"..sgr(nobold)
+local NVM_PROMPT_SUFFIX=""
+
+local function nvm_prompt_info()
+    local nvm_prompt=command("nvm current")
+    if nvm_prompt then
+        nvm_prompt=nvm_prompt:gsub("^v","")
+        return NVM_PROMPT_PREFIX..nvm_prompt..NVM_PROMPT_SUFFIX
+    end
+    return ""
+end
+
+--- Git [±master ▾●]
+
+local GIT_PROMPT_PREFIX="["..sgr(bold,green).."±"..sgr(reset,bold,white)
+local GIT_PROMPT_SUFFIX=reset_color.."]"
+local GIT_PROMPT_CLEAN=sgr(bold,green).."✓"..reset_color
+local GIT_PROMPT_AHEAD=sgr(cyan).."▴"..reset_color
+--local GIT_PROMPT_AHEAD=sgr(cyan).."▲"..reset_color
+local GIT_PROMPT_BEHIND=sgr(magenta).."▾"..reset_color
+--local GIT_PROMPT_BEHIND=sgr(magenta).."▼"..reset_color
+local GIT_PROMPT_DIVERGED="" -- luacheck: no unused
+local GIT_PROMPT_STAGED=sgr(bold,green).."●"..reset_color
+local GIT_PROMPT_UNSTAGED=sgr(bold,yellow).."●"..reset_color
+local GIT_PROMPT_UNTRACKED=sgr(bold,red).."●"..reset_color
+local GIT_PROMPT_UNMERGED=""
+local GIT_PROMPT_STASHED="("..sgr(bold,blue)..""..reset_color..")"
+
+local function bureau_git_info()
+    return git.getbranch()
+end
+
+local function get_git_status()
+    local result=""
+    local branch
+
+    local info=git.getstatus()
+    if info then
+        local gitfiles=""
+        if info.branch then
+            branch=info.branch
+        end
+        if info.staged then
+            gitfiles=gitfiles..GIT_PROMPT_STAGED
+        end
+        if info.tracked then
+            gitfiles=gitfiles..GIT_PROMPT_UNSTAGED
+        end
+        if info.untracked then
+            gitfiles=gitfiles..GIT_PROMPT_UNTRACKED
+        end
+        if info.conflict then
+            gitfiles=gitfiles..GIT_PROMPT_UNMERGED
+        end
+
+        if gitfiles == "" then
+            result=result..GIT_PROMPT_CLEAN
+        else
+            result=result..gitfiles
+        end
+
+        -- check status of local repository
+        if info.ahead then
+            result=result..GIT_PROMPT_AHEAD
+        end
+        if info.behind then
+            result=result..GIT_PROMPT_BEHIND
+        end
+
+        -- check if there are stashed changes
+        if git.hasstash() then
+            result=result..GIT_PROMPT_STASHED
+        end
+    end
+
+    return { result=result, branch=branch }
+end
+
+local last_gitstatus
+local function bureau_git_status()
+    local gitstatus = clink.promptcoroutine(get_git_status)
+    if gitstatus then
+        last_gitstatus = gitstatus
+    else
+        gitstatus = last_gitstatus
+    end
+    if gitstatus then
+        return gitstatus.result, gitstatus.branch
+    end
+end
+
+local function bureau_git_prompt()
+    -- ignore non git folders and hidden repos (adapted from lib/git.zsh)
+    if not git.getgitdir() then
+        return ""
+    end
+
+    -- check git information
+    local gitinfo=bureau_git_info()
+    if gitinfo == "" then
+        return ""
+    end
+
+    local output=gitinfo
+
+    -- check git status
+    local gitstatus, branch=bureau_git_status()
+    if gitstatus then
+        if branch then
+            output=branch
+        end
+        output=output.." "..gitstatus
+    end
+
+    return GIT_PROMPT_PREFIX..output..GIT_PROMPT_SUFFIX
+end
+
+local function bureau_path()
+    local _PATH=sgr(bold,white)..rl.collapsetilde(os.getcwd())..reset_color
+    return _PATH
+end
+
+local function bureau_username()
+    local _USERNAME
+    if os.isuseradmin() then
+        _USERNAME=sgr(bold,red)
+    else
+        _USERNAME=sgr(bold,white)
+    end
+    _USERNAME=_USERNAME..(os.getenv("USERNAME") or "?")..reset_color.."@"
+    _USERNAME=_USERNAME..(os.getenv("COMPUTERNAME") or "?")
+    return _USERNAME
+end
+
+local function bureau_liberty()
+    local _LIBERTY
+    if os.isuseradmin() then
+        _LIBERTY=sgr(red).."#"
+    else
+        _LIBERTY=sgr(green).."$"
+    end
+    return _LIBERTY..reset_color
+end
+
+local function get_space(left, right)
+    return string.rep(" ", math.max(1, console.getwidth() - console.cellcount(left) - console.cellcount(right)))
+end
+
+local function bureau_precmd()
+    local _1LEFT=bureau_username().." "..bureau_path()
+    local _1RIGHT="["..os.date("%H:%M:%S").."]"
+    local _1SPACES=get_space(_1LEFT, _1RIGHT)
+    local spacing=settings.get("prompt.spacing")
+    local newline=(spacing == "normal") and "\n" or ""
+    return newline.._1LEFT.._1SPACES.._1RIGHT
+end
+
+local function bureau_prompt()
+    return "> "..bureau_liberty().." "
+end
+
+local function bureau_rprompt()
+    return nvm_prompt_info().." "..bureau_git_prompt()
+end
+
+local p = clink.promptfilter(5)
+function p:filter() -- luacheck: no unused
+    return bureau_precmd().."\n"..bureau_prompt()
+end
+function p:rightfilter() -- luacheck: no unused
+    return bureau_rprompt():gsub("^ +",""):gsub(" +$","")
+end
+function p:transientfilter() -- luacheck: no unused
+    return bureau_prompt()
+end
+function p:transientrightfilter() -- luacheck: no unused
+    return
+end
+
+
+-- END PORT OF BUREAU PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO BUREAU
+
+
+local last_cwd
+local last_gitdir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the git dir changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local gitdir = git.getgitdir()
+        if last_gitdir ~= gitdir then
+            last_gitdir = gitdir
+            last_gitstatus = nil
+        end
+    end
+end)
+
+
+-- END EXTENSIONS TO BUREAU
+--------------------------------------------------------------------------------

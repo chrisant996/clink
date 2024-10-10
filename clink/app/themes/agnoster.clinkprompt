@@ -1,0 +1,690 @@
+-- Based on https://github.com/agnoster/agnoster-zsh-theme
+-- which doesn't mention any license.
+-- I consider this port to be distributed under the MIT License.
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- To activate this prompt, run `clink config prompt use agnoster`.
+-- To deactivate it, run `clink config prompt clear`.
+
+-- For this to render correctly you'll need a Powerline-enabled font.  There
+-- are many to choose from at https://nerdfonts.com, or try one of these:
+--  - https://gist.github.com/1595572
+--  - Fira Code
+--  - JetBrains
+--
+-- [Solarized theme](https://github.com/altercation/solarized/)
+
+-- The aim of this custom prompt is to only show you *relevant* information.
+-- It will only show git information when in a git working directory.
+-- However, it goes a step further: everything from the current user and
+-- hostname to whether the last call exited with an error will be displayed
+-- automatically when appropriate.
+
+
+-- Features:
+--
+--  - Can show a segment with last errorlevel, admin mode, and battery level.
+--  - Can show segments for the user and machine.
+--  - Can show a segment for the current virtual env.
+--  - Shows a segment for the current directory.
+--  - Shows a segment with git status information when appropriate.
+--  - Can show a segment with the time and day.
+--  - Colors can be configured.
+--  - Custom prompt segments can be added.
+
+
+-- HOW TO CONFIGURE THIS PROMPT:
+
+
+-- ENVIRONMENT VARIABLES:
+--
+--  Set environment variables via "set VAR_NAME=value" in a batch script file
+--  (file.bat or file.cmd).  For more information about environment variables
+--  and batch scripts, do an internet search.
+--
+--  - DEFAULT_USER:                 Show the user segment when it's not this user.
+--  - SSH_CONNECTION:               Show the user segment this is set.
+--  - VIRTUAL_ENV:                  Show a virtual env segment when this is set.
+--  - AGNOSTER_PROMPT_SEGMENTS:     Segments to show in the prompt.
+--  - AGNOSTER_RPROMPT_SEGMENTS:    Segments to show in the right side prompt.
+--
+-- The default for AGNOSTER_PROMPT_SEGMENTS is:
+--  "prompt_status prompt_context prompt_virtualenv prompt_dir prompt_git"
+--
+-- The default for AGNOSTER_RPROMPT_SEGMENTS is:
+--  ""
+
+
+-- AVAILABLE PROMPT SEGMENTS:
+--
+--  - prompt_context        Display context (username@hostname).
+--  - prompt_dir:           Display current working directory.
+--  - prompt_git:           Display git branch and status.
+--  - prompt_status:        Display errorlevel, admin, and battery.
+--  - prompt_virtualenv:    Display current virtual environment.
+--  - prompt_time:          Display the day of week and the time.
+--  - prompt_transient:     Used automatically when showing a transient prompt.
+--                          Refer to Clink docs for info on transient prompts.
+--
+--  - prompt_flexprompt:    Lets you include prompt modules from flexprompt.
+--                          Use quotes around prompt_flexprompt and the
+--                          flexprompt module name and any arguments for it.
+--
+-- FOR EXAMPLE:
+--
+--  In a batch script, use a line like this:
+--
+--  set AGNOSTER_PROMPT_SEGMENTS=prompt_time "prompt_flexprompt cwd smart" prompt_virtualenv "prompt_flexprompt scm"
+--
+-- CUSTOM PROMPT SEGMENTS
+--
+--  You can add your own custom prompt segments from a Lua script by defining
+--  a new function in the agnoster_clinkprompt table.  For example:
+--
+--      function agnoster_clinkprompt.prompt_pushddepth()
+--          local ag = agnoster_clinkprompt
+--          -- Return BG_color, FG_color, text_string.
+--          return ag.blue, ag.bryellow, string.rep("+", os.getpushddeptch())
+--      end
+--
+--  And in a batch script, include it in your prompt segments variable:
+--
+--      set AGNOSTER_PROMPT_SEGMENTS=prompt_status prompt_pushddepth prompt_dir prompt_git
+
+
+-- LUA GLOBAL VARIABLES:
+--
+--  Set any of these in a .lua file to override the default values.
+--  For more information about Lua scripts, refer to the Clink documentation.
+--
+-- DEFAULT COLORS:
+--
+--  - agnoster_clinkprompt.solarized:       Set to false to disable the Solarized
+--                                          theme colors and use the following
+--                                          color variables instead.
+--
+--  Set the following variables to SGR parameters for ANSI escape code colors.
+--  See https://en.wikipedia.org/wiki/ANSI_escape_code#SGR for details.
+--
+--  - agnoster_clinkprompt.black = '30'
+--  - agnoster_clinkprompt.red = '31'
+--  - agnoster_clinkprompt.green = '32'
+--  - agnoster_clinkprompt.yellow = '33'
+--  - agnoster_clinkprompt.blue = '34'
+--  - agnoster_clinkprompt.magenta = '35'
+--  - agnoster_clinkprompt.cyan = '36'
+--  - agnoster_clinkprompt.white = '37'
+--  - agnoster_clinkprompt.brblack = '90'
+--  - agnoster_clinkprompt.brred = '91'
+--  - agnoster_clinkprompt.brgreen = '92'
+--  - agnoster_clinkprompt.bryellow = '93'
+--  - agnoster_clinkprompt.brblue = '94'
+--  - agnoster_clinkprompt.brmagenta = '95'
+--  - agnoster_clinkprompt.brcyan = '96'
+--  - agnoster_clinkprompt.brwhite = '97'
+--
+-- DEFAULT SYMBOLS:
+--
+--  - agnoster_clinkprompt.SEGMENT_SEPARATOR = ucs2to8(0xe0b0)
+--  - agnoster_clinkprompt.SEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b1)
+--  - agnoster_clinkprompt.RSEGMENT_SEPARATOR = ucs2to8(0xe0b2)
+--  - agnoster_clinkprompt.RSEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b3)
+--  - agnoster_clinkprompt.PLUSMINUS = ucs2to8(0x00b1)
+--  - agnoster_clinkprompt.BRANCH = ucs2to8(0xe0a0)
+--  - agnoster_clinkprompt.DETACHED = ucs2to8(0x27a6)
+--  - agnoster_clinkprompt.CROSS = ucs2to8(0x2718)
+--  - agnoster_clinkprompt.LIGHTNING = ucs2to8(0x26a1)
+--  - agnoster_clinkprompt.GEAR = ucs2to8(0x2699)
+--  - agnoster_clinkprompt.CHARGING = ucs2to8(0x2191)
+--  - agnoster_clinkprompt.SMARTCHARGING = ucs2to8(0x2665)
+--  - agnoster_clinkprompt.BATTERY = '%'
+
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF AGNOSTER PROMPT
+
+
+---- Initialization ------------------------------------------------------------
+-- luacheck: globals agnoster_clinkprompt flexprompt agnoster_flexprompt_settings
+
+agnoster_clinkprompt = agnoster_clinkprompt or {}
+local ag = agnoster_clinkprompt
+-- luacheck: push
+-- luacheck: no max line length
+local function add_shift_and(x, y, s, a)
+    return x + bit32.band(bit32.rshift(y, s), a)
+end
+local function ucs2to8(c)
+    if type(c) ~= 'number' then error(string.format('arg #1 unexpected type %s; expected number', type(c)))
+    elseif c < 0 then error(string.format('arg #1 cannot be negative'))
+    elseif c <= 0x007f then return string.char(c)
+    elseif c <= 0x07ff then return string.char(add_shift_and(0xc0, c, 6, 0x1f), add_shift_and(0x80, c, 0, 0x3f))
+    elseif c <= 0xffff then return string.char(add_shift_and(0xe0, c, 12, 0x0f), add_shift_and(0x80, c, 6, 0x3f), add_shift_and(0x80, c, 0, 0x3f))
+    else error(string.format('arg #1 value 0x%x exceeds 0xffff', c))
+    end
+end
+local function hex2dec(hex, s, e)
+    return tostring(tonumber(hex:sub(s, e), 16))
+end
+local function hexcolor(hex)
+    hex = hex:gsub('^#', '')
+    if #hex ~= 6 then error('hexcolor requires a 6 digit hexadecimal string') end
+    return '38;2;'..hex2dec(hex, 1, 2)..';'..hex2dec(hex, 3, 4)..';'..hex2dec(hex, 5, 6)
+end
+-- luacheck: pop
+
+-- Initialize the defaults.
+local defaults = {}
+-- Default left prompt segments.
+defaults.prompt_segments = {
+    'prompt_status',
+    'prompt_context',
+    'prompt_virtualenv',
+    'prompt_dir',
+    'prompt_git',
+}
+-- Default right prompt segments.
+defaults.rprompt_segments = {
+    --'prompt_time',
+}
+-- Default colors.
+defaults.black = '30'
+defaults.red = '31'
+defaults.green = '32'
+defaults.yellow = '33'
+defaults.blue = '34'
+defaults.magenta = '35'
+defaults.cyan = '36'
+defaults.white = '37'
+defaults.brblack = '90'
+defaults.brred = '91'
+defaults.brgreen = '92'
+defaults.bryellow = '93'
+defaults.brblue = '94'
+defaults.brmagenta = '95'
+defaults.brcyan = '96'
+defaults.brwhite = '97'
+-- Default symbols.
+defaults.SEGMENT_SEPARATOR = ucs2to8(0xe0b0)
+defaults.SEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b1)
+defaults.RSEGMENT_SEPARATOR = ucs2to8(0xe0b2)
+defaults.RSEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b3)
+defaults.PLUSMINUS = ucs2to8(0x00b1)
+defaults.BRANCH = ucs2to8(0xe0a0)
+defaults.DETACHED = ucs2to8(0x27a6)
+defaults.CROSS = ucs2to8(0x2718)
+defaults.LIGHTNING = ucs2to8(0xf0e7) -- consider ucs2to8(0x26a1), but conhost has trouble rendering it.
+defaults.GEAR = ucs2to8(0x2699)
+defaults.CHARGING = ucs2to8(0x2191)
+defaults.SMARTCHARGING = ucs2to8(0x2665)
+defaults.BATTERY = '%'
+-- Solarized color theme (https://github.com/altercation/solarized).
+local solarized_dark = {
+    base03  = hexcolor('#002b36'),
+    base02  = hexcolor('#073642'),
+    base01  = hexcolor('#586e75'),
+    base00  = hexcolor('#657b83'),
+    base0   = hexcolor('#839496'),
+    base1   = hexcolor('#93a1a1'),
+    base2   = hexcolor('#eee8d5'),
+    base3   = hexcolor('#fdf6e3'),
+    yellow  = hexcolor('#b58900'),
+    orange  = hexcolor('#cb4b16'),
+    red     = hexcolor('#dc322f'),
+    magenta = hexcolor('#d33682'),
+    violet  = hexcolor('#6c71c4'),
+    blue    = hexcolor('#268bd2'),
+    cyan    = hexcolor('#2aa198'),
+    green   = hexcolor('#859900'),
+}
+-- Apply the solarized colors by default unless overridden.
+if agnoster_clinkprompt.solarized ~= false then
+    defaults.brblack = solarized_dark.base03
+    defaults.black = solarized_dark.base02
+    defaults.brgreen = solarized_dark.base01
+    defaults.bryellow = solarized_dark.base00
+    defaults.brblue = solarized_dark.base0
+    defaults.brcyan = solarized_dark.base1
+    defaults.white = solarized_dark.base2
+    defaults.brwhite = solarized_dark.base3
+    defaults.yellow = solarized_dark.yellow
+    defaults.brred = solarized_dark.orange
+    defaults.red = solarized_dark.red
+    defaults.magenta = solarized_dark.magenta
+    defaults.brmagenta = solarized_dark.violet
+    defaults.blue = solarized_dark.blue
+    defaults.cyan = solarized_dark.cyan
+    defaults.green = solarized_dark.green
+end
+-- Apply defaults for anything in agnoster_clinkprompt that isn't already initialized yet.
+for k,v in pairs(defaults) do
+    if not ag[k] then
+        ag[k] = v
+    end
+end
+ag.default = '39'
+
+
+---- Build prompt segments -----------------------------------------------------
+-- Functions to add segments to the prompt
+
+local CSI = '\x1b['
+local sgr_unsupported_bg = '48;2;128;0;0m'
+local sgr_unsupported_fg = '38;2;255;0;0m'
+
+local function as_back(color)
+    color = ag[color] or color
+    if color == 'NONE' then
+        return CSI..'49m'
+    elseif color:find('^[34]') then
+        return CSI..color:gsub('^3', '4')..'m'
+    elseif color:find('^9[0-7]$|;') or color:find('^10[0-7]$|;') then
+        return CSI..color:gsub('^9', '10')..'m'
+    else
+        log.info('unsupported color format in "'..color..'"')
+        return CSI..sgr_unsupported_bg
+    end
+end
+local function as_fore(color)
+    color = ag[color] or color
+    if color == 'NONE' then
+        return CSI..'39m'
+    elseif color:find('^[34]') then
+        return CSI..color:gsub('^4', '3')..'m'
+    elseif color:find('^9[0-7]$|;') or color:find('^10[0-7]$|;') then
+        return CSI..color:gsub('^10', '9')..'m'
+    else
+        log.info('unsupported color format in "'..color..'"')
+        return CSI..sgr_unsupported_fg
+    end
+end
+
+function ag.append_prompt(text)
+    table.insert(ag.prompt, text)
+end
+
+-- Begin a segment
+-- Takes up to three arguments:
+--  - background (uses default if empty)
+--  - foreground (uses default if empty)
+--  - text to add (can be empty)
+function ag.prompt_segment(bg, fg, text)
+    bg = bg or ag.default
+    fg = fg or ag.default
+    local same_back = (as_back(bg) == as_back(ag.CURRENT_BG))
+    if ag.CURRENT_BG ~= 'NONE' and not same_back then
+        if not ag.right then
+            ag.append_prompt(as_back(bg)..as_fore(ag.CURRENT_BG)..ag.SEGMENT_SEPARATOR..as_fore(fg))
+        else
+            ag.append_prompt(as_fore(bg)..as_back(ag.CURRENT_BG)..ag.RSEGMENT_SEPARATOR..as_fore(fg)..as_back(bg))
+        end
+    elseif same_back then
+        local sep
+        if not ag.right then
+            sep = ag.SEGMENT_SEPARATOR_CONTRAST
+        else
+            sep = ag.RSEGMENT_SEPARATOR_CONTRAST
+        end
+        if sep then
+            text = as_fore(ag.PRIMARY_FG)..sep..as_fore(fg)..text
+        else
+            text = text:gsub('^ ', '')
+        end
+    else
+        ag.append_prompt(as_back(bg)..as_fore(fg))
+    end
+    ag.CURRENT_BG = bg
+    if text and text ~= '' then
+        ag.append_prompt(text)
+    end
+end
+
+-- End the prompt, closing any open segments
+function ag.prompt_end()
+    if ag.CURRENT_BG then
+        ag.append_prompt(as_back(ag.default)..as_fore(ag.CURRENT_BG)..ag.SEGMENT_SEPARATOR)
+    else
+        ag.append_prompt(as_back(ag.default))
+    end
+    ag.append_prompt(as_fore(ag.default))
+    ag.CURRENT_BG = nil
+end
+
+
+---- Prompt components ---------------------------------------------------------
+-- Each component will draw itself, and hide itself if no information needs to be shown
+
+-- Context: user@hostname (who am I and where am I)
+function ag.prompt_context()
+    local default_user = os.getenv('DEFAULT_USER')
+    local ssh_connection = os.getenv('SSH_CONNECTION')
+    if default_user or ssh_connection then
+        local user = os.getenv('USERNAME') or ''
+        if clink.lower(user) ~= default_user or ssh_connection then
+            local hostname = os.getenv('COMPUTERNAME') or ''
+            ag.prompt_segment(ag.PRIMARY_FG, ag.default, ' '..as_fore(ag.yellow)..user..'@'..hostname..' ')
+        end
+    end
+end
+
+-- Git: branch/detached head, dirty status
+local last_git_info
+function ag.prompt_git()
+    local ref, detached = git.getbranch()
+    if ref then
+        local color
+        local info = ag.async_info(ag.get_git_info)
+        info = info or last_git_info or {}
+        ref = info.branch or ref
+        if not info.ready then
+            color = ag.white
+            ref = ref..' '
+        elseif info.dirty then
+            color = ag.yellow
+            ref = ref..' '..ag.PLUSMINUS
+        else
+            color = ag.green
+            ref = ref..' '
+        end
+        if detached then
+            ref = ag.DETACHED..' '..ref
+        else
+            ref = ag.BRANCH..' '..ref
+        end
+        if info.action then
+            ref = ref..' ('..info.action..')'
+        end
+        ag.prompt_segment(color, ag.PRIMARY_FG, ' '..ref)
+    end
+end
+
+-- Dir: current working directory
+function ag.prompt_dir()
+    local cwd = os.getcwd()
+    cwd = rl.collapsetilde(cwd)
+    ag.prompt_segment(ag.blue, ag.PRIMARY_FG, ' '..cwd..' ')
+end
+
+-- Status:
+--  - was there an error
+--  - am I root
+local function sym_sep(sym)
+    return (console.cellcount(sym) == 1) and ' ' or ''
+end
+function ag.prompt_status()
+    local symbols = ''
+    if os.geterrorlevel() ~= 0 then
+        local sym = ag.CROSS
+        symbols = symbols..as_fore(ag.red)..sym..sym_sep(sym)
+    end
+    if os.isuseradmin() then
+        local sym = ag.LIGHTNING
+        symbols = symbols..as_fore(ag.yellow)..sym..sym_sep(sym)
+    end
+    -- if jobs then
+    --     local sym = ag.GEAR
+    --     symbols = symbols..as_fore(ag.cyan)..sym..sym_sep(sym)
+    -- end
+    local batt = os.getbatterystatus()
+    if batt and batt.level and batt.level >= 0 and batt.level < 100 then
+        local sym
+        local batt_color = ((batt.level < 26) and ag.red) or ((batt.level < 71) and ag.yellow) or ag.green
+        if #symbols > 0 then
+            symbols = symbols..as_fore(ag.default)..' '
+        end
+        symbols = symbols..as_fore(batt_color)..tostring(batt.level)
+        if batt.charging then sym = ag.CHARGING
+        elseif batt.acpower then sym = ag.SMARTCHARGING
+        else sym = ag.BATTERY
+        end
+        symbols = symbols..sym..sym_sep(sym)
+    end
+
+    if symbols ~= '' then
+        symbols = ' '..symbols
+        ag.prompt_segment(ag.PRIMARY_FG, ag.default, symbols)
+    end
+end
+
+-- Display current virtual environment
+function ag.prompt_virtualenv()
+    local text = os.getenv('VIRTUAL_ENV')
+    if text then
+        ag.prompt_segment(ag.cyan, ag.PRIMARY_FG, ' '..text..' ')
+    end
+end
+
+
+---- Build the prompt ----------------------------------------------------------
+
+local function is_segment_func(name)
+    if name ~= 'prompt_segment' and type(ag[name]) == 'function' then
+        return true
+    end
+end
+
+local function do_segments(segments, right)
+    if not segments or not segments[1] then
+        return
+    end
+
+    ag.promptcoroutine = clink.promptcoroutine
+    ag.prompt = {}
+    ag.right = right
+    if not right then
+        ag.CURRENT_BG = ag.BEGIN_BG or 'NONE'
+        ag.PRIMARY_FG = ag.PRIMARY_FG or ag.black
+        ag.append_prompt(CSI..'m')
+    else
+        ag.CURRENT_BG = ag.default
+        ag.PRIMARY_FG = ag.PRIMARY_FG or ag.black
+        ag.append_prompt(CSI..'m')
+    end
+
+    for _,segment in ipairs(segments) do
+        segment = segment:gsub("^%s+", ""):gsub("%s+$", "")
+        if segment:find('^prompt_') then
+            local name, args = segment:match('^([^ ]+) ?(.*)$')
+            if name and is_segment_func(name) then
+                ag.current_segment = name
+                local b, f, t = ag[name](args)
+                if type(t) == "string" then
+                    ag.prompt_segment(b, f, t)
+                end
+                ag.current_segment = nil
+            end
+        end
+    end
+
+    if not right then
+        ag.prompt_end()
+        ag.append_prompt(' ')
+    end
+
+    local text = table.concat(ag.prompt)
+    ag.right = nil
+    ag.prompt = nil
+    ag.promptcoroutine = nil
+    return text
+end
+
+local p = clink.promptfilter(5)
+function p:filter() -- luacheck: no unused
+    local segments = os.getenv('AGNOSTER_PROMPT_SEGMENTS')
+    segments = segments and string.explode(segments, ' ', '"') or ag.prompt_segments
+    return do_segments(segments, false)
+end
+function p:rightfilter() -- luacheck: no unused
+    local rsegments = os.getenv('AGNOSTER_RPROMPT_SEGMENTS')
+    rsegments = rsegments and string.explode(rsegments, ' ', '"') or ag.rprompt_segments
+    return do_segments(rsegments, true)
+end
+function p:transientfilter() -- luacheck: no unused
+    return do_segments({'prompt_transient'}, false)
+end
+function p:transientrightfilter() -- luacheck: no unused
+    --return do_segments({}, true)
+end
+
+
+-- END PORT OF AGNOSTER PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO AGNOSTER
+
+
+---- prompt segments -----------------------------------------------------------
+
+-- Display current time
+function ag.prompt_time()
+    return ag.brmagenta, ag.PRIMARY_FG, ' '..os.date('%a %H:%M', os.time())..' '
+end
+
+-- To include a flexprompt module, use either of these:
+--  - 'prompt_flexprompt module_name'
+--  - 'prompt_flexprompt module_name module_args'
+function ag.prompt_flexprompt(args)
+    if flexprompt and flexprompt.render_module then
+        local name
+        name, args = args:match('^([^:]+):?(.*)$')
+        if name then
+            local results = flexprompt.render_module(name, args)
+            if results then
+                for _, segment in ipairs(results) do
+                    if segment.text then
+                        local bg = flexprompt.lookup_color(segment.color)
+                        local fg = flexprompt.lookup_color(segment.altcolor)
+                        bg = bg and flexprompt.get_best_bg(bg) or ag.brblack
+                        fg = fg and flexprompt.get_best_fg(fg) or ag.PRIMARY_FG
+                        segment.text = segment.text:gsub("[\001-\004]", "") -- Strip fluent color codes.
+                        segment.text = ' '..segment.text:gsub('^%s+', ''):gsub('%s+$', '')..' '
+                        ag.prompt_segment(bg, fg, segment.text)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Transient prompt sets the CURRENT_BG to color the end segment separator
+-- according to errorlevel.  This is used automatically when appropriate.
+function ag.prompt_transient()
+    ag.CURRENT_BG = (os.geterrorlevel() ~= 0) and ag.red or ag.green
+end
+
+
+---- Async prompt support ------------------------------------------------------
+
+-- Use this instead of clink.promptcoroutine!
+function ag.async_info(func)
+    if settings.get('prompt.async') then
+        local name = ag.current_segment
+        local entry = ag.info_funcs[name]
+        if not entry then
+            entry = { name=name, func=func, result=nil }
+            ag.info_funcs[name] = entry
+            table.insert(ag.info_funcs, entry)
+
+            -- Capture info_funcs directly, to prevent bleeding between
+            -- different concurrent coroutine invocations.
+            local info_funcs = ag.info_funcs
+            local function prompt_coroutine_func()
+                -- Manual iterator catches entries that haven't been added yet.
+                local i = 1
+                while true do
+                    local e = info_funcs[i]
+                    if not e then
+                        break
+                    end
+                    if e.func then
+                        e.result = e.func()
+                    end
+                    i = i + 1
+                end
+            end
+            ag.promptcoroutine(prompt_coroutine_func)
+        end
+        return entry.result
+    else
+        return func()
+    end
+end
+
+-- Get git status info.
+function ag.get_git_info()
+    local info = git.getstatus() or {}
+    info.action = git.getaction()
+    info.ready = true
+    last_git_info = info
+    return info
+end
+
+local last_cwd
+local last_git_dir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the cwd changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local git_dir = git.getgitdir()
+        if last_git_dir ~= git_dir then
+            last_git_dir = git_dir
+            last_git_info = nil
+        end
+    end
+    -- Clear cached async_info results.
+    ag.info_funcs = {}
+end)
+
+
+
+---- flexprompt integration support --------------------------------------------
+
+-- Customize your flexprompt settings for flexprompt modules in agnoster.
+agnoster_flexprompt_settings = agnoster_flexprompt_settings or {}
+
+-- These flexprompt settings are always overridden in agnoster.
+local override_flexprompt_settings = {
+    style = 'rainbow',
+    charset = 'unicode',
+    powerline_font = true,
+    use_8bit_color = true,
+}
+
+local old_settings
+local function onactivate()
+    old_settings = nil
+    if flexprompt and flexprompt.settings and flexprompt.render_module and agnoster_flexprompt_settings then
+        local s = {}
+        for k,v in pairs(flexprompt.settings) do
+            s[k] = v
+        end
+        for k,v in pairs(agnoster_flexprompt_settings) do
+            s[k] = v
+        end
+        for k,v in pairs(override_flexprompt_settings) do
+            s[k] = v
+        end
+        s.symbols = flexprompt.settings.symbols
+        old_settings = flexprompt.settings
+        flexprompt.settings = s
+    end
+end
+
+local function ondeactivate()
+    if old_settings then
+        flexprompt.settings = old_settings
+    end
+end
+
+local exports = {
+    onactivate=onactivate,
+    ondeactivate=ondeactivate,
+}
+
+return exports
+
+
+-- END EXTENSIONS TO AGNOSTER
+--------------------------------------------------------------------------------
