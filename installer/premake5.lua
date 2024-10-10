@@ -26,6 +26,16 @@ local release_manifest = {
     "Dracula.clinktheme",
     "Enhanced Defaults.clinktheme",
     "Plain.clinktheme",
+    "Solarized Dark.clinktheme",
+    "Solarized Light.clinktheme",
+    "agnoster.clinkprompt",
+    "Antares.clinkprompt",
+    "bureau.clinkprompt",
+    "darkblood.clinkprompt",
+    "Headline.clinkprompt",
+    "jonathan.clinkprompt",
+    "oh-my-posh.clinkprompt",
+    "pure.clinkprompt",
 }
 
 if include_arm64 then

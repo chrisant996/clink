@@ -148,6 +148,16 @@ Section "!Application files" app_files_id
     File "${CLINK_BUILD}\themes\Dracula.clinktheme"
     File "${CLINK_BUILD}\themes\Enhanced Defaults.clinktheme"
     File "${CLINK_BUILD}\themes\Plain.clinktheme"
+    File "${CLINK_BUILD}\themes\Solarized Dark.clinktheme"
+    File "${CLINK_BUILD}\themes\Solarized Light.clinktheme"
+    File "${CLINK_BUILD}\themes\agnoster.clinkprompt"
+    File "${CLINK_BUILD}\themes\Antares.clinkprompt"
+    File "${CLINK_BUILD}\themes\bureau.clinkprompt"
+    File "${CLINK_BUILD}\themes\darkblood.clinkprompt"
+    File "${CLINK_BUILD}\themes\Headline.clinkprompt"
+    File "${CLINK_BUILD}\themes\jonathan.clinkprompt"
+    File "${CLINK_BUILD}\themes\oh-my-posh.clinkprompt"
+    File "${CLINK_BUILD}\themes\pure.clinkprompt"
     SetOutPath $INSTDIR
 
     ; Clean up previous uninstallers.
@@ -358,6 +368,16 @@ Section "!un.Application files" section_un_app_files
     Delete "$INSTDIR\themes\Dracula.clinktheme"
     Delete "$INSTDIR\themes\Enhanced Defaults.clinktheme"
     Delete "$INSTDIR\themes\Plain.clinktheme"
+    Delete "$INSTDIR\themes\Solarized Dark.clinktheme"
+    Delete "$INSTDIR\themes\Solarized Light.clinktheme"
+    Delete "$INSTDIR\themes\agnoster.clinkprompt"
+    Delete "$INSTDIR\themes\Antares.clinkprompt"
+    Delete "$INSTDIR\themes\bureau.clinkprompt"
+    Delete "$INSTDIR\themes\darkblood.clinkprompt"
+    Delete "$INSTDIR\themes\Headline.clinkprompt"
+    Delete "$INSTDIR\themes\jonathan.clinkprompt"
+    Delete "$INSTDIR\themes\oh-my-posh.clinkprompt"
+    Delete "$INSTDIR\themes\pure.clinkprompt"
     RMDir /REBOOTOK $INSTDIR\themes
     RMDir /REBOOTOK $INSTDIR
 
