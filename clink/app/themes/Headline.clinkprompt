@@ -216,6 +216,7 @@ HEADLINE.STATUS_ORDER=HEADLINE.STATUS_ORDER or 'STAGED CHANGED UNTRACKED BEHIND 
 -- Prompt (these can be strings or functions)
 HEADLINE.PROMPT=HEADLINE.PROMPT or function() return os.isuseradmin() and '# ' or '$ ' end
 HEADLINE.RPROMPT=HEADLINE.RPROMPT or ''
+HEADLINE.TPROMPT=HEADLINE.TPROMPT or nil -- Falls back to HEADLINE.PROMPT when nil.
 
 -- Clock (prepends to RPROMPT)
 HEADLINE.DO_CLOCK=orwhennil(HEADLINE.DO_CLOCK, false) -- whether to show the clock
@@ -576,8 +577,7 @@ function hl:rightfilter() -- luacheck: no unused
     return rprompt
 end
 function hl:transientfilter() -- luacheck: no unused
-    -- TODO: consider adding configurable styling etc.
-    return evalcmd(HEADLINE.PROMPT)
+    return evalcmd(HEADLINE.TPROMPT or HEADLINE.PROMPT)
 end
 function hl:transientrightfilter() -- luacheck: no unused
     return
