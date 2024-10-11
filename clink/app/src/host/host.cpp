@@ -74,7 +74,8 @@ setting_str g_customprompt(
     "A .clinkprompt file to use for the prompt",
     ".clinkprompt files contain customizations for the prompt.  Setting this to the\n"
     "name of a .clinkprompt file causes it to be loaded and used for displaying the\n"
-    "prompt.",
+    "prompt.  If a CLINK_CUSTOMPROMPT environment variable is set, its value\n"
+    "supersedes this setting.",
     "");
 
 enum prompt_spacing { normal, compact, sparse, MAX };
@@ -967,7 +968,8 @@ force_reload_lua:
         // Activate a clinkprompt module BEFORE sending onbeginedit, so the
         // module can receive the initial onbeginedit.
         str_moveable customprompt;
-        g_customprompt.get(customprompt);
+        if (!os::get_env("CLINK_CUSTOMPROMPT", customprompt))
+            g_customprompt.get(customprompt);
         lua.activate_clinkprompt_module(customprompt.c_str());
 
         lua.send_event("onbeginedit");

@@ -406,6 +406,7 @@ end
 --------------------------------------------------------------------------------
 function clink._activate_clinkprompt_module(module)
     local new_clinkprompt = module or ""
+    new_clinkprompt = new_clinkprompt:gsub('"', ''):gsub('%s+$', '')
     if active_clinkprompt == new_clinkprompt then
         return
     end

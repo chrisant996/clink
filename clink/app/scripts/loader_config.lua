@@ -818,7 +818,8 @@ local function show_custom_prompt(args)
         if file then
             clink.print(norm..underline.."Current Prompt"..norm)
         end
-        clink._show_prompt_demo(settings.get("clink.customprompt"))
+        local customprompt = os.getenv("CLINK_CUSTOMPROMPT") or settings.get("clink.customprompt")
+        clink._show_prompt_demo(customprompt)
         if file then
             clink.print()
         end

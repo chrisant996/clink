@@ -8,6 +8,7 @@
 
 #include <core/base.h>
 #include <core/path.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
@@ -343,7 +344,8 @@ int32 set(int32 argc, char** argv)
 
     // Load the clink.customprompt module so its settings are available.
     str_moveable customprompt;
-    g_customprompt.get(customprompt);
+    if (!os::get_env("CLINK_CUSTOMPROMPT", customprompt))
+        g_customprompt.get(customprompt);
     lua.activate_clinkprompt_module(customprompt.c_str());
 
     // List or set Clink's settings.
