@@ -652,7 +652,7 @@ See [Coloring the Input Text](#coloring-the-input-text) for information on speci
 - [ ] Create a repo with custom prompts, and encourage people to add pull requests to share their own custom prompts in it.
 - [ ] Describe the `clink config prompt` commands.
 
-See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts and optionally packaging them as "*.clinkprompt" files.
+See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts, and see [Sharing Custom Prompts](#sharing-custom-prompts) for information on optionally packaging them as "*.clinkprompt" files.
 
 <a name="filelocations"></a>
 
@@ -2815,9 +2815,30 @@ Here are a couple of links with more information about ANSI escape codes:
 
 ### Sharing Custom Prompts
 
-**TODO: how to package a prompt in a .clinkprompt file.**
-- [ ] Most existing prompt script .lua files can simply be renamed to .clinkprompt and moved to a `themes\` directory.
-- [ ] Exports table: `onactivate`, `ondeactivate`, `demo`, `dependson`.
+Custom prompts can be shared in Clink v1.7.0 and newer.
+
+To make a custom prompt shareable, put it in a file whose name ends with ".clinkprompt" instead of ".lua".
+
+For many custom prompts, it's as simple as that!  Some prompts may want additional capabilities, which are described further below.
+
+A .clinkprompt file can be shared and installed on other computers.  If it's in a "themes" subdirectory under any of the script directories, then Clink can find it automatically (run `clink info` and look for the "scripts" line in the output).  If the file in some other directory, then you can use it by telling Clink the full path to the file.
+
+Any [prompt filters](#clink.promptfilter) or registered event handlers (such as [clink.onbeginedit](#clink.onbeginedit)) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> select a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.
+
+#### The "exports table" in a .clinkprompt file
+
+A .clinkprompt file can return a table with certain fields which gain additional capabilities.  Each field is optional, as is the table itself.
+
+Field | Description
+-|-
+<code>onactivate = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when the prompt is loaded and activated.
+<code>ondeactivate = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when the prompt is deactivated.
+<code>demo = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when <code>clink config prompt show</code> is run.
+<code>dependson = <span class="arg">string</span></code> | If the string is not empty, then it is a list of clinkprompt names upon which this clinkprompt depends.  When this clinkprompt file is loaded and activated, the other files are also loaded, and their prompt filters and event handlers are allowed to run even though they aren't part of the current active clinkprompt file.
+
+```lua
+#INCLUDE [docs\examples\Sample.clinkprompt]
+```
 
 ### More Advanced Stuff
 
