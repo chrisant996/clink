@@ -22,7 +22,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 
 ## High Priority
 - [ ] Make sure the clink bundle can include and update clinktheme and clinkprompt files.
-- [ ] Add a `CLINK_COLORTHEME` env var to load a .clinktheme file before each `onbeginedit` _but only into memory_ and _not during `clink set`_.
 - [ ] Warn to not edit the clinktheme and clinkprompt files; copy them and edit the copy instead (any edits to the original will be lost when updating Clink to a newer version).
 - [ ] Document the clinktheme system.  Explain how to use `%CLINK_SETTINGS%` to have two different Dark and Light settings files in the same Clink profile.
 - [ ] Document the clinkprompt system.
