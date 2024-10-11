@@ -263,6 +263,12 @@ void host_lua::activate_clinkprompt_module(const char* module)
 }
 
 //------------------------------------------------------------------------------
+void host_lua::load_colortheme_in_memory(const char* theme)
+{
+    m_state.load_colortheme_in_memory(theme);
+}
+
+//------------------------------------------------------------------------------
 bool host_lua::send_event(const char* event_name, int32 nargs)
 {
     return m_state.send_event(event_name, nargs);

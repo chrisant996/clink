@@ -25,6 +25,7 @@ public:
     bool                is_script_path_changed() const;
 
     void                activate_clinkprompt_module(const char* module=nullptr);
+    void                load_colortheme_in_memory(const char* theme);
 
     bool                send_event(const char* event_name, int32 nargs=0);
     bool                send_event_string_out(const char* event_name, str_base& out, int32 nargs=0);

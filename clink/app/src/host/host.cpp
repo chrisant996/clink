@@ -965,6 +965,13 @@ force_reload_lua:
             }
         }
 
+        // Maybe load a color theme into memory.  Load it BEFORE activating a
+        // clinkprompt module, so the module can see the current colors in
+        // effect during its onactivate callback.
+        str_moveable colortheme;
+        if (os::get_env("CLINK_COLORTHEME", colortheme))
+            lua.load_colortheme_in_memory(colortheme.c_str());
+
         // Activate a clinkprompt module BEFORE sending onbeginedit, so the
         // module can receive the initial onbeginedit.
         str_moveable customprompt;

@@ -532,8 +532,7 @@ local function show_color_theme(args)
 
         -- Must temporarily load the theme in order for rl.getmatchcolor() to
         -- represent colors properly.
-        clink._add_clear_colors(ini)
-        settings._overlay(ini, true--[[in_memory_only]])
+        clink._load_theme_in_memory(ini)
         show_demo(path.getbasename(file) or name, ini.preferred, preferred)
 
         -- Skip reloading for performance, since this is running in the

@@ -216,6 +216,7 @@ end
 --- -ver:   1.7.0
 --- -arg:   theme:string
 --- -arg:   [clearall:boolean]
+--- -arg:   [no_save:boolean]
 --- -ret:   table, message
 --- Finds the <span class="arg">theme</span> and tries to apply its setting
 --- (which are saved in the current profile settings, which affects all Clink
@@ -229,8 +230,12 @@ end
 --- <span class="arg">clearall</span> argument is true, then it also clears
 --- any color settings added by Lua scripts.
 ---
+--- If the optional <span class="arg">no_save</span> argument is true, then
+--- the color theme is loaded into memory but is not saved back to the Clink
+--- settings file.
+---
 --- Refer to <a href="#color-themes">Color Themes</a> for more information.
-function clink.applytheme(file, clearall)
+function clink.applytheme(file, clearall, no_save)
     local ini, message = clink.readtheme(file)
     if not ini then
         return nil, message
@@ -238,8 +243,23 @@ function clink.applytheme(file, clearall)
 
     -- FUTURE: what about match coloring rules?
     clink._add_clear_colors(ini, clearall, false)
-    settings._overlay(ini)
+    settings._overlay(ini, no_save and true or nil)
     return ini
+end
+
+--------------------------------------------------------------------------------
+function clink._load_colortheme_in_memory(theme)
+    if type(theme) == "string" then
+        theme = theme:gsub('"', ''):gsub('%s+$', '')
+        if theme == "" then
+            return
+        end
+        theme = clink.readtheme(theme)
+    end
+    if type(theme) == "table" then
+        clink._add_clear_colors(theme)
+        settings._overlay(theme, true--[[in_memory_only]])
+    end
 end
 
 --------------------------------------------------------------------------------
