@@ -406,6 +406,8 @@ local function save_color_theme(args, silent)
     write_color_theme(o, all, rules)
 
     o:close()
+
+    print("Color settings saved to '"..file.."'.")
     return true
 end
 
