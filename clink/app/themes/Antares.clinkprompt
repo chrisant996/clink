@@ -592,20 +592,20 @@ iif=function(expr, iftrue, iffalse)
 end
 
 command=function(cmd, all)
-    local f=io.popen(cmd)
-    if f then
+    local file=io.popen(cmd)
+    if file then
         local ret
         if all then
-            for line in f:lines() do
+            for line in file:lines() do
                 if not ret then
                     ret={}
                 end
                 table.insert(ret, line)
             end
         else
-            ret=f:read()
+            ret=file:read()
         end
-        f:close()
+        file:close()
         return ret
     end
 end
@@ -627,11 +627,11 @@ scan_upwards=function(dir, scan_func)
     until not dir
 end
 
-popen_close=function(f, close_func)
+popen_close=function(file, close_func)
     if type(close_func) == "function" then
         return close_func()
     else
-        return f:close()
+        return file:close()
     end
 end
 
