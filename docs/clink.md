@@ -640,7 +640,7 @@ Clink looks for color theme files in these directories:
 
 To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `CLINK_COLORTHEME` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
 
-To list available color themes, run <code>clink config theme list</code>.  Clink looks for *.clinktheme files in a `themes\` subdirectory under each Clink includes a few theme files, and you can find more shared online by Clink users.  One place to find more color themes for Clink is the [clink-themes](https://github.com/chrisant996/clink-themes) repo.
+To list available color themes, run <code>clink config theme list</code>.  Clink includes a few theme files, and you can find more shared online by Clink users.  One place to find more color themes for Clink is the [clink-themes](https://github.com/chrisant996/clink-themes) repo.
 
 To show a demo of a what a color theme will look like, run <code>clink config theme show <span class="arg">theme_name</span></code>.
 
@@ -648,19 +648,34 @@ To save the current profile's color settings into a .clinktheme file, run <code>
 
 See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
 
-> **Notes:**
-> - The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
-> - If you want to change a .clinktheme file that came with Clink, make a copy of the file and edit the copy.  Don't edit the .clinktheme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
+> **Note:**  The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
+
+<fieldset><legend>Warning</legend>
+If you want to change a .clinktheme file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinktheme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
+</fieldset>
 
 ## Custom Prompts
 
-**TODO: document .clinkprompt files.**
-- [ ] Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
-- [ ] List the .clinkprompt files included with Clink itself.
-- [ ] Create a repo with custom prompts, and encourage people to add pull requests to share their own custom prompts in it.
-- [ ] Describe the `clink config prompt` commands.
+You can choose a custom prompt to use, or you can [make your own prompt](#customizing-the-prompt).
+
+A custom prompt can be packaged into a .clinkprompt file to make it easy to choose which prompt to use, and easy to share custom prompts with other users.
+
+Clink looks for custom prompt files in these directories:
+1. Any directories listed in the `%CLINK_THEMES_DIR%` environment variable (multiple directories may be separated by semicolons).
+2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
+3. Or you can provide a full path name to a file, such as `c:\mythemes\Fancy Prompt.clinkprompt`.
+
+To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the `CLINK_CUSTOMPROMPT` environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile's settings file, and allows multiple concurrent Clink sessions to use different custom prompts.
+
+To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files, and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt), [clink-themes](https://github.com/chrisant996/clink-themes), and [oh-my-posh](https://ohmyposh.dev).  Check [here](#oh-my-posh) for quick info on using oh-my-posh prompt themes with Clink.
+
+To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.
 
 See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts, and see [Sharing Custom Prompts](#sharing-custom-prompts) for information on optionally packaging them as "*.clinkprompt" files.
+
+<fieldset><legend>Warning</legend>
+If you want to change a .clinkprompt file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinkprompt theme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
+</fieldset>
 
 <a name="filelocations"></a>
 
@@ -3644,9 +3659,6 @@ The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script
 
 It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfiltering) to make prompts show up instantly, even in large git repos, for example.
 
-**TODO:**
-- [ ] Mention that it includes various predefined .clinkprompt files.**
-
 ### clink-fzf
 
 The [clink-fzf](https://github.com/chrisant996/clink-fzf) script integrates the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
@@ -3667,14 +3679,9 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 
 The [clink-themes](https://github.com/chrisant996/clink-themes) repository contains some [color themes](#color-themes) and [custom prompts](#custom-prompts) which can be used with Clink.  If you have one you want to share, this can be a good place to share it.
 
-**TODO:**
-- [x] Create a repo with color themes and custom prompts, and encourage people to add pull requests to share their own creations there.
-- [ ] Add instructions in the repo's README.md for how to install them.
-- [ ] Add instructions in the repo's README.md for how to add pull requests.
-
 ### oh-my-posh
 
-The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for installation instructions, sample themes, and more information.
+The [oh-my-posh](https://ohmyposh.dev) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for installation instructions, sample themes, and more information.
 
 But in Clink v1.7.0 and newer, don't create a Lua script for oh-my-posh.
 
