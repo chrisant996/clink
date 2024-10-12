@@ -2044,8 +2044,9 @@ static int32 finish_win_f9()
 
     rl_clear_message();
 
-    if (s_history_number >= 0)
+    if (s_history_number >= 1)
     {
+        --s_history_number;
         if (s_history_number >= history_length)
             s_history_number = history_length - 1;
         if (history_length > 0)

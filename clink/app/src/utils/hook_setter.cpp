@@ -178,7 +178,7 @@ bool hook_setter::commit()
     m_pending = false;
     m_desc_count = 0;
 
-    // TODO: suspend threads?  Currently this relies on CMD being essentially
+    // REVIEW: suspend threads?  Currently this relies on CMD being essentially
     // single threaded.
 
     // Apply and Detours hooks.
@@ -206,7 +206,7 @@ nope:
 
     LOG("<<< Hook transaction committed.");
 
-    // TODO: resume threads?  Currently this relies on CMD being essentially
+    // REVIEW: resume threads?  Currently this relies on CMD being essentially
     // single threaded.
 
     return true;

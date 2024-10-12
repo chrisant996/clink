@@ -74,11 +74,15 @@ static void putc_face (int, int, char *);
 static void puts_face (const char *, const char *, int);
 static void norm_face (char *, int);
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void update_line (char *, char *, char *, char *, int, int, int, int);
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 static void space_to_eol (int);
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void delete_chars (int);
 static void insert_some_chars (char *, int, int);
 static void open_some_spaces (int);
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 static void cr (void);
 static void redraw_prompt (char *);
 static void _rl_move_cursor_relative (int, const char *, const char *);
@@ -707,52 +711,6 @@ rl_set_rprompt (const char *rprompt)
 
   return 0;
 }
-
-void
-tputs_rprompt (const char *s)
-{
-  int col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
-
-  if (col <= 0)
-    return;
-
-  if (_rl_term_ch)
-    {
-      char *buffer = tgoto (_rl_term_ch, 0, col + 1);
-      tputs (buffer, 1, _rl_output_character_function);
-      if (s)
-        tputs (s, 1, _rl_output_character_function);
-      else
-        _rl_clear_to_eol (_rl_rprompt_shown_len);
-      buffer = tgoto (_rl_term_ch, 0, _rl_last_c_pos + 1);
-      tputs (buffer, 1, _rl_output_character_function);
-    }
-  else
-    {
-      int i;
-      int dpos = col;
-      for (i = _rl_last_c_pos; i < dpos; i++)
-        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
-      if (s)
-        tputs (s, 1, _rl_output_character_function);
-      else
-        _rl_clear_to_eol (_rl_rprompt_shown_len);
-      if (!s && i - _rl_last_c_pos < _rl_last_c_pos)
-        _rl_backspace (i - _rl_last_c_pos);
-      else
-        {
-          i = _rl_last_c_pos;
-          cr ();
-          _rl_last_c_pos = i;
-          while (i--)
-            tputs (_rl_term_forward_char, 1, _rl_output_character_function);
-        }
-    }
-
-  _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
-}
-/* end_clink_change */
-
 /*
  * Expand the prompt string into the various display components, if
  * necessary.
@@ -1036,9 +994,6 @@ rl_redisplay (void)
   int hl_begin, hl_end;
   int short_circuit;
   int mb_cur_max = MB_CUR_MAX;
-/* begin_clink_change */
-  int can_show_rprompt;
-/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
   WCHAR_T wc;
   size_t wc_bytes;
@@ -1489,18 +1444,6 @@ rl_redisplay (void)
       lb_linenum = newlines;
     }
 
-/* begin_clink_change */
-  /* Determine whether it's possible to show the right side prompt. */
-  can_show_rprompt = (rl_rprompt &&                       /* has rprompt */
-                      (_rl_term_forward_char || _rl_term_ch) && /* has termcap */
-                      !newlines &&                        /* only one line */
-                      rl_display_prompt == rl_prompt &&   /* displaying the real prompt */
-                      (lpos + rl_visible_rprompt_length < _rl_screenwidth - 1)); /* fits */
-  /* If the right side prompt is shown but shouldn't be, erase it. */
-  if (_rl_rprompt_shown_len && !can_show_rprompt)
-    tputs_rprompt (0);
-/* end_clink_change */
-
   /* If we are switching from one line to multiple wrapped lines, we don't
      want to do a dumb update (or we want to make it smarter). */
   if (_rl_quick_redisplay && newlines > 0)
@@ -1936,12 +1879,6 @@ rl_redisplay (void)
 
     _rl_quick_redisplay = 0;
   }
-
-/* begin_clink_change */
-  /* If the right side prompt is not shown and should be, display it. */
-  if (!_rl_rprompt_shown_len && can_show_rprompt)
-    tputs_rprompt (rl_rprompt);
-/* end_clink_change */
 
   RL_UNSETSTATE (RL_STATE_REDISPLAYING);
   _rl_release_sigint ();
@@ -3006,11 +2943,6 @@ rl_on_new_line (void)
   if (visible_line)
     visible_line[0] = '\0';
 
-/* begin_clink_change */
-  /* The right side prompt is only shown on the first line. */
-  _rl_rprompt_shown_len = 0;
-/* end_clink_change */
-
   _rl_last_c_pos = _rl_last_v_pos = 0;
   _rl_vis_botlin = last_lmargin = 0;
   if (vis_lbreaks)
@@ -3681,6 +3613,7 @@ _rl_clear_screen (int clrscr)
 #endif /* __DJGPP__ */
 }
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 /* Insert COUNT characters from STRING to the output stream at column COL. */
 static void
 insert_some_chars (char *string, int count, int col)
@@ -3698,13 +3631,6 @@ open_some_spaces (int col)
 #if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
   char *buffer;
   register int i;
-
-/* begin_clink_change */
-  /* If on the first line and the right side prompt is shown, hide it
-     first to avoid garbling the display. */
-  if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
-    tputs_rprompt (0);
-/* end_clink_change */
 
   /* If IC is defined, then we do not have to "enter" insert mode. */
   if (_rl_term_IC)
@@ -3742,13 +3668,6 @@ delete_chars (int count)
     return;
 
 #if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
-/* begin_clink_change */
-  /* If on the first line and the right side prompt is shown, hide it
-     first to avoid garbling the display. */
-  if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
-    tputs_rprompt (0);
-/* end_clink_change */
-
   if (_rl_term_DC && *_rl_term_DC)
     {
       char *buffer;
@@ -3763,6 +3682,7 @@ delete_chars (int count)
     }
 #endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
 }
+#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 
 void
 _rl_update_final (void)
@@ -3878,11 +3798,6 @@ _rl_redisplay_after_sigwinch (void)
 
   if (_rl_screenwidth < prompt_visible_length)
     _rl_reset_prompt ();		/* update local_prompt_newlines array */
-
-/* begin_clink_change */
-  /* The right side prompt has been cleared. */
-  _rl_rprompt_shown_len = 0;
-/* end_clink_change */
 
   /* Redraw only the last line of a multi-line prompt. */
   t = strrchr (rl_display_prompt, '\n');

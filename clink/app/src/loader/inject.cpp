@@ -80,7 +80,6 @@ static void copy_dll(str_base& dll_path)
 #if !defined(CLINK_FINAL)
     // The DLL id only changes on a commit-premake cycle. During development
     // this doesn't work so well so we'll force it through.
-    // TODO: check timestamps and only force when timestamp differs.
     bool always = true;
 #else
     bool always = false;

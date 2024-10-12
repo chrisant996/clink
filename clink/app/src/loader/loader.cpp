@@ -25,6 +25,7 @@ int32 inject(int32, char**, app_context::desc&);
 int32 input_echo(int32, char**);
 int32 set(int32, char**);
 int32 update(int32, char**);
+int32 config(int32, char**);
 int32 installscripts(int32, char**);
 int32 uninstallscripts(int32, char**);
 int32 testbed(int32, char**);
@@ -42,6 +43,7 @@ static void show_usage()
         "autorun",         "Manage Clink's entry in cmd.exe's autorun.",
         "set",             "Adjust Clink's settings.",
         "update",          "Check for an update for Clink.",
+        "config",          "Configuration commands for Clink.",
         "installscripts",  "Add a path to search for scripts.",
         "uninstallscripts","Remove a path to search for scripts.",
         "history",         "List and operate on the command history.",
@@ -83,6 +85,7 @@ static int32 dispatch_verb(const char* verb, int32 argc, char** argv, app_contex
         { "inject",               nullptr,            inject,   },
         { "set",                  set,                          },
         { "update",               update,                       },
+        { "config",               config,                       },
         { "installscripts",       installscripts,               },
         { "uninstallscripts",     uninstallscripts,             },
         { "testbed",              testbed,                      },

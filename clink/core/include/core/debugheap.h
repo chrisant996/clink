@@ -141,7 +141,7 @@ void dbgchecksince(size_t alloc_number, int32 all_leaks _DEFAULT_ZERO);
 void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS
-// TODO: report heap stats
+// FUTURE: report heap stats
 #endif
 
 #ifdef __cplusplus

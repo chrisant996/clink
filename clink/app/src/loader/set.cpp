@@ -8,6 +8,7 @@
 
 #include <core/base.h>
 #include <core/path.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
@@ -21,6 +22,7 @@
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
+extern setting_str g_customprompt;
 
 //------------------------------------------------------------------------------
 static void list_keys()
@@ -71,7 +73,8 @@ static void list_options(lua_state& lua, const char* key)
         {
             static const char* const color_keywords[] =
             {
-                "bold", "nobold", "underline", "nounderline",
+                "bold", "nobold", "underline",
+                "reverse", "italic",
                 "bright", "default", "normal", "on",
                 "black", "red", "green", "yellow",
                 "blue", "cyan", "magenta", "white",
@@ -88,7 +91,7 @@ static void list_options(lua_state& lua, const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool print_value(bool describe, const char* key, bool list=false)
+static bool print_value(bool describe, const char* key, bool compat, bool list=false)
 {
     const setting* setting = settings::find(key);
     if (setting == nullptr)
@@ -104,7 +107,7 @@ static bool print_value(bool describe, const char* key, bool list=false)
                     puts("");
                 else
                     printed = true;
-                ret = print_value(describe, pair.name.c_str()) && ret;
+                ret = print_value(describe, pair.name.c_str(), compat) && ret;
             }
             return ret;
         }
@@ -132,22 +135,24 @@ static bool print_value(bool describe, const char* key, bool list=false)
     if (setting->get_type() == setting::type_enum)
         printf("     Options: %s\n", ((setting_enum*)setting)->get_options());
     else if (setting->get_type() == setting::type_color)
-        printf("      Syntax: 'sgr SGR_params' or '[underline bright] color on [bright] color'\n");
-
+        printf("      Syntax: [bold italic underline reverse] [bright] color on [bright] color\n");
 
     str<> value;
-    setting->get_descriptive(value);
+    setting->get_descriptive(value, compat);
     printf("       Value: %s\n", value.c_str());
 
     const char* long_desc = setting->get_long_desc();
     if (long_desc != nullptr && *long_desc)
         printf("\n%s\n", setting->get_long_desc());
 
+    if (setting->get_type() == setting::type_color)
+        printf("\nVisit https://chrisant996.github.io/clink/clink.html#color-settings\nfor details on setting colors.\n");
+
     return true;
 }
 
 //------------------------------------------------------------------------------
-static bool print_keys(bool describe, bool details, const char* prefix=nullptr)
+static bool print_keys(bool describe, bool details, bool compat, const char* prefix=nullptr)
 {
     size_t prefix_len = prefix ? strlen(prefix) : 0;
 
@@ -184,7 +189,7 @@ static bool print_keys(bool describe, bool details, const char* prefix=nullptr)
                 }
                 else
                 {
-                    next->get_descriptive(value);
+                    next->get_descriptive(value, compat);
                     col2 = value.c_str();
                 }
                 printf("%-*s  %s\n", longest, name, col2);
@@ -196,7 +201,7 @@ static bool print_keys(bool describe, bool details, const char* prefix=nullptr)
 }
 
 //------------------------------------------------------------------------------
-static bool set_value_impl(const char* key, const char* value)
+static bool set_value_impl(const char* key, const char* value, bool compat)
 {
     setting* setting = settings::find(key);
     if (setting == nullptr)
@@ -206,7 +211,7 @@ static bool set_value_impl(const char* key, const char* value)
         {
             bool ret = true;
             for (const auto& pair : migrated_settings)
-                ret = set_value_impl(pair.name.c_str(), pair.value.c_str()) && ret;
+                ret = set_value_impl(pair.name.c_str(), pair.value.c_str(), compat) && ret;
             return ret;
         }
 
@@ -228,16 +233,16 @@ static bool set_value_impl(const char* key, const char* value)
     }
 
     str<> result;
-    setting->get_descriptive(result);
+    setting->get_descriptive(result, compat);
     printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
     return true;
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(const char* key, char** argv=nullptr, int32 argc=0)
+static bool set_value(const char* key, bool compat, char** argv=nullptr, int32 argc=0)
 {
     if (!argc)
-        return set_value_impl(key, nullptr);
+        return set_value_impl(key, nullptr, compat);
 
     str<> value;
     for (int32 c = argc; c--;)
@@ -248,7 +253,7 @@ static bool set_value(const char* key, char** argv=nullptr, int32 argc=0)
         argv++;
     }
 
-    return set_value_impl(key, value.c_str());
+    return set_value_impl(key, value.c_str(), compat);
 }
 
 //------------------------------------------------------------------------------
@@ -260,6 +265,7 @@ static void print_help()
         "-d, --describe",   "Show descriptions of settings (instead of values).",
         "-i, --info",       "Show detailed info for each setting when '*' is used.",
         "-h, --help",       "Shows this help text.",
+        "-C, --compat",     "Print backward-compatible color setting values.",
         nullptr
     };
 
@@ -274,7 +280,11 @@ static void print_help()
         "\n"
         "If 'setting_name' ends with '*' then it is a prefix, and all settings\n"
         "matching the prefix are listed.  The --info flag includes detailed info\n"
-        "for each listed setting.");
+        "for each listed setting.\n"
+        "\n"
+        "The --compat flag selects backward-compatible mode when printing color setting\n"
+        "values.  This is only needed when the output from the command will be used as\n"
+        "input to an older version that doesn't support newer color syntax.");
 }
 
 //------------------------------------------------------------------------------
@@ -286,14 +296,16 @@ int32 set(int32 argc, char** argv)
         { "list", no_argument, nullptr, 'l' },
         { "describe", no_argument, nullptr, 'd' },
         { "info", no_argument, nullptr, 'i' },
+        { "compat", no_argument, nullptr, 'C' },
         {}
     };
 
     bool complete = false;
     bool describe = false;
     bool details = false;
+    bool compat = false;
     int32 i;
-    while ((i = getopt_long(argc, argv, "+?hldi", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?hldiC", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -303,6 +315,7 @@ int32 set(int32 argc, char** argv)
         case 'l': complete = true;  break;
         case 'd': describe = true;  break;
         case 'i': details = true;   break;
+        case 'C': compat = true;    break;
         }
     }
 
@@ -316,8 +329,8 @@ int32 set(int32 argc, char** argv)
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
     // Load the settings from disk.
-    str<280> settings_file;
-    str<280> default_settings_file;
+    str_moveable settings_file;
+    str_moveable default_settings_file;
     app_context::get()->get_settings_path(settings_file);
     app_context::get()->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
@@ -328,6 +341,12 @@ int32 set(int32 argc, char** argv)
     prompt_filter prompt_filter(lua);
     host_load_app_scripts(lua);
     lua.load_scripts();
+
+    // Load the clink.customprompt module so its settings are available.
+    str_moveable customprompt;
+    if (!os::get_env("CLINK_CUSTOMPROMPT", customprompt))
+        g_customprompt.get(customprompt);
+    lua.activate_clinkprompt_module(customprompt.c_str());
 
     // List or set Clink's settings.
     if (complete)
@@ -343,24 +362,24 @@ int32 set(int32 argc, char** argv)
     switch (argc)
     {
     case 0:
-        return (print_keys(describe, false) != true);
+        return (print_keys(describe, false, compat) != true);
 
     case 1:
         if (argv[0][0] && argv[0][strlen(argv[0]) - 1] == '*')
         {
             str<> prefix(argv[0]);
             prefix.truncate(prefix.length() - 1);
-            return (print_keys(describe, details, prefix.c_str()) != true);
+            return (print_keys(describe, details, compat, prefix.c_str()) != true);
         }
-        return (print_value(describe, argv[0]) != true);
+        return (print_value(describe, argv[0], compat) != true);
 
     default:
         if (_stricmp(argv[1], "clear") == 0)
         {
-            if (set_value(argv[0]))
+            if (set_value(argv[0], compat))
                 return settings::save(settings_file.c_str()), 0;
         }
-        else if (set_value(argv[0], argv + 1, argc - 1))
+        else if (set_value(argv[0], compat, argv + 1, argc - 1))
             return settings::save(settings_file.c_str()), 0;
     }
 

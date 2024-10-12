@@ -46,6 +46,10 @@ extern setting_bool g_lua_strict;
 /// -show:  print(settings.get("color.doskey", true))   -- Can print "bold cyan"
 static int32 get(lua_State* state)
 {
+    // WARNING!
+    // WARNING!     Update the override in config.cpp if you change this!
+    // WARNING!
+
     const char* key = checkstring(state, 1);
     if (!key)
         return 0;
@@ -75,7 +79,13 @@ static int32 get(lua_State* state)
         {
             str<> value;
             if (lua_isboolean(state, 2) && lua_toboolean(state, 2))
-                setting->get_descriptive(value);
+            {
+                // The third parameter is undocumented; it's a compatibility
+                // kludge intended for internal use.
+                // -arg:    compat:boolean (defaults to true when nil)
+                const bool compat = (!lua_isboolean(state, 3) || lua_toboolean(state, 3));
+                setting->get_descriptive(value, compat);
+            }
             else
                 setting->get(value);
             lua_pushlstring(state, value.c_str(), value.length());
@@ -117,9 +127,9 @@ static int32 get(lua_State* state)
 /// string value.
 /// </ul>
 ///
-/// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
-/// that, it was necessary to separately use <code>clink set</code> to update
-/// the settings file.
+/// <strong>Note:</strong> Beginning in Clink v1.2.31 this updates the
+/// settings file.  Prior to that, it was necessary to separately use
+/// <code>clink set</code> to update the settings file.
 static int32 set(lua_State* state)
 {
     const char* key = checkstring(state, 1);
@@ -159,6 +169,42 @@ static int32 set(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  settings.clear
+/// -ver:   1.7.0
+/// -arg:   name:string
+/// Clears the <span class="arg">name</span> Clink setting and reverts to its
+/// default value.
+///
+/// <strong>Note:</strong> This updates the settings file.
+static int32 clear(lua_State* state)
+{
+    const char* key = checkstring(state, 1);
+    if (!key)
+        return 0;
+
+    setting* setting = settings::find(key);
+    if (setting == nullptr)
+        return 0;
+
+    // Update the settings file and the in-memory setting.
+    setting->set();
+    settings::sandboxed_set_setting(key, nullptr);
+
+    if (lua_state::is_interpreter() &&
+        strcmp(setting->get_name(), "terminal.emulation") == 0)
+    {
+        terminal_out* out = get_lua_terminal_output();
+        if (out)
+        {
+            out->end();
+            out->begin();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int32 parse_ini(lua_State* state)
 {
     const char* file = checkstring(state, 1);
@@ -166,30 +212,58 @@ static int32 parse_ini(lua_State* state)
         return 0;
 
     std::vector<settings::setting_name_value> pairs;
+    int32 num_preferred = 0;
 
     if (!settings::parse_ini(file, pairs))
         return 0;
 
     lua_createtable(state, int32(pairs.size()), 0);
 
+    uint32 num = 0;
     for (uint32 i = 0; i < pairs.size(); ++i)
     {
         const auto& el = pairs[i];
+        const bool set = (el.section == settings::section::set);
+        const bool clear = (el.section == settings::section::clear);
+        if (!set && !clear)
+        {
+            ++num_preferred;
+            continue;
+        }
 
-        lua_createtable(state, el.clear ? 1 : 2, 0);
+        lua_createtable(state, clear ? 1 : 2, 0);
 
         lua_pushliteral(state, "name");
         lua_pushlstring(state, el.name.c_str(), el.name.length());
         lua_rawset(state, -3);
 
-        if (!el.clear)
+        if (!clear)
         {
             lua_pushliteral(state, "value");
             lua_pushlstring(state, el.value.c_str(), el.value.length());
             lua_rawset(state, -3);
         }
 
-        lua_rawseti(state, -2, i + 1);
+        lua_rawseti(state, -2, ++num);
+    }
+
+    if (num_preferred)
+    {
+        lua_pushliteral(state, "preferred");
+        lua_createtable(state, 0, num_preferred);
+
+        for (uint32 i = 0; i < pairs.size(); ++i)
+        {
+            const auto& el = pairs[i];
+            if (el.section != settings::section::preferred)
+                continue;
+
+            lua_pushlstring(state, el.name.c_str(), el.name.length());
+            lua_pushlstring(state, el.value.c_str(), el.value.length());
+            lua_rawset(state, -3);
+        }
+
+        lua_rawset(state, -3);
     }
 
     return 1;
@@ -201,11 +275,13 @@ static int32 overlay(lua_State* state)
     if (!lua_istable(state, 1))
         return luaL_argerror(state, 1, "must be a table");
 
+    const bool in_memory_only = lua_toboolean(state, 2);
+
     std::vector<settings::setting_name_value> pairs;
 
-    for (int32 i = 1, n = int32(lua_rawlen(state, 2)); i <= n; ++i)
+    for (int32 i = 1, n = int32(lua_rawlen(state, 1)); i <= n; ++i)
     {
-        lua_rawgeti(state, -1, i);
+        lua_rawgeti(state, 1, i);
 
         if (!lua_istable(state, -1))
         {
@@ -238,13 +314,13 @@ static int32 overlay(lua_State* state)
         }
         lua_pop(state, 1);
 
-        pairs.emplace_back(name, value, !value/*clear*/);
+        pairs.emplace_back(name, value, value ? settings::section::set : settings::section::clear);
 
         lua_pop(state, 1);
     }
 
     settings::overlay(pairs);
-    bool ok = settings::sandboxed_overlay(pairs);
+    const bool ok = in_memory_only || settings::sandboxed_overlay(pairs);
 
     lua_pushboolean(state, ok == true);
     return 1;
@@ -394,6 +470,75 @@ static int32 add(lua_State* state)
     }
 
     lua_pushboolean(state, 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  settings.parsecolor
+/// -ver:   1.7.0
+/// -arg:   color:string
+/// -ret:   string | nil
+/// Parses a color setting string <span class="arg">color</span> into an ANSI
+/// color code, suitable for use in an ANSI escape sequence.  The string is
+/// parsed the same way as <code>clink set color.foo <em>string</em></code>
+/// would parse it.
+///
+/// Returns the ANSI color code if successful, or nil if unsuccessful.
+///
+/// See <a href="#color-settings">Color Settings</a> for more information.
+/// -show:  settings.parsecolor("bold")                 -- Returns "0;1"
+/// -show:  settings.parsecolor("underline green")      -- Returns "0;4;32"
+/// -show:  settings.parsecolor("bri whi on blu")       -- Returns "0;97;44"
+static int32 api_parse_color(lua_State* state)
+{
+    const char* color = checkstring(state, 1);
+    if (!color)
+        return 0;
+
+    str<64> out;
+    if (!settings::parse_color(color, out))
+        return 0;
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  settings.formatcolor
+/// -ver:   1.7.0
+/// -arg:   code:string
+/// -arg:   [compat:boolean]
+/// -ret:   string | nil
+/// Formats an ANSI color code <span class="arg">code</span> into a color
+/// setting string suitable for use with <code>clink set color.foo</code>.
+///
+/// Returns the formatted color setting string if successful, or nil if
+/// unsuccessful.
+///
+/// If <span class="arg">compat</span> is true, then the formatted string uses
+/// the most compatible format.  This can be useful if the string needs to be
+/// usable by older versions of Clink.
+///
+/// See <a href="#color-settings">Color Settings</a> for more information.
+/// -show:  -- Fully defined color codes:
+/// -show:  settings.formatcolor("0;1")                 -- Returns "bold"
+/// -show:  settings.formatcolor("0;4;32")              -- Returns "underline green"
+/// -show:  settings.formatcolor("0;97;44")             -- Returns "bright white on blue"
+/// -show:  -- Partial color codes:
+/// -show:  settings.formatcolor("1")                   -- Returns "sgr 1"
+/// -show:  settings.formatcolor("4;32")                -- Returns "sgr 4;32"
+/// -show:  settings.formatcolor("97;44")               -- Returns "sgr 97;44"
+static int32 api_format_color(lua_State* state)
+{
+    const char* code = checkstring(state, 1);
+    bool compat = lua_toboolean(state, 2);
+    if (!code)
+        return 0;
+
+    str<64> out;
+    settings::format_color(code, out, compat);
+
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 
@@ -579,8 +724,11 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "get",         &get },
         { 1, "set",         &set },
         { 1, "add",         &add },
+        { 1, "clear",       &clear },
+        { 1, "parsecolor",  &api_parse_color },
+        { 1, "formatcolor", &api_format_color },
         // UNDOCUMENTED; internal use only.
-        { -1, "load",       &load },
+        { 1, "load",        &load },
         { 1, "list",        &list },
         { 1, "match",       &match },
         { 1, "_parseini",   &parse_ini },

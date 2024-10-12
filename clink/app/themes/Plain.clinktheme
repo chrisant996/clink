@@ -1,0 +1,39 @@
+# Name: Plain
+
+[set]
+color.arg=bold
+color.arginfo=italic
+color.argmatcher=bold
+color.cmd=bold
+color.cmdredir=bold
+color.cmdsep=bold
+color.comment_row=bright white on bright black
+color.common_match_prefix=bold underline
+color.description=
+color.doskey=bold
+color.envvars=bold
+color.escapetilde=bold
+color.executable=bold
+color.filtered=bold
+color.flag=
+color.hidden=
+color.histexpand=reverse
+color.horizscroll=reverse
+color.input=default
+color.interact=bold
+color.message=reverse
+color.modmark=
+color.popup=#cccccc on #222222
+color.popup_border=
+color.popup_desc=default on #222222
+color.popup_footer=
+color.popup_header=
+color.popup_select=
+color.popup_selectdesc=
+color.prompt=bold
+color.readonly=
+color.selected_completion=reverse
+color.selection=white bold on bright black
+color.suggestion=#666666
+color.unexpected=
+color.unrecognized=

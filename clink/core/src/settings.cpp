@@ -33,6 +33,7 @@ static setting_map* g_setting_map = nullptr;
 static loaded_settings_map* g_loaded_settings = nullptr;
 static loaded_settings_map* g_custom_defaults = nullptr;
 static str_moveable* g_last_file = nullptr;
+static str_moveable* g_last_default_file = nullptr;
 
 bool g_force_break_on_error = false;
 
@@ -222,8 +223,7 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
     fclose(in);
     data[size] = '\0';
 
-    enum section { ignore, set, clear };
-    section section = ignore;
+    settings::section section = settings::section::ignore;
     bool valid = false;
 
     // Split at new lines.
@@ -247,25 +247,31 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
         {
             if (_strnicmp(line_data, "[set]", 5) == 0)
             {
-                section = set;
+                section = settings::section::set;
                 valid = true;
             }
             else if (_strnicmp(line_data, "[clear]", 7) == 0)
             {
-                section = clear;
+                section = settings::section::clear;
+                valid = true;
+            }
+            else if (_strnicmp(line_data, "[preferred]", 11) == 0)
+            {
+                section = settings::section::preferred;
                 valid = true;
             }
             else
-                section = ignore;
+                section = settings::section::ignore;
             continue;
         }
 
-        if (section == ignore)
+        if (section == settings::section::ignore)
             continue;
 
         // 'key = value'?
         char* value = nullptr;
-        if (section == set)
+        if (section == settings::section::set ||
+            section == settings::section::preferred)
         {
             value = strchr(line_data, '=');
             if (value == nullptr)
@@ -279,14 +285,14 @@ static bool parse_ini(FILE* in, std::vector<settings::setting_name_value>& out)
             while (*value && isspace(*value))
                 ++value;
 
-            out.emplace_back(key.c_str(), value);
+            out.emplace_back(key.c_str(), value, section);
         }
         else
         {
             key = line_data;
             key.trim();
 
-            out.emplace_back(key.c_str(), nullptr, true/*clear*/);
+            out.emplace_back(key.c_str(), nullptr, section);
         }
     }
 
@@ -523,8 +529,15 @@ bool load(const char* file, const char* default_file)
     {
         if (!g_last_file)
             g_last_file = new str_moveable;
-        if (file != g_last_file->c_str())
+        if (!g_last_file->equals(file))
             *g_last_file = file;
+    }
+    if (default_file)
+    {
+        if (!g_last_default_file)
+            g_last_default_file = new str_moveable;
+        if (!g_last_default_file->equals(default_file))
+            *g_last_default_file = default_file;
     }
 
     load_custom_defaults(default_file);
@@ -685,10 +698,15 @@ void overlay(const std::vector<setting_name_value>& overlay)
 {
     for (const auto& o : overlay)
     {
-        if (o.clear)
+        switch (o.section)
+        {
+        case section::clear:
             clear_setting(o.name.c_str());
-        else
+            break;
+        case section::set:
             set_setting(o.name.c_str(), o.value.c_str());
+            break;
+        }
     }
 }
 
@@ -714,18 +732,48 @@ void get_settings_file(str_base& out)
 }
 
 //------------------------------------------------------------------------------
+class rollback_settings_values
+{
+public:
+    rollback_settings_values()
+    {
+        str_moveable value;
+        for (auto& i : get_map())
+        {
+            setting* iter = i.second;
+            iter->get(value);
+            m_restore.emplace(iter->get_name(), std::move(value));
+        }
+    }
+    ~rollback_settings_values()
+    {
+        for (auto& r : m_restore)
+        {
+            setting* iter = settings::find(r.first.c_str());
+            assert(iter); // (It was there a moment ago!)
+            if (iter)
+                iter->set(r.second.c_str());
+        }
+    }
+private:
+    std::map<std::string, str_moveable> m_restore;
+};
+
+//------------------------------------------------------------------------------
 bool sandboxed_set_setting(const char* name, const char* value)
 {
     if (!g_last_file)
         return false;
     const char* file = g_last_file->c_str();
+    const char* default_file = g_last_default_file ? g_last_default_file->c_str() : nullptr;
 
     // Swap real settings data structures with new temporary versions.
-    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
-    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+    loaded_settings_map tmp_loaded_map;
+    rollback_settings_values rb_settings;
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
     // Load settings.
-    return (load(file) &&
+    return (load(file, default_file) &&
             set_setting(name, value) &&
             save(file));
 }
@@ -739,21 +787,466 @@ bool sandboxed_overlay(const std::vector<setting_name_value>& overlay)
     if (!g_last_file)
         return false;
     const char* file = g_last_file->c_str();
+    const char* default_file = g_last_default_file ? g_last_default_file->c_str() : nullptr;
 
     // Swap real settings data structures with new temporary versions.
-    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
-    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+    loaded_settings_map tmp_loaded_map;
+    rollback_settings_values rb_settings;
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, &tmp_loaded_map);
 
-    if (!load(file))
+    if (!load(file, default_file))
         return false;
 
     for (const auto& o : overlay)
-        set_setting(o.name.c_str(), o.value.c_str());
+    {
+        switch (o.section)
+        {
+        case section::set:
+            set_setting(o.name.c_str(), o.value.c_str());
+            break;
+        case section::clear:
+            clear_setting(o.name.c_str());
+            break;
+        }
+    }
 
     if (!save(file))
         return false;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+static bool imatch3(const str<16>& a, const char* b)
+{
+    return _strnicmp(a.c_str(), b, 3) == 0;
+}
+
+//------------------------------------------------------------------------------
+static int32 parsehexdigit(char c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return 10 + (c - 'a');
+    if (c >= 'A' && c <= 'F')
+        return 10 + (c - 'A');
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+static int32 parsehex(const str<16>& a)
+{
+    if (*a.c_str() != '#')
+        return -1;
+
+    const uint32 len = a.length();
+    if (len != 4 && len != 7)
+        return -1;
+
+    const bool double_digits = (len == 4);
+    int32 value = 0;
+    for (const char* s = a.c_str() + 1; *s; ++s)
+    {
+        int32 h = parsehexdigit(*s);
+        if (h < 0)
+            return -1;
+        value <<= 4;
+        value += h;
+        if (double_digits)
+        {
+            value <<= 4;
+            value += h;
+        }
+    }
+
+    return value;
+}
+
+//------------------------------------------------------------------------------
+static const char* const color_names[] = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" };
+
+//------------------------------------------------------------------------------
+bool parse_color(const char* value, str_base& out)
+{
+    if (!value || !*value)
+    {
+        out.clear();
+        return true;
+    }
+
+    str<> code;
+    str<16> token;
+    int32 fg = -1;
+    int32 bg = -1;
+    bool fg_hex = false;
+    bool bg_hex = false;
+    int32 bold = -1;
+    int32 bright = -1;
+    int32 underline = -1;
+    bool italic = false;
+    bool reverse = false;
+    int32* pcolor = &fg;
+    bool* phex = &fg_hex;
+    bool saw_default = false;
+    bool first_part = true;
+
+    str_iter part;
+    str_tokeniser parts(value, " ");
+    while (parts.next(part))
+    {
+        token.clear();
+        token.concat(part.get_pointer(), part.length());
+
+        if (first_part && (strcmpi(token.c_str(), "ansi") == 0 ||
+                           strcmpi(token.c_str(), "sgr") == 0))
+        {
+            if (parts.next(part))
+                code.concat(part.get_pointer(), part.length());
+            if (parts.next(part)) // too many tokens
+                return false;
+            out = code.c_str();
+            return true;
+        }
+
+        first_part = false;
+
+        if (strcmpi(token.c_str(), "on") == 0)
+        {
+            if (pcolor == &bg) return false; // can't use "on" more than once
+            if (!*phex && bright > 0)
+                fg += 8;
+            pcolor = &bg;
+            phex = &bg_hex;
+            bright = -1;
+            saw_default = false;
+            continue;
+        }
+
+        if (imatch3(token, "normal") || imatch3(token, "default"))
+        {
+            if (*pcolor >= 0) return false; // disallow combinations
+            if (saw_default) return false;
+            *pcolor = -1;
+            *phex = false;
+            saw_default = true;
+            continue;
+        }
+
+        if (imatch3(token, "bold") || imatch3(token, "nobold") || imatch3(token, "dim"))
+        {
+            if (pcolor == &bg) return false; // bold only applies to fg
+            if (bold >= 0) return false; // disallow combinations
+            bold = imatch3(token, "bold");
+            continue;
+        }
+
+        if (imatch3(token, "bright"))
+        {
+            if (*phex) return false; // disallow combinations
+            if (bright >= 0) return false; // disallow combinations
+            bright = imatch3(token, "bright");
+            continue;
+        }
+
+        if (imatch3(token, "underline") || imatch3(token, "nounderline"))
+        {
+            if (pcolor == &bg) return false; // only applies to fg
+            if (underline >= 0) return false; // disallow combinations
+            // "nounderline" is still recognized for backward compatibility,
+            // but it has no effect.
+            underline = imatch3(token, "underline");
+            continue;
+        }
+
+        if (imatch3(token, "italic"))
+        {
+            if (pcolor == &bg) return false; // only applies to fg
+            if (italic) return false; // disallow combinations
+            italic = true;
+            continue;
+        }
+
+        if (imatch3(token, "reverse"))
+        {
+            if (reverse) return false; // disallow combinations
+            reverse = true;
+            continue;
+        }
+
+        const int32 h = parsehex(token);
+        if (h >= 0)
+        {
+            if (*pcolor >= 0) return false; // disallow combinations
+            if (bright >= 0) return false; // disallow combinations
+            *pcolor = h;
+            *phex = true;
+            continue;
+        }
+
+        int32 i;
+        for (i = 0; i < sizeof_array(color_names); i++)
+            if (_strnicmp(token.c_str(), color_names[i], 3) == 0)
+            {
+                if (*pcolor >= 0) return false; // disallow combinations
+                *pcolor = i;
+                break;
+            }
+
+        if (i >= sizeof_array(color_names)) // unrecognized keyword
+            return false;
+    }
+
+    if (*pcolor >= 0 && !*phex && bright > 0)
+        (*pcolor) += 8;
+
+    code = "0";
+
+    if (reverse)
+        code << ";7";
+
+    if (bold > 0)
+        code << ";1";
+    else if (bold == 0)
+        code << ";22";
+
+    if (italic)
+        code << ";3";
+
+    if (underline > 0)
+        code << ";4";
+
+    if (fg >= 0)
+    {
+        if (fg_hex)
+        {
+            char r[10];
+            char g[10];
+            char b[10];
+            itoa(fg & 0xff, b, 10);
+            fg >>= 8;
+            itoa(fg & 0xff, g, 10);
+            fg >>= 8;
+            itoa(fg, r, 10);
+            code << ";38;2;" << r << ";" << g << ";" << b;
+        }
+        else
+        {
+            if (fg >= 8)
+                fg += 60 - 8;
+            fg += 30;
+            char buf[10];
+            itoa(fg, buf, 10);
+            code << ";" << buf;
+        }
+    }
+
+    if (bg >= 0)
+    {
+        if (bg_hex)
+        {
+            char r[10];
+            char g[10];
+            char b[10];
+            itoa(bg & 0xff, b, 10);
+            bg >>= 8;
+            itoa(bg & 0xff, g, 10);
+            bg >>= 8;
+            itoa(bg, r, 10);
+            code << ";48;2;" << r << ";" << g << ";" << b;
+        }
+        else
+        {
+            if (bg >= 8)
+                bg += 60 - 8;
+            bg += 40;
+            char buf[10];
+            itoa(bg, buf, 10);
+            code << ";" << buf;
+        }
+    }
+
+    out = code.c_str();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static int32 int_from_str_iter(const str_iter& iter)
+{
+    int32 x = 0;
+    int32 c = iter.length();
+    for (const char* p = iter.get_pointer(); c--; p++)
+    {
+        if (*p < '0' || *p > '9')
+            return -1;
+        x *= 10;
+        x += *p - '0';
+    }
+    return x;
+}
+
+//------------------------------------------------------------------------------
+static bool parse24bit(str_tokeniser& parts, str_iter& part, char* buf)
+{
+    if (!parts.next(part)) return false;
+    if (int_from_str_iter(part) != 2) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 r = int_from_str_iter(part);
+    if (r < 0 || r > 255) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 g = int_from_str_iter(part);
+    if (g < 0 || g > 255) return false;
+
+    if (!parts.next(part)) return false;
+    const int32 b = int_from_str_iter(part);
+    if (b < 0 || b > 255) return false;
+
+    sprintf(buf, "#%02.2X%02.2X%02.2X", r, g, b);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool strip_if_ends_with(str_base& s, const char* suffix, uint32 len)
+{
+    if (s.length() > len && strcmp(s.c_str() + s.length() - len, suffix) == 0)
+    {
+        s.truncate(s.length() - len);
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void format_color(const char* const color, str_base& out, const bool compat)
+{
+    out.clear();
+    if (!color || !*color)
+        return;
+
+    enum { reset_token, reverse_token, bold_token, italic_token, underline_token, fg_token, bg_token, nomore_tokens };
+    int32 expected = reset_token;
+    str_iter part;
+    str_tokeniser parts(color, ";");
+
+    bool any_fg = false;
+    while (parts.next(part))
+    {
+        int32 x = int_from_str_iter(part);
+        if (x < 0)
+        {
+nope:
+            out.clear();
+            out << "sgr " << color;
+            return;
+        }
+
+        if (expected >= nomore_tokens)
+            goto nope;
+        if (expected == reset_token && x != 0)
+            goto nope;
+
+        if (x == 0)
+        {
+            if (expected > reset_token) goto nope;
+            expected = reset_token + 1;
+        }
+        else if (x == 7)
+        {
+            if (expected > reverse_token) goto nope;
+            expected = reverse_token + 1;
+            out << "reverse ";
+        }
+        else if (x == 1 || x == 22)
+        {
+            if (expected > bold_token) goto nope;
+            expected = bold_token + 1;
+            out << ((x == 1) ? "bold " : "nobold ");
+        }
+        else if (x == 3)
+        {
+            if (expected > italic_token) goto nope;
+            expected = italic_token + 1;
+            out << "italic ";
+        }
+        else if (x == 4)
+        {
+            if (expected > underline_token) goto nope;
+            expected = underline_token + 1;
+            out << "underline ";
+        }
+        else if ((x >= 30 && x < 38) || (x >= 90 && x < 98))
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            if (x >= 90)
+            {
+                out << "bright ";
+                x -= 60;
+            }
+            out << color_names[x - 30] << " ";
+            any_fg = true;
+        }
+        else if (x == 38 && !compat)
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            char buf[10];
+            if (!parse24bit(parts, part, buf)) goto nope;
+            out << buf << " ";
+            any_fg = true;
+        }
+        else if (x == 39)
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            out << "default ";
+            any_fg = true;
+        }
+        else if ((x >= 40 && x < 48) || (x >= 100 && x < 108))
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            if (!any_fg)
+                out << "default ";
+            out << "on ";
+            x -= 10;
+            if (x >= 90)
+            {
+                out << "bright ";
+                x -= 60;
+            }
+            out << color_names[x - 30] << " ";
+        }
+        else if (x == 48 && !compat)
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            char buf[10];
+            if (!parse24bit(parts, part, buf)) goto nope;
+            if (!any_fg)
+                out << "default ";
+            out << "on ";
+            out << buf << " ";
+        }
+        else if (x == 49)
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            out << "on default ";
+        }
+        else
+            goto nope;
+    }
+
+    if (out.empty() || out.equals("default on default "))
+        out = "default";
+    else if (!strip_if_ends_with(out, "default on default ", 19))
+        strip_if_ends_with(out, "on default ", 11);
+
+    while (out.length() && out.c_str()[out.length() - 1] == ' ')
+        out.truncate(out.length() - 1);
 }
 
 } // namespace settings
@@ -1024,12 +1517,6 @@ const char* setting_enum::next_option(const char* option)
 }
 
 //------------------------------------------------------------------------------
-static bool imatch3(const str<16>& a, const char* b)
-{
-    return _strnicmp(a.c_str(), b, 3) == 0;
-}
-
-//------------------------------------------------------------------------------
 setting_color::setting_color(const char* name, const char* short_desc, const char* default_value)
 : setting_str(name, short_desc, default_value)
 {
@@ -1046,167 +1533,9 @@ setting_color::setting_color(const char* name, const char* short_desc, const cha
 }
 
 //------------------------------------------------------------------------------
-static const char* const color_names[] = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" };
-
-//------------------------------------------------------------------------------
 bool setting_color::parse(const char* value, store<const char*>& out)
 {
-    if (!value || !*value)
-    {
-        out.value.clear();
-        return true;
-    }
-
-    str<> code;
-    str<16> token;
-    int32 fg = -1;
-    int32 bg = -1;
-    int32 bold = -1;
-    int32 bright = -1;
-    int32 underline = -1;
-    int32* pcolor = &fg;
-    bool saw_default = false;
-    bool first_part = true;
-
-    str_iter part;
-    str_tokeniser parts(value, " ");
-    while (parts.next(part))
-    {
-        token.clear();
-        token.concat(part.get_pointer(), part.length());
-
-        if (first_part && (strcmpi(token.c_str(), "ansi") == 0 ||
-                           strcmpi(token.c_str(), "sgr") == 0))
-        {
-            if (parts.next(part))
-                code.concat(part.get_pointer(), part.length());
-            if (parts.next(part)) // too many tokens
-                return false;
-            out.value = code.c_str();
-            return true;
-        }
-
-        first_part = false;
-
-        if (strcmpi(token.c_str(), "on") == 0)
-        {
-            if (pcolor == &bg) return false; // can't use "on" more than once
-            if (bright > 0)
-                fg += 8;
-            pcolor = &bg;
-            bright = -1;
-            saw_default = false;
-            continue;
-        }
-
-        if (imatch3(token, "normal") || imatch3(token, "default"))
-        {
-            if (*pcolor >= 0) return false; // disallow combinations
-            if (saw_default) return false;
-            *pcolor = -1;
-            saw_default = true;
-            continue;
-        }
-
-        if (imatch3(token, "bold") || imatch3(token, "nobold") || imatch3(token, "dim"))
-        {
-            if (pcolor == &bg) return false; // bold only applies to fg
-            if (bold >= 0) return false; // disallow combinations
-            bold = imatch3(token, "bold");
-            continue;
-        }
-
-        if (imatch3(token, "bright"))
-        {
-            if (bright >= 0) return false; // disallow combinations
-            bright = imatch3(token, "bright");
-            continue;
-        }
-
-        if (imatch3(token, "underline") || imatch3(token, "nounderline"))
-        {
-            if (pcolor == &bg) return false; // only applies to fg
-            if (underline >= 0) return false; // disallow combinations
-            underline = imatch3(token, "underline");
-            continue;
-        }
-
-        int32 i;
-        for (i = 0; i < sizeof_array(color_names); i++)
-            if (_strnicmp(token.c_str(), color_names[i], 3) == 0)
-            {
-                if (*pcolor >= 0) return false; // disallow combinations
-                *pcolor = i;
-                break;
-            }
-
-        if (i >= sizeof_array(color_names)) // unrecognized keyword
-            return false;
-    }
-
-    if (*pcolor >= 0 && bright > 0)
-        (*pcolor) += 8;
-
-    code = "0";
-
-    if (bold > 0)
-        code << ";1";
-    else if (bold == 0)
-        code << ";22";
-
-    if (underline > 0)
-        code << ";4";
-    else if (underline == 0)
-        code << ";24";
-
-    if (fg >= 0)
-    {
-        if (fg >= 8)
-            fg += 60 - 8;
-        fg += 30;
-        char buf[10];
-        itoa(fg, buf, 10);
-        code << ";" << buf;
-    }
-
-    if (bg >= 0)
-    {
-        if (bg >= 8)
-            bg += 60 - 8;
-        bg += 40;
-        char buf[10];
-        itoa(bg, buf, 10);
-        code << ";" << buf;
-    }
-
-    out.value = code.c_str();
-    return true;
-}
-
-//------------------------------------------------------------------------------
-static int32 int_from_str_iter(const str_iter& iter)
-{
-    int32 x = 0;
-    int32 c = iter.length();
-    for (const char* p = iter.get_pointer(); c--; p++)
-    {
-        if (*p < '0' || *p > '9')
-            return -1;
-        x *= 10;
-        x += *p - '0';
-    }
-    return x;
-}
-
-//------------------------------------------------------------------------------
-static bool strip_if_ends_with(str_base& s, const char* suffix, uint32 len)
-{
-    if (s.length() > len && strcmp(s.c_str() + s.length() - len, suffix) == 0)
-    {
-        s.truncate(s.length() - len);
-        return true;
-    }
-    return false;
+    return settings::parse_color(value, out.value);
 }
 
 //------------------------------------------------------------------------------
@@ -1219,103 +1548,9 @@ void setting_color::set()
 }
 
 //------------------------------------------------------------------------------
-void setting_color::get_descriptive(str_base& out) const
+void setting_color::get_descriptive(str_base& out, bool compat) const
 {
     str<> tmp;
     get(tmp);
-
-    out.clear();
-    if (tmp.empty())
-        return;
-
-    enum { reset_token, bold_token, underline_token, fg_token, bg_token, nomore_tokens };
-    int32 expected = reset_token;
-    str_iter part;
-    str_tokeniser parts(tmp.c_str(), ";");
-
-    bool any_fg = false;
-    while (parts.next(part))
-    {
-        int32 x = int_from_str_iter(part);
-        if (x < 0)
-        {
-nope:
-            out.clear();
-            out << "sgr " << tmp.c_str();
-            return;
-        }
-
-        if (expected >= nomore_tokens)
-            goto nope;
-        if (expected == reset_token && x != 0)
-            goto nope;
-
-        if (x == 0)
-        {
-            if (expected > reset_token) goto nope;
-            expected = reset_token + 1;
-        }
-        else if (x == 1 || x == 22)
-        {
-            if (expected > bold_token) goto nope;
-            expected = bold_token + 1;
-            out << ((x == 1) ? "bold " : "nobold ");
-        }
-        else if (x == 4 || x == 24)
-        {
-            if (expected > underline_token) goto nope;
-            expected = underline_token + 1;
-            out << ((x == 4) ? "underline " : "nounderline ");
-        }
-        else if ((x >= 30 && x < 38) || (x >= 90 && x < 98))
-        {
-            if (expected > fg_token) goto nope;
-            expected = fg_token + 1;
-            if (x >= 90)
-            {
-                out << "bright ";
-                x -= 60;
-            }
-            out << color_names[x - 30] << " ";
-            any_fg = true;
-        }
-        else if (x == 39)
-        {
-            if (expected > fg_token) goto nope;
-            expected = fg_token + 1;
-            out << "default ";
-            any_fg = true;
-        }
-        else if ((x >= 40 && x < 48) || (x >= 100 && x < 108))
-        {
-            if (expected > bg_token) goto nope;
-            expected = bg_token + 1;
-            if (!any_fg)
-                out << "default ";
-            out << "on ";
-            x -= 10;
-            if (x >= 90)
-            {
-                out << "bright ";
-                x -= 60;
-            }
-            out << color_names[x - 30] << " ";
-        }
-        else if (x == 49)
-        {
-            if (expected > bg_token) goto nope;
-            expected = bg_token + 1;
-            out << "on default ";
-        }
-        else
-            goto nope;
-    }
-
-    if (out.empty() || out.equals("default on default "))
-        out = "default";
-    else if (!strip_if_ends_with(out, "default on default ", 19))
-        strip_if_ends_with(out, "on default ", 11);
-
-    while (out.length() && out.c_str()[out.length() - 1] == ' ')
-        out.truncate(out.length() - 1);
+    settings::format_color(tmp.c_str(), out, compat);
 }

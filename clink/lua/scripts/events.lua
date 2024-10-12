@@ -28,11 +28,31 @@ local function log_cost(tick, c)
 end
 
 --------------------------------------------------------------------------------
+local function ipairs_active(list)
+    local i = 0
+    local _, clinkprompt_module
+    if clink.getclinkprompt then
+        _, _, clinkprompt_module = clink.getclinkprompt()
+    end
+    return function()
+        i = i + 1
+        local value = list[i]
+        while value and value._clinkprompt_module and value._clinkprompt_module ~= clinkprompt_module do
+            i = i + 1
+            value = list[i]
+        end
+        if value then
+            return i, value
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it.
 function clink._send_event(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, c in ipairs(callbacks) do
+        for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 c.func(...)
@@ -48,7 +68,7 @@ end
 function clink._send_event_string_out(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, c in ipairs(callbacks) do
+        for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 local s = c.func(...)
@@ -68,7 +88,7 @@ end
 function clink._send_event_cancelable(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, c in ipairs(callbacks) do
+        for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 local cancel = (c.func(...) == false)
@@ -89,7 +109,7 @@ end
 function clink._send_event_cancelable_string_inout(event, string)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, c in ipairs(callbacks) do
+        for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 local s,continue = c.func(string)
@@ -127,8 +147,16 @@ local function _add_event_callback(event, func)
     end
 
     if callbacks[func] == nil then
-        callbacks[func] = true -- This prevents duplicates.
-        table.insert(callbacks, { func=func })
+        -- Prevent duplicates.
+        callbacks[func] = true
+        -- Some events are added before clink._get_clinkprompt_wrapping_module
+        -- is available, but they are internal events and can never be inside
+        -- a clinkprompt module, so the module should be nil anyway.
+        local wrapping_module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+        -- Add entry.
+        local entry = { func=func }
+        entry._clinkprompt_module = wrapping_module
+        table.insert(callbacks, entry)
     end
 end
 
@@ -375,7 +403,7 @@ function clink._send_onfiltermatches_event(matches, completion_type, filename_co
     local ret = nil
     local callbacks = clink._event_callbacks["onfiltermatches"]
     if callbacks ~= nil then
-        for _, c in ipairs(callbacks) do
+        for _, c in ipairs_active(callbacks) do
             if c and c.func then
                 local tick = os.clock()
                 local m = c.func(matches, completion_type, filename_completion_desired)
@@ -434,7 +462,7 @@ local function collect_event_src(t, event)
     local any_cost
     local any_events
     local longest = 24
-    for _,c in ipairs(callbacks) do
+    for _,c in ipairs(callbacks) do -- ALL callbacks, even for inactive clinkprompt modules.
         if c.func then
             local info = debug.getinfo(c.func, 'S')
             if not clink._is_internal_script(info.short_src) then

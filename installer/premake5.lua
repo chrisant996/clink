@@ -23,6 +23,19 @@ local release_manifest = {
     "clink_dll_x*.pdb",
     "_default_settings",
     "_default_inputrc",
+    "Dracula.clinktheme",
+    "Enhanced Defaults.clinktheme",
+    "Plain.clinktheme",
+    "Solarized Dark.clinktheme",
+    "Solarized Light.clinktheme",
+    "agnoster.clinkprompt",
+    "Antares.clinkprompt",
+    "bureau.clinkprompt",
+    "darkblood.clinkprompt",
+    "Headline.clinkprompt",
+    "jonathan.clinkprompt",
+    "oh-my-posh.clinkprompt",
+    "pure.clinkprompt",
 }
 
 if include_arm64 then
@@ -64,6 +77,24 @@ end
 local function print_reverse(msg, prolog)
     prolog = prolog or "\n"
     print(prolog .. "\x1b[0;7m " .. msg .. " \x1b[m")
+end
+
+--------------------------------------------------------------------------------
+local function path_normalize(pathname, quote)
+    local pre = ""
+    pathname = pathname:gsub("\"", "")
+    pathname = pathname:gsub("/", "\\")
+    local pre = pathname:match("^\\") or ""
+    pathname = pathname:sub(#pre + 1)
+    pathname = pathname:gsub("\\+", "\\")
+    pathname = pre .. pathname
+    if quote then
+        if pathname:find("\\$") then
+            pathname = pathname .. "\\"
+        end
+        pathname = '"' .. pathname .. '"'
+    end
+    return pathname
 end
 
 --------------------------------------------------------------------------------
@@ -115,7 +146,8 @@ local function mkdir(dir)
         return
     end
 
-    local ret = exec("md " .. path.translate(dir), true)
+    dir = path_normalize(dir, true)
+    local ret = exec("md " .. dir, true)
     if not ret then
         error("Failed to create directory '" .. dir .. "' ("..tostring(ret)..")", 2)
     end
@@ -127,24 +159,26 @@ local function rmdir(dir)
         return
     end
 
-    return exec("rd /q /s " .. path.translate(dir), true)
+    dir = path_normalize(dir, true)
+    return exec("rd /q /s " .. dir, true)
 end
 
 --------------------------------------------------------------------------------
 local function unlink(file)
-    return exec("del /q " .. path.translate(file), true)
+    file = path_normalize(file, true)
+    return exec("del /q " .. file, true)
 end
 
 --------------------------------------------------------------------------------
 local function copy(src, dest)
-    src = path.translate(src)
-    dest = path.translate(dest)
+    src = path_normalize(src, true)
+    dest = path_normalize(dest, true)
     return exec("copy /y " .. src .. " " .. dest, true)
 end
 
 --------------------------------------------------------------------------------
 local function rename(src, dest)
-    src = path.translate(src)
+    src = path_normalize(src, true)
     return exec("ren " .. src .. " " .. dest, true)
 end
 
@@ -280,21 +314,27 @@ newaction {
 
         -- Create the output directory.
         local dest = path.getabsolute(".build/nsis").."/"
+        rmdir(dest.."themes/")
         rmdir(dest)
         mkdir(dest)
+        mkdir(dest.."themes/")
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
             local from = src
+            local to = dest
             if mask == "CHANGES" or mask == "LICENSE" or mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask:match(".*%.clinktheme") or mask:match(".*%.clinkprompt") then
+                from = code_dir.."clink/app/themes/"
+                to = dest.."themes/"
             elseif mask == "clink*.ico" then
                 from = code_dir.."clink/app/resources/"
             elseif mask:sub(-4) == ".pdb" then
                 from = nil
             end
             if from then
-                copy(from .. mask, dest)
+                copy(from .. mask, to)
             end
         end
 
@@ -437,13 +477,13 @@ newaction {
             print_reverse("Run Clink tests")
         end
         if x86_ok then
-            test_exe = path.translate(src.."/clink_test_x86.exe")
+            test_exe = path_normalize(src.."/clink_test_x86.exe")
             if not exec(test_exe) then
                 error("x86 tests failed")
             end
         end
         if x64_ok then
-            test_exe = path.translate(src.."/clink_test_x64.exe")
+            test_exe = path_normalize(src.."/clink_test_x64.exe")
             if not exec(test_exe) then
                 error("x64 tests failed")
             end
@@ -514,16 +554,21 @@ newaction {
         local clink_suffix = "clink."..version
         local dest = target_dir..clink_suffix.."/"
         mkdir(dest)
+        mkdir(dest.."themes/")
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
             local from = src
+            local to = dest
             if mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask:match(".*%.clinktheme") or mask:match(".*%.clinkprompt") then
+                from = code_dir.."clink/app/themes/"
+                to = dest.."themes/"
             elseif mask:match("clink.*%.ico") then
                 from = code_dir.."clink/app/resources/"
             end
-            copy(from .. mask, dest)
+            copy(from .. mask, to)
         end
 
         -- Generate documentation.

@@ -1,0 +1,55 @@
+# Name: Dracula
+
+# Adapted from https://github.com/dracula/fish
+# MIT License
+
+# Dracula Color Palette
+#
+# Foreground:   f8f8f2
+# Selection:    44475a
+# Comment:      6272a4
+# Red:          ff5555
+# Orange:       ffb86c
+# Yellow:       f1fa8c
+# Green:        50fa7b
+# Purple:       bd93f9
+# Cyan:         8be9fd
+# Pink:         ff79c6
+
+[set]
+color.arg=#bd93f9
+color.arginfo=italic #bd93f9
+color.argmatcher=#50fa7b
+color.cmd=#ff79c6
+color.cmdredir=#f8f8f2
+color.cmdsep=#ffb86c
+color.comment_row=#6272a4
+color.common_match_prefix=#8be9fd
+color.description=#6272a4
+color.doskey=#8be9fd
+color.envvars=#50fa7b
+color.escapetilde=#50fa7b
+color.executable=#8be9fd
+color.filtered=#f8f8f2
+color.flag=#ffb86c
+color.hidden=#6272a4
+color.histexpand=#50fa7b
+color.horizscroll=reverse
+color.input=#f8f8f2
+color.interact=bold
+color.message=#6272a4
+color.modmark=#bd93f9
+color.popup=#f8f8f2 on #292a35
+color.popup_border=#6272a4 on #292a35
+color.popup_desc=#8be9fd on #292a35
+color.popup_footer=#f8f8f2 on #292a35
+color.popup_header=#ffb86c on #292a35
+color.popup_select=#f8f8f2 on #44475a
+color.popup_selectdesc=#8be9fd on #44475a
+color.prompt=#f8f8f2
+color.readonly=#bd93f9
+color.selected_completion=#f8f8f2 on #44475a
+color.selection=default on #44475a
+color.suggestion=#6272a4
+color.unexpected=#ff5555
+color.unrecognized=#ff5555

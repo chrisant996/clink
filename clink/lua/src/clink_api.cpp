@@ -33,6 +33,7 @@
 #include <lib/rl_integration.h>
 #include <lib/suggestions.h>
 #include <lib/slash_translation.h>
+#include <lib/host_callbacks.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
@@ -2148,6 +2149,17 @@ static int32 release_updater_mutex(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 get_scripts_path(lua_State* state)
+{
+    int32 id;
+    host_context context;
+    host_get_app_context(id, context);
+
+    lua_pushstring(state, context.scripts.c_str());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int32 is_break_on_error(lua_State* state)
 {
     extern bool g_force_break_on_error;
@@ -2348,6 +2360,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_show_update_prompt",    &show_update_prompt },
         { 0,    "_acquire_updater_mutex", &acquire_updater_mutex },
         { 0,    "_release_updater_mutex", &release_updater_mutex },
+        { 0,    "_get_scripts_path",      &get_scripts_path },
         { 1,    "_is_break_on_error",     &is_break_on_error },
 #if defined(DEBUG) && defined(_MSC_VER)
         { 0,    "last_allocation_number", &last_allocation_number },

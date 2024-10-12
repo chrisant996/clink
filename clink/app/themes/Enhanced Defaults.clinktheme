@@ -1,0 +1,37 @@
+# Name: Enhanced Defaults
+
+[set]
+color.arg                       = bold
+color.arginfo                   = sgr 38;5;172
+color.argmatcher                = sgr 1;38;5;40
+color.cmd                       = bold
+color.cmdredir                  = sgr 38;5;172
+color.cmdsep                    = sgr 38;5;135
+color.comment_row               = sgr 38;5;87;48;5;18
+color.common_match_prefix       =
+color.description               = sgr 38;5;39
+color.doskey                    = sgr 1;38;5;75
+color.executable                = sgr 1;38;5;33
+color.filtered                  = bold
+color.flag                      = sgr 38;5;117
+color.hidden                    = sgr 38;5;160
+color.histexpand                = sgr 97;48;5;55
+color.horizscroll               = sgr 38;5;16;48;5;30
+color.input                     = sgr 38;5;214
+color.interact                  = bold
+color.message                   = default
+color.modmark                   =
+color.popup                     =
+color.popup_border              =
+color.popup_desc                =
+color.popup_footer              =
+color.popup_header              =
+color.popup_select              =
+color.popup_selectdesc          =
+color.prompt                    =
+color.readonly                  = sgr 38;5;28
+color.selected_completion       = sgr 7
+color.selection                 = sgr 38;5;16;48;5;179
+color.suggestion                =
+color.unexpected                = default
+color.unrecognized              = sgr 38;5;203

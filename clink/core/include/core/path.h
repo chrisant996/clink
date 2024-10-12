@@ -35,6 +35,7 @@ bool        tilde_expand(str_moveable& in_out, bool use_appdata_local=false);
 bool        is_rooted(const char* path);
 bool        is_root(const char* path);
 bool        is_device(const char* path);
+bool        is_unix_hidden(const char* in, bool Ignore_trailing_separators=false);
 bool        join(const char* lhs, const char* rhs, str_base& out);
 bool        append(str_base& out, const char* rhs);
 void        maybe_strip_last_separator(str_base& out);

@@ -561,6 +561,7 @@ static bool parse_rule(str_iter& iter, str<16>& value, color_rule& rule)
         assert(rlind >= 0);
         free(s_colors[rlind]);
         s_colors[rlind] = copy_str(value.c_str(), value.length());
+        s_colored_stats = true;
         assert(s_colors[rlind]);
         if (rlind == C_SOCK)
             s_completion_prefix = value.c_str();
@@ -957,7 +958,7 @@ bool get_match_color(const char* f, match_type type, str_base& out)
     }
 
     // Fall back to LS_COLORS behaviors when needed.
-    if (s_color_rules.empty())
+    if (!s_colored_stats)
         return get_ls_color(f, type, out);
 
     // This should already have undergone tilde expansion.

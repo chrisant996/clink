@@ -555,6 +555,72 @@ void dump_lua_stack(lua_State* L, int32 pos)
 #endif
 
 //------------------------------------------------------------------------------
+void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
+{
+#ifdef DEBUG
+    const int32 top = lua_gettop(L);
+#endif
+
+    lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_activate_clinkprompt_module");
+    lua_rawget(L, -2);
+    if (!lua_isnil(L, -1))
+    {
+        if (module)
+            lua_pushstring(L, module);
+        pcall(L, module ? 1 : 0, 1);
+        const char* err = lua_isstring(L, -1) ? lua_tostring(L, -1) : nullptr;
+        if (err)
+        {
+            assert(*err);
+            puts(err);
+        }
+    }
+    lua_pop(L, 2);
+
+    assert(lua_gettop(L) == top);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::load_colortheme_in_memory(lua_State* L, const char* theme)
+{
+    if (!theme || !*theme)
+        return;
+
+#ifdef DEBUG
+    const int32 top = lua_gettop(L);
+#endif
+
+    lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_load_colortheme_in_memory");
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 1);
+    }
+    else
+    {
+        lua_pushstring(L, theme);
+        pcall(L, 1, 0);
+    }
+    lua_pop(L, 1);
+
+    assert(lua_gettop(L) == top);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::activate_clinkprompt_module(const char* module)
+{
+    activate_clinkprompt_module(get_state(), module);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::load_colortheme_in_memory(const char* theme)
+{
+    load_colortheme_in_memory(get_state(), theme);
+}
+
+//------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.  Arguments can be
 // passed by passing nargs equal to the number of pushed arguments.  On success,
 // the stack is left with nret return values.  On error, the stack is popped to

@@ -21,6 +21,7 @@
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
 #include <lib/intercept.h>
 #include <lib/clink_ctrlevent.h>
 #include <lib/clink_rl_signal.h>
@@ -67,6 +68,15 @@ static setting_bool g_filter_prompt(
     "clink.promptfilter",
     "Enable prompt filtering by Lua scripts",
     true);
+
+setting_str g_customprompt(
+    "clink.customprompt",
+    "A .clinkprompt file to use for the prompt",
+    ".clinkprompt files contain customizations for the prompt.  Setting this to the\n"
+    "name of a .clinkprompt file causes it to be loaded and used for displaying the\n"
+    "prompt.  If a CLINK_CUSTOMPROMPT environment variable is set, its value\n"
+    "supersedes this setting.",
+    "");
 
 enum prompt_spacing { normal, compact, sparse, MAX };
 static setting_enum s_prompt_spacing(
@@ -163,7 +173,7 @@ static setting_bool g_debug_heap_stats(
 
 extern setting_bool g_autosuggest_enable;
 extern setting_bool g_classify_words;
-extern setting_color g_color_prompt;
+extern setting_bool g_debug_log_terminal;
 extern setting_bool g_prompt_async;
 extern setting_enum g_expand_mode;
 
@@ -877,6 +887,8 @@ skip_errorlevel:
     // Delete Lua if the script path has changed, to reinitialize Lua.
     if (m_lua && m_lua->is_script_path_changed())
     {
+force_reload_lua:
+        clear_force_reload_scripts();
         delete m_prompt_filter;
         delete m_suggester;
         delete m_lua;
@@ -936,7 +948,44 @@ skip_errorlevel:
     {
         adjust_prompt_spacing();
 
+        // Remind if logging is on.
+        {
+            static bool s_remind = true;
+            if (s_remind)
+            {
+                s_remind = false;
+                if (g_debug_log_terminal.get())
+                {
+                    str<> s;
+                    s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
+                            "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
+                            "\n", g_debug_log_terminal.get_name());
+                    g_printer->print(s.c_str(), s.length());
+                }
+            }
+        }
+
+        // Maybe load a color theme into memory.  Load it BEFORE activating a
+        // clinkprompt module, so the module can see the current colors in
+        // effect during its onactivate callback.
+        str_moveable colortheme;
+        if (os::get_env("CLINK_COLORTHEME", colortheme))
+            lua.load_colortheme_in_memory(colortheme.c_str());
+
+        // Activate a clinkprompt module BEFORE sending onbeginedit, so the
+        // module can receive the initial onbeginedit.
+        str_moveable customprompt;
+        if (!os::get_env("CLINK_CUSTOMPROMPT", customprompt))
+            g_customprompt.get(customprompt);
+        lua.activate_clinkprompt_module(customprompt.c_str());
+
         lua.send_event("onbeginedit");
+
+        if (is_force_reload_scripts())
+        {
+            init_scripts = true;
+            goto force_reload_lua;
+        }
     }
 
     // Send onprovideline event.
@@ -1148,7 +1197,7 @@ skip_errorlevel:
                 //      the temporary file.
                 // NOTE:  %errorlevel% will expand to 0 unless command
                 // extensions were enabled at the time of the error.
-                out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+                out.format(" set clink_dummy_capture_env=& echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
             }
             resolved = true;
             ret = true;

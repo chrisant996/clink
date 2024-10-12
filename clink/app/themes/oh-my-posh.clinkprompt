@@ -1,0 +1,130 @@
+-- This integrates the Oh-My-Posh prompt program with Clink.
+--
+-- Find Oh-My-Posh here:  https://ohmyposh.dev/docs/installation/windows
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- IF YOU NEED TO MAKE CHANGES, INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE
+-- COPY.  BUT YOU SHOULDN'T NEED TO MAKE CHANGES TO THIS FILE.
+
+-- To activate the Oh-My-Posh prompt, run:
+--      clink config prompt use oh-my-posh
+--
+-- Once it's active, you can configure the oh-my-posh prompt.
+--
+-- If your oh-my-posh .exe file is not in the system PATH, then you can tell
+-- Clink where to find it via:
+--      clink set ohmyposh.exepath c:\myposh\oh-my-posh.exe
+--
+-- To tell the oh-my-posh program which prompt theme to use, set the full path
+-- to the prompt theme you want to use.  For example:
+--      clink set ohmyposh.theme c:\myposh\aliens.omp.json
+--
+-- To deactivate the oh-my-posh prompt, run:
+--      clink config prompt clear
+
+
+--------------------------------------------------------------------------------
+-- Integration with oh-my-posh.
+
+settings.add("ohmyposh.theme", "", "The oh-my-posh theme to use.")
+settings.add("ohmyposh.exepath", "", "Path to oh-my-posh program.", "Specifies where to find the oh-my-posh program.\nCan be used when it isn't on the system search PATH.") -- luacheck: no max line length
+
+local orig_theme = settings.get("ohmyposh.theme")
+local orig_exepath = settings.get("ohmyposh.exepath")
+
+local orig_space_binding = rl.getbinding(' ')
+local norm = "\x1b[m"
+local reverse = "\x1b[7m"
+
+local function get_omp_exe()
+    local exe = settings.get("ohmyposh.exepath")
+    if not exe or exe == "" then
+        exe ="oh-my-posh.exe"
+    end
+    return exe
+end
+
+local function make_omp_cmdline(command)
+    local theme = settings.get("ohmyposh.theme") or ""
+    if theme ~= "" then
+        theme = ' -c "' .. theme .. '"'
+    end
+    return string.format('2>nul "%s" %s %s', get_omp_exe(), command, theme)
+end
+
+local init_script = os.getenv("CLINK_OHMYPOSH_INIT_SCRIPT")
+if init_script then
+    loadfile(init_script)()
+else
+    os.setenv("POSH_THEME", "")
+    local cmdline = make_omp_cmdline('init cmd')
+    log.info("oh-my-posh init command:  "..cmdline)
+
+    local script
+    local f = io.popen(cmdline)
+    if f then
+        script = f:read("*a")
+    end
+
+    if not script or script == "" then
+        local err = reverse .. "Need help installing oh-my-posh?  Visit here:" .. norm .. "\n"
+        err = err .. "https://ohmyposh.dev/docs/installation/windows\n\n"
+        err = err .. string.format('Unable to get oh-my-posh script from "%s".', get_omp_exe())
+        return err
+    else
+        load(script)()
+    end
+end
+
+clink.onbeginedit(function()
+    local theme = settings.get("ohmyposh.theme")
+    local exepath = settings.get("ohmyposh.exepath")
+    local reload
+    if orig_theme ~= theme then
+        print("The 'ohmyposh.theme' setting changed; reloading Clink...")
+        reload = true
+    elseif  orig_exepath ~= exepath then
+        print("The 'ohmyposh.exepath' setting changed; reloading Clink...")
+        reload = true
+    end
+    if reload then
+        orig_theme = theme
+        orig_exepath = exepath
+        clink.reload()
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- Support for .clinkprompt module.
+
+local omp_space_binding = rl.getbinding(' ')
+
+local function onactivate()
+    rl.setbinding(' ', omp_space_binding)   -- Set omp SPACE binding.
+end
+
+local function ondeactivate()
+    rl.setbinding(' ', orig_space_binding)  -- Restore original SPACE binding.
+end
+
+local function demo()
+    local primary = io.popen(make_omp_cmdline('print primary')):read("*a")
+    local right = io.popen(make_omp_cmdline('print right')):read("*a")
+    local primary_width = console.cellcount(primary:gsub("^.*\n", ""))
+    local right_width = console.cellcount(right)
+    if right_width <= 0 or primary_width + right_width + 4 >= console.getwidth() then
+        right = ""
+    else
+        right = string.rep(" ", console.getwidth() - primary_width - right_width) .. right
+    end
+    clink.print(primary .. right)
+end
+
+local exports =
+{
+    onactivate = onactivate,
+    ondeactivate = ondeactivate,
+    demo = demo,
+}
+
+return exports

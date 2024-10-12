@@ -991,7 +991,7 @@ extern "C" void dbgcheckfinal()
 }
 
 #ifdef USE_HEAP_STATS
-// TODO: report heap stats
+// FUTURE: report heap stats
 #endif // USE_HEAP_STATS
 
 _Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR

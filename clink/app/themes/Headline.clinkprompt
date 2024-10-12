@@ -1,0 +1,683 @@
+-- Based on Headline ZSH Prompt (https://github.com/Moarram/headline).
+-- MIT License.
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- Features:
+--
+--  - Color matched separator line.
+--  - Dynamic information line.
+--  - Git status info.
+--  - Customizable colors, styles, and symbols.
+--  - Can optionally show the exit code from the last command.
+--  - Can optionally show the current time.
+--  - Can optionally configure the right side prompt.
+--  - Can optionally show the pushd stack depth (only possible if the PROMPT
+--    environment variable starts with $+).
+
+-- Headline does not need a special font.  However, if you want to show icons
+-- in the prompt, then you'll need a Nerd Fonts patched font.  There are many
+-- to choose from at https://nerdfonts.com.  Two of my favorites are "FiraCode
+-- Nerd Font" and "JetBrainsMono Nerd Font".
+
+-- To activate this prompt, run `clink config prompt use headline`.
+-- To deactivate it, run `clink config prompt clear`.
+
+-- Customize this prompt by setting Lua variables in a Lua script:
+--
+--      HEADLINE = HEADLINE or {}
+--
+--      HEADLINE.STATUS_TO_STATUS = " " -- Spaces between git status indicators.
+--      HEADLINE.DO_ERR = true          -- Show last exit code.
+--      HEADLINE.DO_CLOCK = true        -- Show a clock.
+--      HEADLINE.CLOCK_FORMAT = "%a %R" -- Format clock as "Wed 23:15".
+--      HEADLINE.STYLE_DEFAULT = "\027[48;2;24;24;24m"  -- Dark gray background for info text.
+--
+-- The full list of configuration Lua variables in the HEADLINE table is
+-- listed further below, including their default values.  To configure the
+-- prompt, it's best to create a separate .lua file with your configurations
+-- (like the example above), rather than editing this file (and if you want to
+-- edit this file, be sure to make a copy and edit the copy, not the original
+-- file, as any edits to the original file will be lost when Clink is updated).
+
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF HEADLINE PROMPT
+
+
+-- luacheck: no max line length
+-- luacheck: push
+-- luacheck: no unused
+
+-- Formatting aliases
+-- (add more if you need)
+local reset='\27[0m'
+local reset_fg='\27[39;22m'
+local reset_bg='\27[49m'
+local bold='\27[1m'
+local faint='\27[2m'
+local italic='\27[3m'
+local underline='\27[4m'
+local invert='\27[7m'
+-- ...
+
+-- Foreground color aliases
+local black='\27[30m'
+local red='\27[31m'
+local green='\27[32m'
+local yellow='\27[33m'
+local blue='\27[34m'
+local magenta='\27[35m'
+local cyan='\27[36m'
+local white='\27[37m'
+local light_black='\27[90m'
+local light_red='\27[91m'
+local light_green='\27[92m'
+local light_yellow='\27[93m'
+local light_blue='\27[94m'
+local light_magenta='\27[95m'
+local light_cyan='\27[96m'
+local light_white='\27[97m'
+
+-- Background color aliases
+local black_back='\27[40m'
+local red_back='\27[41m'
+local green_back='\27[42m'
+local yellow_back='\27[43m'
+local blue_back='\27[44m'
+local magenta_back='\27[45m'
+local cyan_back='\27[46m'
+local white_back='\27[47m'
+local light_black_back='\27[100m'
+local light_red_back='\27[101m'
+local light_green_back='\27[102m'
+local light_yellow_back='\27[103m'
+local light_blue_back='\27[104m'
+local light_magenta_back='\27[105m'
+local light_cyan_back='\27[106m'
+local light_white_back='\27[107m'
+
+-- Custom colors
+-- REF: https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
+-- orange_yellow='\033[38;5;214m' # example 8-bit color
+-- orange_brown='\033[38;2;191;116;46m' # example rgb color
+-- ...
+
+-- luacheck: pop
+
+--[[ N/A
+# Flags
+! [ -z "$SSH_TTY$SSH_CONNECTION$SSH_CLIENT" ]
+IS_SSH=$? # 0=true, 1=false
+--]]
+
+local function sgr(code)
+    return "\27["..(code or "").."m"
+end
+local function orwhennil(value, valueifnil)
+    if value == nil then return valueifnil else return value end
+end
+local function iif(expr, iftrue, iffalse)
+    if expr then return iftrue else return iffalse end
+end
+
+local headline_git_branch, headline_git_status, _headline_part, ellipsify_left, sum, evalcmd
+local has24bitcolor = string.find(" winterminal wezterm winconsolev2 ", " "..clink.getansihost().." ") and true or false
+
+
+
+--------------------------------------------------------------------------------
+-- Customization
+-- Use the following variables to customize the theme
+
+-- luacheck: globals HEADLINE
+HEADLINE=HEADLINE or {}
+
+-- Info sources (these must be functions that return a string to be shown)
+HEADLINE.USER_CMD=HEADLINE.USER_CMD or function() local u=os.getenv('USERNAME') return (u ~= os.getenv('DEFAULT_USER')) and u or '' end
+HEADLINE.HOST_CMD=HEADLINE.HOST_CMD or function() return (os.getenv('VIRTUAL_ENV') or os.getenv('COMPUTERNAME') or ''):gsub('%..*$', '') end
+HEADLINE.PATH_CMD=HEADLINE.PATH_CMD or function() return rl.collapsetilde(os.getcwd()) or '' end
+HEADLINE.GIT_BRANCH_CMD=HEADLINE.GIT_BRANCH_CMD or function() return headline_git_branch() or '' end
+HEADLINE.GIT_STATUS_CMD=HEADLINE.GIT_STATUS_CMD or function() return headline_git_status() or '' end
+
+-- Info symbols (optional)
+HEADLINE.ICONS=orwhennil(HEADLINE.ICONS, false)
+HEADLINE.USER_PREFIX=HEADLINE.ICONS and " " or ''
+HEADLINE.HOST_PREFIX=HEADLINE.ICONS and "󰇅 " or ''
+HEADLINE.PATH_PREFIX=HEADLINE.ICONS and " " or ''
+HEADLINE.BRANCH_PREFIX=HEADLINE.ICONS and " " or ''
+HEADLINE.STATUS_PREFIX=HEADLINE.STATUS_PREFIX or ''
+
+-- Info joints
+HEADLINE.USER_BEGIN=''
+--[[ N/A
+if [ $IS_SSH = 0 ]; then HEADLINE_USER_BEGIN='=> '; fi
+--]]
+HEADLINE.USER_TO_HOST=HEADLINE.USER_TO_HOST or ' @ '
+HEADLINE.HOST_TO_PATH=HEADLINE.HOST_TO_PATH or ': '
+HEADLINE.PATH_TO_BRANCH=HEADLINE.PATH_TO_BRANCH or ' | ' -- only used when no padding between <path> and <branch>
+HEADLINE.PATH_TO_PAD=HEADLINE.PATH_TO_PAD or '' -- used if padding between <path> and <branch>
+HEADLINE.PAD_TO_BRANCH=HEADLINE.PAD_TO_BRANCH or '' -- used if padding between <path> and <branch>
+HEADLINE.BRANCH_TO_STATUS=HEADLINE.BRANCH_TO_STATUS or ' ['
+HEADLINE.STATUS_TO_STATUS=HEADLINE.STATUS_TO_STATUS or '' -- between each status section, consider "]"
+HEADLINE.STATUS_END=HEADLINE.STATUS_END or ']'
+
+-- Info padding character
+HEADLINE.PAD_CHAR=HEADLINE.PAD_CHAR or ' ' -- repeated for space between <path> and <branch>
+
+-- Info truncation symbol
+HEADLINE.TRUNC_PREFIX=HEADLINE.TRUNC_PREFIX or '...' -- shown where <path> or <branch> is truncated, consider "…"
+
+-- Info styles
+HEADLINE.STYLE_DEFAULT_4BITCOLOR=orwhennil(HEADLINE.STYLE_DEFAULT_4BITCOLOR, not has24bitcolor)
+HEADLINE.STYLE_DEFAULT=HEADLINE.STYLE_DEFAULT or '' -- style applied to entire info line
+HEADLINE.STYLE_JOINT=HEADLINE.STYLE_JOINT or light_black
+HEADLINE.STYLE_USER=HEADLINE.STYLE_USER or iif(HEADLINE.STYLE_DEFAULT_4BITCOLOR, bold..red, sgr(settings.parsecolor('#DA625A'):gsub('^0;', '')))
+HEADLINE.STYLE_HOST=HEADLINE.STYLE_HOST or iif(HEADLINE.STYLE_DEFAULT_4BITCOLOR, bold..yellow, sgr(settings.parsecolor('#E7C94C'):gsub('^0;', '')))
+HEADLINE.STYLE_PATH=HEADLINE.STYLE_PATH or iif(HEADLINE.STYLE_DEFAULT_4BITCOLOR, bold..blue, sgr(settings.parsecolor('#77AEFC'):gsub('^0;', '')))
+HEADLINE.STYLE_BRANCH=HEADLINE.STYLE_BRANCH or iif(HEADLINE.STYLE_DEFAULT_4BITCOLOR, bold..cyan, sgr(settings.parsecolor('#82D4B0'):gsub('^0;', '')))
+HEADLINE.STYLE_STATUS=HEADLINE.STYLE_STATUS or iif(HEADLINE.STYLE_DEFAULT_4BITCOLOR, bold..magenta, sgr(settings.parsecolor('#DA73B8'):gsub('^0;', '')))
+
+-- Separator options
+HEADLINE.LINE_MODE=HEADLINE.LINE_MODE or "on" -- on|auto|off (whether to print the line above the prompt)
+
+-- Separator character
+HEADLINE.LINE_CHAR=HEADLINE.LINE_CHAR or '_' -- repeated for line above information, consider '▁'
+
+-- Separator styles
+HEADLINE.STYLE_JOINT_LINE=HEADLINE.STYLE_JOINT_LINE or HEADLINE.STYLE_JOINT
+HEADLINE.STYLE_USER_LINE=HEADLINE.STYLE_USER_LINE or HEADLINE.STYLE_USER
+HEADLINE.STYLE_HOST_LINE=HEADLINE.STYLE_HOST_LINE or HEADLINE.STYLE_HOST
+HEADLINE.STYLE_PATH_LINE=HEADLINE.STYLE_PATH_LINE or HEADLINE.STYLE_PATH
+HEADLINE.STYLE_BRANCH_LINE=HEADLINE.STYLE_BRANCH_LINE or HEADLINE.STYLE_BRANCH
+HEADLINE.STYLE_STATUS_LINE=HEADLINE.STYLE_STATUS_LINE or HEADLINE.STYLE_STATUS
+
+-- Git branch characters
+HEADLINE.GIT_HASH=HEADLINE.GIT_HASH or ':' -- hash prefix to distinguish from branch
+
+-- Git status characters
+-- To set individual status styles use reset..__STYLE__.."X"
+HEADLINE.GIT_STAGED=HEADLINE.GIT_STAGED or '+'
+HEADLINE.GIT_CHANGED=HEADLINE.GIT_CHANGED or '!'
+HEADLINE.GIT_UNTRACKED=HEADLINE.GIT_UNTRACKED or '?'
+HEADLINE.GIT_BEHIND=HEADLINE.GIT_BEHIND or '↓'
+HEADLINE.GIT_AHEAD=HEADLINE.GIT_AHEAD or '↑'
+-- HEADLINE.GIT_DIVERGED=HEADLINE.GIT_DIVERGED or '↕'
+HEADLINE.GIT_STASHED=HEADLINE.GIT_STASHED or '*'
+HEADLINE.GIT_CONFLICTS=HEADLINE.GIT_CONFLICTS or '✘' -- consider "" or red..""
+HEADLINE.GIT_CLEAN=HEADLINE.GIT_CLEAN or '' -- consider "✓"
+
+-- Git status options
+HEADLINE.DO_GIT_STATUS_COUNTS=orwhennil(HEADLINE.DO_GIT_STATUS_COUNTS, false) -- set "true" to show count of each status
+HEADLINE.DO_GIT_STATUS_OMIT_ONE=orwhennil(HEADLINE.DO_GIT_STATUS_OMIT_ONE, false) -- set "true" to omit the status number when it is 1
+HEADLINE.STATUS_ORDER=HEADLINE.STATUS_ORDER or 'STAGED CHANGED UNTRACKED BEHIND AHEAD DIVERGED STASHED CONFLICTS'
+
+-- Prompt (these can be strings or functions)
+HEADLINE.PROMPT=HEADLINE.PROMPT or function() return os.isuseradmin() and '# ' or '$ ' end
+HEADLINE.RPROMPT=HEADLINE.RPROMPT or ''
+HEADLINE.TPROMPT=HEADLINE.TPROMPT or nil -- Falls back to HEADLINE.PROMPT when nil.
+
+-- Clock (prepends to RPROMPT)
+HEADLINE.DO_CLOCK=orwhennil(HEADLINE.DO_CLOCK, false) -- whether to show the clock
+HEADLINE.STYLE_CLOCK=HEADLINE.STYLE_CLOCK or faint
+HEADLINE.CLOCK_FORMAT=HEADLINE.CLOCK_FORMAT or '%I:%M:%S %p' -- consider "%+" for full date (see strftime docs)
+-- strftime docs available at https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/strftime-wcsftime-strftime-l-wcsftime-l
+HEADLINE.CLOCK_SEPARATOR=HEADLINE.CLOCK_SEPARATOR or ''
+
+-- Pushd stack depth (prepends to PATH; only possible if the PROMPT environment
+-- variable begins with $+)
+HEADLINE.DO_PUSHD_DEPTH=orwhennil(HEADLINE.DO_PUSHD_DEPTH, false) -- set "true" to show count of pushd stack depth
+
+-- Exit code
+HEADLINE.DO_ERR=orwhennil(HEADLINE.DO_ERR, false) -- whether to show non-zero exit codes above prompt
+--[[ N/A
+HEADLINE_DO_ERR_INFO=true # whether to show exit code meaning as well
+--]]
+HEADLINE.ERR_PREFIX=HEADLINE.ERR_PREFIX or '→ '
+HEADLINE.STYLE_ERR=HEADLINE.STYLE_ERR or italic..faint
+
+--------------------------------------------------------------------------------
+
+
+
+-- Local variables
+local _HEADLINE_LINE_OUTPUT='' -- separator line
+local _HEADLINE_INFO_OUTPUT='' -- text line
+local _HEADLINE_DO_SEP=false -- whether to show divider this time
+--[[ N/A
+if [ $IS_SSH = 0 ]; then
+  _HEADLINE_DO_SEP='true' # assume it's not a fresh window
+fi
+--]]
+local _HEADLINE_LEN_REMAIN
+local _HEADLINE_INFO_LEFT
+local _HEADLINE_LINE_LEFT
+local _HEADLINE_INFO_RIGHT
+local _HEADLINE_LINE_RIGHT
+
+local _BRANCH_FROM_STATUS
+local _DETACHED_FROM_STATUS
+local _ACTION_FROM_STATUS
+
+--[[ N/A
+# Guess the exit code meaning
+headline_exit_meaning() { # (num)
+  # REF: https://tldp.org/LDP/abs/html/exitcodes.html
+  # REF: https://man7.org/linux/man-pages/man7/signal.7.html
+  # NOTE: these meanings are not standardized
+  case $1 in
+    126) echo 'Command cannot execute';;
+    127) echo 'Command not found';;
+    129) echo 'Hangup';;
+    130) echo 'Interrupted';;
+    131) echo 'Quit';;
+    132) echo 'Illegal instruction';;
+    133) echo 'Trapped';;
+    134) echo 'Aborted';;
+    135) echo 'Bus error';;
+    136) echo 'Arithmetic error';;
+    137) echo 'Killed';;
+    138) echo 'User signal 1';;
+    139) echo 'Segmentation fault';;
+    140) echo 'User signal 2';;
+    141) echo 'Pipe error';;
+    142) echo 'Alarm';;
+    143) echo 'Terminated';;
+    *) ;;
+  esac
+}
+--]]
+
+
+
+-- Git branch (or hash)
+headline_git_branch = function()
+    local ref, detached
+    if _BRANCH_FROM_STATUS then
+        ref, detached=_BRANCH_FROM_STATUS, _DETACHED_FROM_STATUS
+    else
+        ref, detached=git.getbranch()
+    end
+    if not ref then return ''
+    elseif not detached then return ref
+    else return HEADLINE.GIT_HASH..ref -- hash prefixed to distingush from branch
+    end
+end
+
+-- Git status
+local last_gitstatus
+headline_git_status = function()
+    _BRANCH_FROM_STATUS=nil
+    _DETACHED_FROM_STATUS=nil
+    _ACTION_FROM_STATUS=nil
+
+    -- Data structures
+    local order=string.explode(HEADLINE.STATUS_ORDER)
+    local totals={}
+    for _,key in ipairs(order) do
+        totals[key]=0
+    end
+
+    -- Retrieve status
+    local status=clink.promptcoroutine(function()
+        local x=git.getstatus() or {}
+        x.action = git.getaction()
+        x.ready=true
+        return x
+    end)
+    if status then
+        last_gitstatus=status
+    end
+    status=status or last_gitstatus or {}
+
+    -- Process status lines
+    totals.CONFLICTS=sum(status.conflicts)
+    totals.UNTRACKED=sum(status.untracked)
+    if status.working then
+        status.working.untracked=0 -- Omit from CHANGED.
+    end
+    totals.STAGED=sum(status.staged)
+    totals.CHANGED=sum(status.working)
+    totals.AHEAD=sum(status.ahead)
+    totals.BEHIND=sum(status.behind)
+
+    -- Check for stashes
+    if git.hasstash() then
+        totals.STASHED=git.getstashcount()
+    end
+
+    _BRANCH_FROM_STATUS=status.branch
+    _DETACHED_FROM_STATUS=status.detached
+    _ACTION_FROM_STATUS=status.action
+
+    -- Build string
+    local prefix
+    local status_str=''
+    for _,key in ipairs(order) do
+        if (totals[key] or 0) > 0 then
+            if #HEADLINE.STATUS_TO_STATUS > 0 and #status_str > 0 then -- not first iteration
+                local style_joint=reset..HEADLINE.STYLE_DEFAULT..HEADLINE.STYLE_JOINT
+                local style_status=reset..HEADLINE.STYLE_DEFAULT..HEADLINE.STYLE_STATUS
+                status_str=status_str..style_joint..HEADLINE.STATUS_TO_STATUS..style_status
+            end
+            prefix=HEADLINE["GIT_"..key]
+            if HEADLINE.DO_GIT_STATUS_COUNTS then
+                if HEADLINE.DO_GIT_STATUS_OMIT_ONE and totals[key] == 1 then
+                    status_str=status_str..prefix
+                else
+                    status_str=status_str..tostring(totals[key])..prefix
+                end
+            else
+                status_str=status_str..prefix
+            end
+        end
+    end
+
+    -- Return
+    if status_str ~= '' then
+        return status_str
+    else
+        return HEADLINE.GIT_CLEAN
+    end
+end
+
+
+
+-- # Before executing command
+-- add-zsh-hook preexec headline_preexec
+-- headline_preexec() {
+--   # TODO better way of knowing the prompt is at the top of the terminal
+--   if [[ $2 == 'clear' ]]; then
+--     _HEADLINE_DO_SEP='false'
+--   fi
+-- }
+
+-- Before prompting
+local function headline_precmd()
+    local out={}
+    local err=os.geterrorlevel()
+
+    -- Information
+    local user_str=evalcmd(HEADLINE.USER_CMD)
+    local host_str=evalcmd(HEADLINE.HOST_CMD)
+    local path_str=evalcmd(HEADLINE.PATH_CMD)
+    local status_str=evalcmd(HEADLINE.GIT_STATUS_CMD)
+    local branch_str=evalcmd(HEADLINE.GIT_BRANCH_CMD)
+
+    -- Shared variables
+    _HEADLINE_LEN_REMAIN=console.getwidth()
+    _HEADLINE_INFO_LEFT=''
+    _HEADLINE_LINE_LEFT=''
+    _HEADLINE_INFO_RIGHT=''
+    _HEADLINE_LINE_RIGHT=''
+
+    -- Git status
+    if #status_str > 0 then
+        _headline_part("JOINT", HEADLINE.STATUS_END, "right")
+        _headline_part("STATUS", HEADLINE.STATUS_PREFIX..status_str, "right")
+        _headline_part("JOINT", HEADLINE.BRANCH_TO_STATUS, "right")
+        if _HEADLINE_LEN_REMAIN < console.cellcount(HEADLINE.PAD_TO_BRANCH) + console.cellcount(HEADLINE.BRANCH_PREFIX) + console.cellcount(HEADLINE.TRUNC_PREFIX) then
+            user_str=''
+            host_str=''
+            path_str=''
+            branch_str=''
+        end
+    end
+
+    -- Git branch
+    local len=_HEADLINE_LEN_REMAIN - console.cellcount(HEADLINE.BRANCH_PREFIX)
+    if #branch_str > 0 then
+        if len < console.cellcount(HEADLINE.PATH_PREFIX) + console.cellcount(HEADLINE.TRUNC_PREFIX) + console.cellcount(HEADLINE.PATH_TO_BRANCH) + console.cellcount(branch_str) then
+            path_str=''
+        end
+        if #path_str > 0 then
+            len=len - console.cellcount(HEADLINE.PATH_PREFIX) - console.cellcount(HEADLINE.PATH_TO_BRANCH)
+        else
+            len=len - console.cellcount(HEADLINE.PAD_TO_BRANCH)
+        end
+        _headline_part("BRANCH", HEADLINE.BRANCH_PREFIX..ellipsify_left(branch_str, len), "right")
+    end
+
+-- TODO!
+    --[[
+    -- Trimming
+    local joint_len=$(( ${#HEADLINE_USER_BEGIN} + ${#HEADLINE_USER_TO_HOST} + ${#HEADLINE_HOST_TO_PATH} + ${#HEADLINE_PATH_TO_BRANCH} ))
+    local path_min_len=$(( ${#path_str} + ${#HEADLINE_PATH_PREFIX} > 25 ? 25 : ${#path_str} + ${#HEADLINE_PATH_PREFIX} ))
+    len=$(( $_HEADLINE_LEN_REMAIN - $path_min_len - $joint_len ))
+    if (( $len < 2 )); then
+        user_str=''; host_str=''
+    elif (( $len < ${#user_str} + ${#host_str} )); then
+        user_str="${user_str:0:1}"
+        host_str="${host_str:0:1}"
+    end
+    --]]
+
+    -- User
+    if #user_str > 0 then
+        _headline_part("JOINT", HEADLINE.USER_BEGIN, "left")
+        _headline_part("USER", HEADLINE.USER_PREFIX..user_str, "left")
+    end
+
+    -- Host
+    if #host_str > 0 then
+        if #_HEADLINE_INFO_LEFT > 0 then
+            _headline_part("JOINT", HEADLINE.USER_TO_HOST, "left")
+        end
+        _headline_part("HOST", HEADLINE.HOST_PREFIX..host_str, "left")
+    end
+
+    -- Path
+    if #path_str > 0 then
+        if #_HEADLINE_INFO_LEFT > 0 then
+            _headline_part("JOINT", HEADLINE.HOST_TO_PATH, "left")
+        end
+        local pushd_depth=''
+        if HEADLINE.DO_PUSHD_DEPTH then
+            pushd_depth=os.getpushddepth()
+            if pushd_depth <= 0 then
+                pushd_depth=''
+            elseif pushd_depth < 3 then
+                pushd_depth=string.rep('+', pushd_depth)..' '
+            else
+                pushd_depth=string.format('%u+', pushd_depth)..' '
+            end
+        end
+        len=_HEADLINE_LEN_REMAIN - console.cellcount(HEADLINE.PATH_PREFIX) - ((#branch_str > 0) and console.cellcount(HEADLINE.PATH_TO_BRANCH) or 0)
+        len=len - console.cellcount(pushd_depth)
+        _headline_part("PATH", HEADLINE.PATH_PREFIX..pushd_depth..ellipsify_left(path_str, len), "left")
+    end
+
+    -- Padding
+    if #branch_str > 0 and #path_str > 0 and _HEADLINE_LEN_REMAIN <= console.cellcount(HEADLINE.PATH_TO_BRANCH) then
+        _headline_part("JOINT", HEADLINE.PATH_TO_BRANCH, "left")
+    else
+        if #branch_str > 0 then
+            _headline_part("JOINT", HEADLINE.PAD_TO_BRANCH, "right")
+        end
+        _headline_part("JOINT", HEADLINE.PATH_TO_PAD, "left")
+        _headline_part("JOINT", string.rep(HEADLINE.PAD_CHAR, _HEADLINE_LEN_REMAIN), "left")
+    end
+
+    -- Error line
+    if HEADLINE.DO_ERR and err > 0 then
+        local msg=""
+        -- local meaning
+        -- if [[ $HEADLINE_DO_ERR_INFO == 'true' ]]; then
+        --     meaning=$(headline_exit_meaning $err)
+        --     (( ${#meaning} )) && msg=" ($meaning)"
+        -- end
+        table.insert(out, HEADLINE.STYLE_ERR..HEADLINE.ERR_PREFIX..tostring(err)..msg.."\n")
+    end
+
+    -- Separator line
+    _HEADLINE_LINE_OUTPUT=""
+    if HEADLINE.LINE_MODE == 'on' or (HEADLINE.LINE_MODE == 'auto' and _HEADLINE_DO_SEP) then
+        _HEADLINE_LINE_OUTPUT=_HEADLINE_LINE_LEFT.._HEADLINE_LINE_RIGHT..reset
+    end
+    _HEADLINE_DO_SEP=true
+
+    -- Information line
+    _HEADLINE_INFO_OUTPUT=_HEADLINE_INFO_LEFT.._HEADLINE_INFO_RIGHT..reset
+
+    -- Prompt
+    -- if [[ $HEADLINE_INFO_MODE == 'precmd' ]]; then
+    --     [ ! -z ${_HEADLINE_LINE_OUTPUT} ] && print -rP $_HEADLINE_LINE_OUTPUT
+    --     print -rP $_HEADLINE_INFO_OUTPUT
+    --     PROMPT=$HEADLINE_PROMPT
+    -- else
+        if #_HEADLINE_LINE_OUTPUT > 0 then
+            table.insert(out, _HEADLINE_LINE_OUTPUT.."\n")
+        end
+        table.insert(out, _HEADLINE_INFO_OUTPUT.."\n")
+        table.insert(out, evalcmd(HEADLINE.PROMPT))
+    -- fi
+
+    return table.concat(out)
+end
+
+-- Create a part of the prompt
+_headline_part=function(name, content, side)
+    local style=reset..HEADLINE.STYLE_DEFAULT..HEADLINE["STYLE_"..name]
+    local info=style..content
+    local info_len=console.cellcount(info)
+    _HEADLINE_LEN_REMAIN=_HEADLINE_LEN_REMAIN - info_len
+    style=reset..HEADLINE["STYLE_"..name.."_LINE"]
+    local line=style..string.rep(HEADLINE.LINE_CHAR, info_len)
+    if side == 'right' then
+        _HEADLINE_INFO_RIGHT=info.._HEADLINE_INFO_RIGHT
+        _HEADLINE_LINE_RIGHT=line.._HEADLINE_LINE_RIGHT
+    else
+        _HEADLINE_INFO_LEFT=_HEADLINE_INFO_LEFT..info
+        _HEADLINE_LINE_LEFT=_HEADLINE_LINE_LEFT..line
+    end
+end
+
+local hl = clink.promptfilter(5)
+function hl:filter() -- luacheck: no unused
+    return headline_precmd()
+end
+function hl:rightfilter() -- luacheck: no unused
+    -- Right prompt
+    local rprompt=evalcmd(HEADLINE.RPROMPT)
+    if HEADLINE.DO_CLOCK then
+        if console.cellcount(rprompt) > 0 then
+            rprompt=HEADLINE.CLOCK_SEPARATOR..rprompt
+        end
+        rprompt = HEADLINE.STYLE_CLOCK..os.date(HEADLINE.CLOCK_FORMAT, os.time())..reset_fg..rprompt
+    end
+    if _ACTION_FROM_STATUS then
+        if console.cellcount(rprompt) > 0 then
+            rprompt=rprompt..HEADLINE.CLOCK_SEPARATOR
+        end
+        rprompt=rprompt..HEADLINE.STYLE_JOINT..HEADLINE.BRANCH_TO_STATUS:gsub("^%s+", "")..reset_fg
+        rprompt=rprompt..HEADLINE.STYLE_STATUS.._ACTION_FROM_STATUS..reset_fg
+        rprompt=rprompt..HEADLINE.STYLE_JOINT..HEADLINE.STATUS_END..reset_fg
+    end
+    return rprompt
+end
+function hl:transientfilter() -- luacheck: no unused
+    return evalcmd(HEADLINE.TPROMPT or HEADLINE.PROMPT)
+end
+function hl:transientrightfilter() -- luacheck: no unused
+    return
+end
+
+
+-- END PORT OF HEADLINE PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO HEADLINE
+
+
+ellipsify_left=function(text, limit)
+    if console.cellcount(text) <= limit then
+        return text
+    end
+    local trunc_width = console.cellcount(HEADLINE.TRUNC_PREFIX)
+    local keep = {}
+    local truncate = 0
+    local total = 0
+    local strings = console.explodeansi(text)
+    for i = #strings, 1, -1 do
+        local t = strings[i]
+        if t:byte() == 27 then
+            table.insert(keep, t)
+        else
+            local width = console.cellcount(t)
+            if total + width + trunc_width <= limit then
+                table.insert(keep, t)
+                total = total + width
+            else
+                local reverse = {}
+                for j in unicode.iter(t) do
+                    table.insert(reverse, j)
+                end
+                local s = ""
+                for j = #reverse, 1, -1 do
+                    local k = reverse[j]
+                    if total + trunc_width <= limit then
+                        truncate = #s
+                    end
+                    total = total + console.cellcount(k)
+                    if total > limit then
+                        s = s:sub(-truncate)
+                        s = HEADLINE.TRUNC_PREFIX..s
+                        break
+                    end
+                    s = k..s
+                end
+                table.insert(keep, s)
+            end
+        end
+    end
+    local reverse = {}
+    for i = #keep, 1, -1 do
+        local p = table.remove(keep, i)
+        if not p then
+            break
+        end
+        table.insert(reverse, p)
+    end
+    return table.concat(reverse)
+end
+
+sum=function(list)
+    local n
+    if type(list) == "table" then
+        n=0
+        for _,x in pairs(list) do
+            n=n + tonumber(x)
+        end
+    else
+        n=tonumber(list) or 0
+    end
+    return n
+end
+
+evalcmd=function(x)
+    if type(x) == "function" then
+        return x()
+    else
+        return tostring(x)
+    end
+end
+
+local last_cwd
+local last_gitdir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the git dir changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local gitdir = git.getgitdir()
+        if last_gitdir ~= gitdir then
+            last_gitdir = gitdir
+            last_gitstatus = nil
+        end
+    end
+end)
+
+
+-- END EXTENSIONS TO HEADLINE
+--------------------------------------------------------------------------------
+

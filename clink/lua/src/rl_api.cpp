@@ -51,12 +51,16 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
     str_moveable tilde;
     if (!path::tilde_expand("~", tilde))
         return false;
+    path::maybe_strip_last_separator(tilde);
 
     str_iter in_iter(in);
     str_iter tilde_iter(tilde.c_str());
-    int32 j = str_compare(in_iter, tilde_iter);
-    if (j >= 0 && in_iter.more())
-        return false;
+    {
+        str_compare_scope _(str_compare_scope::caseless, false);
+        int32 j = str_compare(in_iter, tilde_iter);
+        if (j >= 0 && tilde_iter.more())
+            return false;
+    }
 
     out.format("~%s", in_iter.get_pointer());
     return true;

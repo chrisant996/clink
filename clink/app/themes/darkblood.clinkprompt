@@ -1,0 +1,107 @@
+-- Based on darkblood.zsh-theme at https://github.com/ohmyzsh/ohmyzsh
+-- MIT License
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- To activate this prompt, run `clink config prompt use darkblood`.
+-- To deactivate it, run `clink config prompt clear`.
+
+-- To customize this prompt, make a copy of this file and edit the copy.
+
+-- luacheck: push
+-- luacheck: no unused
+local reset=";0"
+local bold=";1"
+local nobold=";22"
+local red=";31"
+local green=";32"
+local yellow=";33"
+local blue=";34"
+local magenta=";35"
+local cyan=";36"
+local white=";37"
+-- luacheck: pop
+
+local function sgr(...)
+    return "\x1b["..(table.concat({...}):gsub("^;+", "")).."m"
+end
+
+local reset_color=sgr()
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF DARKBLOOD PROMPT
+
+
+local WHITE = sgr(bold,white)
+local RED = sgr(reset,red)
+
+--PS2=$' %{$fg[red]%}|>%{$reset_color%} '
+
+local GIT_PROMPT_PREFIX=" ["..WHITE
+local GIT_PROMPT_SUFFIX=RED.."]"
+local GIT_PROMPT_DIRTY=" "..RED..""..reset_color
+
+local last_dirty
+local function git_prompt_info()
+    local branch = git.getbranch()
+    if not branch then return "" end
+
+    local info = GIT_PROMPT_PREFIX..branch
+    local dirty = clink.promptcoroutine(function()
+        local status = git.getstatus()
+        return status and status.dirty or false
+    end)
+    if dirty ~= nil then
+        last_dirty = dirty
+    end
+    if dirty or last_dirty then
+        info = info..GIT_PROMPT_DIRTY
+    end
+    info = info..GIT_PROMPT_SUFFIX
+    return info
+end
+
+local p = clink.promptfilter(5)
+function p:filter() -- luacheck: no unused
+    local username = os.getenv("USERNAME") or "?"
+    local computername = os.getenv("COMPUTERNAME") or "?"
+    local prompt
+
+    prompt = RED..'┌['..WHITE..username..RED..'@'..WHITE..computername..RED..']'
+    --prompt = prompt..' ['..WHITE..'/dev/%y'..RED..'] '
+    prompt = prompt..git_prompt_info()
+    prompt = prompt..reset_color..'\n'
+
+    prompt = prompt..RED..'└['..WHITE..os.getcwd()..RED..']>'..reset_color..' '
+
+    return prompt
+end
+function p:transientfilter() -- luacheck: no unused
+    return RED..'>'..reset_color..' '
+end
+
+
+-- END PORT OF DARKBLOOD PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO DARKBLOOD
+
+
+local last_cwd
+local last_gitdir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the git dir changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local gitdir = git.getgitdir()
+        if last_gitdir ~= gitdir then
+            last_gitdir = gitdir
+            last_dirty = nil
+        end
+    end
+end)
+
+
+-- END EXTENSIONS TO DARKBLOOD
+--------------------------------------------------------------------------------

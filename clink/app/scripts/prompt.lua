@@ -15,13 +15,46 @@ end
 
 
 --------------------------------------------------------------------------------
+-- luacheck: push
+-- luacheck: no max line length
 local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
+local active_clinkprompt = ""           -- Currently active .clinkprompt module, or "" if none.
+local clinkprompt_exports = nil         -- Export table from active .clinkprompt module (may be nil).
+local clinkprompt_module = ""           -- Lowercase copy of active_clinkprompt, for module comparisons.
+local clinkprompt_dependson = {}        -- Index of clinkprompt module(s) the current module depends on (e.g. "flexprompt").
+-- luacheck: pop
 
 --------------------------------------------------------------------------------
 local bold = "\x1b[1m"                  -- Bold (bright).
 local header = "\x1b[36m"               -- Cyan.
 local norm = "\x1b[m"                   -- Normal.
+
+--------------------------------------------------------------------------------
+--- -name:  clink.getclinkprompt
+--- -ver:   1.7.0
+--- -ret:   string, string, string, table
+--- Returns four values related to the current clinkprompt module, if any:
+---
+--- <ul>
+--- <li>A string containing the lowercase name (e.g. <code>"myprompt"</code>).
+--- <li>A string containing the full path name of the current clinkprompt
+--- module (e.g. <code>"C:\MyScripts\themes\MyPrompt.clinkprompt"</code>).
+--- <li>Lowercase full path name of the current clinkprompt module.
+--- <li>A table of other clinkprompt modules that the current module depends
+--- on.  The keys are the lowercase names (not full paths) of modules, and
+--- the values are all <code>true</code>.
+--- </ul>
+---
+--- If no clinkprompt module is currently active, then the return values are
+--- three empty strings and an empty table.
+function clink.getclinkprompt()
+    local dependson = {}
+    for k,v in pairs(clinkprompt_dependson) do
+        dependson[k] = v
+    end
+    return path.getbasename(clinkprompt_module), active_clinkprompt, clinkprompt_module, dependson
+end
 
 --------------------------------------------------------------------------------
 local function set_current_prompt_filter(filter)
@@ -50,6 +83,25 @@ local function log_cost(tick, filter, func_name)
 end
 
 --------------------------------------------------------------------------------
+local function ipairs_active(list)
+    local i = 0
+    return function()
+        i = i + 1
+        local value = list[i]
+        while value and
+                value._clinkprompt_module and
+                value._clinkprompt_module ~= clinkprompt_module and
+                not clinkprompt_dependson[value._clinkprompt_module] do
+            i = i + 1
+            value = list[i]
+        end
+        if value then
+            return i, value
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Sort by priority if required.
     if prompt_filters_unsorted then
@@ -71,7 +123,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt) -- luacheck: ignore 432
         local filtered, onwards
-        for _, filter in ipairs(prompt_filters) do
+        for _, filter in ipairs_active(prompt_filters) do
             set_current_prompt_filter(filter)
 
             -- Always call :filter() to help people to write backward compatible
@@ -210,6 +262,11 @@ function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
     local ret = { _priority = priority }
+    local module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+    if module then
+        ret._clinkprompt_module = module
+        ret._clinkprompt_basename = path.getbasename(module)
+    end
     table.insert(prompt_filters, ret)
 
     prompt_filters_unsorted = true
@@ -244,6 +301,7 @@ function clink.prompt.register_filter(filter, priority)
         local stop = filter(the_prompt)
         return clink.prompt.value, not stop
     end
+    o._deprecated_filter = filter -- So collect_filter_src can get the right source reference.
 end
 
 --------------------------------------------------------------------------------
@@ -270,6 +328,9 @@ local function collect_filter_src(t, type)
     local longest = 24
     for _,prompt in ipairs (prompt_filters) do
         local func = prompt[type]
+        if prompt._deprecated_filter and type == "filter" then
+            func = prompt._deprecated_filter
+        end
         if func then
             local info = debug.getinfo(func, 'S')
             if not clink._is_internal_script(info.short_src) then
@@ -343,6 +404,56 @@ end
 
 
 --------------------------------------------------------------------------------
+function clink._activate_clinkprompt_module(module)
+    local new_clinkprompt = module or ""
+    new_clinkprompt = new_clinkprompt:gsub('"', ''):gsub('%s+$', '')
+    if active_clinkprompt == new_clinkprompt then
+        return
+    end
+
+    local ret
+    local old_clinkprompt_exports = clinkprompt_exports
+
+    active_clinkprompt = new_clinkprompt
+    clinkprompt_exports = nil
+    clinkprompt_module = clink.lower(new_clinkprompt)
+    clinkprompt_dependson = {}
+
+    if new_clinkprompt ~= "" then
+        local file = clink.getprompts(new_clinkprompt)
+        if not file then
+            return "Unable to find custom prompt '"..new_clinkprompt.."'."
+        end
+
+        local ok, err = pcall(function() ret = require(file) end)
+        if not ok or type(ret) == "string" then
+            local msg = err or (type(ret) == "string" and ret) or nil
+            msg = msg and msg.."\n" or ""
+            msg = msg.."Error while activating custom prompt '"..new_clinkprompt.."'."
+            return msg
+        end
+    end
+
+    if old_clinkprompt_exports then
+        if type(old_clinkprompt_exports.ondeactivate) == "function" then
+            old_clinkprompt_exports.ondeactivate()
+        end
+    end
+
+    if type(ret) == "table" then
+        clinkprompt_exports = ret
+        if type(ret.dependson) == "string" then
+            for _,n in ipairs(string.explode(ret.dependson, ";", '"')) do
+                clinkprompt_dependson[clink.lower(path.getbasename(n))] = true
+            end
+        end
+        if type(ret.onactivate) == "function" then
+            ret.onactivate()
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function clear_prompt_coroutines()
     prompt_filter_coroutines = {}
 end
@@ -368,6 +479,7 @@ end
 --- -name:  clink.promptcoroutine
 --- -ver:   1.2.10
 --- -arg:   func:function
+--- -arg:   [cookie:string]
 --- -ret:   [return value from func]
 --- Creates a coroutine to run the <span class="arg">func</span> function in the
 --- background.  Clink will automatically resume the coroutine repeatedly while
@@ -379,6 +491,17 @@ end
 --- during a given input line session.  Subsequent calls reuse the
 --- already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input
 --- line session.)
+---
+--- <fieldset><legend>Compatibility Note:</legend>
+--- Starting in v1.7.0, the optional <span class="arg">cookie</span> argument
+--- can be included to allow a prompt filter to have multiple different
+--- coroutines during a given input line session.  Subsequent calls for a given
+--- <span class="arg">cookie</span> value reuse the already-created coroutine
+--- associated with that cookie value.  This greatly simplifies the use of
+--- <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a>.  When
+--- <span class="arg">cookie</span> is omitted, then <code>"default"</code> is
+--- assumed as the cookie value.
+--- </fieldset>
 ---
 --- The API returns nil until the <span class="arg">func</span> function has
 --- finished.  After that, the API returns whatever the
@@ -397,18 +520,19 @@ end
 ---
 --- <strong>Note:</strong> each prompt filter can have at most one prompt
 --- coroutine.
-function clink.promptcoroutine(func)
+function clink.promptcoroutine(func, cookie)
     if not prompt_filter_current then
         error("clink.promptcoroutine can only be used in a prompt filter", 2)
     end
 
-    local entry = prompt_filter_coroutines[prompt_filter_current]
+    local key = string.format("%s/%s", prompt_filter_current, (cookie or "default"))
+    local entry = prompt_filter_coroutines[key]
     if entry == nil then
         local info = debug.getinfo(func, 'S')
         local src=info.short_src..":"..info.linedefined
 
         entry = { done=false, refilter=false, result=nil, src=src }
-        prompt_filter_coroutines[prompt_filter_current] = entry
+        prompt_filter_coroutines[key] = entry
 
         -- Wrap the supplied function to track completion and end result.
         coroutine.override_src(func)

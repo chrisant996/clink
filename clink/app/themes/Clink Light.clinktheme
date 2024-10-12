@@ -1,0 +1,41 @@
+[preferred]
+background=#ffffff
+foreground=#808080
+
+[set]
+color.arg=black
+color.arginfo=sgr 38;5;172;4
+color.argmatcher=#40d000
+color.cmd=black
+color.cmdredir=sgr 38;5;172
+color.cmdsep=sgr 38;5;93
+# color.command_substitution=sgr 97;48;5;165
+color.comment_row=sgr 38;5;27;48;5;153
+color.common_match_prefix=sgr 38;5;135
+color.description=sgr 38;5;32
+color.doskey=sgr 1;38;5;75
+# color.envvars=sgr 1;38;5;45
+color.executable=sgr 1;38;5;33
+color.filtered=black
+color.flag=sgr 38;5;39
+color.hidden=sgr 38;5;160
+color.histexpand=sgr 97;48;5;55
+color.horizscroll=sgr 38;5;16;48;5;30
+color.input=sgr 38;5;94
+color.interact=black
+color.message=sgr 0;38;5;254;48;2;0;102;0
+color.modmark=bright cyan
+color.popup=#222222 on #d3d3dd
+color.popup_border=
+color.popup_desc=#8094a8 on #d4d4dd
+color.popup_footer=
+color.popup_header=
+color.popup_select=
+color.popup_selectdesc=
+color.prompt=brblack
+color.readonly=
+color.selected_completion=sgr 38;5;15;48;5;242
+color.selection=sgr 38;5;16;48;5;179
+color.suggestion=sgr 38;5;251
+color.unexpected=sgr 38;5;219
+color.unrecognized=sgr 38;5;203

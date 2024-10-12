@@ -246,6 +246,7 @@ void host_load_app_scripts(lua_state& lua)
 {
     lua_load_script(lua, app, cmd);
     lua_load_script(lua, app, commands);
+    lua_load_script(lua, app, config);
     lua_load_script(lua, app, dir);
     lua_load_script(lua, app, env);
     lua_load_script(lua, app, exec);
@@ -255,6 +256,7 @@ void host_load_app_scripts(lua_state& lua)
     lua_load_script(lua, app, prompt);
     lua_load_script(lua, app, suggest);
     lua_load_script(lua, app, update);
+    lua_load_script(lua, app, git);
 }
 
 //------------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 #include "matches_lookaside.h"
 #include "match_pipeline.h"
 #include "display_matches.h"
+#include "display_readline.h"
 #include "column_widths.h"
 #include "ellipsify.h"
 #include "match_adapter.h"
@@ -308,6 +309,9 @@ cant_activate:
         m_expanded = true;
         m_can_prompt = false;
     }
+
+    // Disable the comment row.
+    g_display_manager_no_comment_row = true;
 
     // Activate key bindings.
     assert(m_prev_bind_group < 0);
@@ -1010,6 +1014,8 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
     m_matches.reset();
     assert(m_matches.get_matches() == m_init_matches);
     m_data.clear();
+
+    g_display_manager_no_comment_row = false;
 }
 
 //------------------------------------------------------------------------------

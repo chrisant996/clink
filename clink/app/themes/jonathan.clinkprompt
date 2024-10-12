@@ -1,0 +1,262 @@
+-- Based on jonathan.zsh-theme at https://github.com/ohmyzsh/ohmyzsh
+-- MIT License
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- To activate this prompt, run `clink config prompt use jonathan`.
+-- To deactivate it, run `clink config prompt clear`.
+
+-- Features:
+--
+--  - Sets the title bar text.
+--  - Shows the current working directory.
+--  - Shows the user and computer name.
+--  - Shows the time and date.
+--  - Shows git status.
+--  - Shows the last exit code when non-zero.
+--  - If transient prompt is enabled, its color is based on whether the last
+--    exit code was non-zero (green when zero, red when non-zero).
+
+-- To customize this prompt, make a copy of this file and edit the copy.
+
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF JONATHAN PROMPT
+
+
+-- luacheck: push
+-- luacheck: no unused
+local reset=";0"
+local bold=";1"
+local nobold=";22"
+local red=";31"
+local green=";32"
+local yellow=";33"
+local blue=";34"
+local magenta=";35"
+local cyan=";36"
+local white=";37"
+-- luacheck: pop
+
+local function sgr(...)
+    return "\x1b["..(table.concat({...}):gsub("^;+", "")).."m"
+end
+
+local reset_color=sgr()
+
+--local ellipsis_char = "…"
+local ellipsis_char = "..."
+local ellipsis_char_width = console.cellcount(ellipsis_char)
+
+local function ellipsify(text, limit) -- luacheck: no unused
+    if not console.explodeansi or console.cellcount(text) <= limit then
+        return text
+    end
+    local s = ""
+    local truncate = 0
+    local total = 0
+    local strings = console.explodeansi(text)
+    for _,t in ipairs(strings) do
+        if t:byte() == 27 then
+            s = s..t
+        else
+            for i in unicode.iter(t) do
+                if total + ellipsis_char_width <= limit then
+                    truncate = #s
+                end
+                total = total + console.cellcount(i)
+                if total > limit then
+                    s = s:sub(1, truncate)
+                    s = s..ellipsis_char
+                    break
+                end
+                s = s..i
+            end
+        end
+    end
+    return s
+end
+
+
+local PR = {}
+local ZLE_RPROMPT_INDENT=1
+
+
+-- Set the prompt
+
+-- See if we can use colors.
+for _,color in ipairs(string.explode("RED GREEN YELLOW BLUE MAGENTA CYAN WHITE")) do
+    PR[color]=sgr(settings.parsecolor("bold "..color:lower()))
+    PR["LIGHT_"..color]=sgr(settings.parsecolor(color:lower()))
+end
+PR.GREY=sgr(settings.parsecolor("bold black"))
+PR.NO_COLOUR=reset_color
+
+-- Modify Git prompt
+local GIT_PROMPT_PREFIX=" on "..sgr(green)
+local GIT_PROMPT_SUFFIX=reset_color
+local GIT_PROMPT_DIRTY="" -- luacheck: no unused
+local GIT_PROMPT_CLEAN="" -- luacheck: no unused
+
+local GIT_PROMPT_ADDED=sgr(green).." ✚"
+local GIT_PROMPT_MODIFIED=sgr(bold..blue).." "
+local GIT_PROMPT_DELETED=sgr(red).." ✖"
+local GIT_PROMPT_RENAMED=sgr(magenta).." ➜"
+local GIT_PROMPT_UNMERGED=sgr(yellow).." ═"
+local GIT_PROMPT_UNTRACKED=sgr(cyan).." ✭"
+
+PR.HBAR="─"
+PR.ULCORNER="┌"
+PR.LLCORNER="└"
+PR.URCORNER="┐"
+PR.LRCORNER="┘"
+
+local function ruby_prompt_info()
+    -- NYI
+    return ""
+end
+
+local last_gitstatus
+local function git_prompt_info()
+    local branch=git.getbranch()
+    if not branch then return '' end
+
+    local status=clink.promptcoroutine(function()
+        local t=git.getstatus() or {}
+        t.ready=true
+        return t
+    end)
+    if status then
+        last_gitstatus=status
+    end
+    status=status or last_gitstatus or {}
+    function status:has(kind)
+        if self.working and (self.working[kind] or 0) > 0 then return true end
+        if self.staged and (self.staged[kind] or 0) > 0 then return true end
+    end
+
+    local info=GIT_PROMPT_PREFIX
+    if status.branch then
+        branch=status.branch
+    end
+    if not status.ready then
+        info=info..PR.LIGHT_WHITE..branch..PR.NO_COLOUR
+    else
+        info=info..PR.GREEN..branch..PR.NO_COLOUR
+        if status.untracked then
+            info=info..GIT_PROMPT_UNTRACKED
+        end
+        if status:has("add") then
+            info=info..GIT_PROMPT_ADDED
+        end
+        if status:has("modify") then
+            info=info..GIT_PROMPT_MODIFIED
+        end
+        if status:has("rename") then
+            info=info..GIT_PROMPT_RENAMED
+        end
+        if status:has("delete") then
+            info=info..GIT_PROMPT_DELETED
+        end
+        if status.conflict then
+            info=info..GIT_PROMPT_UNMERGED
+        end
+    end
+    info=info..GIT_PROMPT_SUFFIX
+    return info
+end
+
+local p = clink.promptfilter(5)
+function p:filter() -- luacheck: no unused
+    local TERMWIDTH=console.getwidth() - ZLE_RPROMPT_INDENT
+    local PWD=rl.collapsetilde(os.getcwd())
+    local RUBY_PROMPT_INFO=ruby_prompt_info()
+    local GIT_PROMPT_INFO=git_prompt_info()
+
+    -- Decide if we need to set titlebar text.
+    local username=os.getenv("USERNAME") or "?"
+    local computername=os.getenv("COMPUTERNAME") or "?"
+    PR.TITLEBAR=string.format("\x1b]0;%s@%s:%s | %ux%u\a",
+            os.isuseradmin() and "-=*[ADMIN]*=-" or username, computername,
+            PWD, console.getwidth(), console.getheight())
+
+    PR.FILLBAR=""
+    PR.PWDLEN=0
+
+    username=os.isuseradmin() and sgr(bold)..'ADMIN'..sgr(nobold) or username
+
+    local promptsize=console.cellcount("--("..username.."@"..computername..")---()--")
+    local rubypromptsize=console.cellcount(RUBY_PROMPT_INFO)
+    local pwdsize=console.cellcount(rl.collapsetilde(PWD))
+
+    -- Truncate the path if it's too long.
+    if (promptsize + rubypromptsize + pwdsize > TERMWIDTH) then
+        PR.PWDLEN=TERMWIDTH - (promptsize + rubypromptsize)
+    else
+        PR.PWDLEN=pwdsize
+        PR.FILLBAR=string.rep(PR.HBAR, TERMWIDTH - (promptsize + rubypromptsize + pwdsize))
+    end
+
+    -- Finally, the prompt.
+    local PROMPT=PR.TITLEBAR..
+    PR.CYAN..PR.ULCORNER..PR.HBAR..PR.GREY..'('..
+    PR.GREEN..ellipsify(PWD,PR.PWDLEN)..
+    PR.GREY..')'..RUBY_PROMPT_INFO..PR.CYAN..PR.HBAR..PR.HBAR..PR.FILLBAR..PR.HBAR..PR.GREY..'('..
+    PR.CYAN..username..PR.GREY..'@'..PR.GREEN..computername..
+    PR.GREY..')'..PR.CYAN..PR.HBAR..PR.URCORNER..'\n'..
+
+    PR.CYAN..PR.LLCORNER..PR.BLUE..PR.HBAR..'('..
+    PR.YELLOW..os.date("%H:%M:%S", os.time())..
+    PR.LIGHT_BLUE..reset_color..GIT_PROMPT_INFO..PR.BLUE..')'..PR.CYAN..PR.HBAR..
+    PR.HBAR..
+    '>'..PR.NO_COLOUR..' '
+    return PROMPT
+end
+function p:rightfilter() -- luacheck: no unused
+    -- display exitcode on the right when > 0
+    local exitcode=os.geterrorlevel()
+    local return_code=(exitcode > 0) and sgr(red)..tostring(exitcode).." ↵ "..reset_color or ""
+    return return_code..PR.CYAN..PR.HBAR..PR.BLUE..PR.HBAR..
+            "("..PR.YELLOW..os.date("%a,%b%d", os.time())..PR.BLUE..")"..
+            PR.HBAR..PR.CYAN..PR.LRCORNER..PR.NO_COLOUR..string.rep(" ", ZLE_RPROMPT_INDENT)
+end
+function p:transientfilter() -- luacheck: no unused
+    local exitcodecolor = (os.geterrorlevel() > 0) and PR.RED or PR.GREEN
+    return exitcodecolor..'>'..PR.NO_COLOUR..' '
+end
+function p:transientrightfilter() -- luacheck: no unused
+    return
+end
+
+--[[
+PS2='${PR_CYAN}${PR_HBAR}\
+${PR_BLUE}${PR_HBAR}(\
+${PR_LIGHT_GREEN}%_${PR_BLUE})${PR_HBAR}\
+${PR_CYAN}${PR_HBAR}${PR_NO_COLOUR} '
+--]]
+
+
+-- END PORT OF JONATHAN PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO JONATHAN
+
+
+local last_cwd
+local last_gitdir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the git dir changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local gitdir = git.getgitdir()
+        if last_gitdir ~= gitdir then
+            last_gitdir = gitdir
+            last_gitstatus = nil
+        end
+    end
+end)
+
+
+-- END EXTENSIONS TO JONATHAN
+--------------------------------------------------------------------------------

@@ -1,0 +1,664 @@
+-- Based on Antares ZSH Prompt (https://github.com/elB4RTO/zsh-themes/tree/master/antares).
+-- MIT License.
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE COPY.
+
+-- Features:
+--
+--  - Customization of all the colors and symbols.
+--  - Shows the current directory.
+--  - Shows git info (and detects bare repos).
+--  - Command execution time can be turned off or displayed only when it
+--    exceeds a given threshold.
+
+-- For Antares to render correctly you'll need a Nerd Fonts patched font.
+-- There are many to choose from at https://nerdfonts.com.  Two of my
+-- favorites are "FiraCode Nerd Font" and "JetBrainsMono Nerd Font".
+
+-- To activate this prompt, run `clink config prompt use antares`.
+-- To deactivate it, run `clink config prompt clear`.
+
+
+-- Customize this prompt by setting Lua variables in a Lua script:
+--
+--      ANTARES = ANTARES or {}
+--
+--      ANTARES.FG_EXECTIME = "#ff9900" -- Orange text for execution time.
+--      ANTARES.STR_USER = ">"          -- Set prompt character for non-Admin users.
+--
+-- The full list of configuration Lua variables in the ANTARES table is listed
+-- below, including their default values.  To configure the prompt, it's best
+-- to create a separate .lua file with your configurations (like the example
+-- above), rather than editing this file (and if you want to edit this file,
+-- be sure to make a copy and edit the copy, not the original file, as any
+-- edits to the original file will be lost when Clink is updated).
+
+
+--------------------------------------------------------------------------------
+-- BEGIN PORT OF ANTARES PROMPT
+
+
+-- luacheck: no max line length
+-- luacheck: globals ANTARES
+ANTARES = ANTARES or {}
+
+local term_emoji = (clink.getansihost() == "winterminal") and true or nil
+
+local function makedefault(value, default)
+    if value == nil then return default else return value end
+end
+
+--------------------------------------------------------------------------------
+-- Beginning of the re-definable section...
+
+-- Whether to gather additional details about the git status
+-- Usefull when dealing with huge repositories to speed things up
+ANTARES.USE_LIGHT_GIT_MODE=makedefault(ANTARES.USE_LIGHT_GIT_MODE, false)
+
+-- The colors to use for the various elements of the prompt
+ANTARES.FG_EXECTIME=makedefault(ANTARES.FG_EXECTIME, "#dd00ff")
+ANTARES.FG_ERRVAL=makedefault(ANTARES.FG_ERRVAL, "#c31a1a")
+ANTARES.FG_DECO=makedefault(ANTARES.FG_DECO, "#ffffff")
+ANTARES.FG_PWD_OK=makedefault(ANTARES.FG_PWD_OK, "#ffffff")
+ANTARES.BG_PWD_OK=makedefault(ANTARES.BG_PWD_OK, "#0055ff")
+ANTARES.FG_PWD_ERR=makedefault(ANTARES.FG_PWD_ERR, "#ffffff")
+ANTARES.BG_PWD_ERR=makedefault(ANTARES.BG_PWD_ERR, "#c31a1a")
+ANTARES.FG_GIT_INIT=makedefault(ANTARES.FG_GIT_INIT, "#000000")
+ANTARES.BG_GIT_INIT=makedefault(ANTARES.BG_GIT_INIT, "#b5f3a1")
+ANTARES.FG_GIT_BARE=makedefault(ANTARES.FG_GIT_BARE, "#000000")
+ANTARES.BG_GIT_BARE=makedefault(ANTARES.BG_GIT_BARE, "#b07a4e")
+ANTARES.FG_GIT_BRANCH=makedefault(ANTARES.FG_GIT_BRANCH, "#000000")
+ANTARES.BG_GIT_BRANCH=makedefault(ANTARES.BG_GIT_BRANCH, "#47cc2b")
+ANTARES.FG_GIT_DETACH=makedefault(ANTARES.FG_GIT_DETACH, "#000000")
+ANTARES.BG_GIT_DETACH=makedefault(ANTARES.BG_GIT_DETACH, "#eeaa22")
+ANTARES.FG_GIT_UNPUBLISHED=makedefault(ANTARES.FG_GIT_UNPUBLISHED, "#000000")
+ANTARES.BG_GIT_UNPUBLISHED=makedefault(ANTARES.BG_GIT_UNPUBLISHED, "#a070d0")
+ANTARES.FG_GIT_CONFLICT=makedefault(ANTARES.FG_GIT_CONFLICT, "#000000")
+ANTARES.BG_GIT_CONFLICT=makedefault(ANTARES.BG_GIT_CONFLICT, "#c31a1a")
+ANTARES.FG_GIT_AHEAD=makedefault(ANTARES.FG_GIT_AHEAD, "#cfcfcf")
+ANTARES.FG_GIT_BEHIND=makedefault(ANTARES.FG_GIT_BEHIND, "#9f9f9f")
+ANTARES.FG_GIT_STAGED=makedefault(ANTARES.FG_GIT_STAGED, "#6cc6ee")
+ANTARES.FG_GIT_ADDED=makedefault(ANTARES.FG_GIT_ADDED, "#04c304")
+ANTARES.FG_GIT_DELETED=makedefault(ANTARES.FG_GIT_DELETED, "#e7165a")
+ANTARES.FG_GIT_CHANGED=makedefault(ANTARES.FG_GIT_CHANGED, "#ee9931")
+ANTARES.FG_GIT_CONFLICTS=makedefault(ANTARES.FG_GIT_CONFLICTS, "#ff0000")
+ANTARES.FG_GIT_UNTRACKED=makedefault(ANTARES.FG_GIT_UNTRACKED, "#bbffff")
+ANTARES.FG_GIT_STASHED=makedefault(ANTARES.FG_GIT_STASHED, "#eaa0ff")
+ANTARES.FG_GIT_TAG=makedefault(ANTARES.FG_GIT_TAG, "#ffffff")
+ANTARES.FG_JOBS=makedefault(ANTARES.FG_JOBS, "#9f9f9f")
+ANTARES.FG_PRIVILEDGES=makedefault(ANTARES.FG_PRIVILEDGES, "#ffdd44")
+
+-- The characters (or strings, by will) to use for some of the elements
+ANTARES.STR_GIT_BARE=makedefault(ANTARES.STR_GIT_BARE, "")
+ANTARES.STR_GIT_AHEAD=makedefault(ANTARES.STR_GIT_AHEAD, "￪")
+ANTARES.STR_GIT_BEHIND=makedefault(ANTARES.STR_GIT_BEHIND, "￬")
+ANTARES.STR_GIT_STAGED=makedefault(ANTARES.STR_GIT_STAGED, "●")
+ANTARES.STR_GIT_ADDED=makedefault(ANTARES.STR_GIT_ADDED, "+")
+ANTARES.STR_GIT_DELETED=makedefault(ANTARES.STR_GIT_DELETED, "-")
+ANTARES.STR_GIT_CHANGED=makedefault(ANTARES.STR_GIT_CHANGED, "*")
+ANTARES.STR_GIT_CONFLICTS=makedefault(ANTARES.STR_GIT_CONFLICTS, "")
+ANTARES.STR_GIT_UNTRACKED=makedefault(ANTARES.STR_GIT_UNTRACKED, "")
+ANTARES.STR_GIT_STASHED=makedefault(ANTARES.STR_GIT_STASHED, term_emoji and "⚑" or "")
+ANTARES.STR_GIT_BRANCH=makedefault(ANTARES.STR_GIT_BRANCH, "") -- consider ""
+ANTARES.STR_GIT_DETACHED=makedefault(ANTARES.STR_GIT_COMMIT, "") -- consider ""
+ANTARES.STR_GIT_UNPUBLISHED=makedefault(ANTARES.STR_GIT_UNPUBLISHED, "")
+ANTARES.STR_GIT_TAG=makedefault(ANTARES.STR_GIT_TAG, "🏲")
+-- ANTARES.STR_JOBS="⚙"
+ANTARES.STR_ROOT=makedefault(ANTARES.STR_ROOT, "#")
+ANTARES.STR_USER=makedefault(ANTARES.STR_USER, "$")
+
+-- The path expansion to use to display the pwd
+ANTARES.PATHVAR=makedefault(ANTARES.PATHVAR, function() return rl.collapsetilde(os.getcwd()) end)
+
+-- The minimum amount of time (in seconds) a command shall take to complete
+-- in order to display the execution time in the prompt
+ANTARES.MIN_EXEC_TIME=makedefault(ANTARES.MIN_EXEC_TIME, 3.0)
+
+-- The control character used to insert a new line
+local LINEFEED='\n'
+
+-- ...End of the re-definable section
+--------------------------------------------------------------------------------
+
+
+local ellipsify, evalfunc, sum, iif, command, scan_upwards, popen_close, icon
+
+local function sgr(code)
+    return "\27["..(code or "").."m"
+end
+local function F(color)
+    return sgr(settings.parsecolor(color):gsub("^0;", ""))
+end
+local function K(color)
+    return sgr(settings.parsecolor("on "..color):gsub("^0;", ""))
+end
+
+local f=sgr("39")
+local k=sgr("49")
+local reset=sgr()
+local bold=sgr("1")
+local nobold=sgr("22")
+
+local ant=clink.promptfilter(5)
+ant.ANTARES_ERR_CODE=0
+ant.need_update=true
+
+function ant:antares_update_git_status()
+    self:antares_reset_git_info()
+
+    self.ANTARES_GIT_STATUS=""
+    self.ANTARES_GIT_IN_WORKING_TREE=false
+    self.ANTARES_GIT_IS_INIT_REPO=false
+    self.ANTARES_GIT_IS_BARE_REPO=false
+    self.ANTARES_GIT_IS_DETACHED_HEAD=false
+    self.ANTARES_GIT_IS_UNPUBLISHED=false
+    self.ANTARES_GIT_HAS_CONFLICTS=false
+    self.ANTARES_GIT_HAS_TAGS=false
+    self.ANTARES_GIT_TAG=""
+
+    if not git.getgitdir() then
+        local check_bare=scan_upwards(os.getcwd(), function(dir)
+            if os.isfile(path.join(dir, "config")) and os.isdir(path.join(dir, "refs")) then
+                return true
+            end
+        end)
+        if check_bare then
+            local bare_info=clink.promptcoroutine(function()
+                local info = {}
+                local r,close=io.popen(git.makecommand("rev-parse --is-inside-work=tree >nul"))
+                if not r then return end
+                r:read("*a")
+                local ok,what,status=popen_close(r, close)
+                if ok and what == "exit" and status == 0 then
+                    info.working_tree=true
+                    r=io.popen(git.makecommand("branch --show-current"))
+                    if r then
+                        info.branch=r:read()
+                        r:close()
+                    end
+                    r,close=io.popen(git.makecommand("rev-parse --verify HEAD >nul"))
+                    if r then
+                        ok,what,status=popen_close(r, close)
+                        if ok and what == "exit" and status ~= 0 then
+                            info.init_repo=true
+                        end
+                    end
+                    r=io.popen(git.makecommand("rev-parse --is-bare-repository"))
+                    if r then
+                        info.bare_repo=(r:read() == "true")
+                        info.branch=ANTARES.STR_GIT_BARE
+                        r:close()
+                        info.ahead=command(git.makecommand("rev-list --left-only HEAD..FETCH_HEAD --count"))
+                        info.behind=command(git.makecommand("rev-list --right-only HEAD..FETCH_HEAD --count"))
+                    end
+                end
+                return info
+            end, "check_bare")
+            if bare_info then
+                self.last_bare_info=bare_info
+                self.need_update=nil
+            end
+            bare_info=bare_info or self.last_bare_info or {}
+            self.ANTARES_GIT_IN_WORKING_TREE=bare_info.working_tree
+            self:set_branch_name(bare_info.branch)
+            self.ANTARES_GIT_IS_INIT_REPO=bare_info.init_repo
+            self.ANTARES_GIT_IS_BARE_REPO=bare_info.bare_repo
+            self.GIT_AHEAD=tonumber(bare_info.ahead) or 0
+            self.GIT_BEHIND=tonumber(bare_info.behind) or 0
+        else
+            self.need_update=nil
+        end
+        return
+    end
+
+    self.ANTARES_GIT_IN_WORKING_TREE=true
+    local branch_name, detached=git.getbranch()
+    if branch_name then
+        self:set_branch_name(branch_name, detached)
+        self.ANTARES_GIT_IS_DETACHED_HEAD=detached
+    end
+
+    if ANTARES.USE_LIGHT_GIT_MODE then
+        self:antares_reset_git_counts()
+        self.need_update=nil
+        return
+    end
+
+    local git_status=clink.promptcoroutine(function()
+        local status=git.getstatus()
+        if detached then
+            local git_tag=command(git.makecommand("tag --points-at=HEAD"), true)
+            if git_tag then
+                self.ANTARES_GIT_HAS_TAGS=true
+                local n_tags=#git_tag
+                if n_tags == 1 then
+                    self.ANTARES_GIT_TAG=" "..icon(ANTARES.STR_GIT_TAG)..git_tag[1]
+                elseif n_tags > 1 then
+                    self.ANTARES_GIT_TAG=" "..icon(ANTARES.STR_GIT_TAG)..tostring(n_tags)
+                end
+            end
+        end
+        return { status=status }
+    end)
+    if git_status then
+        self.last_git_status=git_status
+        self.need_update=nil
+    end
+    git_status=git_status or self.last_git_status or {}
+
+    if git_status.status then
+        local status=git_status.status
+        local w=status.working -- luacheck: no unused
+        local s=status.staged
+        local t=status.total
+        -- The original Antares zsh prompt shows counts that combine staged
+        -- and working.  That doesn't make sense to me, but it specifically
+        -- counts them that way, and it's not the only theme that does so.
+        -- So this tries to mimic that, but also fixes what seem to be a
+        -- couple of accounting bugs.
+        self.ANTARES_GIT_IS_INIT_REPO=(status.HEAD == "(initial)")
+        self:set_branch_name(status.branch, status.detached, status.unpublished)
+        self.GIT_AHEAD=tonumber(status.ahead) or 0
+        self.GIT_BEHIND=tonumber(status.behind) or 0
+        self.GIT_STAGED=sum(s)
+        self.GIT_ADDED=t and t.add or 0
+        self.GIT_DELETED=t and t.delete or 0
+        self.GIT_CHANGED=t and t.modify or 0
+        self.GIT_CONFLICTS=status.conflict or 0
+        self.GIT_UNTRACKED=status.untracked or 0
+        self.GIT_STASHED=git.getstashcount() or 0
+    end
+
+    self.ANTARES_GIT_HAS_CONFLICTS=(self.GIT_CONFLICTS > 0)
+end
+
+function ant:antares_reset_git_info()
+    self.GIT_BRANCH=""
+    self:antares_reset_git_counts()
+end
+
+function ant:antares_reset_git_counts()
+    self.GIT_AHEAD=0
+    self.GIT_BEHIND=0
+    self.GIT_STAGED=0
+    self.GIT_ADDED=0
+    self.GIT_DELETED=0
+    self.GIT_CHANGED=0
+    self.GIT_CONFLICTS=0
+    self.GIT_UNTRACKED=0
+    self.GIT_STASHED=0
+end
+
+function ant:set_branch_name(branch_name, detached, unpublished)
+    if not branch_name or branch_name == "" then
+        branch_name=""
+    elseif detached then
+        branch_name=icon(ANTARES.STR_GIT_DETACHED)..branch_name
+    elseif unpublished then
+        branch_name=icon(ANTARES.STR_GIT_UNPUBLISHED)..branch_name
+    else
+        branch_name=icon(ANTARES.STR_GIT_BRANCH)..branch_name
+    end
+    self.GIT_BRANCH=branch_name
+    self.ANTARES_GIT_IS_DETACHED_HEAD=detached
+    self.ANTARES_GIT_IS_UNPUBLISHED=unpublished
+end
+
+function ant:antares_update_prompt()
+    self.ANTARES_RETURN=""
+    if self.ANTARES_EXEC_FLAG then
+        self.exec_time=os.clock() - self.ANTARES_EXEC_START
+        if self.exec_time <= 0 then
+            self.exec_time=nil
+        end
+        self.ANTARES_EXEC_FLAG=nil
+    end
+    if self.exec_time and ANTARES.MIN_EXEC_TIME >= 0 then
+        if self.exec_time >= ANTARES.MIN_EXEC_TIME then
+            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_EXECTIME)..bold.."⤷"..nobold.." "..string.format("%.01f", self.exec_time)..f
+        end
+    end
+    if self.ANTARES_ERR_CODE ~= 0 then
+        if self.ANTARES_RETURN == "" then
+            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_ERRVAL)..bold.."⤷"..nobold..f
+        end
+        self.ANTARES_RETURN=self.ANTARES_RETURN.." "..F(ANTARES.FG_ERRVAL).."✘"..bold..tostring(self.ANTARES_ERR_CODE)..nobold..f
+    end
+    if self.ANTARES_RETURN ~= "" then
+        self.ANTARES_RETURN=self.ANTARES_RETURN..LINEFEED
+    end
+
+    self.ANTARES_FILLER=""
+    local fillchar=" "
+
+    local width=console.getwidth()
+
+    self.ANTARES_PATHVAR=evalfunc(ANTARES.PATHVAR)
+
+    local decosize=7
+    local pwdsize=console.cellcount(self.ANTARES_PATHVAR)
+    local pwdcut=nil
+    local gitsize=console.cellcount(self.GIT_BRANCH..self.ANTARES_GIT_TAG)
+    local gitcut=nil
+
+    if pwdsize + gitsize + (decosize * 2) > width then
+        local half_width=width / 2
+        local pwd_over_half=(pwdsize + decosize) > half_width
+        local git_over_half=(gitsize + decosize) > half_width
+        if pwd_over_half > 0 and git_over_half > 0 then
+            pwdcut=half_width - decosize
+            gitcut=half_width - decosize
+        elseif pwd_over_half > 0 then
+            pwdcut=width - gitsize - (decosize * 2)
+            self.ANTARES_FILLER=string.rep(fillchar, width - pwdcut - gitsize - (decosize * 2))
+        elseif git_over_half > 0 then
+            gitcut=width - pwdsize - (decosize * 2)
+            self.ANTARES_FILLER=string.rep(fillchar, width - pwdsize - gitcut - (decosize * 2))
+        else
+            self.ANTARES_FILLER=string.rep(fillchar, width - pwdsize - gitsize - (decosize * 2))
+        end
+    else
+        self.ANTARES_FILLER=string.rep(fillchar, width - pwdsize - gitsize - (decosize * 2))
+    end
+
+    local pwd_fg_color=(self.ANTARES_ERR_CODE == 0) and ANTARES.FG_PWD_OK or ANTARES.FG_PWD_ERR
+    local pwd_bg_color=(self.ANTARES_ERR_CODE == 0) and ANTARES.BG_PWD_OK or ANTARES.BG_PWD_ERR
+    local pwd_drive=path.getdrive(self.ANTARES_PATHVAR) or ""
+    local pwd_pathvar=self.ANTARES_PATHVAR:sub(#pwd_drive + 1)
+    pwdcut=pwdcut and (pwdcut - console.cellcount(pwd_drive)) or nil
+    pwd_pathvar=pwd_drive..ellipsify(pwd_pathvar, pwdcut, true)
+    self.ANTARES_PWD=K(pwd_bg_color)..F(pwd_fg_color).." "..pwd_pathvar.." "..f..k..F(pwd_bg_color).."▓▒░"..f
+
+    self.ANTARES_GIT_BRANCH=""
+    if self.ANTARES_GIT_IN_WORKING_TREE then
+        if self.ANTARES_GIT_HAS_CONFLICTS then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_CONFLICT).."░▒▓"..f..K(ANTARES.BG_GIT_CONFLICT)..F(ANTARES.FG_GIT_CONFLICT)
+        elseif self.ANTARES_GIT_IS_DETACHED_HEAD then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_DETACH).."░▒▓"..f..K(ANTARES.BG_GIT_DETACH)..F(ANTARES.FG_GIT_DETACH)
+            if self.ANTARES_GIT_HAS_TAGS then
+                self.GIT_BRANCH=self.GIT_BRANCH..F(ANTARES.FG_GIT_TAG)..self.ANTARES_GIT_TAG..f
+            end
+        elseif self.ANTARES_GIT_IS_BARE_REPO then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_BARE).."░▒▓"..f..K(ANTARES.BG_GIT_BARE)..F(ANTARES.FG_GIT_BARE)
+        elseif self.ANTARES_GIT_IS_INIT_REPO then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_INIT).."░▒▓"..f..K(ANTARES.BG_GIT_INIT)..F(ANTARES.FG_GIT_INIT)
+        elseif self.ANTARES_GIT_IS_UNPUBLISHED then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_UNPUBLISHED).."░▒▓"..f..K(ANTARES.BG_GIT_UNPUBLISHED)..F(ANTARES.FG_GIT_UNPUBLISHED)
+        else
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.BG_GIT_BRANCH).."░▒▓"..f..K(ANTARES.BG_GIT_BRANCH)..F(ANTARES.FG_GIT_BRANCH)
+        end
+        self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH.." "..ellipsify(self.GIT_BRANCH, gitcut).." "..f..k
+        if ANTARES.USE_LIGHT_GIT_MODE then
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.FG_DECO).."├╼"..f
+        else
+            self.ANTARES_GIT_BRANCH=self.ANTARES_GIT_BRANCH..F(ANTARES.FG_DECO).."├╮"..f
+        end
+    end
+
+    --ZSH_ANTARES_JOBS="%(1j.%F{$ZSH_ANTARES_FG_JOBS}${ZSH_ANTARES_STR_JOBS}%j%f .)"
+
+    self.ANTARES_PRIVILEDGES=F(ANTARES.FG_PRIVILEDGES)..bold..iif(os.isuseradmin(), ANTARES.STR_ROOT, ANTARES.STR_USER)..nobold..f
+    self.ANTARES_EXEC_FLAG=nil
+end
+
+function ant:antares_update_rprompt()
+    self.ANTARES_GIT_STATUS=""
+
+    if ANTARES.USE_LIGHT_GIT_MODE then return end
+
+    if not self.ANTARES_GIT_IN_WORKING_TREE then return end
+
+    if self.GIT_CONFLICTS > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_CONFLICTS)..ANTARES.STR_GIT_CONFLICTS..tostring(self.GIT_CONFLICTS)..f
+    end
+    if self.GIT_STAGED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_STAGED)..ANTARES.STR_GIT_STAGED..tostring(self.GIT_STAGED)..f
+    end
+    if self.GIT_DELETED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_DELETED)..ANTARES.STR_GIT_DELETED..tostring(self.GIT_DELETED)..f
+    end
+    if self.GIT_CHANGED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_CHANGED)..ANTARES.STR_GIT_CHANGED..tostring(self.GIT_CHANGED)..f
+    end
+    if self.GIT_ADDED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_ADDED)..ANTARES.STR_GIT_ADDED..tostring(self.GIT_ADDED)..f
+    end
+    if self.GIT_UNTRACKED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_UNTRACKED)..ANTARES.STR_GIT_UNTRACKED..tostring(self.GIT_UNTRACKED)..f
+    end
+    if self.GIT_STASHED > 0 then
+        self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_GIT_STASHED)..ANTARES.STR_GIT_STASHED..tostring(self.GIT_STASHED)..f
+    end
+    if not self.ANTARES_GIT_IS_DETACHED_HEAD then
+        local ahead_behind=""
+        if self.GIT_AHEAD > 0 then
+            ahead_behind=ahead_behind..F(ANTARES.FG_GIT_AHEAD)..ANTARES.STR_GIT_AHEAD..tostring(self.GIT_AHEAD)..f
+        end
+        if self.GIT_BEHIND > 0 then
+            ahead_behind=ahead_behind..F(ANTARES.FG_GIT_BEHIND)..ANTARES.STR_GIT_BEHIND..tostring(self.GIT_BEHIND)..f
+        end
+        if ahead_behind ~= "" then
+            self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..ahead_behind
+        end
+    end
+    self.ANTARES_GIT_STATUS=self.ANTARES_GIT_STATUS.." "..F(ANTARES.FG_DECO).."╾─╯"..f
+end
+
+clink.onbeginedit(function()
+    ant.ANTARES_ERR_CODE=os.geterrorlevel()
+    ant.need_update=true
+end)
+
+clink.onendedit(function(cmdline)
+    if cmdline:gsub("%s+$", "") == "" then
+        ant.exec_time=nil
+    else
+        ant.ANTARES_EXEC_FLAG="+"
+        ant.ANTARES_EXEC_START=os.clock()
+    end
+end)
+
+function ant:filter() -- luacheck: no unused
+    if self.need_update then
+        self:antares_update_git_status()
+        self:antares_update_prompt()
+        self:antares_update_rprompt()
+    end
+    local PROMPT=self.ANTARES_RETURN..
+            F(ANTARES.FG_DECO).."╭┤"..reset..self.ANTARES_PWD..self.ANTARES_FILLER..self.ANTARES_GIT_BRANCH..LINEFEED..
+            F(ANTARES.FG_DECO).."╰─╼"..reset.." "--[[..${ZSH_ANTARES_JOBS}]]..self.ANTARES_PRIVILEDGES..' '
+    return PROMPT
+end
+function ant:rightfilter() -- luacheck: no unused
+    return self.ANTARES_GIT_STATUS
+end
+function ant:transientfilter() -- luacheck: no unused
+    return self.ANTARES_PRIVILEDGES..' '
+end
+function ant:transientrightfilter() -- luacheck: no unused
+    return
+end
+
+
+-- END PORT OF ANTARES PROMPT
+--------------------------------------------------------------------------------
+-- BEGIN EXTENSIONS TO ANTARES
+
+
+local ellipsis_char="..."
+
+ellipsify=function(text, limit, trim_left)
+    if not limit or console.cellcount(text) <= limit then
+        return text
+    end
+    local trunc_width = console.cellcount(ellipsis_char)
+    local keep = {}
+    local truncate = 0
+    local total = 0
+    local strings = console.explodeansi(text)
+    for x = #strings, 1, -1 do
+        local t = strings[x]
+        if t:byte() == 27 then
+            table.insert(keep, t)
+        else
+            local width = console.cellcount(t)
+            if total + width + trunc_width <= limit then
+                -- If the text fits, keep the whole thing.
+                table.insert(keep, t)
+                total = total + width
+            else
+                local s = ""
+                if trim_left then
+                    -- Truncate from the left side.
+                    local reverse = {}
+                    for y in unicode.iter(t) do
+                        table.insert(reverse, y)
+                    end
+                    for y = #reverse, 1, -1 do
+                        local z = reverse[y]
+                        if total + trunc_width <= limit then
+                            truncate = #s
+                        end
+                        total = total + console.cellcount(k)
+                        if total > limit then
+                            s = s:sub(-truncate)
+                            s = ellipsis_char..s
+                            break
+                        end
+                        s = z..s
+                    end
+                    table.insert(keep, s)
+                else
+                    -- Truncate from the right side.
+                    for z in unicode.iter(t) do
+                        if total + trunc_width <= limit then
+                            truncate = #s
+                        end
+                        total = total + console.cellcount(k)
+                        if total > limit then
+                            s = s:sub(1, truncate)
+                            s = s..ellipsis_char
+                            break
+                        end
+                        s = s..z
+                    end
+                end
+                table.insert(keep, s)
+            end
+        end
+    end
+    if trim_left then
+        local reverse = {}
+        for x = #keep, 1, -1 do
+            local p = table.remove(keep, x)
+            if not p then
+                break
+            end
+            table.insert(reverse, p)
+        end
+        return table.concat(reverse)
+    else
+        return table.concat(keep)
+    end
+end
+
+evalfunc=function(x)
+    if type(x) == "function" then
+        return x()
+    else
+        return x
+    end
+end
+
+sum=function(list)
+    local n=0
+    if type(list) == "table" then
+        for _,v in pairs(list) do
+            n=n + tonumber(v)
+        end
+    elseif list then
+        n=tonumber(list)
+    end
+    return n
+end
+
+iif=function(expr, iftrue, iffalse)
+    if expr then
+        return iftrue
+    else
+        return iffalse
+    end
+end
+
+command=function(cmd, all)
+    local file=io.popen(cmd)
+    if file then
+        local ret
+        if all then
+            for line in file:lines() do
+                if not ret then
+                    ret={}
+                end
+                table.insert(ret, line)
+            end
+        else
+            ret=file:read()
+        end
+        file:close()
+        return ret
+    end
+end
+
+local function get_parent(dir)
+    local parent = path.toparent(dir)
+    if parent and parent ~= "" and parent ~= dir then
+        return parent
+    end
+end
+
+scan_upwards=function(dir, scan_func)
+    if not dir or dir == '.' then dir = os.getcwd() end
+    repeat
+        local result = table.pack(scan_func(dir))
+        if result ~= nil and result[1] ~= nil then return table.unpack(result, 1, result.n) end
+        local parent = get_parent(dir)
+        dir = parent
+    until not dir
+end
+
+popen_close=function(file, close_func)
+    if type(close_func) == "function" then
+        return close_func()
+    else
+        return file:close()
+    end
+end
+
+icon=function(str)
+    if str and str ~= "" then
+        return str.." "
+    else
+        return ""
+    end
+end
+
+local last_cwd
+local last_gitdir
+clink.onbeginedit(function ()
+    -- Clear cached git info when the git dir changes.
+    local cwd = os.getcwd()
+    if last_cwd ~= cwd then
+        last_cwd = cwd
+        local gitdir = git.getgitdir()
+        if last_gitdir ~= gitdir then
+            last_gitdir = gitdir
+            ant.last_git_status=nil
+            ant.last_bare_info=nil
+        end
+    end
+end)
+
+
+-- END EXTENSIONS TO ANTARES
+--------------------------------------------------------------------------------

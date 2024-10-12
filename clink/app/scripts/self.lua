@@ -146,6 +146,8 @@ local function color_handler(word_index, line_state, classify)
     local include_bold = true
     local include_bright = true
     local include_underline = true
+    local include_italic = true
+    local include_reverse = true
     local include_color = true
     local include_on = true
     local include_sgr = true
@@ -189,6 +191,8 @@ local function color_handler(word_index, line_state, classify)
             include_bold = false
             include_bright = true
             include_underline = false
+            include_italic = false
+            include_reverse = false
             include_color = true
             include_on = false
         elseif is_prefix3(word, "bold", "nobold", "dim") then
@@ -209,6 +213,18 @@ local function color_handler(word_index, line_state, classify)
                 break
             end
             include_underline = false
+        elseif is_prefix3(word, "reverse") then
+            if not include_reverse then
+                invalid = true
+                break
+            end
+            include_reverse = false
+        elseif is_prefix3(word, "italic") then
+            if not include_italic then
+                invalid = true
+                break
+            end
+            include_italic = false
         elseif is_prefix3(word, "default", "normal", "black", "red", "green",
                           "yellow", "blue", "cyan", "magenta", "white") then
             if not include_color then
@@ -218,6 +234,19 @@ local function color_handler(word_index, line_state, classify)
             include_bold = false
             include_bright = false
             include_underline = false
+            include_italic = false
+            include_reverse = false
+            include_color = false
+        elseif word:find("^#%x%x%x$") or word:find("^#%x%x%x%x%x%x$") then
+            if not include_color or not include_bright then
+                invalid = true
+                break
+            end
+            include_bold = false
+            include_bright = false
+            include_underline = false
+            include_italic = false
+            include_reverse = false
             include_color = false
         elseif word == "sgr" then
             if not include_sgr then
@@ -267,6 +296,12 @@ local function color_handler(word_index, line_state, classify)
             table.insert(list, "underline")
             table.insert(list, "nounderline")
         end
+        if include_italic then
+            table.insert(list, "italic")
+        end
+        if include_reverse then
+            table.insert(list, "reverse")
+        end
         if include_color then
             table.insert(list, "default")
             table.insert(list, "normal")
@@ -288,7 +323,10 @@ local function color_handler(word_index, line_state, classify)
     end
 
     if classify and invalid then
-        if word then
+        if word:find("^#%x*$") then
+            classify:classifyword(i, "o") --other
+            return {}
+        elseif word then
             local len = #word
             for _, s in ipairs(list) do
                 if s:sub(1, len) == word then
@@ -305,6 +343,12 @@ local function color_handler(word_index, line_state, classify)
     end
 
     return list
+end
+
+--------------------------------------------------------------------------------
+local function set_onarg(_, word, _, _, user_data)
+    -- Remember the setting name for use by value_handler().
+    user_data.setting_name = word
 end
 
 --------------------------------------------------------------------------------
@@ -356,20 +400,24 @@ local function set_handler(match_word, word_index, line_state) -- luacheck: no u
 end
 
 --------------------------------------------------------------------------------
-local function value_handler(match_word, word_index, line_state, builder, classify) -- luacheck: no unused
-    if word_index <= 3 then
-        return
+local function value_onarg(_, _, word_index, _, user_data)
+    -- Remember the index of the first word in the value.
+    if not user_data.value_word_index then
+        user_data.value_word_index = word_index
     end
+end
 
-    -- Use relative positioning to get the word, in case flags were used.
-    local name = line_state:getword(word_index - 1)
+--------------------------------------------------------------------------------
+local function value_handler(_, word_index, line_state, builder, user_data)
+    local name = user_data.setting_name
     local info = settings.list(name)
     if not info then
         return
     end
 
+    local value_word_index = user_data.value_word_index or word_index
     if info.type == "color" then
-        return color_handler(word_index, line_state)
+        return color_handler(value_word_index, line_state)
     elseif info.type == "string" then
         if name == "autosuggest.strategy" then
             return clink._list_suggesters()
@@ -377,8 +425,10 @@ local function value_handler(match_word, word_index, line_state, builder, classi
             builder:setfullyqualify()
             return clink.filematches(line_state:getendword())
         end
-    else
+    elseif value_word_index == word_index then
         return info.values
+    else
+        return {}
     end
 end
 
@@ -454,16 +504,32 @@ local function classify_handler(arg_index, _, word_index, line_state, classify)
 end
 
 --------------------------------------------------------------------------------
+local set_flags = {
+    "-h", "-d", "-i", "-C", "-?",
+    "--help", "--describe", "--info", "--compat",
+}
+
+local function make_hide_flags(flags)
+    local t = {}
+    for _, f in ipairs(flags) do
+        if f:sub(1, 2) ~= "--" then
+            table.insert(t, f)
+        end
+    end
+    return t
+end
+
 local set = clink.argmatcher()
-:addflags("-h", "-d", "-i", "-?")
-:hideflags("-h", "-d", "-i", "-?")
-:addflags("--help", "--describe", "--info")
+:addflags(set_flags)
+:hideflags(make_hide_flags(set_flags))
 :adddescriptions({
     ["--help"] = "Show help",
     ["--describe"] = "Show descriptions of settings (instead of values)",
-    ["--info"] = "Show detailed info for each setting when '*' is used"})
-:addarg(set_handler)
-:addarg(value_handler)
+    ["--info"] = "Show detailed info for each setting when '*' is used",
+    ["--compat"] = "Print backward-compatible color setting values",
+})
+:addarg({set_handler, onarg=set_onarg})
+:addarg({value_handler, onarg=value_onarg}):loop(2)
 :setclassifier(classify_handler)
 
 --------------------------------------------------------------------------------
@@ -614,12 +680,242 @@ local function filter_hidden()
 end
 
 --------------------------------------------------------------------------------
+local function get_matches_by_ext(builder, func, word, ext)
+    local t = func()
+    builder:setnosort(true)
+    builder:setforcequoting(true)
+    builder:addmatches(t, "alias")
+
+    t = {}
+    for _, m in ipairs(clink.filematches(word)) do
+        local keep
+        if m.type:find("dir") then
+            keep = true
+        else
+            local x = path.getextension(m.match)
+            keep = x and x:lower() == ext
+        end
+        if keep then
+            table.insert(t, m)
+        end
+    end
+    return t
+end
+
+local function get_clink_prompts(word, _, _, builder, _)
+    return get_matches_by_ext(builder, clink.getprompts, word, ".clinkprompt")
+end
+
+local function get_clink_themes(word, _, _, builder, _)
+    return get_matches_by_ext(builder, clink.getthemes, word, ".clinktheme")
+end
+
+-- TODO: delayinit the `clink config` stuff...
+
+local prompt_list = clink.argmatcher()
+:addflags({
+    "-f", "--full",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-f"] = "List full path names of custom prompts",
+    ["-h"] = "Show help text",
+})
+
+local prompt_use = clink.argmatcher()
+:addarg(get_clink_prompts)
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-h"] = "Show help text",
+})
+
+local prompt_show = clink.argmatcher()
+:addarg(get_clink_prompts)
+:addflags({
+    "-n", "--only-named",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-n"] = "Show only the named prompt",
+    ["-h"] = "Show help text",
+})
+
+local prompt_clear = clink.argmatcher()
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-h"] = "Show help text",
+})
+
+local theme_list = clink.argmatcher()
+:addflags({
+    "-f", "--full",
+    "-p", "--preferred",
+    "-s", "--samples",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-f"] = "List full path names of themes",
+    ["-p"] = "Simulate the preferred terminal colors",
+    ["-s"] = "Print color samples from themes",
+    ["-h"] = "Show help text",
+})
+
+local theme_use = clink.argmatcher()
+:addarg(get_clink_themes)
+:addflags({
+    "-n", "--no-save",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-n"] = "Don't save the current theme first",
+    ["-h"] = "Show help text",
+})
+
+local theme_save = clink.argmatcher()
+:addarg(get_clink_themes)
+:addflags({
+    "-a", "--all",
+    "-r", "--rules",
+    "-y", "--yes",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Save all color settings, even colors added by Lua scripts",
+    ["-r"] = "Also save match coloring rules",
+    ["-y"] = "Allow overwriting an existing file",
+    ["-h"] = "Show help text",
+})
+
+local theme_show = clink.argmatcher()
+:addarg(get_clink_themes)
+:addflags({
+    "-n", "--only-named",
+    "-p", "--preferred",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-n"] = "Show only the named theme",
+    ["-p"] = "Simulate the preferred terminal colors",
+    ["-h"] = "Show help text",
+})
+
+local theme_print = clink.argmatcher()
+:addarg(get_clink_themes)
+:addflags({
+    "-a", "--all",
+    "-n", "--no-samples",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Print all colors from current theme, even colors added by Lua scripts",
+    ["-n"] = "Don't print color samples",
+    ["-h"] = "Show help text",
+})
+
+local theme_clear = clink.argmatcher()
+:addflags({
+    "-a", "--all",
+    "-r", "--rules",
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["-a"] = "Clear all colors, even colors added by Lua scripts",
+    ["-r"] = "Also clear match coloring rules",
+    ["-h"] = "Show help text",
+})
+
+local prompt_commands = clink.argmatcher()
+:addarg({
+    "list"..prompt_list,
+    "use"..prompt_use,
+    "show"..prompt_show,
+    "clear"..prompt_clear,
+})
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["list"] = "List custom prompts",
+    ["use"] = {" prompt", "Use a custom prompt"},
+    ["show"] = {" [prompt]", "Show what the custom prompt looks like"},
+    ["clear"] = "Clear the custom prompt",
+    ["-h"] = "Show help text",
+})
+
+local theme_commands = clink.argmatcher()
+:addarg({
+    "list"..theme_list,
+    "use"..theme_use,
+    "save"..theme_save,
+    "show"..theme_show,
+    "print"..theme_print,
+    "clear"..theme_clear,
+})
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["list"] = "List color themes",
+    ["use"] = {" theme", "Use a color theme"},
+    ["save"] = {" theme", "Save the current color theme"},
+    ["show"] = {" [theme]", "Show what the theme looks like"},
+    ["print"] = {" [theme]", "Print a color theme"},
+    ["clear"] = "Reset to the default colors",
+    ["-h"] = "Show help text",
+})
+
+local config = clink.argmatcher()
+:addarg({
+    "prompt"..prompt_commands,
+    "theme"..theme_commands,
+})
+:addflags({
+    "-h", "--help", "-?",
+})
+:hideflags("-?")
+:nofiles()
+:adddescriptions({
+    ["prompt"] = {"Choose a custom prompt for Clink"},
+    ["theme"] = {"Choose a color theme for Clink"},
+    ["-h"] = "Show help text",
+})
+
+--------------------------------------------------------------------------------
 clink.argmatcher(
     "clink",
     "clink_x86.exe",
     "clink_x64.exe")
 :addarg(
     "autorun"   .. autorun,
+    "config"    .. config,
     "echo"      .. echo,
     "history"   .. history,
     "info"      .. nothing,
@@ -645,6 +941,7 @@ clink.argmatcher(
     ["--session"]   = { " id", "Override the session id (for history and info)" },
     ["--version"]   = "Print Clink's version",
     ["autorun"]     = "Manage Clink's entry in cmd.exe's autorun",
+    ["config"]      = "Configuration commands for Clink",
     ["echo"]        = "Echo key sequences for use in .inputrc files",
     ["history"]     = "List and operate on the command history",
     ["info"]        = "Prints information about Clink",
@@ -654,50 +951,3 @@ clink.argmatcher(
     ["uninstallscripts"] = "Remove a path to search for scripts",
     ["set"]         = "Adjust Clink's settings"})
 :nofiles()
-
---------------------------------------------------------------------------------
-local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)
-
-function set_generator:generate(line_state, match_builder) -- luacheck: no self
-    local first_word = clink.lower(path.getname(line_state:getword(1)))
-    if path.getbasename(first_word) ~= "clink" and first_word ~= "clink_x64.exe" and first_word ~= "clink_x86.exe" then
-        return
-    end
-
-    local index = 2
-    while index < line_state:getwordcount() do
-        local word = line_state:getword(index)
-        if word == "--help" or word == "-h" or word == "-?" then -- luacheck: ignore 542
-        elseif word == "--version" or word == "-v" then -- luacheck: ignore 542
-        elseif word == "--profile" or word == "-p" then
-            index = index + 1
-        else
-            break
-        end
-        index = index + 1
-    end
-
-    if line_state:getword(index) ~= "set" then
-        return
-    end
-
-    index = index + 1
-    while true do
-        local word = line_state:getword(index)
-        if word ~= "--help" and word ~= "-h" and word ~= "-?" and word ~= "--describe" and word ~= "-d" then
-            break
-        end
-        index = index + 1
-    end
-
-    if index == line_state:getwordcount() then
-        return
-    end
-
-    index = index + 1
-    local matches = value_handler(line_state:getword(index), index, line_state, match_builder)
-    if matches then
-        match_builder:addmatches(matches, "arg")
-    end
-    return true
-end

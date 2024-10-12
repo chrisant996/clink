@@ -32,25 +32,20 @@ namespace settings
 const uint32 c_max_len_name = 32;
 const uint32 c_max_len_short_desc = 48;
 
+enum class section { ignore, set, clear, preferred };
+
 struct setting_name_value
 {
-    setting_name_value(const char* name, const char* value)
+    setting_name_value(const char* name, const char* value, section section=section::set)
     : name(name)
     , value(value)
-    , clear(false)
-    {
-    }
-
-    setting_name_value(const char* name, const char* value, bool clear)
-    : name(name)
-    , value(value)
-    , clear(clear)
+    , section(section)
     {
     }
 
     str_moveable    name;
     str_moveable    value;
-    bool            clear;
+    section         section;
 };
 
 setting_iter        first();
@@ -60,6 +55,9 @@ bool                save(const char* file);
 
 bool                parse_ini(const char* file, std::vector<setting_name_value>& out);
 void                overlay(const std::vector<setting_name_value>& overlay);
+
+bool                parse_color(const char* value, str_base& out);
+void                format_color(const char* color, str_base& out, bool compat);
 
 void                get_settings_file(str_base& out);
 bool                sandboxed_set_setting(const char* name, const char* value);
@@ -102,7 +100,7 @@ public:
     virtual void    set() = 0;
     virtual bool    set(const char* value) = 0;
     virtual void    get(str_base& out) const = 0;
-    virtual void    get_descriptive(str_base& out) const { get(out); }
+    virtual void    get_descriptive(str_base& out, bool compat=true) const { get(out); }
 
     void            set_source(char const* source);
     const char*     get_source() const;
@@ -263,7 +261,7 @@ public:
                        setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value);
     virtual void       set() override;
     virtual bool       set(const char* value) override { return setting_str::set(value); }
-    virtual void       get_descriptive(str_base& out) const override;
+    virtual void       get_descriptive(str_base& out, bool compat=true) const override;
 protected:
     virtual bool       parse(const char* value, store<const char*>& out) override;
 };

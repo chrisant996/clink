@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -251,7 +251,7 @@ static setting_color g_color_modmark(
     "mark-modified-lines is set.",
     "");
 
-setting_color g_color_prompt(
+static setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",
     "When set, this is used as the default color for the prompt.  But it's\n"
@@ -2631,7 +2631,7 @@ static void suppress_redisplay()
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* const prompt, const char* const rprompt, const bool _redisplay, const bool transient)
+void rl_module::set_prompt(const char* prompt, const char* const rprompt, const bool _redisplay, const bool transient)
 {
     assertimplies(transient, _redisplay);
     const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
@@ -2655,7 +2655,13 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
         const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
         if (prompt_color)
         {
-            m_rl_prompt.format("\x01%s\x02", prompt_color);
+            str<16> leading_newlines;
+            while (*prompt == '\r' || *prompt == '\n')
+            {
+                leading_newlines.concat(prompt, 1);
+                ++prompt;
+            }
+            m_rl_prompt.format("%s\x01%s\x02", leading_newlines.c_str(), prompt_color);
             if (rprompt)
                 m_rl_rprompt.format("\x01%s\x02", prompt_color);
         }
@@ -2703,7 +2709,7 @@ void rl_module::set_prompt(const char* const prompt, const char* const rprompt, 
     }
 
     // Larger scope than the others to affect rl_forced_update_display().
-    rollback<bool> dmncr(g_display_manager_no_comment_row, transient);
+    rollback<bool> dmncr(g_display_manager_no_comment_row, transient || g_display_manager_no_comment_row);
 
     // Update the prompt.
     if (transient)
@@ -2819,26 +2825,9 @@ void rl_module::on_begin_line(const context& context)
     // it now.
     refresh_terminal_size();
 
-    {
-        // Remind if logging is on.
-        static bool s_remind = true;
-        if (s_remind)
-        {
-            s_remind = false;
-            if (log_terminal)
-            {
-                str<> s;
-                s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
-                         "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
-                         "\n", g_debug_log_terminal.get_name());
-                context.printer.print(s.c_str(), s.length());
-            }
-        }
-
-        // Reset the fwrite function so logging changes can take effect immediately.
-        rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
-        rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
-    }
+    // Reset the fwrite function so logging changes can take effect immediately.
+    rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
+    rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up
