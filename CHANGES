@@ -9,11 +9,11 @@ Clink now supports color theme files and custom prompt files.  These enable pack
 - Added support for `*.clinktheme` color theme files; see [Color Themes](#color-themes) for more information.
   - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
   - The famous [Dracula](https://draculatheme.com) and [Solarized Dark](https://github.com/altercation/solarized) (and Light) themes are included.
-  - Use <code>clink config theme use <span class="arg">name</span></code> to apply a color theme.
+  - Use <code>clink config theme use <span class="arg">name</span></code> to apply a color theme, or set the `CLINK_COLORTHEME` environment variable to the color theme name.
 - Added support for `*.clinkprompt` custom prompt module files; see [Custom Prompts](#custom-prompts) for more information.  This makes it easy to share custom prompts, and to have a library of many different custom prompts and switch between them quickly and easily.  One custom prompt module can be active at a time; activating one deactivates any others.
   - Added several `clink config prompt` commands for custom prompt modules (run `clink config prompt --help`).
   - The famous [Agnoster](https://github.com/agnoster/agnoster-zsh-theme) prompt is included (ported from zsh to Clink).
-  - Use <code>clink config prompt use <span class="arg">name</span></code> to activate a custom prompt module.
+  - Use <code>clink config prompt use <span class="arg">name</span></code> to activate a custom prompt module, or set the `CLINK_CUSTOMPROMPT` environment variable to the custom prompt name.
 - Added the ability to show input hints in the comment row (below the input line).
   - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
   - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
