@@ -33,6 +33,7 @@
 #include <core/settings.h>
 #include <core/log.h>
 #include <core/debugheap.h>
+#include <core/callstack.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/printer.h>
@@ -41,10 +42,6 @@
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/scroll.h>
-
-#ifdef LOG_OUTPUT_CALLSTACKS
-#include <core/callstack.h>
-#endif
 
 #include <signal.h>
 #include <unordered_set>
@@ -357,6 +354,9 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_debug_log_terminal;
+#ifdef _MSC_VER
+extern setting_bool g_debug_log_output_callstacks;
+#endif
 extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
@@ -376,17 +376,6 @@ static void __cdecl dummy_display_matches_hook(char**, int32, int32)
     // integrated into Readline.
 }
 #endif
-
-
-
-//------------------------------------------------------------------------------
-static void LOGCURSORPOS()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (GetConsoleScreenBufferInfo(h, &csbi))
-        LOG("CURSORPOS %d,%d", csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
-}
 
 
 
@@ -726,16 +715,20 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int32 char_cou
 static int32 s_puts_face = 0;
 static void terminal_log_write(FILE* stream, const char* chars, int32 char_count)
 {
+    suppress_implicit_write_console_logging nolog;
+
     if (stream == out_stream)
     {
         assert(g_printer);
         LOGCURSORPOS();
-#ifdef LOG_OUTPUT_CALLSTACKS
-        char stk[8192];
-        format_callstack(2, 20, stk, sizeof(stk), false);
-        LOG("%s \"%.*s\", %d -- %s", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count, stk);
-#else
         LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
+#ifdef _MSC_VER
+        if (g_debug_log_output_callstacks.get())
+        {
+            char stk[8192];
+            format_callstack(2, 20, stk, sizeof(stk), false);
+            LOG("%s", stk);
+        }
 #endif
         g_printer->print(chars, char_count);
         return;
@@ -753,7 +746,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
         HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
         if (GetConsoleMode(h, &dw))
         {
-            LOGCURSORPOS();
+            LOGCURSORPOS(h);
             LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
             wstr<32> s;
             str_iter tmpi(chars, char_count);
@@ -2646,12 +2639,6 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_keyseq_len(int32 len)
-{
-    // TODO:  This may be dead code, and may be removable.
-}
-
-//------------------------------------------------------------------------------
 static void suppress_redisplay()
 {
     // Do nothing.  This is used to suppress the rl_redisplay_function call in
@@ -2659,9 +2646,10 @@ static void suppress_redisplay()
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
+void rl_module::set_prompt(const char* const prompt, const char* const rprompt, const bool _redisplay, const bool transient)
 {
-    redisplay = redisplay && (g_rl_buffer && g_printer);
+    assertimplies(transient, _redisplay);
+    const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -2707,7 +2695,8 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         s_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
     }
 
-    if (m_rl_prompt.equals(prev_prompt.c_str()) &&
+    if (!transient &&
+        m_rl_prompt.equals(prev_prompt.c_str()) &&
         m_rl_rprompt.equals(prev_rprompt.c_str()))
         return;
 
@@ -2725,25 +2714,11 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         // Count the number of lines the prompt takes to display.
         int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
 
-#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
-        if (use_display_manager())
-        {
-            clear_lines = lines;
-        }
-        else
-#endif
-        {
-            // Clear the input line and the prompt prefix.
-            // BUGBUG: This can't walk up past the top of the visible area of
-            // the terminal display, so short windows will effectively corrupt
-            // the scrollback history.
-            // REVIEW: What if the visible area is only one line tall?  Are ANSI
-            // codes able to manipulate it adequately?
-            rl_clear_visible_line();
-            while (lines-- > 0)
-                g_printer->print("\x1b[A\x1b[2K");
-        }
+        clear_lines = lines;
     }
+
+    // Larger scope than the others to affect rl_forced_update_display().
+    rollback<bool> dmncr(g_display_manager_no_comment_row, transient);
 
     // Update the prompt.
     if (transient)
@@ -2756,7 +2731,6 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
         rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
         rollback<int32> mml(_rl_mark_modified_lines, 0);
-        rollback<bool> dmncr(g_display_manager_no_comment_row, true);
 
         rl_set_prompt(m_rl_prompt.c_str());
         rl_set_rprompt(m_rl_rprompt.c_str());
@@ -2780,6 +2754,8 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     if (redisplay)
     {
         g_prompt_redisplay++;
+        if (transient)
+            reset_display_readline();
         defer_clear_lines(clear_lines, transient);
         rl_forced_update_display();
 
@@ -2787,6 +2763,9 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         if (was_visible)
             show_cursor(true);
     }
+
+    if (transient)
+        reset_display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -3114,8 +3093,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     rollback<bool> rb_input_more(s_input_more, input.more);
     while (len && !m_done)
     {
-        bool is_quoted_insert = rl_is_insert_next_callback_pending();
-
         // Reset the scroll mode right before handling input so that "scroll
         // mode" can be deduced based on whether the most recently invoked
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
@@ -3155,6 +3132,19 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
+
+        // NOTE:  There's ambiguity for quoted-insert.  Ideally the whole
+        // console input key sequence could be inserted as quoted text (e.g.
+        // CTRL-Q then UP).  But in a recorded key macro there's no way to
+        // know how many characters should be quoted.  For consistency between
+        // direct console input and recorded macros, the implementation here
+        // no longer quotes the whole console input key sequence.
+        //
+        // Related commits:
+        //  - 3a64c92f55ab8d55a979c6f9515eba99a82bb4a8, 2022/09/21 15:43:42
+        //  - 62c44d2c75f998242c59af11db9cac78059189a5, 2021/09/18 11:22:51
+        //  - f28e6018aa6b6b1e26c3a734ec82719abdf0109e, 2021/09/18  3:23:16
+        //  - 7a2236ad48e742be6552a60e32ed26a11581dd8c, 2020/10/07 18:14:49
     }
 
     g_result = nullptr;

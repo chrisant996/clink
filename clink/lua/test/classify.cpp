@@ -592,5 +592,38 @@ TEST_CASE("Lua word classification")
         }
     }
 
+    SECTION("Dash special cases")
+    {
+        const char* script = "\
+            clink.argmatcher('argcmd')\
+            :addflags('-a', '-z'..clink.argmatcher():addarg('x', 'y'))\
+            :addarg({'one'})\
+            :addarg({'two'})\
+        ";
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        SECTION("by itself at end")
+        {
+            tester.set_input("argcmd -z -");
+            tester.set_expected_faces("oooooo ff o");
+            tester.run();
+        }
+
+        SECTION("by itself as arg")
+        {
+            tester.set_input("argcmd -z - one");
+            tester.set_expected_faces("oooooo ff o aaa");
+            tester.run();
+        }
+
+        SECTION("no flags in linked parser")
+        {
+            tester.set_input("argcmd -z -a one");
+            tester.set_expected_faces("oooooo ff oo aaa");
+            tester.run();
+        }
+    }
+
     AddConsoleAliasW(const_cast<wchar_t*>(L"dkalias"), nullptr, host);
 }

@@ -7,6 +7,7 @@
 #include "version.h"
 
 #include <core/str.h>
+#include <terminal/terminal_helpers.h>
 
 //------------------------------------------------------------------------------
 static thread_local int32 s_filter = 0;
@@ -31,12 +32,14 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 
     wstr<> wpath(buffer.c_str());
 
+    suppress_implicit_write_console_logging nolog;
+
     const DWORD pid = GetCurrentProcessId();
     fputs("\n!!! CLINK'S CRASHED!", stderr);
 #ifdef _WIN64
-    fputs("\n!!! v" CLINK_VERSION_STR " (x64)", stderr);
+    fputs("\n!!! v" CLINK_VERSION_STR_WITH_BRANCH " (x64)", stderr);
 #else
-    fputs("\n!!! v" CLINK_VERSION_STR " (x86)", stderr);
+    fputs("\n!!! v" CLINK_VERSION_STR_WITH_BRANCH " (x86)", stderr);
 #endif
     fprintf(stderr, "\n!!! process id %u (0x%x)", pid, pid);
     fputs("\n!!!", stderr);

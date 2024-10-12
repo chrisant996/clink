@@ -1134,11 +1134,11 @@ static int32 get_ansi_host(lua_State* state)
 /// If <span class="arg">mode</span> is omitted, then the function returns the
 /// current slash translation mode without changing it.
 ///
-/// Note:  Clink always generates file matches using the system path separator
-/// (backslash on Windows), regardless what path separator may have been typed
-/// as input.  Setting this to <code>0</code> does not disable normalizing typed
-/// input paths when invoking completion; it only disables translating slashes
-/// in custom generators.
+/// <strong>Note:</strong>  Clink always generates file matches using the
+/// system path separator (backslash on Windows), regardless what path
+/// separator may have been typed as input.  Setting this to <code>0</code>
+/// does not disable normalizing typed input paths when invoking completion;
+/// it only disables translating slashes in custom generators.
 /// -show:  -- This example affects all match generators, by using priority -1 to
 /// -show:  -- run first and returning false to let generators continue.
 /// -show:  -- To instead affect only one generator, call clink.translateslashes()
@@ -1230,7 +1230,8 @@ static int32 reclassify_line(lua_State* state)
 /// -ver:   1.2.46
 /// Invoke the prompt filters again and refresh the prompt.
 ///
-/// Note: this can potentially be expensive; call this only infrequently.
+/// <strong>Note:</strong> This can potentially be expensive; call this only
+/// infrequently.
 extern bool g_filtering_in_progress;
 int32 g_prompt_refilter = 0;
 static int32 refilter_prompt(lua_State* state)

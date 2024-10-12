@@ -27,12 +27,14 @@ setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
 
 
 --------------------------------------------------------------------------------
+local _enable_hints
 local _delayinit_generation = 0
 local _clear_onuse_coroutine = {}
 local _clear_delayinit_coroutine = {}
 
 --------------------------------------------------------------------------------
 clink.onbeginedit(function ()
+    _enable_hints = settings.get("argmatcher.show_hints")
     _delayinit_generation = _delayinit_generation + 1
 
     -- Clear dangling coroutine references in matchers.  Otherwise if a
@@ -242,10 +244,24 @@ local function is_word_present(word, arg, t, arg_match_type)
         if it == "function" then
             t = 'o' --other (placeholder; superseded by :classifyword).
         elseif i == word or (it == "table" and i.match == word) then
-            return arg_match_type, true
+            return arg_match_type, true, i.arginfo
         end
     end
     return t, false
+end
+
+--------------------------------------------------------------------------------
+local function get_word_arginfo(word, arg, matcher)
+    local _, _, arginfo = is_word_present(word, arg)
+    if arginfo then
+        return arginfo
+    end
+    if matcher._descriptions then
+        local desc = matcher._descriptions[word]
+        if desc and desc[2] then
+            return desc[1]
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -650,17 +666,50 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
 
+    -- Merge two adjacent words separated only by nowordbreakchars.
+    local matcher = self._matcher
+    local realmatcher = self._realmatcher
+    if not self._cmd_wordbreak then
+        local is_flag = matcher:_is_flag(word)
+        local arg = is_flag and matcher._flags and matcher._flags._args[1] or matcher._args[self._arg_index]
+        if arg and (arg.nowordbreakchars or is_flag) then
+            -- Internal CMD commands and Batch scripts never use nowordbreakchars.
+            -- Flags in other commands default to certain punctuation marks as
+            -- nowordbreakchars.  This more accurately reflects how the command
+            -- line will actually be parsed, especially for commas.
+            --
+            -- UNLESS the character is immediately preceded by ":", so that e.g.
+            -- "-Q:+x" can still be interpreted as two words, "-Q:" and "+x".
+            -- This exception is handled inside _unbreak_word() itself.
+            local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
+            local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
+            if adjusted then
+                self._line_state = adjusted
+                line_state = adjusted
+                if self._word_classifier then
+                    self._word_classifier:_unbreak_word(word_index, len, skip_word)
+                end
+                if skip_word then
+                    if is_flag then
+                        local next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
+                        self:_pop(next_is_flag)
+                    end
+                    return
+                end
+                word = line_state:getword(word_index)
+            end
+        end
+    end
+
     -- Check for flags and switch matcher if the word is a flag.
     local is_flag
     local next_is_flag
     local end_flags = nil
-    local matcher = self._matcher
-    local realmatcher = self._realmatcher
     local pushed_flags
     if not self._noflags then
         -- Don't treat a flag prefix character by itself as a flag unless it's in the end word.
         -- For example, Perforce `p4 -x - command`.
-        is_flag = matcher:_is_flag(word) and (word:byte(2) or word_index == line_state:getwordcount()) and true or nil
+        is_flag = matcher:_is_flag(word) and matcher._flags and (word:byte(2) or word_index == line_state:getwordcount()) and true or nil
     end
     if is_flag then
         if matcher._flags and not last_onadvance then
@@ -677,8 +726,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
-                            if self._word_classifier and not self._extra then
-                                self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                            if self._word_classifier then
+                                if not self._extra then
+                                    self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                                end
+                            elseif self._need_arginfo then
+                                self._arginfo = get_word_arginfo(word, arg, realmatcher)
                             end
                             self:push_line_state(line_states[1], true--[[no_onalias]])
                             if chain then
@@ -689,7 +742,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                         end
                     end
                 end
-                if arg.onarg and clink._in_generate() then
+                if arg.onarg then
                     arg.onarg(0, word, word_index, line_state, self._user_data)
                 end
             end
@@ -746,8 +799,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
-                    if self._word_classifier and not self._extra then
-                        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                    if self._word_classifier then
+                        if not self._extra then
+                            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+                        end
+                    elseif self._need_arginfo then
+                        self._arginfo = get_word_arginfo(word, arg, realmatcher)
                     end
                     self:push_line_state(line_states[1], true--[[no_onalias]])
                     if chain then
@@ -767,35 +824,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
-
-    -- Merge two adjacent words separated only by nowordbreakchars.
-    if arg and (arg.nowordbreakchars or is_flag) and not self._cmd_wordbreak then
-        -- Internal CMD commands and Batch scripts never use nowordbreakchars.
-        -- Flags in other commands default to certain punctuation marks as
-        -- nowordbreakchars.  This more accurately reflects how the command
-        -- line will actually be parsed, especially for commas.
-        --
-        -- UNLESS the character is immediately preceded by ":", so that e.g.
-        -- "-Q:+x" can still be interpreted as two words, "-Q:" and "+x".
-        -- This exception is handled inside _unbreak_word() itself.
-        local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
-        local adjusted, skip_word, len = line_state:_unbreak_word(word_index, nowordbreakchars)
-        if adjusted then
-            self._line_state = adjusted
-            line_state = adjusted
-            if self._word_classifier then
-                self._word_classifier:_unbreak_word(word_index, len, skip_word)
-            end
-            if skip_word then
-                if is_flag then
-                    next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
-                    self:_pop(next_is_flag)
-                end
-                return
-            end
-            word = line_state:getword(word_index)
-        end
-    end
 
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
@@ -883,14 +911,18 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         return
     end
 
-    -- Run delayinit and onarg (is_flag runs them further above).
-    if not is_flag then
-        if arg.delayinit then
-            do_delayed_init(arg, realmatcher, arg_index)
+    -- Run delayinit (is_flag runs it further above).
+    if not is_flag and arg.delayinit then
+        do_delayed_init(arg, realmatcher, arg_index)
+    end
+
+    -- Parse the word type.
+    if self._word_classifier then
+        if not self._extra then
+            self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
         end
-        if arg.onarg and clink._in_generate() then
-            arg.onarg(arg_index, word, word_index, line_state, self._user_data)
-        end
+    elseif self._need_arginfo then
+        self._arginfo = get_word_arginfo(word, arg, realmatcher)
     end
 
     -- Generate matches from history.
@@ -902,9 +934,11 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         end
     end
 
-    -- Parse the word type.
-    if self._word_classifier and not self._extra then
-        self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
+    -- Run onarg (is_flag runs it further above).  Must run classify_word
+    -- BEFORE onarg, otherwise for example onarg can change the current
+    -- directory before classify_word has a chance to process the word.
+    if not is_flag and arg.onarg then
+        arg.onarg(arg_index, word, word_index, line_state, self._user_data)
     end
 
     -- Does the word lead to another matcher?
@@ -1026,7 +1060,7 @@ function _argreader:_push(matcher, realmatcher)
     -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
-        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data })
+        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data, self._arginfo })
         --[[
         self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
     else
@@ -1042,6 +1076,9 @@ function _argreader:_push(matcher, realmatcher)
     if not realmatcher then -- Don't start new user data when switching to flags matcher.
         self._user_data = { shared_user_data=self._shared_user_data }
     end
+    if realmatcher or matcher._is_flag_matcher then -- Clear arginfo if not linked.
+        self._arginfo = nil
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1056,7 +1093,9 @@ function _argreader:_pop(next_is_flag)
             return false
         end
 
-        self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data = table.unpack(table.remove(self._stack))
+        -- Since self._arginfo can be nil, the extents of the table must now
+        -- be specified explicitly (..., 1, 6).
+        self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data, self._arginfo = table.unpack(table.remove(self._stack), 1, 6)
 
         if self._matcher._loop then
             -- Matcher is looping; stop popping so it can handle the argument.
@@ -1116,11 +1155,16 @@ end
 
 --------------------------------------------------------------------------------
 local function apply_options_to_list(addee, list)
+    local t
     if type(addee.delayinit) == "function" then
         list.delayinit = addee.delayinit
     end
     if addee.fromhistory then
         list.fromhistory = true
+    end
+    t = type(addee.hint)
+    if t == "string" or t == "function" then
+        list.hint = addee.hint
     end
     if type(addee.loopchars) == "string" then
         -- Apply looping characters, but avoid duplicates.
@@ -1273,6 +1317,7 @@ end
 --- <tr><th>Entry</th><th>More Info</th><th>Version</th></tr>
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
+--- <tr><td><code>hint=<span class="arg">string_or_function</span></code></td><td>See <a href="#addarg_hint">Show a Usage Hint</a>.</td><td class="version">v1.7.0 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>nowordbreakchars=true</code></td><td>See <a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a>.</td><td class="version">v1.5.17 and newer</td></tr>
@@ -2720,11 +2765,12 @@ end
 --  exists      = True if argmatcher exists (even if too few words to use it).
 --  extra       = Extra line_state to run through reader before continuing.
 --  no_cmd      = Don't find argmatchers for CMD builtin commands.
-local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra)
-    -- Running an argmatcher only makes sense if there's two or more words.
+local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force)
+    -- Running an argmatcher only makes sense if there's two or more words,
+    -- but allowing forcing it to be returned when getting input hints.
     local word_count = line_state:getwordcount()
     local command_word_index = line_state:getcommandwordindex()
-    if word_count < command_word_index + ((check_existence or has_extra) and 0 or 1) then
+    if word_count < command_word_index + ((check_existence or has_extra or force) and 0 or 1) then
         return
     end
     if word_count > command_word_index then
@@ -2883,6 +2929,7 @@ end
 clink.argmatcher_generator_priority = 24
 local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority)
 local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priority)
+local argmatcher_hinter = clink.hinter(clink.argmatcher_generator_priority)
 
 --------------------------------------------------------------------------------
 local function do_generate(line_state, match_builder)
@@ -3109,6 +3156,141 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
     end
 
     return false -- continue
+end
+
+--------------------------------------------------------------------------------
+local function between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
+    local args = argmatcher._args[arg_index]
+    if args then
+        local hint = args.hint
+        if type(hint) == "string" then
+            return hint, line_state:getcursor()
+        elseif type(hint) == "function" then
+            local h,p = hint(arg_index, "", word_index, line_state, user_data)
+            if h then
+                p = p or line_state:getcursor()
+                return h, p
+            end
+        elseif prev_arginfo then
+            local h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+            if h then
+                return h, line_state:getcursor()
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+function argmatcher_hinter:gethint(line_state) -- luacheck: no self
+    if not _enable_hints then
+        return
+    end
+
+    local besthint
+    local bestpos
+    local cursorpos = line_state:getcursor()
+
+    local lookup
+    local no_cmd
+    local reader
+::do_command::
+
+    local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
+    lookup = nil -- luacheck: ignore 311
+
+    if argmatcher then
+        if reader then
+            local last_word = reader._last_word
+            reader._last_word = nil
+            reader:start_command(argmatcher)
+            reader._last_word = last_word
+        else
+            reader = _argreader(argmatcher, line_state)
+            reader._need_arginfo = true
+        end
+        if extra and not reader._extra then
+            extra.line_state = break_slash(extra.line_state) or extra.line_state
+            reader:push_line_state(extra)
+        end
+
+        -- Consume words and use them to move through matchers' arguments.
+        local prev_info
+        while true do
+            -- Capture parser state BEFORE calling reader:update(), which
+            -- advances the parser and sets up state for the NEXT pass.
+            local arg_index = reader._arg_index
+            local user_data = reader._user_data
+            local prev_arginfo = reader._arginfo
+            local noflags = reader._noflags
+            argmatcher = reader._realmatcher
+
+            -- Get the next word.
+            local word, word_index = reader:next_word()
+            if not word then
+                -- Handle case where cursor is past the last word.
+                local endinfo = line_state:getwordinfo(line_state:getwordcount())
+                if endinfo then
+                    local nextposafterendword = endinfo.offset + endinfo.length
+                    if (cursorpos > nextposafterendword) or
+                            (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                        return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, user_data, prev_arginfo)
+                    end
+                end
+                break
+            end
+
+            -- Advance the parser.
+            local chain, chainlookup = reader:update(word, word_index)
+            if chain then
+                line_state = reader._line_state -- reader:update() can swap to a different line_state.
+                lookup = chainlookup
+                no_cmd = reader._no_cmd
+                goto do_command
+            end
+
+            -- Process the word.
+            if not reader._extra then
+                local info = line_state:getwordinfo(word_index)
+                if not info then
+                    break
+                elseif cursorpos < info.offset then
+                    if not prev_info or prev_info.offset + prev_info.length < cursorpos then
+                        -- Cursor is between words.
+                        return between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
+                    end
+                    break
+                elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
+                    local args
+                    if not noflags and argmatcher._flags and argmatcher:_is_flag(word) then
+                        arg_index = 0
+                        args = argmatcher._flags._args[1]
+                        prev_arginfo = nil
+                    else
+                        args = argmatcher._args[arg_index]
+                    end
+                    if args then
+                        local hint = args.hint
+                        if type(hint) == "string" then
+                            besthint = hint
+                            bestpos = info.offset
+                        elseif type(hint) == "function" then
+                            local h,p = hint(arg_index, word, word_index, line_state, user_data)
+                            if h then
+                                besthint = h
+                                bestpos = p or info.offset
+                            end
+                        elseif prev_arginfo then
+                            besthint = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+                            bestpos = info.offset
+                        end
+                    end
+                end
+                prev_info = info
+            end
+        end
+
+        return besthint, bestpos
+    end
 end
 
 

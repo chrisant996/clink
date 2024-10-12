@@ -13,8 +13,8 @@
 #endif
 
 #define CLINK_VERSION_MAJOR     1
-#define CLINK_VERSION_MINOR     6
-#define CLINK_VERSION_PATCH     22
+#define CLINK_VERSION_MINOR     7
+#define CLINK_VERSION_PATCH     0
 
 #define ORIGINAL_COPYRIGHT_STR  "Copyright (c) 2012-2018 Martin Ridgers"
 #define CLINK_COPYRIGHT_STR     "Copyright (c) 2012-2018 Martin Ridgers, Portions Copyright (c) 2020-2024 Christopher Antos"
@@ -31,6 +31,17 @@
                                 AS_LSTR(CLINK_VERSION_MINOR) ## L"." ##\
                                 AS_LSTR(CLINK_VERSION_PATCH) ## L"." ##\
                                 AS_LSTR(CLINK_COMMIT)
+#   undef CLINK_VERSION_STR_WITH_BRANCH
+#   ifdef CLINK_BRANCH
+#       define CLINK_VERSION_STR_WITH_BRANCH \
+                                AS_STR(CLINK_VERSION_MAJOR) ## "." ##\
+                                AS_STR(CLINK_VERSION_MINOR) ## "." ##\
+                                AS_STR(CLINK_VERSION_PATCH) ## "." ##\
+                                AS_STR(CLINK_COMMIT) ## "." ##\
+                                AS_STR(CLINK_BRANCH)
+#   else
+#       define CLINK_VERSION_STR_WITH_BRANCH CLINK_VERSION_STR
+#   endif
 #endif
 
 #define ENCODE_CLINK_VERSION(major, minor, patch) (major * 10000000 + minor * 10000 + patch)

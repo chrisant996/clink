@@ -161,7 +161,7 @@ int32 loader(int32 argc, char** argv)
             break;
 
         case 'v':
-            puts(CLINK_VERSION_STR);
+            puts(CLINK_VERSION_STR_WITH_BRANCH);
             return 0;
 
         case '~':

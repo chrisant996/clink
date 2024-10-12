@@ -14,14 +14,14 @@
 
 //------------------------------------------------------------------------------
 static constexpr const char* const c_clink_header =
-    "Clink v" CLINK_VERSION_STR "\n"
+    "Clink v" CLINK_VERSION_STR_WITH_BRANCH "\n"
     ORIGINAL_COPYRIGHT_STR "\n"
     PORTIONS_COPYRIGHT_STR "\n"
     "https://github.com/chrisant996/clink\n"
     ;
 
 static constexpr const char* const c_clink_header_abbr =
-    "Clink v" CLINK_VERSION_STR " (https://github.com/chrisant996/clink)\n"
+    "Clink v" CLINK_VERSION_STR_WITH_BRANCH " (https://github.com/chrisant996/clink)\n"
     ;
 
 static setting_enum s_clink_logo(
@@ -43,16 +43,21 @@ void maybe_print_logo()
     // Add a blank line if our logo follows anything else (the goal is to
     // put a blank line after CMD's "Microsoft Windows ..." logo), but don't
     // add a blank line if our logo is at the very top of the window.
+    // Avoid puts or printf otherwise debug.log_terminal reveals that the C
+    // runtime calls WriteFile/WriteConsoleW once per character.
+    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi = { sizeof(csbi) };
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (GetConsoleScreenBufferInfo(hout, &csbi))
     {
+        str<> s;
         if (csbi.dwCursorPosition.Y > 0)
-            puts("");
-    }
+            s.concat("\r\n", 2);
+        s.concat((logo == 2) ? c_clink_header_abbr : c_clink_header);
 
-    // Using printf instead of puts ensures there's only one blank line
-    // between the header and the subsequent prompt.
-    printf("%s", (logo == 2) ? c_clink_header_abbr : c_clink_header);
+        DWORD written;
+        wstr<> w(s.c_str());
+        WriteConsoleW(hout, w.c_str(), w.length(), &written, nullptr);
+    }
 }
 
 //------------------------------------------------------------------------------

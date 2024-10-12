@@ -79,6 +79,9 @@ int32 main(int32 argc, char** argv)
     set_noasync_recognizer();
     set_test_harness();
 
+    extern bool g_direct_lua_fwrite;
+    g_direct_lua_fwrite = true; // Otherwise Lua print() is swallowed by test_terminal_out.
+
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
     bool times = false;

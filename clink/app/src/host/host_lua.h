@@ -5,6 +5,7 @@
 
 #include <core/str.h>
 #include <lua/lua_match_generator.h>
+#include <lua/lua_hinter.h>
 #include <lua/lua_word_classifier.h>
 #include <lua/lua_input_idle.h>
 #include <lua/lua_state.h>
@@ -17,6 +18,7 @@ public:
                         host_lua();
                         operator lua_state& ();
                         operator match_generator& ();
+                        operator hinter& ();
                         operator word_classifier& ();
                         operator input_idle* ();
     void                load_scripts();
@@ -41,6 +43,7 @@ private:
     void                load_script(const char* path, unsigned& num_loaded, unsigned& num_failed);
     lua_state           m_state;
     lua_match_generator m_generator;
+    lua_hinter          m_hinter;
     lua_word_classifier m_classifier;
     lua_input_idle      m_idle;
     str<>               m_prev_script_path;

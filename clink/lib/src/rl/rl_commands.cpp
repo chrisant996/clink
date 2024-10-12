@@ -2538,7 +2538,6 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     static char err[] = "\x1b[1;91;40m";
     static char lf[] = "\n";
 
-    str<> s;
     str<> t;
     const char* p;
     const int32 spacing = 16;
@@ -2547,20 +2546,19 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     host_context context;
     host_get_app_context(id, context);
 
+    str<> _lambda_s;
     auto print_heading = [&](const char* text)
     {
-        s.clear();
-        s << bold << text << ":" << norm << lf;
-        g_printer->print(s.c_str(), s.length());
+        _lambda_s.clear();
+        _lambda_s << bold << text << ":" << norm << lf;
+        g_printer->print(_lambda_s.c_str(), _lambda_s.length());
     };
-
     auto print_value = [&](const char* name, const char* value)
     {
         if (value && *value)
         {
-            s.clear();
-            s.format("  %-*s  %s\n", spacing, name, value);
-            g_printer->print(s.c_str(), s.length());
+            _lambda_s.format("  %-*s  %s\n", spacing, name, value);
+            g_printer->print(_lambda_s.c_str(), _lambda_s.length());
         }
     };
 
@@ -2568,7 +2566,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     print_heading("version");
 
-    print_value("version", CLINK_VERSION_STR);
+    print_value("version", CLINK_VERSION_STR_WITH_BRANCH);
     print_value("binaries", context.binaries.c_str());
 
     if (rl_explicit_arg)
@@ -2578,8 +2576,8 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     print_heading("session");
 
-    printf("  %-*s  %d\n", spacing, "session", id);
-
+    t.format("%d", id);
+    print_value("session", t.c_str());
     print_value("profile", context.profile.c_str());
     print_value("log", file_logger::get_path());    // ACTUAL FILE IN USE.
     print_value("default_settings", context.default_settings.c_str());
@@ -2605,14 +2603,17 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     {
         print_heading("language");
 
+        t.format("%u", cpid);
+        print_value("codepage", t.c_str());
+
         const DWORD kbid = LOWORD(GetKeyboardLayout(0));
+        t.format("%u", kbid);
+        print_value("keyboard langid", t.c_str());
+
         WCHAR wide_layout_name[KL_NAMELENGTH * 2];
         if (!GetKeyboardLayoutNameW(wide_layout_name))
             wide_layout_name[0] = 0;
         t = wide_layout_name;
-
-        printf("  %-*s  %u\n", spacing, "codepage", cpid);
-        printf("  %-*s  %u\n", spacing, "keyboard langid", kbid);
         print_value("keyboard layout", t.c_str());
     }
 
@@ -2683,25 +2684,28 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
             if (cjk.size())
             {
                 list_ambiguous_codepoints("CJK ambiguous characters", cjk);
-                puts("    Running 'chcp 65001' can often fix width problems with these characters.\n"
-                     "    Or you can use a different character.");
+                g_printer->print(
+                    "    Running 'chcp 65001' can often fix width problems with these characters.\n"
+                    "    Or you can use a different character.\n");
             }
 
             if (emoji.size())
             {
                 list_ambiguous_codepoints("color emoji", emoji);
-                puts("    To fix problems with these, try using a different symbol or a different\n"
-                     "    terminal program.  Or sometimes using a different font can help.");
+                g_printer->print(
+                    "    To fix problems with these, try using a different symbol or a different\n"
+                    "    terminal program.  Or sometimes using a different font can help.\n");
             }
 
             if (qualified.size())
             {
                 list_ambiguous_codepoints("qualified emoji", qualified);
-                puts("    To fix problems with these, try using a different symbol or a different\n"
-                     "    terminal program.  Or sometimes using a different font can help.");
-                puts("    The fully-qualified forms of these symbols often encounter problems,\n"
-                     "    but the unqualified forms often work.  For a table of emoji and their\n"
-                     "    forms see https://www.unicode.org/Public/emoji/15.0/emoji-test.txt");
+                g_printer->print(
+                    "    To fix problems with these, try using a different symbol or a different\n"
+                    "    terminal program.  Or sometimes using a different font can help.\n"
+                    "    The fully-qualified forms of these symbols often encounter problems,\n"
+                    "    but the unqualified forms often work.  For a table of emoji and their\n"
+                    "    forms see https://www.unicode.org/Public/emoji/15.0/emoji-test.txt\n");
             }
         }
     }
@@ -2716,9 +2720,10 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
         {
             print_heading("problematic codes in prompt");
             list_problem_codes(problems);
-            puts("    These characters in the prompt string can cause problems.  Clink will try\n"
-                 "    to compensate as much as it can, but for best results you may need to fix\n"
-                 "    the prompt string by removing the characters.");
+            g_printer->print(
+                "    These characters in the prompt string can cause problems.  Clink will try\n"
+                "    to compensate as much as it can, but for best results you may need to fix\n"
+                "    the prompt string by removing the characters.\n");
         }
     }
 

@@ -74,3 +74,12 @@ uint8 get_console_faint_text();
 uint8 get_console_default_attr();
 console_theme get_console_theme();
 int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3]);
+
+//------------------------------------------------------------------------------
+class suppress_implicit_write_console_logging : public no_copy
+{
+public:
+    suppress_implicit_write_console_logging();
+    ~suppress_implicit_write_console_logging();
+    static bool is_suppressed();
+};

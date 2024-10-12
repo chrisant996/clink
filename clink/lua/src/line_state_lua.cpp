@@ -258,10 +258,11 @@ int32 line_state_lua::get_word_count(lua_State* state)
 /// -ret:   table
 /// Returns a table of information about the Nth word in the line.
 ///
-/// Note:  The length refers to the substring in the line; it omits leading and
-/// trailing quotes, but <em><strong>includes</strong></em> embedded quotes.
-/// <a href="#line_state:getword">line_state:getword()</a> conveniently strips
-/// embedded quotes to help generators naturally complete <code>"foo\"ba</code>
+/// <strong>Note:</strong>  The length refers to the substring in the line; it
+/// omits leading and trailing quotes, but <em><strong>includes</strong></em>
+/// embedded quotes.  <a href="#line_state:getword">line_state:getword()</a>
+/// conveniently strips embedded quotes to help generators naturally complete
+/// <code>"foo\"ba</code>
 /// to <code>"foo\bar"</code>.
 ///
 /// The table returned has the following scheme:

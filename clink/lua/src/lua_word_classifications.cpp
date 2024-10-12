@@ -136,9 +136,9 @@ int32 lua_word_classifications::classify_word(lua_State* state)
 /// See <a href="#classifywords">Coloring the Input Text</a> for more
 /// information.
 ///
-/// Note: an input line can have up to 100 different unique color strings
-/// applied, and then this stops applying new colors.  The counter gets reset
-/// when the onbeginedit event is sent.
+/// <strong>Note:</strong> An input line can have up to 100 different unique
+/// color strings applied, and then this stops applying new colors.  The
+/// counter gets reset when the onbeginedit event is sent.
 int32 lua_word_classifications::apply_color(lua_State* state)
 {
     auto start = checkinteger(state, LUA_SELF + 1);

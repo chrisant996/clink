@@ -489,6 +489,9 @@ void app_context::start_logger() const
         get_binaries_dir(dll_path);
         LOG("DLL path is '%s'", dll_path.c_str());
 
+        const void* const base = vm().get_alloc_base((void*)"");
+        LOG("DLL base is %p", base);
+
         {
 #pragma warning(push)
 #pragma warning(disable:4996)
@@ -504,7 +507,7 @@ void app_context::start_logger() const
                     (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" :
                     ((system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) ? "arm64" : "x86"));
             }
-            LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+            LOG("Clink version %s (%s)", CLINK_VERSION_STR_WITH_BRANCH, AS_STR(ARCHITECTURE_NAME));
 #pragma warning(pop)
         }
     }

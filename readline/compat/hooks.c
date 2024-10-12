@@ -300,20 +300,10 @@ void end_prompt(int crlf)
     host_filter_transient_prompt(crlf);
 
     _rl_move_vert(_rl_vis_botlin);
+    if (crlf != 0)
+        end_prompt_lf();
     if (crlf > 0)
-    {
-#ifdef INCLUDE_CLINK_DISPLAY_READLINE
-        end_prompt_lf();
-#else
-        rl_crlf();
-#endif
         _rl_last_c_pos = 0;
-    }
-
-#ifdef INCLUDE_CLINK_DISPLAY_READLINE
-    if (crlf < 0)
-        end_prompt_lf();
-#endif
 
     _rl_last_c_pos = 0;
     _rl_last_v_pos = 0;

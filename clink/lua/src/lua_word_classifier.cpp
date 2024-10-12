@@ -7,6 +7,7 @@
 #include "line_states_lua.h"
 
 #include <core/base.h>
+#include <core/os.h>
 #include <lib/line_state.h>
 #include <lib/word_classifications.h>
 
@@ -66,6 +67,8 @@ void lua_word_classifier::classify(const line_states& commands, word_classificat
 
     line_states_lua lines(commands, classifications);
     lines.push(state);
+
+    os::cwd_restorer cwd;
 
     m_state.pcall(state, 1, 1);
 }

@@ -834,7 +834,7 @@ int32 globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// Collects directories matching <span class="arg">globpattern</span> and
 /// returns them in a table of strings.
 ///
-/// <strong>Note:</strong> any quotation marks (<code>"</code>) in
+/// <strong>Note:</strong> Any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
 ///
 /// Starting in v1.3.1, when this is used in a coroutine it automatically yields
@@ -881,7 +881,7 @@ int32 glob_dirs(lua_State* state)
 /// Collects files and/or directories matching
 /// <span class="arg">globpattern</span> and returns them in a table of strings.
 ///
-/// <strong>Note:</strong> any quotation marks (<code>"</code>) in
+/// <strong>Note:</strong> Any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
 ///
 /// Starting in v1.3.1, when this is used in a coroutine it automatically yields
@@ -1583,7 +1583,7 @@ static void get_bool_field(lua_State* state, const char* field, bool& out)
 /// Returns an object that can be used to get files and/or directories matching
 /// <span class="arg">pattern</span>.
 ///
-/// <strong>Note:</strong> any quotation marks (<code>"</code>) in
+/// <strong>Note:</strong> Any quotation marks (<code>"</code>) in
 /// <span class="arg">pattern</span> are stripped.
 ///
 /// Unlike <a href="#os.globfiles">os.globfiles</a>, this only collects matching
@@ -1738,7 +1738,8 @@ int32 touch(lua_State* state)
 /// Returns the value of the named environment variable, or nil if it doesn't
 /// exist.
 ///
-/// Note: Certain environment variable names receive special treatment:
+/// <strong>Note:</strong> Certain environment variable names receive special
+/// treatment:
 ///
 /// <table>
 /// <tr><th>Name</th><th>Special Behavior</th></tr>
@@ -1806,8 +1807,8 @@ int32 set_env(lua_State* state)
 /// syntax is not supported (e.g. <code>%name:str1=str2%</code> or
 /// <code>%name:~offset,length%</code>).
 ///
-/// Note: See <a href="#os.getenv">os.getenv()</a> for a list of special
-/// variable names.
+/// <strong>Note:</strong> See <a href="#os.getenv">os.getenv()</a> for a list
+/// of special variable names.
 int32 expand_env(lua_State* state)
 {
     const char* in = checkstring(state, 1);
@@ -2650,8 +2651,8 @@ static bool maybe_rawset(lua_State *state, const char* name, const char* value)
 /// -show:  -- info.productversion      10.0.19041.1
 /// -show:  -- info.privatebuild
 /// -show:  -- info.specialbuild
-/// Note:  The <span class="arg">fileflags</span> field may be nil (omitted),
-/// or it may contain a table with additional fields.
+/// <strong>Note:</strong>  The <span class="arg">fileflags</span> field may
+/// be nil (omitted), or it may contain a table with additional fields.
 /// -show:  if info.fileflags then
 /// -show:  -- info.fileflags.debug
 /// -show:  -- info.fileflags.prerelease

@@ -14,10 +14,10 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 Clink offers suggestions as you type based on history, files, and completions.
 
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).
+Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color).
 
 See [Auto-Suggest](#gettingstarted_autosuggest) to learn more.
 
@@ -130,7 +130,7 @@ Starting Clink injects it into a `cmd.exe` process, where it intercepts a handfu
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions.
-- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion.
+- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
@@ -143,7 +143,7 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 
 "Completion" is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.
 
-"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
+"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
 
 Some examples of what completions can offer:
 - File names,
@@ -276,7 +276,7 @@ Clink can suggest command lines as you type, based on command history and comple
 
 You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.
 
-When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
+When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
 Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
 
@@ -288,11 +288,11 @@ Later, you start to type a new command, and it matches the earlier command from 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
+The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
 If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers a suggestion for a whole input line, and the suggestion can come from the saved command history or from the list of possible completions.  There can be many possible completions available, but there is never more than one auto-suggestion available.
 
-The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Accept Suggestion` usage hint when a suggestion is available.
+The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Insert Suggestion` usage hint when a suggestion is available.
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
 
@@ -456,10 +456,11 @@ The following table describes the available Clink settings:
 
 Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
+<a name="argmatcher_show_hints"></a>`argmatcher.show_hints` | True | When both the [`comment_row.show_hints`](#comment_row_show_hints) and `argmatcher.show_hints` settings are enabled, [argmatchers](#argumentcompletion) can show usage hints in the comment row (below the input line).
 <a name="autosuggest_async"></a>`autosuggest.async` | True | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
-<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
-<a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a usage hint `[Right]=Accept Suggestion` to help make the feature more discoverable and easy to use.  Set this to `false` to hide the usage hint.
-<a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
+<a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a usage hint `[Right]=Insert Suggestion` to help make the feature more discoverable and easy to use.  Set this to `false` to hide the usage hint.
+<a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), inserting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the [`history.dupe_mode`](#history_dupe_mode) setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 <a name="clink_autoupdate"></a>`clink.autoupdate` | `check` | Clink can periodically check for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
@@ -505,6 +506,9 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` [*](#alternatedefault) | The color for automatic suggestions when [`autosuggest.enable`](#autosuggest_enable) is enabled.
 <a name="color_unexpected"></a>`color.unexpected` | `default` | The color for unexpected arguments in the input line when [`clink.colorize_input`](#clink_colorize_input) is enabled.
 <a name="color_unrecognized"></a>`color.unrecognized` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
+<a name="comment_row_hint_delay"></a>`comment_row.hint_delay` | `500` | Specifies a delay in milliseconds before showing input hints (see [Showing Input Hints](#showinginputhints)).  The delay can be up to 3000 milliseconds, or 0 for no delay.
+<a name="comment_row_show_hints"></a>`comment_row.show_hints` | False | Allow showing input hints in the comment row (see [Showing Input Hints](#showinginputhints)).
+<a name="debug_log_output_callstacks"></a>`debug.log_output_callstacks` | False | Include callstack when logging output.  This has no effect unless `debug.log_terminal` is enabled.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 <a name="debug_log_terminal"></a>`debug.log_terminal` | False | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 <a name="directories_dupe_mode"></a>`directories.dupe_mode` | `add` | Controls how the current directory history is updated.  A value of `add` (the default) always adds the current directory to the directory history.  A value of `erase_prev` will erase any previous entries for the current directory and then add it to the directory history.  Note that directory history is not saved between sessions.
 <a name="doskey_enhanced"></a>`doskey.enhanced` | True | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. To suppress macro expansion for an individual command, prefix the command with a space or semicolon (<code>&nbsp;foo</code> or `;foo`). Or following `\|` or `&`, prefix with two spaces or a semicolon (<code>foo\|&nbsp; bar</code> or `foo\|;bar`).
@@ -1629,6 +1633,7 @@ Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to custo
 <tr><td><a href="#classifywords">Coloring the Input Text</a></td><td>How to make a match generator or argument matcher override the input coloring.</td></tr>
 <tr><td><a href="#customisingtheprompt">Customizing the Prompt</a></td><td>How to write custom prompt filters.</td></tr>
 <tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom [suggestion](#auto-suggest) generators.</td></tr>
+<tr><td><a href="#showinginputhints">Showing Input Hints</a></td><td>How to write custom input hint providers (input hints can be displayed below the input line).</td></tr>
 </table>
 
 <a name="lua-scripts-location"></a>
@@ -1702,6 +1707,7 @@ Clink provides a framework for writing complex argument match generators in Lua.
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_linking">Linking Parsers</a></td><td>How to link a parser to a word or flag.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_hint">Show a Usage Hint</a></td><td>How to show a usage hint for the argument under the cursor.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
@@ -1898,6 +1904,53 @@ Function | Description
 :-: | ---
 [clink.dirmatches](#clink.dirmatches) | Generates directory matches.
 [clink.filematches](#clink.filematches) | Generates file matches.
+
+<a name="addarg_hint"></a>
+
+#### Show a Usage Hint
+
+A usage hint can be shown in the comment row (below the input line).  Usage hints for argmatchers are only shown if both [comment_row.show_hints](#comment_row_show_hints) (off by default) and [argmatcher.show_hints](#argmatcher_show_hints) (on by default) are enabled.
+
+To use this, Clink v1.7.0 or higher is required.
+
+Argmatchers can automatically supply input hints based on `arginfo` fields from match completions.
+
+To supply a custom usage hint, an argmatcher can include either `hint="text"` or <code>hint=<em>function_name</em></code> in the argument table.
+
+```lua
+clink.argmatcher("foo")
+:addarg({ clink.filematches, hint="Argument expected:  filename" })
+```
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected:  filename</span>
+</code></pre>
+
+If a function name is supplied, then the function is passed five arguments:
+
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a string containing the word being parsed.  **Note:** when the cursor is between words or after the last word then `word` is an empty string.
+- `word_index` is the word index in `line_state`, corresponding to the word being parsed.  **Note:** when the cursor is between words then `word_index` is the index of the _next_ word after the cursor, or when the cursor is after the last word then `word_index` is greater than `line_state:getwordcount()`.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
+
+The function returns a hint string, and an optional position in the line text where the hint refers to.  If the position is omitted, then the offset to the beginning of the word is assumed.
+
+```lua
+local function foo_hint_func(arg_index, word, word_index, line_state, user_data)
+    local hint = "Argument expected for '"..line_state:getword(word_index - 1).."':  filename"
+    local pos = line_state:getwordinfo(word_index).offset   -- Shown for completeness, but this is automatically assumed if omitted.
+    return hint, pos
+end
+
+clink.argmatcher("foo")
+:addarg({ "add", "remove" })
+:addarg({ clink.filematches, hint=foo_hint_func })
+```
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="color_arg">add</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected for 'add':  filename</span>
+</code></pre>
 
 <a name="addarg_fromhistory"></a>
 
@@ -2355,7 +2408,9 @@ Here is an example script that supplies git branch names as matches for `git che
 
 If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
 
-The function takes a <span class="arg">line_state</span> [line_state](#line_state) object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+The function takes a <span class="arg">line_state</span> argument which is a [line_state](#line_state) object that has information about the current line.
+
+If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
 
@@ -2452,9 +2507,9 @@ However, older versions of Clink don't support those fields.  And in some cases 
 
 A [match generator](#matchgenerators) or [argmatcher](#argumentcompletion) or [luafunc: key binding](#luakeybindings) can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
-The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
+The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
 
-The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
+The return value is a table with the input matches filtered as required by the match generator.  The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
 
 Filtering the match display can affect completing matches: the `match` field is what gets inserted.  It can also affect displaying matches: the `display` field is displayed if present, otherwise the `match` field is displayed.
 
@@ -2565,7 +2620,7 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 <tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_arg">color.arg</span></td><td class="right_gray">'color.arg' is defined as an argument for 'clink set'</td></tr>
 <tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_unexpected">abc.xyz</span></td><td class="right_gray">'abc.xyz' is not a recognized argument for 'clink set'</td></tr>
 <tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s needle haystack\*</span></td><td class="right_gray">if 'findstr' has no argmatcher, all words use 'color.input'</td></tr>
-<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to accept an auto-suggestion</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to insert an auto-suggestion</td></tr>
 </table></code></pre>
 
 ### More Advanced Stuff
@@ -2655,7 +2710,9 @@ Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:filter()` function on the returned prompt filter.
 
-The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The filter function takes a string argument that contains the filtered prompt so far.
+
+If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 ```lua
 local p = clink.promptfilter(30)
@@ -2705,7 +2762,9 @@ Clink expands CMD prompt `$` codes in `%CLINK_RPROMPT%`, with a few exceptions: 
 
 The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to [clink.promptfilter()](#clink.promptfilter).  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
 
-The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.  If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.
+
+If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 This example modifies the right side prompt by prepending the current date:
 
@@ -2755,7 +2814,9 @@ The transient prompt can be customized by a prompt filter:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:transientfilter()` function on the returned prompt filter.
 
-The transient filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+The transient filter function takes a string argument that contains the filtered prompt so far.
+
+If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 A transient right side prompt is also possible (similar to the usual [right side prompt](#rightprompt)).  The `%CLINK_TRANSIENT_RPROMPT%` environment variable (note the `R` in `_RPROMPT`) provides the initial prompt string for the transient right side prompt, which can be customized by a `:transientrightfilter()` function on a prompt filter.
 
@@ -2799,20 +2860,50 @@ Additionally, individual prompt filters may want to add escape codes surrounding
 
 Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.
 
-Turn on [automatic suggestions](#autosuggest_enable) with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
+Turn on [automatic suggestions](#autosuggest_enable) with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you insert them.
 
 Scripts can provide custom suggestion generators, in addition to the built-in options:
 1. Create a new suggestion generator by calling [clink.suggester()](#clink.suggester) along with a name that identifies the suggestion generator, and can be added to the <code><a href="#autosuggest_strategy">autosuggest.strategy</a></code> setting.
 2. Define a `:suggest()` function on the returned suggestion generator.
 
-The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
+The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.
 
-The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole accepted suggestion (even the part that's already been typed).
+If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.  The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
 
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
 ```lua
 #INCLUDE [docs\examples\ex_suggest.lua]
+```
+
+<a name="showinginputhints"></a>
+
+## Showing Input Hints
+
+Clink can show contextual input hints while you type.  Lua scripts can provide input hints.  When a hint is available, it's shown in the comment row (below the input line).  For example:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_argmatcher">foo</span> <span class="cursor">_</span></span>
+<span class="color_comment_row">Argument expected:  filename</span>
+</code></pre>
+
+To use this, Clink v1.7.0 or higher is required.
+
+To turn on input hints, run <code>clink set <a href="#comment_row_show_hints">comment_row.show_hints</a> true</code>.  Lua scripts can add hinters to do things like show the value of an environment variable under the cursor, or show the value of a doskey macro, or show a hint about what kind of argument a command expects to be entered next, or other things.  The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) repo has some scripts that add hinters.
+
+Scripts can provide custom input hint generators:
+1. Create a new hint generator by calling [clink.hinter()](#clink.hinter) along with an optional priority id which dictates the order in which hinters are called. Lower priority ids are called first.
+2. Define a `:gethint()` function on the returned hint generator.
+
+The function takes a [line_state](#line_state) argument that contains the input line.
+
+If the function returns nil, the next hint generator is called.  If the function returns a string (even an empty string), then the string is used as a hint candidate.  The function can optionally return a string and a position in the line text where the hint refers to (for example, the offset to the beginning of a word).  The hint string with the highest position not exceeding the cursor position is used as the "best hint" (if a hint is returned without a position, then the beginning of the line is assumed).
+
+> **Note:** The `:gethint` callback function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.
+
+This example illustrates how to make an input hint generator that shows the offset of the start of the word under the cursor.
+
+```lua
+#INCLUDE [docs\examples\ex_hinter.lua]
 ```
 
 # Miscellaneous

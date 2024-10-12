@@ -48,10 +48,6 @@
 #endif
 
 //------------------------------------------------------------------------------
-// Define this to add callstacks with `debug.log_terminal`.
-//#define LOG_OUTPUT_CALLSTACKS
-
-//------------------------------------------------------------------------------
 // Define this to run `pushd` repeatedly and expose the directory stack.
 // However, it relys on writing temporary batch scripts, which adds possible
 // failure points and performance degradation.

@@ -17,6 +17,7 @@ class line_states;
 struct host_context;
 enum class display_filter_flags;
 enum class collect_words_mode;
+class input_hint;
 
 //------------------------------------------------------------------------------
 void set_active_line_editor(line_editor_impl* editor, host_callbacks* callbacks);
@@ -37,6 +38,7 @@ matches* get_mutable_matches(bool nosort=false);
 
 //------------------------------------------------------------------------------
 uint32 collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode);
+const input_hint* get_input_hint();
 void refresh_recognizer();
 
 //------------------------------------------------------------------------------
@@ -60,3 +62,7 @@ bool has_deprecated_argmatcher(const char* name);
 //------------------------------------------------------------------------------
 bool host_can_suggest(const line_state& line);
 bool host_suggest(const line_states& lines, matches* matches, int32 generation_id);
+
+//------------------------------------------------------------------------------
+DWORD host_get_input_hint_timeout();
+void host_clear_input_hint_timeout();

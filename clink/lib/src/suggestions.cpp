@@ -43,7 +43,7 @@ setting_bool g_autosuggest_hint(
     "autosuggest.hint",
     "Show usage hint for automatic suggestions",
     "The default is 'true'.  When this and 'autosuggest.enable' are both 'true'\n"
-    "and a suggestion is available, show a usage hint '[Right]-Accept Suggestion'\n"
+    "and a suggestion is available, show a usage hint '[Right]-Insert Suggestion'\n"
     "to help make the feature more discoverable and easy to use.  Set this to\n"
     "'false' to hide the usage hint.",
     true);

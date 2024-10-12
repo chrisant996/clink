@@ -249,6 +249,21 @@ static void dbgdeadfillpointer(void** ppv)
 
 using namespace debugheap;
 
+static size_t dbgcchcopy(char* to, size_t max, char const* from)
+{
+    if (!max)
+        return 0;
+
+    size_t copied = 0;
+    while (--max && *from)
+    {
+        *(to++) = *(from++);
+        copied++;
+    }
+    *to = '\0';
+    return copied;
+}
+
 extern "C" char const* dbginspectmemory(void const* pv, size_t size)
 {
     auto& config = get_config();
@@ -1011,43 +1026,3 @@ void* __cdecl object::operator new(size_t size)
 #endif // USE_RTTI
 
 #endif // USE_MEMORY_TRACKING
-
-#ifdef DEBUG
-
-extern "C" size_t dbgcchcopy(char* to, size_t max, char const* from)
-{
-    if (!max)
-        return 0;
-
-    size_t copied = 0;
-    while (--max && *from)
-    {
-        *(to++) = *(from++);
-        copied++;
-    }
-    *to = '\0';
-    return copied;
-}
-
-extern "C" size_t dbgcchcat(char* to, size_t max, char const* from)
-{
-    if (!max)
-        return 0;
-
-    max--;
-
-    size_t len = strlen(to);
-    if (len > max)
-        len = max;
-    to += len;
-
-    while (len < max && *from)
-    {
-        *(to++) = *(from++);
-        len++;
-    }
-    *to = '\0';
-    return len;
-}
-
-#endif

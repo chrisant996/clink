@@ -67,6 +67,15 @@ setting_bool g_debug_log_terminal(
     "the log file.",
     false);
 
+#ifdef _MSC_VER
+setting_bool g_debug_log_output_callstacks(
+    "debug.log_output_callstacks",
+    "Include callstack when logging output",
+    "When debug.log_terminal is enabled, this logs the corresponding callstacks.\n"
+    "Otherwise this has no effect.\n",
+    false);
+#endif
+
 extern setting_bool g_adjust_cursor_style;
 extern setting_enum g_default_bindings;
 
@@ -917,15 +926,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
             if (callback)
             {
-                if (waited >= WAIT_OBJECT_0 + index_callback_events &&
-                    waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events)
-                {
+                const bool is_event = (waited >= WAIT_OBJECT_0 + index_callback_events &&
+                                       waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events);
+                if (is_event)
                     callback->on_wait_event(waited - (WAIT_OBJECT_0 + index_callback_events));
-                }
                 else
-                {
                     callback->on_idle();
-                }
             }
 
             if (has_mode)
@@ -1043,6 +1049,8 @@ static void verbose_input(KEY_EVENT_RECORD const& record, bool log)
     }
     else
     {
+        suppress_implicit_write_console_logging nolog;
+
         const char* pro = (s_verbose_input > 1) ? "\x1b[s\x1b[H" : "";
         const char* epi = (s_verbose_input > 1) ? "\x1b[K\x1b[u" : "\n";
 
@@ -1392,6 +1400,8 @@ static void verbose_input(MOUSE_EVENT_RECORD const& record, bool log)
     }
     else
     {
+        suppress_implicit_write_console_logging nolog;
+
         printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
                 record.dwMousePosition.X,
                 record.dwMousePosition.Y,
@@ -1570,8 +1580,6 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
         // Reset buffer, discarding the chord.
         m_buffer_count = buffer_count;
     }
-
-    m_keys->set_keyseq_len(m_buffer_count);
 }
 
 //------------------------------------------------------------------------------

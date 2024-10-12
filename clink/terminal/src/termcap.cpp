@@ -54,7 +54,7 @@ extern "C" int32 show_cursor(int32 visible)
             if (!str[0])
             {
                 str = g_enhanced_cursor ? L"\u001b[1 q" : L"\u001b[0 q";
-                len = 6;
+                len = 5;
             }
         }
 

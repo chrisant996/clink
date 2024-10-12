@@ -25,5 +25,4 @@ public:
     virtual bool    is_bound(const char* seq, int32 len) = 0;
     virtual bool    accepts_mouse_input(mouse_input_type type) { return false; }
     virtual bool    translate(const char* seq, int32 len, str_base& out) { return false; }
-    virtual void    set_keyseq_len(int32 len) {}
 };

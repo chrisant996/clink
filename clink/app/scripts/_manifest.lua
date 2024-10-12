@@ -6,7 +6,6 @@ return {
         "dir.lua",
         "env.lua",
         "exec.lua",
-        "git.lua",
         "prompt.lua",
         "self.lua",
         "set.lua",

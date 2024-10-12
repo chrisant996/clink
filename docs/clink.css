@@ -226,6 +226,7 @@ kbd {
 .color_suggestion { color: #808080 }
 .color_unexpected { color: #c0c0c0 }
 .color_unrecognized { color: #ff5f5f }
+.color_comment_row { color: #00ffff; background-color: #000080; }
 
 .right_gray {
     color: #d7d7d7;
@@ -269,7 +270,15 @@ kbd {
 #header #title {
     font: 2.5rem Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: bold;
-    margin-bottom: 0.4rem;
+}
+
+#header #branch {
+    font: 1.5rem Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
+    font-style: italic;
+}
+
+#header #url {
+    margin-top: 0.5rem;
 }
 
 #content {

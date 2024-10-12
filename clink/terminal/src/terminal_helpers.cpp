@@ -712,3 +712,11 @@ printer_context::~printer_context()
     m_terminal->end();
     m_terminal->close();
 }
+
+
+
+//------------------------------------------------------------------------------
+static thread_local int32 s_supersede_logging = 0;
+suppress_implicit_write_console_logging::suppress_implicit_write_console_logging() { ++s_supersede_logging; }
+suppress_implicit_write_console_logging::~suppress_implicit_write_console_logging() { --s_supersede_logging; }
+bool suppress_implicit_write_console_logging::is_suppressed() { return s_supersede_logging > 0; }

@@ -109,18 +109,24 @@ end
 --------------------------------------------------------------------------------
 -- MinGW's windres tool can't seem to handle string concatenation like rc does,
 -- so I gave up and generate it here.
-local function get_version_str_defs(commit)
+local function get_version_str_defs(branch, commit)
     local maj, min, pat = get_clink_version()
     local str = '#define CLINK_VERSION_STR "'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
     local lstr = '#define CLINK_VERSION_LSTR L"'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
-    return str..lstr
+    local bstr
+    if branch ~= "master" and branch ~= "main" then
+        bstr = '#define CLINK_BRANCH '..branch..'\n#define CLINK_VERSION_STR_WITH_BRANCH "'..maj..'.'..min..'.'..pat..'.'..commit..'.'..branch..'"\n'
+    else
+        bstr = '#define CLINK_VERSION_STR_WITH_BRANCH "'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
+    end
+    return str..lstr..bstr
 end
 
 --------------------------------------------------------------------------------
-local function write_clink_commit_file(commit)
+local function write_clink_commit_file(branch, commit)
     local clink_commit_file
     local clink_commit_file_name = ".build/clink_commit.h"
-    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"..get_version_str_defs(commit)
+    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"..get_version_str_defs(branch, commit)
     local old_commit_string = ""
 
     clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "r")
@@ -191,7 +197,7 @@ if _ACTION then
     local docs = (_ACTION == "docs")
     if workspace or docs then
         clink_git_name, clink_git_commit = get_git_info()
-        write_clink_commit_file(clink_git_commit)
+        write_clink_commit_file(clink_git_name, clink_git_commit)
     end
     if workspace then
         write_clink_manifest_file()
@@ -301,6 +307,7 @@ project("lua")
     language("c")
     kind("staticlib")
     defines("BUILD_LUA")
+    defines("BUILD_CLINK_LUA")
     files("lua/src/*.c")
     files("lua/src/*.h")
     excludes("lua/src/lua.c")

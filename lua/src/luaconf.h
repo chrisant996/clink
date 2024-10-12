@@ -211,7 +211,17 @@
 */
 #if defined(LUA_LIB) || defined(lua_c)
 #include <stdio.h>
-#define luai_writestring(s,l)	fwrite((s), sizeof(char), (l), stdout)
+/* begin_clink_change */
+//#define luai_writestring(s,l)	fwrite((s), sizeof(char), (l), stdout)
+#   ifdef __cplusplus
+extern "C" {
+#   endif // __cplusplus
+extern void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream);
+#   ifdef __cplusplus
+}
+#   endif // __cplusplus
+#define luai_writestring(s,l)	lua_fwrite((s), sizeof(char), (l), stdout)
+/* end_clink_change */
 #define luai_writeline()	(luai_writestring("\n", 1), fflush(stdout))
 #endif
 

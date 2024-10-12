@@ -4,11 +4,7 @@
 #include <core/str.h>
 #include <vector>
 
-// Define USE_SUGGESTION_HINT_COMMENTROW to show "[Right]=Accept Suggestion"
-// (with a hyperlink) in the comment row when there's suggestion text.
-//#define USE_SUGGESTION_HINT_COMMENTROW
-
-// Define USE_SUGGESTION_HINT_INLINE to show "[Right]=Accept Suggestion" (with a hyperlink)
+// Define USE_SUGGESTION_HINT_INLINE to show "[Right]=Insert Suggestion" (with a hyperlink)
 // inline when there's suggestion text.
 // Define RIGHT_ALIGN_SUGGESTION_HINT to show the hint right aligned, dropping
 // down a line if it doesn't fit.
@@ -18,29 +14,27 @@
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
+void reset_display_readline();
 void refresh_terminal_size();
 void display_readline();
 void set_history_expansions(history_expansion* list=nullptr);
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
 bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nullptr, uint32 len=-1);
-bool use_display_manager();
 
-#if defined(INCLUDE_CLINK_DISPLAY_READLINE)
 void clear_comment_row();
 void defer_clear_lines(uint32 prompt_lines, bool transient);
-#endif
 
 extern bool g_display_manager_no_comment_row;
 
 //------------------------------------------------------------------------------
-#if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
+#ifdef USE_SUGGESTION_HINT_INLINE
 #define DOC_HYPERLINK_AUTOSUGGEST "https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest"
 #endif
 
 //------------------------------------------------------------------------------
 #ifdef USE_SUGGESTION_HINT_INLINE
-#define STR_SUGGESTION_HINT_INLINE      "    Right=Accept Suggestion"
+#define STR_SUGGESTION_HINT_INLINE      "    Right=Insert Suggestion"
 #define IDX_SUGGESTION_KEY_BEGIN        (-23)
 #define IDX_SUGGESTION_KEY_END          (-18)
 #define IDX_SUGGESTION_LINK_TEXT        (-17)
@@ -89,6 +83,9 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #define FACE_NONE           'n'
 
 //------------------------------------------------------------------------------
+// The display_accumulator can be disabled:
+// In release builds with `set CLINK_NO_DISPLAY_ACCUMULATOR=1`.
+// Or in debug builds also with `set DEBUG_NO_DISPLAY_ACCUMULATOR=1`.
 class display_accumulator
 {
 public:

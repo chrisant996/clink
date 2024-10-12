@@ -606,6 +606,11 @@ void host::filter_transient_prompt(bool final)
     {
 cant:
         update_last_cwd();
+        // Erase comment row if present.
+        clear_comment_row();
+        // Must ensure display_manager gets reset, so it doesn't try to
+        // optimize away printing the new prompt.
+        reset_display_readline();
         return;
     }
 
@@ -619,6 +624,9 @@ cant:
     if (!prompt)
         goto cant;
 
+    // Passing true for transient always ensures display_manager gets reset,
+    // and at the right point (after the transient prompt, but before setting
+    // the new normal prompt).
     set_prompt(prompt, rprompt, true/*redisplay*/, true/*transient*/);
 
     if (final)
@@ -730,6 +738,8 @@ std::unique_ptr<printer_context> host::make_printer_context()
 bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit)
 {
     assert(!m_prompt); // Reentrancy not supported!
+
+    reset_display_readline();
 
     const app_context* app = app_context::get();
     bool reset = app->update_env();
@@ -927,10 +937,6 @@ skip_errorlevel:
         adjust_prompt_spacing();
 
         lua.send_event("onbeginedit");
-
-        // Terminal shell integration.  Happens after any Lua scripts so that
-        // it corresponds most cleanly to end of command output.
-        terminal_end_command();
     }
 
     // Send onprovideline event.
@@ -1029,6 +1035,7 @@ skip_errorlevel:
     {
         editor = line_editor_create(desc);
         editor->set_generator(lua);
+        editor->set_hinter(lua);
         if (g_classify_words.get())
             editor->set_classifier(lua);
         editor->set_input_idle(lua);
