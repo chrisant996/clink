@@ -37,6 +37,17 @@ The Dracula color theme (https://draculatheme.com).<br/>
 Copyright (c) 2018 Dracula Theme.<br/>
 Licensed under the [MIT License](https://github.com/dracula/fish/blob/master/LICENSE).
 
+The Solarized color theme (https://ethanschoonover.com/solarized).<br/>
+Copyright (c) 2011 Ethan Schoonover.<br/>
+Licensed under the [MIT License](https://github.com/altercation/solarized/blob/master/LICENSE).
+
+The Tomorrow color theme (https://github.com/chriskempson/tomorrow-theme).<br/>
+Copyright (C) 2011 [Chris Kempson](https://github.com/chriskempson).<br/>
+Licensed under the [MIT License](https://github.com/chriskempson/tomorrow-theme/blob/master/LICENSE.md).
+
+[Custom prompts included with Clink](https://github.com/chrisant996/clink/tree/master/clink/app/themes) are based on some custom prompt themes for the zsh shell.<br/>
+For details about the original prompt implementation for each one, refer to information at the top of each .clinkprompt file.
+
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br/>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
 
