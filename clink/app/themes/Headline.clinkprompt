@@ -124,6 +124,7 @@ end
 
 local headline_git_branch, headline_git_status, _headline_part, ellipsify_left, sum, evalcmd
 local has24bitcolor = string.find(" winterminal wezterm winconsolev2 ", " "..clink.getansihost().." ") and true or false
+local only_ucs2 = (not string.find(" winterminal wezterm ", " "..clink.getansihost().." ")) and true or false
 
 
 
@@ -144,7 +145,7 @@ HEADLINE.GIT_STATUS_CMD=HEADLINE.GIT_STATUS_CMD or function() return headline_gi
 -- Info symbols (optional)
 HEADLINE.ICONS=orwhennil(HEADLINE.ICONS, false)
 HEADLINE.USER_PREFIX=HEADLINE.ICONS and " " or ''
-HEADLINE.HOST_PREFIX=HEADLINE.ICONS and "󰇅 " or ''
+HEADLINE.HOST_PREFIX=HEADLINE.ICONS and (only_ucs2 and " " or "󰇅 ") or ''
 HEADLINE.PATH_PREFIX=HEADLINE.ICONS and " " or ''
 HEADLINE.BRANCH_PREFIX=HEADLINE.ICONS and " " or ''
 HEADLINE.STATUS_PREFIX=HEADLINE.STATUS_PREFIX or ''
