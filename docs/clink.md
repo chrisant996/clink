@@ -465,6 +465,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 <a name="clink_autoupdate"></a>`clink.autoupdate` | `check` | Clink can periodically check for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
 <a name="clink_colorize_input"></a>`clink.colorize_input` | True | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
+<a name="clink_customprompt"></a>`clink.customprompt` | | *.clinkprompt files contain customizations for the prompt.  Setting this to the name of a .clinkprompt file causes it to be loaded and used for displaying the prompt (see [Customizing the Prompt](#customisingtheprompt)).
 <a name="default_bindings"><a name="clink_default_bindings"></a></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.
 <a name="clink_logo"></a>`clink.logo` | `full` | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 <a name="clink_max_input_rows"></a>`clink.max_input_rows` | `0` | Limits how many rows the input line can use, up to the terminal height.  When this is `0` (the default), the terminal height is the limit.
@@ -498,7 +499,12 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_interact"></a>`color.interact` | `bold` | The color for prompts such as a pager's `--More?--` prompt.
 <a name="color_message"></a>`color.message` | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 <a name="color_popup"></a>`color.popup` | | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
+<a name="color_popup_border"></a>`color.popup_border` | | When set, this is used as the color popup list borders.  If no color is set, then the color from `color.popup` is used.
 <a name="color_popup_desc"></a>`color.popup_desc` | | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
+<a name="color_popup_footer"></a>`color.popup_footer` | | When set, this is used as the color for popup list footer message text.  If no color is set, then the color from `color.popup_border` is used.
+<a name="color_popup_header"></a>`color.popup_header` | | When set, this is used as the color for popup list title text.  If no color is set, then the color from `color.popup_border` is used.
+<a name="color_popup_select"></a>`color.popup_select` | | When set, this is used as the color for the selected popup list item.  If no color is set, a color is chosen by swapping the foreground and background colors from `color.popup`.
+<a name="color_popup_selectdesc"></a>`color.popup_selectdesc` | | When set, this is used as the color for the selected popup list item's description text.  If no color is set, a color is chosen by swapping the foreground and background colors from `color.popup`.
 <a name="color_prompt"></a>`color.prompt` | | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | [*](#alternatedefault) | Used when displaying file completions with the "readonly" attribute.
 <a name="color_selected_completion"></a>`color.selected_completion` | [*](#alternatedefault) | The color for the selected completion with the [`clink-select-complete`](#rlcmd-clink-select-complete) command.  If no color is set, then bright reverse video is used.
@@ -573,7 +579,9 @@ Name                         | Default [*](#alternatedefault) | Description
 
 <a name="alternatedefault"></a>
 
-**&ast;** Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
+> **Note:**
+>
+> Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a [`clink-reset-line`](#rlcmd-clink-reset-line) command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) for more information.
@@ -594,25 +602,82 @@ The Clink color [settings](#clinksettings) are the ones whose names begin with `
 <code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code>
 
 Optional attributes (can be abbreviated to 3 letters):
-- `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already).
-- `underline` or `nounderline` adds or removes an underline.
+- `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already; some terminal programs may also/instead use a bolder font weight).
+- `underline` adds an underline (some terminal programs cannot display underlines).
+- `italic` adds italics (some terminal programs cannot display italics).  This keyword requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 3`.
+- `reverse` swaps the foreground and background colors.  This keyword requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 7`.
 
 Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):
 - `default` or `normal` uses the default color as defined by the current color theme in the console window.
 - `black`, `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `white` are the basic colors names.
 - `bright` can be combined with any of the other color names to make them bright (high intensity).
+- `#XXXXXX` specifies a color using 24-bit RGB hex format; the first two digits are the red value, the next two digits are the green value, and the last two digits are the blue value (some terminal programs cannot display 24-bit colors, and will try to instead use the closest supported color).  Requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 38;2;255;80;160`.
+- `#XXX` specifies a color using a short RGB hex format; each digit is doubled so `#3fc` means `#33ffcc`.  Requires Clink v1.7.0 or newer; in older versions you can use the `sgr` keyword with the corresponding escape code sequence such as `sgr 38;2;255;80;160`.
 
 Examples (specific results may depend on the console host program):
 - `bri yel` for bright yellow foreground on default background color.
 - `bold` for bright default foreground on default background color.
-- `underline bright black on white` for dark gray (bright black) foreground on light gray (white) background.
+- `underline bright black on white` for dark gray (bright black) foreground with underline on light gray (white) background.
 - `default on blue` for default foreground color on blue background.
+- `bold underline green on #222` for bright green with underline on a dark gray background.
 
 ### Alternative SGR Syntax
 
-It's also possible to set any ANSI [SGR escape code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
+It's also possible to set any ANSI [SGR escape code](https://wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
 
 Be careful, since some escape code sequences might behave strangely.
+
+### Color Themes
+
+Clink has many [color settings](#color_arg) which can be set with <code>clink set color.<span class="arg">setting_name</span> <span class="arg"><a href="#friendly-color-names">color_value</a></span></code>.
+
+Predefined color setting values can be grouped into a .clinktheme file to make it easy to save, apply, and share different color themes for Clink.  These color theme files require Clink v1.7.0 or newer.
+
+Clink looks for color theme files in these directories:
+1. Any directories listed in the `%CLINK_THEMES_DIR%` environment variable (multiple directories may be separated by semicolons).
+2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
+3. Or you can provide a full path name to a file, such as `c:\mythemes\Colorful.clinktheme`.
+
+To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `CLINK_COLORTHEME` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
+
+> **Note:** The `clink config theme use` command first saves the current color theme as "Previous Theme" to help avoid accidentally losing color settings.
+
+To list available color themes, run <code>clink config theme list</code>.  Clink includes a few theme files, and you can find more shared online by Clink users.  One place to find more color themes for Clink is the [clink-themes](https://github.com/chrisant996/clink-themes) repo.
+
+To show a demo of a what a color theme will look like, run <code>clink config theme show <span class="arg">theme_name</span></code>.
+
+To save the current profile's color settings into a .clinktheme file, run <code>clink config theme save <span class="arg">theme_name</span></code>.  The color settings are saved into a file named <code>themes\\<span class="arg">theme_name</span>.clinktheme</code> under the current Clink profile directory.
+
+See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
+
+> **Note:**  The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
+
+<fieldset><legend>Warning</legend>
+If you want to change a .clinktheme file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinktheme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
+</fieldset>
+
+## Custom Prompts
+
+You can choose a custom prompt to use, or you can [make your own prompt](#customizing-the-prompt).
+
+A custom prompt can be packaged into a .clinkprompt file to make it easy to choose which prompt to use, and easy to share custom prompts with other users.
+
+Clink looks for custom prompt files in these directories:
+1. Any directories listed in the `%CLINK_THEMES_DIR%` environment variable (multiple directories may be separated by semicolons).
+2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
+3. Or you can provide a full path name to a file, such as `c:\mythemes\Fancy Prompt.clinkprompt`.
+
+To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the `CLINK_CUSTOMPROMPT` environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile's settings file, and allows multiple concurrent Clink sessions to use different custom prompts.
+
+To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files, and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt), [clink-themes](https://github.com/chrisant996/clink-themes), and [oh-my-posh](https://ohmyposh.dev).  Check [here](#oh-my-posh) for quick info on using oh-my-posh prompt themes with Clink.
+
+To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.
+
+See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts, and see [Sharing Custom Prompts](#sharing-custom-prompts) for information on optionally packaging them as "*.clinkprompt" files.
+
+<fieldset><legend>Warning</legend>
+If you want to change a .clinkprompt file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinkprompt theme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
+</fieldset>
 
 <a name="filelocations"></a>
 
@@ -626,6 +691,8 @@ Settings and history are persisted to disk from session to session. By default C
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
+
+Also see [Location of Lua Scripts](#lua-scripts-location) for details on where Clink looks for Lua scripts, and [Themes Directories](#themes-directories) for details on where Clink looks for color theme files (\*.clinktheme) and custom prompt files (\*.clinkprompt).
 
 > **Notes:**
 > - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOME%` or `%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
@@ -725,6 +792,20 @@ See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
 <p>
+<dt>clink config prompt</dt>
+<dd>
+Configures Clink to use a custom prompt module.<br/>
+See <code>clink config prompt --help</code> or [Custom Prompts](#custom-prompts) for more information.</dd>
+</p>
+
+<p>
+<dt>clink config theme</dt>
+<dd>
+Configures Clink to use a color theme.<br/>
+See <code>clink config theme --help</code> or [Color Themes](#color-themes) for more information.</dd>
+</p>
+
+<p>
 <dt>clink installscripts</dt>
 <dd>
 Adds a path to search for Lua scripts.<br/>
@@ -780,6 +861,8 @@ Mode | Description
 `check` | This is the default; Clink periodically checks for updates and prints a message when an update is available.
 `prompt` | Clink periodically checks for updates and if one is available then it shows a window to prompt whether to install the update.
 `auto` | Clink periodically checks for updates and also attempts to automatically install an update.  If elevation is needed then it pops up a prompt window, otherwise it automatically installs the update.
+
+<br/>
 
 > **Notes:**
 > - The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
@@ -1073,7 +1156,7 @@ Name | Sequence | Description
 `Space` | | The <kbd>Space</kbd> key.
 | `"Space"` | The series of five keys <kbd>S</kbd> <kbd>p</kbd> <kbd>a</kbd> <kbd>c</kbd> <kbd>e</kbd>.
 
-Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"`.  See [Discovering Clink key sequences](#discovering-clink-key-sequences) and [Binding special keys](#specialkeys) for how to find the <span class="arg">keyname</span> for the key you want to bind.
+Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as `"\e[A"`.  See [Discovering Clink key sequences](#discovering-clink-key-sequences) and [Binding special keys](#specialkeys) for how to find the <span class="arg">keyname</span> for the key you want to bind.
 
 <p>
 <dt>Key bindings</dt>
@@ -1491,7 +1574,7 @@ Command | Key | Description
 
 <a name="alternatedefaultcommand"></a>
 
-**&ast;** Some commands have alternative default key bindings when Clink is installed with "Use enhanced default settings" checked in the setup program or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`.
+> **Note:** Some commands have alternative default key bindings when Clink is installed with "Use enhanced default settings" checked in the setup program or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`.
 
 <a name="completioncolors"></a>
 
@@ -2550,6 +2633,8 @@ end
 
 When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.  When the setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.
 
+See [Color Themes](#color-themes) for information on loading and saving color theme files (whose names end with ".clinktheme").
+
 <table class="linkmenu">
 <tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
 <tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
@@ -2693,9 +2778,12 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 
 Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).
 
+See [Custom Prompts](#custom-prompts) for information on loading custom prompt files (whose names end with ".clinkprompt").
+
 <table class="linkmenu">
 <tr><td><a href="#promptfilter_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
 <tr><td><a href="#escapecodes">ANSI escape codes in the prompt string</a></td><td>How special characters are colored.</td></tr>
+<tr><td><a href="#sharing-custom-prompts">Sharing Custom Prompts</a></td><td>How to share your custom prompt with other people as a *.clinkprompt file.</td></tr>
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
 <tr><td style="padding-left: 2rem"><a href="#rightprompt">Right Side Prompt</a></td><td>How to add prompt text at the right edge of the terminal.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a></td><td>How to make the prompt show up instantly.</td></tr>
@@ -2750,6 +2838,33 @@ Here are a couple of links with more information about ANSI escape codes:
 - [Wikipedia - ANSI Escape Code](https://en.wikipedia.org/wiki/ANSI_escape_code)
 - [Console Virtual Terminal Sequences](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences)
 
+### Sharing Custom Prompts
+
+Custom prompts can be shared in Clink v1.7.0 and newer.
+
+To make a custom prompt shareable, put it in a file whose name ends with ".clinkprompt" instead of ".lua".
+
+For many custom prompts, it's as simple as that!  Some prompts may want additional capabilities, which are described further below.
+
+A .clinkprompt file can be shared and installed on other computers.  If it's in a "themes" subdirectory under any of the script directories, then Clink can find it automatically (run `clink info` and look for the "scripts" line in the output).  If the file in some other directory, then you can use it by telling Clink the full path to the file.
+
+Any [prompt filters](#clink.promptfilter) or registered event handlers (such as [clink.onbeginedit](#clink.onbeginedit)) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> select a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.
+
+#### The "exports table" in a .clinkprompt file
+
+A .clinkprompt file can return a table with certain fields which gain additional capabilities.  Each field is optional, as is the table itself.
+
+Field | Description
+-|-
+<code>onactivate = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when the prompt is loaded and activated.
+<code>ondeactivate = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when the prompt is deactivated.
+<code>demo = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when <code>clink config prompt show</code> is run.
+<code>dependson = <span class="arg">string</span></code> | If the string is not empty, then it is a list of clinkprompt names upon which this clinkprompt depends.  When this clinkprompt file is loaded and activated, the other files are also loaded, and their prompt filters and event handlers are allowed to run even though they aren't part of the current active clinkprompt file.
+
+```lua
+#INCLUDE [docs\examples\Sample.clinkprompt]
+```
+
 ### More Advanced Stuff
 
 <a name="rightprompt"></a>
@@ -2795,6 +2910,8 @@ Typically the motivation to use asynchronous prompt filtering is that one or mor
 > **Backward compatibility:** A prompt filter must handle backward compatibility itself if it needs to run on versions of Clink that don't support asynchronous prompt filtering (v1.2.9 and lower).  E.g. you can use <code><span class="hljs-keyword">if</span> clink.promptcoroutine <span class="hljs-keyword">then</span></code> to test whether the API exists.
 
 The following example illustrates running `git status` in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.
+
+**Note:**  This is for illustration purposes and works when no other custom prompt filters are installed.  If another custom prompt filter is present and runs earlier and chooses to halt further prompt filtering, then this example code might not get reached.
 
 ```lua
 #INCLUDE [docs\examples\ex_async_prompt.lua]
@@ -3560,16 +3677,20 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 - The `luaexec.lua` script which has various features handy for Clink Lua script authors.
 - And more.
 
+### clink-themes
+
+The [clink-themes](https://github.com/chrisant996/clink-themes) repository contains some [color themes](#color-themes) and [custom prompts](#custom-prompts) which can be used with Clink.  If you have one you want to share, this can be a good place to share it.
+
 ### oh-my-posh
 
-The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
+The [oh-my-posh](https://ohmyposh.dev) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for installation instructions, sample themes, and more information.
 
-Integrating oh-my-posh with Clink is easy: just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `oh-my-posh.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you're good to go.
+But in Clink v1.7.0 and newer, don't create a Lua script for oh-my-posh.
 
-```lua
--- oh-my-posh.lua
-load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --init --shell cmd'):read("*a"))()
-```
+Instead do the following:
+1. Run `clink config prompt use oh-my-posh` to activate oh-my-posh as the custom prompt.
+2. If the oh-my-posh.exe file is not in the system PATH, then run <code>clink set ohmyposh.exepath "<span class="arg">full_path_to_oh-my-posh.exe</span>"</code> to tell Clink where to find the oh-my-posh program file.
+3. To configure oh-my-posh to use a particular prompt theme, run <code>clink set ohmyposh.theme "<span class="arg">full_path_to_theme_file</span>.omp.json"</code> to select the theme file.
 
 ### starship
 

@@ -1,0 +1,97 @@
+--------------------------------------------------------------------------------
+-- This is a sample clinkprompt module.  It shows how (easy it is) to write a
+-- clinkprompt module.
+--
+-- While a clinkprompt module is deactivated, it stops receiving calls to any
+-- prompt filters or events it may have registered until the clinkprompt module
+-- is reactivated later.
+
+local norm = "\x1b[m"
+local bold = "\x1b[1m"
+local reverse = "\x1b[0;7m"
+local red = "\x1b[91m"
+local green = "\x1b[92m"
+local darkgray = "\x1b[90m"
+
+local symbol = ">"
+
+--------------------------------------------------------------------------------
+-- Normal prompt filter stuff...
+
+local function cwdstring()
+    local cwd = os.getcwd()
+    return rl.collapsetilde(cwd, true)
+end
+
+local function errorlevelcolor()
+    return (os.geterrorlevel() == 0) and green or red
+end
+
+local p = clink.promptfilter(25)
+
+function p:filter()
+    return bold..cwdstring()..norm.." "..errorlevelcolor()..symbol..norm.." "
+end
+
+function p:rightfilter()
+    return os.date("%a %H:%M", os.time())
+end
+
+function p:transientfilter()
+    return errorlevelcolor()..symbol..norm.." "
+end
+
+--------------------------------------------------------------------------------
+-- Some event handlers...
+
+local function onbeginedit()
+    print(darkgray.."-- SAMPLEPROMPT: onbeginedit --"..norm)
+end
+
+local function onendedit()
+    print(darkgray.."-- SAMPLEPROMPT: onendedit --"..norm)
+end
+
+clink.onbeginedit(onbeginedit)
+clink.onendedit(onendedit)
+
+--------------------------------------------------------------------------------
+-- Special clinkprompt module stuff...
+
+local function onactivate()
+    print(darkgray.."-- SAMPLEPROMPT: onactivate --"..norm)
+end
+
+local function ondeactivate()
+    print(darkgray.."-- SAMPLEPROMPT: ondeactivate --"..norm)
+end
+
+local function demo()
+    local left = bold..cwdstring()..norm.." "..green..symbol..norm.." "
+    local right = os.date("%a %H:%M", os.time())
+    left = left..reverse.." "..norm
+
+    local left_len = console.cellcount(left)
+    local right_len = console.cellcount(right)
+    local pad = ""
+    if left_len + 4 + right_len >= console.getwidth() then
+        right = ""
+    else
+        pad = string.rep(" ", console.getwidth() - (left_len + right_len))
+    end
+
+    print(left..pad..right)
+end
+
+local exports =
+{
+    onactivate = onactivate,
+    ondeactivate = ondeactivate,
+    -- Uncomment this if you want to supply a custom demo function which will
+    -- be invoked by 'clink config prompt show Sample'.
+    --demo = demo,
+}
+
+-- Returning an exports table is optional, but allows the clinkprompt module to
+-- print a custom demo from 'clink config prompt show Sample'.
+return exports
