@@ -2,12 +2,44 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.6.22
+#### v1.7.0
 
-- Added workaround for Unicode limitations in Windows 8.1 and earlier (improves cursor position accuracy on Windows 8.1).
+Clink now supports color theme files and custom prompt files.  These enable packaging Clink color settings or Clink custom prompts into shareable files.  This finally makes it easy to download and apply themes or prompts shared by other people, or copy them and modify them.  The new [clink-themes](https://github.com/chrisant996/clink-themes) repo is a site where .clinktheme and .clinkprompt files can be shared (to contribute, make a pull request with the files you want to share).
+
+- Added support for `*.clinktheme` color theme files; see [Color Themes](#color-themes) for more information.
+  - Added several `clink config theme` commands for color themes (run `clink config theme --help`).
+  - The famous [Dracula](https://draculatheme.com) and [Solarized Dark](https://github.com/altercation/solarized) (and Light) themes are included.
+  - Use <code>clink config theme use <span class="arg">name</span></code> to apply a color theme, or set the `CLINK_COLORTHEME` environment variable to the color theme name.
+- Added support for `*.clinkprompt` custom prompt module files; see [Custom Prompts](#custom-prompts) for more information.  This makes it easy to share custom prompts, and to have a library of many different custom prompts and switch between them quickly and easily.  One custom prompt module can be active at a time; activating one deactivates any others.
+  - Added several `clink config prompt` commands for custom prompt modules (run `clink config prompt --help`).
+  - The famous [Agnoster](https://github.com/agnoster/agnoster-zsh-theme) prompt is included (ported from zsh to Clink).
+  - Use <code>clink config prompt use <span class="arg">name</span></code> to activate a custom prompt module, or set the `CLINK_CUSTOMPROMPT` environment variable to the custom prompt name.
+- Added the ability to show input hints in the comment row (below the input line).
+  - Input hints are off by default, and can be enabled with `clink set comment_row.show_hints true`.
+  - Argmatchers can provide input hints; see [Show a Usage Hint](#addarg_hint) for more information.
+  - Lua scripts can create custom hinters; see [Showing Input Hints](#showinginputhints) for more information.
+- Enhanced the syntax for setting colors; added `italic` and `reverse`, and added `#XXXXXX` and `#XXX` shortcuts for specifying 24-bit color values.
+- Added more popup list colors:  `color.popup_border`, `color.popup_header`, `color.popup_footer`, `color.popup_select`, and `color.popup_selectdesc`.
+- Changed phrasing from "Accept Suggestion" to "Insert Suggestion" in the documentation and in the auto-suggestions usage hint text.
+- Changed the Lua `print()` function to support UTF8 output and terminal escape codes.  Now the only reasons for a script to use `clink.print()` instead of `print()` are (1) background compatibility or (2) using `NONL` to suppress printing a line ending.
+- Improved terminal output logging when the `debug.log_terminal` setting is enabled (the setting is only for diagnostic use).
+  - Now it captures all WriteConsoleW and WriteFile output sent to stdout or stderr (instead of only capturing output from the Readline library).
+  - Added a `debug.log_output_callstacks` setting which includes callstacks for each output reported by the `debug.log_terminal` setting.
+- Added a workaround for Unicode limitations in legacy console windows and legacy terminals (improves cursor position accuracy when Unicode surrogate pairs are present).
+- Added several new Lua APIs for color themes and custom prompts:  [clink.getprompts()](#clink.getprompts), [clink.applyprompt()](#clink.applyprompt), [clink.getclinkprompt()](#clink.getclinkprompt), [clink.getthemes()](#clink.getthemes), [clink.readtheme()](#clink.readtheme), [clink.applytheme()](#clink.applytheme), [settings.clear()](#settings.clear), [settings.parsecolor()](#settings.parsecolor), [settings.formatcolor()](#settings.formatcolor), [os.createguid()](#os.createguid).
+- Added [git Lua APIs](#git) for use by custom prompts.
+- Added optional `cookie` argument to [clink.promptcoroutine()](#clink.promptcoroutine) to make it simple for *.clinkprompt files to allow customization that makes use of asynchronous prompt filtering without needing modifications to the main *.clinkprompt file.
 - Fixed detecting file associations (some file extensions weren't detected as having file associations, causing executable completion to omit them, and causing input line coloring to be inaccurate).
+- Fixed a case where updating the right side prompt could leave stray characters behind.
+- Fixed a case where the `match.coloring_rules` setting could have no effect.
 - Fixed delay when typing `X:` and it's a remote drive.
 - Fixed coloring `2>&1`; the `1` wasn't colored.
+- Fixed color of leading blank lines in a prompt string (use the terminal's default color, not the `color.prompt` color).
+- Fixed `rl.collapsetilde()` which just didn't do its job.
+- Fixed `%clink_dummy_capture_env%` to stop accidentally leaking into the environment variables collection.
+- Fixed an infinite loop when `prompt.async` was false.
+- Fixed <kbd>F9</kbd> to stop jumping one past the actual entered history number.
+- Fixed various edge case bugs in the input line display, which were uncovered while adding the ability to show input hints.
 
 #### v1.6.21
 
