@@ -21,16 +21,11 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- [ ] Warn to not edit the clinktheme and clinkprompt files; copy them and edit the copy instead (any edits to the original will be lost when updating Clink to a newer version).
-- [ ] Document the clinktheme system (also how to use `%CLINK_COLORTHEME%` to apply a color theme only to the current session).
-- [ ] Document the clinkprompt system (also how to use `%CLINK_CUSTOMPROMPT%` to apply a custom prompt only to the current session).
-- [ ] Can `git.getstatus()` be simplified even further, so it automatically handles `clink.promptcoroutine()`?  Maybe a `git.getstatusasync()` function?
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
 
 ## Normal Priority
-- A way to detect git bare repos?
 - Windows Terminal has changed how it renders various emoji; need to update the emoji width tables, but maybe not until the changes reach official releases (they're just in preview at the moment).
 - Remove the RPROMPT stuff from Readline; move it entirely into Clink code.  The only part of Readline that actually needs it is the stuff for clearing to the end of the line, which is mostly omitted now anyway.  Most of it can be moved easily, but one spot will need special consideration (maybe a callback?):  `_rl_erase_entire_line()` inside `_rl_internal_char_cleanup()`.
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
@@ -44,6 +39,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
+- Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
 - line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
@@ -130,6 +126,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- Can `git.getstatus()` be simplified even further, so it automatically handles `clink.promptcoroutine()`?  Maybe a `git.getstatusasync()` function?  _[Not at this time:  that could be something to consider for a bunch of various APIs later, but for now scripts should just use the normal `clink.promptcoroutine()` usage pattern.]_
 - Input hinter:
   - Need some way for `:gethint()` to work with coroutines and override the optimization and call it again.  _[No:  that would lead to hints cycling through multiple values at the same cursor position.  Once a hint is shown, it shouldn't change until at least another keypress occurs.]_
 - `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?  Any `^` combined with redirection before the command word seems to go awry one way or another.  It looks like a bug in the CMD parser.  _Trying to accurately predict how the bug will behave in all possible contexts seems unrealistic._
