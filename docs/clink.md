@@ -631,18 +631,26 @@ Be careful, since some escape code sequences might behave strangely.
 
 Clink has many [color settings](#color_arg) which can be set with <code>clink set color.<span class="arg">setting_name</span> <span class="arg"><a href="#friendly-color-names">color_value</a></span></code>.
 
-Predefined color setting values can be grouped into a .clinktheme file to make it easy to save, apply, and share different color themes for Clink.
+Predefined color setting values can be grouped into a .clinktheme file to make it easy to save, apply, and share different color themes for Clink.  These color theme files require Clink v1.7.0 or newer.
 
-**TODO: document .clinktheme files.**
-- [ ] Describe `themes\` subdirectories, which work similarly to `completions\` subdirectories.
-- [x] Emphasize the difference between terminal color themes versus Clink color themes.
-- [ ] List the .clinktheme files included with Clink itself.
-- [ ] Describe how to save a color theme, and how to manually edit a color theme.
-- [ ] Describe the `clink config theme` commands.
+Clink looks for color theme files in these directories:
+1. Any directories listed in the `%CLINK_THEMES_DIR%` environment variable (multiple directories may be separated by semicolons).
+2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
+3. Or you can provide a full path name to a file, such as `c:\mythemes\Colorful.clinktheme`.
+
+To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `CLINK_COLORTHEME` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
+
+To list available color themes, run <code>clink config theme list</code>.  Clink looks for *.clinktheme files in a `themes\` subdirectory under each Clink includes a few theme files, and you can find more shared online by Clink users.  One place to find more color themes for Clink is the [clink-themes](https://github.com/chrisant996/clink-themes) repo.
+
+To show a demo of a what a color theme will look like, run <code>clink config theme show <span class="arg">theme_name</span></code>.
+
+To save the current profile's color settings into a .clinktheme file, run <code>clink config theme save <span class="arg">theme_name</span></code>.  The color settings are saved into a file named <code>themes\\<span class="arg">theme_name</span>.clinktheme</code> under the current Clink profile directory.
 
 See [Coloring the Input Text](#coloring-the-input-text) for information on specific color settings.
 
-> **Note:** The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
+> **Notes:**
+> - The .clinktheme files are Clink color themes for Clink-specific color settings.  They are not terminal color themes and don't affect other programs or the terminal in general.  Consult your terminal program's documentation for how to set terminal color themes for it.
+> - If you want to change a .clinktheme file that came with Clink, make a copy of the file and edit the copy.  Don't edit the .clinktheme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
 
 ## Custom Prompts
 
