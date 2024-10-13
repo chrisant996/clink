@@ -720,8 +720,6 @@ local function get_clink_themes(word, _, _, builder, _)
     return get_matches_by_ext(builder, clink.getthemes, word, ".clinktheme")
 end
 
--- TODO: delayinit the `clink config` stuff...
-
 local prompt_list = clink.argmatcher()
 :addflags({
     "-f", "--full",
@@ -902,21 +900,26 @@ local theme_commands = clink.argmatcher()
     ["-h"] = "Show help text",
 })
 
-local config = clink.argmatcher()
-:addarg({
-    "prompt"..prompt_commands,
-    "theme"..theme_commands,
-})
-:addflags({
-    "-h", "--help", "-?",
-})
-:hideflags("-?")
-:nofiles()
-:adddescriptions({
-    ["prompt"] = {"Choose a custom prompt for Clink"},
-    ["theme"] = {"Choose a color theme for Clink"},
-    ["-h"] = "Show help text",
-})
+local function delayinit_config(argmatcher)
+    argmatcher
+    :setdelayinit(nil)
+    :addarg({
+        "prompt"..prompt_commands,
+        "theme"..theme_commands,
+    })
+    :addflags({
+        "-h", "--help", "-?",
+    })
+    :hideflags("-?")
+    :adddescriptions({
+        ["prompt"] = {"Choose a custom prompt for Clink"},
+        ["theme"] = {"Choose a color theme for Clink"},
+        ["-h"] = "Show help text",
+    })
+
+end
+
+local config = clink.argmatcher():setdelayinit(delayinit_config):nofiles()
 
 --------------------------------------------------------------------------------
 clink.argmatcher(
