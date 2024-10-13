@@ -11,6 +11,16 @@ local empty_arg_nothing = clink.argmatcher():addarg():nofiles()
 local file_loop = clink.argmatcher():addarg(clink.filematches):loop()
 
 --------------------------------------------------------------------------------
+local function full_filematches(match_word, _, _, builder)
+    builder:setfullyqualify()
+    return clink.filematches(match_word)
+end
+
+local function full_dirmatches(match_word, _, _, builder)
+    builder:setfullyqualify()
+    return clink.dirmatches(match_word)
+end
+
 local file_matcher = clink.argmatcher():addarg(clink.filematches)
 local dir_matcher = clink.argmatcher():addarg(clink.dirmatches)
 
@@ -39,7 +49,7 @@ end
 
 --------------------------------------------------------------------------------
 local autorun_dashdash = clink.argmatcher()
-:addarg("--" .. make_inject_parser():addarg(clink.filematches):loop())
+:addarg("--" .. make_inject_parser():addarg(full_filematches):loop())
 
 local autorun = clink.argmatcher()
 :addflags("-h", "-a", "-?")
@@ -583,7 +593,7 @@ local installscripts = clink.argmatcher()
     ["--help"] = "Show help",
     ["--list"] = "List all installed script paths",
 })
-:addarg(clink.dirmatches)
+:addarg(full_dirmatches)
 :nofiles()
 
 --------------------------------------------------------------------------------
