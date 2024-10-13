@@ -679,6 +679,30 @@ See [Customizing the Prompt](#customisingtheprompt) for information on writing y
 If you want to change a .clinkprompt file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinkprompt theme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
 </fieldset>
 
+### Compatibility Between .clinkprompt Versus .lua Files
+
+When you activate a .clinkprompt file via `clink config prompt use` you might see a garbled prompt, or still see your old prompt.
+
+That can happen because activating a .clinkprompt file deactivates other .clinkprompt files, but it doesn't deactivate prompt filters registered from .lua files (it could break other things if it did).
+
+So, if you have a custom prompt in a .lua file then you may need to update the .lua file to disable itself while a .clinkprompt file is active.
+
+For most .lua custom prompts, you can simply rename its file to change the file extension from ".lua" to ".clinkprompt", and then it won't interfere with other .clinkprompt files.
+
+Or, you can modify any prompt filter to automatically disable itself like this:
+
+```lua
+local your_prompt_filter = clink.promptfilter()
+
+function your_prompt_filter:filter()
+    -- Insert the following if..end line at the beginning of any .lua prompt filter to automatically
+    -- disable it while a .clinkprompt file is active (but don't insert it in a .clinkprompt file).
+    if clink.getclinkprompt and clink.getclinkprompt() then return end
+
+    -- The rest of your prompt filter goes here...
+end
+```
+
 <a name="filelocations"></a>
 
 ## File Locations
