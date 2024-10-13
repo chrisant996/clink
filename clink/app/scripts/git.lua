@@ -545,6 +545,8 @@ function git.getstatus(no_untracked, include_submodules)
     end
 
     local git_dir, wks_dir = git.getgitdir()
+    if not git_dir then return end
+
     local submodule
     if git_dir then
         submodule = (git_dir:lower():find(path.join(wks_dir:lower(), "modules\\"), 1, true) == 1)
@@ -738,6 +740,8 @@ function git.getaction()
     end
 
     local git_dir = git.getgitdir()
+    if not git_dir then return end
+
     if os.isdir(path.join(git_dir, "rebase-merge")) then
         local action
         -- FUTURE?: local b = read_from_file(path.join(git_dir, "rebase-merge/head-name"))
