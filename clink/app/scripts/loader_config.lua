@@ -478,6 +478,8 @@ local function use_color_theme(args)
         printerror(message)
         return
     end
+
+    print("Applied color theme from '"..file.."'.")
     return true
 end
 
@@ -767,6 +769,7 @@ local function use_custom_prompt(args)
     end
 
     settings.set("clink.customprompt", file)
+    print("Applied custom prompt from '"..file.."'.")
     return true
 end
 
