@@ -175,7 +175,7 @@ Section "!Application files" app_files_id
     WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_TAGVERSION}"
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$uninstallerExe"
     WriteRegStr HKLM $0 "Publisher"         "Christopher Antos"
-    WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
+    WriteRegStr HKLM $0 "DisplayIcon"       "$INSTDIR\clink.ico,0"
     WriteRegStr HKLM $0 "URLInfoAbout"      "http://chrisant996.github.io/clink"
     WriteRegStr HKLM $0 "HelpLink"          "http://chrisant996.github.io/clink"
     WriteRegStr HKLM $0 "InstallLocation"   "$INSTDIR"
