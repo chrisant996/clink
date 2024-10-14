@@ -155,6 +155,21 @@ local function get_local_tag()
     return "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
 end
 
+local function did_themes_update_fail(exe_path, cloud_tag)
+    exe_path = exe_path or get_bin_dir()
+    if exe_path then
+        local expand_dir = get_update_dir()
+        local local_tag = get_local_tag()
+        if expand_dir and
+                os.isdir(path.join(path.join(expand_dir, local_tag), "themes")) and
+                not os.isdir(path.join(exe_path, "themes")) then
+            if not cloud_tag or local_tag == cloud_tag then
+                return true
+            end
+        end
+    end
+end
+
 local function get_installation_type()
     if not this_install_type then
         this_install_type, this_install_key = clink._get_installation_type()
@@ -200,6 +215,13 @@ local function delete_files(dir, wild, except)
             os.remove(full)
         end
     end
+end
+
+local function delete_expand_dir(expand_dir)
+    delete_files(expand_dir, "*")
+    delete_files(path.join(expand_dir, "themes"), "*")
+    os.rmdir(path.join(expand_dir, "themes"))
+    os.rmdir(expand_dir)
 end
 
 local function unzip(zip, out)
@@ -364,6 +386,11 @@ local function can_check_for_update(force)
             return true
         end
 
+        if did_themes_update_fail(bin_dir) then
+            log_info("updating because the themes directory is missing.")
+            return true
+        end
+
         local local_lastcheck = f:read("*l")
         f:close()
 
@@ -396,8 +423,17 @@ local function internal_check_for_update(force)
         need_lf = true
         print("Checking latest version...")
     end
-    local cloud_tag
-    local api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo) -- luacheck: no max line length
+    local api, cloud_tag, mock
+    if clink.DEBUG and os.getenv("DEBUG_UPDATE_FILE") then
+        mock = os.getenv("DEBUG_UPDATE_FILE")
+        local ver = mock:match("clink%.(%d+%.%d+%.?%d*)%.[0-9a-fA-F]+%.zip")
+        if not ver then
+            error("invalid DEBUG_UPDATE_FILE name '" .. mock .. "'.")
+        end
+        api = string.format([[2>&1 echo "tag_name": "v%s"& echo "browser_download_url": "%s"]], ver, mock) -- luacheck: no max line length
+    else
+        api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo) -- luacheck: no max line length
+    end
     local f, err = io.popen(api)
     if not f then
         log_info(api)
@@ -430,7 +466,9 @@ local function internal_check_for_update(force)
 
     -- Compare versions.
     log_info("latest release is " .. cloud_tag .. "; install type is " .. install_type .. ".")
-    if not is_rhs_version_newer(local_tag, cloud_tag) then
+    if did_themes_update_fail(nil, cloud_tag) then
+        log_info("update again to version " .. local_tag .. " because themes directory is missing.")
+    elseif not is_rhs_version_newer(nil, local_tag, cloud_tag) then
         log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
         return "", "already up-to-date.", true
     end
@@ -456,7 +494,12 @@ local function internal_check_for_update(force)
         return nil, err
     end
     log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
-    local cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file) -- luacheck: no max line length
+    local cmd
+    if clink.DEBUG and mock then
+        cmd = string.format([[2>&1 copy "%s" "%s"]], latest_update_file, local_update_file)
+    else
+        cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file) -- luacheck: no max line length
+    end
     f, err = io.popen(cmd)
     if not f then
         log_info(cmd)
@@ -569,6 +612,10 @@ local function is_update_ready(force)
     local local_tag = get_local_tag()
     local cloud_tag = latest_cloud_tag or path.getbasename(update_file)
     if not is_rhs_version_newer(local_tag, cloud_tag) then
+        if did_themes_update_fail(exe_path, cloud_tag) then
+            log_info("reapply update in " .. update_file .. " using new updater with themes directory fix.")
+            return update_file
+        end
         log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
         return "", "already up-to-date."
     end
@@ -606,7 +653,8 @@ local function prepare_to_update(elevated, cloud_tag)
     -- Must double check that cloud_tag is newer than what's running,
     -- since an update might have completed while waiting for the mutex.
     local local_tag = get_local_tag()
-    if not is_rhs_version_newer(local_tag, cloud_tag) then
+    if not is_rhs_version_newer(local_tag, cloud_tag) and
+            not did_themes_update_fail(bin_dir, cloud_tag) then
         return nil, nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
     end
 
@@ -626,8 +674,7 @@ local function apply_zip_update(elevated, zip_file)
 
     -- Prepare the temp directory; ensure it is empty (avoid copying stray
     -- pre-existing files).
-    delete_files(expand_dir, "*")
-    os.rmdir(expand_dir)
+    delete_expand_dir(expand_dir)
     if os.isdir(expand_dir) then
         return nil, log_info("temp path '" .. expand_dir .. "' already exists.")
     end
@@ -677,8 +724,7 @@ local function apply_zip_update(elevated, zip_file)
     end
 
     -- Cleanup.
-    delete_files(expand_dir, "*")
-    os.rmdir(expand_dir)
+    delete_expand_dir(expand_dir)
     delete_files(update_dir, "*.zip", zip_file)
     delete_files(bin_dir, "~clink.*.old")
 
@@ -817,14 +863,27 @@ end
 local function report_if_update_available(manual, redirected)
     local update_file = has_update_file()
     if update_file and can_check_for_update(true) then
-        local tag = path.getbasename(update_file)
-        if is_rhs_version_newer(get_local_tag(), tag) and
-                not clink._is_skip_update(tag) and
+        local local_tag = get_local_tag()
+        local cloud_tag = path.getbasename(update_file)
+        if did_themes_update_fail(nil, cloud_tag) then
+            if manual and need_lf then
+                print("")
+            end
+            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " needs to be updated again to install the themes directory.")
+            print("- To apply the update, run 'clink update'.")
+            clink.printreleasesurl("- ")
+            if not manual then
+                maybe_trigger_update(update_file)
+            end
+            return true
+        end
+        if is_rhs_version_newer(local_tag, cloud_tag) and
+                not clink._is_skip_update(cloud_tag) and
                 not clink._is_snoozed_update() then
             if manual and need_lf then
                 print("")
             end
-            print_update_message(nil, redirected, "Clink " .. tag .. " is available.")
+            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " is available.")
             print("- To apply the update, run 'clink update'.")
             if not manual then
                 print("- To stop checking for updates, run 'clink set clink.autoupdate off'.")
@@ -920,7 +979,8 @@ function clink.updatenow(elevated, force_prompt, redirected)
         -- since an update might have completed while waiting for the mutex.
         local local_tag = get_local_tag()
         local cloud_tag = latest_cloud_tag
-        if not is_rhs_version_newer(local_tag, cloud_tag) then
+        if not is_rhs_version_newer(local_tag, cloud_tag) and
+                not did_themes_update_fail(nil, cloud_tag) then
             log_info("already up-to-date; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
             print_update_message(true, redirected, "already up-to-date.")
             return 1
