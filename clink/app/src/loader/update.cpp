@@ -143,10 +143,6 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
         tmp = msg;
         tmp.data()[0] = toupper(tmp.data()[0]);
 
-        terminal term = terminal_create();
-        printer printer(*term.out);
-        printer_context printer_context(term.out, &printer);
-
         if (!redirected)
         {
             str<> colored_msg(ok ? "\x1b[0;1;32m" : "\x1b[m");
@@ -202,6 +198,10 @@ int32 update(int32 argc, char** argv)
         "-n, --check",              "Do nothing; check for an update, but don't install it.",
         nullptr
     };
+
+    terminal term = terminal_create();
+    printer printer(*term.out);
+    printer_context printer_context(term.out, &printer);
 
     // Parse arguments
     DWORD target_pid = 0;
