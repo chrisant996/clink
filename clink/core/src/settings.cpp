@@ -564,7 +564,7 @@ bool load(const char* file, const char* default_file)
         path::append(old_file, "settings");
         in = fopen(old_file.c_str(), "rb");
         if (in == nullptr)
-            return false;
+            return true;
         migrating = true;
     }
 
