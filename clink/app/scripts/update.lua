@@ -208,20 +208,37 @@ local function delete_files(dir, wild, except)
     if except then
         except = path.join(dir, except)
     end
-    local t = os.globfiles(path.join(dir, wild))
+    local t = os.globfiles(path.join(dir, wild), true)
     for _, d in ipairs(t) do
-        local full = path.join(dir, d)
-        if not except or not string.equalsi(full, except) then
-            os.remove(full)
+        if d.type:find("file") then
+            local full = path.join(dir, d.name)
+            if not except or not string.equalsi(full, except) then
+                local ok, msg = os.remove(full)
+                if not ok then
+                    log_info(msg)
+                end
+            end
         end
     end
 end
 
 local function delete_expand_dir(expand_dir)
+    local ok, msg
+    local themes_dir = path.join(expand_dir, "themes")
+    if os.isdir(themes_dir) then
+        delete_files(themes_dir, "*")
+        ok, msg = os.rmdir(themes_dir)
+        if not ok then
+            log_info(msg)
+        end
+    end
     delete_files(expand_dir, "*")
-    delete_files(path.join(expand_dir, "themes"), "*")
-    os.rmdir(path.join(expand_dir, "themes"))
-    os.rmdir(expand_dir)
+    ok, msg = os.rmdir(expand_dir)
+    if not ok then
+        log_info(msg)
+    else
+        log_info("successfully removed temp path '" .. expand_dir .. "'.")
+    end
 end
 
 local function unzip(zip, out)
@@ -674,8 +691,15 @@ local function apply_zip_update(elevated, zip_file)
 
     -- Prepare the temp directory; ensure it is empty (avoid copying stray
     -- pre-existing files).
+    local retries_remaining = 2
+::retry_delete_expand_dir::
     delete_expand_dir(expand_dir)
     if os.isdir(expand_dir) then
+        if retries_remaining > 0 then
+            os.sleep(1)
+            retries_remaining = retries_remaining - 1
+            goto retry_delete_expand_dir
+        end
         return nil, log_info("temp path '" .. expand_dir .. "' already exists.")
     end
     local ok, err = os.mkdir(expand_dir) -- luacheck: no unused, ignore 411
