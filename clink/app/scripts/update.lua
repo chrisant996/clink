@@ -254,6 +254,11 @@ local function install_file(from_dir, to_dir, name)
     local src = path.join(from_dir, name)
     local dst = path.join(to_dir, name)
 
+    -- Make sure the destination directory exists.
+    if not os.isdir(to_dir) then
+        os.mkdir(to_dir)
+    end
+
     -- Copy file.
     local ok, err, code = os.copy(src, dst)
     if ok then
@@ -639,16 +644,29 @@ local function apply_zip_update(elevated, zip_file)
     end
 
     -- Apply expanded files.
-    local t = os.globfiles(path.join(expand_dir, "*"))
-    for _, f in ipairs(t) do
+    local files = {}
+    local dirs = { { from=expand_dir, to=bin_dir } }
+    while dirs[1] do
+        local d = table.remove(dirs)
+        local t = os.globfiles(path.join(d.from, "*"), true)
+        for _, f in ipairs(t) do
+            if f.type:find("dir") then
+                table.insert(dirs, { from=path.join(d.from, f.name), to=path.join(d.to, f.name) })
+            else
+                table.insert(files, { from=d.from, to=d.to, name=f.name })
+            end
+        end
+    end
+    for _, f in ipairs(files) do
         local code
-        ok, err, code = install_file(expand_dir, bin_dir, f)
+        ok, err, code = install_file(f.from, f.to, f.name)
         if not ok then
             local ret = nil
             if code == -1 then
                 ret = -1 -- Signal that a retry with elevation is needed.
             end
-            return ret, log_info(concat_error("failed to install file '" .. f .. "'.", err))
+            local msg = string.format("failed to install file '%s' from '%s' to '%s'.", f.name, f.from, f.to)
+            return ret, log_info(concat_error(msg, err))
         end
     end
 
