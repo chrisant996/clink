@@ -232,12 +232,14 @@ local function delete_expand_dir(expand_dir)
             log_info(msg)
         end
     end
-    delete_files(expand_dir, "*")
-    ok, msg = os.rmdir(expand_dir)
-    if not ok then
-        log_info(msg)
-    else
-        log_info("successfully removed temp path '" .. expand_dir .. "'.")
+    if os.isdir(expand_dir) then
+        delete_files(expand_dir, "*")
+        ok, msg = os.rmdir(expand_dir)
+        if not ok then
+            log_info(msg)
+        else
+            log_info("successfully removed temp path '" .. expand_dir .. "'.")
+        end
     end
 end
 
