@@ -304,6 +304,8 @@ Clink has many configurable colors for match completions, input line coloring, p
 
 If you use the setup program with "Use enhanced default settings" checked then many of the color settings have more colorful default values.
 
+See below for information on customizing colors yourself, or see [Color Themes](#color-themes) for information on applying color theme files (whose names end with ".clinktheme").  Clink comes with a few color theme files, and users can also share color themes online (or convert color themes from other shells).
+
 #### For completion
 
 When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) Clink can add color to the possible completions.
@@ -819,14 +821,14 @@ See <code>clink autorun --help</code> for more information.</dd>
 <dt>clink config prompt</dt>
 <dd>
 Configures Clink to use a custom prompt module.<br/>
-See <code>clink config prompt --help</code> or [Custom Prompts](#custom-prompts) for more information.</dd>
+See <code>clink config prompt --help</code> or <a href="#custom-prompts">Custom Prompts</a> for more information.</dd>
 </p>
 
 <p>
 <dt>clink config theme</dt>
 <dd>
 Configures Clink to use a color theme.<br/>
-See <code>clink config theme --help</code> or [Color Themes](#color-themes) for more information.</dd>
+See <code>clink config theme --help</code> or <a href="#color-themes">Color Themes</a> for more information.</dd>
 </p>
 
 <p>
@@ -2884,6 +2886,8 @@ Field | Description
 <code>ondeactivate = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when the prompt is deactivated.
 <code>demo = <span class="arg">function_name</span></code> | If <span class="arg">function_name</span> is not nil, then it's called when <code>clink config prompt show</code> is run.
 <code>dependson = <span class="arg">string</span></code> | If the string is not empty, then it is a list of clinkprompt names upon which this clinkprompt depends.  When this clinkprompt file is loaded and activated, the other files are also loaded, and their prompt filters and event handlers are allowed to run even though they aren't part of the current active clinkprompt file.
+
+Here's a "Sample.clinkprompt" file to illustrate how to write .clinkprompt files, including the `onactivate` and `ondeactivate` and `demo` functions.
 
 ```lua
 #INCLUDE [docs\examples\Sample.clinkprompt]
