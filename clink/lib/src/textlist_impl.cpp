@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021 Christopher Antos
+// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1847,7 +1847,7 @@ static void init_color(const str_base* first, const char* second, str_base& out)
 //------------------------------------------------------------------------------
 static void wrap_color(str_base& color)
 {
-    str<32> tmp;
+    str<64> tmp;
     tmp = color.c_str();
     color.format("\x1b[%sm", tmp.c_str());
 }
@@ -1864,7 +1864,6 @@ void textlist_impl::init_colors(const popup_config* config)
     init_color(config ? &config->colors.selectdesc : nullptr, get_popup_selectdesc_colors(config && (!config->colors.items.empty() || !config->colors.select.empty()) ? m_color.select.c_str() : nullptr), m_color.selectdesc);
     init_color(config ? &config->colors.mark : nullptr, m_color.desc.c_str(), m_color.mark);
 
-    str<32> tmp;
     wrap_color(m_color.items);
     wrap_color(m_color.desc);
     wrap_color(m_color.border);

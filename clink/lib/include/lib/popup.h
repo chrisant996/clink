@@ -31,15 +31,15 @@ typedef bool (*del_callback_t)(int32 index);
 //------------------------------------------------------------------------------
 struct popup_colors
 {
-    str<32>         items;
-    str<32>         desc;
-    str<32>         border;
-    str<32>         header;
-    str<32>         footer;
-    str<32>         select;
-    str<32>         selectdesc;
-    str<32>         mark;
-    str<32>         selectmark;
+    str<48>         items;
+    str<48>         desc;
+    str<48>         border;
+    str<48>         header;
+    str<48>         footer;
+    str<48>         select;
+    str<48>         selectdesc;
+    str<48>         mark;
+    str<48>         selectmark;
 };
 
 //------------------------------------------------------------------------------

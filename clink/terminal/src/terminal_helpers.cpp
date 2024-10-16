@@ -309,9 +309,9 @@ int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
-    static str<32> s_popup;
+    static str<48> s_popup;
 
-    str<32> tmp;
+    str<48> tmp;
     g_color_popup.get(tmp);
     if (!tmp.empty())
     {
@@ -334,9 +334,9 @@ const char* get_popup_colors()
 //------------------------------------------------------------------------------
 const char* get_popup_desc_colors()
 {
-    static str<32> s_popup_desc;
+    static str<48> s_popup_desc;
 
-    str<32> tmp;
+    str<48> tmp;
     g_color_popup_desc.get(tmp);
     if (!tmp.empty())
     {
@@ -362,7 +362,7 @@ const char* get_popup_desc_colors()
 //------------------------------------------------------------------------------
 const char* get_popup_border_colors(const char* preferred)
 {
-    static str<32> s_popup_border;
+    static str<48> s_popup_border;
 
     if (preferred && *preferred)
     {
@@ -370,7 +370,7 @@ const char* get_popup_border_colors(const char* preferred)
     }
     else
     {
-        str<32> tmp;
+        str<48> tmp;
         g_color_popup_border.get(tmp);
         if (!tmp.empty())
             s_popup_border.format("0;%s", tmp.c_str());
@@ -383,7 +383,7 @@ const char* get_popup_border_colors(const char* preferred)
 //------------------------------------------------------------------------------
 const char* get_popup_header_colors(const char* preferred)
 {
-    static str<32> s_popup_header;
+    static str<48> s_popup_header;
 
     if (preferred && *preferred)
     {
@@ -391,7 +391,7 @@ const char* get_popup_header_colors(const char* preferred)
     }
     else
     {
-        str<32> tmp;
+        str<48> tmp;
         g_color_popup_header.get(tmp);
         if (!tmp.empty())
             s_popup_header.format("0;%s", tmp.c_str());
@@ -404,7 +404,7 @@ const char* get_popup_header_colors(const char* preferred)
 //------------------------------------------------------------------------------
 const char* get_popup_footer_colors(const char* preferred)
 {
-    static str<32> s_popup_footer;
+    static str<48> s_popup_footer;
 
     if (preferred && *preferred)
     {
@@ -412,7 +412,7 @@ const char* get_popup_footer_colors(const char* preferred)
     }
     else
     {
-        str<32> tmp;
+        str<48> tmp;
         g_color_popup_footer.get(tmp);
         if (!tmp.empty())
             s_popup_footer.format("0;%s", tmp.c_str());
@@ -425,7 +425,7 @@ const char* get_popup_footer_colors(const char* preferred)
 //------------------------------------------------------------------------------
 const char* get_popup_select_colors(const char* preferred)
 {
-    static str<32> s_popup_select;
+    static str<48> s_popup_select;
 
     if (preferred && *preferred)
     {
@@ -433,7 +433,7 @@ const char* get_popup_select_colors(const char* preferred)
     }
     else
     {
-        str<32> tmp;
+        str<48> tmp;
         g_color_popup_select.get(tmp);
         if (!tmp.empty())
             s_popup_select.format("0;%s", tmp.c_str());
@@ -446,7 +446,7 @@ const char* get_popup_select_colors(const char* preferred)
 //------------------------------------------------------------------------------
 const char* get_popup_selectdesc_colors(const char* preferred)
 {
-    static str<32> s_popup_selectdesc;
+    static str<48> s_popup_selectdesc;
 
     if (preferred && *preferred)
     {
@@ -454,7 +454,7 @@ const char* get_popup_selectdesc_colors(const char* preferred)
     }
     else
     {
-        str<32> tmp;
+        str<48> tmp;
         g_color_popup_selectdesc.get(tmp);
         if (!tmp.empty())
             s_popup_selectdesc.format("0;%s", tmp.c_str());
