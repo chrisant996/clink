@@ -625,6 +625,9 @@ rl_clear_screen (int count, int key)
       return 0;
     }
 
+/* begin_clink_change */
+  reset_display_readline ();
+/* end_clink_change */
   _rl_clear_screen (0);		/* calls termcap function to clear screen */
   rl_keep_mark_active ();
   rl_forced_update_display ();

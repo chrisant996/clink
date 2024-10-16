@@ -54,6 +54,7 @@ struct hooked_stat
     short st_nlink;                     /* Always 1 in MSVC */
 };
 
+void reset_display_readline(void);
 void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
 

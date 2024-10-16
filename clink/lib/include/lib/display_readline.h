@@ -14,7 +14,7 @@
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
-void reset_display_readline();
+extern "C" void reset_display_readline(void);
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();
 void display_readline();

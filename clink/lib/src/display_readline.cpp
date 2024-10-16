@@ -2690,7 +2690,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
 }
 
 //------------------------------------------------------------------------------
-void reset_display_readline()
+extern "C" void reset_display_readline(void)
 {
     s_display_manager.on_new_line();
 
