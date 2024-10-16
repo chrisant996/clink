@@ -73,13 +73,13 @@ static void print_with_wrapping(int32 max_len, const char* arg, const char* desc
     ecma48_wrapper wrapper(desc, wrap);
     while (wrapper.next(buf))
     {
-        printf("  %-*s  %s", max_len, arg, buf.c_str());
+        printf("  %-*s%s", max_len, arg, buf.c_str());
         arg = "";
     }
 }
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, const char* const* other_pairs)
+void puts_help(const char* const* help_pairs, const char* const* other_pairs, int32 padding)
 {
     int32 max_len = -1;
     for (int32 i = 0; help_pairs[i]; i += 2)
@@ -87,6 +87,8 @@ void puts_help(const char* const* help_pairs, const char* const* other_pairs)
     if (other_pairs)
         for (int32 i = 0; other_pairs[i]; i += 2)
             max_len = max((int32)strlen(other_pairs[i]), max_len);
+
+    max_len += padding;
 
     DWORD wrap = 78;
 #if 0
@@ -101,7 +103,7 @@ void puts_help(const char* const* help_pairs, const char* const* other_pairs)
     if (wrap <= DWORD(max_len + 20))
         wrap = 0;
     if (wrap)
-        wrap -= 2 + max_len + 2;
+        wrap -= max_len + 2;
 
     for (int32 i = 0; help_pairs[i]; i += 2)
     {

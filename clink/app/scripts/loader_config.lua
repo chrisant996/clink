@@ -937,16 +937,6 @@ function config_loader.do_config(args)
         return do_prompt_command(args)
     elseif command == "theme" then
         return do_theme_command(args)
-    elseif not command or command == "" or command == "--help" or command == "-h" or command == "-?" then
-        print("Usage:  clink config [command]")
-        print()
-        print("Commands:")
-        print("  prompt            Configure the custom prompt for Clink.")
-        print("  theme             Configure the color theme for Clink.")
-        print()
-        print("Options:")
-        print("  -h, --help        Show this help text.")
-        return true
     else
         printerror("Unrecognized 'clink config "..command.."' command.")
     end

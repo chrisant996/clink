@@ -52,11 +52,8 @@ static bool do_config(lua_state& lua, int32 argc, char** argv)
 static void print_help()
 {
     static const char* const help[] = {
-        "list",             "List color themes",
-        "load",             "Load a color theme",
-        "save",             "Save the current color theme",
-        "show",             "Show what the theme looks like",
-        "print",            "Print a color theme",
+        "prompt",           "Configure the custom prompt for Clink.",
+        "theme",            "Configure the color theme for Clink.",
         "-h, --help",       "Shows this help text.",
         nullptr
     };
@@ -64,21 +61,9 @@ static void print_help()
     puts_clink_header();
     puts("Usage: config [commands]\n");
 
-    puts_help(help);
+    puts("Commands:");
 
-#if 0
-    puts("If 'setting_name' is omitted then all settings are listed.  Omit 'value'\n"
-        "for more detailed info about a setting and use a value of 'clear' to reset\n"
-        "the setting to its default value.\n"
-        "\n"
-        "If 'setting_name' ends with '*' then it is a prefix, and all settings\n"
-        "matching the prefix are listed.  The --info flag includes detailed info\n"
-        "for each listed setting.\n"
-        "\n"
-        "The --compat flag selects backward-compatible mode when printing color setting\n"
-        "values.  This is only needed when the output from the command will be used as\n"
-        "input to an older version that doesn't support newer color syntax.");
-#endif
+    puts_help(help);
 }
 
 //------------------------------------------------------------------------------
@@ -97,12 +82,18 @@ int32 config(int32 argc, char** argv)
         {
         default:
         case '?':
-        case 'h': print_help();     return 0;
+        case 'h':
+do_help:
+            print_help();
+            return 0;
         }
     }
 
     argc -= optind;
     argv += optind;
+
+    if (!argc)
+        goto do_help;
 
     terminal term = terminal_create();
     printer printer(*term.out);
