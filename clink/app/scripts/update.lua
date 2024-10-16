@@ -895,7 +895,7 @@ local function report_if_update_available(manual, redirected)
             if manual and need_lf then
                 print("")
             end
-            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " needs to be updated again to install the themes directory.")
+            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " needs to be updated again to install the themes directory.") -- luacheck: no max line length
             print("- To apply the update, run 'clink update'.")
             clink.printreleasesurl("- ")
             if not manual then
