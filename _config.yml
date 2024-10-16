@@ -1,6 +1,6 @@
 theme: jekyll-theme-cayman
 title: Clink
 github:
-  version: v1.7.2
-  download_url: https://github.com/chrisant996/clink/releases/download/v1.7.2/clink.1.7.2.f5e99f.zip
-  install_url:  https://github.com/chrisant996/clink/releases/download/v1.7.2/clink.1.7.2.f5e99f_setup.exe
+  version: v1.7.3
+  download_url: https://github.com/chrisant996/clink/releases/download/v1.7.3/clink.1.7.3.f8fb96.zip
+  install_url:  https://github.com/chrisant996/clink/releases/download/v1.7.3/clink.1.7.3.f8fb96_setup.exe
