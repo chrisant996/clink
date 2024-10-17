@@ -2469,7 +2469,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.dirmatches
---- -ver:   1.1.18
+--- -ver:   1.1.8
 --- -arg:   word:string
 --- -ret:   table
 --- You can use this function in an argmatcher to supply directory matches.
@@ -2495,7 +2495,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.filematches
---- -ver:   1.1.18
+--- -ver:   1.1.8
 --- -arg:   word:string
 --- -ret:   table
 --- You can use this function in an argmatcher to supply file matches.  This
