@@ -21,6 +21,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- Make sure that when .clinkprompt scripts use `require()`, that the required script's onbeginedit/etc events are immune from the "current clinkprompt" restriction.
 - Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
