@@ -408,7 +408,7 @@ function clink._activate_clinkprompt_module(module)
     local new_clinkprompt = module or ""
     new_clinkprompt = new_clinkprompt:gsub('"', ''):gsub('%s+$', '')
     if active_clinkprompt == new_clinkprompt then
-        return
+        return clinkprompt_exports
     end
 
     local ret
@@ -450,6 +450,7 @@ function clink._activate_clinkprompt_module(module)
         if type(ret.onactivate) == "function" then
             ret.onactivate()
         end
+        return ret
     end
 end
 
