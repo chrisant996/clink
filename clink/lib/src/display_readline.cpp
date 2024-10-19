@@ -1457,6 +1457,7 @@ void display_manager::clear()
     m_curr.clear();
     // m_histexpand is only cleared in on_new_line().
     // m_top is only cleared in on_new_line().
+    m_last_rprompt.clear();
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
