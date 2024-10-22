@@ -638,7 +638,8 @@ Predefined color setting values can be grouped into a .clinktheme file to make i
 Clink looks for color theme files in these directories:
 1. Any directories listed in the `%CLINK_THEMES_DIR%` environment variable (multiple directories may be separated by semicolons).
 2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
-3. Or you can provide a full path name to a file, such as `c:\mythemes\Colorful.clinktheme`.
+3. A `themes\` subdirectory under the Clink program directory and the Clink profile directory.
+4. Or you can provide a full path name to a file, such as `c:\mythemes\Colorful.clinktheme`.
 
 To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `CLINK_COLORTHEME` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
 
