@@ -73,9 +73,14 @@ local function get_theme_files(name, ext)
 
     -- Order matters:  if the same name exists in two directories, the first
     -- one in the scripts path order wins.
+    -- NOTE:  The `%=clink.bin%` and `%=clink.profile envvars%` are always
+    -- included, even if the `clink.path` setting doesn't include them.
+    -- Because the built-in themes are under `%=clink.bin%\themes`, and themes
+    -- saved by `clink config theme save` go in `%=clink.profile%\themes`.
     local dirs = {}
-    local env = os.getenv("CLINK_THEMES_DIR")
-    add_dirs_from_var(dirs, env, false)
+    add_dirs_from_var(dirs, os.getenv("CLINK_THEMES_DIR"), false)
+    add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
+    add_dirs_from_var(dirs, os.getenv("=clink.profile"), true)
     add_dirs_from_var(dirs, clink._get_scripts_path(), true)
 
     local list = {}
