@@ -22,7 +22,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 
 ## High Priority
 - Make sure that when .clinkprompt scripts use `require()`, that the required script's onbeginedit/etc events are immune from the "current clinkprompt" restriction.
-- Add some emoji verifications to wcwidth-verifier; update wcwidth_iter.cpp tests according to the results.
 
 ## Unit Tests
 
