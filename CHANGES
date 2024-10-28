@@ -5,11 +5,11 @@
 #### v1.7.4
 
 - Changed searching for color themes and custom prompts to always include `themes\` directories under the Clink program directory and Clink profile directory, even when the `clink.path` setting has been used to remove them from the list of script directories.
-- Improved character width predictions for Unicode color emoji codepoints; different versions of Windows and terminal programs handle them differently (in particular, the predicted width for U+26A1 should be generally accurate now).
 - Fixed the right side transient prompt so it shows up even when identical to the right side normal prompt.
 - Fixed the `demo` callback in .clinkprompt files.
 - Fixed [#685](https://github.com/chrisant996/clink/issues/685); CTRL-L while input text is present redraws the input line wrong.
 - Fixed [#686](https://github.com/chrisant996/clink/issues/686); `clink config -h` shows inaccurate info.
+- Fixed [#696](https://github.com/chrisant996/clink/issues/696); console width length off-by-one on certain characters.  Improved character width predictions for Unicode color emoji codepoints; different versions of Windows and terminal programs give them different widths, and Clink should generally predict the widths accurately now (in particular, for U+26A1).
 
 #### v1.7.3
 
