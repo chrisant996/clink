@@ -270,18 +270,27 @@ end
 
 local function virtualenv_func()
     local text
+    -- Check if showing virtual environment in the prompt is disabled.
+    if os.getenv("VIRTUAL_ENV_DISABLE") then
+        return
+    end
     -- Check if a Conda environment is active and display its name.
     local conda = os.getenv("CONDA_DEFAULT_ENV")
     if conda then
         text = conda
     end
-    -- Check VIRTUAL_ENV and display its name.
+    -- Check VIRTUAL_ENV and display it.
     local venv = os.getenv("VIRTUAL_ENV")
     if venv then
         text = venv
     end
+    -- Check VIRTUAL_ENV_PROMPT and display it.
+    local venvp = os.getenv("VIRTUAL_ENV_PROMPT")
+    if venvp then
+        text = venvp
+    end
     if text then
-        return text:gsub("\t\r\n", "")
+        return text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
     end
 end
 
