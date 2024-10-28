@@ -267,6 +267,11 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
   if (ucs < 0xa0)
     return -1;
 
+  /* special processing for color emoji */
+  if (g_color_emoji &&
+      bisearch(ucs, emojis, _countof(emojis) - 1))
+    return 2;
+
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
@@ -686,17 +691,11 @@ void reset_wcwidths()
     if (use_cjk)
     {
         wcwidth = s_only_ucs2 ? mk_wcwidth_cjk_ucs2 : mk_wcwidth_cjk;
-#if 0
-        wcswidth = mk_wcswidth_cjk;
-#endif
         init_cached_font();
     }
     else
     {
         wcwidth = s_only_ucs2 ? mk_wcwidth_ucs2 : mk_wcwidth;
-#if 0
-        wcswidth = mk_wcswidth;
-#endif
         reset_cached_font();
     }
 }

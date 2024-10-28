@@ -189,9 +189,8 @@ static setting_enum g_terminal_color_emoji(
     "to display the input line properly when it contains emoji characters.\n"
     "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
     "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
-    "When set to 'auto' (the default) Clink assumes emoji are rendered using 2\n"
-    "character cells when using Windows Terminal or WezTerm, or otherwise using 1\n"
-    "character cell.",
+    "When set to 'auto' (the default) Clink tries to predict how emoji will be\n"
+    "rendered based on the OS version and terminal program.",
     "off,on,auto",
     2);
 
@@ -223,6 +222,9 @@ void win_screen_buffer::begin()
     static bool s_detect_native_ansi_handler = true;
     const bool detect_native_ansi_handler = s_detect_native_ansi_handler;
 
+    static bool s_win10_15063 = false;
+    static bool s_win11 = false;
+
     // One-time detection.
     if (detect_native_ansi_handler)
     {
@@ -234,8 +236,10 @@ void win_screen_buffer::begin()
         OSVERSIONINFO ver = { sizeof(ver) };
         if (GetVersionEx(&ver))
         {
-            if ((ver.dwMajorVersion > 10) ||
-                (ver.dwMajorVersion == 10 && ver.dwBuildNumber >= 15063))
+            s_win10_15063 = ((ver.dwMajorVersion > 10) || (ver.dwMajorVersion == 10 && ver.dwBuildNumber >= 15063));
+            s_win11 = ((ver.dwMajorVersion > 10) || (ver.dwMajorVersion == 10 && ver.dwBuildNumber >= 22000));
+
+            if (s_win10_15063)
             {
                 DWORD type;
                 DWORD data;
@@ -251,25 +255,6 @@ void win_screen_buffer::begin()
 
         // Check whether hosted by Windows Terminal.
         s_in_windows_terminal = check_for_windows_terminal();
-    }
-
-    // Check for color emoji width handling.
-    switch (g_terminal_color_emoji.get())
-    {
-    default:
-    case 0:
-        g_color_emoji = false;
-        break;
-    case 1:
-        g_color_emoji = true;
-        break;
-    case 2:
-        // Even with HKCU\Console\ForceV2 == 0, the Unicode codepoints for
-        // color emoji are rendered as two character cells.  I don't know for
-        // sure when Windows started doing that, but for now I'll make it the
-        // default assumption.
-        g_color_emoji = true;
-        break;
     }
 
     // Always recheck the native terminal mode.  For example, it's possible
@@ -353,6 +338,26 @@ void win_screen_buffer::begin()
             }
         }
         while (false);
+    }
+
+    // Check for color emoji width handling.
+    switch (g_terminal_color_emoji.get())
+    {
+    default:
+    case 0:
+        g_color_emoji = false;
+        break;
+    case 1:
+        g_color_emoji = true;
+        break;
+    case 2:
+        if (s_win11)
+            g_color_emoji = true;
+        else if (s_win10_15063)
+            g_color_emoji = s_in_windows_terminal;
+        else
+            g_color_emoji = false;
+        break;
     }
 
     GetConsoleMode(m_handle, &m_prev_mode);
