@@ -1,8 +1,8 @@
 -- Some fully-qualified emoji can be supported, on two conditions:
---  1.  If they are two Unicode characters and the second one if FE0F.
+--  1.  If they are two Unicode characters and the second one is FE0F.
 --  2.  If Windows Terminal doesn't get confused by them.
 
--- See XXXXXXXXXXXXXXXX in YYYYYYYYYYYYYYYY for implementation details.
+-- See wcwidth_iter::next in clink/terminal/src/wcwidth_iter.cpp for implementation details.
 
 263A FE0F                                              ; fully-qualified     # ☺️ E0.6 smiling face
 263A                                                   ; unqualified         # ☺ E0.6 smiling face
