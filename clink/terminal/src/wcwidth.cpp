@@ -238,13 +238,18 @@ static int32 mk_wcwidth(char32_t ucs)
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
 
+  /* ignore skin tone selectors to help make various fully-qualified emoji work out correctly */
+  if (ucs >= 0x1f3fb && ucs <= 0x1f3ff && g_color_emoji)
+    return 0;
+
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   return 1 +
     (ucs >= 0x1100 &&
      (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
       ucs == 0x2329 || ucs == 0x232a ||
       (ucs >= 0x2e80 && ucs <= 0xa4cf &&
-       ucs != 0x303f) ||                  /* CJK ... Yi */
+       ucs != 0x303f &&                   /* CJK ... Yi */
+       (!g_color_emoji || !bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))) ||
       (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
       (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
       (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
@@ -276,13 +281,18 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
 
+  /* ignore skin tone selectors to help various fully-qualified emoji work out correctly */
+  if (ucs >= 0x1f3fb && ucs <= 0x1f3ff && g_color_emoji)
+    return 0;
+
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   return 1 +
     (ucs >= 0x1100 &&
      (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
       ucs == 0x2329 || ucs == 0x232a ||
       (ucs >= 0x2e80 && ucs <= 0xa4cf &&
-       ucs != 0x303f) ||                  /* CJK ... Yi */
+       ucs != 0x303f &&                   /* CJK ... Yi */
+       (!g_color_emoji || !bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))) ||
       (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
       (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
       (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */

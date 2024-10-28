@@ -15,9 +15,18 @@
 
 2763 FE0F                                              ; fully-qualified     # ❣️ E1.0 heart exclamation
 2763                                                   ; unqualified         # ❣ E1.0 heart exclamation
-
 2764 FE0F                                              ; fully-qualified     # ❤️ E0.6 red heart
 2764                                                   ; unqualified         # ❤ E0.6 red heart
+
+1F573 FE0F                                             ; fully-qualified     # 🕳️ E0.7 hole
+1F573                                                  ; unqualified         # 🕳 E0.7 hole
+1F5E8 FE0F                                             ; fully-qualified     # 🗨️ E2.0 left speech bubble
+1F5E8                                                  ; unqualified         # 🗨 E2.0 left speech bubble
+1F5EF FE0F                                             ; fully-qualified     # 🗯️ E0.7 right anger bubble
+1F5EF                                                  ; unqualified         # 🗯 E0.7 right anger bubble
+
+1F590 FE0F                                             ; fully-qualified     # 🖐️ E0.7 hand with fingers splayed
+1F590                                                  ; unqualified         # 🖐 E0.7 hand with fingers splayed
 
 270C FE0F                                              ; fully-qualified     # ✌️ E0.6 victory hand
 270C                                                   ; unqualified         # ✌ E0.6 victory hand
@@ -28,55 +37,171 @@
 270D FE0F                                              ; fully-qualified     # ✍️ E0.7 writing hand
 270D                                                   ; unqualified         # ✍ E0.7 writing hand
 
+1F441 FE0F                                             ; fully-qualified     # 👁️ E0.7 eye
+1F441                                                  ; unqualified         # 👁 E0.7 eye
+
+1F575 FE0F                                             ; fully-qualified     # 🕵️ E0.7 detective
+1F575                                                  ; unqualified         # 🕵 E0.7 detective
+1F574 FE0F                                             ; fully-qualified     # 🕴️ E0.7 person in suit levitating
+1F574                                                  ; unqualified         # 🕴 E0.7 person in suit levitating
+
 26F7 FE0F                                              ; fully-qualified     # ⛷️ E0.7 skier
 26F7                                                   ; unqualified         # ⛷ E0.7 skier
-
+1F3CC FE0F                                             ; fully-qualified     # 🏌️ E0.7 person golfing
+1F3CC                                                  ; unqualified         # 🏌 E0.7 person golfing
 26F9 FE0F                                              ; fully-qualified     # ⛹️ E0.7 person bouncing ball
 26F9                                                   ; unqualified         # ⛹ E0.7 person bouncing ball
+1F3CB FE0F                                             ; fully-qualified     # 🏋️ E0.7 person lifting weights
+1F3CB                                                  ; unqualified         # 🏋 E0.7 person lifting weights
+
+1F5E3 FE0F                                             ; fully-qualified     # 🗣️ E0.7 speaking head
+1F5E3                                                  ; unqualified         # 🗣 E0.7 speaking head
+
+1F43F FE0F                                             ; fully-qualified     # 🐿️ E0.7 chipmunk
+1F43F                                                  ; unqualified         # 🐿 E0.7 chipmunk
+
+1F54A FE0F                                             ; fully-qualified     # 🕊️ E0.7 dove
+1F54A                                                  ; unqualified         # 🕊 E0.7 dove
+
+1F577 FE0F                                             ; fully-qualified     # 🕷️ E0.7 spider
+1F577                                                  ; unqualified         # 🕷 E0.7 spider
+1F578 FE0F                                             ; fully-qualified     # 🕸️ E0.7 spider web
+1F578                                                  ; unqualified         # 🕸 E0.7 spider web
+
+1F3F5 FE0F                                             ; fully-qualified     # 🏵️ E0.7 rosette
+1F3F5                                                  ; unqualified         # 🏵 E0.7 rosette
 
 2618 FE0F                                              ; fully-qualified     # ☘️ E1.0 shamrock
 2618                                                   ; unqualified         # ☘ E1.0 shamrock
 
+1F336 FE0F                                             ; fully-qualified     # 🌶️ E0.7 hot pepper
+1F336                                                  ; unqualified         # 🌶 E0.7 hot pepper
+
+1F37D FE0F                                             ; fully-qualified     # 🍽️ E0.7 fork and knife with plate
+1F37D                                                  ; unqualified         # 🍽 E0.7 fork and knife with plate
+
+1F5FA FE0F                                             ; fully-qualified     # 🗺️ E0.7 world map
+1F5FA                                                  ; unqualified         # 🗺 E0.7 world map
+
+1F3D4 FE0F                                             ; fully-qualified     # 🏔️ E0.7 snow-capped mountain
+1F3D4                                                  ; unqualified         # 🏔 E0.7 snow-capped mountain
 26F0 FE0F                                              ; fully-qualified     # ⛰️ E0.7 mountain
 26F0                                                   ; unqualified         # ⛰ E0.7 mountain
+1F3D5 FE0F                                             ; fully-qualified     # 🏕️ E0.7 camping
+1F3D5                                                  ; unqualified         # 🏕 E0.7 camping
+1F3D6 FE0F                                             ; fully-qualified     # 🏖️ E0.7 beach with umbrella
+1F3D6                                                  ; unqualified         # 🏖 E0.7 beach with umbrella
+1F3DC FE0F                                             ; fully-qualified     # 🏜️ E0.7 desert
+1F3DC                                                  ; unqualified         # 🏜 E0.7 desert
+1F3DD FE0F                                             ; fully-qualified     # 🏝️ E0.7 desert island
+1F3DD                                                  ; unqualified         # 🏝 E0.7 desert island
+1F3DE FE0F                                             ; fully-qualified     # 🏞️ E0.7 national park
+1F3DE                                                  ; unqualified         # 🏞 E0.7 national park
+
+1F3DF FE0F                                             ; fully-qualified     # 🏟️ E0.7 stadium
+1F3DF                                                  ; unqualified         # 🏟 E0.7 stadium
+1F3DB FE0F                                             ; fully-qualified     # 🏛️ E0.7 classical building
+1F3DB                                                  ; unqualified         # 🏛 E0.7 classical building
+1F3D7 FE0F                                             ; fully-qualified     # 🏗️ E0.7 building construction
+1F3D7                                                  ; unqualified         # 🏗 E0.7 building construction
+1F3D8 FE0F                                             ; fully-qualified     # 🏘️ E0.7 houses
+1F3D8                                                  ; unqualified         # 🏘 E0.7 houses
+1F3DA FE0F                                             ; fully-qualified     # 🏚️ E0.7 derelict house
+1F3DA                                                  ; unqualified         # 🏚 E0.7 derelict house
 
 26E9 FE0F                                              ; fully-qualified     # ⛩️ E0.7 shinto shrine
 26E9                                                   ; unqualified         # ⛩ E0.7 shinto shrine
 
+1F3D9 FE0F                                             ; fully-qualified     # 🏙️ E0.7 cityscape
+1F3D9                                                  ; unqualified         # 🏙 E0.7 cityscape
 2668 FE0F                                              ; fully-qualified     # ♨️ E0.6 hot springs
 2668                                                   ; unqualified         # ♨ E0.6 hot springs
 
+1F3CE FE0F                                             ; fully-qualified     # 🏎️ E0.7 racing car
+1F3CE                                                  ; unqualified         # 🏎 E0.7 racing car
+1F3CD FE0F                                             ; fully-qualified     # 🏍️ E0.7 motorcycle
+1F3CD                                                  ; unqualified         # 🏍 E0.7 motorcycle
+1F6E3 FE0F                                             ; fully-qualified     # 🛣️ E0.7 motorway
+1F6E3                                                  ; unqualified         # 🛣 E0.7 motorway
+1F6E4 FE0F                                             ; fully-qualified     # 🛤️ E0.7 railway track
+1F6E4                                                  ; unqualified         # 🛤 E0.7 railway track
+1F6E2 FE0F                                             ; fully-qualified     # 🛢️ E0.7 oil drum
+1F6E2                                                  ; unqualified         # 🛢 E0.7 oil drum
+
+1F6F3 FE0F                                             ; fully-qualified     # 🛳️ E0.7 passenger ship
+1F6F3                                                  ; unqualified         # 🛳 E0.7 passenger ship
 26F4 FE0F                                              ; fully-qualified     # ⛴️ E0.7 ferry
 26F4                                                   ; unqualified         # ⛴ E0.7 ferry
+1F6E5 FE0F                                             ; fully-qualified     # 🛥️ E0.7 motor boat
+1F6E5                                                  ; unqualified         # 🛥 E0.7 motor boat
 
 2708 FE0F                                              ; fully-qualified     # ✈️ E0.6 airplane
 2708                                                   ; unqualified         # ✈ E0.6 airplane
+1F6E9 FE0F                                             ; fully-qualified     # 🛩️ E0.7 small airplane
+1F6E9                                                  ; unqualified         # 🛩 E0.7 small airplane
+1F6F0 FE0F                                             ; fully-qualified     # 🛰️ E0.7 satellite
+1F6F0                                                  ; unqualified         # 🛰 E0.7 satellite
+
+1F6CE FE0F                                             ; fully-qualified     # 🛎️ E0.7 bellhop bell
+1F6CE                                                  ; unqualified         # 🛎 E0.7 bellhop bell
 
 23F1 FE0F                                              ; fully-qualified     # ⏱️ E1.0 stopwatch
 23F1                                                   ; unqualified         # ⏱ E1.0 stopwatch
 23F2 FE0F                                              ; fully-qualified     # ⏲️ E1.0 timer clock
 23F2                                                   ; unqualified         # ⏲ E1.0 timer clock
+1F570 FE0F                                             ; fully-qualified     # 🕰️ E0.7 mantelpiece clock
+1F570                                                  ; unqualified         # 🕰 E0.7 mantelpiece clock
 
+1F321 FE0F                                             ; fully-qualified     # 🌡️ E0.7 thermometer
+1F321                                                  ; unqualified         # 🌡 E0.7 thermometer
 2600 FE0F                                              ; fully-qualified     # ☀️ E0.6 sun
 2600                                                   ; unqualified         # ☀ E0.6 sun
 2601 FE0F                                              ; fully-qualified     # ☁️ E0.6 cloud
 2601                                                   ; unqualified         # ☁ E0.6 cloud
 26C8 FE0F                                              ; fully-qualified     # ⛈️ E0.7 cloud with lightning and rain
 26C8                                                   ; unqualified         # ⛈ E0.7 cloud with lightning and rain
-
+1F324 FE0F                                             ; fully-qualified     # 🌤️ E0.7 sun behind small cloud
+1F324                                                  ; unqualified         # 🌤 E0.7 sun behind small cloud
+1F325 FE0F                                             ; fully-qualified     # 🌥️ E0.7 sun behind large cloud
+1F325                                                  ; unqualified         # 🌥 E0.7 sun behind large cloud
+1F326 FE0F                                             ; fully-qualified     # 🌦️ E0.7 sun behind rain cloud
+1F326                                                  ; unqualified         # 🌦 E0.7 sun behind rain cloud
+1F327 FE0F                                             ; fully-qualified     # 🌧️ E0.7 cloud with rain
+1F327                                                  ; unqualified         # 🌧 E0.7 cloud with rain
+1F328 FE0F                                             ; fully-qualified     # 🌨️ E0.7 cloud with snow
+1F328                                                  ; unqualified         # 🌨 E0.7 cloud with snow
+1F329 FE0F                                             ; fully-qualified     # 🌩️ E0.7 cloud with lightning
+1F329                                                  ; unqualified         # 🌩 E0.7 cloud with lightning
+1F32A FE0F                                             ; fully-qualified     # 🌪️ E0.7 tornado
+1F32A                                                  ; unqualified         # 🌪 E0.7 tornado
+1F32B FE0F                                             ; fully-qualified     # 🌫️ E0.7 fog
+1F32B                                                  ; unqualified         # 🌫 E0.7 fog
+1F32C FE0F                                             ; fully-qualified     # 🌬️ E0.7 wind face
+1F32C                                                  ; unqualified         # 🌬 E0.7 wind face
 2602 FE0F                                              ; fully-qualified     # ☂️ E0.7 umbrella
 2602                                                   ; unqualified         # ☂ E0.7 umbrella
 26F1 FE0F                                              ; fully-qualified     # ⛱️ E0.7 umbrella on ground
 26F1                                                   ; unqualified         # ⛱ E0.7 umbrella on ground
-
 2744 FE0F                                              ; fully-qualified     # ❄️ E0.6 snowflake
 2744                                                   ; unqualified         # ❄ E0.6 snowflake
 2603 FE0F                                              ; fully-qualified     # ☃️ E0.7 snowman
 2603                                                   ; unqualified         # ☃ E0.7 snowman
-
 2604 FE0F                                              ; fully-qualified     # ☄️ E1.0 comet
 2604                                                   ; unqualified         # ☄ E1.0 comet
 
+1F397 FE0F                                             ; fully-qualified     # 🎗️ E0.7 reminder ribbon
+1F397                                                  ; unqualified         # 🎗 E0.7 reminder ribbon
+1F39F FE0F                                             ; fully-qualified     # 🎟️ E0.7 admission tickets
+1F39F                                                  ; unqualified         # 🎟 E0.7 admission tickets
+
+1F396 FE0F                                             ; fully-qualified     # 🎖️ E0.7 military medal
+1F396                                                  ; unqualified         # 🎖 E0.7 military medal
+
+26F8 FE0F                                              ; fully-qualified     # ⛸️ E0.7 ice skate
+26F8                                                   ; unqualified         # ⛸ E0.7 ice skate
+
+1F579 FE0F                                             ; fully-qualified     # 🕹️ E0.7 joystick
+1F579                                                  ; unqualified         # 🕹 E0.7 joystick
 2660 FE0F                                              ; fully-qualified     # ♠️ E0.6 spade suit
 2660                                                   ; unqualified         # ♠ E0.6 spade suit
 2665 FE0F                                              ; fully-qualified     # ♥️ E0.6 heart suit
@@ -88,55 +213,123 @@
 265F FE0F                                              ; fully-qualified     # ♟️ E11.0 chess pawn
 265F                                                   ; unqualified         # ♟ E11.0 chess pawn
 
+1F5BC FE0F                                             ; fully-qualified     # 🖼️ E0.7 framed picture
+1F5BC                                                  ; unqualified         # 🖼 E0.7 framed picture
+
+1F576 FE0F                                             ; fully-qualified     # 🕶️ E0.7 sunglasses
+1F576                                                  ; unqualified         # 🕶 E0.7 sunglasses
+1F6CD FE0F                                             ; fully-qualified     # 🛍️ E0.7 shopping bags
+1F6CD                                                  ; unqualified         # 🛍 E0.7 shopping bags
 26D1 FE0F                                              ; fully-qualified     # ⛑️ E0.7 rescue worker’s helmet
 26D1                                                   ; unqualified         # ⛑ E0.7 rescue worker’s helmet
+
+1F399 FE0F                                             ; fully-qualified     # 🎙️ E0.7 studio microphone
+1F399                                                  ; unqualified         # 🎙 E0.7 studio microphone
+1F39A FE0F                                             ; fully-qualified     # 🎚️ E0.7 level slider
+1F39A                                                  ; unqualified         # 🎚 E0.7 level slider
+1F39B FE0F                                             ; fully-qualified     # 🎛️ E0.7 control knobs
+1F39B                                                  ; unqualified         # 🎛 E0.7 control knobs
 
 260E FE0F                                              ; fully-qualified     # ☎️ E0.6 telephone
 260E                                                   ; unqualified         # ☎ E0.6 telephone
 
+1F5A5 FE0F                                             ; fully-qualified     # 🖥️ E0.7 desktop computer
+1F5A5                                                  ; unqualified         # 🖥 E0.7 desktop computer
+1F5A8 FE0F                                             ; fully-qualified     # 🖨️ E0.7 printer
+1F5A8                                                  ; unqualified         # 🖨 E0.7 printer
 2328 FE0F                                              ; fully-qualified     # ⌨️ E1.0 keyboard
 2328                                                   ; unqualified         # ⌨ E1.0 keyboard
+1F5B1 FE0F                                             ; fully-qualified     # 🖱️ E0.7 computer mouse
+1F5B1                                                  ; unqualified         # 🖱 E0.7 computer mouse
+1F5B2 FE0F                                             ; fully-qualified     # 🖲️ E0.7 trackball
+1F5B2                                                  ; unqualified         # 🖲 E0.7 trackball
+
+1F39E FE0F                                             ; fully-qualified     # 🎞️ E0.7 film frames
+1F39E                                                  ; unqualified         # 🎞 E0.7 film frames
+1F4FD FE0F                                             ; fully-qualified     # 📽️ E0.7 film projector
+1F4FD                                                  ; unqualified         # 📽 E0.7 film projector
+1F56F FE0F                                             ; fully-qualified     # 🕯️ E0.7 candle
+1F56F                                                  ; unqualified         # 🕯 E0.7 candle
+
+1F5DE FE0F                                             ; fully-qualified     # 🗞️ E0.7 rolled-up newspaper
+1F5DE                                                  ; unqualified         # 🗞 E0.7 rolled-up newspaper
+1F3F7 FE0F                                             ; fully-qualified     # 🏷️ E0.7 label
+1F3F7                                                  ; unqualified         # 🏷 E0.7 label
 
 2709 FE0F                                              ; fully-qualified     # ✉️ E0.6 envelope
 2709                                                   ; unqualified         # ✉ E0.6 envelope
+1F5F3 FE0F                                             ; fully-qualified     # 🗳️ E0.7 ballot box with ballot
+1F5F3                                                  ; unqualified         # 🗳 E0.7 ballot box with ballot
 
 270F FE0F                                              ; fully-qualified     # ✏️ E0.6 pencil
 270F                                                   ; unqualified         # ✏ E0.6 pencil
 2712 FE0F                                              ; fully-qualified     # ✒️ E0.6 black nib
 2712                                                   ; unqualified         # ✒ E0.6 black nib
+1F58B FE0F                                             ; fully-qualified     # 🖋️ E0.7 fountain pen
+1F58B                                                  ; unqualified         # 🖋 E0.7 fountain pen
+1F58A FE0F                                             ; fully-qualified     # 🖊️ E0.7 pen
+1F58A                                                  ; unqualified         # 🖊 E0.7 pen
+1F58C FE0F                                             ; fully-qualified     # 🖌️ E0.7 paintbrush
+1F58C                                                  ; unqualified         # 🖌 E0.7 paintbrush
+1F58D FE0F                                             ; fully-qualified     # 🖍️ E0.7 crayon
+1F58D                                                  ; unqualified         # 🖍 E0.7 crayon
 
+1F5C2 FE0F                                             ; fully-qualified     # 🗂️ E0.7 card index dividers
+1F5C2                                                  ; unqualified         # 🗂 E0.7 card index dividers
+1F5D2 FE0F                                             ; fully-qualified     # 🗒️ E0.7 spiral notepad
+1F5D2                                                  ; unqualified         # 🗒 E0.7 spiral notepad
+1F5D3 FE0F                                             ; fully-qualified     # 🗓️ E0.7 spiral calendar
+1F5D3                                                  ; unqualified         # 🗓 E0.7 spiral calendar
+1F587 FE0F                                             ; fully-qualified     # 🖇️ E0.7 linked paperclips
+1F587                                                  ; unqualified         # 🖇 E0.7 linked paperclips
 2702 FE0F                                              ; fully-qualified     # ✂️ E0.6 scissors
 2702                                                   ; unqualified         # ✂ E0.6 scissors
+1F5C3 FE0F                                             ; fully-qualified     # 🗃️ E0.7 card file box
+1F5C3                                                  ; unqualified         # 🗃 E0.7 card file box
+1F5C4 FE0F                                             ; fully-qualified     # 🗄️ E0.7 file cabinet
+1F5C4                                                  ; unqualified         # 🗄 E0.7 file cabinet
+1F5D1 FE0F                                             ; fully-qualified     # 🗑️ E0.7 wastebasket
+1F5D1                                                  ; unqualified         # 🗑 E0.7 wastebasket
+
+1F5DD FE0F                                             ; fully-qualified     # 🗝️ E0.7 old key
+1F5DD                                                  ; unqualified         # 🗝 E0.7 old key
 
 26CF FE0F                                              ; fully-qualified     # ⛏️ E0.7 pick
 26CF                                                   ; unqualified         # ⛏ E0.7 pick
 2692 FE0F                                              ; fully-qualified     # ⚒️ E1.0 hammer and pick
 2692                                                   ; unqualified         # ⚒ E1.0 hammer and pick
-
+1F6E0 FE0F                                             ; fully-qualified     # 🛠️ E0.7 hammer and wrench
+1F6E0                                                  ; unqualified         # 🛠 E0.7 hammer and wrench
+1F5E1 FE0F                                             ; fully-qualified     # 🗡️ E0.7 dagger
+1F5E1                                                  ; unqualified         # 🗡 E0.7 dagger
 2694 FE0F                                              ; fully-qualified     # ⚔️ E1.0 crossed swords
 2694                                                   ; unqualified         # ⚔ E1.0 crossed swords
-
+1F6E1 FE0F                                             ; fully-qualified     # 🛡️ E0.7 shield
+1F6E1                                                  ; unqualified         # 🛡 E0.7 shield
 2699 FE0F                                              ; fully-qualified     # ⚙️ E1.0 gear
 2699                                                   ; unqualified         # ⚙ E1.0 gear
-
+1F5DC FE0F                                             ; fully-qualified     # 🗜️ E0.7 clamp
+1F5DC                                                  ; unqualified         # 🗜 E0.7 clamp
 2696 FE0F                                              ; fully-qualified     # ⚖️ E1.0 balance scale
 2696                                                   ; unqualified         # ⚖ E1.0 balance scale
-
 26D3 FE0F                                              ; fully-qualified     # ⛓️ E0.7 chains
 26D3                                                   ; unqualified         # ⛓ E0.7 chains
 
 2697 FE0F                                              ; fully-qualified     # ⚗️ E1.0 alembic
 2697                                                   ; unqualified         # ⚗ E1.0 alembic
 
+1F6CF FE0F                                             ; fully-qualified     # 🛏️ E0.7 bed
+1F6CF                                                  ; unqualified         # 🛏 E0.7 bed
+1F6CB FE0F                                             ; fully-qualified     # 🛋️ E0.7 couch and lamp
+1F6CB                                                  ; unqualified         # 🛋 E0.7 couch and lamp
+
 26B0 FE0F                                              ; fully-qualified     # ⚰️ E1.0 coffin
 26B0                                                   ; unqualified         # ⚰ E1.0 coffin
-
 26B1 FE0F                                              ; fully-qualified     # ⚱️ E1.0 funeral urn
 26B1                                                   ; unqualified         # ⚱ E1.0 funeral urn
 
 26A0 FE0F                                              ; fully-qualified     # ⚠️ E0.6 warning
 26A0                                                   ; unqualified         # ⚠ E0.6 warning
-
 2622 FE0F                                              ; fully-qualified     # ☢️ E1.0 radioactive
 2622                                                   ; unqualified         # ☢ E1.0 radioactive
 2623 FE0F                                              ; fully-qualified     # ☣️ E1.0 biohazard
@@ -173,7 +366,8 @@
 
 269B FE0F                                              ; fully-qualified     # ⚛️ E1.0 atom symbol
 269B                                                   ; unqualified         # ⚛ E1.0 atom symbol
-
+1F549 FE0F                                             ; fully-qualified     # 🕉️ E0.7 om
+1F549                                                  ; unqualified         # 🕉 E0.7 om
 2721 FE0F                                              ; fully-qualified     # ✡️ E0.7 star of David
 2721                                                   ; unqualified         # ✡ E0.7 star of David
 2638 FE0F                                              ; fully-qualified     # ☸️ E0.7 wheel of dharma
@@ -191,17 +385,14 @@
 
 25B6 FE0F                                              ; fully-qualified     # ▶️ E0.6 play button
 25B6                                                   ; unqualified         # ▶ E0.6 play button
-
 23ED FE0F                                              ; fully-qualified     # ⏭️ E0.7 next track button
 23ED                                                   ; unqualified         # ⏭ E0.7 next track button
 23EF FE0F                                              ; fully-qualified     # ⏯️ E1.0 play or pause button
 23EF                                                   ; unqualified         # ⏯ E1.0 play or pause button
 25C0 FE0F                                              ; fully-qualified     # ◀️ E0.6 reverse button
 25C0                                                   ; unqualified         # ◀ E0.6 reverse button
-
 23EE FE0F                                              ; fully-qualified     # ⏮️ E0.7 last track button
 23EE                                                   ; unqualified         # ⏮ E0.7 last track button
-
 23F8 FE0F                                              ; fully-qualified     # ⏸️ E0.7 pause button
 23F8                                                   ; unqualified         # ⏸ E0.7 pause button
 23F9 FE0F                                              ; fully-qualified     # ⏹️ E0.7 stop button
@@ -220,7 +411,6 @@
 
 2716 FE0F                                              ; fully-qualified     # ✖️ E0.6 multiply
 2716                                                   ; unqualified         # ✖ E0.6 multiply
-
 267E FE0F                                              ; fully-qualified     # ♾️ E11.0 infinity
 267E                                                   ; unqualified         # ♾ E11.0 infinity
 
@@ -228,7 +418,6 @@
 203C                                                   ; unqualified         # ‼ E0.6 double exclamation mark
 2049 FE0F                                              ; fully-qualified     # ⁉️ E0.6 exclamation question mark
 2049                                                   ; unqualified         # ⁉ E0.6 exclamation question mark
-
 3030 FE0F                                              ; fully-qualified     # 〰️ E0.6 wavy dash
 3030                                                   ; unqualified         # 〰 E0.6 wavy dash
 
@@ -238,12 +427,11 @@
 267B                                                   ; unqualified         # ♻ E0.6 recycling symbol
 269C FE0F                                              ; fully-qualified     # ⚜️ E1.0 fleur-de-lis
 269C                                                   ; unqualified         # ⚜ E1.0 fleur-de-lis
-
 2611 FE0F                                              ; fully-qualified     # ☑️ E0.6 check box with check
 2611                                                   ; unqualified         # ☑ E0.6 check box with check
 2714 FE0F                                              ; fully-qualified     # ✔️ E0.6 check mark
 2714                                                   ; unqualified         # ✔ E0.6 check mark
-
+; SPECIAL CASE:  Windows Terminal renders 303D the same as 303D FE0F, differing from the usual unqualified behavior.
 303D FE0F                                              ; fully-qualified     # 〽️ E0.6 part alternation mark
 303D                                                   ; unqualified         # 〽 E0.6 part alternation mark
 2733 FE0F                                              ; fully-qualified     # ✳️ E0.6 eight-spoked asterisk
@@ -259,12 +447,48 @@
 2122 FE0F                                              ; fully-qualified     # ™️ E0.6 trade mark
 2122                                                   ; unqualified         # ™ E0.6 trade mark
 
+; Windows Terminal can't display these yet.
+;0023 FE0F                                              ; fully-qualified     # #️⃣ E0.6 keycap: #
+;0023                                                   ; unqualified         # #⃣ E0.6 keycap: #
+;002A FE0F                                              ; fully-qualified     # *️⃣ E2.0 keycap: *
+;002A                                                   ; unqualified         # *⃣ E2.0 keycap: *
+;0030 FE0F                                              ; fully-qualified     # 0️⃣ E0.6 keycap: 0
+;0030                                                   ; unqualified         # 0⃣ E0.6 keycap: 0
+;0031 FE0F                                              ; fully-qualified     # 1️⃣ E0.6 keycap: 1
+;0031                                                   ; unqualified         # 1⃣ E0.6 keycap: 1
+;0032 FE0F                                              ; fully-qualified     # 2️⃣ E0.6 keycap: 2
+;0032                                                   ; unqualified         # 2⃣ E0.6 keycap: 2
+;0033 FE0F                                              ; fully-qualified     # 3️⃣ E0.6 keycap: 3
+;0033                                                   ; unqualified         # 3⃣ E0.6 keycap: 3
+;0034 FE0F                                              ; fully-qualified     # 4️⃣ E0.6 keycap: 4
+;0034                                                   ; unqualified         # 4⃣ E0.6 keycap: 4
+;0035 FE0F                                              ; fully-qualified     # 5️⃣ E0.6 keycap: 5
+;0035                                                   ; unqualified         # 5⃣ E0.6 keycap: 5
+;0036 FE0F                                              ; fully-qualified     # 6️⃣ E0.6 keycap: 6
+;0036                                                   ; unqualified         # 6⃣ E0.6 keycap: 6
+;0037 FE0F                                              ; fully-qualified     # 7️⃣ E0.6 keycap: 7
+;0037                                                   ; unqualified         # 7⃣ E0.6 keycap: 7
+;0038 FE0F                                              ; fully-qualified     # 8️⃣ E0.6 keycap: 8
+;0038                                                   ; unqualified         # 8⃣ E0.6 keycap: 8
+;0039 FE0F                                              ; fully-qualified     # 9️⃣ E0.6 keycap: 9
+;0039                                                   ; unqualified         # 9⃣ E0.6 keycap: 9
+
+1F170 FE0F                                             ; fully-qualified     # 🅰️ E0.6 A button (blood type)
+1F170                                                  ; unqualified         # 🅰 E0.6 A button (blood type)
+1F171 FE0F                                             ; fully-qualified     # 🅱️ E0.6 B button (blood type)
+1F171                                                  ; unqualified         # 🅱 E0.6 B button (blood type)
 2139 FE0F                                              ; fully-qualified     # ℹ️ E0.6 information
 2139                                                   ; unqualified         # ℹ E0.6 information
-
 24C2 FE0F                                              ; fully-qualified     # Ⓜ️ E0.6 circled M
 24C2                                                   ; unqualified         # Ⓜ E0.6 circled M
-
+1F17E FE0F                                             ; fully-qualified     # 🅾️ E0.6 O button (blood type)
+1F17E                                                  ; unqualified         # 🅾 E0.6 O button (blood type)
+1F17F FE0F                                             ; fully-qualified     # 🅿️ E0.6 P button
+1F17F                                                  ; unqualified         # 🅿 E0.6 P button
+1F202 FE0F                                             ; fully-qualified     # 🈂️ E0.6 Japanese “service charge” button
+1F202                                                  ; unqualified         # 🈂 E0.6 Japanese “service charge” button
+1F237 FE0F                                             ; fully-qualified     # 🈷️ E0.6 Japanese “monthly amount” button
+1F237                                                  ; unqualified         # 🈷 E0.6 Japanese “monthly amount” button
 3297 FE0F                                              ; fully-qualified     # ㊗️ E0.6 Japanese “congratulations” button
 3297                                                   ; unqualified         # ㊗ E0.6 Japanese “congratulations” button
 3299 FE0F                                              ; fully-qualified     # ㊙️ E0.6 Japanese “secret” button
@@ -274,8 +498,10 @@
 25FC                                                   ; unqualified         # ◼ E0.6 black medium square
 25FB FE0F                                              ; fully-qualified     # ◻️ E0.6 white medium square
 25FB                                                   ; unqualified         # ◻ E0.6 white medium square
-
 25AA FE0F                                              ; fully-qualified     # ▪️ E0.6 black small square
 25AA                                                   ; unqualified         # ▪ E0.6 black small square
 25AB FE0F                                              ; fully-qualified     # ▫️ E0.6 white small square
 25AB                                                   ; unqualified         # ▫ E0.6 white small square
+
+1F3F3 FE0F                                             ; fully-qualified     # 🏳️ E0.7 white flag
+1F3F3                                                  ; unqualified         # 🏳 E0.7 white flag

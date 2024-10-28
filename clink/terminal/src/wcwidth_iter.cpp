@@ -64,7 +64,7 @@ wcwidth_iter::wcwidth_iter(const wcwidth_iter& i)
 //  - NUL ends a run without being part of the run.
 //  - A control character or DEL is a run by itself.
 //  - Certain fully qualified double width color emoji may compose a run with
-//    two codepoints where the second is 0xFE0F.
+//    two codepoints where the second is 0xFE0F or a skin tone selector.
 //  - Otherwise a run includes a Unicode codepoint and any following
 //    codepoints whose wcwidth is 0.
 //
@@ -88,17 +88,30 @@ char32_t wcwidth_iter::next()
     if (m_chr_wcwidth < 0)
         return c;
 
+    // FE0F or skin tone selector after an unqualified form makes it
+    // fully-qualified and be double-width.
     extern bool g_color_emoji;
-    if (m_next == 0xfe0f &&
-        g_color_emoji &&
-        m_chr_wcwidth > 0 &&
-        is_fully_qualified_double_width_prefix(c))
+    if (g_color_emoji)
     {
-        m_chr_end = m_iter.get_pointer();
-        m_next = m_iter.next();
-        ++m_chr_wcwidth;
-        assert(m_chr_wcwidth == 2);
-        return c;
+        if ((m_next == 0xfe0f || (m_next >= 0x1f3fb && m_next <= 0x1f3ff)) &&
+            m_chr_wcwidth > 0 &&
+            is_fully_qualified_double_width_prefix(c))
+        {
+            m_chr_end = m_iter.get_pointer();
+            m_next = m_iter.next();
+            ++m_chr_wcwidth;
+            assert(m_chr_wcwidth == 2);
+            return c;
+        }
+
+        // Special case:  Windows Terminal renders 303D the same as 303D FE0F,
+        // differing from the usual unqualified behavior.
+        if (c == 0x303d)
+        {
+            ++m_chr_wcwidth;
+            assert(m_chr_wcwidth == 2);
+            return c;
+        }
     }
 
     while (m_next)
