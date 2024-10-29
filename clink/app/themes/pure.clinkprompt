@@ -48,10 +48,10 @@
 --      PURE_USE_TERMINAL_COLORS        = Set to any value to force using the
 --                                        terminal's color scheme.
 --
---  These environment variables override the default colors.  Set them to the
---  SGR Parameters of an ANSI escape code color.  For more information on ANSI
---  color codes and SGR Parameters, visit wikipedia:
---  https://en.wikipedia.org/wiki/ANSI_escape_code#SGR
+--  These environment variables override the default colors.  Set them using the
+--  same syntax as any Clink color settings.
+--  https://chrisant996.github.io/clink/clink.html#friendly-color-names
+--  https://chrisant996.github.io/clink/clink.html#alternative-sgr-syntax
 --      PURE_COLOR_EXECUTION_TIME
 --      PURE_COLOR_GIT_ARROW
 --      PURE_COLOR_GIT_STASH
