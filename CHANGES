@@ -6,7 +6,7 @@
 
 - Changed searching for color themes and custom prompts to always include `themes\` directories under the Clink program directory and Clink profile directory, even when the `clink.path` setting has been used to remove them from the list of script directories.
 - Improved character width measurements for various color emoji; in particular, unqualified emoji should now be counted as a single cell, and skin tone selectors should generally work for emoji that don't involve other joiners or selectors (this requires that the terminal program supports color emoji; Windows Terminal supports color emoji, but many other terminal programs don't and may behave strangely).
-- The pure.clinkprompt now supports the `VIRTUAL_ENV_DISABLED` and `VIRTUAL_ENV_PROMPT` environment variables.
+- The pure.clinkprompt now also supports virtualenv's `VIRTUAL_ENV_DISABLE_PROMPT` and `VIRTUAL_ENV_PROMPT` environment variables.
 - Fixed the right side transient prompt so it shows up even when identical to the right side normal prompt.
 - Fixed the `demo` callback in .clinkprompt files.
 - Fixed [#685](https://github.com/chrisant996/clink/issues/685); CTRL-L while input text is present redraws the input line wrong.
