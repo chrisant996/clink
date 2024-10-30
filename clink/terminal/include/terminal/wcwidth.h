@@ -12,7 +12,8 @@ extern void detect_ucs2_limitation(bool force=false);
 extern "C" void reset_wcwidths();
 extern "C" int32 test_ambiguous_width_char(char32_t ucs, str_iter* iter);
 extern "C" void reset_cached_font();
-bool is_fully_qualified_double_width_prefix(char32_t ucs);
+bool is_possible_unqualified_half_width(char32_t ucs);
+bool is_emoji(char32_t ucs);
 
 //------------------------------------------------------------------------------
 extern "C" uint32 clink_wcswidth(const char* s, uint32 len);

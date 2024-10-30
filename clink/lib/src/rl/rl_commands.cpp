@@ -2483,10 +2483,7 @@ static void list_problem_codes(const std::vector<prompt_problem_details>& proble
 }
 
 //------------------------------------------------------------------------------
-static void analyze_char_widths(const char* s,
-                                std::vector<alert_char>& cjk,
-                                std::vector<alert_char>& emoji,
-                                std::vector<alert_char>& qualified)
+static void analyze_char_widths(const char* s, std::vector<alert_char>& cjk)
 {
     if (!s)
         return;
@@ -2519,9 +2516,6 @@ static void analyze_char_widths(const char* s,
                 switch (kind)
                 {
                 case 1: cjk.push_back(ac); break;
-                case 2: emoji.push_back(ac); break;
-                case 3: qualified.push_back(ac); break;
-                case 4: emoji.push_back(ac); break;
                 }
             }
         }
@@ -2672,13 +2666,11 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
             prompt++;
 
         std::vector<alert_char> cjk;
-        std::vector<alert_char> emoji;
-        std::vector<alert_char> qualified;
 
-        analyze_char_widths(prompt, cjk, emoji, qualified);
-        analyze_char_widths(rl_rprompt, cjk, emoji, qualified);
+        analyze_char_widths(prompt, cjk);
+        analyze_char_widths(rl_rprompt, cjk);
 
-        if (cjk.size() || emoji.size() || qualified.size())
+        if (cjk.size())
         {
             print_heading("ambiguous width characters in prompt");
 
@@ -2688,25 +2680,6 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
                 g_printer->print(
                     "    Running 'chcp 65001' can often fix width problems with these characters.\n"
                     "    Or you can use a different character.\n");
-            }
-
-            if (emoji.size())
-            {
-                list_ambiguous_codepoints("color emoji", emoji);
-                g_printer->print(
-                    "    To fix problems with these, try using a different symbol or a different\n"
-                    "    terminal program.  Or sometimes using a different font can help.\n");
-            }
-
-            if (qualified.size())
-            {
-                list_ambiguous_codepoints("qualified emoji", qualified);
-                g_printer->print(
-                    "    To fix problems with these, try using a different symbol or a different\n"
-                    "    terminal program.  Or sometimes using a different font can help.\n"
-                    "    The fully-qualified forms of these symbols often encounter problems,\n"
-                    "    but the unqualified forms often work.  For a table of emoji and their\n"
-                    "    forms see https://www.unicode.org/Public/emoji/15.0/emoji-test.txt\n");
             }
         }
     }

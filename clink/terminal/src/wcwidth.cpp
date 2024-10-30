@@ -243,7 +243,7 @@ static int32 mk_wcwidth(char32_t ucs)
   /* special processing when color emoji support is enabled */
   if (g_color_emoji) {
     /* characters with unqualified forms are width 1 without FE0F/etc */
-    if (bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))
+    if (bisearch(ucs, possible_unqualified_half_width, _countof(possible_unqualified_half_width) - 1))
       return 1;
     /* color emoji are width 2 */
     if (bisearch(ucs, emojis, _countof(emojis) - 1))
@@ -290,7 +290,7 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
   /* special processing when color emoji support is enabled */
   if (g_color_emoji) {
     /* characters with unqualified forms are width 1 without FE0F/etc */
-    if (bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))
+    if (bisearch(ucs, possible_unqualified_half_width, _countof(possible_unqualified_half_width) - 1))
       return 1;
     /* color emoji are width 2 */
     if (bisearch(ucs, emojis, _countof(emojis) - 1))
@@ -456,14 +456,24 @@ wcswidth_t *wcswidth = mk_wcswidth;
 #endif
 
 /*
- * This tests whether the input codepoint is a recognized as a valid potential
- * first codepoint in a pair of codepoints for a fully qualified color emoji
- * where the second codepoint is U+FE0F.
+ * Windows Terminal renders some codepoints as half-width unless followed by
+ * codepoints that make them fully-qualified.  This is for consistency with
+ * behavior of the first few terminals that supported color emoji.
+ * https://github.com/microsoft/terminal/issues/17342#issuecomment-2199942912
  */
-bool is_fully_qualified_double_width_prefix(char32_t ucs)
+bool is_possible_unqualified_half_width(char32_t ucs)
 {
     assert(g_color_emoji);
-    return !!bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1);
+    return !!bisearch(ucs, possible_unqualified_half_width, _countof(possible_unqualified_half_width) - 1);
+}
+
+/*
+ * This tests whether the input codepoint is a recognized as an emoji.
+ */
+bool is_emoji(char32_t ucs)
+{
+    assert(g_color_emoji);
+    return !!bisearch(ucs, emojis, _countof(emojis) - 1);
 }
 
 #include <core/settings.h>
@@ -736,19 +746,6 @@ int32 test_ambiguous_width_char(char32_t ucs, str_iter* iter)
     {
         if (bisearch(ucs, ambiguous, _countof(ambiguous) - 1))
             return 1; // CJK ambiguous width char.
-    }
-
-    if (bisearch(ucs, emojis, _countof(emojis) - 1))
-        return 2; // Color emoji ambiguous width char.
-
-    if (bisearch(ucs, ambiguous_emojis, _countof(ambiguous_emojis) - 1))
-    {
-        if (iter && iter->peek() == 0xfe0f &&
-            bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))
-        {
-            return 4; // Color emoji ambiguous width char, fully qualified with 0xFE0F.
-        }
-        return 3; // Emoji whose width depends on surrounding characters.
     }
 
     return 0; // Char width is not known to be ambiguous (but still could be).

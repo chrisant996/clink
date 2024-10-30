@@ -63,8 +63,9 @@ wcwidth_iter::wcwidth_iter(const wcwidth_iter& i)
 //
 //  - NUL ends a run without being part of the run.
 //  - A control character or DEL is a run by itself.
-//  - Certain fully qualified double width color emoji may compose a run with
-//    two codepoints where the second is 0xFE0F or a skin tone selector.
+//  - An emoji codepoint starts a run that includes the codepoint and
+//    following codepoints for certain variant selectors, or zero width joiner
+//    followed by another emoji codepoint.
 //  - Otherwise a run includes a Unicode codepoint and any following
 //    codepoints whose wcwidth is 0.
 //
@@ -88,32 +89,76 @@ char32_t wcwidth_iter::next()
     if (m_chr_wcwidth < 0)
         return c;
 
-    // FE0F or skin tone selector after an unqualified form makes it
-    // fully-qualified and be double-width.
+    // Try to parse emoji sequences.
     extern bool g_color_emoji;
-    if (g_color_emoji)
+    if (g_color_emoji && m_chr_wcwidth)
     {
-        if ((m_next == 0xfe0f || (m_next >= 0x1f3fb && m_next <= 0x1f3ff)) &&
-            m_chr_wcwidth > 0 &&
-            is_fully_qualified_double_width_prefix(c))
+        // Check for a country flag sequence.
+        if (c >= 0x1f1e6 && c <= 0x1f1ff && m_next >= 0x1f1e6 && m_next <= 0x1f1ff)
         {
+            m_chr_wcwidth = 2;
             m_chr_end = m_iter.get_pointer();
             m_next = m_iter.next();
-            ++m_chr_wcwidth;
-            assert(m_chr_wcwidth == 2);
             return c;
         }
 
-        // Special case:  Windows Terminal renders 303D the same as 303D FE0F,
-        // differing from the usual unqualified behavior.
-        if (c == 0x303d)
+        // If it's an emoji character, then try to parse an emoji sequence.
+        if (is_emoji(c) || is_possible_unqualified_half_width(c))
         {
-            ++m_chr_wcwidth;
-            assert(m_chr_wcwidth == 2);
+            // FE0F or skin tone selector after an unqualified form makes it
+            // fully-qualified and be full width (2 cells).
+            if ((m_next == 0xfe0f || (m_next >= 0x1f3fb && m_next <= 0x1f3ff)) &&
+                m_chr_wcwidth > 0 &&
+                is_possible_unqualified_half_width(c))
+            {
+                m_chr_end = m_iter.get_pointer();
+fully_qualified:
+                assert(m_chr_wcwidth == 1 || m_chr_wcwidth == 2);
+                m_chr_wcwidth = max<char32_t>(m_chr_wcwidth, 2);
+                m_next = m_iter.next();
+            }
+            else if (c == 0x303d)
+            {
+                // Special case:  Windows Terminal renders unqualified 303D
+                // the same as fully-qualified 303D FE0F.
+                assert(m_chr_wcwidth > 0);
+                goto fully_qualified;
+            }
+
+            while (m_next)
+            {
+                if (m_next == 0xfe0f ||                         // color variant
+                    m_next >= 0x1f3fb && m_next <= 0x1f3ff)     // skin tone
+                {
+                    m_chr_end = m_iter.get_pointer();
+                    m_next = m_iter.next();
+                }
+                else if (m_next == 0x200d)
+                {
+                    m_chr_end = m_iter.get_pointer();
+                    m_next = m_iter.next();
+                    // ZWJ implies full width emoji (2 cells).
+                    assert(m_chr_wcwidth == 1 || m_chr_wcwidth == 2);
+                    m_chr_wcwidth = max<char32_t>(m_chr_wcwidth, 2);
+                    // Stop parsing if the next character is not an emoji.
+                    if (!is_emoji(m_next) &&
+                        !is_possible_unqualified_half_width(m_next) &&
+                        m_next != 0x2640 &&                     // woman
+                        m_next != 0x2642)                       // man
+                        break;
+                    // Accept the next emoji, and advance to continue with the
+                    // next character, to handle joiners and variants.
+                    m_chr_end = m_iter.get_pointer();
+                    m_next = m_iter.next();
+                }
+                else
+                    break;
+            }
             return c;
         }
     }
 
+    // Collect a run until the next non-zero width character.
     while (m_next)
     {
         const int32 w = wcwidth(m_next);

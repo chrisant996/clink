@@ -330,7 +330,7 @@ local function do_emojis()
     -- Collect the emoji characters.
     local indexed = load_indexed_emoji_table(file)
     local filtered = load_indexed_emoji_table(filter)
-    local fully_qualified_double_width = load_indexed_emoji_table(fe0f)
+    local possible_unqualified_half_width = load_indexed_emoji_table(fe0f)
     file:close()
     filter:close()
     fe0f:close()
@@ -338,30 +338,13 @@ local function do_emojis()
     -- Output ranges of double-width emoji characters.
     local emojis, count_ranges = output_character_ranges(out, "emojis", indexed, filtered)
 
-    -- Output ranges of ambiguous emoji characters.
-    local ignored = {
-        [0x0023] = true,
-        [0x002A] = true,
-        [0x0030] = true,
-        [0x0031] = true,
-        [0x0032] = true,
-        [0x0033] = true,
-        [0x0034] = true,
-        [0x0035] = true,
-        [0x0036] = true,
-        [0x0037] = true,
-        [0x0038] = true,
-        [0x0039] = true,
-    }
-    local ambiguous = output_character_ranges(out, "ambiguous_emojis", filtered, ignored)
-
-    local double_width = output_character_ranges(out, "fully_qualified_double_width", fully_qualified_double_width, nil)
+    -- Output ranges of emoji characters which may be half-width if unqualified.
+    local half_width = output_character_ranges(out, "possible_unqualified_half_width", possible_unqualified_half_width, nil)
 
     out:close()
 
     print("   " .. #emojis .. " emojis; " .. count_ranges .. " ranges")
-    print("   " .. #ambiguous .. " ambiguous emojis")
-    print("   " .. #double_width .. " fully qualified double width emojis")
+    print("   " .. #half_width .. " fully qualified double width emojis")
 end
 
 --------------------------------------------------------------------------------

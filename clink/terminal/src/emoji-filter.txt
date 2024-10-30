@@ -686,3 +686,31 @@
 1F3F3 200D 26A7 FE0F                                   ; unqualified         # 🏳‍⚧️ E13.0 transgender flag
 1F3F3 FE0F 200D 26A7                                   ; minimally-qualified # 🏳️‍⚧ E13.0 transgender flag
 1F3F3 200D 26A7                                        ; unqualified         # 🏳‍⚧ E13.0 transgender flag
+
+; Unicode Region Charaters
+1F1E6                                                  ;                     # A
+1F1E7                                                  ;                     # B
+1F1E8                                                  ;                     # C
+1F1E9                                                  ;                     # D
+1F1EA                                                  ;                     # E
+1F1EB                                                  ;                     # F
+1F1EC                                                  ;                     # G
+1F1ED                                                  ;                     # G
+1F1EE                                                  ;                     # I
+1F1EF                                                  ;                     # J
+1F1F0                                                  ;                     # K
+1F1F1                                                  ;                     # L
+1F1F2                                                  ;                     # M
+1F1F3                                                  ;                     # N
+1F1F4                                                  ;                     # O
+1F1F5                                                  ;                     # P
+1F1F6                                                  ;                     # Q
+1F1F7                                                  ;                     # R
+1F1F8                                                  ;                     # S
+1F1F9                                                  ;                     # T
+1F1FA                                                  ;                     # U
+1F1FB                                                  ;                     # V
+1F1FC                                                  ;                     # W
+1F1FD                                                  ;                     # X
+1F1FE                                                  ;                     # Y
+1F1FF                                                  ;                     # Z
