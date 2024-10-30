@@ -185,6 +185,17 @@ static const struct interval combining[] = {
   { 0xE0100, 0xE01EF }
 };
 
+/* sorted list of non-overlapping intervals of zero width characters */
+/* generated manually */
+static const struct interval zero[] = {
+  { 0x200B, 0x200F },       /* zero width characters */
+  { 0x202A, 0x202E },       /* zero width characters */
+  { 0x2060, 0x2063 },       /* zero width characters */
+  { 0x206A, 0x206F },       /* zero width characters */
+  { 0xFE00, 0xFE0F },       /* variation selectors */
+  { 0x1F3FB, 0x1F3FF },     /* skin tone variation selectors */
+};
+
 /* The following two functions define the column width of an ISO 10646
  * character as follows:
  *
@@ -229,18 +240,23 @@ static int32 mk_wcwidth(char32_t ucs)
   if (ucs < 0xa0)
     return -1;
 
-  /* special processing for color emoji */
-  if (g_color_emoji &&
-      bisearch(ucs, emojis, _countof(emojis) - 1))
-    return 2;
+  /* special processing when color emoji support is enabled */
+  if (g_color_emoji) {
+    /* characters with unqualified forms are width 1 without FE0F/etc */
+    if (bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))
+      return 1;
+    /* color emoji are width 2 */
+    if (bisearch(ucs, emojis, _countof(emojis) - 1))
+      return 2;
+    /* ignore special zero width characters; but if improperly placed in a
+     * string then these may sometimes render with non-zero width... */
+    if (bisearch(ucs, zero, _countof(zero) - 1))
+      return 0;
+  }
 
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
-
-  /* ignore skin tone selectors to help make various fully-qualified emoji work out correctly */
-  if (ucs >= 0x1f3fb && ucs <= 0x1f3ff && g_color_emoji)
-    return 0;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   return 1 +
@@ -248,8 +264,7 @@ static int32 mk_wcwidth(char32_t ucs)
      (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
       ucs == 0x2329 || ucs == 0x232a ||
       (ucs >= 0x2e80 && ucs <= 0xa4cf &&
-       ucs != 0x303f &&                   /* CJK ... Yi */
-       (!g_color_emoji || !bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))) ||
+       ucs != 0x303f) ||                  /* CJK ... Yi */
       (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
       (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
       (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
@@ -272,18 +287,23 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
   if (ucs < 0xa0)
     return -1;
 
-  /* special processing for color emoji */
-  if (g_color_emoji &&
-      bisearch(ucs, emojis, _countof(emojis) - 1))
-    return 2;
+  /* special processing when color emoji support is enabled */
+  if (g_color_emoji) {
+    /* characters with unqualified forms are width 1 without FE0F/etc */
+    if (bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))
+      return 1;
+    /* color emoji are width 2 */
+    if (bisearch(ucs, emojis, _countof(emojis) - 1))
+      return 2;
+    /* ignore special zero width characters; but if improperly placed in a
+     * string then these may sometimes render with non-zero width... */
+    if (bisearch(ucs, zero, _countof(zero) - 1))
+      return 0;
+  }
 
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
-
-  /* ignore skin tone selectors to help various fully-qualified emoji work out correctly */
-  if (ucs >= 0x1f3fb && ucs <= 0x1f3ff && g_color_emoji)
-    return 0;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   return 1 +
@@ -291,8 +311,7 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
      (ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
       ucs == 0x2329 || ucs == 0x232a ||
       (ucs >= 0x2e80 && ucs <= 0xa4cf &&
-       ucs != 0x303f &&                   /* CJK ... Yi */
-       (!g_color_emoji || !bisearch(ucs, fully_qualified_double_width, _countof(fully_qualified_double_width) - 1))) ||
+       ucs != 0x303f) ||                  /* CJK ... Yi */
       (ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
       (ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
       (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
