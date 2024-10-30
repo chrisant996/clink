@@ -768,6 +768,7 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
 {
     bool ret = false;
     const uint32 buffer_count = m_buffer_count;
+    const wchar_t lead_surrogate = m_lead_surrogate;
 
     switch (record.EventType)
     {
@@ -777,6 +778,8 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
         if (peeked)
             *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
         m_buffer_count = buffer_count; // Revert.
+        if (lead_surrogate)
+            m_lead_surrogate = lead_surrogate; // Revert.
         break;
 
     case MOUSE_EVENT:
@@ -785,6 +788,8 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
         if (peeked)
             *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
         m_buffer_count = buffer_count; // Revert.
+        if (lead_surrogate)
+            m_lead_surrogate = lead_surrogate; // Revert.
         break;
 
     case WINDOW_BUFFER_SIZE_EVENT:
