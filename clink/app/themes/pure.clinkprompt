@@ -271,7 +271,7 @@ end
 local function virtualenv_func()
     local text
     -- Check if showing virtual environment in the prompt is disabled.
-    if os.getenv("VIRTUAL_ENV_DISABLE") then
+    if os.getenv("VIRTUAL_ENV_DISABLE_PROMPT") then
         return
     end
     -- Check if a Conda environment is active and display its name.
