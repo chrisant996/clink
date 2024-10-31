@@ -19,6 +19,7 @@
 - Fixed [#685](https://github.com/chrisant996/clink/issues/685); CTRL-L while input text is present redraws the input line wrong.
 - Fixed [#686](https://github.com/chrisant996/clink/issues/686); `clink config -h` shows inaccurate info.
 - Fixed [#696](https://github.com/chrisant996/clink/issues/696); console width length off-by-one on certain characters (in particular U+26A1).
+- Fixed [#698](https://github.com/chrisant996/clink/issues/698); script error when using `clink config prompt show pure`.
 
 #### v1.7.3
 
