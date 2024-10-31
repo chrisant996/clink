@@ -36,6 +36,36 @@ end
 
 table.insert(package.searchers, 2, clinkprompt_searcher)
 
+local orig_require = require
+require = function(module)
+    if clinkprompt_wrapping_module then
+        local old = clinkprompt_wrapping_module
+
+        -- Make sure each require() starts with no wrapping module, so it
+        -- doesn't matter whether a required module is loaded first by a
+        -- .clinkprompt file or by a normal .lua file.
+        clinkprompt_wrapping_module = nil
+        -- When loading a .clinkprompt file via require(), then the loader
+        -- function clinkprompt_loader() is what sets the wrapping module
+        -- after this.
+
+        local rets
+        local ok, msg = pcall(function() rets = orig_require(module) end)
+
+        clinkprompt_wrapping_module = old
+
+        if not ok then
+            -- Some context (such as the original traceback) is lost when
+            -- rethrowing the error, but only if an error occurs while
+            -- require() tries to load and run a .clinkprompt script file.
+            error(msg, 0)
+        end
+        return rets
+    else
+        return orig_require(module)
+    end
+end
+
 --------------------------------------------------------------------------------
 local function add_dirs_from_var(t, var, subdir)
     if var and var ~= "" then
