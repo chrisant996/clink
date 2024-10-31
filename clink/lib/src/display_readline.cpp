@@ -2289,21 +2289,23 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
             const char* p = dc;
             while (oiter.next() && diter.next())
             {
-                if (oiter.character_length() != diter.character_length())
+                const uint32 bytes = diter.character_length();
+                if (oiter.character_length() != bytes)
                     break;
-                if (memcmp(oc, dc, diter.character_length()))
+                if (memcmp(oc, dc, bytes) ||
+                    memcmp(of, df, bytes))
                     break;
                 assert(oiter.character_wcwidth_onectrl() == diter.character_wcwidth_onectrl());
                 lcol += diter.character_wcwidth_onectrl();
-                p = diter.get_pointer();
+                oc += bytes;
+                of += bytes;
+                dc += bytes;
+                df += bytes;
             }
-            lind = uint32(p - d->m_chars);
         }
 
-        oc = o->m_chars + lind;
-        of = o->m_faces + lind;
-        dc = d->m_chars + lind;
-        df = d->m_faces + lind;
+        lind = uint32(dc - d->m_chars);
+
         const char* oc2 = o->m_chars + o->m_len;
         const char* of2 = o->m_faces + o->m_len;
         const char* dc2 = d->m_chars + d->m_len;
