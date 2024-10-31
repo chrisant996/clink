@@ -2266,36 +2266,36 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
 
     bool use_eol_opt = !m_horizpos_workaround && !has_rprompt && d->m_toeol;
 
+#ifdef DEBUG
+    const bool can_optimize = !dbg_get_env_int("DEBUG_NOOPT_UPDATE_LINE");
+#else
+    const bool can_optimize = true;
+#endif
+
     // Optimize updating when the new starting column is less than or equal to
     // the old starting column.  Can't optimize in the other direction unless
     // update_line(0) happens before displaying the prompt string.
-    if (!m_horizpos_workaround && o && d->m_x <= o->m_x)
+    if (!m_horizpos_workaround && o && d->m_x <= o->m_x && can_optimize)
     {
         const char* oc = o->m_chars;
         const char* of = o->m_faces;
         const char* dc = d->m_chars;
         const char* df = d->m_faces;
-        uint32 stop = min<uint32>(o->m_len, d->m_len);
 
         // Find left index of difference.
         {
-            wcwidth_iter iter(dc, stop);
+            wcwidth_iter oiter(oc, o->m_len);
+            wcwidth_iter diter(dc, d->m_len);
             const char* p = dc;
-            while (iter.next())
+            while (oiter.next() && diter.next())
             {
-                const char* q = iter.get_pointer();
-                const char* walk = p;
-test_left:
-                if (*oc != *dc || *of != *df)
+                if (oiter.character_length() != diter.character_length())
                     break;
-                oc++;
-                dc++;
-                of++;
-                df++;
-                if (++walk < q)
-                    goto test_left;
-                lcol += iter.character_wcwidth_onectrl();
-                p = q;
+                if (memcmp(oc, dc, diter.character_length()))
+                    break;
+                assert(oiter.character_wcwidth_onectrl() == diter.character_wcwidth_onectrl());
+                lcol += diter.character_wcwidth_onectrl();
+                p = diter.get_pointer();
             }
             lind = uint32(p - d->m_chars);
         }
@@ -2314,6 +2314,8 @@ test_left:
         if (!has_rprompt)
         {
             const char* dcend = dc2;
+            const char* oc2best = oc2;
+            const char* dc2best = dc2;
 
             while (oc2 > oc && dc2 > dc)
             {
@@ -2329,6 +2331,29 @@ test_left:
                 dc2 = dback;
                 of2 -= bytes;
                 df2 -= bytes;
+                if (bytes == 1)
+                {
+                    // The width and glyph(s) in an emoji sequence can change
+                    // as codepoints are added or removed from emoji sequence.
+                    // Parsing emoji sequences backwards is ambiguous, so for
+                    // reliability the right difference index snaps to ASCII
+                    // character boundaries.  This still achieves at least
+                    // word-level display optimization even when a high volume
+                    // of non-ASCII characters are present.
+                    oc2best = oback;
+                    dc2best = dback;
+                }
+            }
+
+            if (oc2 != oc2best)
+            {
+                oc2 = oc2best;
+                of2 = o->m_faces + (oc2 - o->m_chars);
+            }
+            if (dc2 != dc2best)
+            {
+                dc2 = dc2best;
+                df2 = d->m_faces + (dc2 - d->m_chars);
             }
 
             if (use_eol_opt)
