@@ -15,6 +15,7 @@
 - Fixed the right side transient prompt so it shows up even when identical to the right side normal prompt.
 - Fixed the `demo` callback in .clinkprompt files.
 - Fixed potential for incomplete input of Unicode surrogate pairs.  An easy way to encounter the problem was using the Windows emoji picker to input an emoji that's a sequence of other emojis joined together -- for example, the pride flag emoji is a flag emoji joined with a rainbow emoji, and the rainbow emoji uses a surrogate pair.
+- Fixed an edge case where if a .clinkprompt file calls `require()` to load a module, and later on a different script also calls `require()` for the same module, then any event handlers or prompt filters registered by the required module accidentally only worked inside the .clinkprompt that originally required it.  Now required modules behave the same regardless whether they are first required by a .clinkprompt file or by some other script file.
 - Fixed [#685](https://github.com/chrisant996/clink/issues/685); CTRL-L while input text is present redraws the input line wrong.
 - Fixed [#686](https://github.com/chrisant996/clink/issues/686); `clink config -h` shows inaccurate info.
 - Fixed [#696](https://github.com/chrisant996/clink/issues/696); console width length off-by-one on certain characters (in particular U+26A1).
