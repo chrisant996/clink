@@ -130,6 +130,7 @@ local function sgr(code)
     return "\x1b["..(code or "").."m"
 end
 
+local need_update = true
 local function update_config()
     local default_colors = os.getenv("PURE_USE_TERMINAL_COLORS") and default_colors_terminal or default_colors_custom
     for k,v in pairs(default_colors) do
@@ -139,6 +140,7 @@ local function update_config()
     for k,v in pairs(default_symbols) do
         symbols[k] = os.getenv(k) or v
     end
+    need_update = nil
 end
 
 local last_duration
@@ -311,6 +313,12 @@ local modules = {
 }
 
 local function format_modules(list)
+    if need_update then
+        -- onbeginedit doesn't happen during `clink config prompt show pure`,
+        -- so make sure update_config() gets called if it hasn't been yet.
+        update_config()
+    end
+
     local t = {}
     local prev
     for _,m in ipairs(string.explode(list)) do
