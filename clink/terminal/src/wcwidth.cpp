@@ -445,6 +445,17 @@ wcswidth_t *wcswidth = mk_wcswidth;
 #endif
 
 /*
+ * This tests whether the input codepoint is a recognized emoji variant
+ * selector.
+ */
+bool is_variant_selector(char32_t ucs)
+{
+    assert(g_color_emoji);
+    return (ucs == 0xfe0f ||                            // color variant
+            ucs >= 0x1f3fb && ucs <= 0x1f3ff);          // skin tone
+}
+
+/*
  * Windows Terminal renders some codepoints as half-width unless followed by
  * codepoints that make them fully-qualified.  This is for consistency with
  * behavior of the first few terminals that supported color emoji.
@@ -457,7 +468,7 @@ bool is_possible_unqualified_half_width(char32_t ucs)
 }
 
 /*
- * This tests whether the input codepoint is a recognized as an emoji.
+ * This tests whether the input codepoint is recognized as an emoji.
  */
 bool is_emoji(char32_t ucs)
 {
