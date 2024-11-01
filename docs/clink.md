@@ -567,7 +567,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="prompt-transient"></a>`prompt.transient` | `off` | Controls when past prompts are collapsed ([transient prompts](#transientprompts)).  `off` = never collapse past prompts, `always` = always collapse past prompts, `same_dir` = only collapse past prompts when the current working directory hasn't changed since the last prompt.
 <a name="readline_hide_stderr"></a>`readline.hide_stderr` | False | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
 <a name="terminal_adjust_cursor_style"></a>`terminal.adjust_cursor_style` | True | When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).
-<a name="terminal_color_emoji"></a>`terminal.color_emoji` | `auto` | Set this to indicate whether the terminal program draws emoji using colored double width characters.  This needs to be set accurately in order for Clink to display the input line properly when it contains emoji characters.  When set to `off` Clink assumes emoji are rendered using 1 character cell.  When set to `on` Clink assumes emoji are rendered using 2 character cells.  When set to `auto` (the default) Clink tries to predict how emoji will be rendered based on OS version and terminal program.
+<a name="terminal_color_emoji"></a>`terminal.color_emoji` | `auto` | Set this to indicate whether the terminal program draws emojis using colored double width characters.  This needs to be set accurately in order for Clink to display the input line properly when it contains emoji characters.  When set to `off` Clink assumes emojis are rendered using 1 character cell.  When set to `on` Clink assumes emojis are rendered using 2 character cells.  When set to `auto` (the default) Clink tries to predict how emojis will be rendered based on OS version and terminal program.
 <a name="terminal_differentiate_keys"></a>`terminal.differentiate_keys` | False | When enabled, pressing <kbd>Ctrl</kbd>-<kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.
 <a name="terminal_east_asian_ambiguous"></a>`terminal.east_asian_ambiguous` |`auto` | There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to `auto`, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to `font` measures the East Asian Ambiguous character widths using the current font.  Setting it to `one` uses 1 as the width, or `two` uses 2 as the width.  When this is 'auto' (the default) and the current code page is 932, 936, 949, or 950 then it tries to automatically measure the width based on which terminal host and font are used, or for any other code pages (including UTF8) it uses 1 as the width.  The `%CLINK_EAST_ASIAN_AMBIGUOUS%` environment variable overrides this setting.
 <a name="terminal_emulation"></a>`terminal.emulation` | `auto` | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu, Windows Terminal, WezTerm, or Windows 10 new console.
@@ -2919,7 +2919,7 @@ This example modifies the right side prompt by prepending the current date:
 <br/>
 
 > **Notes:**
-> - If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running `chcp utf-8` can resolve positioning issues).
+> - If the console font and encoding are mismatched, or if some kinds of emojis are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running `chcp utf-8` can resolve positioning issues).
 > - If the `:filter()` function returns a string and false to stop filtering, then the `:rightfilter()` is not called (because no further filter functions are called).  If you want to stop filtering but have both a left and right side prompt, then return only a string from `:filter()` and return a string and false from `:rightfilter()`.
 
 <a name="asyncpromptfiltering"></a>
@@ -3772,6 +3772,16 @@ set CLINK_TERM_VE=\e[?12h
 set CLINK_TERM_VS=\e[?12l
 ```
 
+### Color Emojis
+
+The Unicode specification for emojis is constantly evolving.  It's natural for operating system versions, code libraries, and application programs to lag behind the latest Unicode specification.
+
+Clink's emoji width predictions work best on Windows 11 with Windows Terminal 1.22 or newer.  All of the actual rendering is done by the terminal program.  Applications have to make assumptions and predictions about how Unicode characters will end up being rendered by terminal programs.  It involves a lot of guesswork.
+
+Clink has no way to know for sure how different combinations of OS / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes many new improvements for rendering color emojis but there are still some edge cases that aren't fully implemented yet.  Windows Terminal 1.21 has good support for rendering color emojis, but you may encounter various emoji sequences that don't render as expected in WT 1.21 or older.
+
+If you encounter problems with emoji characters, first check whether the latest OS version and/or the latest terminal program version solves some of the problems.  If the problems persist, you can [open a new issue](https://github.com/chrisant996/clink/issues/new) in the Clink repo.  Please be sure to share details and specific steps for how to reproduce the problem, so that it's possible for someone to try to help.
+
 ## Troubleshooting Tips
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
@@ -3785,7 +3795,7 @@ If something seems to malfunction, here are some things to try that often help t
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
 
-When [reporting an issue](https://github.com/chrisant996/clink/issues), please include the following which saves time by answering in advance the usual questions:
+When [reporting an issue](https://github.com/chrisant996/clink/issues/new), please include the following which saves time by answering in advance the usual questions:
 
 - Please describe what was expected to happen.
 - Please describe what actually happened.
