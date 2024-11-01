@@ -21,22 +21,20 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
+- Expose a way to use `wcwidth_iter` from Lua.  For example, it could enable an input hinter that shows the Unicode codepoints at the cursor position.  It could also greatly simplify writing ellipsification code, and/or make ellipsification code more accurate (since summing `console.cellcount()` on individual codepoints in a string is _NOT_ the same as `console.cellcount()` on the string).
+- Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 
 ## Unit Tests
 
 ## Normal Priority
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
-- Windows Terminal has changed how it renders various emoji; need to update the emoji width tables, but maybe not until the changes reach official releases (they're just in preview at the moment).
 - Finish removing the RPROMPT stuff from Readline, moving it entirely into Clink code.  The only part of Readline that actually needs it is the stuff for clearing to the end of the line, which is mostly omitted now anyway.  Most of it can be moved easily, but one spot will need special consideration (maybe a callback?):  `_rl_erase_entire_line()` inside `_rl_internal_char_cleanup()`.
-- Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
-- Event handler enhancements.
+- Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
-  - Allow setting an optional `name` when registering event handlers?  So that scripts can cooperate to share a single named event.  But it's already possible for scripts to cooperate to achieve the same effect, e.g. by having an event handler that executes a function specified by a global variable.
-  - Allow removing an event handler?
-  - Maybe the `clink.onbeginedit()` (etc) functions could return an object with methods for setting priority, replacing the handler, disabling/enabling the handler, removing the handler, etc.
+  - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
+    - Watch out for back-compat:  Consider making _new API functions_ for adding one-time event handlers.  Adding an optional parameter is dangerous because a script author could use it without taking steps to ensure backward compatibility, and then potentially significant malfunctions could occur.  And anyway, probably only a small number of events would actually need support for one-time handlers (maybe even only `onbeginedit`).
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
-- Some wizard for interactively viewing/modifying color settings.
 
 ## Low Priority
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
@@ -47,12 +45,7 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
-- Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
-- Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
-    ```
-    local remove = clink.onbeginedit(func) -- add func
-    remove()                               -- remove func
-    ```
+- Some wizard for interactively viewing/modifying color settings.  _[This is Low priority now that Clink supports .clinktheme color themes.]_
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
 ## Follow Up
