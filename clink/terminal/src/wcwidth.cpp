@@ -73,11 +73,19 @@
 
 extern bool g_color_emoji;
 
-/* In the Windows console subsystem, combining marks actually have a column */
-/* width of 1, not 0 as the original wcwidth implementation expected. */
-static const int32 s_combining_mark_width = 1;
-
+static int32 s_combining_mark_width = 0;
 static bool s_only_ucs2 = false;
+
+combining_mark_width_scope::combining_mark_width_scope(int32 width)
+: m_old(s_combining_mark_width)
+{
+    s_combining_mark_width = width;
+}
+
+combining_mark_width_scope::~combining_mark_width_scope()
+{
+    s_combining_mark_width = m_old;
+}
 
 void detect_ucs2_limitation(bool force)
 {
@@ -181,19 +189,8 @@ static const struct interval combining[] = {
   { 0x10A01, 0x10A03 }, { 0x10A05, 0x10A06 }, { 0x10A0C, 0x10A0F },
   { 0x10A38, 0x10A3A }, { 0x10A3F, 0x10A3F }, { 0x1D167, 0x1D169 },
   { 0x1D173, 0x1D182 }, { 0x1D185, 0x1D18B }, { 0x1D1AA, 0x1D1AD },
-  { 0x1D242, 0x1D244 }, { 0xE0001, 0xE0001 }, { 0xE0020, 0xE007F },
-  { 0xE0100, 0xE01EF }
-};
-
-/* sorted list of non-overlapping intervals of zero width characters */
-/* generated manually */
-static const struct interval zero[] = {
-  { 0x200B, 0x200F },       /* zero width characters */
-  { 0x202A, 0x202E },       /* zero width characters */
-  { 0x2060, 0x2063 },       /* zero width characters */
-  { 0x206A, 0x206F },       /* zero width characters */
-  { 0xFE00, 0xFE0F },       /* variation selectors */
-  { 0x1F3FB, 0x1F3FF },     /* skin tone variation selectors */
+  { 0x1D242, 0x1D244 }, { 0x1F3FB, 0x1F3FF }, { 0xE0001, 0xE0001 },
+  { 0xE0020, 0xE007F }, { 0xE0100, 0xE01EF }
 };
 
 /* The following two functions define the column width of an ISO 10646
@@ -248,10 +245,6 @@ static int32 mk_wcwidth(char32_t ucs)
     /* color emoji are width 2 */
     if (bisearch(ucs, emojis, _countof(emojis) - 1))
       return 2;
-    /* ignore special zero width characters; but if improperly placed in a
-     * string then these may sometimes render with non-zero width... */
-    if (bisearch(ucs, zero, _countof(zero) - 1))
-      return 0;
   }
 
   /* binary search in table of non-spacing characters */
@@ -295,10 +288,6 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
     /* color emoji are width 2 */
     if (bisearch(ucs, emojis, _countof(emojis) - 1))
       return 2;
-    /* ignore special zero width characters; but if improperly placed in a
-     * string then these may sometimes render with non-zero width... */
-    if (bisearch(ucs, zero, _countof(zero) - 1))
-      return 0;
   }
 
   /* binary search in table of non-spacing characters */

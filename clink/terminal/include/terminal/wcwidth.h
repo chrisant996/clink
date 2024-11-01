@@ -16,6 +16,16 @@ bool is_possible_unqualified_half_width(char32_t ucs);
 bool is_emoji(char32_t ucs);
 
 //------------------------------------------------------------------------------
+class combining_mark_width_scope
+{
+public:
+    combining_mark_width_scope(int32 width);
+    ~combining_mark_width_scope();
+private:
+    const int32 m_old;
+};
+
+//------------------------------------------------------------------------------
 extern "C" uint32 clink_wcswidth(const char* s, uint32 len);
 extern "C" uint32 clink_wcswidth_expandctrl(const char* s, uint32 len);
 

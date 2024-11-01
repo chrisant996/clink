@@ -85,6 +85,11 @@ char32_t wcwidth_iter::next()
     m_chr_end = m_iter.get_pointer();
     m_next = m_iter.next();
 
+    // In the Windows console subsystem, combining marks actually have a
+    // column width of 1, not 0 as the original wcwidth implementation
+    // expected.
+    combining_mark_width_scope cmwidth(1);
+
     m_chr_wcwidth = wcwidth(c);
     if (m_chr_wcwidth < 0)
         return c;
@@ -105,6 +110,9 @@ char32_t wcwidth_iter::next()
         // If it's an emoji character, then try to parse an emoji sequence.
         if (is_emoji(c) || is_possible_unqualified_half_width(c))
         {
+            // Within emoji sequences, combining marks have zero width.
+            combining_mark_width_scope cmwidth_emoji(0);
+
             // FE0F or skin tone selector after an unqualified form makes it
             // fully-qualified and be full width (2 cells).
             if ((m_next == 0xfe0f || (m_next >= 0x1f3fb && m_next <= 0x1f3ff)) &&
