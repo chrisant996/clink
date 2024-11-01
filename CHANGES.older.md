@@ -131,16 +131,16 @@
 #### v1.4.8
 
 - Added `rl.needquotes()` function to check whether text needs quotes in a command line.
-- Changed the `terminal.color_emoji` setting `auto` mode to more broadly support accurate width measurements for color emoji (regardless whether the terminal program is capable of actually drawing the color emoji).
+- Changed the `terminal.color_emoji` setting `auto` mode to more broadly support accurate width measurements for color emojis (regardless whether the terminal program is capable of actually drawing the color emoji).
 - Now `clink-diagnostics` <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.
 - Fixed the `completion` autosuggest strategy so it doesn't provide a suggestion that requires quoting if the command line input is not currently quoted.
-- Fixed overly aggressive detection of color emoji (regression introduced in v1.4.7).
+- Fixed overly aggressive detection of color emojis (regression introduced in v1.4.7).
 
 #### v1.4.7
 
 - Clink now supports ARM64.
 - Clink now recognizes when the terminal host is WezTerm.
-- Clink now supports color emoji in Windows Terminal and WezTerm, according to the Unicode v15.0 standard.  The new `terminal.color_emoji` setting controls when Clink assumes the terminal supports color emoji (color emoji are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emoji).
+- Clink now supports color emojis in Windows Terminal and WezTerm, according to the Unicode v15.0 standard.  The new `terminal.color_emoji` setting controls when Clink assumes the terminal supports color emojis (color emojis are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emojis).
 - Enabled Readline's support for non-incremental vi-mode search (<kbd>N</kbd>, <kbd>n</kbd>) to search for a shell pattern using `fnmatch()`, as Posix specifies.
 - Fixed obscure issue when a "luafunc:" macro modifies the input line and then invokes a completion command.
 - Fixed `line_state:getword()` and `line_state:getendword()` to not strip quotes during `generator:getwordbreakinfo()` functions (regression introduced in v1.1.24).

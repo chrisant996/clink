@@ -6,11 +6,11 @@
 
 - Changed searching for color themes and custom prompts to always include `themes\` directories under the Clink program directory and Clink profile directory, even when the `clink.path` setting has been used to remove them from the list of script directories.
 - Improved emoji width measurements.
-  - Unqualified emoji are counted as a single cell now.  Windows Terminal intentionally renders these as a single cell for compatibility with the behavior of the first terminal programs on Linux that began to support emoji characters (an important compatibility detail for the Windows Subsystem for Linux, for example).
+  - Unqualified emojis are counted as a single cell now.  Windows Terminal intentionally renders these as a single cell for compatibility with the behavior of the first terminal programs on Linux that began to support emoji characters (an important compatibility detail for the Windows Subsystem for Linux, for example).
   - Country flag emoji character pairs are recognized.
   - Skin tone variant selectors are recognized.
   - The zero width joiner is recognized when it joins two emoji characters, or an emoji and a male or female symbol.
-  - **NOTE:**  A given OS version and terminal program version will only recognize certain combinations of joined emoji as valid sequences.  And Windows Terminal is one of the only terminal programs on Windows that can draw color emoji characters.  Clink has no way to know how a given terminal will actually render sequences of Unicode emoji characters.  If a terminal program renders a particular emoji sequence differently than Clink predicts, then the display may become garbled.  If that happens, don't use that emoji sequence.  But if a terminal program renders an emoji sequence as a single glyph and Clink predicts the width incorrectly, then please open an issue with details about the emoji.
+  - **NOTE:**  A given OS version and terminal program version will only recognize certain combinations of joined emojis as valid sequences.  And Windows Terminal is one of the only terminal programs on Windows that can draw color emoji characters.  Clink has no way to know how a given terminal will actually render sequences of Unicode emoji characters.  If a terminal program renders a particular emoji sequence differently than Clink predicts, then the display may become garbled.  If that happens, don't use that emoji sequence.  But if a terminal program renders an emoji sequence as a single glyph and Clink predicts the width incorrectly, then please open an issue with details about the emoji.
 - The pure.clinkprompt now also supports virtualenv's `VIRTUAL_ENV_DISABLE_PROMPT` and `VIRTUAL_ENV_PROMPT` environment variables.
 - Fixed the right side transient prompt so it shows up even when identical to the right side normal prompt.
 - Fixed the `demo` callback in .clinkprompt files.
@@ -350,7 +350,7 @@ Readline 8.2 introduced a crash in the `undo` command after navigating through h
   - Changed the default for `color.suggestion` so that it attempts to detect light themes (bright background colors) when possible, and it attempts to automatically choose a default color for suggestions that is faint but has sufficient contrast to be readable.
 - Fixed the `onlink` callback function in `:addflags()` so that the `arg_index` parameter is correctly `0` instead of `1`.
 - Fixed the upper bound line number for Lua console line API functions.
-- Fixed `console.getlinetext()` when emoji are present.
+- Fixed `console.getlinetext()` when emojis are present.
 
 #### v1.5.14
 - Added a visible usage hint for [Auto-Suggestions](#gettingstarted_autosuggest) to help make the feature more discoverable and usable.  The usage hint can be hidden by turning off the `autosuggest.hint` setting.
@@ -423,7 +423,7 @@ Readline 8.2 introduced a crash in the `undo` command after navigating through h
 - Fixed `debug.log_terminal` to capture all input (regression introduced in v1.5.2).
 - Fixed slowness during `clink-select-complete` while typing, caused by excessive match generation.
 - Fixed selection highlight in `clink-select-complete` when the whole match text has been typed.
-- Fixed [#486](https://github.com/chrisant996/clink/issues/486); window title escape code doesn't work properly if it contains emoji or UTF content.
+- Fixed [#486](https://github.com/chrisant996/clink/issues/486); window title escape code doesn't work properly if it contains emojis or UTF8 content.
 - Internal changes.
 
 #### v1.5.4
