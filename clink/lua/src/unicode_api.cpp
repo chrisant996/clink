@@ -267,8 +267,6 @@ static int32 isnormalized(lua_State* state)
 /// -show:  -- Index by byte:        1   2   3   4   5   6   7   8   9   10  11
 /// -show:
 /// -show:  for str, value, combining in unicode.iter(text) do
-/// -show:  &nbsp;   -- Note that the default lua print() function is not fully aware
-/// -show:  &nbsp;   -- of Unicode, so clink.print() is needed to print Unicode text.
 /// -show:  &nbsp;   local bytes = ""
 /// -show:  &nbsp;   for i = 1, #str do
 /// -show:  &nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))

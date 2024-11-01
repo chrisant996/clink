@@ -8,6 +8,7 @@
 #include "terminal/printer.h"
 #include "terminal/find_line.h"
 #include "terminal/ecma48_iter.h"
+#include "terminal/wcwidth.h"
 #include "terminal/terminal.h"
 #include "terminal/terminal_in.h"
 #include "terminal/terminal_helpers.h"
@@ -869,6 +870,90 @@ static int32 get_color_table(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.cellcountiter
+/// -ver:   1.7.4
+/// -arg:   text:string
+/// -ret:   iterator
+/// This returns an iterator function which steps through
+/// <span class="arg">text</span> one glyph at a time.  Each call to the
+/// iterator function returns the string for the next glyph, the count of
+/// visible character cells that would be consumed when displaying it in the
+/// terminal, and a boolean indicating whether the string is an emoji.
+///
+/// <strong>Note:</strong> This only recognizes emojis if Clink recognizes
+/// that the terminal program supports emojis.  The results are "best effort",
+/// and may differ from reality depending on the specific OS version, terminal
+/// program (and its version), and the input string.  The width prediction is
+/// based on the Unicode emoji specification, with accommodations for how
+/// Windows Terminal renders certain emoji sequences.
+/// -show:  -- UTF8 sample string:
+/// -show:  -- Index by glyph:       12                                                   3
+/// -show:  -- Unicode character:    A❤️          U+FE0F      ZWJ         🔥              Z
+/// -show:  local text            = "A\xe2\x9d\xa4\xef\xb8\x8f\xe2\x80\x8d\xf0\x9f\x94\xa5Z"
+/// -show:  -- Index by byte:        12   3   4   5   6   7   8   9   10  11  12  13  14  15
+/// -show:
+/// -show:  for str, width, emoji in console.cellcountiter(text) do
+/// -show:  &nbsp;   -- Build string showing byte values.
+/// -show:  &nbsp;   local bytes = ""
+/// -show:  &nbsp;   for i = 1, #str do
+/// -show:  &nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
+/// -show:  &nbsp;   end
+/// -show:  &nbsp;   -- Print the cellcount substring and info about it.
+/// -show:  &nbsp;   clink.print(str, width, emoji, bytes)
+/// -show:  &nbsp;   -- Print the individual codepoints in the cellcount substring.
+/// -show:  &nbsp;   for s, value in unicode.iter(str) do
+/// -show:  &nbsp;       bytes = ""
+/// -show:  &nbsp;       for i = 1, #s do
+/// -show:  &nbsp;           bytes = bytes .. string.format("\\x%02x", s:byte(i, i))
+/// -show:  &nbsp;       end
+/// -show:  &nbsp;       clink.print("", s, string.format("U+%X", value), bytes)
+/// -show:  &nbsp;   end
+/// -show:  end
+/// -show:
+/// -show:  -- The above prints the following:
+/// -show:  --      A       1       false   \x41
+/// -show:  --              A       U+41    \x41
+/// -show:  --      ❤️‍🔥      2       true    \xe2\x9d\xa4\xef\xb8\x8f\xe2\x80\x8d\xf0\x9f\x94\xa5
+/// -show:  --              ❤       U+2764  \xe2\x9d\xa4
+/// -show:  --              ️       U+FE0F  \xef\xb8\x8f
+/// -show:  --              ‍        U+200D  \xe2\x80\x8d
+/// -show:  --              🔥      U+1F525 \xf0\x9f\x94\xa5
+/// -show:  --      Z       1       false   \x5a
+/// -show:  --              Z       U+5A    \x5a
+static int32 cell_count_iter_aux (lua_State* state)
+{
+    const char* text = lua_tolstring(state, lua_upvalueindex(1), nullptr);
+    const int32 pos = int32(lua_tointeger(state, lua_upvalueindex(2)));
+    const char* s = text + pos;
+
+    wcwidth_iter iter(s);
+    const int32 c = iter.next();
+    if (!c)
+        return 0;
+
+    const char* e = iter.get_pointer();
+
+    lua_pushinteger(state, int32(e - text));
+    lua_replace(state, lua_upvalueindex(2));
+
+    lua_pushlstring(state, s, size_t(e - s));
+    lua_pushinteger(state, iter.character_wcwidth_onectrl());
+    lua_pushboolean(state, iter.character_is_emoji());
+    return 3;
+}
+static int32 cell_count_iter(lua_State* state)
+{
+    const char* s = checkstring(state, 1);
+    if (!s)
+        return 0;
+
+    lua_settop(state, 1);                   // Reuse the pushed string.
+    lua_pushinteger(state, 0);              // Push a position for the next iteration.
+    lua_pushcclosure(state, cell_count_iter_aux, 2);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 static int32 set_width(lua_State* state)
 {
@@ -934,6 +1019,7 @@ void console_lua_initialise(lua_state& lua)
         { "readinput",              &read_input },
         { "checkinput",             &check_input },
         { "getcolortable",          &get_color_table },
+        { "cellcountiter",          &cell_count_iter },
         // UNDOCUMENTED; internal use only.
         { "__set_width",            &set_width },
     };
