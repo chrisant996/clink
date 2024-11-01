@@ -21,7 +21,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- Expose a way to use `wcwidth_iter` from Lua.  For example, it could enable an input hinter that shows the Unicode codepoints at the cursor position.  It could also greatly simplify writing ellipsification code, and/or make ellipsification code more accurate (since summing `console.cellcount()` on individual codepoints in a string is _NOT_ the same as `console.cellcount()` on the string).
 - Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 
 ## Unit Tests
