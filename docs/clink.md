@@ -3064,6 +3064,7 @@ These sections provide more information about various aspects of Clink:
 <tr><td><a href="#enhanced-doskey-expansion">Enhanced Doskey Expansion</a></td><td>How enhanced Doskey expansion works.</td></tr>
 <tr><td><a href="#popular-scripts">Popular Scripts</a></td><td>Some popular scripts to enhance Clink.</td></tr>
 <tr><td><a href="#terminal-support">Terminal Support</a></td><td>Information about how Clink's terminal support works.</td></tr>
+<tr><td><a href="#how-clink-works">How Clink Works</a></td><td>Technical details about how Clink injects into cmd.exe.</td></tr>
 <tr><td><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td>How to troubleshoot and report problems.</td></tr>
 <tr><td><a href="#privacy">Privacy</a></td><td>Privacy statement for Clink.</td></tr>
 </table>
@@ -3778,9 +3779,57 @@ The Unicode specification for emojis is constantly evolving.  It's natural for o
 
 Clink's emoji width predictions work best on Windows 11 with Windows Terminal 1.22 or newer.  All of the actual rendering is done by the terminal program.  Applications have to make assumptions and predictions about how Unicode characters will end up being rendered by terminal programs.  It involves a lot of guesswork.
 
-Clink has no way to know for sure how different combinations of OS / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes many new improvements for rendering color emojis but there are still some edge cases that aren't fully implemented yet.  Windows Terminal 1.21 has good support for rendering color emojis, but you may encounter various emoji sequences that don't render as expected in WT 1.21 or older.
+Clink has no way to know for sure how different combinations of OS / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes significant improvements for rendering color emojis, but there are still some edge cases that aren't fully implemented yet.  (When using older version of Windows Terminal then you should expect some emoji sequences to render incorrectly, and there's nothing Clink can do to work around that.)
 
 If you encounter problems with emoji characters, first check whether the latest OS version and/or the latest terminal program version solves some of the problems.  If the problems persist, you can [open a new issue](https://github.com/chrisant996/clink/issues/new) in the Clink repo.  Please be sure to share details and specific steps for how to reproduce the problem, so that it's possible for someone to try to help.
+
+## How Clink Works
+
+The `clink inject` command checks whether the parent process is supported and injects a DLL.
+
+The DLL takes over printing the prompt and reading command line input from the user.
+
+##### Checking if the parent process is supported
+
+The parent process is supported if it is `cmd.exe` and its command line indicates that it will be an interactive process.  The process will be interactive if the command line has `/k` or does not have `/c` or `/r`.
+
+If the parent process is not supported, then the `clink.bat` script or the `clink_*.exe` program will exit before it actually injects the DLL into the `cmd.exe` process.
+
+##### Hooking OS functions
+
+If the DLL gets loaded into the `cmd.exe` parent process and hooks some OS functions:
+
+Function | Reason
+-|-
+GetEnvironmentVariableW() | To let the DLL finish its initialization.  This is always called before CMD displays the prompt and is rarely called otherwise, so it's a reliable spot to hook regardless whether injection is triggered during CMD's AutoRun regkey or by running `clink inject` at the command line.
+SetEnvironmentVariableW() | To intercept setting the `PROMPT` variable, and add a special tag so Clink can tell when CMD is trying to print the prompt.
+SetEnvironmentStringsW() | To intercept setting the `PROMPT` variable, and add a special tag so Clink can tell when CMD is trying to print the prompt.
+WriteConsoleW() | To capture the current prompt and defer printing it until command line editing begins (inside ReadConsoleW()).
+ReadConsoleW() | To replace the command line editing with its own Readline-powered command line editing.
+SetConsoleTitleW() | To enable replacing the "Administrator:" prefix in the title bar.
+
+##### How to prevent injection when Clink is configured for autorun
+
+There are several ways:
+1. The `cmd /d` flag disables CMD's AutoRun regkey processing, which will prevent CMD from running the Clink autorun script.
+2. If the `CLINK_NOAUTORUN` environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.
+3. Clink autorun can be uninstalled:  `clink autorun uninstall`.
+
+##### Other notes
+
+The `clink.bat` file exists to enable seamless support for x64/x86/ARM64 on the same computer by detecting the current mode and invoking the corresponding `clink_*.exe` program.  There is no way for a batch script to figure out whether cmd.exe is going to be interactive, so that check has to happen inside the clink_x64.exe program.  If it assesses that it will be non-interactive, then clink_x64.exe exits without injecting clink_dll_x64.dll into the cmd.exe process.  The act of checking whether cmd.exe will be interactive is much faster than the act of injecting Clink into the cmd.exe process, and so the check minimizes performance degradation when Clink is configured for autorun.
+
+Personally, I don't use Clink with autorun for three reasons:
+1. It slows down startup of cmd.exe processes that happen in the background or in automated situations,
+2. It introduces the possibility of interfering with background or automated cmd usage, and
+3. I don't want Clink auto-injected into every cmd session.  I prefer to be explicit about when I'm going to use Clink, and I use LNK files or Windows Terminal profiles to control how and when Clink is injected.
+
+I haven't removed the autorun feature because:
+1. It already existed as the default mode before I ever found Clink or took over maintenance,
+2. Many people like the feature, and
+3. It performs as efficiently as possible given how the CMD AutoRun regkey operates.
+
+Redirected output is not considered when checking if the parent process is supported.  The only way to reliably and accurately check for redirected stdin/stdout is to do the check after having already injected Clink, which would be pointless since by that time Clink has already been injected, so the full slowdown cost has already been paid.  So, overall, trying to check for stdin/stdout doesn't have practical value.
 
 ## Troubleshooting Tips
 
