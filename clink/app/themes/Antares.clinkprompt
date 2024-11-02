@@ -227,19 +227,19 @@ function ant:antares_update_git_status()
 
     local git_status=clink.promptcoroutine(function()
         local status=git.getstatus()
+        local tag
         if detached then
             local git_tag=command(git.makecommand("tag --points-at=HEAD"), true)
             if git_tag then
-                self.ANTARES_GIT_HAS_TAGS=true
                 local n_tags=#git_tag
                 if n_tags == 1 then
-                    self.ANTARES_GIT_TAG=" "..icon(ANTARES.STR_GIT_TAG)..git_tag[1]
+                    tag=" "..icon(ANTARES.STR_GIT_TAG)..git_tag[1]
                 elseif n_tags > 1 then
-                    self.ANTARES_GIT_TAG=" "..icon(ANTARES.STR_GIT_TAG)..tostring(n_tags)
+                    tag=" "..icon(ANTARES.STR_GIT_TAG)..tostring(n_tags)
                 end
             end
         end
-        return { status=status }
+        return { status=status, tag=tag }
     end)
     if git_status then
         self.last_git_status=git_status
@@ -268,6 +268,8 @@ function ant:antares_update_git_status()
         self.GIT_CONFLICTS=status.conflict or 0
         self.GIT_UNTRACKED=status.untracked or 0
         self.GIT_STASHED=git.getstashcount() or 0
+        self.ANTARES_GIT_HAS_TAGS=git_status.tag and true or nil
+        self.ANTARES_GIT_TAG=git_status.tag or ""
     end
 
     self.ANTARES_GIT_HAS_CONFLICTS=(self.GIT_CONFLICTS > 0)
@@ -346,13 +348,13 @@ function ant:antares_update_prompt()
         local half_width=width / 2
         local pwd_over_half=(pwdsize + decosize) > half_width
         local git_over_half=(gitsize + decosize) > half_width
-        if pwd_over_half > 0 and git_over_half > 0 then
+        if pwd_over_half and git_over_half then
             pwdcut=half_width - decosize
             gitcut=half_width - decosize
-        elseif pwd_over_half > 0 then
+        elseif pwd_over_half then
             pwdcut=width - gitsize - (decosize * 2)
             self.ANTARES_FILLER=string.rep(fillchar, width - pwdcut - gitsize - (decosize * 2))
-        elseif git_over_half > 0 then
+        elseif git_over_half then
             gitcut=width - pwdsize - (decosize * 2)
             self.ANTARES_FILLER=string.rep(fillchar, width - pwdsize - gitcut - (decosize * 2))
         else
@@ -520,7 +522,7 @@ ellipsify=function(text, limit, trim_left)
                         if total + trunc_width <= limit then
                             truncate = #s
                         end
-                        total = total + console.cellcount(k)
+                        total = total + console.cellcount(z)
                         if total > limit then
                             s = s:sub(-truncate)
                             s = ellipsis_char..s
@@ -543,8 +545,8 @@ ellipsify=function(text, limit, trim_left)
                         end
                         s = s..z
                     end
+                    table.insert(keep, s)
                 end
-                table.insert(keep, s)
             end
         end
     end
