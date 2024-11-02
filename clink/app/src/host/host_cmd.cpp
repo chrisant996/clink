@@ -201,10 +201,12 @@ static void tag_prompt()
     buffer[0] = '\0';
     __Real_GetEnvironmentVariableW(L"prompt", buffer, sizeof_array(buffer));
 
-    // This MUST NOT call the hooked version, or infinite recursion will happen.
-    tagged_prompt prompt;
-    prompt.tag(buffer[0] ? buffer : L"$p$g");
-    __Real_SetEnvironmentVariableW(L"prompt", prompt.get());
+    if (buffer[0])
+    {
+        tagged_prompt prompt;
+        prompt.tag(buffer);
+        __Real_SetEnvironmentVariableW(L"prompt", prompt.get());
+    }
 }
 
 //------------------------------------------------------------------------------
