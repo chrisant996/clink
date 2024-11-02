@@ -21,7 +21,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
-- Add documentation about pros and cons of autorun, and how detection of "interactive session" has to work.
 
 ## Unit Tests
 
@@ -46,9 +45,6 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
 - Some wizard for interactively viewing/modifying color settings.  _[This is Low priority now that Clink supports .clinktheme color themes.]_
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
-
-## Follow Up
-- Push update to z.lua repo.
 
 ## Argmatcher syntax
 - See the argmatcher_syntax branch.
