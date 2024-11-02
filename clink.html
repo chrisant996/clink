@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.7.3</title>
+<title>Clink v1.7.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -943,6 +943,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <div><a class="h2" href="#enhanced-doskey-expansion">Enhanced Doskey Expansion</a></div>
 <div><a class="h2" href="#popular-scripts">Popular Scripts</a></div>
 <div><a class="h2" href="#terminal-support">Terminal Support</a></div>
+<div><a class="h2" href="#how-clink-works">How Clink Works</a></div>
 <div><a class="h2" href="#troubleshooting-tips">Troubleshooting Tips</a></div>
 <div><a class="h2" href="#privacy">Privacy</a></div>
 <div><a class="h1" href="#lua-api">Lua API Reference</a></div>
@@ -953,7 +954,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.3</div>
+                <div id="title">Clink v1.7.4</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1918,7 +1919,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#terminal_color_emoji"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_color_emoji"></a><code>terminal.color_emoji</code></td>
 <td align="center"><code>auto</code></td>
-<td>Set this to indicate whether the terminal program draws emoji using colored double width characters.  This needs to be set accurately in order for Clink to display the input line properly when it contains emoji characters.  When set to <code>off</code> Clink assumes emoji are rendered using 1 character cell.  When set to <code>on</code> Clink assumes emoji are rendered using 2 character cells.  When set to <code>auto</code> (the default) Clink assumes emoji are rendered using 2 character cells when using Windows Terminal or WezTerm, or otherwise using 1 character cell.</td>
+<td>Set this to indicate whether the terminal program draws emojis using colored double width characters.  This needs to be set accurately in order for Clink to display the input line properly when it contains emoji characters.  When set to <code>off</code> Clink assumes emojis are rendered using 1 character cell.  When set to <code>on</code> Clink assumes emojis are rendered using 2 character cells.  When set to <code>auto</code> (the default) Clink tries to predict how emojis will be rendered based on OS version and terminal program.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#terminal_differentiate_keys"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_differentiate_keys"></a><code>terminal.differentiate_keys</code></td>
@@ -2015,6 +2016,7 @@ $endif
 <ol>
 <li>Any directories listed in the <code>%CLINK_THEMES_DIR%</code> environment variable (multiple directories may be separated by semicolons).</li>
 <li>A <code>themes\</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
+<li>A <code>themes\</code> subdirectory under the Clink program directory and the Clink profile directory.</li>
 <li>Or you can provide a full path name to a file, such as <code>c:\mythemes\Colorful.clinktheme</code>.</li>
 </ol>
 <p>To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the <code>CLINK_COLORTHEME</code> environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile&#39;s settings file, which allows multiple concurrent Clink sessions to use different color themes.</p>
@@ -5529,7 +5531,7 @@ end
 <blockquote>
 <p><strong>Notes:</strong></p>
 <ul>
-<li>If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running <code>chcp utf-8</code> can resolve positioning issues).</li>
+<li>If the console font and encoding are mismatched, or if some kinds of emojis are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running <code>chcp utf-8</code> can resolve positioning issues).</li>
 <li>If the <code>:filter()</code> function returns a string and false to stop filtering, then the <code>:rightfilter()</code> is not called (because no further filter functions are called).  If you want to stop filtering but have both a left and right side prompt, then return only a string from <code>:filter()</code> and return a string and false from <code>:rightfilter()</code>.</li>
 </ul>
 </blockquote>
@@ -5794,6 +5796,7 @@ end
 <tr><td><a href="#enhanced-doskey-expansion">Enhanced Doskey Expansion</a></td><td>How enhanced Doskey expansion works.</td></tr>
 <tr><td><a href="#popular-scripts">Popular Scripts</a></td><td>Some popular scripts to enhance Clink.</td></tr>
 <tr><td><a href="#terminal-support">Terminal Support</a></td><td>Information about how Clink's terminal support works.</td></tr>
+<tr><td><a href="#how-clink-works">How Clink Works</a></td><td>Technical details about how Clink injects into cmd.exe.</td></tr>
 <tr><td><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td>How to troubleshoot and report problems.</td></tr>
 <tr><td><a href="#privacy">Privacy</a></td><td>Privacy statement for Clink.</td></tr>
 </table>
@@ -7027,6 +7030,73 @@ set CLINK_TERM_VS=\e[2 q
 <pre><code class="language-cmd">set CLINK_TERM_VE=\e[?12h
 set CLINK_TERM_VS=\e[?12l
 </code></pre>
+<h3 id="color-emojis"><a class="wlink" href="#color-emojis"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Color Emojis <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
+<p>The Unicode specification for emojis is constantly evolving.  It&#39;s natural for operating system versions, code libraries, and application programs to lag behind the latest Unicode specification.</p>
+<p>Clink&#39;s emoji width predictions work best on Windows 11 with Windows Terminal 1.22 or newer.  All of the actual rendering is done by the terminal program.  Applications have to make assumptions and predictions about how Unicode characters will end up being rendered by terminal programs.  It involves a lot of guesswork.</p>
+<p>Clink has no way to know for sure how different combinations of OS / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes significant improvements for rendering color emojis, but there are still some edge cases that aren&#39;t fully implemented yet.  (When using older version of Windows Terminal then you should expect some emoji sequences to render incorrectly, and there&#39;s nothing Clink can do to work around that.)</p>
+<p>If you encounter problems with emoji characters, first check whether the latest OS version and/or the latest terminal program version solves some of the problems.  If the problems persist, you can <a href="https://github.com/chrisant996/clink/issues/new">open a new issue</a> in the Clink repo.  Please be sure to share details and specific steps for how to reproduce the problem, so that it&#39;s possible for someone to try to help.</p>
+<h2 id="how-clink-works"><a class="wlink" href="#how-clink-works"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>How Clink Works <span class="uplinks"><a href="#miscellaneous">up</a> <a href="#toc">top</a></span></h2>
+<p>The <code>clink inject</code> command checks whether the parent process is supported and injects a DLL.</p>
+<p>The DLL takes over printing the prompt and reading command line input from the user.</p>
+<h5 id="checking-if-the-parent-process-is-supported"><a class="wlink" href="#checking-if-the-parent-process-is-supported"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Checking if the parent process is supported <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
+<p>The parent process is supported if it is <code>cmd.exe</code> and its command line indicates that it will be an interactive process.  The process will be interactive if the command line has <code>/k</code> or does not have <code>/c</code> or <code>/r</code>.</p>
+<p>If the parent process is not supported, then the <code>clink.bat</code> script or the <code>clink_*.exe</code> program will exit before it actually injects the DLL into the <code>cmd.exe</code> process.</p>
+<h5 id="hooking-os-functions"><a class="wlink" href="#hooking-os-functions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Hooking OS functions <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
+<p>If the DLL gets loaded into the <code>cmd.exe</code> parent process and hooks some OS functions:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GetEnvironmentVariableW()</td>
+<td>To let the DLL finish its initialization.  This is always called before CMD displays the prompt and is rarely called otherwise, so it&#39;s a reliable spot to hook regardless whether injection is triggered during CMD&#39;s AutoRun regkey or by running <code>clink inject</code> at the command line.</td>
+</tr>
+<tr>
+<td>SetEnvironmentVariableW()</td>
+<td>To intercept setting the <code>PROMPT</code> variable, and add a special tag so Clink can tell when CMD is trying to print the prompt.</td>
+</tr>
+<tr>
+<td>SetEnvironmentStringsW()</td>
+<td>To intercept setting the <code>PROMPT</code> variable, and add a special tag so Clink can tell when CMD is trying to print the prompt.</td>
+</tr>
+<tr>
+<td>WriteConsoleW()</td>
+<td>To capture the current prompt and defer printing it until command line editing begins (inside ReadConsoleW()).</td>
+</tr>
+<tr>
+<td>ReadConsoleW()</td>
+<td>To replace the command line editing with its own Readline-powered command line editing.</td>
+</tr>
+<tr>
+<td>SetConsoleTitleW()</td>
+<td>To enable replacing the &quot;Administrator:&quot; prefix in the title bar.</td>
+</tr>
+</tbody></table>
+<h5 id="how-to-prevent-injection-when-clink-is-configured-for-autorun"><a class="wlink" href="#how-to-prevent-injection-when-clink-is-configured-for-autorun"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>How to prevent injection when Clink is configured for autorun <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
+<p>There are several ways:</p>
+<ol>
+<li>The <code>cmd /d</code> flag disables CMD&#39;s AutoRun regkey processing, which will prevent CMD from running the Clink autorun script.</li>
+<li>If the <code>CLINK_NOAUTORUN</code> environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.</li>
+<li>Clink autorun can be uninstalled:  <code>clink autorun uninstall</code>.</li>
+</ol>
+<h5 id="other-notes"><a class="wlink" href="#other-notes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Other notes <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
+<p>The <code>clink.bat</code> file exists to enable seamless support for x64/x86/ARM64 on the same computer by detecting the current mode and invoking the corresponding <code>clink_*.exe</code> program.  There is no way for a batch script to figure out whether cmd.exe is going to be interactive, so that check has to happen inside the clink_x64.exe program.  If it assesses that it will be non-interactive, then clink_x64.exe exits without injecting clink_dll_x64.dll into the cmd.exe process.  The act of checking whether cmd.exe will be interactive is much faster than the act of injecting Clink into the cmd.exe process, and so the check minimizes performance degradation when Clink is configured for autorun.</p>
+<p>Personally, I don&#39;t use Clink with autorun for three reasons:</p>
+<ol>
+<li>It slows down startup of cmd.exe processes that happen in the background or in automated situations,</li>
+<li>It introduces the possibility of interfering with background or automated cmd usage, and</li>
+<li>I don&#39;t want Clink auto-injected into every cmd session.  I prefer to be explicit about when I&#39;m going to use Clink, and I use LNK files or Windows Terminal profiles to control how and when Clink is injected.</li>
+</ol>
+<p>I haven&#39;t removed the autorun feature because:</p>
+<ol>
+<li>It already existed as the default mode before I ever found Clink or took over maintenance,</li>
+<li>Many people like the feature, and</li>
+<li>It performs as efficiently as possible given how the CMD AutoRun regkey operates.</li>
+</ol>
+<p>Redirected output is not considered when checking if the parent process is supported.  The only way to reliably and accurately check for redirected stdin/stdout is to do the check after having already injected Clink, which would be pointless since by that time Clink has already been injected, so the full slowdown cost has already been paid.  So, overall, trying to check for stdin/stdout doesn&#39;t have practical value.</p>
 <h2 id="troubleshooting-tips"><a class="wlink" href="#troubleshooting-tips"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Troubleshooting Tips <span class="uplinks"><a href="#miscellaneous">up</a> <a href="#toc">top</a></span></h2>
 <p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
 <ul>
@@ -7041,7 +7111,7 @@ set CLINK_TERM_VS=\e[?12l
 <li>Check <code>clink set</code>.  E.g. do the settings look right?</li>
 <li>Check the <code>clink.log</code> file for clues (its location is reported by <code>clink info</code>).</li>
 </ul>
-<p>When <a href="https://github.com/chrisant996/clink/issues">reporting an issue</a>, please include the following which saves time by answering in advance the usual questions:</p>
+<p>When <a href="https://github.com/chrisant996/clink/issues/new">reporting an issue</a>, please include the following which saves time by answering in advance the usual questions:</p>
 <ul>
 <li>Please describe what was expected to happen.</li>
 <li>Please describe what actually happened.</li>
@@ -7214,14 +7284,14 @@ builder:addmatches({
 
 <div class="function"><div class="header"> <div id="clink.classifier" class="name"><a class="wlink" href="#clink.classifier"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.classifier</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table<br/><div class="version">v1.1.49 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>:classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.dirmatches" class="name"><a class="wlink" href="#clink.dirmatches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.dirmatches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
+<div class="function"><div class="header"> <div id="clink.dirmatches" class="name"><a class="wlink" href="#clink.dirmatches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.dirmatches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.8 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
 clink.argmatcher("cd")
 :addflags("/d")
 :addarg({ clink.dirmatches })</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.dirmatchesexact" class="name"><a class="wlink" href="#clink.dirmatchesexact"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.dirmatchesexact</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.6.4 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#clink.dirmatches">clink.dirmatches()</a> except this doesn't append a <code>*</code> to the search pattern.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.filematches" class="name"><a class="wlink" href="#clink.filematches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.filematches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply file matches.  This automatically handles Readline tilde completion.</p><p class="desc"> Argmatchers default to matching files, so it's unusual to need this function.  However, some exceptions are when a flag needs to accept file matches but other flags and arguments don't, or when matches need to include more than files.</p><pre class="language-lua"><code>-- Make "foo --file" generate file matches, but other flags and args don't.
+<div class="function"><div class="header"> <div id="clink.filematches" class="name"><a class="wlink" href="#clink.filematches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.filematches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.8 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply file matches.  This automatically handles Readline tilde completion.</p><p class="desc"> Argmatchers default to matching files, so it's unusual to need this function.  However, some exceptions are when a flag needs to accept file matches but other flags and arguments don't, or when matches need to include more than files.</p><pre class="language-lua"><code>-- Make "foo --file" generate file matches, but other flags and args don't.
 -- And the third argument can be a file or $stdin or $stdout.
 clink.argmatcher("foo")
 :addflags(
@@ -7471,8 +7541,43 @@ clink.lower("áèïÕÛ")       -- returns "ÁÈÏÕÛ"</code></pre></div></div>
 
 </div><div class="group">
 <h5 id="console" class="group_name"><a class="wlink" href="#console"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>console. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#console.cellcount">cellcount</a></td><td><a href="#console.getcolortable">getcolortable</a></td><td><a href="#console.gettitle">gettitle</a></td><td><a href="#console.plaintext">plaintext</a></td></tr><tr><td><a href="#console.checkinput">checkinput</a></td><td><a href="#console.getcursorpos">getcursorpos</a></td><td><a href="#console.gettop">gettop</a></td><td><a href="#console.readinput">readinput</a></td></tr><tr><td><a href="#console.explodeansi">explodeansi</a></td><td><a href="#console.getheight">getheight</a></td><td><a href="#console.getwidth">getwidth</a></td><td><a href="#console.screengrab">screengrab</a></td></tr><tr><td><a href="#console.findnextline">findnextline</a></td><td><a href="#console.getlinetext">getlinetext</a></td><td><a href="#console.islinedefaultcolor">islinedefaultcolor</a></td><td><a href="#console.scroll">scroll</a></td></tr><tr><td><a href="#console.findprevline">findprevline</a></td><td><a href="#console.getnumlines">getnumlines</a></td><td><a href="#console.linehascolor">linehascolor</a></td><td><a href="#console.settitle">settitle</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#console.cellcount">cellcount</a></td><td><a href="#console.getcolortable">getcolortable</a></td><td><a href="#console.gettop">gettop</a></td><td><a href="#console.screengrab">screengrab</a></td></tr><tr><td><a href="#console.cellcountiter">cellcountiter</a></td><td><a href="#console.getcursorpos">getcursorpos</a></td><td><a href="#console.getwidth">getwidth</a></td><td><a href="#console.scroll">scroll</a></td></tr><tr><td><a href="#console.checkinput">checkinput</a></td><td><a href="#console.getheight">getheight</a></td><td><a href="#console.islinedefaultcolor">islinedefaultcolor</a></td><td><a href="#console.settitle">settitle</a></td></tr><tr><td><a href="#console.explodeansi">explodeansi</a></td><td><a href="#console.getlinetext">getlinetext</a></td><td><a href="#console.linehascolor">linehascolor</a></td></tr><tr><td><a href="#console.findnextline">findnextline</a></td><td><a href="#console.getnumlines">getnumlines</a></td><td><a href="#console.plaintext">plaintext</a></td></tr><tr><td><a href="#console.findprevline">findprevline</a></td><td><a href="#console.gettitle">gettitle</a></td><td><a href="#console.readinput">readinput</a></td></tr></table>
 <div class="function"><div class="header"> <div id="console.cellcount" class="name"><a class="wlink" href="#console.cellcount"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.cellcount</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer<br/><div class="version">v1.2.5 and newer</div></div></div><div class="body"><p class="desc">Returns the count of visible character cells that would be consumed if the <span class="arg">text</span> string were output to the console, accounting for any ANSI escape codes that may be present in the text.</p><p class="desc"> <strong>Note:</strong> Backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="console.cellcountiter" class="name"><a class="wlink" href="#console.cellcountiter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.cellcountiter</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">text</span>:string ) : iterator<br/><div class="version">v1.7.4 and newer</div></div></div><div class="body"><p class="desc">This returns an iterator function which steps through <span class="arg">text</span> one glyph at a time.  Each call to the iterator function returns the string for the next glyph, the count of visible character cells that would be consumed when displaying it in the terminal, and a boolean indicating whether the string is an emoji.</p><p class="desc"> <strong>Note:</strong> This only recognizes emojis if Clink recognizes that the terminal program supports emojis.  The results are "best effort", and may differ from reality depending on the specific OS version, terminal program (and its version), and the input string.  The width prediction is based on the Unicode emoji specification, with accommodations for how Windows Terminal renders certain emoji sequences.</p><pre class="language-lua"><code>-- UTF8 sample string:
+-- Index by glyph:       12                                                   3
+-- Unicode character:    A❤️          U+FE0F      ZWJ         🔥              Z
+local text            = "A\xe2\x9d\xa4\xef\xb8\x8f\xe2\x80\x8d\xf0\x9f\x94\xa5Z"
+-- Index by byte:        12   3   4   5   6   7   8   9   10  11  12  13  14  15
+
+for str, width, emoji in console.cellcountiter(text) do
+&nbsp;   -- Build string showing byte values.
+&nbsp;   local bytes = ""
+&nbsp;   for i = 1, #str do
+&nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
+&nbsp;   end
+&nbsp;   -- Print the cellcount substring and info about it.
+&nbsp;   clink.print(str, width, emoji, bytes)
+&nbsp;   -- Print the individual codepoints in the cellcount substring.
+&nbsp;   for s, value in unicode.iter(str) do
+&nbsp;       bytes = ""
+&nbsp;       for i = 1, #s do
+&nbsp;           bytes = bytes .. string.format("\\x%02x", s:byte(i, i))
+&nbsp;       end
+&nbsp;       clink.print("", s, string.format("U+%X", value), bytes)
+&nbsp;   end
+end
+
+-- The above prints the following:
+--      A       1       false   \x41
+--              A       U+41    \x41
+--      ❤️‍🔥      2       true    \xe2\x9d\xa4\xef\xb8\x8f\xe2\x80\x8d\xf0\x9f\x94\xa5
+--              ❤       U+2764  \xe2\x9d\xa4
+--              ️       U+FE0F  \xef\xb8\x8f
+--              ‍        U+200D  \xe2\x80\x8d
+--              🔥      U+1F525 \xf0\x9f\x94\xa5
+--      Z       1       false   \x5a
+--              Z       U+5A    \x5a</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="console.checkinput" class="name"><a class="wlink" href="#console.checkinput"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.checkinput</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">timeout</span>:number] ) : boolean<br/><div class="version">v1.3.42 and newer</div></div></div><div class="body"><p class="desc">Checks whether input is available.</p><p class="desc"> The optional <span class="arg">timeout</span> is the number of seconds to wait for input to be available (use a floating point number for fractional seconds).  The default is 0 seconds, which returns immediately if input is not available.</p><p class="desc"> If input is available before the <span class="arg">timeout</span> is reached, the return value is true.  Use <a href="#console.readinput">console.readinput()</a> to read the available input.</p><p class="desc"> In Clink v1.6.0 and higher, when <span class="arg">timeout</span> is negative, the timeout is infinite.</p><p class="desc"> <strong>Note:</strong> Mouse input is not supported.</p><pre class="language-lua"><code>if console.checkinput() then
 &nbsp;   local key = console.readinput() -- Returns immediately since input is available.
@@ -8443,8 +8548,6 @@ local text            = "\xc3\xa0\xc3\xa9\xe1\xb4\x86\xc3\xb5\xc3\xbb"
 -- Index by byte:        1   2   3   4   5   6   7   8   9   10  11
 
 for str, value, combining in unicode.iter(text) do
-&nbsp;   -- Note that the default lua print() function is not fully aware
-&nbsp;   -- of Unicode, so clink.print() is needed to print Unicode text.
 &nbsp;   local bytes = ""
 &nbsp;   for i = 1, #str do
 &nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
@@ -8624,6 +8727,29 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v174"><a class="wlink" href="#v174"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.4 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Changed searching for color themes and custom prompts to always include <code>themes\</code> directories under the Clink program directory and Clink profile directory, even when the <code>clink.path</code> setting has been used to remove them from the list of script directories.</li>
+<li>Improved emoji width measurements.<ul>
+<li>Unqualified emojis are counted as a single cell now.  Windows Terminal intentionally renders these as a single cell for compatibility with the behavior of the first terminal programs on Linux that began to support emoji characters (an important compatibility detail for the Windows Subsystem for Linux, for example).</li>
+<li>Country flag emoji character pairs are recognized.</li>
+<li>Skin tone variant selectors are recognized.</li>
+<li>The zero width joiner is recognized when it joins two emoji characters, or an emoji and a male or female symbol.</li>
+<li><strong>NOTE:</strong>  A given OS version and terminal program version will only recognize certain combinations of joined emojis as valid sequences.  And Windows Terminal is one of the only terminal programs on Windows that can draw color emoji characters.  Clink has no way to know how a given terminal will actually render sequences of Unicode emoji characters.  If a terminal program renders a particular emoji sequence differently than Clink predicts, then the display may become garbled.  If that happens, don&#39;t use that emoji sequence.  But if a terminal program renders an emoji sequence as a single glyph and Clink predicts the width incorrectly, then please open an issue with details about the emoji.</li>
+</ul>
+</li>
+<li>The pure.clinkprompt now also supports virtualenv&#39;s <code>VIRTUAL_ENV_DISABLE_PROMPT</code> and <code>VIRTUAL_ENV_PROMPT</code> environment variables.</li>
+<li>Added <a href="#console.cellcountiter">console.cellcountiter()</a> so scripts can iterate over Unicode character sequences in a string.  Using <code>unicode.iter()</code> returns one codepoint at a time, but emojis can have multiple codepoints and <code>console.cellcountiter()</code> groups them together for easy processing and accurate overall width measures (measuring the width of each codepoint in an emoji sequence is not the same as measuring the width of the emoji sequence as a whole).</li>
+<li>Fixed the right side transient prompt so it shows up even when identical to the right side normal prompt.</li>
+<li>Fixed the <code>demo</code> callback in .clinkprompt files.</li>
+<li>Fixed potential for incomplete input of Unicode surrogate pairs.  An easy way to encounter the problem was using the Windows emoji picker to input an emoji that&#39;s a sequence of other emojis joined together -- for example, the pride flag emoji is a flag emoji joined with a rainbow emoji, and the rainbow emoji uses a surrogate pair.</li>
+<li>Fixed an edge case where if a .clinkprompt file calls <code>require()</code> to load a module, and later on a different script also calls <code>require()</code> for the same module, then any event handlers or prompt filters registered by the required module accidentally only worked inside the .clinkprompt that originally required it.  Now required modules behave the same regardless whether they are first required by a .clinkprompt file or by some other script file.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/685">#685</a>; CTRL-L while input text is present redraws the input line wrong.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/686">#686</a>; <code>clink config -h</code> shows inaccurate info.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/696">#696</a>; console width length off-by-one on certain characters (in particular U+26A1).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/698">#698</a>; script error when using <code>clink config prompt show pure</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/701">#701</a>; issues in Antares prompt (missing tag and error when truncation is needed).</li>
+</ul>
 <h4 id="v173"><a class="wlink" href="#v173"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.3 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added the missing Tomorrow* color themes.</li>
@@ -9009,7 +9135,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </li>
 <li>Fixed the <code>onlink</code> callback function in <code>:addflags()</code> so that the <code>arg_index</code> parameter is correctly <code>0</code> instead of <code>1</code>.</li>
 <li>Fixed the upper bound line number for Lua console line API functions.</li>
-<li>Fixed <code>console.getlinetext()</code> when emoji are present.</li>
+<li>Fixed <code>console.getlinetext()</code> when emojis are present.</li>
 </ul>
 <h4 id="v1514"><a class="wlink" href="#v1514"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.14 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
@@ -9092,7 +9218,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Fixed <code>debug.log_terminal</code> to capture all input (regression introduced in v1.5.2).</li>
 <li>Fixed slowness during <code>clink-select-complete</code> while typing, caused by excessive match generation.</li>
 <li>Fixed selection highlight in <code>clink-select-complete</code> when the whole match text has been typed.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/486">#486</a>; window title escape code doesn&#39;t work properly if it contains emoji or UTF content.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/486">#486</a>; window title escape code doesn&#39;t work properly if it contains emojis or UTF8 content.</li>
 <li>Internal changes.</li>
 </ul>
 <h4 id="v154"><a class="wlink" href="#v154"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.4 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -9278,16 +9404,16 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <h4 id="v148"><a class="wlink" href="#v148"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.8 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added <code>rl.needquotes()</code> function to check whether text needs quotes in a command line.</li>
-<li>Changed the <code>terminal.color_emoji</code> setting <code>auto</code> mode to more broadly support accurate width measurements for color emoji (regardless whether the terminal program is capable of actually drawing the color emoji).</li>
+<li>Changed the <code>terminal.color_emoji</code> setting <code>auto</code> mode to more broadly support accurate width measurements for color emojis (regardless whether the terminal program is capable of actually drawing the color emoji).</li>
 <li>Now <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.</li>
 <li>Fixed the <code>completion</code> autosuggest strategy so it doesn&#39;t provide a suggestion that requires quoting if the command line input is not currently quoted.</li>
-<li>Fixed overly aggressive detection of color emoji (regression introduced in v1.4.7).</li>
+<li>Fixed overly aggressive detection of color emojis (regression introduced in v1.4.7).</li>
 </ul>
 <h4 id="v147"><a class="wlink" href="#v147"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.7 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Clink now supports ARM64.</li>
 <li>Clink now recognizes when the terminal host is WezTerm.</li>
-<li>Clink now supports color emoji in Windows Terminal and WezTerm, according to the Unicode v15.0 standard.  The new <code>terminal.color_emoji</code> setting controls when Clink assumes the terminal supports color emoji (color emoji are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emoji).</li>
+<li>Clink now supports color emojis in Windows Terminal and WezTerm, according to the Unicode v15.0 standard.  The new <code>terminal.color_emoji</code> setting controls when Clink assumes the terminal supports color emojis (color emojis are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emojis).</li>
 <li>Enabled Readline&#39;s support for non-incremental vi-mode search (<kbd>N</kbd>, <kbd>n</kbd>) to search for a shell pattern using <code>fnmatch()</code>, as Posix specifies.</li>
 <li>Fixed obscure issue when a &quot;luafunc:&quot; macro modifies the input line and then invokes a completion command.</li>
 <li>Fixed <code>line_state:getword()</code> and <code>line_state:getendword()</code> to not strip quotes during <code>generator:getwordbreakinfo()</code> functions (regression introduced in v1.1.24).</li>
