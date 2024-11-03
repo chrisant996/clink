@@ -197,6 +197,7 @@ no_truncate:
             std::vector<run> runs;
 
             // Build vector of runs of individual renderable characters.
+            const char* prev_end = in;
             while (const ecma48_code& code = iter.next())
             {
                 if (code.get_type() == ecma48_code::type_chars)
@@ -215,12 +216,13 @@ no_truncate:
                 else
                 {
                     run r;
-                    r.index = int32(code.get_pointer() - in);
+                    r.index = int32(prev_end - in);
                     r.length = code.get_length();
                     r.cells = 0;
                     r.chars = false;
                     runs.emplace_back(r);
                 }
+                prev_end = iter.get_pointer();
             }
 
             if (runs.empty())
@@ -256,7 +258,7 @@ no_truncate:
                         // Build the output string.  Start with any leading
                         // escape codes, to maintain consistent styling even
                         // when truncated.
-                        for (const run* walk = begin; walk < r; ++walk)
+                        for (const run* walk = begin; walk < truncate_run; ++walk)
                         {
                             if (!walk->chars)
                                 out.concat(in + walk->index, walk->length);
