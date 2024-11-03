@@ -16,6 +16,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <lib/ellipsify.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -954,6 +955,101 @@ static int32 cell_count_iter(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.ellipsify
+/// -ver:   1.7.5
+/// -arg:   text:string
+/// -arg:   limit:integer
+/// -arg:   [mode:string]
+/// -arg:   [ellipsis:string]
+/// -ret:   string, integer
+/// Returns as much of <span class="arg">text</span> as fits in
+/// <span class="arg">limit</span> screen columns, truncated with either an
+/// ellipsis or the optional custom <span class="arg">ellipsis</span> string.
+///
+/// The optional <span class="arg">mode</span> can be any of the following:
+///
+/// <table>
+/// <tr><th>Value</th><th>Description</th></tr>
+/// <tr><td><code>"right"</code></td><td>Truncates from the right end of the input string.</td></tr>
+/// <tr><td><code>"left"</code></td><td>Truncates from the left end of the input string.</td></tr>
+/// <tr><td><code>"path"</code></td><td>Treats the input string as a file path and keeps any drive specifier, and truncates any directory portion from its left end.</td></tr>
+/// </table>
+///
+/// <strong>Note:</strong> Both <span class="arg">text</span> and/or
+/// <span class="arg">ellipsis</span> may include ANSI escape codes.  When the
+/// <code>"left"</code> or <code>"path"</code> truncation modes are used, then
+/// any ANSI escape code to the left of the ellipsis are preserved, to ensure
+/// consistent styling regardless whether truncation occurs.  Any ANSI escape
+/// codes in <span class="arg">ellipsis</span> are included as-is, which means
+/// it's possible for the caller to give the ellipsis string different styling
+/// from the rest of the string.
+/// -show:  print(ellipsify("abcdef", 4))
+/// -show:  --  abc…
+/// -show:
+/// -show:  print(ellipsify("abcdef", 4, "right", ".."))
+/// -show:  --  ab..
+/// -show:
+/// -show:  print(ellipsify("abcdef", 4, "left"))
+/// -show:  --  …def
+/// -show:
+/// -show:  print(ellipsify("abcdefghijk", 8, "left", "[...]"))
+/// -show:  --  [...]ijk
+/// -show:
+/// -show:  print(ellipsify("c:/abcd/wxyz", 8, "path"))
+/// -show:  --  c:…/wxyz
+/// -show:
+/// -show:  print(ellipsify("c:/abcd/wxyz", 8, "path", "..."))
+/// -show:  --  c:...xyz
+static int32 api_ellipsify(lua_State* state)
+{
+    // Get input string.
+    const char* s = checkstring(state, 1);
+    if (!s)
+        return 0;
+
+    // Get limit.
+    const auto limit = checkinteger(state, 2);
+    if (!limit.isnum())
+        return 0;
+    if (limit.get() <= 0)
+    {
+        lua_pushstring(state, s);
+        lua_pushinteger(state, cell_count(s));
+        return 2;
+    }
+
+    // Get mode (right="Abc...", left="...xyz", path="c:...name").
+    ellipsify_mode mode = RIGHT;
+    if (!lua_isnoneornil(state, 3))
+    {
+        const char* m = checkstring(state, 3);
+        if (!m)
+            return 0;
+        if (strcmp(m, "right") == 0) mode = RIGHT;
+        else if (strcmp(m, "left") == 0) mode = LEFT;
+        else if (strcmp(m, "path") == 0) mode = PATH;
+        else mode = INVALID;
+        if (mode == INVALID)
+        {
+            const char* msg = lua_pushfstring(state, "%s expected, got '%s'",
+                    "'left', 'right', or 'path'", m);
+            return luaL_argerror(state, 2, msg);
+        }
+    }
+
+    // Get ellipsis character sequence.
+    const char* e = optstring(state, 4, nullptr);
+
+    // Perform truncation.
+    str<128> out;
+    const int32 width = ellipsify_ex(s, limit.get(), mode, out, e);
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    lua_pushinteger(state, width);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 static int32 set_width(lua_State* state)
 {
@@ -1020,6 +1116,7 @@ void console_lua_initialise(lua_state& lua)
         { "checkinput",             &check_input },
         { "getcolortable",          &get_color_table },
         { "cellcountiter",          &cell_count_iter },
+        { "ellipsify",              &api_ellipsify },
         // UNDOCUMENTED; internal use only.
         { "__set_width",            &set_width },
     };
