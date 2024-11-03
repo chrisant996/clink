@@ -298,16 +298,57 @@ no_truncate:
     case PATH:
         {
             const char* const _in = in;
-
-            // Try to keep the whole drive.
             str<16> drive;
-            path::get_drive(in, drive);
-            if (drive.length())
+
+            // Try to keep the whole drive.  This can't use path::get_drive()
+            // because this needs to accommodate ANSI escape codes embedded in
+            // the input string.
+            const char* drive_end = in;
+            int32 drive_chars = 0;
+            while (true)
             {
-                const char* p = in + path::past_ssqs(in) + drive.length();
-                drive.clear();
-                drive.concat(in, int32(p - in));
-                in = p;
+                const ecma48_code& code = iter.next();
+                if (!code)
+                {
+break_break_no:
+                    drive_end = nullptr;
+break_break_yes:
+                    break;
+                }
+                if (code.get_type() == ecma48_code::type_chars)
+                {
+                    str_iter inner_iter(code.get_pointer(), code.get_length());
+                    while (const int32 c = inner_iter.next())
+                    {
+                        switch (drive_chars)
+                        {
+                        case 0:
+                            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')))
+                                goto break_break_no;
+                            ++drive_chars;
+                            ++drive_end;
+                            break;
+                        case 1:
+                            if (c != ':')
+                                goto break_break_no;
+                            ++drive_chars;
+                            ++drive_end;
+                            break;
+                        case 2:
+                            goto break_break_yes;
+                        }
+                    }
+                }
+                else
+                {
+                    drive_end = iter.get_pointer();
+                }
+            }
+            if (drive_end)
+            {
+                assert(2 == drive_chars);
+                drive.concat(in, int32(drive_end - in));
+                in = drive_end;
             }
 
             // Try to keep as much of the rest of the path as can fit.

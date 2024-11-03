@@ -25,6 +25,8 @@ TEST_CASE("Ellipsify.")
 
     static const testcase c_testcases[] =
     {
+        // Plain text tests.
+
         { 0,    "",                 "",             RIGHT,  "!" },
         { 1,    "",                 "",             RIGHT,  "!" },
         { 0,    "a",                "",             RIGHT,  "!",    true },
@@ -36,7 +38,6 @@ TEST_CASE("Ellipsify.")
         { 6,    "abcdef",           "abcdef",       RIGHT,  "!" },
         { 6,    "abcdefg",          "abcde!",       RIGHT,  "!",    true },
         { 6,    "abcdefg",          "abc...",       RIGHT,  "...",  true },
-        // TODO: escape code tests.
 
         { 0,    "",                 "",             LEFT,   "!" },
         { 1,    "",                 "",             LEFT,   "!" },
@@ -49,7 +50,6 @@ TEST_CASE("Ellipsify.")
         { 6,    "abcdef",           "abcdef",       LEFT,   "!" },
         { 6,    "abcdefg",          "!cdefg",       LEFT,   "!",    true },
         { 6,    "abcdefg",          "...efg",       LEFT,   "...",  true },
-        // TODO: escape code tests.
 
         { 0,    "c:/abcdef/uvwxyz", "",             PATH,   "!",    true },
         { 1,    "c:/abcdef/uvwxyz", "!",            PATH,   "!",    true },
@@ -66,7 +66,19 @@ TEST_CASE("Ellipsify.")
         { 6,    "c:/abcdef/uvwxyz", "c:...z",       PATH,   "...",  true },
         { 10,   "c:/abcdef/uvwxyz", "c:!/uvwxyz",   PATH,   "!",    true },
         { 10,   "c:/abcdef/uvwxyz", "c:...vwxyz",   PATH,   "...",  true },
-        // TODO: escape code tests.
+
+        // Escape code tests.
+
+        { 4,    "\x1b[mabcd\x1b[1m1234",    "\x1b[mabc!",           RIGHT,  "!",    true },
+        { 5,    "\x1b[mabcd\x1b[1m1234",    "\x1b[mabcd\x1b[1m!",   RIGHT,  "!",    true },
+        { 6,    "\x1b[mabcd\x1b[1m1234",    "\x1b[mabcd\x1b[1m1!",  RIGHT,  "!",    true },
+
+        { 2,    "\x1b[mabcd\x1b[1m12",      "\x1b[m\x1b[1m!2",      LEFT,   "!",    true },
+        { 3,    "\x1b[mabcd\x1b[1m12",      "\x1b[m!\x1b[1m12",     LEFT,   "!",    true },
+        { 5,    "\x1b[mabcd\x1b[1m12",      "\x1b[m!cd\x1b[1m12",   LEFT,   "!",    true },
+
+        { 6,    "\x1b[mc:\x1b[32m/abcdef/\x1b[34muvwxyz",   "\x1b[mc:\x1b[32m\x1b[34m!xyz",     PATH,   "!",    true },
+        { 9,    "\x1b[mc:\x1b[32m/abcdef/\x1b[34muvwxyz",   "\x1b[mc:\x1b[32m!\x1b[34muvwxyz",  PATH,   "!",    true },
     };
 
     for (auto const& t : c_testcases)
@@ -78,10 +90,10 @@ TEST_CASE("Ellipsify.")
                             strcmp(t.expected, out.c_str()) == 0);
 
         REQUIRE(ok, [&] () {
-            printf("      in:  \"%s\"\n     out:  \"%s\"%s\nexpected:  \"%s\"%s",
-                    t.in,
-                    out.c_str(), truncated ? ", truncated" : "",
-                    t.expected, t.truncated ? ", truncated" : "");
+            printf("      in:  \"%s%s%s\"\n     out:  \"%s%s%s\"%s\nexpected:  \"%s%s%s\"%s",
+                    "\x1b[m", t.in, clatch::colors::get_error(),
+                    "\x1b[m", out.c_str(), clatch::colors::get_error(), truncated ? ", truncated" : "",
+                    "\x1b[m", t.expected, clatch::colors::get_error(), t.truncated ? ", truncated" : "");
         });
     }
 }
