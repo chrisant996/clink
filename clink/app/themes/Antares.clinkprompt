@@ -491,7 +491,7 @@ end
 local ellipsis_char="..."
 
 ellipsify=function(text, limit, trim_left)
-    if not limit then
+    if not limit or not console.ellipsify then
         return text
     end
     return console.ellipsify(text, limit, trim_left and "left" or "right", ellipsis_char)

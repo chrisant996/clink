@@ -48,6 +48,13 @@ local reset_color=sgr()
 --local ellipsis_char = "…"
 local ellipsis_char = "..."
 
+local function ellipsify(text, limit)
+    if not console.ellipsify then
+        return text
+    end
+    return console.ellipsify(text, limit, "path", ellipsis_char)
+end
+
 
 local PR = {}
 local ZLE_RPROMPT_INDENT=1
@@ -171,7 +178,7 @@ function p:filter() -- luacheck: no unused
     -- Finally, the prompt.
     local PROMPT=PR.TITLEBAR..
     PR.CYAN..PR.ULCORNER..PR.HBAR..PR.GREY..'('..
-    PR.GREEN..console.ellipsify(PWD,PR.PWDLEN,"path",ellipsis_char)..
+    PR.GREEN..ellipsify(PWD,PR.PWDLEN)..
     PR.GREY..')'..RUBY_PROMPT_INFO..PR.CYAN..PR.HBAR..PR.HBAR..PR.FILLBAR..PR.HBAR..PR.GREY..'('..
     PR.CYAN..username..PR.GREY..'@'..PR.GREEN..computername..
     PR.GREY..')'..PR.CYAN..PR.HBAR..PR.URCORNER..'\n'..

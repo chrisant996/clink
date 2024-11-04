@@ -591,6 +591,9 @@ end
 
 
 ellipsify=function(text, limit, mode)
+    if not console.ellipsify then
+        return text
+    end
     return console.ellipsify(text, limit, mode, HEADLINE.TRUNC_PREFIX)
 end
 
