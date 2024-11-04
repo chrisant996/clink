@@ -47,36 +47,6 @@ local reset_color=sgr()
 
 --local ellipsis_char = "…"
 local ellipsis_char = "..."
-local ellipsis_char_width = console.cellcount(ellipsis_char)
-
-local function ellipsify(text, limit) -- luacheck: no unused
-    if not console.explodeansi or console.cellcount(text) <= limit then
-        return text
-    end
-    local s = ""
-    local truncate = 0
-    local total = 0
-    local strings = console.explodeansi(text)
-    for _,t in ipairs(strings) do
-        if t:byte() == 27 then
-            s = s..t
-        else
-            for i in unicode.iter(t) do
-                if total + ellipsis_char_width <= limit then
-                    truncate = #s
-                end
-                total = total + console.cellcount(i)
-                if total > limit then
-                    s = s:sub(1, truncate)
-                    s = s..ellipsis_char
-                    break
-                end
-                s = s..i
-            end
-        end
-    end
-    return s
-end
 
 
 local PR = {}
@@ -201,7 +171,7 @@ function p:filter() -- luacheck: no unused
     -- Finally, the prompt.
     local PROMPT=PR.TITLEBAR..
     PR.CYAN..PR.ULCORNER..PR.HBAR..PR.GREY..'('..
-    PR.GREEN..ellipsify(PWD,PR.PWDLEN)..
+    PR.GREEN..console.ellipsify(PWD,PR.PWDLEN,"path",ellipsis_char)..
     PR.GREY..')'..RUBY_PROMPT_INFO..PR.CYAN..PR.HBAR..PR.HBAR..PR.FILLBAR..PR.HBAR..PR.GREY..'('..
     PR.CYAN..username..PR.GREY..'@'..PR.GREEN..computername..
     PR.GREY..')'..PR.CYAN..PR.HBAR..PR.URCORNER..'\n'..

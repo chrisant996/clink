@@ -491,78 +491,10 @@ end
 local ellipsis_char="..."
 
 ellipsify=function(text, limit, trim_left)
-    if not limit or console.cellcount(text) <= limit then
+    if not limit then
         return text
     end
-    local trunc_width = console.cellcount(ellipsis_char)
-    local keep = {}
-    local truncate = 0
-    local total = 0
-    local strings = console.explodeansi(text)
-    for x = #strings, 1, -1 do
-        local t = strings[x]
-        if t:byte() == 27 then
-            table.insert(keep, t)
-        else
-            local width = console.cellcount(t)
-            if total + width + trunc_width <= limit then
-                -- If the text fits, keep the whole thing.
-                table.insert(keep, t)
-                total = total + width
-            else
-                local s = ""
-                if trim_left then
-                    -- Truncate from the left side.
-                    local reverse = {}
-                    for y in unicode.iter(t) do
-                        table.insert(reverse, y)
-                    end
-                    for y = #reverse, 1, -1 do
-                        local z = reverse[y]
-                        if total + trunc_width <= limit then
-                            truncate = #s
-                        end
-                        total = total + console.cellcount(z)
-                        if total > limit then
-                            s = s:sub(-truncate)
-                            s = ellipsis_char..s
-                            break
-                        end
-                        s = z..s
-                    end
-                    table.insert(keep, s)
-                else
-                    -- Truncate from the right side.
-                    for z in unicode.iter(t) do
-                        if total + trunc_width <= limit then
-                            truncate = #s
-                        end
-                        total = total + console.cellcount(k)
-                        if total > limit then
-                            s = s:sub(1, truncate)
-                            s = s..ellipsis_char
-                            break
-                        end
-                        s = s..z
-                    end
-                    table.insert(keep, s)
-                end
-            end
-        end
-    end
-    if trim_left then
-        local reverse = {}
-        for x = #keep, 1, -1 do
-            local p = table.remove(keep, x)
-            if not p then
-                break
-            end
-            table.insert(reverse, p)
-        end
-        return table.concat(reverse)
-    else
-        return table.concat(keep)
-    end
+    return console.ellipsify(text, limit, trim_left and "left" or "right", ellipsis_char)
 end
 
 evalfunc=function(x)

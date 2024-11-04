@@ -122,7 +122,7 @@ local function iif(expr, iftrue, iffalse)
     if expr then return iftrue else return iffalse end
 end
 
-local headline_git_branch, headline_git_status, _headline_part, ellipsify_left, sum, evalcmd
+local headline_git_branch, headline_git_status, _headline_part, ellipsify, sum, evalcmd
 local has24bitcolor = string.find(" winterminal wezterm winconsolev2 ", " "..clink.getansihost().." ") and true or false
 local only_ucs2 = (not string.find(" winterminal wezterm ", " "..clink.getansihost().." ")) and true or false
 
@@ -437,7 +437,7 @@ local function headline_precmd()
         else
             len=len - console.cellcount(HEADLINE.PAD_TO_BRANCH)
         end
-        _headline_part("BRANCH", HEADLINE.BRANCH_PREFIX..ellipsify_left(branch_str, len), "right")
+        _headline_part("BRANCH", HEADLINE.BRANCH_PREFIX..ellipsify(branch_str, len, "left"), "right")
     end
 
 -- TODO!
@@ -486,7 +486,7 @@ local function headline_precmd()
         end
         len=_HEADLINE_LEN_REMAIN - console.cellcount(HEADLINE.PATH_PREFIX) - ((#branch_str > 0) and console.cellcount(HEADLINE.PATH_TO_BRANCH) or 0)
         len=len - console.cellcount(pushd_depth)
-        _headline_part("PATH", HEADLINE.PATH_PREFIX..pushd_depth..ellipsify_left(path_str, len), "left")
+        _headline_part("PATH", HEADLINE.PATH_PREFIX..pushd_depth..ellipsify(path_str, len, "path"), "left")
     end
 
     -- Padding
@@ -590,56 +590,8 @@ end
 -- BEGIN EXTENSIONS TO HEADLINE
 
 
-ellipsify_left=function(text, limit)
-    if console.cellcount(text) <= limit then
-        return text
-    end
-    local trunc_width = console.cellcount(HEADLINE.TRUNC_PREFIX)
-    local keep = {}
-    local truncate = 0
-    local total = 0
-    local strings = console.explodeansi(text)
-    for i = #strings, 1, -1 do
-        local t = strings[i]
-        if t:byte() == 27 then
-            table.insert(keep, t)
-        else
-            local width = console.cellcount(t)
-            if total + width + trunc_width <= limit then
-                table.insert(keep, t)
-                total = total + width
-            else
-                local reverse = {}
-                for j in unicode.iter(t) do
-                    table.insert(reverse, j)
-                end
-                local s = ""
-                for j = #reverse, 1, -1 do
-                    local k = reverse[j]
-                    if total + trunc_width <= limit then
-                        truncate = #s
-                    end
-                    total = total + console.cellcount(k)
-                    if total > limit then
-                        s = s:sub(-truncate)
-                        s = HEADLINE.TRUNC_PREFIX..s
-                        break
-                    end
-                    s = k..s
-                end
-                table.insert(keep, s)
-            end
-        end
-    end
-    local reverse = {}
-    for i = #keep, 1, -1 do
-        local p = table.remove(keep, i)
-        if not p then
-            break
-        end
-        table.insert(reverse, p)
-    end
-    return table.concat(reverse)
+ellipsify=function(text, limit, mode)
+    return console.ellipsify(text, limit, mode, HEADLINE.TRUNC_PREFIX)
 end
 
 sum=function(list)
