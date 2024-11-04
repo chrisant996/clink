@@ -989,17 +989,26 @@ static int32 cell_count_iter(lua_State* state)
 /// -show:  print(ellipsify("abcdef", 4, "right", ".."))
 /// -show:  --  ab..
 /// -show:
+/// -show:  print(ellipsify("abcdef", 4, "right", ""))
+/// -show:  --  abcd
+/// -show:
 /// -show:  print(ellipsify("abcdef", 4, "left"))
 /// -show:  --  …def
 /// -show:
 /// -show:  print(ellipsify("abcdefghijk", 8, "left", "[...]"))
 /// -show:  --  [...]ijk
 /// -show:
+/// -show:  print(ellipsify("abcdefghijk", 4, "left", ""))
+/// -show:  --  hijk
+/// -show:
 /// -show:  print(ellipsify("c:/abcd/wxyz", 8, "path"))
 /// -show:  --  c:…/wxyz
 /// -show:
 /// -show:  print(ellipsify("c:/abcd/wxyz", 8, "path", "..."))
 /// -show:  --  c:...xyz
+/// -show:
+/// -show:  print(ellipsify("c:/abcd/wxyz", 5, "path", ""))
+/// -show:  --  c:xyz
 static int32 api_ellipsify(lua_State* state)
 {
     // Get input string.

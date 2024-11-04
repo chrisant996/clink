@@ -38,6 +38,7 @@ TEST_CASE("Ellipsify.")
         { 6,    "abcdef",           "abcdef",       RIGHT,  "!" },
         { 6,    "abcdefg",          "abcde!",       RIGHT,  "!",    true },
         { 6,    "abcdefg",          "abc...",       RIGHT,  "...",  true },
+        { 6,    "abcdefg",          "abcdef",       RIGHT,  "",     true },
 
         { 0,    "",                 "",             LEFT,   "!" },
         { 1,    "",                 "",             LEFT,   "!" },
@@ -50,6 +51,7 @@ TEST_CASE("Ellipsify.")
         { 6,    "abcdef",           "abcdef",       LEFT,   "!" },
         { 6,    "abcdefg",          "!cdefg",       LEFT,   "!",    true },
         { 6,    "abcdefg",          "...efg",       LEFT,   "...",  true },
+        { 6,    "abcdefg",          "bcdefg",       LEFT,   "",     true },
 
         { 0,    "c:/abcdef/uvwxyz", "",             PATH,   "!",    true },
         { 1,    "c:/abcdef/uvwxyz", "!",            PATH,   "!",    true },
@@ -66,6 +68,7 @@ TEST_CASE("Ellipsify.")
         { 6,    "c:/abcdef/uvwxyz", "c:...z",       PATH,   "...",  true },
         { 10,   "c:/abcdef/uvwxyz", "c:!/uvwxyz",   PATH,   "!",    true },
         { 10,   "c:/abcdef/uvwxyz", "c:...vwxyz",   PATH,   "...",  true },
+        { 6,    "c:/abcdef/uvwxyz", "c:wxyz",       PATH,   "",     true },
 
         // Escape code tests.
 
