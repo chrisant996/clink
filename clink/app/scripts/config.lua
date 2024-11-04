@@ -36,6 +36,7 @@ end
 
 table.insert(package.searchers, 2, clinkprompt_searcher)
 
+-- luacheck: globals require
 local orig_require = require
 require = function(module)
     if clinkprompt_wrapping_module then
