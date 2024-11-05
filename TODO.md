@@ -5,20 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## Mystery Issue
-There's some kind of case where `accept-line` doesn't print a newline before returning the input line to CMD.  Maybe somehow involving modmark.  I've hit it several times.
-
-Actually it almost looks like _after_ printing the transient prompt and `rl_crlf()`, something may have gotten a chance to force `clink.refilterprompt()` and print a normal prompt again out of turn, leaving the cursor at the end of that and thus output from the command began at that cursor position?  A command that I definitely only ran _once_ shows up in a transient prompt, immediately followed by a normal prompt plus input line, then followed by command output immediately at the end of the displayed input line.  But maybe the transient prompt is present because I hit UP then typed `value`, then hit CTRL-X,CTRL-R which prints transient prompt, then I hit UP again and typed `value` again and finally hit ENTER?
-
-    ```
-    > xx run -long_flags_that_make_command_wrap args -flags value
-
-     reponame  branchname ↓415  12345 14 hours ago             Tue 11:40
-    *> xx run -long_flags_that_make_command_wrap args -flags valueThis XX command is using the *XX Workflow* If you are testing changes in xx client code...
-    ```
-
-- Instrumentation seems to indicate it cannot hit `read_console()` again after the `rl_crlf()`, so on-idle coroutines shouldn't be involved.
-- Could some `onfoo` callback have forced `clink.refilterprompt()` out of turn?
-- Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
 
 ## High Priority
 
@@ -108,6 +94,18 @@ Actually it almost looks like _after_ printing the transient prompt and `rl_crlf
 - Lua code can check if there is real console input available, and can read real console input.  But there is no way for Lua code to check whether there is any input queued for Readline (pending input, pushed input, macro text).  That probably makes sense, since there is (correctly) no way for Lua code to read input queued for Readline.
 
 ## Mystery
+- There's some kind of case where `accept-line` doesn't print a newline before returning the input line to CMD.  Maybe somehow involving modmark.  I've hit it several times.  _[But it only happened for a few days and then stopped.  So I wonder if it was actually some kind of regression in Windows Terminal which got fixed.]_
+  - Maybe _after_ printing the transient prompt and `rl_crlf()`, something may have gotten a chance to force `clink.refilterprompt()` and print a normal prompt again out of turn, leaving the cursor at the end of that and thus output from the command began at that cursor position?  A command that I definitely only ran _once_ shows up in a transient prompt, immediately followed by a normal prompt plus input line, then followed by command output immediately at the end of the displayed input line.  But maybe the transient prompt is present because I hit UP then typed `value`, then hit CTRL-X,CTRL-R which prints transient prompt, then I hit UP again and typed `value` again and finally hit ENTER?
+    ```
+    > xx run -long_flags_that_make_command_wrap args -flags value
+
+     reponame  branchname ↓415  12345 14 hours ago             Tue 11:40
+    *> xx run -long_flags_that_make_command_wrap args -flags valueThis XX command is using the *XX Workflow* If you are testing changes in xx client code...
+    ```
+  - Instrumentation seems to indicate it cannot hit `read_console()` again after the `rl_crlf()`, so on-idle coroutines shouldn't be involved.
+  - Could some `onfoo` callback have forced `clink.refilterprompt()` out of turn?
+  - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
+  - It only happened for a few days and then stopped, without any changes in Clink, so maybe the cause was external.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Not fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30).]_ _[Have not seen for many weeks.]_ _[Likely due to `ENABLE_VIRTUAL_TERMINAL_INPUT` and largely mitigated by [a8d80b752a](https://github.com/chrisant996/clink/commit/a8d80b752a3c4ff8660debeec0133a009fb04051).]_ _[Root cause is https://github.com/microsoft/terminal/issues/15711]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30)?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
