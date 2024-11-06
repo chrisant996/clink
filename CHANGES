@@ -5,6 +5,7 @@
 #### v1.7.5
 
 - Added new Lua API [console.ellipsify()](#console.ellipsify) to truncate an input string in various ways.
+- Adjusted a few character width measurements based on analysis from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier).
 
 #### v1.7.4
 
