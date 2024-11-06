@@ -344,7 +344,7 @@ local function do_emojis()
     out:close()
 
     print("   " .. #emojis .. " emojis; " .. count_ranges .. " ranges")
-    print("   " .. #half_width .. " fully qualified double width emojis")
+    print("   " .. #half_width .. " possible unqualified half width emojis")
 end
 
 --------------------------------------------------------------------------------
