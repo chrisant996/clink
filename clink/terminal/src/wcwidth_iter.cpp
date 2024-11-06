@@ -154,7 +154,7 @@ emoji_sequence:
         {
             // Variant selectors affect non-emoji as well, so treat them as
             // zero width for continuation purposes, but make the width 2.
-            if (g_color_emoji && is_variant_selector(w))
+            if (g_color_emoji && is_variant_selector(m_next))
             {
                 assert(m_chr_wcwidth == 1 || m_chr_wcwidth == 2);
                 m_chr_wcwidth = max<char32_t>(m_chr_wcwidth, 2);
