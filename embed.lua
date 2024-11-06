@@ -270,7 +270,7 @@ end
 
 --------------------------------------------------------------------------------
 local function output_character_ranges(out, tag, indexed, filtered)
-
+    -- Declaration.
     out:write("\nstatic const struct interval " .. tag .. "[] = {\n\n")
 
     -- Build sorted array of characters.
