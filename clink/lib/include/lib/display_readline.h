@@ -19,6 +19,7 @@ void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();
 void display_readline();
 void set_history_expansions(history_expansion* list=nullptr);
+void force_comment_row(const char* text);
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
 bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nullptr, uint32 len=-1);

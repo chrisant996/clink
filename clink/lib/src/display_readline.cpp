@@ -1400,6 +1400,7 @@ public:
     void                reset_rprompt_shown();
     void                display();
     void                set_history_expansions(history_expansion* list=nullptr);
+    void                force_comment_row(const char* text);
     void                measure(measure_columns& mc);
     bool                get_horz_offset(int32& bytes, int32& column) const;
     bool                has_comment_row() const;
@@ -1435,6 +1436,9 @@ private:
     HANDLE              m_horizpos_workaround = nullptr;
     bool                m_pending_wrap = false;
     const display_lines* m_pending_wrap_display = nullptr;
+
+    str_moveable        m_forced_comment_row;
+    int32               m_forced_comment_row_cursorpos = -1;
 };
 
 //------------------------------------------------------------------------------
@@ -1467,6 +1471,9 @@ void display_manager::clear()
 
     m_pending_wrap = false;
     m_pending_wrap_display = nullptr;
+
+    m_forced_comment_row.free();
+    m_forced_comment_row_cursorpos = -1;
 }
 
 //------------------------------------------------------------------------------
@@ -1958,10 +1965,18 @@ void display_manager::display()
     if (need_update && _rl_vis_botlin < _rl_screenheight && !g_display_manager_no_comment_row)
     {
         str_moveable in;
-        const input_hint* hint = get_input_hint();
+        if (m_forced_comment_row_cursorpos == rl_point)
+            in = m_forced_comment_row.c_str();
+        else
+        {
+            m_forced_comment_row.free();
+            m_forced_comment_row_cursorpos = -1;
+        }
+
+        const input_hint* hint = in.empty() ? get_input_hint() : nullptr;
         const int32 pos = hint ? hint->pos() : -1;
 
-        if (can_show_histexpand)
+        if (can_show_histexpand && in.empty())
         {
             const history_expansion* e;
             for (e = m_histexpand; e; e = e->next)
@@ -2141,6 +2156,17 @@ void display_manager::set_history_expansions(history_expansion* list)
 {
     history_free_expansions(&m_histexpand);
     m_histexpand = list;
+}
+
+//------------------------------------------------------------------------------
+void display_manager::force_comment_row(const char* text)
+{
+    if (text && *text)
+    {
+        m_forced_comment_row = text;
+        m_forced_comment_row_cursorpos = rl_point;
+        display();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -2785,6 +2811,12 @@ void display_readline()
 void set_history_expansions(history_expansion* list)
 {
     s_display_manager.set_history_expansions(list);
+}
+
+//------------------------------------------------------------------------------
+void force_comment_row(const char* text)
+{
+    s_display_manager.force_comment_row(text);
 }
 
 //------------------------------------------------------------------------------

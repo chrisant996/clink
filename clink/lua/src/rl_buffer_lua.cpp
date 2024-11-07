@@ -8,6 +8,7 @@
 #include <core/str_iter.h>
 #include <lib/line_buffer.h>
 #include <lib/suggestions.h>
+#include <lib/display_readline.h>
 
 extern "C" {
 #include <lua.h>
@@ -38,6 +39,7 @@ const rl_buffer_lua::method rl_buffer_lua::c_methods[] = {
     { "setargument",        &set_argument },
     { "hassuggestion",      &has_suggestion },
     { "insertsuggestion",   &insert_suggestion },
+    { "setcommentrow",      &set_comment_row },
     { "ding",               &ding },
     {}
 };
@@ -353,6 +355,20 @@ int32 rl_buffer_lua::insert_suggestion(lua_State* state)
 
     lua_pushboolean(state, inserted);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:setcommentrow
+/// -ver:   1.7.5
+/// Displays the <span class="arg">text</span> in the comment row.
+int32 rl_buffer_lua::set_comment_row(lua_State* state)
+{
+    const char* text = checkstring(state, LUA_SELF + 1);
+    if (!text)
+        return 0;
+
+    force_comment_row(text);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
