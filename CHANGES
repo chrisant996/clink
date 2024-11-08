@@ -7,6 +7,7 @@
 - Added new Lua API [console.ellipsify()](#console.ellipsify) to truncate an input string in various ways.
 - Added new [rl_buffer:setcommentrow()](#rl_buffer:setcommentrow) to let [`"luafunc:"` commands](#luakeybindings) immediately show text in the comment row.
 - Adjusted a few character width measurements based on analysis from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier).
+- The Headline, Pure, and Bureau clinkprompt files now consider unpublished branches as being "ahead", even in cases where git doesn't report a specific "ahead by" count.
 
 #### v1.7.4
 
