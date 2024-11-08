@@ -228,7 +228,7 @@ local function git_func()
     if tonumber(status.behind or 0) > 0 then
         arrows = arrows..symbols.PURE_GIT_DOWN_ARROW
     end
-    if tonumber(status.ahead or 0) > 0 then
+    if status.unpublished or tonumber(status.ahead or 0) > 0 then
         arrows = arrows..symbols.PURE_GIT_UP_ARROW
     end
     if arrows ~= "" then

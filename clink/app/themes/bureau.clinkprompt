@@ -109,7 +109,7 @@ local function get_git_status()
         end
 
         -- check status of local repository
-        if info.ahead then
+        if info.ahead or info.unpublished then
             result=result..GIT_PROMPT_AHEAD
         end
         if info.behind then

@@ -207,12 +207,13 @@ HEADLINE.GIT_AHEAD=HEADLINE.GIT_AHEAD or '↑'
 -- HEADLINE.GIT_DIVERGED=HEADLINE.GIT_DIVERGED or '↕'
 HEADLINE.GIT_STASHED=HEADLINE.GIT_STASHED or '*'
 HEADLINE.GIT_CONFLICTS=HEADLINE.GIT_CONFLICTS or '✘' -- consider "" or red..""
+HEADLINE.GIT_UNPUBLISHED=HEADLINE.GIT_UNPUBLISHED or '' -- consider ""
 HEADLINE.GIT_CLEAN=HEADLINE.GIT_CLEAN or '' -- consider "✓"
 
 -- Git status options
 HEADLINE.DO_GIT_STATUS_COUNTS=orwhennil(HEADLINE.DO_GIT_STATUS_COUNTS, false) -- set "true" to show count of each status
 HEADLINE.DO_GIT_STATUS_OMIT_ONE=orwhennil(HEADLINE.DO_GIT_STATUS_OMIT_ONE, false) -- set "true" to omit the status number when it is 1
-HEADLINE.STATUS_ORDER=HEADLINE.STATUS_ORDER or 'STAGED CHANGED UNTRACKED BEHIND AHEAD DIVERGED STASHED CONFLICTS'
+HEADLINE.STATUS_ORDER=HEADLINE.STATUS_ORDER or 'STAGED CHANGED UNTRACKED BEHIND AHEAD UNPUBLISHED DIVERGED STASHED CONFLICTS'
 
 -- Prompt (these can be strings or functions)
 HEADLINE.PROMPT=HEADLINE.PROMPT or function() return os.isuseradmin() and '# ' or '$ ' end
@@ -342,6 +343,16 @@ headline_git_status = function()
     totals.CHANGED=sum(status.working)
     totals.AHEAD=sum(status.ahead)
     totals.BEHIND=sum(status.behind)
+    totals.UNPUBLISHED=status.unpublished and "" -- Unpublished is a Boolean state; there's no count.
+
+    -- If there's no unpublished indicator and the branch is unpublished and
+    -- the ahead count is missing, then treat the unpublished state as a
+    -- special case of AHEAD.
+    if HEADLINE.GIT_UNPUBLISHED == "" and
+            status.unpublished and
+            (not totals.AHEAD or totals.AHEAD == 0) then
+        totals.AHEAD="" -- Make the indicator show up, but without a count.
+    end
 
     -- Check for stashes
     if git.hasstash() then
@@ -356,7 +367,7 @@ headline_git_status = function()
     local prefix
     local status_str=''
     for _,key in ipairs(order) do
-        if (totals[key] or 0) > 0 then
+        if type(totals[key]) == "string" or (totals[key] or 0) > 0 then
             if #HEADLINE.STATUS_TO_STATUS > 0 and #status_str > 0 then -- not first iteration
                 local style_joint=reset..HEADLINE.STYLE_DEFAULT..HEADLINE.STYLE_JOINT
                 local style_status=reset..HEADLINE.STYLE_DEFAULT..HEADLINE.STYLE_STATUS
