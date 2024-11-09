@@ -11,9 +11,9 @@ extern "C" uint32 clink_wcswidth(const char* s, uint32 len)
 {
     uint32 count = 0;
 
-    wcwidth_iter inner_iter(s, len);
-    while (inner_iter.next())
-        count += inner_iter.character_wcwidth_onectrl();
+    wcwidth_iter iter(s, len);
+    while (iter.next())
+        count += iter.character_wcwidth_onectrl();
 
     return count;
 }
@@ -23,9 +23,9 @@ extern "C" uint32 clink_wcswidth_expandctrl(const char* s, uint32 len)
 {
     uint32 count = 0;
 
-    wcwidth_iter inner_iter(s, len);
-    while (inner_iter.next())
-        count += inner_iter.character_wcwidth_twoctrl();
+    wcwidth_iter iter(s, len);
+    while (iter.next())
+        count += iter.character_wcwidth_twoctrl();
 
     return count;
 }

@@ -1,0 +1,74 @@
+-- Windows 11 conhost renders some emojis as monochrome full width characters.
+
+231A    ; ⌚    # E0.6 WATCH
+231B    ; ⌛    # E0.6 HOURGLASS DONE
+23E9    ; ⏩    # E0.6 FAST-FORWARD BUTTON
+23EA    ; ⏪    # E0.6 FAST REVERSE BUTTON
+23EB    ; ⏫    # E0.6 FAST UP BUTTON
+23EC    ; ⏬    # E0.6 FAST DOWN BUTTON
+23F0    ; ⏰    # E0.6 ALARM CLOCK
+23F3    ; ⏳    # E0.6 HOURGLASS NOT DONE
+
+25FD    ; ◽    # E0.6 WHITE MEDIUM-SMALL SQUARE
+25FE    ; ◾    # E0.6 BLACK MEDIUM-SMALL SQUARE
+
+2614    ; ☔    # E0.6 UMBRELLA WITH RAIN DROPS
+2615    ; ☕    # E0.6 HOT BEVERAGE
+2648    ; ♈    # E0.6 ARIES
+2649    ; ♉    # E0.6 TAURUS
+264A    ; ♊    # E0.6 GEMINI
+264B    ; ♋    # E0.6 CANCER
+264C    ; ♌    # E0.6 LEO
+264D    ; ♍    # E0.6 VIRGO
+264E    ; ♎    # E0.6 LIBRA
+264F    ; ♏    # E0.6 SCORPIO
+2650    ; ♐    # E0.6 SAGITTARIUS
+2651    ; ♑    # E0.6 CAPRICORN
+2652    ; ♒    # E0.6 AQUARIUS
+2653    ; ♓    # E0.6 PISCES
+267F    ; ♿    # E0.6 WHEELCHAIR SYMBOL
+2693    ; ⚓    # E0.6 ANCHOR
+26A1    ; ⚡    # E0.6 HIGH VOLTAGE
+26AA    ; ⚪    # E0.6 WHITE CIRCLE
+26AB    ; ⚫    # E0.6 BLACK CIRCLE
+26BD    ; ⚽    # E0.6 SOCCER BALL
+26BE    ; ⚾    # E0.6 BASEBALL
+26C4    ; ⛄    # E0.6 SNOWMAN WITHOUT SNOW
+26C5    ; ⛅    # E0.6 SUN BEHIND CLOUD
+26CE    ; ⛎    # E0.6 OPHIUCHUS
+26D4    ; ⛔    # E0.6 NO ENTRY
+26EA    ; ⛪    # E0.6 CHURCH
+26F2    ; ⛲    # E0.6 FOUNTAIN
+26F3    ; ⛳    # E0.6 FLAG IN HOLE
+26F5    ; ⛵    # E0.6 SAILBOAT
+26FA    ; ⛺    # E0.6 TENT
+26FD    ; ⛽    # E0.6 FUEL PUMP
+
+2705    ; ✅    # E0.6 CHECK MARK BUTTON
+270A    ; ✊    # E0.6 RAISED FIST
+270B    ; ✋    # E0.6 RAISED HAND
+2728    ; ✨    # E0.6 SPARKLES
+274C    ; ❌    # E0.6 CROSS MARK
+274E    ; ❎    # E0.6 CROSS MARK BUTTON
+2753    ; ❓    # E0.6 RED QUESTION MARK
+2754    ; ❔    # E0.6 WHITE QUESTION MARK
+2755    ; ❕    # E0.6 WHITE EXCLAMATION MARK
+2757    ; ❗    # E0.6 RED EXCLAMATION MARK
+2795    ; ➕    # E0.6 PLUS
+2796    ; ➖    # E0.6 MINUS
+2797    ; ➗    # E0.6 DIVIDE
+27B0    ; ➰    # E0.6 CURLY LOOP
+27BF    ; ➿    # E1.0 DOUBLE CURLY LOOP
+
+2B1B    ; ⬛    # E0.6 BLACK LARGE SQUARE
+2B1C    ; ⬜    # E0.6 WHITE LARGE SQUARE
+2B50    ; ⭐    # E0.6 STAR
+2B55    ; ⭕    # E0.6 HOLLOW RED CIRCLE
+
+302A    ; 〪     # IDEOGRAPHIC LEVEL TONE MARK
+302B    ; 〫     # IDEOGRAPHIC RISING TONE MARK
+302C    ; 〬     # IDEOGRAPHIC DEPARTING TONE MARK
+302D    ; 〭     # IDEOGRAPHIC ENTERING TONE MARK
+
+3099    ; ゙     # COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK
+309A    ; ゚     # COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK
