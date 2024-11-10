@@ -8,6 +8,7 @@
 - Added new [rl_buffer:setcommentrow()](#rl_buffer:setcommentrow) to let [`"luafunc:"` commands](#luakeybindings) immediately show text in the comment row.
 - Adjusted some character width measurements based on analysis from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier) on Win8.1, Win10 with conhost, Win10 with Windows Terminal 1.22, Win11 with conhost, and Win11 with Windows Terminal 1.22.
 - The Headline, Pure, and Bureau clinkprompt files now consider unpublished branches as being "ahead", even in cases where git doesn't report a specific "ahead by" count.
+- Internal changes to the right side prompt implementation, to disentangle unnecessary internal dependencies.
 
 #### v1.7.4
 
