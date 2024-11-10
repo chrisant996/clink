@@ -333,7 +333,6 @@ extern int rl_expand_prompt (char *);
 extern const char *rl_get_local_prompt (void);
 extern const char *rl_get_local_prompt_prefix (void);
 extern const char *rl_get_message_buffer (void);
-extern int rl_set_rprompt (const char *);
 /* end_clink_change */
 
 extern int rl_initialize (void);
@@ -614,13 +613,6 @@ extern char *rl_prompt;
 /* The prompt string that is actually displayed by rl_redisplay.  Public so
    applications can more easily supply their own redisplay functions. */
 extern char *rl_display_prompt;
-
-/* begin_clink_change */
-/* The right-justified prompt string, if any.  This is set by
-   rl_set_rprompt (), and should not be assigned to directly. */
-extern char *rl_rprompt;
-extern int rl_visible_rprompt_length;
-/* end_clink_change */
 
 /* The line buffer that is in use. */
 extern char *rl_line_buffer;

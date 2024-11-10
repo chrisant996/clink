@@ -12,7 +12,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
-- Finish removing the RPROMPT stuff from Readline, moving it entirely into Clink code.  The only part of Readline that actually needs it is the stuff for clearing to the end of the line, which is mostly omitted now anyway.  Most of it can be moved easily, but one spot will need special consideration (maybe a callback?):  `_rl_erase_entire_line()` inside `_rl_internal_char_cleanup()`.
 - Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.

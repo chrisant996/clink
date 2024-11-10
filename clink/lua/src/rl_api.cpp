@@ -17,6 +17,7 @@
 #include <lib/rl_integration.h>
 #include <lib/matches.h>
 #include <lib/match_colors.h>
+#include <lib/display_readline.h>
 #include "match_builder_lua.h"
 #include "prompt.h"
 
@@ -30,9 +31,6 @@ extern "C" {
 #include <readline/history.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-extern int              _rl_completion_case_map;
-extern const char*      rl_readline_name;
-extern int              _rl_last_v_pos;
 }
 
 // TODO: Clean up extern.

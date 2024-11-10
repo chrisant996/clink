@@ -75,9 +75,13 @@ extern int rl_get_forced_display(void);
 extern void rl_set_forced_display(int force);
 
 extern int _rl_last_v_pos;
-extern int _rl_rprompt_shown_len;
-
+int _rl_rprompt_shown_len = 0;
 } // extern "C"
+
+// rl_prompt is the right-justified prompt string, if any.  It is set by
+// rl_set_rprompt(), and should not be assigned to directly.
+char* rl_rprompt = nullptr;
+int32 rl_visible_rprompt_length = 0;
 
 #ifndef HANDLE_MULTIBYTE
 #error HANDLE_MULTIBYTE is required.
@@ -2769,6 +2773,63 @@ extern "C" void _rl_refresh_line(void)
 {
     reset_display_readline();
     rl_keep_mark_active();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void _rl_clear_to_eol(int32 count)
+{
+    if (_rl_last_v_pos == 0)
+    {
+        // If the cursor is on the first line of the input buffer, then flag
+        // that the right side prompt is not shown, so it can be redisplayed
+        // later as appropriate.
+        _rl_rprompt_shown_len = 0;
+    }
+
+    assert(_rl_term_clreol);
+    assert(*_rl_term_clreol);
+    tputs(_rl_term_clreol);
+}
+
+//------------------------------------------------------------------------------
+static char* expand_rprompt(const char* pmt)
+{
+    const uint32 l = str_len(pmt);
+    char* ret = (char*)xmalloc(l + 1);
+    bool newlines = false;
+
+    // Strip the invisible character string markers RL_PROMPT_START_IGNORE and
+    // RL_PROMPT_END_IGNORE.
+    char* r = ret;
+    for (const char* p = pmt; *p; ++p)
+    {
+        if (*p == '\r' || *p == '\n')
+            newlines = true;
+        if (*p != RL_PROMPT_START_IGNORE && *p != RL_PROMPT_END_IGNORE)
+            *(r++) = *p;
+    }
+    *r = '\0';
+
+    if (newlines)
+    {
+        free(ret);
+        ret = nullptr;
+    }
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+void rl_set_rprompt(const char* rprompt)
+{
+    free(rl_rprompt);
+
+    if (rprompt && *rprompt)
+        rl_rprompt = expand_rprompt(rprompt);
+    else
+        rl_rprompt = nullptr;
+
+    rl_visible_rprompt_length = rl_rprompt ? cell_count(rl_rprompt) : 0;
 }
 
 //------------------------------------------------------------------------------

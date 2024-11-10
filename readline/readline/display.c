@@ -76,9 +76,7 @@ static void norm_face (char *, int);
 
 #if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void update_line (char *, char *, char *, char *, int, int, int, int);
-#endif /* !OMIT_DEFAULT_DISPLAY_READLINE */
 static void space_to_eol (int);
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 static void delete_chars (int);
 static void insert_some_chars (char *, int, int);
 static void open_some_spaces (int);
@@ -89,7 +87,6 @@ static void _rl_move_cursor_relative (int, const char *, const char *);
 
 /* Values for FLAGS */
 #define PMT_MULTILINE	0x01
-#define PMT_RPROMPT	0x02
 
 /* begin_clink_change */
 //static char *expand_prompt (char *, int, int *, int *, int *, int *);
@@ -219,13 +216,6 @@ int rl_display_fixed = 0;
 /* The stuff that gets printed out before the actual text of the line.
    This is usually pointing to rl_prompt. */
 char *rl_display_prompt = (char *)NULL;
-
-/* begin_clink_change */
-/* The right side prompt, if any.  This is displayed on the first
-   line of the input text, if there is room past the input text. */
-char *rl_display_rprompt = (char *)NULL;
-int _rl_rprompt_shown_len = 0;
-/* end_clink_change */
 
 /* Variables used to include the editing mode in the prompt. */
 char *_rl_emacs_mode_str;
@@ -402,7 +392,6 @@ prompt_modestr (int *lenp)
 
 /* Possible values for FLAGS:
 	PMT_MULTILINE	caller indicates that this is part of a multiline prompt
-	PMT_RPROMPT	caller indicates that this is the right side prompt
 */
 
 /* This approximates the number of lines the prompt will take when displayed */
@@ -466,15 +455,10 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 	  if (vlp)
 	    *vlp = l;
 
-/* begin_clink_change */
-	  if (!(flags & PMT_RPROMPT))
-/* end_clink_change */
-	    {
-	      local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * 2);
-	      local_prompt_invis_chars = (int *) xrealloc (local_prompt_invis_chars, sizeof (int) * 2);
-	      local_prompt_newlines[0] = local_prompt_invis_chars[0] = 0;
-	      local_prompt_newlines[1] = -1;
-	    }
+	  local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * 2);
+	  local_prompt_invis_chars = (int *) xrealloc (local_prompt_invis_chars, sizeof (int) * 2);
+	  local_prompt_newlines[0] = local_prompt_invis_chars[0] = 0;
+	  local_prompt_newlines[1] = -1;
 
 	  return r;
         }
@@ -486,19 +470,14 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
   /* Guess at how many screen lines the prompt will take to size the array that
      keeps track of where the line wraps happen */
   newlines_guess = (_rl_screenwidth > 0) ? APPROX_DIV(l,  _rl_screenwidth) : APPROX_DIV(l, 80);
-/* begin_clink_change */
-  if (!(flags & PMT_RPROMPT))
-/* end_clink_change */
+  local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * (newlines_guess + 1));
+  local_prompt_newlines[newlines = 0] = 0;
+  local_prompt_invis_chars = (int *) xrealloc (local_prompt_invis_chars, sizeof (int) * (newlines_guess + 1));
+  local_prompt_invis_chars[0] = 0;
+  for (rl = 1; rl <= newlines_guess; rl++)
     {
-      local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * (newlines_guess + 1));
-      local_prompt_newlines[newlines = 0] = 0;
-      local_prompt_invis_chars = (int *) xrealloc (local_prompt_invis_chars, sizeof (int) * (newlines_guess + 1));
-      local_prompt_invis_chars[0] = 0;
-      for (rl = 1; rl <= newlines_guess; rl++)
-	{
-	  local_prompt_newlines[rl] = -1;
-	  local_prompt_invis_chars[rl] = 0;
-	}
+      local_prompt_newlines[rl] = -1;
+      local_prompt_invis_chars[rl] = 0;
     }
 
   rl = physchars = 0;	/* mode string now part of nprompt */
@@ -594,12 +573,7 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 	      invflset = 1;
 	    }
 
-/* begin_clink_change */
-	  //if (physchars >= (bound = (newlines + 1) * _rl_screenwidth) && local_prompt_newlines[newlines+1] == -1)
-	  if (!(flags & PMT_RPROMPT) &&
-	      physchars >= (bound = (newlines + 1) * _rl_screenwidth) &&
-	      local_prompt_newlines[newlines+1] == -1)
-/* end_clink_change */
+	  if (physchars >= (bound = (newlines + 1) * _rl_screenwidth) && local_prompt_newlines[newlines+1] == -1)
 	    {
 	      int new;
 	      if (physchars > bound)		/* should rarely happen */
@@ -625,11 +599,8 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 	     code that wraps before the physical screen width if the character
 	     width would exceed it, but it needs to be checked against this
 	     code and local_prompt_newlines[]. */
-/* begin_clink_change */
-	  //if (ignoring == 0)
-	  if (!(flags & PMT_RPROMPT) && ignoring == 0)
-/* end_clink_change */
-	    can_add_invis = (physchars == bound); 
+	  if (ignoring == 0)
+	    can_add_invis = (physchars == bound);
 	}
     }
 
@@ -652,23 +623,6 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
   if (nprompt != pmt)
     xfree (nprompt);
 
-/* begin_clink_change */
-  /* Right side prompt is restricted to one line. */
-  if ((flags & PMT_RPROMPT) && newlines > 0)
-    {
-      xfree (ret);
-      ret = 0;
-      if (lp)
-        *lp = 0;
-      if (lip)
-        *lip = 0;
-      if (niflp)
-        *niflp = 0;
-      if  (vlp)
-        *vlp = 0;
-    }
-/* end_clink_change */
-
   return ret;
 }
 
@@ -689,28 +643,6 @@ _rl_reset_prompt (void)
   rl_visible_prompt_length = rl_expand_prompt (rl_prompt);
 }
 
-/* begin_clink_change */
-/* Set up the right side prompt.  Call this before calling readline ()
-   or rl_callback_handler_install ().  The string should include
-   RL_PROMPT_START_IGNORE and RL_PROMPT_END_IGNORE around invisible
-   characters (escape codes). */
-int
-rl_set_rprompt (const char *rprompt)
-{
-  FREE (rl_rprompt);
-
-  if (rprompt && *rprompt)
-    {
-      rl_rprompt = expand_prompt (rprompt, PMT_RPROMPT, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
-    }
-  else
-    {
-      rl_rprompt = (char *)NULL;
-      rl_visible_rprompt_length = 0;
-    }
-
-  return 0;
-}
 /*
  * Expand the prompt string into the various display components, if
  * necessary.
@@ -3558,7 +3490,6 @@ _rl_erase_at_end_of_line (int l)
     visible_line[--_rl_last_c_pos] = '\0';
   rl_display_fixed++;
 }
-#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 /* Clear to the end of the line.  COUNT is the minimum
    number of character spaces to clear, but we use a terminal escape
@@ -3566,13 +3497,6 @@ _rl_erase_at_end_of_line (int l)
 void
 _rl_clear_to_eol (int count)
 {
-/* begin_clink_change */
-  /* Flag that the right side prompt is not shown, so it can be
-     redisplayed as appropriate. */
-  if (_rl_last_v_pos == 0)
-    _rl_rprompt_shown_len = 0;
-/* end_clink_change */
-
 #ifndef __MSDOS__
   if (_rl_term_clreol)
     tputs (_rl_term_clreol, 1, _rl_output_character_function);
@@ -3594,6 +3518,7 @@ space_to_eol (int count)
 
   _rl_last_c_pos += count;
 }
+#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 void
 _rl_clear_screen (int clrscr)
