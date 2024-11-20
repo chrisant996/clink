@@ -265,42 +265,11 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
   if (ucs < 0xa0)
     return -1;
 
-  /* special processing when color emoji support is enabled */
-  if (g_color_emoji) {
-    /* characters with unqualified forms are width 1 without FE0F/etc */
-    if (bisearch(ucs, possible_unqualified_half_width, _countof(possible_unqualified_half_width) - 1))
-      return 1;
-    /* color emoji are width 2 */
-    if (bisearch(ucs, emojis, _countof(emojis) - 1))
-      return 2;
-  } else if (s_win11) {
-    /* Windows 11 conhost renders some emoji as full width monochrome glyphs */
-    if (bisearch(ucs, mono_emojis, _countof(mono_emojis) - 1))
-      return 2;
-  }
-
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
     return s_combining_mark_width;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
-  if (ucs < 0x1100)
-    return 1;
-  if (ucs <= 0x115f)                      /* Hangul Jamo init. consonants */
-    return 2;                                         // ...wcwidth expected 1
-  if (ucs == 0x2329 || ucs == 0x232a)
-    return s_win10 ? 2 : 1;
-  if (ucs >= 0x2e80 && ucs <= 0xa4cf)
-    return 1 + (s_win10 && !is_cjk_halfwidth(ucs));   // ...wcwidth expected 2
-  if (ucs >= 0xac00 && ucs <= 0xd7a3)     /* Hangul Syllables */
-    return 1 + (s_win10 && !is_cjk_halfwidth(ucs));   // ...wcwidth expected 2
-  if ((ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
-      (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
-      (ucs >= 0xfe30 && ucs <= 0xfe6f))   /* CJK Compatibility Forms */
-    return s_win10 ? 2 : 1;
-  if ((ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
-      (ucs >= 0xffe0 && ucs <= 0xffe6))
-    return s_win10 ? 2 : 1;
   if (ucs >= 0x10000)                     /* UCS2 on Windows 8.1 and lower */
     return 2;
   return 1;
