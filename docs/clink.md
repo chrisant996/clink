@@ -1862,7 +1862,7 @@ C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-ba
 
 When displaying possible completions, flag matches are only shown if the flag character has been input.  So `foobar ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the first argument position, or `foobar some_word ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the second argument position, or  `foobar -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches.
 
-If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
+If a command is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
 
 Also see [clink.argmatcher()](#clink.argmatcher), [:addflags()](#_argmatcher:addflags) and [:addarg()](#_argmatcher:addarg).
 
