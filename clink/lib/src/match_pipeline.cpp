@@ -374,7 +374,11 @@ void match_pipeline::restrict(str_base& needle) const
     if (rl_complete_with_tilde_expansion && needle.c_str()[0] == '~')
     {
         if (path::tilde_expand(needle.c_str(), expanded))
+        {
+            if (!needle.c_str()[1])
+                path::maybe_strip_last_separator(expanded);
             needle = expanded.c_str();
+        }
     }
 
     if (count)
@@ -448,7 +452,11 @@ void match_pipeline::select(const char* needle) const
     if (rl_complete_with_tilde_expansion && needle[0] == '~')
     {
         if (path::tilde_expand(needle, expanded))
+        {
+            if (!needle[1])
+                path::maybe_strip_last_separator(expanded);
             needle = expanded.c_str();
+        }
     }
 
     if (count)
