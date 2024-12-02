@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.7.6
+
+- Update Win8.1 character width measurements from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier).
+- Fixed [#709](https://github.com/chrisant996/clink/issues/709); TAB expansion doesn't work for `cd ~` (regression introduced in v1.3.36).
+
 #### v1.7.5
 
 - Added new Lua API [console.ellipsify()](#console.ellipsify) to truncate an input string in various ways.
