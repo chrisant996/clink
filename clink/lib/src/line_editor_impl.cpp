@@ -619,6 +619,8 @@ void line_editor_impl::update_matches()
             just_tilde = !tmp.c_str()[1];
             if (!path::tilde_expand(tmp))
                 just_tilde = false;
+            else if (just_tilde)
+                path::maybe_strip_last_separator(tmp);
         }
 
         m_needle = tmp.c_str();

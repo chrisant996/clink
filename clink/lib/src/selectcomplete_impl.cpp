@@ -1056,13 +1056,11 @@ void selectcomplete_impl::init_matches()
     {
         tmp.concat(m_buffer->get_buffer() + m_anchor, m_point - m_anchor);
 
-        // bool just_tilde = false;
         if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
         {
-            // just_tilde = !tmp.c_str()[1];
-            // if (!path::tilde_expand(tmp))
-            //     just_tilde = false;
-            path::tilde_expand(tmp);
+            const bool just_tilde = !tmp.c_str()[1];
+            if (path::tilde_expand(tmp) && just_tilde)
+                path::maybe_strip_last_separator(tmp);
         }
 
         const char* in = tmp.c_str();
