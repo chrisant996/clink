@@ -5,6 +5,7 @@
 #### v1.7.6
 
 - Update Win8.1 character width measurements from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier).
+- Fixed a case where other popup list colors could interfere with the `colors.border` color in `clink.popuplist()`.
 - Fixed [#709](https://github.com/chrisant996/clink/issues/709); TAB expansion doesn't work for `cd ~` (regression introduced in v1.3.36).
 
 #### v1.7.5
