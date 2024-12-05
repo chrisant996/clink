@@ -20,6 +20,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 
 ## Low Priority
+- Windows Terminal now has 3 ways of measuring character widths.  There's no way for Clink to ask which mode is being used (but it might be possible to deduce on the fly using techniques from the wcwidth-verifier repo).  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
 - line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
@@ -28,7 +29,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
-- Some wizard for interactively viewing/modifying color settings.  _[This is Low priority now that Clink supports .clinktheme color themes.]_
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
 ## Argmatcher syntax
@@ -111,6 +111,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- Some wizard for interactively viewing/modifying color settings.  _[This is low priority now that Clink supports .clinktheme color themes.]_
 - Can `git.getstatus()` be simplified even further, so it automatically handles `clink.promptcoroutine()`?  Maybe a `git.getstatusasync()` function?  _[Not at this time:  that could be something to consider for a bunch of various APIs later, but for now scripts should just use the normal `clink.promptcoroutine()` usage pattern.]_
 - Input hinter; need some way for `:gethint()` to work with coroutines and override the optimization and call it again.  _[No:  that would lead to hints cycling through multiple values at the same cursor position.  Once a hint is shown, it shouldn't change until at least another keypress occurs.]_
 - `^>nul echo hello` behaves strangely:  It redirects to `echo` and tries to run `hello`.  What is going on with that syntax?  Any `^` combined with redirection before the command word seems to go awry one way or another.  It looks like a bug in the CMD parser.  _Trying to accurately predict how the bug will behave in all possible contexts seems unrealistic._
