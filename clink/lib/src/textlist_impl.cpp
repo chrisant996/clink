@@ -1741,7 +1741,7 @@ void textlist_impl::update_display()
                     make_spaces(spaces, tmp);
                     line << tmp;                                        // spaces
 
-                    line << m_color.border;
+                    line << "\x1b[m" << m_color.border;
 #ifdef SHOW_VERT_SCROLLBARS
                     const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, false/*floating*/);
                     if (car)
