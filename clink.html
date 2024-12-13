@@ -1424,7 +1424,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#default_bindings"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="default_bindings"><a name="clink_default_bindings"></a></a><code>clink.default_bindings</code></td>
 <td align="center"><code>bash</code> <a href="#alternatedefault">*</a></td>
-<td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
+<td>When this is <code>bash</code> (the default), Clink uses bash key bindings and does not match leading dots unless typed (completion does not match <code>.foo</code> when <code>f</code> is typed).<br/>When this is <code>windows</code>, Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>, and also Clink mimics the CMD completion behavior where completion matches <code>.foo</code> when just <code>f</code> is typed (that can also be controlled with the <a href="#configmatchhiddenfiles">match-hidden-files</a> configuration variable in the <a href="#init-file">.inputrc</a> file).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#clink_logo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_logo"></a><code>clink.logo</code></td>
@@ -1889,7 +1889,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#match_wild"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_wild"></a><code>match.wild</code></td>
 <td align="center">True</td>
-<td>Matches <code>?</code> and <code>*</code> wildcards and leading <code>.</code> when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but <a href="#rlcmd-glob-complete-word"><code>glob-complete-word</code></a> always matches wildcards).</td>
+<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards (but <a href="#rlcmd-glob-complete-word"><code>glob-complete-word</code></a> always matches wildcards).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#prompt_async"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="prompt_async"></a><code>prompt.async</code></td>
@@ -4300,7 +4300,7 @@ C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-ba
 </code></pre>
 
 <p>When displaying possible completions, flag matches are only shown if the flag character has been input.  So <code>foobar </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the first argument position, or <code>foobar some_word </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the second argument position, or  <code>foobar -</code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches.</p>
-<p>If a command doesn&#39;t have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like <code>gco=git checkout $*</code> automatically reuses a <code>git</code> argmatcher and produces completions for its <code>checkout</code> argument.  However, it only expands the doskey macro up to the first <code>$</code>, so complex aliases like <code>foo=app 2$gnul text $*</code> or <code>foo=$2 $1</code> might behave strangely.</p>
+<p>If a command is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like <code>gco=git checkout $*</code> automatically reuses a <code>git</code> argmatcher and produces completions for its <code>checkout</code> argument.  However, it only expands the doskey macro up to the first <code>$</code>, so complex aliases like <code>foo=app 2$gnul text $*</code> or <code>foo=$2 $1</code> might behave strangely.</p>
 <p>Also see <a href="#clink.argmatcher">clink.argmatcher()</a>, <a href="#_argmatcher:addflags">:addflags()</a> and <a href="#_argmatcher:addarg">:addarg()</a>.</p>
 <p><a name="argmatcher_autofiles"></a></p>
 <h3 id="automatic-filename-completion"><a class="wlink" href="#argmatcher_autofiles"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Automatic Filename Completion <span class="uplinks"><a href="#argumentcompletion">up</a> <a href="#toc">top</a></span></h3>
