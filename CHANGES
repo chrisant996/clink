@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.7.7
+
+- Fixed [#713](https://github.com/chrisant996/clink/issues/713); character width measurements are wrong for some Chinese characters in terminals other than Windows Terminal (regression introduced in v1.7.6).
+
 #### v1.7.6
 
 - Update Win8.1 character width measurements from [wcwidth-verifier](https://github.com/chrisant996/wcwidth-verifier).
