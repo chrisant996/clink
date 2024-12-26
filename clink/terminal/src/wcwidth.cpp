@@ -255,6 +255,42 @@ static int32 mk_wcwidth(char32_t ucs)
 
 static int32 mk_wcwidth_ucs2(char32_t ucs)
 {
+  static const struct interval ucs2_fullwidth_emoji[] = {
+    { 0x231A, 0x231B },     // Watch, hourglass.
+    { 0x23E9, 0x23EC },     // Media controls.
+    { 0x23F0, 0x23F0 },     // Alarm clock.
+    { 0x23F3, 0x23F3 },     // Hourglass not done.
+    { 0x25FD, 0x25FE },     // Medium-small squares.
+    { 0x2614, 0x2615 },     // Umbrella, hot beverage.
+    { 0x2648, 0x2653 },     // Zodiac signs.
+    { 0x267F, 0x267F },     // Wheelchair symbol.
+    { 0x2693, 0x2693 },     // Anchor.
+    { 0x26A1, 0x26A1 },     // High voltage.
+    { 0x26AA, 0x26AB },     // Circles.
+    { 0x26BD, 0x26BE },     // Soccer ball, baseball.
+    { 0x26C4, 0x26C5 },     // Snowman without snow, sun behind cloud.
+    { 0x26CE, 0x26CE },     // Ophiuchus.
+    { 0x26D4, 0x26D4 },     // No entry.
+    { 0x26EA, 0x26EA },     // Church.
+    { 0x26F2, 0x26F3 },     // Fountain, flag in hole.
+    { 0x26F5, 0x26F5 },     // Sailboat.
+    { 0x26FA, 0x26FA },     // Tent.
+    { 0x26FD, 0x26FD },     // Fuel pump.
+    { 0x2705, 0x2705 },     // Check mark button.
+    { 0x270A, 0x270B },     // Raised fist, raised hand.
+    { 0x2728, 0x2728 },     // Sparkles.
+    { 0x274C, 0x274C },     // Cross mark.
+    { 0x274E, 0x274E },     // Cross mark button.
+    { 0x2753, 0x2755 },     // Question marks, exclamation mark.
+    { 0x2757, 0x2757 },     // Exclamation mark.
+    { 0x2795, 0x2797 },     // Arithmetic operators.
+    { 0x27B0, 0x27B0 },     // Curly loop.
+    { 0x27BF, 0x27BF },     // Double curly loop.
+    { 0x2B1B, 0x2B1C },     // Large squares.
+    { 0x2B50, 0x2B50 },     // Star.
+    { 0x2B55, 0x2B55 },     // Hollow red circle.
+  };
+
   /* test for 8-bit control characters */
   if (ucs == 0)
     return 0;
@@ -270,7 +306,29 @@ static int32 mk_wcwidth_ucs2(char32_t ucs)
     return s_combining_mark_width;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
-  if (ucs >= 0x10000)                     /* UCS2 on Windows 8.1 and lower */
+  if (ucs < 0x1100)
+    return 1;
+  if (s_win10)
+  {
+    if (ucs <= 0x115f)                      /* Hangul Jamo init. consonants */
+      return 2;                                         // ...wcwidth expected 1
+    if (ucs == 0x2329 || ucs == 0x232a)
+      return 2;
+    if (s_win11 && bisearch(ucs, ucs2_fullwidth_emoji, _countof(ucs2_fullwidth_emoji) - 1))
+      return 2;
+    if (ucs >= 0x2e80 && ucs <= 0xa4cf)
+      return 1 +  !is_cjk_halfwidth(ucs);               // ...wcwidth expected 2
+    if (ucs >= 0xac00 && ucs <= 0xd7a3)     /* Hangul Syllables */
+      return 1 + !is_cjk_halfwidth(ucs);                // ...wcwidth expected 2
+    if ((ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
+        (ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
+        (ucs >= 0xfe30 && ucs <= 0xfe6f))   /* CJK Compatibility Forms */
+      return 2;
+    if ((ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
+        (ucs >= 0xffe0 && ucs <= 0xffe6))
+      return 2;
+  }
+  if (ucs >= 0x10000)                       /* UCS2 in legacy console mode. */
     return 2;
   return 1;
 }
