@@ -1,6 +1,6 @@
 @echo off
 rem -- Copyright (c) 2012 Martin Ridgers
-rem -- Portions Copyright (c) 2020-2024 Christopher Antos
+rem -- Portions Copyright (c) 2020-2025 Christopher Antos
 rem -- License: http://opensource.org/licenses/MIT
 
 setlocal enableextensions
