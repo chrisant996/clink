@@ -2199,7 +2199,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
-        { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x*",         "glob-expand-word" },        // ctrl-x,*
@@ -2245,6 +2244,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     };
 
     static constexpr const char* const general_key_binds[][2] = {
+        { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
