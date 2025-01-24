@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Option for the installer to add the Clink directory to the system PATH?  WARNING:  The tricky part is during _uninstall_...
 
 ## Unit Tests
 
@@ -20,6 +21,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 
 ## Low Priority
+- I'd love to let the installer run without Admin privilege, but I don't see how to do that safely because of the need for updating All Users AutoRun.
 - Windows Terminal now has 3 ways of measuring character widths.  There's no way for Clink to ask which mode is being used (but it might be possible to deduce on the fly using techniques from the wcwidth-verifier repo).  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
