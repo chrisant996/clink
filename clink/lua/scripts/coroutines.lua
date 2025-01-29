@@ -270,9 +270,11 @@ function clink._resume_coroutines()
             co = c
             if coroutine.status(c) == "dead" then
                 table.insert(remove, c)
-            elseif not check_generation(c) and not entry.yieldguard then
-                entry.canceled = true
-                table.insert(remove, c)
+            elseif not check_generation(c) then
+                if not entry.yieldguard or entry.yieldguard:ready() then
+                    entry.canceled = true
+                    table.insert(remove, c)
+                end
             else
                 _coroutines_resumable = true
                 local now = os.clock()
