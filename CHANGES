@@ -5,6 +5,7 @@
 #### v1.7.8
 
 - Added <kbd>Ctrl</kbd>-<kbd>C</kbd> binding in vi keymaps ([#716](https://github.com/chrisant996/clink/discussions/716)).
+- Fixed [#718](https://github.com/chrisant996/clink/issues/718); potential for "coroutine is orphaned" error, depending on the CPU speed and how `autosuggest.strategy` is configured (regression introduced in v1.3.26).
 
 #### v1.7.7
 
