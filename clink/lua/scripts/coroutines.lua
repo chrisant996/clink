@@ -80,10 +80,13 @@ end
 clink.onbeginedit(clear_coroutines)
 
 --------------------------------------------------------------------------------
-local function release_coroutine_yieldguard()
+local check_generation
+
+--------------------------------------------------------------------------------
+local function release_coroutine_yieldguard(c)
     local nil_cats = {}
     for category, cyg in pairs(_coroutine_yieldguard) do
-        if cyg.yieldguard:ready() then
+        if cyg.yieldguard:ready() or not check_generation(cyg.coroutine) then
             local entry = _coroutines[cyg.coroutine]
             if entry and entry.yieldguard == cyg.yieldguard then
                 entry.throttleclock = os.clock()
@@ -153,7 +156,7 @@ local function cancel_coroutine(message)
 end
 
 --------------------------------------------------------------------------------
-local function check_generation(c)
+check_generation = function(c)
     if get_coroutine_generation(c) == _coroutine_generation then
         return true
     end
@@ -270,7 +273,7 @@ function clink._resume_coroutines()
             co = c
             if coroutine.status(c) == "dead" then
                 table.insert(remove, c)
-            elseif not check_generation(c) and not entry.yieldguard then
+            elseif not check_generation(c) then
                 entry.canceled = true
                 table.insert(remove, c)
             else
