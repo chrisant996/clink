@@ -80,6 +80,32 @@ end
 clink.onbeginedit(clear_coroutines)
 
 --------------------------------------------------------------------------------
+local function release_coroutine_yieldguard()
+    local nil_cats = {}
+    for category, cyg in pairs(_coroutine_yieldguard) do
+        if cyg.yieldguard:ready() then
+            local entry = _coroutines[cyg.coroutine]
+            if entry and entry.yieldguard == cyg.yieldguard then
+                entry.throttleclock = os.clock()
+                entry.yieldguard = nil
+                table.insert(nil_cats, category)
+                -- TODO: This is an arbitrary order, but the dequeue order
+                -- should ideally be FIFO.
+                for _,e in pairs(_coroutines) do
+                    if e.queued and e.category == category then
+                        e.queued = nil
+                        break
+                    end
+                end
+            end
+        end
+    end
+    for _, cat in ipairs(nil_cats) do
+        _coroutine_yieldguard[cat] = nil
+    end
+end
+
+--------------------------------------------------------------------------------
 local function get_coroutine_generation(c)
     if c and _coroutines[c] then
         return _coroutines[c].generation
@@ -90,6 +116,25 @@ end
 local function is_prompt_coroutine(c)
     if c and _coroutines[c] then
         return _coroutines[c].isprompt
+    end
+end
+
+--------------------------------------------------------------------------------
+local function set_coroutine_yieldguard(yieldguard)
+    local t = coroutine.running()
+    local entry = _coroutines[t]
+    if yieldguard then
+        local cyg = { coroutine=t, yieldguard=yieldguard }
+        if entry.yield_category then
+            _coroutine_yieldguard[entry.yield_category] = cyg
+        else
+            table.insert(_coroutine_yieldguard, cyg)
+        end
+    else
+        release_coroutine_yieldguard()
+    end
+    if t and entry then
+        entry.yieldguard = yieldguard
     end
 end
 
@@ -117,51 +162,6 @@ local function check_generation(c)
         return true
     end
     return false
-end
-
---------------------------------------------------------------------------------
-local function release_coroutine_yieldguard(c)
-    local nil_cats = {}
-    for category, cyg in pairs(_coroutine_yieldguard) do
-        if cyg.yieldguard:ready() or not check_generation(cyg.coroutine) then
-            local entry = _coroutines[cyg.coroutine]
-            if entry and entry.yieldguard == cyg.yieldguard then
-                entry.throttleclock = os.clock()
-                entry.yieldguard = nil
-                table.insert(nil_cats, category)
-                -- TODO: This is an arbitrary order, but the dequeue order
-                -- should ideally be FIFO.
-                for _,e in pairs(_coroutines) do
-                    if e.queued and e.category == category then
-                        e.queued = nil
-                        break
-                    end
-                end
-            end
-        end
-    end
-    for _, cat in ipairs(nil_cats) do
-        _coroutine_yieldguard[cat] = nil
-    end
-end
-
---------------------------------------------------------------------------------
-local function set_coroutine_yieldguard(yieldguard)
-    local t = coroutine.running()
-    local entry = _coroutines[t]
-    if yieldguard then
-        local cyg = { coroutine=t, yieldguard=yieldguard }
-        if entry.yield_category then
-            _coroutine_yieldguard[entry.yield_category] = cyg
-        else
-            table.insert(_coroutine_yieldguard, cyg)
-        end
-    else
-        release_coroutine_yieldguard()
-    end
-    if t and entry then
-        entry.yieldguard = yieldguard
-    end
 end
 
 --------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ function clink._resume_coroutines()
             co = c
             if coroutine.status(c) == "dead" then
                 table.insert(remove, c)
-            elseif not check_generation(c) then
+            elseif not check_generation(c) and not entry.yieldguard then
                 entry.canceled = true
                 table.insert(remove, c)
             else
