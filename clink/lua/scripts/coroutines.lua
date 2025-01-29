@@ -80,7 +80,44 @@ end
 clink.onbeginedit(clear_coroutines)
 
 --------------------------------------------------------------------------------
-local check_generation
+local function get_coroutine_generation(c)
+    if c and _coroutines[c] then
+        return _coroutines[c].generation
+    end
+end
+
+--------------------------------------------------------------------------------
+local function is_prompt_coroutine(c)
+    if c and _coroutines[c] then
+        return _coroutines[c].isprompt
+    end
+end
+
+--------------------------------------------------------------------------------
+local function set_coroutine_queued(queued)
+    local t = coroutine.running()
+    if t and _coroutines[t] then
+        _coroutines[t].queued = queued and true or nil
+    end
+end
+
+--------------------------------------------------------------------------------
+local function cancel_coroutine(message)
+    clink._cancel_coroutine()
+    error((message or "").."canceling popenyield; coroutine is orphaned")
+end
+
+--------------------------------------------------------------------------------
+local function check_generation(c)
+    if get_coroutine_generation(c) == _coroutine_generation then
+        return true
+    end
+    local entry = _coroutines[c]
+    if entry and entry.untilcomplete then
+        return true
+    end
+    return false
+end
 
 --------------------------------------------------------------------------------
 local function release_coroutine_yieldguard(c)
@@ -109,20 +146,6 @@ local function release_coroutine_yieldguard(c)
 end
 
 --------------------------------------------------------------------------------
-local function get_coroutine_generation(c)
-    if c and _coroutines[c] then
-        return _coroutines[c].generation
-    end
-end
-
---------------------------------------------------------------------------------
-local function is_prompt_coroutine(c)
-    if c and _coroutines[c] then
-        return _coroutines[c].isprompt
-    end
-end
-
---------------------------------------------------------------------------------
 local function set_coroutine_yieldguard(yieldguard)
     local t = coroutine.running()
     local entry = _coroutines[t]
@@ -139,32 +162,6 @@ local function set_coroutine_yieldguard(yieldguard)
     if t and entry then
         entry.yieldguard = yieldguard
     end
-end
-
---------------------------------------------------------------------------------
-local function set_coroutine_queued(queued)
-    local t = coroutine.running()
-    if t and _coroutines[t] then
-        _coroutines[t].queued = queued and true or nil
-    end
-end
-
---------------------------------------------------------------------------------
-local function cancel_coroutine(message)
-    clink._cancel_coroutine()
-    error((message or "").."canceling popenyield; coroutine is orphaned")
-end
-
---------------------------------------------------------------------------------
-check_generation = function(c)
-    if get_coroutine_generation(c) == _coroutine_generation then
-        return true
-    end
-    local entry = _coroutines[c]
-    if entry and entry.untilcomplete then
-        return true
-    end
-    return false
 end
 
 --------------------------------------------------------------------------------
