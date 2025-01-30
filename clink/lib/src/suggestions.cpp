@@ -236,8 +236,9 @@ void suggestion_manager::set_started(const char* line)
 
     m_started = line;
 
-#ifdef DEBUG_SUGGEST
-    printf("\x1b[s\x1b[2Hstarted:  \"%s\"\x1b[K\x1b[u", m_started.c_str());
+#ifdef DEBUG
+    if (dbg_get_env_int("CLINK_DEBUG_SUGGEST"))
+        printf("\x1b[s\x1b[2Hstarted:  \"%s\"\x1b[K\x1b[u", m_started.c_str());
 #endif
 }
 
@@ -246,10 +247,13 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, const char
 {
     assertimplies(suggestion && *suggestion && line != suggestion, g_autosuggest_enable.get());
 
-#ifdef DEBUG_SUGGEST
-    static int32 s_suggnum = 0;
-    printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
-           ++s_suggnum, suggestion, offset, endword_offset);
+#ifdef DEBUG
+    if (dbg_get_env_int("CLINK_DEBUG_SUGGEST"))
+    {
+        static int32 s_suggnum = 0;
+        printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
+               ++s_suggnum, suggestion, offset, endword_offset);
+    }
 #endif
 
     if ((m_suggestion.length() == 0) == (!suggestion || !*suggestion) &&
@@ -301,8 +305,9 @@ malformed:
     m_line = line;
     m_started = line;
 
-#ifdef DEBUG_SUGGEST
-    printf("\x1b[s\x1b[2Hline:     \"%s\"\x1b[K\x1b[u", m_line.c_str());
+#ifdef DEBUG
+    if (dbg_get_env_int("CLINK_DEBUG_SUGGEST"))
+        printf("\x1b[s\x1b[2Hline:     \"%s\"\x1b[K\x1b[u", m_line.c_str());
 #endif
 
     if (g_rl_buffer)
