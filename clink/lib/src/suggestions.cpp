@@ -90,7 +90,7 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
     out.clear();
     if (!g_rl_buffer)
         return false;
-    if (m_suggestion_offset >= g_rl_buffer->get_length())
+    if (m_suggestion_offset > g_rl_buffer->get_length())
         return false;
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
