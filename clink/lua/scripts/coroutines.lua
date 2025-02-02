@@ -262,60 +262,70 @@ function clink._resume_coroutines()
         return
     end
 
-    -- Protected call to resume coroutines.
-    local remove = {}
-    local co
-    local impl = function()
-        for c,entry in pairs(_coroutines) do
-            co = c
-            if coroutine.status(c) == "dead" then
-                table.insert(remove, c)
-            elseif not check_generation(c) and (not entry.yieldguard or entry.yieldguard:ready()) then
-                entry.canceled = true
-                table.insert(remove, c)
-            else
-                _coroutines_resumable = true
-                local now = os.clock()
-                if next_entry_target(entry, now) <= now and
-                        (not entry.asyncyield or entry.asyncyield:ready()) then
-                    if not entry.firstclock then
-                        entry.firstclock = now
-                    end
-                    if entry.asyncyield then
-                        entry.throttleclock = now
-                    end
-                    entry.resumed = entry.resumed + 1
-                    clink._set_coroutine_context(entry.context)
-                    local ok, ret
-                    if entry.isprompt or entry.isgenerator then
-                        ok, ret = coroutine.resume(c, true--[[async]])
-                    else
-                        ok, ret = coroutine.resume(c)
-                    end
-                    if ok then
-                        -- Use live clock so the interval excludes the execution
-                        -- time of the coroutine.
-                        entry.lastclock = os.clock()
-                    else
-                        if not entry.canceled then
-                            print("")
-                            print("coroutine failed:")
-                            _co_error_handler(c, ret)
-                            entry.error = ret
-                        end
-                    end
-                    if coroutine.status(c) == "dead" then
-                        table.insert(remove, c)
-                    end
-                end
-            end
-        end
-    end
+    local remove
 
     -- Prepare.
     _coroutines_resumable = false
     _coroutines_fallback_state = {}
     clink._set_coroutine_context(nil)
+
+    -- Remove dead/obsolete coroutines.  Must remove old gen coroutines first,
+    -- since removing them may free up new gen coroutines to be resumable.
+    remove = {}
+    for c,entry in pairs(_coroutines) do
+        if coroutine.status(c) == "dead" then
+            table.insert(remove, c)
+        elseif not check_generation(c) and (not entry.yieldguard or entry.yieldguard:ready()) then
+            entry.canceled = true
+            table.insert(remove, c)
+        end
+    end
+    for _,c in ipairs(remove) do
+        clink.removecoroutine(c)
+    end
+
+    -- Protected call to resume coroutines.
+    local co
+    remove = {}
+    local impl = function()
+        for c,entry in pairs(_coroutines) do
+            co = c
+            _coroutines_resumable = true
+            local now = os.clock()
+            if next_entry_target(entry, now) <= now and
+                    (not entry.asyncyield or entry.asyncyield:ready()) then
+                if not entry.firstclock then
+                    entry.firstclock = now
+                end
+                if entry.asyncyield then
+                    entry.throttleclock = now
+                end
+                entry.resumed = entry.resumed + 1
+                clink._set_coroutine_context(entry.context)
+                local ok, ret
+                if entry.isprompt or entry.isgenerator then
+                    ok, ret = coroutine.resume(c, true--[[async]])
+                else
+                    ok, ret = coroutine.resume(c)
+                end
+                if ok then
+                    -- Use live clock so the interval excludes the execution
+                    -- time of the coroutine.
+                    entry.lastclock = os.clock()
+                else
+                    if not entry.canceled then
+                        print("")
+                        print("coroutine failed:")
+                        _co_error_handler(c, ret)
+                        entry.error = ret
+                    end
+                end
+                if coroutine.status(c) == "dead" then
+                    table.insert(remove, c)
+                end
+            end
+        end
+    end
 
     -- Protected call.
     local ok, ret = xpcall(impl, _error_handler_ret)
