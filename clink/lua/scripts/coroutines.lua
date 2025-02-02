@@ -270,7 +270,7 @@ function clink._resume_coroutines()
             co = c
             if coroutine.status(c) == "dead" then
                 table.insert(remove, c)
-            elseif not check_generation(c) and not entry.yieldguard then
+            elseif not check_generation(c) and (not entry.yieldguard or entry.yieldguard:ready()) then
                 entry.canceled = true
                 table.insert(remove, c)
             else
@@ -278,11 +278,6 @@ function clink._resume_coroutines()
                 local now = os.clock()
                 if next_entry_target(entry, now) <= now and
                         (not entry.asyncyield or entry.asyncyield:ready()) then
-                    if not check_generation(c) then
-                        entry.canceled = true
-                        table.insert(remove, c)
-                        goto continue
-                    end
                     if not entry.firstclock then
                         entry.firstclock = now
                     end
@@ -314,7 +309,6 @@ function clink._resume_coroutines()
                     end
                 end
             end
-::continue::
         end
     end
 
