@@ -410,6 +410,7 @@ static int32 to_codepage(lua_State* state)
 /// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a>
 /// except that this treats each integer as a Unicode codepoints, instead of as
 /// ASCII values.
+inline char add_shift_and(uint8 x, uint32 c, uint8 s, uint8 a) { return char(x + ((c >> s) & a)); }
 static int32 uni_char(lua_State* state)
 {
     char tmp[5];
@@ -427,30 +428,21 @@ static int32 uni_char(lua_State* state)
         }
         else if (c <= 0x07ff)
         {
-            const uint32 b2 = 0x80 + (c & 0x3f);
-            const uint32 b1 = 0xc0 + ((c >> 6) & 0x1f);
-            tmp[z++] = b1;
-            tmp[z++] = b2;
+            tmp[z++] = add_shift_and(0xc0, c, 6, 0x1f);
+            tmp[z++] = add_shift_and(0x80, c, 0, 0x3f);
         }
         else if (c <= 0xffff)
         {
-            const uint32 b3 = 0x80 + (c & 0x3f);
-            const uint32 b2 = 0x80 + ((c >> 6) & 0x3f);
-            const uint32 b1 = 0xe0 + ((c >> 12) & 0x0f);
-            tmp[z++] = b1;
-            tmp[z++] = b2;
-            tmp[z++] = b3;
+            tmp[z++] = add_shift_and(0xe0, c, 12, 0x0f);
+            tmp[z++] = add_shift_and(0x80, c, 6, 0x3f);
+            tmp[z++] = add_shift_and(0x80, c, 0, 0x3f);
         }
         else if (c <= 0x10ffff)
         {
-            const uint32 b4 = 0x80 + (c & 0x3f);
-            const uint32 b3 = 0x80 + ((c >> 6) & 0x3f);
-            const uint32 b2 = 0x80 + ((c >> 12) & 0x3f);
-            const uint32 b1 = 0xf0 + ((c >> 18) & 0x07);
-            tmp[z++] = b1;
-            tmp[z++] = b2;
-            tmp[z++] = b3;
-            tmp[z++] = b4;
+            tmp[z++] = add_shift_and(0xf0, c, 18, 0x07);
+            tmp[z++] = add_shift_and(0x80, c, 12, 0x3f);
+            tmp[z++] = add_shift_and(0x80, c, 6, 0x3f);
+            tmp[z++] = add_shift_and(0x80, c, 0, 0x3f);
         }
         else
         {
