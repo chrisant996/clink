@@ -399,6 +399,72 @@ static int32 to_codepage(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  unicode.char
+/// -ver:   1.7.10
+/// -arg:   ...:integer
+/// -ret:   string
+/// Receives zero or more integers.  Returns a string containing the UTF8
+/// encoding of each of the integers as Unicode codepoints.
+///
+/// This behaves similar to
+/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a>
+/// except that this treats each integer as a Unicode codepoints, instead of as
+/// ASCII values.
+static int32 uni_char(lua_State* state)
+{
+    char tmp[5];
+    str_moveable s;
+
+    const int32 n = lua_gettop(state);
+    for (int32 i = 1; i <= n; ++i)
+    {
+        const uint32 c = luaL_checkint(state, i);
+
+        uint32 z = 0;
+        if (c <= 0x007f)
+        {
+            tmp[z++] = c;
+        }
+        else if (c <= 0x07ff)
+        {
+            const uint32 b2 = 0x80 + (c & 0x3f);
+            const uint32 b1 = 0xc0 + ((c >> 6) & 0x1f);
+            tmp[z++] = b1;
+            tmp[z++] = b2;
+        }
+        else if (c <= 0xffff)
+        {
+            const uint32 b3 = 0x80 + (c & 0x3f);
+            const uint32 b2 = 0x80 + ((c >> 6) & 0x3f);
+            const uint32 b1 = 0xe0 + ((c >> 12) & 0x0f);
+            tmp[z++] = b1;
+            tmp[z++] = b2;
+            tmp[z++] = b3;
+        }
+        else if (c <= 0x10ffff)
+        {
+            const uint32 b4 = 0x80 + (c & 0x3f);
+            const uint32 b3 = 0x80 + ((c >> 6) & 0x3f);
+            const uint32 b2 = 0x80 + ((c >> 12) & 0x3f);
+            const uint32 b1 = 0xf0 + ((c >> 18) & 0x07);
+            tmp[z++] = b1;
+            tmp[z++] = b2;
+            tmp[z++] = b3;
+            tmp[z++] = b4;
+        }
+        else
+        {
+            luaL_argerror(state, i, "value out of range");
+        }
+
+        s.concat_no_truncate(tmp, z);
+    }
+
+    lua_pushlstring(state, s.c_str(), s.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void unicode_lua_initialise(lua_state& lua)
 {
     struct {
@@ -410,6 +476,7 @@ void unicode_lua_initialise(lua_state& lua)
         { "iter",           &iter },
         { "fromcodepage",   &from_codepage },
         { "tocodepage",     &to_codepage },
+        { "char",           &uni_char },
     };
 
     lua_State* state = lua.get_state();
