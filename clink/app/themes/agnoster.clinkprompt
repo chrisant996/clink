@@ -127,18 +127,18 @@
 --
 -- DEFAULT SYMBOLS:
 --
---  - agnoster_clinkprompt.SEGMENT_SEPARATOR = ucs2to8(0xe0b0)
---  - agnoster_clinkprompt.SEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b1)
---  - agnoster_clinkprompt.RSEGMENT_SEPARATOR = ucs2to8(0xe0b2)
---  - agnoster_clinkprompt.RSEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b3)
---  - agnoster_clinkprompt.PLUSMINUS = ucs2to8(0x00b1)
---  - agnoster_clinkprompt.BRANCH = ucs2to8(0xe0a0)
---  - agnoster_clinkprompt.DETACHED = ucs2to8(0x27a6)
---  - agnoster_clinkprompt.CROSS = ucs2to8(0x2718)
---  - agnoster_clinkprompt.LIGHTNING = ucs2to8(0x26a1)
---  - agnoster_clinkprompt.GEAR = ucs2to8(0x2699)
---  - agnoster_clinkprompt.CHARGING = ucs2to8(0x2191)
---  - agnoster_clinkprompt.SMARTCHARGING = ucs2to8(0x2665)
+--  - agnoster_clinkprompt.SEGMENT_SEPARATOR = uc(0xe0b0)
+--  - agnoster_clinkprompt.SEGMENT_SEPARATOR_CONTRAST = uc(0xe0b1)
+--  - agnoster_clinkprompt.RSEGMENT_SEPARATOR = uc(0xe0b2)
+--  - agnoster_clinkprompt.RSEGMENT_SEPARATOR_CONTRAST = uc(0xe0b3)
+--  - agnoster_clinkprompt.PLUSMINUS = uc(0x00b1)
+--  - agnoster_clinkprompt.BRANCH = uc(0xe0a0)
+--  - agnoster_clinkprompt.DETACHED = uc(0x27a6)
+--  - agnoster_clinkprompt.CROSS = uc(0x2718)
+--  - agnoster_clinkprompt.LIGHTNING = uc(0x26a1)
+--  - agnoster_clinkprompt.GEAR = uc(0x2699)
+--  - agnoster_clinkprompt.CHARGING = uc(0x2191)
+--  - agnoster_clinkprompt.SMARTCHARGING = uc(0x2665)
 --  - agnoster_clinkprompt.BATTERY = '%'
 
 
@@ -151,20 +151,7 @@
 
 agnoster_clinkprompt = agnoster_clinkprompt or {}
 local ag = agnoster_clinkprompt
--- luacheck: push
--- luacheck: no max line length
-local function add_shift_and(x, y, s, a)
-    return x + bit32.band(bit32.rshift(y, s), a)
-end
-local function ucs2to8(c)
-    if type(c) ~= 'number' then error(string.format('arg #1 unexpected type %s; expected number', type(c)))
-    elseif c < 0 then error(string.format('arg #1 cannot be negative'))
-    elseif c <= 0x007f then return string.char(c)
-    elseif c <= 0x07ff then return string.char(add_shift_and(0xc0, c, 6, 0x1f), add_shift_and(0x80, c, 0, 0x3f))
-    elseif c <= 0xffff then return string.char(add_shift_and(0xe0, c, 12, 0x0f), add_shift_and(0x80, c, 6, 0x3f), add_shift_and(0x80, c, 0, 0x3f))
-    else error(string.format('arg #1 value 0x%x exceeds 0xffff', c))
-    end
-end
+local uc = unicode.char
 local function hex2dec(hex, s, e)
     return tostring(tonumber(hex:sub(s, e), 16))
 end
@@ -173,7 +160,6 @@ local function hexcolor(hex)
     if #hex ~= 6 then error('hexcolor requires a 6 digit hexadecimal string') end
     return '38;2;'..hex2dec(hex, 1, 2)..';'..hex2dec(hex, 3, 4)..';'..hex2dec(hex, 5, 6)
 end
--- luacheck: pop
 
 -- Initialize the defaults.
 local defaults = {}
@@ -207,18 +193,18 @@ defaults.brmagenta = '95'
 defaults.brcyan = '96'
 defaults.brwhite = '97'
 -- Default symbols.
-defaults.SEGMENT_SEPARATOR = ucs2to8(0xe0b0)
-defaults.SEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b1)
-defaults.RSEGMENT_SEPARATOR = ucs2to8(0xe0b2)
-defaults.RSEGMENT_SEPARATOR_CONTRAST = ucs2to8(0xe0b3)
-defaults.PLUSMINUS = ucs2to8(0x00b1)
-defaults.BRANCH = ucs2to8(0xe0a0)
-defaults.DETACHED = ucs2to8(0x27a6)
-defaults.CROSS = ucs2to8(0x2718)
-defaults.LIGHTNING = ucs2to8(0xf0e7) -- consider ucs2to8(0x26a1), but conhost has trouble rendering it.
-defaults.GEAR = ucs2to8(0x2699)
-defaults.CHARGING = ucs2to8(0x2191)
-defaults.SMARTCHARGING = ucs2to8(0x2665)
+defaults.SEGMENT_SEPARATOR = uc(0xe0b0)
+defaults.SEGMENT_SEPARATOR_CONTRAST = uc(0xe0b1)
+defaults.RSEGMENT_SEPARATOR = uc(0xe0b2)
+defaults.RSEGMENT_SEPARATOR_CONTRAST = uc(0xe0b3)
+defaults.PLUSMINUS = uc(0x00b1)
+defaults.BRANCH = uc(0xe0a0)
+defaults.DETACHED = uc(0x27a6)
+defaults.CROSS = uc(0x2718)
+defaults.LIGHTNING = uc(0xf0e7) -- consider uc(0x26a1), but conhost has trouble rendering it.
+defaults.GEAR = uc(0x2699)
+defaults.CHARGING = uc(0x2191)
+defaults.SMARTCHARGING = uc(0x2665)
 defaults.BATTERY = '%'
 -- Solarized color theme (https://github.com/altercation/solarized).
 local solarized_dark = {
