@@ -87,7 +87,7 @@ end
 --------------------------------------------------------------------------------
 function clink._diag_loaded_scripts(arg)
     arg = (arg and arg >= 9)
-    if not arg then
+    if not arg or not clink._loaded_scripts then
         return
     end
 
@@ -97,7 +97,7 @@ function clink._diag_loaded_scripts(arg)
     local any = false
 
     clink.print(bold.."loaded scripts:"..norm)
-    for i,chunkname in ipairs (clink._loaded_scripts or {}) do
+    for i,chunkname in ipairs (clink._loaded_scripts) do
         clink.print("  "..i.." = "..chunkname)
         any = true
     end
