@@ -626,5 +626,11 @@ void __lua_set_clink_callbacks(const lua_clink_callbacks* callbacks);
     } while (0)
 /* end_clink_change */
 
+/* begin_clink_change */
+#ifdef LUA_TRACK_LOADED_FILES
+extern char g_track_loaded_files;
+#endif
+/* end_clink_change */
+
 #endif
 

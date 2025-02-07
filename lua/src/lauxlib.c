@@ -24,13 +24,6 @@
 #include "lauxlib.h"
 
 
-/* begin_clink_change */
-#ifdef TRACK_LOADED_LUA_FILES
-#include <windows.h>
-#endif
-/* end_clink_change */
-
-
 /*
 ** {======================================================
 ** Traceback
@@ -635,45 +628,19 @@ static int skipcomment (LoadF *lf, int *cp) {
 
 
 /* begin_clink_change */
-#ifdef TRACK_LOADED_LUA_FILES
+#ifdef LUA_TRACK_LOADED_FILES
 
-static int get_full_path (const char *filename, char *out, int size)
-{
-  wchar_t *unused;
-  wchar_t win[MAX_PATH * 2];
-  wchar_t wout[MAX_PATH * 2];
-  int len;
+char g_track_loaded_files = 0;
 
-  if (!out || !size)
-    return 0;
-  out[0] = '\0';
-
-  len = MultiByteToWideChar(CP_UTF8, 0, filename, -1, win, sizeof(win) / sizeof(win[0]));
-  if (len <= 0)
-    return 0;
-
-  len = GetFullPathNameW(win, sizeof(wout) / sizeof(wout[0]), wout, &unused);
-  if (!len || len >= size)
-    return 0;
-
-  len = WideCharToMultiByte(CP_UTF8, 0, wout, -1, out, size, NULL, NULL);
-  if (len <= 0)
-    return 0;
-
-  return 1;
-}
-
-LUALIB_API int is_lua_file_loaded (lua_State *L, const char *filename)
+void add_loaded_file (lua_State *L, const char *filename, int add)
 {
   int top = lua_gettop(L);
-  char full[MAX_PATH * 2];
-  int loaded = 0;
 
   lua_getglobal(L, "clink");
   if (!lua_istable(L, -1))
   {
     lua_pop(L, 1);
-    lua_createtable(L, 0, 0);
+    lua_newtable(L);
     lua_setglobal(L, "clink");
     lua_getglobal(L, "clink");
   }
@@ -685,51 +652,23 @@ LUALIB_API int is_lua_file_loaded (lua_State *L, const char *filename)
     lua_pop(L, 1);
     lua_getglobal(L, "clink");
     lua_pushliteral(L, "_loaded_scripts");
-    lua_createtable(L, 0, 0);
+    lua_newtable(L);
     lua_rawset(L, -3);
     lua_pushliteral(L, "_loaded_scripts");
     lua_rawget(L, -2);
   }
 
-  if (get_full_path(filename, full, sizeof(full) / sizeof(full[0])))
-  {
+  if (add) {
+    /* add to end of array */
+    int e = luaL_len(L, -1) + 1;
     lua_pushstring(L, filename);
-    lua_rawget(L, -2);
-    loaded = !lua_isnil(L, -1);
+    lua_rawseti(L, -2, e);
+  } else {
+    /* TODO: Loop to find last matching entry. */
+    /* TODO: Append " // ERROR" to its end; maybe even include an error number. */
   }
 
   lua_settop(L, top);
-  return loaded;
-}
-
-static void add_loaded_file (lua_State *L, const char *filename, int add)
-{
-  int top = lua_gettop(L);
-  char full[MAX_PATH * 2];
-
-  if (!get_full_path(filename, full, sizeof(full) / sizeof(full[0])))
-    return;
-
-  lua_getglobal(L, "clink");
-  if (!lua_istable(L, -1))
-  {
-done:
-    lua_settop(L, top);
-    return;
-  }
-
-  lua_pushliteral(L, "_loaded_scripts");
-  lua_rawget(L, -2);
-  if (!lua_istable(L, -1))
-    goto done;
-
-  lua_pushstring(L, filename);
-  if (add)
-    lua_pushboolean(L, 1);
-  else
-    lua_pushnil(L);
-  lua_rawset(L, -3);
-  goto done;
 }
 
 #endif
@@ -751,8 +690,8 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
   int c;
   int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
 /* begin_clink_change */
-#ifdef TRACK_LOADED_LUA_FILES
-  int was_loaded = 0;
+#ifdef LUA_TRACK_LOADED_FILES
+  const char* loaded_name = 0;
 #endif
 /* end_clink_change */
   if (filename == NULL) {
@@ -780,10 +719,9 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
   if (c != EOF)
     lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
 /* begin_clink_change */
-#ifdef TRACK_LOADED_LUA_FILES
-  was_loaded = is_lua_file_loaded(L, filename);
-  if (!was_loaded)
-    add_loaded_file(L, filename, 1);
+#ifdef LUA_TRACK_LOADED_FILES
+  if (g_track_loaded_files)
+    loaded_name = lua_tostring(L, -1);
 #endif
 /* end_clink_change */
   status = lua_load(L, getF, &lf, lua_tostring(L, -1), mode);
@@ -791,9 +729,11 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
   if (readstatus) {
 /* begin_clink_change */
-#ifdef TRACK_LOADED_LUA_FILES
-    if (!was_loaded)
-      add_loaded_file(L, filename, 0);
+#ifdef LUA_TRACK_LOADED_FILES
+#if 0
+    if (g_track_loaded_files)
+      add_loaded_file(L, loaded_name, 0);
+#endif
 #endif
 /* end_clink_change */
     lua_settop(L, fnameindex);  /* ignore results from `lua_load' */

@@ -970,12 +970,25 @@ LUA_API int lua_pcallk (lua_State *L, int nargs, int nresults, int errfunc,
 }
 
 
+/* begin_clink_change */
+#ifdef LUA_TRACK_LOADED_FILES
+extern void add_loaded_file (lua_State *L, const char *filename, int add);
+#endif
+/* end_clink_change */
+
+
 LUA_API int lua_load (lua_State *L, lua_Reader reader, void *data,
                       const char *chunkname, const char *mode) {
   ZIO z;
   int status;
   lua_lock(L);
   if (!chunkname) chunkname = "?";
+/* begin_clink_change */
+#ifdef LUA_TRACK_LOADED_FILES
+  if (g_track_loaded_files)
+    add_loaded_file(L, chunkname, 1);
+#endif
+/* end_clink_change */
   luaZ_init(L, &z, reader, data);
   status = luaD_protectedparser(L, &z, chunkname, mode);
   if (status == LUA_OK) {  /* no errors? */

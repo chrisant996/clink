@@ -66,10 +66,6 @@ static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows
 static const char c_uninstall_key[] = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 #endif
 
-#ifdef TRACK_LOADED_LUA_FILES
-extern "C" int32 is_lua_file_loaded(lua_State* state, const char* filename);
-#endif
-
 //------------------------------------------------------------------------------
 const uint32 c_snooze_duration = 22 * 60 * 60;  // Effectively one day, but avoids the threshold creeping forward over time.
 static HANDLE s_hMutex = 0;
@@ -2191,20 +2187,6 @@ static int32 get_c_callstack(lua_State* state)
 #endif
 
 //------------------------------------------------------------------------------
-#ifdef TRACK_LOADED_LUA_FILES
-static int32 clink_is_lua_file_loaded(lua_State* state)
-{
-    const char* filename = checkstring(state, 1);
-    if (!filename)
-        return 0;
-
-    int32 loaded = is_lua_file_loaded(state, filename);
-    lua_pushboolean(state, loaded);
-    return 1;
-}
-#endif
-
-//------------------------------------------------------------------------------
 // This prototype was abandoned, but is kept in case parts of it might be useful
 // in the future.  The match generator layer is too dependent on CMD and threads
 // and things that don't make sense in a standalone Lua interpreter.  And how to
@@ -2365,9 +2347,6 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #if defined(DEBUG) && defined(_MSC_VER)
         { 0,    "last_allocation_number", &last_allocation_number },
         { 0,    "get_c_callstack",        &get_c_callstack },
-#endif
-#ifdef TRACK_LOADED_LUA_FILES
-        { 1,    "is_lua_file_loaded",     &clink_is_lua_file_loaded },
 #endif
     };
 

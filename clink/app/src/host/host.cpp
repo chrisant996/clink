@@ -906,7 +906,12 @@ force_reload_lua:
     {
         dbg_ignore_scope(snapshot, "Initialization overhead");
         if (!m_lua)
+        {
+#ifdef LUA_TRACK_LOADED_FILES
+            g_track_loaded_files = true;
+#endif
             m_lua = new host_lua;
+        }
         if (!m_prompt_filter)
             m_prompt_filter = new prompt_filter(*m_lua);
         if (!m_suggester)
