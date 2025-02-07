@@ -23,6 +23,10 @@
 
 #include "lauxlib.h"
 
+/* begin_clink_change */
+#include "lobject.h"
+/* end_clink_change */
+
 
 /*
 ** {======================================================
@@ -661,7 +665,9 @@ void add_loaded_file (lua_State *L, const char *filename, int add)
   if (add) {
     /* add to end of array */
     int e = luaL_len(L, -1) + 1;
-    lua_pushstring(L, filename);
+    char short_src[LUA_IDSIZE];
+    luaO_chunkid(short_src, filename, LUA_IDSIZE);
+    lua_pushstring(L, short_src);
     lua_rawseti(L, -2, e);
   } else {
     /* TODO: Loop to find last matching entry. */
