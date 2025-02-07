@@ -1954,6 +1954,11 @@ void display_manager::display()
             {
                 move_to_row(i);
                 _rl_clear_to_eol(_rl_screenwidth);
+                if (_rl_last_c_pos)
+                {
+                    print("\r", 1);
+                    _rl_last_c_pos = 0;
+                }
             }
         }
 
@@ -2043,6 +2048,8 @@ void display_manager::display()
             print(color.c_str(), color.length());
             print(out.c_str(), out.length());
             reset_col = true;
+
+            _rl_last_c_pos = cell_count(out.c_str());
         }
 
         print("\x1b[m", 3);
@@ -2786,9 +2793,19 @@ extern "C" void _rl_clear_to_eol(int32 count)
         _rl_rprompt_shown_len = 0;
     }
 
-    assert(_rl_term_clreol);
-    assert(*_rl_term_clreol);
-    tputs(_rl_term_clreol);
+    if (_rl_term_clreol)
+    {
+        tputs(_rl_term_clreol);
+    }
+    else if (count)
+    {
+        str_moveable s;
+        s.reserve(count);
+        concat_spaces(s, count);
+        tputs(s.c_str());
+        _rl_last_c_pos += count;
+        assert(_rl_last_c_pos <= _rl_screenwidth);
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -456,7 +456,16 @@ host::host(const char* name)
 : m_name(name)
 , m_doskey(os::get_shellname())
 {
-    m_terminal = terminal_create();
+#ifdef DEBUG
+    // For this to take effect, it must be set before host is instantiated, so
+    // before `clink inject`.
+    str<16> value;
+    const bool cursor_visibility = !(os::get_env("DEBUG_NO_HIDE_CURSOR", value) && atoi(value.c_str()) != 0);
+#else
+    const bool cursor_visibility = true;
+#endif
+
+    m_terminal = terminal_create(nullptr, cursor_visibility);
     m_printer = new printer(*m_terminal.out);
 
     assert(!get_lua_terminal_input());
