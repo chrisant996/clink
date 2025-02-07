@@ -5,7 +5,7 @@
 #### v1.7.10
 
 - Added new Lua API [unicode.char()](#unicode.char), similar to [string.char()](https://www.lua.org/manual/5.2/manual.html#pdf-string.char) but for Unicode codepoints instead of ASCII values.
-- Added a `clink-diagnostics-output` bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.
+- Added a `clink-diagnostics-output` bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.  This command also includes a list of all loaded Lua scripts.
 - Fixed [#721](https://github.com/chrisant996/clink/issues/721); potential crash if console window width is less than console screen buffer width (regression introduced in v1.7.5).
 
 #### v1.7.9
