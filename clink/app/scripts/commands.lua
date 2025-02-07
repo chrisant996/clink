@@ -85,12 +85,36 @@ function clink._popup_show_help(rl_buffer)
 end
 
 --------------------------------------------------------------------------------
+function clink._diag_loaded_scripts(arg)
+    arg = (arg and arg >= 9)
+    if not arg then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    local any = false
+
+    clink.print(bold.."loaded scripts:"..norm)
+    for i,chunkname in ipairs (clink._loaded_scripts or {}) do
+        clink.print("  "..i.." = "..chunkname)
+        any = true
+    end
+
+    if not any then
+        clink.print("  no scripts loaded")
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
     clink._diag_coroutines()
     clink._diag_refilter()
     clink._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
     if arg then
+        clink._diag_loaded_scripts(arg)     -- When arg >= 9.
         clink._diag_argmatchers(arg)        -- When arg >= 2.
         clink._diag_prompts(arg)            -- When arg >= 1 or lua.debug is set.
         clink._diag_generators(arg)         -- When arg >= 3.
