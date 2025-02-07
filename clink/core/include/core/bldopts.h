@@ -49,7 +49,7 @@
 //------------------------------------------------------------------------------
 // Define this to maintain a clink._loaded_scripts table tracking an array of
 // scripts that have been loaded during the session.
-//#define LUA_TRACK_LOADED_FILES
+#define LUA_TRACK_LOADED_FILES
 
 //------------------------------------------------------------------------------
 // Define this to run `pushd` repeatedly and expose the directory stack.
