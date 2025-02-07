@@ -5,6 +5,7 @@
 #### v1.7.10
 
 - Added new Lua API [unicode.char()](#unicode.char), similar to [string.char()](https://www.lua.org/manual/5.2/manual.html#pdf-string.char) but for Unicode codepoints instead of ASCII values.
+- Added a `clink-diagnostics-output` bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.
 
 #### v1.7.9
 
