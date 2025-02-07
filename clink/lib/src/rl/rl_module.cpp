@@ -2137,6 +2137,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         clink_add_funmap_entry("magic-space", magic_space, keycat_history, "Perform history expansion on the text before the cursor position and insert a space");
 
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
+        clink_add_funmap_entry("clink-diagnostics-output", clink_diagnostics_output, keycat_misc, "Write internal diagnostic information to a file");
 
         // IMPORTANT:  Aliased command names need to be defined after the real
         // command name, so that rl.getbinding() returns the real command name.
@@ -2206,6 +2207,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\C-x\\C-e",     "edit-and-execute-command" }, // ctrl-x,ctrl-e
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
+        { "\\C-x\\e[27;6;90~", "clink-diagnostics-output" }, // ctrl-x,ctrl-shift-z
         { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\eOP",          "win-cursor-forward" },      // F1
         { "\\eOQ",          "win-copy-up-to-char" },     // F2

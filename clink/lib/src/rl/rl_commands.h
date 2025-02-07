@@ -148,3 +148,4 @@ int32   magic_space(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 int32   clink_diagnostics(int32 count, int32 invoking_key);
+int32   clink_diagnostics_output(int32 count, int32 invoking_key);

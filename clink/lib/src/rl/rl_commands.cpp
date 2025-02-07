@@ -31,6 +31,7 @@
 #include <terminal/scroll.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/terminal_out.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -2523,11 +2524,56 @@ static void analyze_char_widths(const char* s, std::vector<alert_char>& cjk)
 }
 
 //------------------------------------------------------------------------------
-extern void task_manager_diagnostics();
-int32 clink_diagnostics(int32 count, int32 invoking_key)
+class terminal_file : public terminal_out
 {
-    end_prompt(true/*crlf*/);
+public:
+                            terminal_file(const char* file, int32 rows, int32 cols);
+    virtual                 ~terminal_file();
+    virtual void            open() {}
+    virtual void            begin() {}
+    virtual void            end() {}
+    virtual void            close() {}
+    virtual void            write(const char* chars, int32 length);
+    virtual bool            get_line_text(int32 line, str_base& out) const { return false; }
+    virtual void            flush() {}
+    virtual int32           get_columns() const { return m_cols; }
+    virtual int32           get_rows() const { return m_rows; }
+    virtual int32           is_line_default_color(int32 line) const { assert(false); return -1; }
+    virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { assert(false); return -1; }
+    virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const { assert(false); return -1; }
 
+private:
+    FILE* const             m_file;
+    const int32             m_rows;
+    const int32             m_cols;
+};
+
+//------------------------------------------------------------------------------
+terminal_file::terminal_file(const char* file, int32 rows, int32 cols)
+: m_file(fopen(file, "w"))
+, m_rows(rows)
+, m_cols(cols)
+{
+}
+
+//------------------------------------------------------------------------------
+terminal_file::~terminal_file()
+{
+    if (m_file)
+        fclose(m_file);
+}
+
+//------------------------------------------------------------------------------
+void terminal_file::write(const char* chars, int32 length)
+{
+    if (m_file)
+        fwrite(chars, length, 1, m_file);
+}
+
+//------------------------------------------------------------------------------
+extern void task_manager_diagnostics();
+static void do_clink_diagnostics()
+{
     static char bold[] = "\x1b[1m";
     static char norm[] = "\x1b[m";
     static char err[] = "\x1b[1;91;40m";
@@ -2700,9 +2746,55 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
                 "    the prompt string by removing the characters.\n");
         }
     }
+}
+
+//------------------------------------------------------------------------------
+int32 clink_diagnostics(int32 count, int32 invoking_key)
+{
+    end_prompt(true/*crlf*/);
+
+    do_clink_diagnostics();
 
     if (!rl_explicit_arg)
         g_printer->print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");
+
+    rl_forced_update_display();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_diagnostics_output(int32 count, int32 invoking_key)
+{
+    end_prompt(true/*crlf*/);
+
+    int32 id = 0;
+    host_context context;
+    host_get_app_context(id, context);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int32 rows = 50;
+    int32 cols = 80;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    {
+        rows = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+        cols = (csbi.srWindow.Right - csbi.srWindow.Left) + 1;
+    }
+
+    str_moveable file;
+    path::join(context.profile.c_str(), "clink.info", file);
+    terminal_file out(file.c_str(), rows, cols);
+    printer file_printer(out);
+
+    {
+        rollback<printer*> rb_printer(g_printer, &file_printer);
+        rollback<int> rb_numeric_arg(rl_numeric_arg, 999);
+        rollback<int> rb_explicit_arg(rl_explicit_arg, 1);
+        rollback<int> rb_arg_sign(rl_arg_sign, 1);
+
+        do_clink_diagnostics();
+    }
+
+    printf("Clink diagnostics output written to '%s'.\n", file.c_str());
 
     rl_forced_update_display();
     return 0;
