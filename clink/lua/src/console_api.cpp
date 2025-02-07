@@ -1132,7 +1132,7 @@ void console_lua_initialise(lua_state& lua)
 
     lua_State* state = lua.get_state();
 
-    lua_createtable(state, sizeof_array(methods), 0);
+    lua_createtable(state, 0, sizeof_array(methods));
 
     for (const auto& method : methods)
     {
