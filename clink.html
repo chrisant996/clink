@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.7.9</title>
+<title>Clink v1.7.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -954,7 +954,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.9</div>
+                <div id="title">Clink v1.7.10</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -3563,6 +3563,11 @@ $endif              # end clink-only section
 <td><a class="wlink" href="#rlcmd-clink-diagnostics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-diagnostics"></a><code>clink-diagnostics</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd></td>
 <td>Show internal diagnostic information.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#rlcmd-clink-diagnostics-output"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-diagnostics-output"></a><code>clink-diagnostics-output</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>z</kbd></td>
+<td>Write internal diagnostic information to a file.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-dump-functions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-dump-functions"></a><code>clink-dump-functions</code></td>
@@ -8565,7 +8570,9 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 
 </div><div class="group">
 <h5 id="unicode" class="group_name"><a class="wlink" href="#unicode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>unicode. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#unicode.fromcodepage">fromcodepage</a></td></tr><tr><td><a href="#unicode.isnormalized">isnormalized</a></td></tr><tr><td><a href="#unicode.iter">iter</a></td></tr><tr><td><a href="#unicode.normalize">normalize</a></td></tr><tr><td><a href="#unicode.tocodepage">tocodepage</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#unicode.char">char</a></td><td><a href="#unicode.iter">iter</a></td></tr><tr><td><a href="#unicode.fromcodepage">fromcodepage</a></td><td><a href="#unicode.normalize">normalize</a></td></tr><tr><td><a href="#unicode.isnormalized">isnormalized</a></td><td><a href="#unicode.tocodepage">tocodepage</a></td></tr></table>
+<div class="function"><div class="header"> <div id="unicode.char" class="name"><a class="wlink" href="#unicode.char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>unicode.char</span> <span class="uplinks"><a href="#unicode">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">...</span>:integer ) : string<br/><div class="version">v1.7.10 and newer</div></div></div><div class="body"><p class="desc">Receives zero or more integers.  Returns a string containing the UTF8 encoding of each of the integers as Unicode codepoints.</p><p class="desc"> This behaves similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a> except that this treats each integer as a Unicode codepoints, instead of as ASCII values.</p></div></div><hr/>
+
 <div class="function"><div class="header"> <div id="unicode.fromcodepage" class="name"><a class="wlink" href="#unicode.fromcodepage"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>unicode.fromcodepage</span> <span class="uplinks"><a href="#unicode">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">codepage</span>:integer] ) : string | nil<br/><div class="version">v1.3.27 and newer</div></div></div><div class="body"><p class="desc">This converts <span class="arg">text</span> from the <span class="arg">codepage</span> encoding to UTF8.</p><p class="desc"> When <span class="arg">codepage</span> is omitted, the current Active Code Page is used.</p><p class="desc"> If the text cannot be converted, nil is returned.</p><p class="desc"> <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from other encodings is intended for use with file input/output or network input/output.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="unicode.isnormalized" class="name"><a class="wlink" href="#unicode.isnormalized"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>unicode.isnormalized</span> <span class="uplinks"><a href="#unicode">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">form</span>:integer, <span class="arg_name">text</span>:string ) : boolean [, integer]<br/><div class="version">v1.3.26 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">text</span> is already normalized according to the Unicode normalization <span class="arg">form</span>:</p><p class="desc"> <ul> <li><code>1</code> is Unicode normalization form C, canonical composition. Transforms each base character + combining characters into the precomposed equivalent.  For example, A + umlaut becomes Ä. <li><code>2</code> is Unicode normalization form D, canonical decomposition. Transforms each precomposed character into base character + combining characters.  For example, Ä becomes A + umlaut. <li><code>3</code> is Unicode normalization form KC, compatibility composition.  Transforms each base character + combining characters into the precomposed equivalent, and transforms compatibility characters into their equivalents.  For example, A + umlaut + ligature for "fi" becomes Ä + f + i. <li><code>4</code> is Unicode normalization form KD, compatibility decomposition.  Transforms each precomposed character into base character + combining characters, and transforms compatibility characters to their equivalents.  For example, Ä + ligature for "fi" becomes A + umlaut + f + i. </ul></p><p class="desc"> If successful, true or false is returned.</p><p class="desc"> If unsuccessful, false and an error code are returned.</p></div></div><hr/>
@@ -8756,6 +8763,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1710"><a class="wlink" href="#v1710"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.10 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new Lua API <a href="#unicode.char">unicode.char()</a>, similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a> but for Unicode codepoints instead of ASCII values.</li>
+<li>Added a <code>clink-diagnostics-output</code> bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.  This command also includes a list of all loaded Lua scripts.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/721">#721</a>; potential crash if console window width is less than console screen buffer width (regression introduced in v1.7.5).</li>
+</ul>
 <h4 id="v179"><a class="wlink" href="#v179"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.9 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/719">#719</a>; async prompt filtering can stall for 15 seconds (regression introduced in v1.7.8).</li>
