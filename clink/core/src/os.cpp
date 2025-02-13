@@ -1269,6 +1269,44 @@ HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDL
 }
 
 //------------------------------------------------------------------------------
+bool format_error_message(DWORD code, str_base& out, const char* tag, const char* sep)
+{
+    out.clear();
+
+    wchar_t buf[1024];
+    const DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS;
+    const DWORD cch = FormatMessageW(flags, 0, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof_array(buf), nullptr);
+
+    if (!tag)
+        tag = "Error";
+
+    if (code < 65536)
+        out.format("%s %u", tag, code);
+    else
+        out.format("%s 0x%08X", tag, code);
+
+    bool need_term = true;
+    if (cch > 0 && cch < sizeof_array(buf))
+    {
+        str_moveable tmp;
+        if (to_utf8(tmp, buf))
+        {
+            need_term = false;
+            out.concat(sep ? sep : ".  ");
+            out.concat(tmp.c_str());
+        }
+    }
+
+    if (need_term && !sep)
+        out.concat(".");
+
+    while (out.length() && strchr("\r\n", out.c_str()[out.length() - 1]))
+        out.truncate(out.length() - 1);
+
+    return !out.empty();
+}
+
+//------------------------------------------------------------------------------
 HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
 {
     HANDLE new_h = 0;

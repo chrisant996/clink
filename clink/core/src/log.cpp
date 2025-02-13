@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "log.h"
+#include "os.h"
 
 #include <stdarg.h>
 
@@ -62,7 +63,12 @@ void logger::error(const char* function, int32 line, const char* fmt, ...)
 
     logger::info(function, line, "*** ERROR ***");
     instance->emit(function, line, fmt, args);
-    logger::info(function, line, "(last error = %d)", last_error);
+
+    str_moveable err;
+    if (os::format_error_message(last_error, err))
+        logger::info(function, line, "(%s)", err.c_str());
+    else
+        logger::info(function, line, "(last error = %d)", last_error);
 
     va_end(args);
 }

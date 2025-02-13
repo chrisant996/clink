@@ -109,6 +109,7 @@ void    map_errno(unsigned long const oserrno);
 
 void    set_errorlevel(int32 errorlevel);
 int32   get_errorlevel();
+bool    format_error_message(DWORD code, str_base& out, const char* tag=nullptr, const char* sep=nullptr);
 
 #ifdef CAPTURE_PUSHD_STACK
 void    set_pushd_stack(std::vector<str_moveable>& stack);
