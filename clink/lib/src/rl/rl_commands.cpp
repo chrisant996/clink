@@ -2572,7 +2572,7 @@ void terminal_file::write(const char* chars, int32 length)
 
 //------------------------------------------------------------------------------
 extern void task_manager_diagnostics();
-static void do_clink_diagnostics()
+static void do_clink_diagnostics(bool include_settings=false)
 {
     static char bold[] = "\x1b[1m";
     static char norm[] = "\x1b[m";
@@ -2746,6 +2746,27 @@ static void do_clink_diagnostics()
                 "    the prompt string by removing the characters.\n");
         }
     }
+
+    // Optionally include settings.
+
+    if (include_settings)
+    {
+        str<> value;
+        bool printed = false;
+        for (auto iter = settings::first(); auto* next = iter.next();)
+        {
+            str<> value;
+            next->get_descriptive(value);
+            t.format("%s = %s\n", next->get_name(), value.c_str());
+            if (!printed)
+            {
+                g_printer->print("\n\n");
+                print_heading("clink_settings");
+                printed = true;
+            }
+            g_printer->print(t.c_str(), t.length());
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -2791,7 +2812,7 @@ int32 clink_diagnostics_output(int32 count, int32 invoking_key)
         rollback<int> rb_explicit_arg(rl_explicit_arg, 1);
         rollback<int> rb_arg_sign(rl_arg_sign, 1);
 
-        do_clink_diagnostics();
+        do_clink_diagnostics(true/*include_settings*/);
     }
 
     printf("Clink diagnostics output written to '%s'.\n", file.c_str());
