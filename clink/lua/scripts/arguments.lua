@@ -3161,6 +3161,14 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
+local function hint_from_prev_arginfo(line_state, prev_arginfo)
+    local h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+    if h then
+        return h, line_state:getcursor()
+    end
+end
+
+--------------------------------------------------------------------------------
 local function between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
     local args = argmatcher._args[arg_index]
     if args then
@@ -3173,12 +3181,11 @@ local function between_words(argmatcher, arg_index, word_index, line_state, user
                 p = p or line_state:getcursor()
                 return h, p
             end
-        elseif prev_arginfo then
-            local h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
-            if h then
-                return h, line_state:getcursor()
-            end
+            return
         end
+    end
+    if prev_arginfo then
+        return hint_from_prev_arginfo(line_state, prev_arginfo)
     end
 end
 
@@ -3197,6 +3204,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local reader
 ::do_command::
 
+    local chained = (lookup and true)
     local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
 
@@ -3235,10 +3243,25 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                     local nextposafterendword = endinfo.offset + endinfo.length
                     if (cursorpos > nextposafterendword) or
                             (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                        if chained then
+                            -- When chained, don't carry previous arginfo past
+                            -- the last word.
+                            prev_arginfo = nil
+                        end
                         return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, user_data, prev_arginfo)
+                    elseif chained and prev_arginfo then
+                        -- When chained, use previous arginfo if argmatcher
+                        -- was found and cursor is still in argmatcher word.
+                        return hint_from_prev_arginfo(line_state, prev_arginfo)
                     end
                 end
                 break
+            end
+
+            if chained then
+                -- When chained, don't carry previous arginfo past the
+                -- argmatcher word.
+                prev_arginfo = nil
             end
 
             -- Advance the parser.
@@ -3289,10 +3312,22 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 end
                 prev_info = info
             end
-        end
 
-        return besthint, bestpos
+            -- When chained, don't carry previous arginfo past the argmatcher
+            -- word.
+            if chained then
+                prev_arginfo = nil
+            end
+
+            -- Clear any chained flag for subsequence words.
+            chained = nil
+        end
+    elseif line_state and reader and reader._arginfo then
+        -- If there's a previous arginfo, use it.
+        return hint_from_prev_arginfo(line_state, reader._arginfo)
     end
+
+    return besthint, bestpos
 end
 
 
