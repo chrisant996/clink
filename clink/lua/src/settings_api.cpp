@@ -32,9 +32,8 @@ extern setting_bool g_lua_strict;
 /// <ul>
 /// <li>Boolean settings return a boolean value.
 /// <li>Integer settings return an integer value.
-/// <li>Enum settings return an integer value corresponding to a position in the
-/// setting's table of accepted values.  The first position is 0, the second
-/// position is 1, etc.
+/// <li>Enum settings return a string value containing the name of the
+/// corresponding enum value.
 /// <li>String settings return a string.
 /// <li>Color settings return a string.
 /// </ul>
