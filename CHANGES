@@ -7,6 +7,7 @@
 - Changed the `clink-diagnostics-output` bindable command to include a list of the current Clink settings.
 - Changed logged error codes to include the corresponding message text for the error code.
 - Fixed input hints in chained argmatchers (it could sometimes show a hint from the preceding word by mistake).
+- Fixed height of scrollbars in popup lists and in the `select-complete` command (they were half as tall as they should have been).
 
 #### v1.7.10
 
