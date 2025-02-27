@@ -41,7 +41,7 @@ int32 calc_scroll_car_size(int32 rows, int32 total)
     if (!use_vert_scrollbars() || rows <= 0 || rows >= total)
         return 0;
 
-    const int car_size = max(c_min_car_size, min(rows, (rows * rows + (total / 2)) / total));
+    const int car_size = max(c_min_car_size, min(c_scale_positions * rows, (c_scale_positions * rows * rows + (total / 2)) / total));
     return car_size;
 }
 
