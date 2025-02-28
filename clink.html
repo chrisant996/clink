@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.7.10</title>
+<title>Clink v1.7.11</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -954,7 +954,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.10</div>
+                <div id="title">Clink v1.7.11</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -8519,7 +8519,7 @@ settings.formatcolor("1")                   -- Returns "sgr 1"
 settings.formatcolor("4;32")                -- Returns "sgr 4;32"
 settings.formatcolor("97;44")               -- Returns "sgr 97;44"</code></pre></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="settings.get" class="name"><a class="wlink" href="#settings.get"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>settings.get</span> <span class="uplinks"><a href="#settings">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string, [<span class="arg_name">descriptive</span>:boolean] ) : boolean | string | integer | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the current value of the <span class="arg">name</span> Clink setting or nil if the setting does not exist.</p><p class="desc"> The return type corresponds to the setting type: <ul> <li>Boolean settings return a boolean value. <li>Integer settings return an integer value. <li>Enum settings return an integer value corresponding to a position in the setting's table of accepted values.  The first position is 0, the second position is 1, etc. <li>String settings return a string. <li>Color settings return a string. </ul></p><p class="desc"> Color settings normally return the ANSI color code, suitable for use in an ANSI escape sequence.  If the optional <span class="arg">descriptive</span> parameter is true then the friendly color name is returned.</p><pre class="language-lua"><code>print(settings.get("color.doskey"))         -- Can print "1;36"
+<div class="function"><div class="header"> <div id="settings.get" class="name"><a class="wlink" href="#settings.get"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>settings.get</span> <span class="uplinks"><a href="#settings">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string, [<span class="arg_name">descriptive</span>:boolean] ) : boolean | string | integer | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the current value of the <span class="arg">name</span> Clink setting or nil if the setting does not exist.</p><p class="desc"> The return type corresponds to the setting type: <ul> <li>Boolean settings return a boolean value. <li>Integer settings return an integer value. <li>Enum settings return a string value containing the name of the corresponding enum value. <li>String settings return a string. <li>Color settings return a string. </ul></p><p class="desc"> Color settings normally return the ANSI color code, suitable for use in an ANSI escape sequence.  If the optional <span class="arg">descriptive</span> parameter is true then the friendly color name is returned.</p><pre class="language-lua"><code>print(settings.get("color.doskey"))         -- Can print "1;36"
 print(settings.get("color.doskey", true))   -- Can print "bold cyan"</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="settings.parsecolor" class="name"><a class="wlink" href="#settings.parsecolor"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>settings.parsecolor</span> <span class="uplinks"><a href="#settings">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">color</span>:string ) : string | nil<br/><div class="version">v1.7.0 and newer</div></div></div><div class="body"><p class="desc">Parses a color setting string <span class="arg">color</span> into an ANSI color code, suitable for use in an ANSI escape sequence.  The string is parsed the same way as <code>clink set color.foo <em>string</em></code> would parse it.</p><p class="desc"> Returns the ANSI color code if successful, or nil if unsuccessful.</p><p class="desc"> See <a href="#color-settings">Color Settings</a> for more information.</p><pre class="language-lua"><code>settings.parsecolor("bold")                 -- Returns "0;1"
@@ -8763,6 +8763,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1711"><a class="wlink" href="#v1711"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.11 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Changed the <code>clink-diagnostics-output</code> bindable command to include a list of the current Clink settings.</li>
+<li>Changed logged error codes to include the corresponding message text for the error code.</li>
+<li>Fixed input hints in chained argmatchers (it could sometimes show a hint from the preceding word by mistake).</li>
+<li>Fixed height of scrollbars in popup lists and in the <code>select-complete</code> command (they were half as tall as they should have been).</li>
+</ul>
 <h4 id="v1710"><a class="wlink" href="#v1710"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.10 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new Lua API <a href="#unicode.char">unicode.char()</a>, similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a> but for Unicode codepoints instead of ASCII values.</li>
