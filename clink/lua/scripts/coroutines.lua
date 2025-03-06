@@ -840,6 +840,9 @@ end
 --- the second return value is not a function, then the exit status may be
 --- retrieved from calling <code>file:close()</code> on the returned file handle.
 ---
+--- In v1.7.12 and higher, if an error occurs then the function returns nil, an
+--- error message string, and an error code.
+---
 --- <strong>Compatibility Note:</strong> when <code>io.popen()</code> is used in
 --- a coroutine, it is automatically redirected to <code>io.popenyield()</code>.
 --- This means on success the second return value from <code>io.popen()</code>
@@ -904,7 +907,12 @@ function io.popenyield(command, mode)
         end
         -- Start the popenyield.
         local pclose
-        local file, yieldguard = io.popenyield_internal(command, mode)
+        local r1, r2, r3 = io.popenyield_internal(command, mode)
+        if not r1 then
+            -- An error occurred:  r2 is the error message; r3 is the errno.
+            return r1, r2, r3
+        end
+        local file, yieldguard = r1, r2
         if file and yieldguard then
             set_coroutine_yieldguard(yieldguard)
             while not yieldguard:ready() do
