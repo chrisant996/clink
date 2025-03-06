@@ -3261,6 +3261,9 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             if chained then
                 -- When chained, don't carry previous arginfo past the
                 -- argmatcher word.
+                -- REVIEW:  When does this have an actual effect?  Setting it
+                -- to a gibberish string has no effect on the unit tests, and
+                -- I haven't found repro steps that show the gibberish string.
                 prev_arginfo = nil
             end
 
@@ -3315,9 +3318,13 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- When chained, don't carry previous arginfo past the argmatcher
             -- word.
-            if chained then
-                prev_arginfo = nil
-            end
+            -- REVIEW:  This has no effect since prev_arginfo goes out of
+            -- scope a couple of lines later.  This is probably leftover from
+            -- when prev_arginfo was declare outside the loop.  But should
+            -- this instead be setting reader._arginfo = nil?
+            -- if chained then
+            --     prev_arginfo = nil
+            -- end
 
             -- Clear any chained flag for subsequence words.
             chained = nil
