@@ -195,6 +195,8 @@ int32 loader(int32 argc, char** argv)
 //------------------------------------------------------------------------------
 int32 loader_main_impl()
 {
+    install_crt_invalid_parameter_handler();
+
     int32 argc = 0;
     LPWSTR* argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
 

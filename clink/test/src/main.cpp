@@ -71,6 +71,8 @@ int32 main(int32 argc, char** argv)
 {
     argc--, argv++;
 
+    install_crt_invalid_parameter_handler();
+
 #ifdef DEBUG
     settings::TEST_set_ever_loaded();
 #endif

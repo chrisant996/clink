@@ -95,6 +95,8 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         s_initialized = true;
     }
 
+    install_crt_invalid_parameter_handler();
+
 #ifdef DEBUG
     {
         DWORD type;

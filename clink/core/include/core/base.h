@@ -158,3 +158,6 @@ private:
 
 //------------------------------------------------------------------------------
 template <class T> inline void suppress_unused_var(T var) {}
+
+//------------------------------------------------------------------------------
+void install_crt_invalid_parameter_handler();

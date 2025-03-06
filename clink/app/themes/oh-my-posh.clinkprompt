@@ -108,8 +108,30 @@ local function ondeactivate()
 end
 
 local function demo()
-    local primary = io.popen(make_omp_cmdline('print primary')):read("*a")
-    local right = io.popen(make_omp_cmdline('print right')):read("*a")
+    local msg
+    local f_primary, f_right
+    local primary, right
+
+    f_primary, msg = io.popen(make_omp_cmdline('print primary'))
+::failed::
+    if not f_primary then
+        clink.print(string.format('Error running oh-my-posh from "%s".', get_omp_exe()))
+        if msg and msg ~= "" then
+            clink.print(msg)
+        end
+        return
+    end
+    primary = f_primary:read("*a")
+    f_primary:close()
+
+    f_right = io.popen(make_omp_cmdline('print right'))
+    if not f_right then
+        f_primary = nil
+        goto failed
+    end
+    right = f_right:read("*a")
+    f_right:close()
+
     local primary_width = console.cellcount(primary:gsub("^.*\n", ""))
     local right_width = console.cellcount(right)
     if right_width <= 0 or primary_width + right_width + 4 >= console.getwidth() then
@@ -117,6 +139,7 @@ local function demo()
     else
         right = string.rep(" ", console.getwidth() - primary_width - right_width) .. right
     end
+
     clink.print(primary .. right)
 end
 
