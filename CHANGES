@@ -4,6 +4,7 @@
 
 #### v1.7.12
 
+- Fixed what `io.popenyield()` returns upon failure; previously it accidentally only returned nil, and now upon failure it returns the usual values (nil, error message, error code).
 - Fixed [#727](https://github.com/chrisant996/clink/issues/727); custom prompts can crash Clink when `cd` into a path that exceeds MAX_PATH length.
 
 #### v1.7.11
