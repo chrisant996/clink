@@ -8,30 +8,34 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 
-## Unit Tests
-
 ## Normal Priority
+- Investigate adding a line at the top of clink_settings (#729) such as "# This is an auto-generated file. Certain kinds of manual edits are not preserved."
+  - Watch out for edge cases that could potentially result in duplication of the line (especially if the first setting is from a script that is no longer loaded, so it _and any preceding comments_ get moved to the tail section of the file).
+  - Watch out for edge cases where an older version of Clink reads and re-writes the settings file; what will happen...?
+  - Look for other possible problems that could result from the seeming simple suggestion.
+
+## Low Priority
+- The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
+- `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
+- Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
     - Watch out for back-compat:  Consider making _new API functions_ for adding one-time event handlers.  Adding an optional parameter is dangerous because a script author could use it without taking steps to ensure backward compatibility, and then potentially significant malfunctions could occur.  And anyway, probably only a small number of events would actually need support for one-time handlers (maybe even only `onbeginedit`).
-- The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
+- Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
+- Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
-## Low Priority
+## Extra Low Priority
 - Option for the installer to add the Clink directory to the system PATH?  **WARNING:**  The main problem is about All Users...
 - I'd love to let the installer run without Admin privilege, but I don't see how to do that safely because of the need for updating All Users AutoRun.
 - Windows Terminal now has 3 ways of measuring character widths.  There's no way for Clink to ask which mode is being used (but it might be possible to deduce on the fly using techniques from the wcwidth-verifier repo).  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
-- Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
-- `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
-- line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
-- Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
-- Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
+- line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 
 ## Argmatcher syntax
 - See the argmatcher_syntax branch.
