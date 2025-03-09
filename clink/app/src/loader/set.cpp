@@ -288,6 +288,16 @@ static void print_help()
 }
 
 //------------------------------------------------------------------------------
+static bool save_settings(const char* settings_file)
+{
+    if (settings::save(settings_file))
+        return true;
+
+    printf("ERROR: Unable to write to settings file '%s'.\n", settings_file);
+    return false;
+}
+
+//------------------------------------------------------------------------------
 int32 set(int32 argc, char** argv)
 {
     // Parse command line arguments.
@@ -377,10 +387,10 @@ int32 set(int32 argc, char** argv)
         if (_stricmp(argv[1], "clear") == 0)
         {
             if (set_value(argv[0], compat))
-                return settings::save(settings_file.c_str()), 0;
+                return (save_settings(settings_file.c_str()) != true);
         }
         else if (set_value(argv[0], compat, argv + 1, argc - 1))
-            return settings::save(settings_file.c_str()), 0;
+            return (save_settings(settings_file.c_str()) != true);
     }
 
     return 1;
