@@ -9,16 +9,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Investigate adding a line at the top of clink_settings (#729) such as "# This is an auto-generated file. Certain kinds of manual edits are not preserved."
-  - Watch out for edge cases that could potentially result in duplication of the line (especially if the first setting is from a script that is no longer loaded, so it _and any preceding comments_ get moved to the tail section of the file).
-  - Watch out for edge cases where an older version of Clink reads and re-writes the settings file; what will happen...?
-  - Look for other possible problems that could result from the seeming simple suggestion.
 
 ## Low Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
+- Explore documentation changes about `clink set`, the `clink_settings` file, and fact that it is not meant to be edited manually and that the file format does not consider comments to be "user data" and does not preserve certain kinds of edits in comments (or whitespace or sort order or etc).  However, the file format is not meant to be edited manually, and so there are no plans to document the file format.
 - Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
@@ -117,6 +114,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- Investigate adding a line at the top of clink_settings (#729) such as "# This is an auto-generated file. Certain kinds of manual edits are not preserved."
+  - Watch out for edge cases that could potentially result in duplication of the line (especially if the first setting is from a script that is no longer loaded, so it _and any preceding comments_ get moved to the tail section of the file). _CONFIRMED: multiple cases exist where an older version of Clink can lead to unbounded growth in the clink_settings file if such a line is added._
+  - Watch out for edge cases where an older version of Clink reads and re-writes the settings file; what will happen...? _CONFIRMED: multiple cases exist where an older version of Clink can lead to unbounded growth in the clink_settings file if such a line is added._
+  - Look for other possible problems that could result from the seemingly simple suggestion.
 - Some wizard for interactively viewing/modifying color settings.  _[This is low priority now that Clink supports .clinktheme color themes.]_
 - Can `git.getstatus()` be simplified even further, so it automatically handles `clink.promptcoroutine()`?  Maybe a `git.getstatusasync()` function?  _[Not at this time:  that could be something to consider for a bunch of various APIs later, but for now scripts should just use the normal `clink.promptcoroutine()` usage pattern.]_
 - Input hinter; need some way for `:gethint()` to work with coroutines and override the optimization and call it again.  _[No:  that would lead to hints cycling through multiple values at the same cursor position.  Once a hint is shown, it shouldn't change until at least another keypress occurs.]_
