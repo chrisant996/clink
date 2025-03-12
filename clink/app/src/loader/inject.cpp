@@ -178,9 +178,10 @@ static int32 check_dll_version(const char* clink_dll)
 //------------------------------------------------------------------------------
 struct wait_monitor : public process_wait_callback
 {
-    enum wait_operation { wait_inject, wait_initialize };
-
-    wait_monitor(const char* op) : m_op(op) {}
+    wait_monitor(const char* op) : m_op(op)
+    {
+        GetLocalTime(&m_started);
+    }
 
     bool on_waited(DWORD tick_begin, DWORD wait_result) override
     {
@@ -207,6 +208,9 @@ struct wait_monitor : public process_wait_callback
                     if (m_elapsed < 5000)
                     {
                         LOG("%s%s", m_op, c_msg_slow);
+                        LOG("--- SLOW: Inject started at %04u/%02u/%02u %02u:%02u:%02u.%03u",
+                            m_started.wYear, m_started.wMonth, m_started.wDay,
+                            m_started.wHour, m_started.wMinute, m_started.wSecond, m_started.wMilliseconds);
                         fprintf(stderr, "\n\n%s%s", m_op, c_msg_slow);
                     }
                     else
@@ -229,6 +233,7 @@ struct wait_monitor : public process_wait_callback
 
 private:
     const char* m_op = "Something";
+    SYSTEMTIME m_started;
     DWORD m_elapsed = 0;
 };
 
@@ -595,7 +600,8 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
     {
         app_context::get()->get_log_path(log_path);
 
-        // Don't restart the log file; append to whatever log file may already
+        // Don't restart the log file; this is so AutoRun doesn't ruin
+        // diagnostic logs.  Instead, append to whatever log file may already
         // exist.  The DLL code restarts the log file on a successful inject.
         new file_logger(log_path.c_str());
 
@@ -689,6 +695,9 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
     }
 
     DEFER_LOG("Initializing Clink...");
+
+    app_desc.tick = GetTickCount();
+    if (!app_desc.tick) ++app_desc.tick; // So that 0 can mean "not available".
 
     // Remotely call Clink's initialisation function.
     void* our_dll_base = vm().get_alloc_base((void*)"");

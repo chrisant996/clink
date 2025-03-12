@@ -81,8 +81,36 @@ static void shutdown_clink()
 }
 
 //------------------------------------------------------------------------------
+void log_excessive_time(const char* const op, uint32& last_tick, const uint32 threshold, str_moveable* out=nullptr)
+{
+    if (last_tick)
+    {
+        const uint32 tick = GetTickCount();
+        const uint32 elapsed = tick - last_tick;
+        str_moveable msg;
+        if (elapsed > threshold)
+            msg.format("--- SLOW: %s took %u ms.", op, elapsed);
+#ifdef DEBUG
+        else
+            msg.format("--- %s took %u ms.", op, elapsed);
+#endif
+        if (out)
+            *out = std::move(msg);
+        else if (msg.length())
+            LOG("%s", msg.c_str());
+        last_tick = tick;
+        if (!last_tick)
+            ++last_tick;
+    }
+}
+
+//------------------------------------------------------------------------------
 INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 {
+    uint32 last_tick = app_desc.tick;
+    str_moveable slow_inject;
+    log_excessive_time("Remote thread injection", last_tick, 250, &slow_inject);
+
     {
         static bool s_initialized = false;
         if (s_initialized)
@@ -125,6 +153,13 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
                 MessageBox(0, msg.c_str(), "Clink", MB_OK);
             }
         }
+
+        if (last_tick)
+        {
+            last_tick = GetTickCount();
+            if (!last_tick)
+                ++last_tick;
+        }
     }
 #endif
 
@@ -141,14 +176,18 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     auto* app_ctx = new app_context(app_desc);
 
     app_ctx->start_logger();
+    if (slow_inject.length())
+        LOG("%s", slow_inject.c_str());
+    log_excessive_time("Start logger", last_tick, 100);
 
     // What process is the DLL loaded into?
     str<64> host_name;
-    if (!app_ctx->get_host_name(host_name))
-    {
+    bool ok = app_ctx->get_host_name(host_name);
+    if (!ok)
         ERR("Unable to get host name.");
+    log_excessive_time("Get host name", last_tick, 25);
+    if (!ok)
         return false;
-    }
 
     // Search for a supported host (keep in sync with inject_dll in inject.cpp).
     struct {
@@ -164,26 +203,30 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
                 break;
 
     // Bail out if this isn't a supported host.
-    if (g_host == nullptr)
-    {
+    ok = (g_host != nullptr);
+    if (!ok)
         LOG("Unknown host '%s'.", host_name.c_str());
+    log_excessive_time("Find supported host", last_tick, 25);
+    if (!ok)
         return false;
-    }
 
     // Validate and initialise.  Negative means an ignorable error that should
     // not be reported.
     int32 validate = g_host->validate();
+    log_excessive_time("Validate supported host", last_tick, 25);
     if (validate <= 0)
         return validate;
 
-    if (!g_host->initialise())
-    {
+    ok = g_host->initialise();
+    if (!ok)
         failed();
+    log_excessive_time("Initialize hooks", last_tick, 50);
+    if (!ok)
         return false;
-    }
 
     atexit(shutdown_clink);
 
     success();
+    log_excessive_time("Finish inject", last_tick, 25);
     return true;
 }

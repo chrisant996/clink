@@ -22,6 +22,7 @@ public:
         bool    detours = false;    // Use Detours for hooking, instead of IAT.
         char    state_dir[510];     // = {}; (this crashes cl.exe v18.00.21005.1)
         char    script_path[510];   // = {}; (this crashes cl.exe v18.00.21005.1)
+        uint32  tick = 0;           // Tick when inject began.
     };
 
                 app_context(const desc& desc);
