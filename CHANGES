@@ -5,6 +5,7 @@
 #### v1.7.13
 
 - Added an error message when `clink set` fails to write the `clink_settings` file (e.g. no permission or the file is marked read-only).
+- Added logging when `clink inject` is slow.
 
 #### v1.7.12
 
