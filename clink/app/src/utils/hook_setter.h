@@ -5,9 +5,10 @@
 
 //------------------------------------------------------------------------------
 enum hook_type { iat, detour };
+class str_base;
 typedef void (__stdcall* hookptr_t)();
 typedef hookptr_t* hookptrptr_t;
-bool find_iat(void* base, const char* dll, const char* func_name, bool find_by_name, hookptrptr_t* import_out, hookptr_t* original_out);
+bool find_iat(void* base, const char* dll, const char* func_name, bool find_by_name, hookptrptr_t* import_out, hookptr_t* original_out, str_base* found_in_module=nullptr);
 void hook_iat(hookptrptr_t import, hookptr_t hook);
 
 //------------------------------------------------------------------------------
@@ -21,6 +22,7 @@ class hook_setter
         const char*             module;
         const char*             name;
         hookptr_t               hook;
+        bool                    required;
     };
 
 public:
@@ -28,9 +30,9 @@ public:
                                 ~hook_setter();
 
     template <typename RET, typename... ARGS>
-    bool                        attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), hookptrptr_t original);
+    bool                        attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), hookptrptr_t original, bool required=true);
     template <typename RET, typename... ARGS>
-    bool                        attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), RET (__stdcall **original)(ARGS...));
+    bool                        attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), RET (__stdcall **original)(ARGS...), bool required=true);
     template <typename RET, typename... ARGS>
     bool                        detach(hook_type type, const char* module, const char* name, hookptrptr_t original, RET (__stdcall *hook)(ARGS...));
     template <typename RET, typename... ARGS>
@@ -38,11 +40,11 @@ public:
     bool                        commit();
 
 private:
-    bool                        attach_internal(hook_type type, const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
+    bool                        attach_internal(hook_type type, const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required);
     bool                        detach_internal(hook_type type, const char* module, const char* name, hookptrptr_t original, hookptr_t hook);
 
     bool                        attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
-    bool                        attach_iat(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
+    bool                        attach_iat(const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required);
     bool                        detach_detour(hookptrptr_t original, hookptr_t hook);
     bool                        detach_iat(const char* module, const char* name, hookptrptr_t original, hookptr_t hook);
 
@@ -56,16 +58,16 @@ private:
 
 //------------------------------------------------------------------------------
 template <typename RET, typename... ARGS>
-bool hook_setter::attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), hookptrptr_t original)
+bool hook_setter::attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), hookptrptr_t original, bool required)
 {
-    return attach_internal(type, module, name, hookptr_t(hook), original);
+    return attach_internal(type, module, name, hookptr_t(hook), original, required);
 }
 
 //------------------------------------------------------------------------------
 template <typename RET, typename... ARGS>
-bool hook_setter::attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), RET (__stdcall **original)(ARGS...))
+bool hook_setter::attach(hook_type type, const char* module, const char* name, RET (__stdcall *hook)(ARGS...), RET (__stdcall **original)(ARGS...), bool required)
 {
-    return attach_internal(type, module, name, hookptr_t(hook), hookptrptr_t(original));
+    return attach_internal(type, module, name, hookptr_t(hook), hookptrptr_t(original), required);
 }
 
 //------------------------------------------------------------------------------

@@ -91,7 +91,7 @@ void log_excessive_time(const char* const op, uint32& last_tick, const uint32 th
         if (elapsed > threshold)
             msg.format("--- SLOW: %s took %u ms.", op, elapsed);
 #ifdef DEBUG
-        else
+        else if (elapsed > 0)
             msg.format("--- %s took %u ms.", op, elapsed);
 #endif
         if (out)

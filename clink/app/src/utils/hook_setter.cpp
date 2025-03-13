@@ -6,6 +6,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/os.h>
 #include <process/pe.h>
 #include <process/vm.h>
 #include <detours.h>
@@ -17,6 +18,14 @@
 // but doesn't help with IAT hooking in other images in the process.
 extern "C" void* __imp_ReadConsoleW;
 #endif
+
+//------------------------------------------------------------------------------
+static bool use_verbose_hook_logging()
+{
+    str<16> tmp;
+    os::get_env("CLINK_VERBOSE_HOOK_LOGGING", tmp);
+    return atoi(tmp.c_str()) > 0;
+}
 
 //------------------------------------------------------------------------------
 static void* follow_jump(void* addr)
@@ -90,16 +99,18 @@ bool find_iat(
     const char* func_name,
     bool find_by_name,
     hookptrptr_t* import_out,
-    hookptr_t* original_out
+    hookptr_t* original_out,
+    str_base* found_in_module
 )
 {
     hookptrptr_t import;
 
     // Find entry and replace it.
     pe_info pe(base);
+    str<> table_name;
     if (find_by_name)
     {
-        import = (hookptrptr_t)pe.get_import_by_name(nullptr, func_name);
+        import = (hookptrptr_t)pe.get_import_by_name(nullptr, func_name, found_in_module);
     }
     else
     {
@@ -107,12 +118,12 @@ bool find_iat(
         hookptr_t func_addr = get_proc_addr(dll, func_name);
         if (func_addr == nullptr)
         {
-            LOG("Failed to find %s in %s.", func_name, dll);
+            LOG("Failed to find %s in '%s'.", func_name, dll);
             return false;
         }
 
-        LOG("Looking up import by address %p in %s.", func_addr, dll);
-        import = (hookptrptr_t)pe.get_import_by_addr(nullptr, (pe_info::funcptr_t)func_addr);
+        LOG("Looking up import by address %p in '%s'.", func_addr, dll);
+        import = (hookptrptr_t)pe.get_import_by_addr(nullptr, (pe_info::funcptr_t)func_addr, found_in_module);
     }
 
     if (import == nullptr)
@@ -197,8 +208,11 @@ nope:
         const hook_desc& desc = m_descs[i];
         if (desc.type == iat && !commit_iat(desc))
         {
-            err = GetLastError();
-            failed++;
+            if (desc.required)
+            {
+                err = GetLastError();
+                failed++;
+            }
         }
     }
     if (failed)
@@ -213,7 +227,7 @@ nope:
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::attach_internal(hook_type type, const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
+bool hook_setter::attach_internal(hook_type type, const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required)
 {
     assert(m_desc_count < sizeof_array(m_descs));
     if (m_desc_count >= sizeof_array(m_descs))
@@ -223,8 +237,10 @@ bool hook_setter::attach_internal(hook_type type, const char* module, const char
         return false;
     }
 
+    assertimplies(!required, type == iat);
+
     if (type == iat)
-        return attach_iat(module, name, hook, original);
+        return attach_iat(module, name, hook, original, required);
     else if (type == detour)
         return attach_detour(module, name, hook, original);
     else
@@ -283,6 +299,7 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
     desc.module = module;
     desc.name = name;
     desc.hook = hook;
+    desc.required = true;
 
     // Hook the target pointer.  For Detours desc.replace is a pointer to the
     // function to hook.
@@ -303,7 +320,7 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
+bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required)
 {
     void* base = GetModuleHandleA(module);
     if (!base)
@@ -313,11 +330,20 @@ bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hoo
         return false;
     }
 
-    LOG("Attempting to hook %s in IAT for module %p.", name, base);
-
     hookptrptr_t replace;
-    if (!find_iat(base, module, name, true/*find_by_name*/, &replace, original))
-        return false;
+    str<> found_in_module;
+    {
+        logging_group lg(use_verbose_hook_logging());
+        LOG("Attempting to hook %s in IAT for module %p.", name, base);
+
+        if (!find_iat(base, module, name, true/*find_by_name*/, &replace, original, &found_in_module))
+            return false;
+
+        lg.discard();
+
+        if (!lg.is_verbose())
+            LOG("Hooking %s in IAT for module %p in '%s' at %p (value was %p).", name, base, found_in_module.c_str(), replace, *original);
+    }
 
     hook_desc& desc = m_descs[m_desc_count++];
     desc.type = iat;
@@ -326,6 +352,7 @@ bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hoo
     desc.module = module;
     desc.name = name;
     desc.hook = hook;
+    desc.required = required;
     return true;
 }
 
@@ -356,17 +383,26 @@ bool hook_setter::detach_iat(const char* module, const char* name, hookptrptr_t 
         return false;
     }
 
-    LOG("Attempting to unhook %p from %s in IAT for module %p.", hook, name, base);
-
     hookptrptr_t replace;
-    hookptr_t was;
-    if (!find_iat(base, module, name, true/*find_by_name*/, &replace, &was))
-        return false;
-
-    if (*was != hook)
+    str<> found_in_module;
     {
-        LOG("Unable to unhook %p; the IAT has %p instead.", hook, was);
-        return false;
+        logging_group lg(use_verbose_hook_logging());
+        LOG("Attempting to unhook %p from %s in IAT for module %p.", hook, name, base);
+
+        hookptr_t was;
+        if (!find_iat(base, module, name, true/*find_by_name*/, &replace, &was, &found_in_module))
+            return false;
+
+        if (*was != hook)
+        {
+            LOG("Unable to unhook %p; the IAT has %p instead.", hook, was);
+            return false;
+        }
+
+        lg.discard();
+
+        if (!lg.is_verbose())
+            LOG("Unhooking %s in IAT for module %p in '%s' at %p.", name, base, found_in_module.c_str(), *replace);
     }
 
     hook_desc& desc = m_descs[m_desc_count++];

@@ -33,10 +33,7 @@ void logger::info(const char* function, int32 line, const char* fmt, ...)
     if (instance == nullptr)
         return;
 
-    if (!instance->m_deferred.empty())
-        instance->emit_deferred();
-    if (instance->m_can_defer)
-        instance->m_can_defer = false;
+    instance->emit_deferred();
 
     va_list args;
     va_start(args, fmt);
@@ -53,22 +50,20 @@ void logger::error(const char* function, int32 line, const char* fmt, ...)
 
     DWORD last_error = GetLastError();
 
-    if (!instance->m_deferred.empty())
-        instance->emit_deferred();
-    if (instance->m_can_defer)
-        instance->m_can_defer = false;
+    instance->emit_deferred();
 
     va_list args;
     va_start(args, fmt);
 
-    logger::info(function, line, "*** ERROR ***");
+    if ((last_error >= 0) || (last_error >> 16 == 0xffff))
+        logger::info(function, line, "*** ERROR %d ***", last_error);
+    else
+        logger::info(function, line, "*** ERROR 0x%8.8X ***", last_error);
     instance->emit(function, line, fmt, args);
 
     str_moveable err;
     if (os::format_error_message(last_error, err))
         logger::info(function, line, "(%s)", err.c_str());
-    else
-        logger::info(function, line, "(last error = %d)", last_error);
 
     va_end(args);
 }
@@ -103,12 +98,71 @@ void logger::defer_info(const char* function, int32 line, const char* fmt, ...)
 }
 
 //------------------------------------------------------------------------------
+void logger::emit(const char* function, int32 line, const char* fmt, va_list args)
+{
+    str_moveable msg;
+    msg.vformat(fmt, args);
+
+    if (m_grouping <= 0)
+    {
+        emit_impl(function, line, msg.c_str());
+    }
+    else
+    {
+        deferred d;
+        d.function = function;
+        d.line = line;
+        d.msg = std::move(msg);
+        m_deferred.emplace_back(std::move(d));
+    }
+}
+
+//------------------------------------------------------------------------------
 void logger::emit_deferred()
 {
-    std::vector<deferred> deferred;
-    deferred.swap(m_deferred);
-    for (const auto& d : deferred)
-        info(d.function.c_str(), d.line, "%s", d.msg.c_str());
+    if (m_grouping <= 0 && !m_deferred.empty())
+    {
+        std::vector<deferred> deferred;
+        deferred.swap(m_deferred);
+        for (const auto& d : deferred)
+            emit_impl(d.function.c_str(), d.line, d.msg.c_str());
+    }
+
+    if (m_can_defer)
+        m_can_defer = false;
+}
+
+//------------------------------------------------------------------------------
+size_t logger::begin_group()
+{
+    // It's a usage error if begin_group() is called before any calls to
+    // info() or error().
+    assert(!can_defer());
+    assert(m_deferred.empty());
+    ++m_grouping;
+    return m_deferred.size();
+}
+
+//------------------------------------------------------------------------------
+void logger::end_group(size_t rollback_index, bool discard)
+{
+    assert(m_grouping > 0);
+    assert(rollback_index <= m_deferred.size());
+    --m_grouping;
+    if (rollback_index <= m_deferred.size())
+    {
+        if (!discard && m_grouping <= 0)
+        {
+            for (size_t i = rollback_index; i < m_deferred.size(); ++i)
+            {
+                const auto& d = m_deferred[i];
+                emit_impl(d.function.c_str(), d.line, d.msg.c_str());
+            }
+            discard = true;
+        }
+        if (discard)
+            m_deferred.resize(rollback_index);
+    }
 }
 
 
@@ -130,7 +184,7 @@ file_logger::~file_logger()
 }
 
 //------------------------------------------------------------------------------
-void file_logger::emit(const char* function, int32 line, const char* fmt, va_list args)
+void file_logger::emit_impl(const char* function, int32 line, const char* msg)
 {
     FILE* file;
 
@@ -144,10 +198,47 @@ void file_logger::emit(const char* function, int32 line, const char* fmt, va_lis
     DWORD pid = GetCurrentProcessId();
 
     str<256> buffer;
-    buffer.format("%04x %-24s %4d ", pid, func_name.c_str(), line);
+    buffer.format("%04x %-24s %4d %s\n", pid, func_name.c_str(), line, msg);
     fputs(buffer.c_str(), file);
-    vfprintf(file, fmt, args);
-    fputs("\n", file);
 
     fclose(file);
+}
+
+
+
+//------------------------------------------------------------------------------
+logging_group::logging_group(bool verbose)
+{
+    m_verbose = verbose;
+    if (verbose)
+        return;
+
+    logger* instance = logger::get();
+    if (instance == nullptr)
+        return;
+
+    m_grouping = true;
+    m_rollback_index = instance->begin_group();
+}
+
+//------------------------------------------------------------------------------
+logging_group::~logging_group()
+{
+    close(false/*discard*/);
+}
+
+//------------------------------------------------------------------------------
+void logging_group::close(bool discard)
+{
+    if (!m_grouping)
+        return;
+
+    m_grouping = false;
+
+    logger* instance = logger::get();
+    assert(instance);
+    if (instance == nullptr)
+        return;
+
+    instance->end_group(m_rollback_index, discard);
 }

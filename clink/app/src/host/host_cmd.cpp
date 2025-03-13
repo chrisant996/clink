@@ -1023,21 +1023,17 @@ bool host_cmd::initialise_system()
         hook_type type = get_hook_type();
         const char* module = get_kernel_module();
 
+        hook_setter hooks;
+
         // ReadConsoleW is required.
-        {
-            hook_setter hooks;
-            hooks.attach(type, module, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
-            if (!hooks.commit())
-                return false;
-        }
+        hooks.attach(type, module, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
 
         // Hook SetConsoleTitleW in order to replace the "Administrator: "
         // prefix, but ignore failure since it's just a minor convenience.
-        {
-            hook_setter hooks;
-            hooks.attach(type, module, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW);
-            hooks.commit();
-        }
+        hooks.attach(type, module, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW, false/*required*/);
+
+        if (!hooks.commit())
+            return false;
     }
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding

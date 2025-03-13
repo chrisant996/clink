@@ -124,15 +124,15 @@ pe_info::funcptr_t* pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const 
 }
 
 //------------------------------------------------------------------------------
-pe_info::funcptr_t* pe_info::get_import_by_name(const char* dll, const char* func_name) const
+pe_info::funcptr_t* pe_info::get_import_by_name(const char* dll, const char* func_name, str_base* found_in_module) const
 {
-    return iterate_imports(dll, func_name, &pe_info::import_by_name);
+    return iterate_imports(dll, func_name, &pe_info::import_by_name, found_in_module);
 }
 
 //------------------------------------------------------------------------------
-pe_info::funcptr_t* pe_info::get_import_by_addr(const char* dll, funcptr_t func_addr) const
+pe_info::funcptr_t* pe_info::get_import_by_addr(const char* dll, funcptr_t func_addr, str_base* found_in_module) const
 {
-    return iterate_imports(dll, (const void*)func_addr, &pe_info::import_by_addr);
+    return iterate_imports(dll, (const void*)func_addr, &pe_info::import_by_addr, found_in_module);
 }
 
 //------------------------------------------------------------------------------
@@ -169,7 +169,8 @@ pe_info::funcptr_t pe_info::get_export(const char* func_name) const
 pe_info::funcptr_t* pe_info::iterate_imports(
     const char* dll,
     const void* param,
-    import_iter_t iter_func) const
+    import_iter_t iter_func,
+    str_base* found_in_module) const
 {
     IMAGE_IMPORT_DESCRIPTOR* iid;
     iid = (IMAGE_IMPORT_DESCRIPTOR*)get_data_directory(1, nullptr);
@@ -193,6 +194,8 @@ pe_info::funcptr_t* pe_info::iterate_imports(
             if (funcptr_t* ret = (this->*iter_func)(iid, param))
             {
                 LOG("Found import in '%s'", name);
+                if (found_in_module)
+                    found_in_module->copy(name);
                 m_image = nullptr;
                 return ret;
             }
