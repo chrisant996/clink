@@ -22,6 +22,11 @@
 #include <mutex>
 #include <shlwapi.h>
 
+//#define USE_SHFETFILEINFOW_IN_RECOGNIZER
+#ifdef USE_SHFETFILEINFOW_IN_RECOGNIZER
+#include <shellapi.h>
+#endif
+
 extern "C" {
 #include <readline/readline.h>
 }
@@ -82,8 +87,10 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
     int32 length;
 
     const char* ext = path::get_extension(word);
-    str<16> token_ext;
+    if (str_icmp(ext, ".LNK") == 0 && file_exists(full.c_str(), out))
+        return true;
 
+    str<16> token_ext;
     while (str_token token = tokens.next(start, length))
     {
         if (ext)
@@ -105,6 +112,19 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
         if (file_exists(full.c_str(), out))
             return true;
     }
+
+// REVIEW:  Would it be useful to add this?  It was an experiment to try to
+// query the OS whether .LNK files are executable, but it doesn't recognize
+// them.  This runs only in the recognizer's background thread, so performance
+// and possible network access aren't necessarily a problem, although they
+// could of course potentially stall the recognizer.
+#ifdef USE_SHFETFILEINFOW_IN_RECOGNIZER
+    wstr<> wfull(full.c_str());
+    SHFILEINFOW fi = {};
+    const uint32 x = uint32(SHGetFileInfoW(wfull.c_str(), FILE_ATTRIBUTE_NORMAL, &fi, sizeof(fi), SHGFI_EXETYPE));
+    if (x != 0 && file_exists(full.c_str(), out))
+        return true;
+#endif
 
     return false;
 }
