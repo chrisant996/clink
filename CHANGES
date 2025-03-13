@@ -6,7 +6,7 @@
 
 - Added an error message when `clink set` fails to write the `clink_settings` file (e.g. no permission or the file is marked read-only).
 - Added logging when `clink inject` is slow.
-- Condensed the logging during `clink inject`.
+- Condensed the logging during `clink inject`, but if an error occurs while hooking system APIs then it automatically emits verbose logging instead of condensed logging.
 
 #### v1.7.12
 
