@@ -72,14 +72,20 @@ static void write_addr(hookptr_t* where, hookptr_t to_write)
 {
     vm vm;
     vm::region region = { vm.get_page(where), 1 };
-    uint32 prev_access = vm.get_access(region);
+    const uint32 prev_access = vm.get_access(region);
+    bool need_restore = true;
+
     if (!vm.set_access(region, vm::access_write))
-        LOG("VM set write access to %p failed (err = %d)", where, GetLastError());
+    {
+        ERR("VM set write access to %p failed.", where);
+        need_restore = false;
+    }
 
     if (!vm.write(where, &to_write, sizeof(to_write)))
-        LOG("VM write to %p failed (err = %d)", where, GetLastError());
+        ERR("VM write to %p failed.", where);
 
-    vm.set_access(region, prev_access);
+    if (!vm.set_access(region, prev_access) && need_restore)
+        ERR("VM restore 0x%X access to %p failed.", prev_access, where);
 }
 
 //------------------------------------------------------------------------------
