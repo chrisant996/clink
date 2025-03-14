@@ -87,7 +87,7 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
     int32 length;
 
     const char* ext = path::get_extension(word);
-    if (str_icmp(ext, ".LNK") == 0 && file_exists(full.c_str(), out))
+    if (ext && str_icmp(ext, ".LNK") == 0 && file_exists(full.c_str(), out))
         return true;
 
     str<16> token_ext;
