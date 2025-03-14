@@ -69,7 +69,7 @@ public:
                     ~lua_state();
     void            initialise(lua_state_flags flags=lua_state_flags::none);
     void            shutdown();
-    bool            do_string(const char* string, int32 length=-1, str_base* error=nullptr);
+    bool            do_string(const char* string, int32 length=-1, str_base* error=nullptr, const char* name=nullptr);
     bool            do_file(const char* path);
     lua_State*      get_state() const;
 

@@ -314,7 +314,7 @@ lua_State* lua_state::get_state() const
 #endif
 
 //------------------------------------------------------------------------------
-bool lua_state::do_string(const char* string, int32 length, str_base* error)
+bool lua_state::do_string(const char* string, int32 length, str_base* error, const char* name)
 {
     lua_State* L = get_state();
 
@@ -323,7 +323,7 @@ bool lua_state::do_string(const char* string, int32 length, str_base* error)
     if (length < 0)
         length = int32(strlen(string));
 
-    int32 err = luaL_loadbuffer(L, string, length, string);
+    int32 err = luaL_loadbuffer(L, string, length, name ? name : string);
     if (err)
     {
         if (error)
