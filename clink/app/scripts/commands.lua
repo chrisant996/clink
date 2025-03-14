@@ -98,6 +98,9 @@ function clink._diag_loaded_scripts(arg)
 
     clink.print(bold.."loaded scripts:"..norm)
     for i,chunkname in ipairs (clink._loaded_scripts) do
+        if chunkname == "[string \"\x1bLuaR\"]" then
+            chunkname = "[precompiled script]"
+        end
         clink.print("  "..i.." = "..chunkname)
         any = true
     end
