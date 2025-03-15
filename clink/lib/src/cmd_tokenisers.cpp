@@ -16,6 +16,47 @@
 extern setting_bool g_enhanced_doskey;
 
 //------------------------------------------------------------------------------
+// WARNING:  PROTOTYPE FEATURE.
+//
+// On the surface, this seems nice in theory (issue #731).  But it changes how
+// line_state is parsed in general (not just for completion).  It could easily
+// have unexpected consequences for other features, and for third party Lua
+// scripts.
+//
+// This would be a breaking change with relatively high risk for regressions.
+// Some Lua scripts would need to check the setting and adjust their behavior
+// accordingly, and some other Readline code and Clink code might need to
+// adapt as well.  This kind of breaking change is not something that should
+// be introduced quickly or lightly.
+//
+// And in the case of issue #731, the initial observation what that the
+// behavior did not match CMD.  If matching CMD behavior is desired, then
+// accepting brackets as part of word text is not a solution.  In that case
+// the only solution would be to turn off the match.substring setting.
+//
+//#define USE_SETTING_FOR_BRACKETS_ARE_WORD_BREAKS
+#ifdef USE_SETTING_FOR_BRACKETS_ARE_WORD_BREAKS
+setting_bool* init_match_brackets_are_word_breaks()
+{
+    str<> tmp;
+    os::get_env("CLINK_PROTOTYPE_MATCH_BRACKETS_ARE_WORD_BREAKS", tmp);
+    if (atoi(tmp.c_str()) <= 0)
+        return nullptr;
+
+    return new setting_bool(
+        "match.brackets_are_word_breaks",
+        "Whether []{} are word breaks for completion",
+        "CMD normally treats []{} as word break characters during completion.  That\n"
+        "makes completion for 'program [filename' only complete 'filename', leaving\n"
+        "the '[' present even though it doesn't have any meaning to CMD.\n"
+        "Set this to false to disable that behavior and not consider []{} as word\n"
+        "break characters during completion.",
+        true);
+}
+static setting_bool* s_match_brackets_are_word_breaks = init_match_brackets_are_word_breaks();
+#endif
+
+//------------------------------------------------------------------------------
 const char* const c_cmd_exes[] =
 {   // These are executables that pretend to be built-in commands.
     "attrib", "chcp", "format", "help", "more", "subst", "tasklist", "taskkill",
@@ -262,6 +303,9 @@ bool cmd_state::test(const int32 c, const tokeniser_state new_state)
 static const char c_command_delims[] = "@ \t=;,(/";
 static const char c_name_delims[] = "@ \t=;,(";
 static const char c_word_delims[] = " \t\n'`=+;,()[]{}";
+#ifdef USE_SETTING_FOR_BRACKETS_ARE_WORD_BREAKS
+static const char c_word_delims_no_brackets[] = " \t\n'`=+;,()";
+#endif
 
 //------------------------------------------------------------------------------
 static const char* get_delims(bool command_word, bool redir_arg, bool in_word)
@@ -270,6 +314,10 @@ static const char* get_delims(bool command_word, bool redir_arg, bool in_word)
         return c_name_delims;
     if (command_word)
         return c_command_delims;
+#ifdef USE_SETTING_FOR_BRACKETS_ARE_WORD_BREAKS
+    if (s_match_brackets_are_word_breaks && !s_match_brackets_are_word_breaks->get())
+        return c_word_delims_no_brackets;
+#endif
     return c_word_delims;
 }
 
