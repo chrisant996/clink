@@ -3035,3 +3035,9 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
     pos = point;
     return true;
 }
+
+//------------------------------------------------------------------------------
+SHORT calc_max_y_scroll_pos(SHORT y)
+{
+    return y + (_rl_vis_botlin - _rl_last_v_pos) + s_ever_input_hint;
+}

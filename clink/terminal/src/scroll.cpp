@@ -5,9 +5,8 @@
 #include "scroll.h"
 
 //------------------------------------------------------------------------------
-// Terminal can't #include from Readline.
-extern "C" int32 _rl_vis_botlin;
-extern "C" int32 _rl_last_v_pos;
+// Terminal can't #include from Lib.
+extern SHORT calc_max_y_scroll_pos(SHORT y);
 
 //------------------------------------------------------------------------------
 static bool s_scroll_mode = false;
@@ -33,7 +32,7 @@ int32 ScrollConsoleRelative(HANDLE h, int32 direction, SCRMODE mode)
         return 0;
 
     // Calculate the bottom line of the readline edit line.
-    SHORT bottom_Y = csbiInfo.dwCursorPosition.Y + (_rl_vis_botlin - _rl_last_v_pos);
+    SHORT bottom_Y = calc_max_y_scroll_pos(csbiInfo.dwCursorPosition.Y);
 
     // Calculate the new window position.
     SMALL_RECT srWindow = csbiInfo.srWindow;
