@@ -1319,7 +1319,7 @@ $endif
 <p>You can remove the startup message by running <code>clink set clink.logo none</code>.</p>
 <p><a name="gettingstarted_startupcmdscript"></a></p>
 <h3 id="startup-cmd-script"><a class="wlink" href="#gettingstarted_startupcmdscript"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Cmd Script <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
-<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected and before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown: after Clink is injected, after any <code>cmd.exe</code> command line arguments, but before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
 <p><a name="gettingstarted_customprompt"></a></p>
 <h3 id="custom-prompt"><a class="wlink" href="#gettingstarted_customprompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Custom Prompt <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
 <p>If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you&#39;ve been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.</p>
@@ -7087,6 +7087,23 @@ set CLINK_TERM_VS=\e[?12l
 <li>If the <code>CLINK_NOAUTORUN</code> environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.</li>
 <li>Clink autorun can be uninstalled:  <code>clink autorun uninstall</code>.</li>
 </ol>
+<h5 id="order-of-execution-during-autorun"><a class="wlink" href="#order-of-execution-during-autorun"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Order of execution during AutoRun <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
+<p>This is the order in which operations are performed when Clink is configured to automatically inject itself whenever CMD is started:</p>
+<ol>
+<li>CMD executes the commands listed in its AutoRun regkey.<ul>
+<li>Clink.bat checks whether to skip injecting (e.g. the <code>CLINK_NOAUTORUN</code> environment variable).</li>
+<li>Clink.bat executes clink_x64.exe with the <code>inject</code> command.</li>
+<li>Clink_x64.exe checks if the parent process is supported (see <a href="#checking-if-the-parent-process-is-supported">here</a> for details).</li>
+<li>Clink_x64.exe injects a remote thread into its parent CMD process.</li>
+<li>Clink_x64_dll.dll is loaded into the CMD process.</li>
+<li>Clink_x64_dll.dll hooks the OS functions (see <a href="#hooking-os-functions">here</a> for details).</li>
+</ul>
+</li>
+<li>CMD executes any commands specified in its command line arguments (the <code>cmd /c <span class="arg">command</span></code> or <code>cmd /k <span class="arg">command</span></code> flags).</li>
+<li>If a <a href="#gettingstarted_startupcmdscript">startup script</a> is present, then when CMD tries to show the prompt for the first time Clink intercepts the prompt and immediately returns the path to the startup script, making CMD run the startup script.  This is the earliest opportunity for Clink to run the startup script; there&#39;s no way to run a startup script before CMD executes commands specified in its command line arguments.</li>
+<li>Clink initializes its Lua engine and <a href="#lua-scripts-location">loads Lua scripts</a>.</li>
+</ol>
+<p>Each time CMD subsequently tries to prompt for input then Clink runs any configured prompt filters, shows the resulting prompt, and uses its own line editor to accept input until <kbd>Enter</kbd> is pressed.  The resulting input is returned to CMD for processing.</p>
 <h5 id="other-notes"><a class="wlink" href="#other-notes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Other notes <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
 <p>The <code>clink.bat</code> file exists to enable seamless support for x64/x86/ARM64 on the same computer by detecting the current mode and invoking the corresponding <code>clink_*.exe</code> program.  There is no way for a batch script to figure out whether cmd.exe is going to be interactive, so that check has to happen inside the clink_x64.exe program.  If it assesses that it will be non-interactive, then clink_x64.exe exits without injecting clink_dll_x64.dll into the cmd.exe process.  The act of checking whether cmd.exe will be interactive is much faster than the act of injecting Clink into the cmd.exe process, and so the check minimizes performance degradation when Clink is configured for autorun.</p>
 <p>Personally, I don&#39;t use Clink with autorun for three reasons:</p>
