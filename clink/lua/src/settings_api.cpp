@@ -628,6 +628,8 @@ static int32 load(lua_State* state)
 // Undocumented, because it's only needed internally.
 static int32 list(lua_State* state)
 {
+    str<32> tmp;
+
     if (lua_gettop(state) < 1)
     {
         lua_createtable(state, 0, 1);
@@ -644,6 +646,11 @@ static int32 list(lua_State* state)
 
             lua_pushliteral(state, "description");
             lua_pushstring(state, setting->get_short_desc());
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "default");
+            setting->get_default(tmp);
+            lua_pushlstring(state, tmp.c_str(), tmp.length());
             lua_rawset(state, -3);
 
             source = setting->get_source();
@@ -684,6 +691,11 @@ static int32 list(lua_State* state)
 
         lua_pushliteral(state, "values");
         push_setting_values_table(state, setting, classify);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "default");
+        setting->get_default(tmp);
+        lua_pushlstring(state, tmp.c_str(), tmp.length());
         lua_rawset(state, -3);
 
         return 1;

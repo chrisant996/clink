@@ -1409,6 +1409,38 @@ template <> void setting_impl<const char*>::get(str_base& out) const
 
 
 //------------------------------------------------------------------------------
+template <> void setting_impl<bool>::get_default(str_base& out) const
+{
+    const char* custom_default = get_custom_default();
+    if (custom_default)
+        out = custom_default;
+    else
+        out = bool(m_default) ? "True" : "False";
+}
+
+//------------------------------------------------------------------------------
+template <> void setting_impl<int32>::get_default(str_base& out) const
+{
+    const char* custom_default = get_custom_default();
+    if (custom_default)
+        out = custom_default;
+    else
+        out.format("%d", int32(m_default));
+}
+
+//------------------------------------------------------------------------------
+template <> void setting_impl<const char*>::get_default(str_base& out) const
+{
+    const char* custom_default = get_custom_default();
+    if (custom_default)
+        out = custom_default;
+    else
+        out = (const char*)m_default;
+}
+
+
+
+//------------------------------------------------------------------------------
 setting_enum::setting_enum(
     const char* name,
     const char* short_desc,

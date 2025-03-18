@@ -101,6 +101,7 @@ public:
     virtual bool    set(const char* value) = 0;
     virtual void    get(str_base& out) const = 0;
     virtual void    get_descriptive(str_base& out, bool compat=true) const { get(out); }
+    virtual void    get_default(str_base& out) const = 0;
 
     void            set_source(char const* source);
     const char*     get_source() const;
@@ -147,6 +148,7 @@ public:
     virtual void    set() override;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
+    virtual void    get_default(str_base& out) const override;
     void            deferred_load();
 
 protected:
