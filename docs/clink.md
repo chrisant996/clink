@@ -394,7 +394,7 @@ You can remove the startup message by running `clink set clink.logo none`.
 
 ### Startup Cmd Script
 
-When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected and before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to "nul" to run no command at all.
+When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the script(s), if present, when the first CMD prompt is shown: after Clink is injected, after any `cmd.exe` command line arguments, but before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to "nul" to run no command at all.
 
 <a name="gettingstarted_customprompt"></a>
 
@@ -3815,6 +3815,22 @@ There are several ways:
 1. The `cmd /d` flag disables CMD's AutoRun regkey processing, which will prevent CMD from running the Clink autorun script.
 2. If the `CLINK_NOAUTORUN` environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.
 3. Clink autorun can be uninstalled:  `clink autorun uninstall`.
+
+##### Order of execution during AutoRun
+
+This is the order in which operations are performed when Clink is configured to automatically inject itself whenever CMD is started:
+1. CMD executes the commands listed in its AutoRun regkey.
+    - Clink.bat checks whether to skip injecting (e.g. the `CLINK_NOAUTORUN` environment variable).
+    - Clink.bat executes clink_x64.exe with the `inject` command.
+    - Clink_x64.exe checks if the parent process is supported (see [here](#checking-if-the-parent-process-is-supported) for details).
+    - Clink_x64.exe injects a remote thread into its parent CMD process.
+    - Clink_x64_dll.dll is loaded into the CMD process.
+    - Clink_x64_dll.dll hooks the OS functions (see [here](#hooking-os-functions) for details).
+2. CMD executes any commands specified in its command line arguments (the <code>cmd /c <span class="arg">command</span></code> or <code>cmd /k <span class="arg">command</span></code> flags).
+3. If a [startup script](#gettingstarted_startupcmdscript) is present, then when CMD tries to show the prompt for the first time Clink intercepts the prompt and immediately returns the path to the startup script, making CMD run the startup script.  This is the earliest opportunity for Clink to run the startup script; there's no way to run a startup script before CMD executes commands specified in its command line arguments.
+4. Clink initializes its Lua engine and [loads Lua scripts](#lua-scripts-location).
+
+Each time CMD subsequently tries to prompt for input then Clink runs any configured prompt filters, shows the resulting prompt, and uses its own input line editor to accept input until <kbd>Enter</kbd> is pressed.  The resulting input is returned to CMD for processing.
 
 ##### Other notes
 
