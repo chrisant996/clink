@@ -6,6 +6,7 @@
 
 - Added an error message when `clink set` fails to write the `clink_settings` file (e.g. no permission or the file is marked read-only).
 - Added logging when `clink inject` is slow.
+- Added keyboard info in `clink echo --verbose`.
 - Condensed the logging during `clink inject`, but if an error occurs while hooking system APIs then it automatically emits verbose logging instead of condensed logging.
 - Fixed the maximum vertical scroll position limiter to include the input hint row when using the legacy Windows conhost.
 - Fixed [#732](https://github.com/chrisant996/clink/issues/732); Executable Completion does not recognize `.LNK` files.
