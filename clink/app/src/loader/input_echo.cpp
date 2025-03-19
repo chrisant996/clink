@@ -38,7 +38,31 @@ int32 input_echo(int32 argc, char** argv)
 
     set_verbose_input(verbose_input);
 
-    puts("Type a key to see its key sequence string.\nPress Ctrl+C when finished.");
+    puts("Type a key to see its key sequence string.");
+    if (verbose_input)
+    {
+        const DWORD cpid = GetACP();
+        const DWORD kbid = LOWORD(GetKeyboardLayout(0));
+        WCHAR wide_layout_name[KL_NAMELENGTH * 2];
+        if (!GetKeyboardLayoutNameW(wide_layout_name))
+            wide_layout_name[0] = 0;
+
+        wstr<> keyboard_info;
+        keyboard_info.format(L"codepage %u, keyboard langid %u, keyboard layout %s", cpid, kbid, wide_layout_name);
+
+        DWORD dummy;
+        const HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(hout, &dummy))
+        {
+            keyboard_info.concat(L"\r\n");
+            WriteConsoleW(hout, keyboard_info.c_str(), keyboard_info.length(), &dummy, nullptr);
+        }
+        else
+        {
+            _putws(keyboard_info.c_str());
+        }
+    }
+    puts("Press Ctrl+C when finished.");
 
     // Load the settings from disk, since terminal input is affected by settings.
     str<280> settings_file;
