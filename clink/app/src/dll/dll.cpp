@@ -107,7 +107,8 @@ void log_excessive_time(const char* const op, uint32& last_tick, const uint32 th
 //------------------------------------------------------------------------------
 INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 {
-    uint32 last_tick = app_desc.tick;
+    uint32 begin_tick = app_desc.tick;
+    uint32 last_tick = begin_tick;
     str_moveable slow_inject;
     log_excessive_time("Remote thread injection", last_tick, 250, &slow_inject);
 
@@ -228,5 +229,15 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
     success();
     log_excessive_time("Finish inject", last_tick, 25);
+
+    log_excessive_time("Total time to inject", begin_tick, 500);
+    {
+        SYSTEMTIME now;
+        GetLocalTime(&now);
+        LOG("Inject completed at %04u/%02u/%02u %02u:%02u:%02u.%03u",
+            now.wYear, now.wMonth, now.wDay,
+            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
+    }
+
     return true;
 }
