@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.7.12</title>
+<title>Clink v1.7.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -954,7 +954,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.12</div>
+                <div id="title">Clink v1.7.13</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1582,6 +1582,11 @@ $endif
 <td>The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).</td>
 </tr>
 <tr>
+<td align="center"><a class="wlink" href="#color_modmark"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_modmark"></a><code>color.modmark</code></td>
+<td align="center"></td>
+<td>The color for the modified history line mark character.</td>
+</tr>
+<tr>
 <td align="center"><a class="wlink" href="#color_popup"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_popup"></a><code>color.popup</code></td>
 <td align="center"></td>
 <td>When set, this is used as the color for popup lists and messages.  If no color is set, then the console&#39;s popup colors are used (see the Properties dialog box for the console window).</td>
@@ -1857,7 +1862,7 @@ $endif
 <td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
 </tr>
 <tr>
-<td align="center"><a class="wlink" href="#match_limit_fitted_columns"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_limit_fitted_columns"></a><code>match.limit_fitted_columns</code></td>
+<td align="center"><a class="wlink" href="#match_limit_fitted_columns"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_limit_fitted_columns"></a><code>match.max_fitted_matches</code></td>
 <td align="center"><code>0</code></td>
 <td>When the <a href="#match_fit_columns"><code>match.fit_columns</code></a> setting is enabled, this disables calculating column widths when the number of matches exceeds this value.  The default is 0 (unlimited).  Depending on the screen width and CPU speed, setting a limit may avoid delays.</td>
 </tr>
@@ -7103,7 +7108,7 @@ set CLINK_TERM_VS=\e[?12l
 <li>If a <a href="#gettingstarted_startupcmdscript">startup script</a> is present, then when CMD tries to show the prompt for the first time Clink intercepts the prompt and immediately returns the path to the startup script, making CMD run the startup script.  This is the earliest opportunity for Clink to run the startup script; there&#39;s no way to run a startup script before CMD executes commands specified in its command line arguments.</li>
 <li>Clink initializes its Lua engine and <a href="#lua-scripts-location">loads Lua scripts</a>.</li>
 </ol>
-<p>Each time CMD subsequently tries to prompt for input then Clink runs any configured prompt filters, shows the resulting prompt, and uses its own line editor to accept input until <kbd>Enter</kbd> is pressed.  The resulting input is returned to CMD for processing.</p>
+<p>Each time CMD subsequently tries to prompt for input then Clink runs any configured prompt filters, shows the resulting prompt, and uses its own input line editor to accept input until <kbd>Enter</kbd> is pressed.  The resulting input is returned to CMD for processing.</p>
 <h5 id="other-notes"><a class="wlink" href="#other-notes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Other notes <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
 <p>The <code>clink.bat</code> file exists to enable seamless support for x64/x86/ARM64 on the same computer by detecting the current mode and invoking the corresponding <code>clink_*.exe</code> program.  There is no way for a batch script to figure out whether cmd.exe is going to be interactive, so that check has to happen inside the clink_x64.exe program.  If it assesses that it will be non-interactive, then clink_x64.exe exits without injecting clink_dll_x64.dll into the cmd.exe process.  The act of checking whether cmd.exe will be interactive is much faster than the act of injecting Clink into the cmd.exe process, and so the check minimizes performance degradation when Clink is configured for autorun.</p>
 <p>Personally, I don&#39;t use Clink with autorun for three reasons:</p>
@@ -8780,6 +8785,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1713"><a class="wlink" href="#v1713"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.13 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added an error message when <code>clink set</code> fails to write the <code>clink_settings</code> file (e.g. no permission or the file is marked read-only).</li>
+<li>Added logging when <code>clink inject</code> is slow.</li>
+<li>Added keyboard info in <code>clink echo --verbose</code>.</li>
+<li>Condensed the logging during <code>clink inject</code>, but if an error occurs while hooking system APIs then it automatically emits verbose logging instead of condensed logging.</li>
+<li>Fixed the maximum vertical scroll position limiter to include the input hint row when using the legacy Windows conhost.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/732">#732</a>; Executable Completion does not recognize <code>.LNK</code> files.</li>
+</ul>
 <h4 id="v1712"><a class="wlink" href="#v1712"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.12 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed what <code>io.popenyield()</code> returns upon failure; previously it accidentally only returned nil, and now upon failure it returns the usual values (nil, error message, error code).</li>
