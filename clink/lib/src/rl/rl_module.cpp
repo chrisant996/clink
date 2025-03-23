@@ -2882,7 +2882,7 @@ void rl_module::on_begin_line(const context& context)
 
     if (!_rl_selected_color)
     {
-        m_selected_color.format("0;1;7");
+        m_selected_color.format("0;7");
         _rl_selected_color = m_selected_color.c_str();
     }
 
