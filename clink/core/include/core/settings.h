@@ -244,12 +244,14 @@ public:
                        setting_enum(const char* name, const char* short_desc, const char* values, int32 default_value);
                        setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int32 default_value);
     virtual void       get(str_base& out) const override;
+    virtual void       get_default(str_base& out) const override;
     const char*        get_options() const;
 
     using setting_impl<int32>::get;
 
 protected:
     virtual bool       parse(const char* value, store<int32>& out) override;
+    void               get_option_name(int32 index, str_base& out) const;
     static const char* next_option(const char* option);
     str<48>            m_options;
 };

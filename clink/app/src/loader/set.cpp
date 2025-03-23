@@ -141,6 +141,15 @@ static bool print_value(bool describe, const char* key, bool compat, bool list=f
     setting->get_descriptive(value, compat);
     printf("       Value: %s\n", value.c_str());
 
+    setting->get_default(value);
+    if (setting->get_type() == setting::type_color)
+    {
+        str<> tmp;
+        settings::parse_color(value.c_str(), tmp);
+        settings::format_color(tmp.c_str(), value, false);
+    }
+    printf("     Default: %s\n", value.c_str());
+
     const char* long_desc = setting->get_long_desc();
     if (long_desc != nullptr && *long_desc)
         printf("\n%s\n", setting->get_long_desc());

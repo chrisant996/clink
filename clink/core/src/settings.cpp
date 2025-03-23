@@ -1513,7 +1513,25 @@ bool setting_enum::parse(const char* value, store<int32>& out)
 //------------------------------------------------------------------------------
 void setting_enum::get(str_base& out) const
 {
-    int32 index = m_store.value;
+    get_option_name(m_store.value, out);
+}
+
+//------------------------------------------------------------------------------
+void setting_enum::get_default(str_base& out) const
+{
+    get_option_name(m_default.value, out);
+}
+
+//------------------------------------------------------------------------------
+const char* setting_enum::get_options() const
+{
+    return m_options.c_str();
+}
+
+//------------------------------------------------------------------------------
+void setting_enum::get_option_name(int32 index, str_base& out) const
+{
+    out.clear();
     if (index < 0)
         return;
 
@@ -1530,12 +1548,6 @@ void setting_enum::get(str_base& out) const
         out.clear();
         out.concat(option, int32(next - option));
     }
-}
-
-//------------------------------------------------------------------------------
-const char* setting_enum::get_options() const
-{
-    return m_options.c_str();
 }
 
 //------------------------------------------------------------------------------
