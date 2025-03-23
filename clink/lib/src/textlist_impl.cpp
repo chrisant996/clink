@@ -775,6 +775,13 @@ void textlist_impl::on_input(const input& input, result& result, const context& 
         if (m_index < 0)
             m_index = _rl_menu_complete_wraparound ? m_count - 1 : 0;
 navigated:
+        if (m_needle_is_number)
+        {
+            m_needle.clear();
+            m_needle_is_number = false;
+            m_input_clears_needle = false;
+            m_override_title.clear();
+        }
         update_display();
         break;
     case bind_id_textlist_down:
@@ -847,7 +854,7 @@ find:
             {
                 m_prev_displayed = -1;
                 m_force_clear = true;
-                update_display();
+                need_display = true;
             }
         }
         else
@@ -892,10 +899,9 @@ find:
                 if (i == original)
                     break;
             }
-
-            if (need_display)
-                update_display();
         }
+        if (need_display)
+            update_display();
         break;
 
     case bind_id_textlist_copy:
