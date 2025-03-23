@@ -475,6 +475,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="clink_dot_path"></a>`clink.path` | | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
 <a name="clink_popup_search_mode"></a>`clink.popup_search_mode` | `find` | When this is `find`, typing in popup lists moves to the next matching item.  When this is `filter`, typing in popup lists filters the list.
 <a name="clink_promptfilter"></a>`clink.promptfilter` | True | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
+<a name="clink_scroll_offset"></a>`clink.scroll_offset` | `3` | Number of screen lines to show above or below a selected item in popup lists or the [`clink-select-complete`](#rlcmd-clink-select-complete) command.  The list scrolls up or down as needed to maintain the scroll offset (except after a mouse click).
 <a name="clink_update_interval"></a>`clink.update_interval` | `5` | The Clink autoupdater will wait this many days between update checks (see [Automatic Updates](#automatic-updates)).
 <a name="cmd_admin_title_prefix"></a>`cmd.admin_title_prefix` | | When set, this replaces the "Administrator: " console title prefix.
 <a name="cmd_altf4_exits"></a>`cmd.altf4_exits` | True | When set, pressing <kbd>Alt</kbd>-<kbd>F4</kbd> exits the cmd.exe process.
