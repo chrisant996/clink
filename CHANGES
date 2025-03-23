@@ -5,6 +5,7 @@
 #### v1.7.14
 
 - Added a new `clink.scroll_offset` setting which controls how many lines to show above or below the selected item in popup lists or the `clink-select-complete` command (default is 3).
+- Changed <code>clink set <span class="arg">name</span></code> to include the default value of the named setting.
 - Fixed input edge cases in the `win-history-list` command.
 
 #### v1.7.13
