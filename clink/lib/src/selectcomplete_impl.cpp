@@ -91,6 +91,14 @@ setting_int g_match_limit_fitted(
     "Depending on the screen width and CPU speed, setting a limit may avoid delays.",
     0);
 
+setting_int g_clink_scroll_offset(
+    "clink.scroll_offset",
+    "Scroll offset above/below selected item in list",
+    "Number of screen lines to show above or below a selected item in popup\n"
+    "lists or the clink-select-complete command.  The list scrolls up or down\n"
+    "as needed to maintain the scroll offset (except after a mouse click).\n",
+    3);
+
 extern setting_bool g_match_expand_abbrev;
 
 
@@ -425,6 +433,7 @@ void selectcomplete_impl::on_end_line()
     m_init_desc_below = true;
     m_can_prompt = true;
     m_clear_display = false;
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------
@@ -474,6 +483,8 @@ revert:
         cancel(result);
         return;
     }
+
+    m_ignore_scroll_offset = false;
 
     bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
@@ -601,6 +612,8 @@ arrow_next:
         {
             const int32 y = get_match_row(m_index);
             const int32 rows = min<int32>(m_match_rows, m_visible_rows);
+            const int32 scroll_ofs = get_scroll_offset();
+            const int32 scroll_rows = (rows - scroll_ofs - 1);
             if (input.id == bind_id_selectcomplete_pgup)
             {
                 if (!y)
@@ -609,7 +622,7 @@ arrow_next:
                 }
                 else
                 {
-                    int32 new_y = max<int32>(0, (y == m_top) ? y - (rows - 1) : m_top);
+                    int32 new_y = max<int32>(0, (y <= m_top + scroll_ofs) ? y - scroll_rows : m_top + scroll_ofs);
                     int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
                     m_index += (new_y - y) * stride;
                 }
@@ -624,7 +637,7 @@ arrow_next:
                 else
                 {
                     int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                    int32 new_y = min<int32>(m_match_rows - 1, (y == m_top + rows - 1) ? y + (rows - 1) : m_top + (rows - 1));
+                    int32 new_y = min<int32>(m_match_rows - 1, (y >= m_top + scroll_rows) ? y + scroll_rows : m_top + scroll_rows);
                     int32 new_index = m_index + (new_y - y) * stride;
                     int32 new_top = m_top;
                     if (new_index >= count)
@@ -727,6 +740,7 @@ do_mouse_position:
                     if (p0 >= x1 && p0 < x1 + col_width)
                     {
                         m_index = index;
+                        m_ignore_scroll_offset = true;
                         if (scrolling)
                             m_scroll_helper.on_scroll(now);
                         if (m_index >= m_matches.get_match_count())
@@ -800,6 +814,7 @@ do_mouse_position:
                 m_index -= min<uint32>(match_row, p0) * major_stride;
             else
                 m_index += min<uint32>(m_match_rows - 1 - match_row, p0) * major_stride;
+
             const int32 count = m_matches.get_match_count();
             if (m_index >= count)
             {
@@ -811,6 +826,8 @@ do_mouse_position:
                     set_top(min<int32>(max_top, m_top + 1));
                 }
             }
+            assert(!m_ignore_scroll_offset);
+
             if (m_index != prev_index || m_top != prev_top)
                 update_display();
         }
@@ -954,6 +971,8 @@ void selectcomplete_impl::on_matches_changed(const context& context, const line_
     // but only an explicit wildcard (e.g. "*g") should accept ".git".
     m_needle = needle;
     update_len(m_needle.length());
+
+    assert(!m_ignore_scroll_offset);
 }
 
 //------------------------------------------------------------------------------
@@ -1021,6 +1040,8 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
 //------------------------------------------------------------------------------
 void selectcomplete_impl::init_matches()
 {
+    m_ignore_scroll_offset = false;
+
     m_matches.reset();
     assert(m_init_matches);
     assert(m_matches.get_matches() == m_init_matches);
@@ -1257,6 +1278,7 @@ void selectcomplete_impl::update_matches()
 
     m_clear_display = m_any_displayed;
     m_calc_widths = true;
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1312,6 +1334,7 @@ force_desc_below:
     const int32 cols_that_fit = m_widths.num_columns();
     m_match_cols = max<int32>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
+    m_ignore_scroll_offset = false;
 
     // If initializing where to display descriptions, and they don't fit inline
     // in a small number of rows, then display them below.
@@ -1369,6 +1392,21 @@ void selectcomplete_impl::update_top()
         if (m_top < top)
             set_top(top);
     }
+
+    if (m_expanded && !m_ignore_scroll_offset)
+    {
+        const int32 scroll_ofs = get_scroll_offset();
+        if (scroll_ofs > 0)
+        {
+            const int32 y = get_match_row(m_index);
+            const int32 last_row = max<int32>(0, m_match_rows - m_visible_rows);
+            if (m_top > max(0, y - scroll_ofs))
+                set_top(max(0, y - scroll_ofs));
+            else if (m_top < min(last_row, y + scroll_ofs - m_displayed_rows + 1))
+                set_top(min(last_row, y + scroll_ofs - m_displayed_rows + 1));
+        }
+    }
+
     assert(m_top >= 0);
     assert(m_top <= max<int32>(0, m_match_rows - m_visible_rows));
 }
@@ -1418,8 +1456,6 @@ void selectcomplete_impl::update_display()
         const int32 count = m_matches.get_match_count();
         if (is_active() && count > 0)
         {
-            update_top();
-
             const int32 preview_rows = g_preview_rows.get();
             if (!m_expanded)
             {
@@ -1445,6 +1481,10 @@ void selectcomplete_impl::update_display()
             const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
             const int32 rows = min<int32>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
             m_displayed_rows = rows;
+
+            // Can't update top until after m_displayed_rows is known, so that
+            // the scroll offset can be accounted for accurately in all cases.
+            update_top();
 
 #ifdef SHOW_VERT_SCROLLBARS
             m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
@@ -2004,6 +2044,15 @@ int32 selectcomplete_impl::get_match_row(int32 index) const
 }
 
 //------------------------------------------------------------------------------
+int32 selectcomplete_impl::get_scroll_offset() const
+{
+    const int32 ofs = g_clink_scroll_offset.get();
+    if (ofs <= 0)
+        return 0;
+    return min(ofs, max(0, (m_displayed_rows - 1) / 2));
+}
+
+//------------------------------------------------------------------------------
 bool selectcomplete_impl::use_display(bool append, match_type type, int32 index) const
 {
     return m_matches.use_display(index, type, append);
@@ -2029,6 +2078,7 @@ void selectcomplete_impl::reset_top()
     m_index = 0;
     m_prev_displayed = -1;
     m_comment_row_displayed = false;
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------

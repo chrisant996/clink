@@ -89,6 +89,7 @@ static setting_enum g_popup_search_mode(
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
+extern setting_int g_clink_scroll_offset;
 extern bool host_remove_dir_history(int32 index);
 
 //------------------------------------------------------------------------------
@@ -768,6 +769,8 @@ void textlist_impl::on_input(const input& input, result& result, const context& 
         return;
     }
 
+    m_ignore_scroll_offset = false;
+
     switch (input.id)
     {
     case bind_id_textlist_up:
@@ -802,14 +805,15 @@ navigated:
         {
             const int32 y = m_index;
             const int32 rows = min<int32>(m_count, m_visible_rows);
-
+            const int32 scroll_ofs = get_scroll_offset();
             // Use rows as the page size (vs the more common rows-1) for
             // compatibility with Conhost's F7 popup list behavior.
+            const int32 scroll_rows = (rows - scroll_ofs);
             if (input.id == bind_id_textlist_pgup)
             {
                 if (y > 0)
                 {
-                    int32 new_y = max<int32>(0, (y == m_top) ? y - rows : m_top);
+                    int32 new_y = max<int32>(0, (y <= m_top + scroll_ofs) ? y - scroll_rows : m_top + scroll_ofs);
                     m_index += (new_y - y);
                     goto navigated;
                 }
@@ -818,8 +822,8 @@ navigated:
             {
                 if (y < m_count - 1)
                 {
-                    int32 bottom_y = m_top + rows - 1;
-                    int32 new_y = min<int32>(m_count - 1, (y == bottom_y) ? y + rows : bottom_y);
+                    int32 bottom_y = m_top + scroll_rows - 1;
+                    int32 new_y = min<int32>(m_count - 1, (y == bottom_y) ? y + scroll_rows : bottom_y);
                     m_index += (new_y - y);
                     if (m_index > m_count - 1)
                     {
@@ -1066,6 +1070,7 @@ do_insert:
             if (p1 < rows)
             {
                 m_index = p1 + m_top;
+                m_ignore_scroll_offset = true;
                 if (input.id == bind_id_textlist_doubleclick)
                 {
                     update_display();
@@ -1080,8 +1085,9 @@ do_insert:
                 {
                     if (m_top > 0)
                     {
-                        set_top(max<int32>(0, m_top - m_scroll_helper.scroll_speed()));
+                        set_top(max<int32>(0, m_top - m_scroll_helper.scroll_speed()), true);
                         m_index = m_top;
+                        assert(m_ignore_scroll_offset);
                         goto navigated;
                     }
                 }
@@ -1089,8 +1095,9 @@ do_insert:
                 {
                     if (m_top + rows < m_count)
                     {
-                        set_top(min<int32>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
+                        set_top(min<int32>(m_count - rows, m_top + m_scroll_helper.scroll_speed()), true);
                         m_index = m_top + rows - 1;
+                        assert(m_ignore_scroll_offset);
                         goto navigated;
                     }
                 }
@@ -1107,6 +1114,7 @@ do_insert:
                 m_index -= min<uint32>(m_index, p0);
             else
                 m_index += min<uint32>(m_count - 1 - m_index, p0);
+            m_ignore_scroll_offset = false;
             goto navigated;
         }
         break;
@@ -1387,6 +1395,8 @@ void textlist_impl::update_layout()
     m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
     m_vert_scroll_column = 0;
 #endif
+
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1404,6 +1414,21 @@ void textlist_impl::update_top()
         if (m_top < top)
             set_top(top);
     }
+
+    if (!m_ignore_scroll_offset)
+    {
+        const int32 scroll_ofs = get_scroll_offset();
+        if (scroll_ofs > 0)
+        {
+            const int32 visible_rows = min<int32>(m_count, m_visible_rows);
+            const int32 last_row = max(0, m_count - visible_rows);
+            if (m_top > max(0, m_index - scroll_ofs))
+                set_top(max(0, m_index - scroll_ofs));
+            else if (m_top < min(last_row, m_index + scroll_ofs - visible_rows + 1))
+                set_top(min(last_row, m_index + scroll_ofs - visible_rows + 1));
+        }
+    }
+
     assert(m_top >= 0);
     assert(m_top <= max<int32>(0, m_count - m_visible_rows));
 }
@@ -1814,7 +1839,16 @@ void textlist_impl::update_display()
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::set_top(int32 top)
+int32 textlist_impl::get_scroll_offset() const
+{
+    const int32 ofs = g_clink_scroll_offset.get();
+    if (ofs <= 0)
+        return 0;
+    return min(ofs, max(0, (m_visible_rows - 1) / 2));
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::set_top(int32 top, bool ignore_scroll_offset)
 {
     assert(top >= 0);
     assert(top <= max<int32>(0, m_count - m_visible_rows));
@@ -1822,6 +1856,7 @@ void textlist_impl::set_top(int32 top)
     {
         m_top = top;
         m_prev_displayed = -1;
+        m_ignore_scroll_offset = ignore_scroll_offset;
     }
 }
 
@@ -1932,6 +1967,7 @@ void textlist_impl::reset()
     m_needle.clear();
     m_needle_is_number = false;
     m_input_clears_needle = false;
+    m_ignore_scroll_offset = false;
 
     m_store.clear();
 }
@@ -1978,6 +2014,7 @@ void textlist_impl::clear_filter()
         m_filter_string.clear();
         m_filtered_items.clear();
         m_index = m_filter_saved_index;
+        m_ignore_scroll_offset = false;
         set_top(m_filter_saved_top);
 #ifdef SHOW_VERT_SCROLLBARS
         m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
@@ -2086,6 +2123,7 @@ bool textlist_impl::filter_items()
     else
         m_index = 0;
     set_top(0);
+    assert(!m_ignore_scroll_offset);
     update_top();
 
 #ifdef SHOW_VERT_SCROLLBARS

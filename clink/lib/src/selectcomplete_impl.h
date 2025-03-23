@@ -48,6 +48,7 @@ private:
     void            insert_needle();
     void            insert_match(int32 final=false);
     int32           get_match_row(int32 index) const;
+    int32           get_scroll_offset() const;
     bool            use_display(bool append, match_type type, int32 index) const;
     void            set_top(int32 top);
     void            reset_top();
@@ -102,6 +103,7 @@ private:
     // Current input.
     str<>           m_needle;
     bool            m_was_backspace = false;
+    bool            m_ignore_scroll_offset = false;
 #ifdef FISH_ARROW_KEYS
     bool            m_prev_latched = false;
     uint8           m_prev_input_id = 0;

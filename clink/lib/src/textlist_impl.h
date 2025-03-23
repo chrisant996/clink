@@ -85,7 +85,8 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
-    void            set_top(int32 top);
+    int32           get_scroll_offset() const;
+    void            set_top(int32 top, bool ignore_scroll_offset=false);
     void            adjust_horz_offset(int32 delta);
     void            init_colors(const popup_config* config);
     void            reset();
@@ -160,6 +161,7 @@ private:
     str<16>         m_needle;
     bool            m_needle_is_number = false;
     bool            m_input_clears_needle = false;
+    bool            m_ignore_scroll_offset = false;
     scroll_helper   m_scroll_helper;
 #ifdef SHOW_VERT_SCROLLBARS
     bool            m_scroll_bar_clicked = false;
