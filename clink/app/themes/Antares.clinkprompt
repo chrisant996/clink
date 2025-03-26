@@ -107,6 +107,8 @@ ANTARES.STR_GIT_TAG=makedefault(ANTARES.STR_GIT_TAG, "🏲")
 -- ANTARES.STR_JOBS="⚙"
 ANTARES.STR_ROOT=makedefault(ANTARES.STR_ROOT, "#")
 ANTARES.STR_USER=makedefault(ANTARES.STR_USER, "$")
+ANTARES.STR_RETURN=makedefault(ANTARES.STR_RETURN, "⤷")
+ANTARES.STR_RETURN_NONZERO=makedefault(ANTARES.STR_RETURN_NONZERO, "✘")
 
 -- The path expansion to use to display the pwd
 ANTARES.PATHVAR=makedefault(ANTARES.PATHVAR, function() return rl.collapsetilde(os.getcwd()) end)
@@ -318,14 +320,14 @@ function ant:antares_update_prompt()
     end
     if self.exec_time and ANTARES.MIN_EXEC_TIME >= 0 then
         if self.exec_time >= ANTARES.MIN_EXEC_TIME then
-            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_EXECTIME)..bold.."⤷"..nobold.." "..string.format("%.01f", self.exec_time)..f
+            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_EXECTIME)..bold..ANTARES.STR_RETURN..nobold.." "..string.format("%.01f", self.exec_time)..f
         end
     end
     if self.ANTARES_ERR_CODE ~= 0 then
         if self.ANTARES_RETURN == "" then
-            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_ERRVAL)..bold.."⤷"..nobold..f
+            self.ANTARES_RETURN=self.ANTARES_RETURN..F(ANTARES.FG_ERRVAL)..bold..ANTARES.STR_RETURN..nobold..f
         end
-        self.ANTARES_RETURN=self.ANTARES_RETURN.." "..F(ANTARES.FG_ERRVAL).."✘"..bold..tostring(self.ANTARES_ERR_CODE)..nobold..f
+        self.ANTARES_RETURN=self.ANTARES_RETURN.." "..F(ANTARES.FG_ERRVAL)..ANTARES.STR_RETURN_NONZERO..bold..tostring(self.ANTARES_ERR_CODE)..nobold..f
     end
     if self.ANTARES_RETURN ~= "" then
         self.ANTARES_RETURN=self.ANTARES_RETURN..LINEFEED
