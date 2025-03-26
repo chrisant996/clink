@@ -166,7 +166,7 @@ function ant:antares_update_git_status()
         if check_bare then
             local bare_info=clink.promptcoroutine(function()
                 local info = {}
-                local r,close=io.popen(git.makecommand("rev-parse --is-inside-work=tree >nul"))
+                local r,close=io.popen(git.makecommand("rev-parse --is-inside-work-tree >nul"))
                 if not r then return end
                 r:read("*a")
                 local ok,what,status=popen_close(r, close)
