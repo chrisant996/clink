@@ -3748,6 +3748,30 @@ Clink's keyboard driver generally produces VT220 style key sequences, but it als
 
 Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the [`terminal.emulation`](#terminal_emulation) setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
 
+### Key Binding Quirks
+
+If you see the input line sometimes lose typed input and start with `[A` or `[B` or similar cryptic characters, here is what's happening:
+
+Some terminal based applications ported from Unix/Linux to Windows set the console input mode to request emulated Virtual Terminal (VT) input sequences.  Some examples are `git`, `ls`, `cat` and other command Unix/Linux programs.
+
+When a terminal based application requests emulated VT input sequences, then the Windows console (terminal) subsystem converts each keystroke into an equivalent VT input sequence _at the moment the keys are pressed_.  If the application doesn't read the input before it exits, then that can interfere with Clink's keyboard driver.  Any keystrokes that are typed while the application is running (i.e. before Clink regains control) still end up converted to VT input sequences before they reach Clink, even though Clink turns off emulated VT input sequences before reading any input.  This typically ends up looking like the input line gets cleared and has just `[A` or `[B` or similar text, instead of what was typed by the user.
+
+There is a way to work around that problem, if necessary:
+
+1. Run `clink set terminal.raw_esc true`.
+2. Use only key bindings in Clink that Unix/Linux would also recognize.
+
+That means:
+
+- Don't use key bindings for <kbd>Ctrl</kbd>-<kbd>Space</kbd>.
+- Don't use key bindings for <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd><em>Letters</em></kbd>.
+- Don't use various other key combinations that Clink recognizes but which Unix/Linux do not recognize.
+- Don't try to bind anything directly to the <kbd>Esc</kbd> key by itself, since that creates ambiguity because `ESC` is the first character in VT input sequences for most special keystrokes.
+- Pressing <kbd>Esc</kbd> by itself can no longer clear the input line.
+- Pressing <kbd>Esc</kbd> by itself can lead to confusing input states, exactly the same as happens in Unix/Linux.
+
+### Cursor Style
+
 By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  `%CLINK_TERM_VE%` selects the style for the normal cursor (insert mode), `%CLINK_TERM_VS%` selects the style for the enhanced cursor (overwrite mode).
 
 Special codes recognized in the cursor style escape code strings:
