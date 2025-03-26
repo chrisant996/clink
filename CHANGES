@@ -10,6 +10,7 @@
 - Fixed a typo in the Antares clinkprompt when trying to detect a bare git repo.
 - Fixed default color for `color.selected_completion` to have better contrast ratio in light terminal themes.
 - Fixed input edge cases in the `win-history-list` command.
+- Fixed [#738](https://github.com/chrisant996/clink/issues/738); Windows Terminal does not handle the `CSI K` code correctly when the cursor is past the end of the screen line.
 
 #### v1.7.13
 
