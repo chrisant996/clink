@@ -2793,18 +2793,21 @@ extern "C" void _rl_clear_to_eol(int32 count)
         _rl_rprompt_shown_len = 0;
     }
 
-    if (_rl_term_clreol)
+    if (count)
     {
-        tputs(_rl_term_clreol);
-    }
-    else if (count)
-    {
-        str_moveable s;
-        s.reserve(count);
-        concat_spaces(s, count);
-        tputs(s.c_str());
-        _rl_last_c_pos += count;
-        assert(_rl_last_c_pos <= _rl_screenwidth);
+        if (_rl_term_clreol)
+        {
+            tputs(_rl_term_clreol);
+        }
+        else
+        {
+            str_moveable s;
+            s.reserve(count);
+            concat_spaces(s, count);
+            tputs(s.c_str());
+            _rl_last_c_pos += count;
+            assert(_rl_last_c_pos <= _rl_screenwidth);
+        }
     }
 }
 
