@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Issue [#739](https://github.com/chrisant996/clink/issues/739); **ConsoleZ can interfere with injecting Clink**.  `pause()` and `unpause()` currently happen around the entire `CreateRemoteThread()`, and if ConsoleZ's remote thread is trying to load ConsoleHook.dll then pausing threads will end up blocking Clink's remote thread as well, since the loader lock serializes loading DLLs.  But maybe pause/unpause doesn't need to happen around the `LoadLibraryW()` remote thread, and maybe pause/unpause can be done within `initialise_clink()` around the actual hooking of system APIs, which seems to be what actually needs to be protected by pause/unpause.  That would also reduce the cross-process manipulations, and might even reduce the possibility of false positives by anti-malware software.
 
 ## Low Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
