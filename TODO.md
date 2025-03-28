@@ -109,6 +109,29 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Could some `onfoo` callback have forced `clink.refilterprompt()` out of turn?
   - Could this be a race condition versus `reset_stdio_handles()`?  Doesn't appear to be possible, since it goes through `hooked_fwrite`.
   - It only happened for a few days and then stopped, without any changes in Clink, so maybe the cause was external.
+  - **2025/03/27 18:13** -- it happened again.  This time it's clear that it tried to print a transient prompt, but it actually reprinted a _normal_ prompt somehow (plus input text), and the cursor was left at the end of the input text.  Notice the blank line after the "took 17.1s", followed by a non-transient prompt, when the directory didn't change and it should have printed a transient prompt.
+    ```
+    ...
+    Files read from disk: 1
+    Archive size: 304261 bytes (298 KiB)
+    Everything is Ok
+
+    ## EXEC: rd /q /s c:\repos\dirx\.build\release\~working\
+
+
+
+    Release 0.27 built successfully.
+    ───────────────────────────────────────────────────────────────────────────────────────────────────────────╮ took 17.1s
+
+     dirx  main                                                                                  17s Thu 06:09 PM
+    ❯ \chrisant\cpdirx.cmd release==== RELEASE: INSTALL DIRX to c:\wbin ====
+
+    ...
+    ───────────────────────────────────────────────────────────────────────────────────────────────────────────╮ took 21.7s
+    ❯ \chrisant\cpdirx.cmd release                                                                             ╰───────────
+    ==== RELEASE: INSTALL DIRX to c:\wbin ====
+    ...
+    ```
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30)?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
