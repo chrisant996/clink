@@ -11,6 +11,7 @@
 - Fixed default color for `color.selected_completion` to have better contrast ratio in light terminal themes.
 - Fixed input edge cases in the `win-history-list` command.
 - Added a workaround to fix [#738](https://github.com/chrisant996/clink/issues/738); Windows Terminal does not handle the `CSI K` code correctly when the cursor is past the end of the screen line.
+- Improvements for [#739](https://github.com/chrisant996/clink/issues/739); ConsoleZ, ConEmu, and other tools can interfere with injecting Clink (there's no way to completely prevent opportunities for interference, but this reduces the chances).
 
 #### v1.7.13
 
