@@ -34,8 +34,13 @@ bool __EnumProcesses(std::vector<DWORD>& processes);
 class process
 {
 public:
-    enum arch { arch_unknown, arch_x86, arch_x64, arch_arm64 };
     typedef FARPROC funcptr_t;
+    enum arch { arch_unknown, arch_x86, arch_x64, arch_arm64 };
+    enum remote_call_flags
+    {
+        remote_call_default     = 0x00,
+        pause_threads           = 0x01,
+    };
 
                                 process(int32 pid=-1);
     int32                       get_pid() const;
@@ -48,14 +53,14 @@ public:
     remote_result               inject_module(const char* dll, process_wait_callback* callback);
     template <typename T> remote_result remote_call(funcptr_t function, T const& param);
     template <typename T1, typename T2> remote_result remote_call(funcptr_t function, T1 const& param1, T2 const& param2);
-    template <typename T> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T const& param);
-    template <typename T1, typename T2> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2);
+    template <typename T> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T const& param, remote_call_flags flags=remote_call_default);
+    template <typename T1, typename T2> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2, remote_call_flags flags=remote_call_default);
     void                        pause();
     void                        unpause();
 
 private:
-    remote_result               remote_call_internal(funcptr_t function, process_wait_callback* callback, const void* param, int32 param_size);
-    remote_result               remote_call_internal(funcptr_t function, process_wait_callback* callback, const void* param1, int32 param1_size, const void* param2, int32 param2_size);
+    remote_result               remote_call_internal(funcptr_t function, process_wait_callback* callback, remote_call_flags flags, const void* param, int32 param_size);
+    remote_result               remote_call_internal(funcptr_t function, process_wait_callback* callback, remote_call_flags flags, const void* param1, int32 param1_size, const void* param2, int32 param2_size);
     DWORD                       wait(process_wait_callback* callback, HANDLE remote_thread);
     void                        pause(bool suspend);
     int32                       m_pid;
@@ -81,28 +86,28 @@ inline int32 process::get_pid() const
 template <typename T>
 remote_result process::remote_call(funcptr_t function, T const& param)
 {
-    return remote_call_internal(function, nullptr/*callback*/, &param, sizeof(param));
+    return remote_call_internal(function, nullptr/*callback*/, remote_call_default, &param, sizeof(param));
 }
 
 //------------------------------------------------------------------------------
 template <typename T1, typename T2>
 remote_result process::remote_call(funcptr_t function, T1 const& param1, T2 const& param2)
 {
-    return remote_call_internal(function, nullptr/*callback*/, &param1, sizeof(param1), &param2, sizeof(param2));
+    return remote_call_internal(function, nullptr/*callback*/, remote_call_default, &param1, sizeof(param1), &param2, sizeof(param2));
 }
 
 //------------------------------------------------------------------------------
 template <typename T>
-remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T const& param)
+remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T const& param, remote_call_flags flags)
 {
-    return remote_call_internal(function, callback, &param, sizeof(param));
+    return remote_call_internal(function, callback, flags, &param, sizeof(param));
 }
 
 //------------------------------------------------------------------------------
 template <typename T1, typename T2>
-remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2)
+remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2, remote_call_flags flags)
 {
-    return remote_call_internal(function, callback, &param1, sizeof(param1), &param2, sizeof(param2));
+    return remote_call_internal(function, callback, flags, &param1, sizeof(param1), &param2, sizeof(param2));
 }
 
 //------------------------------------------------------------------------------

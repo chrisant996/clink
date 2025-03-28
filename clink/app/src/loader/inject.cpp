@@ -192,13 +192,20 @@ struct wait_monitor : public process_wait_callback
                 static const char c_msg_slow[] =
                     " is taking a long time...";
                 static const char c_msg_timed_out[] =
-                    " timed out.  An antivirus tool may be blocking Clink.\n"
-                    "Consider adding an exception for Clink in the antivirus tool(s) in use.";
+                    " timed out.  Something is interfering with Clink.\n"
+                    "Interference is usually from either antivirus tools or other software which\n"
+                    "hooks into CMD (such as ConEmu or ConsoleZ).  Adding an exception for Clink\n"
+                    "in the antivirus tool(s) might help, or using Windows Terminal might help.";
 
                 DWORD elapsed = GetTickCount() - tick_begin;
                 if (elapsed >= 30 * 1000)
                 {
+                    SYSTEMTIME now;
+                    GetLocalTime(&now);
                     LOG("%s%s", m_op, c_msg_timed_out);
+                    LOG("--- SLOW: %s timed out at %04u/%02u/%02u %02u:%02u:%02u.%03u",
+                        m_op, now.wYear, now.wMonth, now.wDay,
+                        now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
                     fprintf(stderr, "\n\n%s%s\n\n", m_op, c_msg_timed_out);
                     break;
                 }
@@ -208,8 +215,8 @@ struct wait_monitor : public process_wait_callback
                     if (m_elapsed < 5000)
                     {
                         LOG("%s%s", m_op, c_msg_slow);
-                        LOG("--- SLOW: Inject started at %04u/%02u/%02u %02u:%02u:%02u.%03u",
-                            m_started.wYear, m_started.wMonth, m_started.wDay,
+                        LOG("--- SLOW: %s started at %04u/%02u/%02u %02u:%02u:%02u.%03u",
+                            m_op, m_started.wYear, m_started.wMonth, m_started.wDay,
                             m_started.wHour, m_started.wMinute, m_started.wSecond, m_started.wMilliseconds);
                         fprintf(stderr, "\n\n%s%s", m_op, c_msg_slow);
                     }
@@ -492,16 +499,17 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
     static const char* help_usage = "Usage: inject [options]\n";
 
     static const struct option options[] = {
-        { "scripts",     required_argument,  nullptr, 's' },
-        { "profile",     required_argument,  nullptr, 'p' },
-        { "quiet",       no_argument,        nullptr, 'q' },
-        { "pid",         required_argument,  nullptr, 'd' },
-        { "nolog",       no_argument,        nullptr, 'l' },
-        { "help",        no_argument,        nullptr, 'h' },
+        { "scripts",            required_argument,  nullptr, 's' },
+        { "profile",            required_argument,  nullptr, 'p' },
+        { "quiet",              no_argument,        nullptr, 'q' },
+        { "pid",                required_argument,  nullptr, 'd' },
+        { "nolog",              no_argument,        nullptr, 'l' },
+        { "help",               no_argument,        nullptr, 'h' },
         // Undocumented flags.
-        { "autorun",     no_argument,        nullptr, '_' },
-        { "detours",     no_argument,        nullptr, '^' },
-        { "forcehost",   no_argument,        nullptr, '|' },
+        { "autorun",            no_argument,        nullptr, '_' },
+        { "detours",            no_argument,        nullptr, '^' },
+        { "forcehost",          no_argument,        nullptr, '|' },
+        { "no-pause-threads",   no_argument,        nullptr, '\\' },
         { nullptr, 0, nullptr, 0 }
     };
 
@@ -520,6 +528,7 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
     int32 i;
     int32 ret = exit_code_fatal;
     bool is_autorun = false;
+    bool no_pause_threads = false;
     while ((i = getopt_long(argc, argv, "?lqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
@@ -550,6 +559,7 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
         case '^': app_desc.detours = true;      break;
         case '|': app_desc.force = true;        break;
         case '_': ret = 0; is_autorun = true;   break;
+        case '\\': no_pause_threads = true;     break;
 
         case '?':
         case 'h':
@@ -700,11 +710,12 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
     if (!app_desc.tick) ++app_desc.tick; // So that 0 can mean "not available".
 
     // Remotely call Clink's initialisation function.
+    const process::remote_call_flags flags = no_pause_threads ? process::remote_call_default : process::pause_threads;
     void* our_dll_base = vm().get_alloc_base((void*)"");
     uintptr_t init_func = uintptr_t(remote_dll_base.result);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
     wait_monitor monitor("Initializing Clink");
-    remote_result rr = process(target_pid).remote_callex((process::funcptr_t)init_func, &monitor, app_desc);
+    remote_result rr = process(target_pid).remote_callex((process::funcptr_t)init_func, &monitor, app_desc, flags);
     if (!rr.ok)
         return ret;
 

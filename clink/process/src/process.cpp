@@ -341,7 +341,7 @@ remote_result process::inject_module(const char* dll_path, process_wait_callback
     pe_info::funcptr_t func = kernel32.get_export("LoadLibraryW");
 
     wstr<280> wpath(dll_path);
-    return remote_call_internal(func, callback, wpath.data(), wpath.length() * sizeof(wchar_t));
+    return remote_call_internal(func, callback, remote_call_default, wpath.data(), wpath.length() * sizeof(wchar_t));
 }
 
 //------------------------------------------------------------------------------
@@ -367,11 +367,11 @@ static DWORD WINAPI stdcall_thunk(thunk_data& data)
 }
 
 //------------------------------------------------------------------------------
-remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int32 param_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const remote_call_flags flags, const void* param, int32 param_size)
 {
     // Open the process so we can operate on it.
-    handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
-        FALSE, m_pid);
+    const uint32 opflags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
+    handle process_handle = OpenProcess(opflags, FALSE, m_pid);
     if (!process_handle)
     {
         ERR("Unable to open process %d.", m_pid);
@@ -409,7 +409,9 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     static_assert(sizeof(thunk_ptrs) == sizeof(thunk_data), "");
     static_assert((offsetof(thunk_data, in) & 7) == 0, "");
 
-    pause();
+    const bool do_pause = !!(flags & remote_call_flags::pause_threads);
+    if (do_pause)
+        pause();
 
     // The 'remote call' is actually a thread that's created in the process and
     // then waited on for completion.
@@ -419,12 +421,14 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     if (!remote_thread)
     {
         ERR("Unable to create remote thread in process %d.", m_pid);
-        unpause();
+        if (do_pause)
+            unpause();
         return {};
     }
 
     DWORD wait_result = wait(callback, remote_thread);
-    unpause();
+    if (do_pause)
+        unpause();
 
     void* call_ret = nullptr;
     if (wait_result == WAIT_OBJECT_0)
@@ -463,11 +467,11 @@ static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
 }
 
 //------------------------------------------------------------------------------
-remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int32 param1_size, const void* param2, int32 param2_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const remote_call_flags flags, const void* param1, int32 param1_size, const void* param2, int32 param2_size)
 {
     // Open the process so we can operate on it.
-    uint32 flags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
-    handle process_handle = OpenProcess(flags, FALSE, m_pid);
+    const uint32 opflags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
+    handle process_handle = OpenProcess(opflags, FALSE, m_pid);
     if (!process_handle)
     {
         ERR("Unable to open process %d.", m_pid);
@@ -514,7 +518,9 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     static_assert(sizeof(thunk_ptrs) == sizeof(thunk2_data), "");
     static_assert((offsetof(thunk2_data, buffer) & 7) == 0, "");
 
+#ifndef SMALLER_SCOPE_FOR_PAUSE_THREAD
     pause();
+#endif
 
     // The 'remote call' is actually a thread that's created in the process and
     // then waited on for completion.
@@ -524,12 +530,16 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     if (!remote_thread)
     {
         ERR("Unable to create remote thread in process %d.", m_pid);
+#ifndef SMALLER_SCOPE_FOR_PAUSE_THREAD
         unpause();
+#endif
         return {};
     }
 
     DWORD wait_result = wait(callback, remote_thread);
+#ifndef SMALLER_SCOPE_FOR_PAUSE_THREAD
     unpause();
+#endif
 
     void* call_ret = nullptr;
     if (wait_result == WAIT_OBJECT_0)
