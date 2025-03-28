@@ -3882,6 +3882,7 @@ If something seems to malfunction, here are some things to try that often help t
   - Consider adding an exclusion for Clink.
   - The contents of the `clink.log` file often help in determining whether anti-malware software blocked Clink.
   - If it's indeed being blocked by anti-malware software, report the false positive to the publisher of the anti-malware software so they can confirm and update the detection signatures.  There's nothing Clink can do about it.
+- Interference can happen while injecting Clink.  Anything that hooks into CMD can potentially interfere with Clink (including tools like ConsoleZ and ConEmu).  Clink tries very hard to minimize opportunities for interference, but there's no way to eliminate the possibility for interference (except by not using the other tools or not using Clink).
 - If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the [`clink-diagnostics`](#rlcmd-clink-diagnostics) command.  Any problems it finds in the prompt string are reported at the end.
 - Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
 - Check `clink set`.  E.g. do the settings look right?
