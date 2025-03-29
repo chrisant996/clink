@@ -2889,6 +2889,8 @@ void rl_module::on_begin_line(const context& context)
     if (!_rl_display_message_color)
         _rl_display_message_color = "\x1b[m";
 
+    init_display_readline();
+
     lock_cursor(true); // Suppress cursor flicker.
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
@@ -2912,6 +2914,8 @@ void rl_module::on_end_line()
 
     if (!m_done)
         done(rl_line_buffer);
+
+    uninit_display_readline();
 
 #ifdef USE_MEMORY_TRACKING
     // Force freeing any cached matches, to avoid the appearance of a leak.

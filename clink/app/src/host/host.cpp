@@ -599,6 +599,9 @@ void host::pop_queued_line()
 //------------------------------------------------------------------------------
 void host::filter_prompt()
 {
+    if (!is_display_readline_initialized())
+        return;
+
     if (!g_prompt_async.get())
         return;
 
@@ -619,44 +622,57 @@ void host::filter_prompt()
 }
 
 //------------------------------------------------------------------------------
-void host::filter_transient_prompt(bool final)
+void host::filter_transient_prompt(const bool final)
 {
-    if (!m_can_transient)
-    {
-cant:
-        update_last_cwd();
-        // Erase comment row if present.
-        clear_comment_row();
-        // Must ensure display_manager gets reset, so it doesn't try to
-        // optimize away printing the new prompt.
-        reset_display_readline();
+    if (!is_display_readline_initialized())
         return;
-    }
 
     const char* rprompt;
     const char* prompt;
     bool ok;                    // Not used for transient prompt.
 
-    // Replace old prompt with transient prompt.
-    rprompt = nullptr;
-    prompt = filter_prompt(&rprompt, ok, true/*transient*/, final);
-    if (!prompt)
-        goto cant;
+    bool can_transient = m_can_transient;
+    if (can_transient)
+    {
+        // Replace old prompt with transient prompt.
+        rprompt = nullptr;
+        prompt = filter_prompt(&rprompt, ok, true/*transient*/, final);
+        if (!prompt)
+            can_transient = false; // Fall back to no transient prompt.
+    }
 
-    // Passing true for transient always ensures display_manager gets reset,
-    // and at the right point (after the transient prompt, but before setting
-    // the new normal prompt).
-    set_prompt(prompt, rprompt, true/*redisplay*/, true/*transient*/);
+    if (can_transient)
+    {
+        // Passing true for transient always ensures display_manager gets
+        // reset, and at the right point (after the transient prompt, but
+        // before setting the new normal prompt).
+        set_prompt(prompt, rprompt, true/*redisplay*/, true/*transient*/);
+    }
+    else
+    {
+        update_last_cwd();
+        // Erase comment row if present.
+        clear_comment_row();
+    }
 
     if (final)
         return;
 
-    // Refilter new prompt, but don't redisplay (which would replace the prompt
-    // again; not what is needed here).  Instead let the prompt get displayed
-    // again naturally in due time.
-    rprompt = nullptr;
-    prompt = filter_prompt(&rprompt, ok, false/*transient*/);
-    set_prompt(prompt, rprompt, false/*redisplay*/);
+    if (can_transient)
+    {
+        // Refilter new prompt, but don't redisplay (which would replace the
+        // prompt again; not what is needed here).  Instead let the prompt get
+        // displayed again naturally in due time.
+        rprompt = nullptr;
+        prompt = filter_prompt(&rprompt, ok, false/*transient*/);
+        set_prompt(prompt, rprompt, false/*redisplay*/);
+    }
+    else
+    {
+        // Must ensure display_manager gets reset, so it doesn't try to
+        // optimize away printing the new prompt.
+        reset_display_readline();
+    }
 }
 
 //------------------------------------------------------------------------------

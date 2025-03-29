@@ -17,6 +17,10 @@ typedef struct _history_expansion history_expansion;
 extern char* rl_rprompt;
 void rl_set_rprompt(const char* rprompt);
 
+extern "C" void init_display_readline(void);
+extern "C" void uninit_display_readline(void);
+extern "C" int32 is_display_readline_initialized(void);
+
 extern "C" void reset_display_readline(void);
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();

@@ -298,6 +298,9 @@ void end_prompt(int crlf)
         end_recognizer();
     }
 
+    if (!is_display_readline_initialized())
+        return;
+
     host_filter_transient_prompt(crlf);
 
     _rl_move_vert(_rl_vis_botlin);
@@ -310,6 +313,10 @@ void end_prompt(int crlf)
     _rl_last_c_pos = 0;
     _rl_last_v_pos = 0;
     _rl_vis_botlin = 0;
+
+    // Block any further prompt display if this is final.
+    if (crlf < 0)
+        uninit_display_readline();
 
     // Terminal shell integration.
     terminal_begin_command();

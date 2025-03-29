@@ -1395,13 +1395,14 @@ class display_manager
 {
 public:
                         display_manager();
+    void                initialize();
+    void                uninitialize();
     void                clear();
     uint32              top_offset() const;
     uint32              top_buffer_start() const;
     void                on_new_line();
     void                end_prompt_lf();
     void                clear_to_end_of_screen_on_next_display();
-    void                reset_rprompt_shown();
     void                display();
     void                set_history_expansions(history_expansion* list=nullptr);
     void                force_comment_row(const char* text);
@@ -1409,6 +1410,7 @@ public:
     bool                get_horz_offset(int32& bytes, int32& column) const;
     bool                has_comment_row() const;
     void                clear_comment_row();
+    bool                is_initialized() const;
     bool                is_displayed() const;
 
 private:
@@ -1419,9 +1421,12 @@ private:
     void                shift_cols(uint32 col, int32 delta);
     void                print(const char* chars, uint32 len);
     void                print_rprompt(const char* s);
+    void                reset_rprompt_shown();
     void                init_horizpos_workaround();
     void                detect_pending_wrap();
     void                finish_pending_wrap();
+
+    bool                m_initialized = false;
 
     display_lines       m_next;
     display_lines       m_curr;
@@ -1453,6 +1458,28 @@ display_manager::display_manager()
 : m_autowrap_bug(is_autowrap_bug_present())
 {
     rl_on_new_line();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::initialize()
+{
+    assert(!m_initialized);
+    m_initialized = true;
+    clear();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::uninitialize()
+{
+    m_initialized = false;
+    clear();
+
+#ifdef DEBUG
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    assert(!csbi.dwCursorPosition.X);
+    assert(!_rl_last_c_pos);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1511,6 +1538,9 @@ void display_manager::on_new_line()
 //------------------------------------------------------------------------------
 void display_manager::end_prompt_lf()
 {
+    if (!m_initialized)
+        return;
+
     init_horizpos_workaround();
     preserve_window_scroll_position preserve(m_horizpos_workaround);
 
@@ -1582,6 +1612,9 @@ void display_manager::end_prompt_lf()
 //------------------------------------------------------------------------------
 void display_manager::clear_to_end_of_screen_on_next_display()
 {
+    if (!m_initialized)
+        return;
+
     m_clear_to_end_of_screen_on_next_display = true;
 }
 
@@ -1627,7 +1660,7 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
 //------------------------------------------------------------------------------
 void display_manager::display()
 {
-    if (!_rl_echoing_p)
+    if (!_rl_echoing_p || !m_initialized)
         return;
 
     init_horizpos_workaround();
@@ -2165,6 +2198,9 @@ void display_manager::display()
 //------------------------------------------------------------------------------
 void display_manager::set_history_expansions(history_expansion* list)
 {
+    if (!m_initialized)
+        return;
+
     history_free_expansions(&m_histexpand);
     m_histexpand = list;
 }
@@ -2172,6 +2208,9 @@ void display_manager::set_history_expansions(history_expansion* list)
 //------------------------------------------------------------------------------
 void display_manager::force_comment_row(const char* text)
 {
+    if (!m_initialized)
+        return;
+
     if (text && *text)
     {
         m_forced_comment_row = text;
@@ -2183,6 +2222,8 @@ void display_manager::force_comment_row(const char* text)
 //------------------------------------------------------------------------------
 void display_manager::measure(measure_columns& mc)
 {
+    assert(m_initialized);
+
     // FUTURE:  Ideally this would remember what prompt it displayed and use
     // that here, rather than using whatever is the current prompt content.
     const char* prompt = rl_get_local_prompt();
@@ -2251,6 +2292,8 @@ bool display_manager::has_comment_row() const
 //------------------------------------------------------------------------------
 void display_manager::clear_comment_row_internal()
 {
+    assert(m_initialized);
+
     if (*m_curr.get_comment_row())
     {
         _rl_move_vert(_rl_vis_botlin + 1);
@@ -2266,11 +2309,19 @@ void display_manager::clear_comment_row()
 {
     if (*m_curr.get_comment_row())
     {
+        assert(m_initialized);
+
         init_horizpos_workaround();
         preserve_window_scroll_position preserve(m_horizpos_workaround);
 
         clear_comment_row_internal();
     }
+}
+
+//------------------------------------------------------------------------------
+bool display_manager::is_initialized() const
+{
+    return m_initialized;
 }
 
 //------------------------------------------------------------------------------
@@ -2282,6 +2333,8 @@ bool display_manager::is_displayed() const
 //------------------------------------------------------------------------------
 void display_manager::update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt)
 {
+    assert(m_initialized);
+
     uint32 lcol = d->m_x;
     uint32 rcol = d->m_lastcol + d->m_trail;
     uint32 lind = 0;
@@ -2492,6 +2545,7 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
 //------------------------------------------------------------------------------
 void display_manager::move_to_column(uint32 col, bool force)
 {
+    assert(m_initialized);
     assert(_rl_term_ch && *_rl_term_ch);
     assert(col < _rl_screenwidth);
 
@@ -2528,6 +2582,8 @@ void display_manager::move_to_column(uint32 col, bool force)
 //------------------------------------------------------------------------------
 void display_manager::move_to_row(int32 row)
 {
+    assert(m_initialized);
+
     if (m_pending_wrap)
         finish_pending_wrap();
 
@@ -2541,6 +2597,7 @@ void display_manager::move_to_row(int32 row)
 //------------------------------------------------------------------------------
 void display_manager::shift_cols(uint32 col, int32 delta)
 {
+    assert(m_initialized);
     assert(col == _rl_last_c_pos);
 
     if (delta > 0)
@@ -2601,6 +2658,7 @@ void display_manager::shift_cols(uint32 col, int32 delta)
 //------------------------------------------------------------------------------
 void display_manager::print(const char* chars, uint32 len)
 {
+    assert(m_initialized);
     assert(!m_pending_wrap);
     m_pending_wrap = false;
     rl_fwrite_function(_rl_out_stream, chars, len);
@@ -2609,6 +2667,8 @@ void display_manager::print(const char* chars, uint32 len)
 //------------------------------------------------------------------------------
 void display_manager::print_rprompt(const char* s)
 {
+    assert(m_initialized);
+
     const int32 col = _rl_screenwidth - (s ? max(rl_visible_rprompt_length, _rl_rprompt_shown_len) : _rl_rprompt_shown_len);
     if (col <= 0 || col >= _rl_screenwidth)
         return;
@@ -2645,6 +2705,8 @@ void display_manager::print_rprompt(const char* s)
 //------------------------------------------------------------------------------
 void display_manager::reset_rprompt_shown()
 {
+    assert(m_initialized);
+
     _rl_rprompt_shown_len = 0;
     m_last_rprompt.clear();
 }
@@ -2652,12 +2714,16 @@ void display_manager::reset_rprompt_shown()
 //------------------------------------------------------------------------------
 void display_manager::init_horizpos_workaround()
 {
+    assert(m_initialized);
+
     m_horizpos_workaround = is_horizpos_workaround_needed();
 }
 
 //------------------------------------------------------------------------------
 void display_manager::detect_pending_wrap()
 {
+    assert(m_initialized);
+
     if (_rl_last_c_pos == _rl_screenwidth)
     {
         _rl_last_c_pos = 0;
@@ -2673,6 +2739,8 @@ void display_manager::detect_pending_wrap()
 //------------------------------------------------------------------------------
 void display_manager::finish_pending_wrap()
 {
+    assert(m_initialized);
+
     // This finishes a pending wrap using a technique that works equally well on
     // both Win 8.1 and Win 10.
     assert(m_pending_wrap);
@@ -2876,6 +2944,24 @@ void clear_to_end_of_screen_on_next_display()
 }
 
 //------------------------------------------------------------------------------
+extern "C" void init_display_readline(void)
+{
+    s_display_manager.initialize();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void uninit_display_readline(void)
+{
+    s_display_manager.uninitialize();
+}
+
+//------------------------------------------------------------------------------
+extern "C" int32 is_display_readline_initialized(void)
+{
+    return s_display_manager.is_initialized();
+}
+
+//------------------------------------------------------------------------------
 void display_readline()
 {
     // Terminal shell integration.  The caller doesn't have to worry about
@@ -2903,6 +2989,9 @@ void force_comment_row(const char* text)
 //------------------------------------------------------------------------------
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt)
 {
+    if (!s_display_manager.is_initialized())
+        return;
+
     // Clink tries to put the cursor on the original top row, compensating for
     // terminal wrapping behavior, and redisplay the prompt and input buffer.
     //
@@ -2955,7 +3044,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
         tputs(tmp);
     }
     _rl_cr();
-    s_display_manager.reset_rprompt_shown();
+    _rl_rprompt_shown_len = 0;
     _rl_last_v_pos = 0;
     _rl_last_c_pos = 0;
 
