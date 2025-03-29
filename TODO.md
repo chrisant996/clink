@@ -9,14 +9,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Issue [#739](https://github.com/chrisant996/clink/issues/739); **ConsoleZ can interfere with injecting Clink**.  `pause()` and `unpause()` currently happen around the entire `CreateRemoteThread()`, and if ConsoleZ's remote thread is trying to load ConsoleHook.dll then pausing threads will end up blocking Clink's remote thread as well, since the loader lock serializes loading DLLs.  But maybe pause/unpause doesn't need to happen around the `LoadLibraryW()` remote thread, and maybe pause/unpause can be done within `initialise_clink()` around the actual hooking of system APIs, which seems to be what actually needs to be protected by pause/unpause.  That would also reduce the cross-process manipulations, and might even reduce the possibility of false positives by anti-malware software.
 
 ## Low Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - `clink_reset_line` still causes UNDO list leaks.  `UP` until `sudo where`, then `asdf`, then `ESC`, then `ENTER`.  May take several repititions; may repro quicker when varying which history entry is recalled.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
-- Explore documentation changes about `clink set`, the `clink_settings` file, and fact that it is not meant to be edited manually and that the file format does not consider comments to be "user data" and does not preserve certain kinds of edits in comments (or whitespace or sort order or etc).  However, the file format is not meant to be edited manually, and so there are no plans to document the file format.
 - Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
