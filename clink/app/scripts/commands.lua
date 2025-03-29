@@ -118,6 +118,7 @@ function clink._diagnostics(rl_buffer)
     clink._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
     clink._diag_loaded_scripts(arg)         -- When arg >= 9.
     clink._diag_argmatchers(arg)            -- When arg >= 2.
+    clink._diag_customprompt(arg)
     clink._diag_prompts(arg)                -- When arg >= 1 or lua.debug is set.
     clink._diag_generators(arg)             -- When arg >= 3 or lua.debug is set.
     clink._diag_classifiers(arg)            -- When arg >= 2 or lua.debug is set or classifiers took more than 10 ms.

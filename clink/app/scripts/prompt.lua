@@ -376,6 +376,26 @@ local function print_filter_src(t, type)
 end
 
 --------------------------------------------------------------------------------
+function clink._diag_customprompt()
+    local which
+    local file = os.getenv("CLINK_CUSTOMPROMPT")
+    if file and file ~= "" then
+        which = "From %CLINK_CUSTOMPROMPT% environment variable"
+    else
+        file = settings.get("clink.customprompt")
+        if file and file ~= "" then
+            which = "From clink.customprompt setting"
+        end
+    end
+    if which and file and file ~= "" then
+        file = file:gsub('"', ''):gsub('%s+$', '')
+        clink.print(bold.."customprompt:"..norm)
+        clink.print("  "..file)
+        clink.print("  "..which)
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._diag_prompts(arg)
     arg = (arg and arg >= 1)
     if not arg and not settings.get("lua.debug") then
