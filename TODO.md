@@ -131,6 +131,21 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     ==== RELEASE: INSTALL DIRX to c:\wbin ====
     ...
     ```
+  - The transient prompt must have been displayed; there seems to be no way that a transient prompt filter can produce a non-transient prompt.
+  - The non-transient prompt must have been re-displayed after that point --> that would not print a newline.
+  - Since I have "sparse" mode enabled, the non-transient prompt would start with `CSI A` to go up one line, which would cause the redisplay to overwrite the transient prompt.
+  - **Maybe block readline_display once the transient prompt has been printed, until the next edit_line call?**
+  - Is cua selection triggering the redisplay somehow? --> **Seems not.**
+  - `rl_callback_read_char()` clears `rl_buffer` when `rl_done` (which is indeed `true` at this point).
+  - So, the stray readline_display has to be happening in one of these places between displaying the transient prompt and clearing `rl_buffer`:
+    - `oninputlinechanged` callback? --> flexprompt can indeed call `clink.refilterprompt()` during `oninputlinechanged`, but only if the admin (elevated) state changes, which didn't happen in my repros.
+    - `onaftercommand` callback? --> several things can indeed call `clink.refilterprompt()` during `onaftercommand`:  if modmark changes, if keymap changes, if insert mode changes.
+    - Due to `rl_callback_read_char()` setting `_rl_want_redisplay = 1` [here](https://github.com/chrisant996/clink/blob/7f2905b0e119637bdec2134de2d927d2226d33ef/readline/readline/callback.c#L251-L258), combined with `rl_num_chars_to_read` [here](https://github.com/chrisant996/clink/blob/7f2905b0e119637bdec2134de2d927d2226d33ef/readline/readline/readline.c#L570-L578)?
+    - Some more circuitous path through the `update_internal()` state machine which somehow triggers a redisplay?
+  - **FOUND THE REPRO!** 🥳🙌🍾🥂🎉
+    - `UP` a few times, `END` to go to end of line, press `BACKSPACE` a few times to edit the input line so the `*` modmark shows up, press `PGUP` to show history list, press `ENTER` to choose a history line.
+    - The modmark state disappears, and flexprompt's `modmark_aftercommand` triggers a redisplay, but by that time the transient prompt has already been printed, so the display state ends up garbled.
+    - And the display state would get garbled even without "sparse" mode or transient prompts -- in fact, the garbled display state would be even more obvious because no prior displayed lines would be overwritten.
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30)?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
