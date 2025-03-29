@@ -30,6 +30,8 @@ extern int is_exec_ext(const char* ext);
 extern void clear_suggestion();
 extern void end_recognizer();
 extern void end_task_manager();
+extern void uninit_display_readline();
+extern int is_display_readline_initialized();
 extern void host_filter_transient_prompt(int crlf);
 extern void terminal_begin_command();
 extern int show_cursor(int visible);
