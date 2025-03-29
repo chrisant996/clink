@@ -1708,7 +1708,7 @@ void textlist_impl::update_display()
                         const char* color = !ismark ? "" : (i == m_index) ? m_color.selectmark.c_str() : m_color.mark.c_str();
                         const char* uncolor = !ismark ? "" : (i == m_index) ? m_color.select.c_str() : m_color.items.c_str();
                         tmp.clear();
-                        tmp.format("%*u:%s%c", max<>(0, m_max_num_cells - 2), history_index + 1, color, mark);
+                        tmp.format("%*u:%s%c%s", max<>(0, m_max_num_cells - 2), history_index + 1, color, mark, uncolor);
                         line << tmp;                                    // history number
                         const uint32 number_cells = cell_count(tmp.c_str());
                         if (spaces > number_cells)
