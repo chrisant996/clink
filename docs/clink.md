@@ -450,7 +450,7 @@ The following sections describe how to configure Clink itself.  To learn about t
 
 ## Clink Settings
 
-The easiest way to configure Clink is to use the `clink set` command to list, query, and set Clink's settings.
+Use the `clink set` command to list, query, and set Clink's settings.  Clink's [completion system](#how-completion-works) can help you use the `clink set` command; press <kbd>Tab</kbd> to use completions.
 
 Run `clink set --help` from a Clink-installed cmd.exe process to learn more.
 
