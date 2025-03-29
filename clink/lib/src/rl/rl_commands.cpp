@@ -1501,7 +1501,18 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
         infos[total].index = i;
         infos[total].marked = (list[i]->data != nullptr);
         if (i == orig_pos)
+        {
             current = total;
+            if (rl_undo_list)
+            {
+                // Ensure consistent behavior with respect to modified history
+                // entries:  If there's an undo list, the current history line
+                // has edits (modmark), so show the current input buffer
+                // instead, since that's what will end up getting executed.
+                history[total] = rl_line_buffer;
+                infos[total].marked = true;
+            }
+        }
         total++;
     }
     if (!total)
