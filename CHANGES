@@ -7,6 +7,7 @@
 - Added a new `clink.scroll_offset` setting which controls how many lines to show above or below the selected item in popup lists or the `clink-select-complete` command (default is 3).
 - Changed <code>clink set <span class="arg">name</span></code> to include the default value of the named setting.
 - The Antares clinkprompt now allows configuring the characters for showing the previous command's exit code (refer to the Antares.clinkprompt file for details).
+- The `clink-diagnostics` and `clink-diagnostics-output` bindable commands also show the current *.clinkprompt custom prompt file, if any.
 - Fixed a typo in the Antares clinkprompt when trying to detect a bare git repo.
 - Fixed default color for `color.selected_completion` to have better contrast ratio in light terminal themes.
 - Fixed input edge cases in the `win-history-list` command.
