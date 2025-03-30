@@ -1413,6 +1413,10 @@ public:
     bool                is_initialized() const;
     bool                is_displayed() const;
 
+#ifdef DEBUG
+    void                ignore_column_on_uninit() { m_ignore_column_on_uninit = true; }
+#endif
+
 private:
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
     void                clear_comment_row_internal();
@@ -1448,6 +1452,10 @@ private:
 
     str_moveable        m_forced_comment_row;
     int32               m_forced_comment_row_cursorpos = -1;
+
+#ifdef DEBUG
+    bool                m_ignore_column_on_uninit = false;
+#endif
 };
 
 //------------------------------------------------------------------------------
@@ -1475,10 +1483,13 @@ void display_manager::uninitialize()
     clear();
 
 #ifdef DEBUG
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    assert(!csbi.dwCursorPosition.X);
-    assert(!_rl_last_c_pos);
+    if (!m_ignore_column_on_uninit)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        assert(!csbi.dwCursorPosition.X);
+        assert(!_rl_last_c_pos);
+    }
 #endif
 }
 
@@ -2960,6 +2971,14 @@ extern "C" int32 is_display_readline_initialized(void)
 {
     return s_display_manager.is_initialized();
 }
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+void ignore_column_in_uninit_display_readline()
+{
+    s_display_manager.ignore_column_on_uninit();
+}
+#endif
 
 //------------------------------------------------------------------------------
 void display_readline()

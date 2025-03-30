@@ -21,6 +21,10 @@ extern "C" void init_display_readline(void);
 extern "C" void uninit_display_readline(void);
 extern "C" int32 is_display_readline_initialized(void);
 
+#ifdef DEBUG
+void ignore_column_in_uninit_display_readline();
+#endif
+
 extern "C" void reset_display_readline(void);
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();

@@ -765,6 +765,9 @@ bool line_editor_impl::update_input()
             {
                 m_buffer.reset();
                 m_buffer.insert("exit 0");
+#ifdef DEBUG
+                ignore_column_in_uninit_display_readline();
+#endif
                 end_line();
             }
             return true;

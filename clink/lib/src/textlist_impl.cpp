@@ -2362,31 +2362,6 @@ bool standalone_input::update_input()
             module->on_terminal_resize(columns, rows, context);
     }
 
-    if (key == terminal_in::input_abort)
-    {
-#if 0
-        if (!m_dispatching)
-        {
-            m_buffer.reset();
-            end_line();
-        }
-#endif
-        return true;
-    }
-
-    if (key == terminal_in::input_exit)
-    {
-#if 0
-        if (!m_dispatching)
-        {
-            m_buffer.reset();
-            m_buffer.insert("exit 0");
-            end_line();
-        }
-#endif
-        return true;
-    }
-
     if (key < 0)
         return true;
 
