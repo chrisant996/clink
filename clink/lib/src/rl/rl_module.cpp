@@ -48,16 +48,15 @@
 
 extern "C" {
 #include <compat/config.h>
+#include <readline/history.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
-#include <readline/history.h>
 #include <readline/histlib.h>
 #include <readline/keymaps.h>
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
-#include <readline/history.h>
 extern int32 _rl_get_inserted_char(void);
 extern char* tgetstr(const char*, char**);
 extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
@@ -1392,15 +1391,19 @@ static bool ensure_matches_size(char**& matches, int32 count, int32& reserved)
 }
 
 //------------------------------------------------------------------------------
-static void buffer_changing()
+static void buffer_changing(int32 event)
 {
     // Reset the history position for the next input line prompt, upon changing
     // the input text at all.
-    if (has_sticky_search_position())
+    if (event != CHG_REPLACE && has_sticky_search_position())
     {
         clear_sticky_search_position();
-        // TODO: Does this cross-link or leak or interfere with undo lists?
-        using_history();
+        if (!rl_end)
+        {
+            assert(!rl_undo_list);
+            assert(!_rl_saved_line_for_history);
+            using_history();
+        }
     }
 
     // The buffer text is changing, so the selection will be invalidated and

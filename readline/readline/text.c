@@ -74,7 +74,7 @@ static int _rl_char_search_callback (_rl_callback_generic_arg *);
 int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 
 /* begin_clink_change */
-rl_voidfunc_t *rl_buffer_changing_hook = 0;
+rl_vintfunc_t *rl_buffer_changing_hook = 0;
 rl_intfunc_t *rl_selection_event_hook = 0;
 rl_voidfunc_t *rl_after_dispatch_hook = 0;
 rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook = 0;
@@ -102,7 +102,7 @@ rl_insert_text (const char *string)
 
 /* begin_clink_change */
   if (rl_buffer_changing_hook)
-    rl_buffer_changing_hook ();
+    rl_buffer_changing_hook (CHG_INSERT);
 /* end_clink_change */
 
   if (rl_end + l >= rl_line_buffer_len)
@@ -158,8 +158,8 @@ rl_delete_text (int from, int to)
     from = 0;
 
 /* begin_clink_change */
-  if (rl_buffer_changing_hook)
-    rl_buffer_changing_hook ();
+  if (rl_buffer_changing_hook && to != from)
+    rl_buffer_changing_hook (CHG_DELETE);
 /* end_clink_change */
 
   text = rl_copy_text (from, to);
@@ -235,12 +235,11 @@ rl_replace_line (const char *text, int clear_undo)
 {
   int len;
 
-/* begin_clink_change */
-  if (rl_buffer_changing_hook)
-    rl_buffer_changing_hook ();
-/* end_clink_change */
-
   len = strlen (text);
+/* begin_clink_change */
+  if (rl_buffer_changing_hook && (len != rl_end || memcmp(rl_line_buffer, text, len)))
+    rl_buffer_changing_hook (CHG_REPLACE);
+/* end_clink_change */
   if (len >= rl_line_buffer_len)
     rl_extend_line_buffer (len);
   strcpy (rl_line_buffer, text);
