@@ -907,7 +907,7 @@ rl_remove_history (int count, int key)
   /* Bail out if the input buffer doesn't match the history entry. */
   HIST_ENTRY **list = history_list ();
   HIST_ENTRY *hist = list ? list[old_where] : 0;
-  if (!hist || rl_undo_list || strcmp (rl_line_buffer, hist->line))
+  if (!hist || (current_history () && rl_undo_list) || strcmp (rl_line_buffer, hist->line))
     {
       rl_ding ();
       return 0;
