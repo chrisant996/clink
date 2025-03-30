@@ -460,6 +460,7 @@ private:
     int32           m_total = 0;
     int32           m_current = -1;
     HIST_ENTRY*     m_saved_line = nullptr;
+    int32           m_saved_point = -1;
 };
 
 //------------------------------------------------------------------------------
@@ -471,6 +472,11 @@ history_infos::~history_infos()
     {
         _rl_unsave_line(m_saved_line);
         m_saved_line = nullptr;
+        if (m_saved_point >= 0)
+        {
+            assert(m_saved_point <= rl_end);
+            rl_point = m_saved_point;
+        }
     }
 }
 
@@ -482,6 +488,7 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
         return false;
 
     m_saved_line = _rl_alloc_saved_line();
+    m_saved_point = rl_point;
     rl_maybe_replace_line();
 
     m_history = (char**)malloc(sizeof(*m_history) * history_length);
@@ -546,6 +553,7 @@ void history_infos::discard()
 {
     _rl_free_history_entry(m_saved_line);
     m_saved_line = nullptr;
+    m_saved_point = -1;
 }
 
 
