@@ -865,7 +865,12 @@ rl_add_history (int count, int key)
       return 0;
     }
   add_history (rl_line_buffer);
+
+  rl_maybe_replace_line ();
   using_history ();
+  /* It would be too confusing to unsave, so just discard. */
+  _rl_free_saved_history_line ();
+
   rl_delete_text (0, rl_end);
   rl_point = 0;
   return 0;
@@ -902,7 +907,7 @@ rl_remove_history (int count, int key)
   /* Bail out if the input buffer doesn't match the history entry. */
   HIST_ENTRY **list = history_list ();
   HIST_ENTRY *hist = list ? list[old_where] : 0;
-  if (!hist || strcmp (rl_line_buffer, hist->line))
+  if (!hist || rl_undo_list || strcmp (rl_line_buffer, hist->line))
     {
       rl_ding ();
       return 0;
@@ -954,6 +959,8 @@ rl_remove_history (int count, int key)
     {
       rl_replace_line ("", 1);
       using_history ();
+      /* It would be too confusing to unsave, so just discard. */
+      _rl_free_saved_history_line ();
     }
   else if (hist)
     {
