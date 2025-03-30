@@ -690,13 +690,13 @@ rl_history_search_internal (int count, int dir)
   int ret, oldpos, newcol;
   char *t;
 
+  /* If the current line has changed, put it back into the history if necessary. */
+  rl_maybe_replace_line ();
+
 /* begin_clink_change */
   if (history_prev_use_curr)
     using_history ();
 /* end_clink_change */
-
-  /* If the current line has changed, put it back into the history if necessary. */
-  rl_maybe_replace_line ();
 
   _rl_saved_line_for_search = _rl_alloc_saved_line ();
   temp = (HIST_ENTRY *)NULL;
