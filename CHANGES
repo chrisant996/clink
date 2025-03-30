@@ -9,10 +9,14 @@
 - The Antares clinkprompt now allows configuring the characters for showing the previous command's exit code (refer to the Antares.clinkprompt file for details).
 - The `clink-diagnostics` and `clink-diagnostics-output` bindable commands also show the current *.clinkprompt custom prompt file, if any.
 - Fixed a typo in the Antares clinkprompt when trying to detect a bare git repo.
+- Fixed the `history.sticky_search` setting (regression introduced in v1.5.12).
 - Fixed default color for `color.selected_completion` to have better contrast ratio in light terminal themes.
-- Fixed input edge cases in the `win-history-list` command.
+- Fixed input edge cases in the `win-history-list` command which missed updating the display.
 - Fixed a color glitch in the `clink-popup-history` command for history lines marked as having been modified in memory.
+- Fixed the `win-history-list` command to show a mark for history lines that have been modified in memory, like the `clink-popup-history` command already does.
 - Fixed an issue where instead of always starting on a new line, output from a command could potentially accidentally start at the end of the input line.
+- Fixed a problem where <kbd>Esc</kbd> could leak or corrupt history undo lists when used after searching history (the problem existed since v0.1 in 2012).
+- Fixed some memory management bugs in history item undo lists.
 - Added a workaround to fix [#738](https://github.com/chrisant996/clink/issues/738); Windows Terminal does not handle the `CSI K` code correctly when the cursor is past the end of the screen line.
 - Improvements for [#739](https://github.com/chrisant996/clink/issues/739); ConsoleZ, ConEmu, and other tools can interfere with injecting Clink (there's no way to completely prevent opportunities for interference, but this reduces the chances).
 
