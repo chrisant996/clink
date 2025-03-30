@@ -298,6 +298,7 @@ void popup_results::clear()
     m_result = popup_result::cancel;
     m_index = -1;
     m_text.free();
+    m_reset_history_index = false;
 }
 
 
@@ -621,6 +622,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     results.m_result = m_results.m_result;
     results.m_index = m_results.m_index;
     results.m_text = std::move(m_results.m_text);
+    results.m_reset_history_index = (!s_standalone && m_reset_history_index);
 
     reset();
     m_results.clear();
@@ -1353,13 +1355,6 @@ void textlist_impl::cancel(popup_result result)
         }
     }
 
-    if (!s_standalone && m_reset_history_index)
-    {
-        rl_replace_line("", 1);
-        using_history();
-        m_reset_history_index = false;
-    }
-
     m_active = false;
 }
 
@@ -1922,6 +1917,8 @@ void textlist_impl::init_colors(const popup_config* config)
 void textlist_impl::reset()
 {
     // Don't reset screen row and cols; they stay in sync with the terminal.
+
+    m_reset_history_index = false;
 
     m_visible_rows = 0;
     m_max_num_cells = 0;

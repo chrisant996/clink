@@ -23,6 +23,7 @@ struct popup_results
     popup_result    m_result;
     int32           m_index;
     str_moveable    m_text;
+    bool            m_reset_history_index = false;
 };
 
 //------------------------------------------------------------------------------

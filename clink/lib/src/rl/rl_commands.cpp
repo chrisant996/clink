@@ -445,6 +445,112 @@ extern "C" void clink_check_undo_entry_leaks(void)
 
 
 //------------------------------------------------------------------------------
+class history_infos
+{
+public:
+                    history_infos() = default;
+                    ~history_infos();
+    bool            make(const char* prefix=nullptr, int32 search_len=0, int32 orig_pos=-1);
+    popup_results   activate_history_text_list(bool win_history);
+private:
+    void            discard();
+private:
+    char**          m_history = nullptr;
+    entry_info*     m_infos = nullptr;
+    int32           m_total = 0;
+    int32           m_current = -1;
+    HIST_ENTRY*     m_saved_line = nullptr;
+};
+
+//------------------------------------------------------------------------------
+history_infos::~history_infos()
+{
+    free(m_history);
+    free(m_infos);
+    if (m_saved_line)
+    {
+        _rl_unsave_line(m_saved_line);
+        m_saved_line = nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
+{
+    HIST_ENTRY** list = history_list();
+    if (!list || !history_length)
+        return false;
+
+    m_saved_line = _rl_alloc_saved_line();
+    rl_maybe_replace_line();
+
+    m_history = (char**)malloc(sizeof(*m_history) * history_length);
+    m_infos = (entry_info*)malloc(sizeof(*m_infos) * history_length);
+    m_current = -1;
+
+    // Copy the history list (just a shallow copy of the line pointers).
+    m_total = 0;
+    for (int32 i = 0; i < history_length; i++)
+    {
+        if (prefix && search_len > 0 && !find_streqn(prefix, list[i]->line, search_len))
+            continue;
+        m_history[m_total] = list[i]->line;
+        m_infos[m_total].index = i;
+        m_infos[m_total].marked = (list[i]->data != nullptr);
+        if (i == orig_pos)
+            m_current = m_total;
+        ++m_total;
+    }
+
+    if (m_current < 0 && orig_pos < 0)
+        m_current = where_history();
+    if (m_current < 0 || m_current > m_total - 1)
+        m_current = m_total - 1;
+
+    return m_total > 0;
+}
+
+//------------------------------------------------------------------------------
+popup_results history_infos::activate_history_text_list(bool win_history)
+{
+    if (m_total <= 0)
+        return popup_results();
+
+    popup_results results = ::activate_history_text_list(const_cast<const char**>(m_history), m_total, m_current, m_infos, win_history);
+
+    switch (results.m_result)
+    {
+    case popup_result::cancel:
+        if (results.m_reset_history_index)
+        {
+            discard();
+            rl_replace_line("", 1);
+            using_history();
+            results.m_reset_history_index = false;
+        }
+        break;
+    case popup_result::error:
+        break;
+    case popup_result::select:
+    case popup_result::use:
+        discard();
+        results.m_index = m_infos[results.m_index].index;
+        break;
+    }
+
+    return results;
+}
+
+//------------------------------------------------------------------------------
+void history_infos::discard()
+{
+    _rl_free_history_entry(m_saved_line);
+    m_saved_line = nullptr;
+}
+
+
+
+//------------------------------------------------------------------------------
 static int32 s_cua_anchor = -1;
 
 //------------------------------------------------------------------------------
@@ -1476,73 +1582,31 @@ int32 clink_accept_suggested_line(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_popup_history(int32 count, int32 invoking_key)
 {
-    HIST_ENTRY** list = history_list();
-    if (!list || !history_length)
-    {
-        rl_ding();
-        return 0;
-    }
-
-    rl_completion_invoking_key = invoking_key;
-
     int32 current = -1;
     int32 orig_pos = where_history();
     int32 search_len = rl_point;
 
-    // Copy the history list (just a shallow copy of the line pointers).
-    char** history = (char**)malloc(sizeof(*history) * history_length);
-    entry_info* infos = (entry_info*)malloc(sizeof(*infos) * history_length);
-    int32 total = 0;
-    for (int32 i = 0; i < history_length; i++)
+    history_infos hi;
+    if (!hi.make(g_rl_buffer->get_buffer(), search_len, orig_pos))
     {
-        if (!find_streqn(g_rl_buffer->get_buffer(), list[i]->line, search_len))
-            continue;
-        history[total] = list[i]->line;
-        infos[total].index = i;
-        infos[total].marked = (list[i]->data != nullptr);
-        if (i == orig_pos)
-        {
-            current = total;
-            if (rl_undo_list)
-            {
-                // Ensure consistent behavior with respect to modified history
-                // entries:  If there's an undo list, the current history line
-                // has edits (modmark), so show the current input buffer
-                // instead, since that's what will end up getting executed.
-                history[total] = rl_line_buffer;
-                infos[total].marked = true;
-            }
-        }
-        total++;
-    }
-    if (!total)
-    {
+ding:
         rl_ding();
-        free(history);
-        free(infos);
         return 0;
     }
-    if (current < 0)
-        current = total - 1;
 
     // Popup list.
-    const popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, infos, false/*win_history*/);
+    const popup_results results = hi.activate_history_text_list(false/*win_history*/);
 
     switch (results.m_result)
     {
     case popup_result::cancel:
         break;
     case popup_result::error:
-        rl_ding();
-        break;
+        goto ding;
     case popup_result::select:
     case popup_result::use:
         {
-            rl_maybe_save_line();
-            rl_maybe_replace_line();
-
-            const int32 pos = infos[results.m_index].index;
-            history_set_pos(pos);
+            history_set_pos(results.m_index);
             rl_replace_from_history(current_history(), 0);
             suppress_suggestions();
 
@@ -1556,9 +1620,6 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
         }
         break;
     }
-
-    free(history);
-    free(infos);
 
     return 0;
 }
@@ -1996,39 +2057,21 @@ ding:
         return 0;
     }
 
-    HIST_ENTRY** list = history_list();
-    if (!list)
+    history_infos hi;
+    const int32 total = hi.make();
+    if (!total)
         goto ding;
 
-    const char** history = static_cast<const char**>(calloc(history_length, sizeof(const char**)));
-    if (!history)
-        goto ding;
-
-#define ding __cant_goto__must_free_local__
-
-    for (int32 i = 0; i < history_length; i++)
-    {
-        const char* p = list[i]->line;
-        assert(p);
-        history[i] = p ? p : "";
-    }
-
-    int32 current = where_history();
-    if (current < 0 || current > history_length - 1)
-        current = history_length - 1;
-
-    const popup_results results = activate_history_text_list(history, history_length, current, nullptr, true/*win_history*/);
+    const popup_results results = hi.activate_history_text_list(true/*win_history*/);
 
     switch (results.m_result)
     {
-    case popup_result::error:
-        rl_ding();
+    case popup_result::cancel:
         break;
-
+    case popup_result::error:
+        goto ding;
     case popup_result::use:
     case popup_result::select:
-        rl_maybe_save_line();
-        rl_maybe_replace_line();
         history_set_pos(results.m_index);
         rl_replace_from_history(current_history(), 0);
         suppress_suggestions();
@@ -2038,11 +2081,7 @@ ding:
         break;
     }
 
-    free(history);
-
     return 0;
-
-#undef ding
 }
 
 //------------------------------------------------------------------------------
