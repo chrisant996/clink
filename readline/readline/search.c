@@ -801,7 +801,9 @@ rl_history_search_reinit (int flags)
   if (history_prev_use_curr)
     {
       int pos = where_history ();
+      rl_maybe_replace_line ();
       using_history ();
+      _rl_free_saved_history_line ();
       _rl_history_search_pos = where_history ();
       history_set_pos (pos);
       history_prev_use_curr = 1;

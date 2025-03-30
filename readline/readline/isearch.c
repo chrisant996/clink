@@ -97,7 +97,11 @@ _rl_scxt_alloc (int type, int flags)
 
 /* begin_clink_change */
   if (history_prev_use_curr)
-    using_history ();
+    {
+      rl_maybe_replace_line ();
+      using_history ();
+      _rl_free_saved_history_line ();
+    }
 /* end_clink_change */
 
   cxt = (_rl_search_cxt *)xmalloc (sizeof (_rl_search_cxt));
