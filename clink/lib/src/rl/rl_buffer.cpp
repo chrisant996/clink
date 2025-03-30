@@ -27,7 +27,9 @@ void rl_buffer::reset()
 {
     assert(m_attached);
     clear_override();
+    rl_maybe_replace_line();
     using_history();
+    rl_maybe_unsave_line();
     remove(0, ~0u);
 }
 
