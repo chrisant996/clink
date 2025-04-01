@@ -149,6 +149,9 @@ int32 clink_info(int32 argc, char** argv)
 
     // Version information.
     printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR_WITH_BRANCH);
+#ifdef DEBUG
+    printf("%-*s : %s\n", spacing, "flavor", "DEBUG");
+#endif
     printf("%-*s : %d\n", spacing, "session", context->get_id());
 
     // Check whether injected.

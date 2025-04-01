@@ -2668,6 +2668,9 @@ static void do_clink_diagnostics(bool include_settings=false)
     print_heading("version");
 
     print_value("version", CLINK_VERSION_STR_WITH_BRANCH);
+#ifdef DEBUG
+    print_value("flavor", "DEBUG");
+#endif
     print_value("binaries", context.binaries.c_str());
 
     if (rl_explicit_arg)
