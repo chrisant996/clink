@@ -106,9 +106,8 @@ static int32 dispatch_verb(const char* verb, int32 argc, char** argv, app_contex
             {
                 // Allocate app_context from the heap (not stack) so testbed
                 // can replace it when simulating an injected scenario.
-                app_context* context = new app_context(desc);
+                new app_context(desc);
                 ret = handlers[i].handler(argc, argv);
-                delete context;
             }
             else
             {
