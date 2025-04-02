@@ -193,10 +193,21 @@ static int32 editline()
     init_readline_funmap();
     init_readline_testbed();
 
+    std::vector<str_moveable> history_list;
+
     str<> out;
     while (true)
     {
         reset_display_readline();
+
+        rl_clear_history();
+        assert(!rl_undo_list);
+        history_prev_use_curr = 0;
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+        clink_check_undo_entry_leaks();
+#endif
+        for (const auto& h : history_list)
+            add_history(h.c_str());
 
         out.clear();
         editor->edit(out);
@@ -205,7 +216,7 @@ static int32 editline()
             break;
 
         if (!out.empty())
-            add_history(out.c_str());
+            history_list.emplace_back(out.c_str());
     }
 
     line_editor_destroy(editor);
@@ -321,6 +332,10 @@ int32 testbed(int32 argc, char** argv)
     {
         ret = editline();
     }
+
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+    clink_check_undo_entry_leaks();
+#endif
 
     shutdown_recognizer();
 
