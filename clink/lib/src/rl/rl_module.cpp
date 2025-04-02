@@ -2211,6 +2211,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         { "\\C-x\\e[27;6;90~", "clink-diagnostics-output" }, // ctrl-x,ctrl-shift-z
+        { "\\M-f",          "forward-word" },            // alt-f (because of suggestions)
         { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\eOP",          "win-cursor-forward" },      // F1
         { "\\eOQ",          "win-copy-up-to-char" },     // F2
@@ -2239,10 +2240,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     static constexpr const char* const bash_emacs_key_binds[][2] = {
         { "\\C-a",          "beginning-of-line" },       // ctrl-a
         { "\\C-b",          "backward-char" },           // ctrl-b
-        { "\\C-e",          "end-of-line" },             // ctrl-e
-        { "\\C-f",          "forward-char" },            // ctrl-f
+        { "\\C-e",          "end-of-line" },             // ctrl-e (because of suggestions)
+        { "\\C-f",          "forward-char" },            // ctrl-f (because of suggestions)
         { "\\e[27;5;77~",   "" },                        // ctrl-m (differentiated)
-        { "\\e[C",          "forward-char" },            // right
+        { "\\e[C",          "forward-char" },            // right (because of suggestions)
         { "\t",             "complete" },                // tab
         { "\\e[Z",          "" },                        // shift-tab
         {}
@@ -2325,7 +2326,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     static constexpr const char* const vi_movement_key_binds[][2] = {
         { " ",              "forward-char" },            // space (because of suggestions)
         { "$",              "end-of-line" },             // end (because of suggestions)
-        { "l",              "forward-char" },            // l
+        { "l",              "forward-char" },            // l (because of suggestions)
         { "v",              "edit-and-execute-command" }, // v
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
