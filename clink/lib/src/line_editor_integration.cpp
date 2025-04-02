@@ -6,6 +6,7 @@
 #include "line_editor_integration.h"
 #include "host_callbacks.h"
 #include "match_pipeline.h"
+#include "display_readline.h"
 #include "reclassify.h"
 #include "suggestions.h"
 
@@ -290,7 +291,10 @@ bool host_call_lua_rl_global_function(const char* func_name, const line_state* l
 void host_filter_prompt()
 {
     if (!s_callbacks)
+    {
+        reset_display_readline();
         return;
+    }
 
     s_callbacks->filter_prompt();
 }
@@ -300,7 +304,10 @@ void host_filter_prompt()
 extern "C" void host_filter_transient_prompt(int32 crlf)
 {
     if (!s_callbacks)
+    {
+        reset_display_readline();
         return;
+    }
 
     s_callbacks->filter_transient_prompt(crlf < 0/*final*/);
 }

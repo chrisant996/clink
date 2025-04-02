@@ -11,21 +11,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-enum
-{
-    keycat_none,
-    keycat_basic,
-    keycat_cursor,
-    keycat_completion,
-    keycat_history,
-    keycat_killyank,
-    keycat_select,
-    keycat_scroll,
-    keycat_misc,
-    keycat_macros,
-    keycat_MAX
-};
-void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, int32 cat, const char* desc);
+void    init_readline_funmap();
 
 //------------------------------------------------------------------------------
 void    reset_command_states();

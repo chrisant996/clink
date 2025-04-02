@@ -38,6 +38,22 @@ extern pager* g_pager;
 extern setting_bool g_terminal_raw_esc;
 
 //------------------------------------------------------------------------------
+enum keycat
+{
+    keycat_none,
+    keycat_basic,
+    keycat_cursor,
+    keycat_completion,
+    keycat_history,
+    keycat_killyank,
+    keycat_select,
+    keycat_scroll,
+    keycat_misc,
+    keycat_macros,
+    keycat_MAX
+};
+
+//------------------------------------------------------------------------------
 static linear_allocator s_macro_name_store(4096);
 static str_unordered_map<str_moveable> s_macro_descriptions;
 
@@ -80,7 +96,7 @@ const char* lookup_macro_description(const char* macro)
 //------------------------------------------------------------------------------
 struct Keyentry
 {
-    int32 cat;
+    keycat cat;
     int32 sort;
     char* key_name;
     char* macro_text;
@@ -93,10 +109,10 @@ struct Keyentry
 //------------------------------------------------------------------------------
 struct Keydesc
 {
-    Keydesc(const char* name, int32 cat, const char* desc) : name(name), desc(desc), cat(cat) {}
+    Keydesc(const char* name, keycat cat, const char* desc) : name(name), desc(desc), cat(cat) {}
     const char* name;   // command name
     const char* desc;   // command description
-    int32 cat;          // command category
+    keycat cat;         // command category
 };
 
 //------------------------------------------------------------------------------
@@ -123,7 +139,7 @@ static_assert(sizeof_array(c_headings) == keycat_MAX, "c_headings must have the 
 static const struct {
     const char* name;
     rl_command_func_t* func;
-    int32 cat;
+    keycat cat;
     const char* desc;
 } c_func_descriptions[] = {
   { "abort", rl_abort, keycat_basic, "Abort the current editing command and ring the terminal's bell (subject to the setting of 'bell-style')" },
@@ -300,7 +316,7 @@ static bool ensure_keydesc_map()
         if (!s_pmap_keydesc)
             s_pmap_keydesc = new keydesc_map;
 
-        s_pmap_keydesc->emplace(rl_insert_close, std::move(Keydesc("insert-close", 0, nullptr)));
+        s_pmap_keydesc->emplace(rl_insert_close, std::move(Keydesc("insert-close", keycat_none, nullptr)));
 
         FUNMAP** funcs = funmap;
         while (*funcs != nullptr)
@@ -309,7 +325,7 @@ static bool ensure_keydesc_map()
 
             auto const& iter = s_pmap_keydesc->find(func->function);
             if (iter == s_pmap_keydesc->end())
-                s_pmap_keydesc->emplace(func->function, std::move(Keydesc(func->name, 0, nullptr)));
+                s_pmap_keydesc->emplace(func->function, std::move(Keydesc(func->name, keycat_none, nullptr)));
             else if (!iter->second.name) // Don't overwrite existing name; works around case sensitivity bug with some VI mode commands.
                 iter->second.name = func->name;
 
@@ -365,7 +381,7 @@ static bool ensure_keydesc_map()
 }
 
 //------------------------------------------------------------------------------
-void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int32 cat, const char* desc)
+static void clink_add_funmap_entry(const char *name, rl_command_func_t *func, keycat cat, const char* desc)
 {
     assert(name);
     assert(func);
@@ -394,6 +410,114 @@ void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int32 cat
 }
 
 //------------------------------------------------------------------------------
+void init_readline_funmap()
+{
+    clink_add_funmap_entry("clink-accept-suggested-line", clink_accept_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line and accept the input line");
+    clink_add_funmap_entry("clink-backward-bigword", rl_vi_bWord, keycat_cursor, "Move back to the start of the current or previous space delimited word");
+    clink_add_funmap_entry("clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen");
+    clink_add_funmap_entry("clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard");
+    clink_add_funmap_entry("clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard");
+    clink_add_funmap_entry("clink-copy-word", clink_copy_word, keycat_misc, "Copies the word at the cursor point to the clipboard, or copies the Nth word if a numeric argument is provided");
+    clink_add_funmap_entry("clink-ctrl-c", clink_ctrl_c, keycat_basic, "Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one");
+    clink_add_funmap_entry("clink-dump-functions", clink_dump_functions, keycat_misc, "Print all of the functions and their key bindings.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file");
+    clink_add_funmap_entry("clink-dump-macros", clink_dump_macros, keycat_misc, "Print all of the key names bound to macros and the strings they output.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file");
+    clink_add_funmap_entry("clink-exit", clink_exit, keycat_misc, "Replaces the input line with 'exit' and executes it (exits the CMD instance)");
+    clink_add_funmap_entry("clink-expand-doskey-alias", clink_expand_doskey_alias, keycat_misc, "Expands doskey aliases in the input line");
+    clink_add_funmap_entry("clink-expand-env-var", clink_expand_env_var, keycat_misc, "Expands environment variables in the word at the cursor point");
+    clink_add_funmap_entry("clink-expand-history", clink_expand_history, keycat_misc, "Performs history expansion in the input line");
+    clink_add_funmap_entry("clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line");
+    clink_add_funmap_entry("clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line");
+    clink_add_funmap_entry("clink-find-conhost", clink_find_conhost, keycat_misc, "Invokes the 'Find...' command in a standalone CMD window");
+    clink_add_funmap_entry("clink-forward-bigword", clink_forward_bigword, keycat_cursor, "Move forward to the beginning of the next space delimited word, or insert the next full suggested word up to a space");
+    clink_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point");
+    clink_add_funmap_entry("clink-insert-suggested-full-word", clink_insert_suggested_full_word, keycat_misc, "If there is a suggestion, insert the next full word from the suggested line");
+    clink_add_funmap_entry("clink-insert-suggested-line", clink_insert_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line");
+    clink_add_funmap_entry("clink-insert-suggested-word", clink_insert_suggested_word, keycat_misc, "If there is a suggestion, insert the next word from the suggested line");
+    clink_add_funmap_entry("clink-magic-suggest-space", clink_magic_suggest_space, keycat_misc, "Insert the next full suggested word (if any) up to a space, and insert a space");
+    clink_add_funmap_entry("clink-mark-conhost", clink_mark_conhost, keycat_misc, "Invokes the 'Mark' command in a standalone CMD window");
+    clink_add_funmap_entry("clink-menu-complete-numbers", clink_menu_complete_numbers, keycat_completion, "Like 'menu-complete' using numbers from the current screen");
+    clink_add_funmap_entry("clink-menu-complete-numbers-backward", clink_menu_complete_numbers_backward, keycat_completion, "Like 'menu-complete-backward' using numbers from the current screen");
+    clink_add_funmap_entry("clink-old-menu-complete-numbers", clink_old_menu_complete_numbers, keycat_completion, "Like 'old-menu-complete' using numbers from the current screen");
+    clink_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen");
+    clink_add_funmap_entry("clink-paste", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point");
+    clink_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform interactive completion from a list of numbers from the current screen");
+    clink_add_funmap_entry("clink-popup-directories", clink_popup_directories, keycat_misc, "Show recent directories in a popup list.  In the popup, use Enter to 'cd /d' to the selected directory");
+    clink_add_funmap_entry("clink-popup-history", clink_popup_history, keycat_history, "Show history entries in a popup list.  Filters using any text before the cursor point.  In the popup, use Enter to execute the selected history entry");
+    clink_add_funmap_entry("clink-popup-show-help", clink_popup_show_help, keycat_misc, "Show all key bindings in a searchable popup list.  In the popup, use Enter to invoke the selected key binding.  If a numeric argument of 4 is supplied, includes unbound commands");
+    clink_add_funmap_entry("clink-reload", clink_reload, keycat_misc, "Reload Lua scripts and the .inputrc file");
+    clink_add_funmap_entry("clink-reset-line", clink_reset_line, keycat_basic, "Clear the input line.  Can be undone, unlike 'revert-line'");
+    clink_add_funmap_entry("clink-scroll-bottom", clink_scroll_bottom, keycat_scroll, "Scroll to the bottom of the terminal's scrollback buffer");
+    clink_add_funmap_entry("clink-scroll-line-down", clink_scroll_line_down, keycat_scroll, "Scroll down one line");
+    clink_add_funmap_entry("clink-scroll-line-up", clink_scroll_line_up, keycat_scroll, "Scroll up one line");
+    clink_add_funmap_entry("clink-scroll-page-down", clink_scroll_page_down, keycat_scroll, "Scroll down one page");
+    clink_add_funmap_entry("clink-scroll-page-up", clink_scroll_page_up, keycat_scroll, "Scroll up one page");
+    clink_add_funmap_entry("clink-scroll-top", clink_scroll_top, keycat_scroll, "Scroll to the top of the terminal's scrollback buffer");
+    clink_add_funmap_entry("clink-select-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it");
+    clink_add_funmap_entry("clink-selectall-conhost", clink_selectall_conhost, keycat_misc, "Invokes the 'Select All' command in a standalone CMD window");
+    clink_add_funmap_entry("clink-shift-space", clink_shift_space, keycat_misc, "Invoke the normal Space key binding, so that Shift-Space behaves the same as Space");
+    clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions:  0=neither, 1=categories, 2=descriptions, 3=both (default).  Add 4 to include unbound commands");
+    clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
+    clink_add_funmap_entry("clink-toggle-slashes", clink_toggle_slashes, keycat_misc, "Toggle between forward and backslashes in the word at the cursor point, or in the Nth word if a numeric argument is provided");
+    clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory");
+    clink_add_funmap_entry("clink-what-is", clink_what_is, keycat_misc, "Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name");
+    clink_add_funmap_entry("cua-backward-bigword", cua_backward_bigword, keycat_select, "Extend the selection backward one space delimited word");
+    clink_add_funmap_entry("cua-backward-char", cua_backward_char, keycat_select, "Extend the selection backward one character");
+    clink_add_funmap_entry("cua-backward-word", cua_backward_word, keycat_select, "Extend the selection backward one word");
+    clink_add_funmap_entry("cua-beg-of-line", cua_beg_of_line, keycat_select, "Extend selection to the beginning of the line");
+    clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
+    clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
+    clink_add_funmap_entry("cua-end-of-line", cua_end_of_line, keycat_select, "Extend the selection to the end of the line");
+    clink_add_funmap_entry("cua-forward-bigword", cua_forward_bigword, keycat_select, "Extend the selection forward one space delimited word, or insert the next full suggested word up to a space");
+    clink_add_funmap_entry("cua-forward-char", cua_forward_char, keycat_select, "Extend the selection forward one character, or insert the next full suggested word up to a space");
+    clink_add_funmap_entry("cua-forward-word", cua_forward_word, keycat_select, "Extend the selection forward one word");
+    clink_add_funmap_entry("cua-next-screen-line", cua_next_screen_line, keycat_select, "Extend the selection down one screen line");
+    clink_add_funmap_entry("cua-previous-screen-line", cua_previous_screen_line, keycat_select, "Extend the selection up one screen line");
+    clink_add_funmap_entry("cua-select-all", cua_select_all, keycat_select, "Extend the selection to the entire input line");
+    clink_add_funmap_entry("cua-select-word", cua_select_word, keycat_select, "Select the word at the cursor point");
+
+    clink_add_funmap_entry("win-copy-history-number", win_f9, keycat_history, "Enter a history number and replace the input line with the history entry");
+    clink_add_funmap_entry("win-copy-up-to-char", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
+    clink_add_funmap_entry("win-copy-up-to-end", win_f3, keycat_history, "Copy the rest of the previous command");
+    clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command, or insert suggestion");
+    clink_add_funmap_entry("win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
+    clink_add_funmap_entry("win-history-list", win_f7, keycat_history, "Executes a history entry from a list");
+    clink_add_funmap_entry("win-insert-eof", win_f6, keycat_misc, "Insert ^Z");
+
+    clink_add_funmap_entry("edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order");
+    clink_add_funmap_entry("glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended");
+    clink_add_funmap_entry("glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
+    clink_add_funmap_entry("glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
+    clink_add_funmap_entry("magic-space", magic_space, keycat_history, "Perform history expansion on the text before the cursor position and insert a space");
+
+    clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
+    clink_add_funmap_entry("clink-diagnostics-output", clink_diagnostics_output, keycat_misc, "Write internal diagnostic information to a file");
+
+    // IMPORTANT:  Aliased command names need to be defined after the real
+    // command name, so that rl.getbinding() returns the real command name.
+    {
+        // Alias some Clink commands.
+        // clink_add_funmap_entry("clink-popup-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it");
+        rl_add_funmap_entry("clink-popup-complete", clink_select_complete);
+
+        // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
+        rl_add_funmap_entry("alias-expand-line", clink_expand_doskey_alias);
+        rl_add_funmap_entry("history-and-alias-expand-line", clink_expand_history_and_alias);
+        rl_add_funmap_entry("history-expand-line", clink_expand_history);
+        rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
+        rl_add_funmap_entry("shell-expand-line", clink_expand_line);
+    }
+
+    // Preemptively replace some commands with versions that support suggestions.
+    clink_add_funmap_entry("forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion");
+    clink_add_funmap_entry("forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion");
+    clink_add_funmap_entry("forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word");
+    clink_add_funmap_entry("end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion");
+
+    // Preemptively replace paste command with one that supports Unicode.
+    rl_add_funmap_entry("paste-from-clipboard", clink_paste);
+}
+
+//------------------------------------------------------------------------------
 static const char* get_function_name(int32 (*func_addr)(int32, int32))
 {
     auto const& iter = s_pmap_keydesc->find(func_addr);
@@ -404,7 +528,7 @@ static const char* get_function_name(int32 (*func_addr)(int32, int32))
 }
 
 //------------------------------------------------------------------------------
-static bool get_function_info(int32 (*func_addr)(int32, int32), const char** desc, int32* cat)
+static bool get_function_info(int32 (*func_addr)(int32, int32), const char** desc, keycat* cat)
 {
     auto const& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
@@ -639,7 +763,7 @@ static Keyentry* collect_keymap(
         if (entry.type == ISFUNC && maybe_exclude_function(entry.function))
             continue;
 
-        int32 cat = keycat_macros;
+        keycat cat = keycat_macros;
         const char *name = nullptr;
         const char *desc = nullptr;
         char *macro = nullptr;
@@ -705,7 +829,7 @@ static Keyentry* collect_keymap(
 
             out.func_name = name;
             out.func_desc = desc;
-            out.cat = categories ? cat : 0;
+            out.cat = categories ? cat : keycat_none;
             ++(*offset);
         }
 
@@ -844,7 +968,7 @@ static Keyentry* collect_functions(
 #endif /* VI_MODE */
 
         const char* desc;
-        int32 cat = keycat_misc;
+        keycat cat = keycat_misc;
         get_function_info(func, &desc, &cat);
 
         if (*offset >= *max)
@@ -863,7 +987,7 @@ static Keyentry* collect_functions(
         out.key_name = (char*)calloc(1, 1);
         out.func_name = found_name;
         out.func_desc = desc;
-        out.cat = categories ? cat : 0;
+        out.cat = categories ? cat : keycat_none;
 
         ++(*offset);
     }
@@ -894,7 +1018,7 @@ static Keyentry* collect_functions(
         out.key_name = (char*)calloc(1, 1);
         out.macro_text = savestring(macro_desc.first);
         out.func_desc = macro_desc.second.c_str();
-        out.cat = categories ? keycat_macros : 0;
+        out.cat = categories ? keycat_macros : keycat_none;
 
         ++(*offset);
     }
@@ -1438,7 +1562,7 @@ bool get_command_bindings(const char* command, bool friendly, str_base& _desc, s
         return false;
 
     const char* desc = nullptr;
-    int32 cat = keycat_none;
+    keycat cat = keycat_none;
     rl_command_func_t* func = rl_named_function(command);
     bool lookup_macro = false;
     str<> macro;
