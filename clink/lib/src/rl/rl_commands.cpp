@@ -382,8 +382,7 @@ public:
         {
             if (new_leaks)
             {
-                if (m_heap.footprint() > m_heap.pagesize() || dbg_get_env_int("DEBUG_REPORT_UNDO_LIST_LEAKS"))
-                    assert(!leaks);
+                assert(!leaks);
 
                 dbgtracef("----- UNDO_LIST leaks: %u -----", leaks);
 
