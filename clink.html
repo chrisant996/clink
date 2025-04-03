@@ -3,7 +3,11 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.7.13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
+<title>Clink v1.7.14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -954,7 +958,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.13</div>
+                <div id="title">Clink v1.7.14</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1360,7 +1364,7 @@ $endif
 
 <p><a name="clinksettings"></a></p>
 <h2 id="clink-settings"><a class="wlink" href="#clinksettings"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Clink Settings <span class="uplinks"><a href="#configclink">up</a> <a href="#toc">top</a></span></h2>
-<p>The easiest way to configure Clink is to use the <code>clink set</code> command to list, query, and set Clink&#39;s settings.</p>
+<p>Use the <code>clink set</code> command to list, query, and set Clink&#39;s settings.  Clink&#39;s <a href="#how-completion-works">completion system</a> can help you use the <code>clink set</code> command; press <kbd>Tab</kbd> to use completions.</p>
 <p>Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more.</p>
 <p>The following table describes the available Clink settings:</p>
 <table>
@@ -1455,6 +1459,11 @@ $endif
 <td align="center"><a class="wlink" href="#clink_promptfilter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_promptfilter"></a><code>clink.promptfilter</code></td>
 <td align="center">True</td>
 <td>Enable <a href="#customising-the-prompt">prompt filtering</a> by Lua scripts.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#clink_scroll_offset"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_scroll_offset"></a><code>clink.scroll_offset</code></td>
+<td align="center"><code>3</code></td>
+<td>Number of screen lines to show above or below a selected item in popup lists or the <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> command.  The list scrolls up or down as needed to maintain the scroll offset (except after a mouse click).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#clink_update_interval"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_update_interval"></a><code>clink.update_interval</code></td>
@@ -1634,7 +1643,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#color_selected_completion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_selected_completion"></a><code>color.selected_completion</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
-<td>The color for the selected completion with the <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> command.  If no color is set, then bright reverse video is used.</td>
+<td>The color for the selected completion with the <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> command.  If no color is set, then reverse video is used.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#color_selection"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_selection"></a><code>color.selection</code></td>
@@ -7021,6 +7030,25 @@ load(io.popen(&#39;starship.exe init cmd&#39;):read(&quot;*a&quot;))()
 <p>Windows programs generally don&#39;t need to worry about terminal support.  But the Readline library used by Clink comes from Unix, where there are many different kinds of terminals, and the library requires certain kinds of terminal support.</p>
 <p>Clink&#39;s keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use <code>clink echo</code> to find key sequences for specific inputs.</p>
 <p>Clink&#39;s terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the <a href="#terminal_emulation"><code>terminal.emulation</code></a> setting is <code>emulate</code>, or when <code>auto</code> and Clink is running on an older version of Windows that doesn&#39;t support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.</p>
+<h3 id="key-binding-quirks"><a class="wlink" href="#key-binding-quirks"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Key Binding Quirks <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
+<p>If you see the input line sometimes lose typed input and start with <code>[A</code> or <code>[B</code> or similar cryptic characters, here is what&#39;s happening:</p>
+<p>Some terminal based applications ported from Unix/Linux to Windows set the console input mode to request emulated Virtual Terminal (VT) input sequences.  Some examples are <code>git</code>, <code>ls</code>, <code>cat</code> and other command Unix/Linux programs.</p>
+<p>When a terminal based application requests emulated VT input sequences, then the Windows console (terminal) subsystem converts each keystroke into an equivalent VT input sequence <em>at the moment the keys are pressed</em>.  If the application doesn&#39;t read the input before it exits, then that can interfere with Clink&#39;s keyboard driver.  Any keystrokes that are typed while the application is running (i.e. before Clink regains control) still end up converted to VT input sequences before they reach Clink, even though Clink turns off emulated VT input sequences before reading any input.  This typically ends up looking like the input line gets cleared and has just <code>[A</code> or <code>[B</code> or similar text, instead of what was typed by the user.</p>
+<p>There is a way to work around that problem, if necessary:</p>
+<ol>
+<li>Run <code>clink set terminal.raw_esc true</code>.</li>
+<li>Use only key bindings in Clink that Unix/Linux would also recognize.</li>
+</ol>
+<p>That means:</p>
+<ul>
+<li>Don&#39;t use key bindings for <kbd>Ctrl</kbd>-<kbd>Space</kbd>.</li>
+<li>Don&#39;t use key bindings for <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd><em>Letters</em></kbd>.</li>
+<li>Don&#39;t use various other key combinations that Clink recognizes but which Unix/Linux do not recognize.</li>
+<li>Don&#39;t try to bind anything directly to the <kbd>Esc</kbd> key by itself, since that creates ambiguity because <code>ESC</code> is the first character in VT input sequences for most special keystrokes.</li>
+<li>Pressing <kbd>Esc</kbd> by itself can no longer clear the input line.</li>
+<li>Pressing <kbd>Esc</kbd> by itself can lead to confusing input states, exactly the same as happens in Unix/Linux.</li>
+</ul>
+<h3 id="cursor-style"><a class="wlink" href="#cursor-style"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Cursor Style <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
 <p>By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  <code>%CLINK_TERM_VE%</code> selects the style for the normal cursor (insert mode), <code>%CLINK_TERM_VS%</code> selects the style for the enhanced cursor (overwrite mode).</p>
 <p>Special codes recognized in the cursor style escape code strings:</p>
 <table>
@@ -7133,6 +7161,7 @@ set CLINK_TERM_VS=\e[?12l
 <li>If it&#39;s indeed being blocked by anti-malware software, report the false positive to the publisher of the anti-malware software so they can confirm and update the detection signatures.  There&#39;s nothing Clink can do about it.</li>
 </ul>
 </li>
+<li>Interference can happen while injecting Clink.  Anything that hooks into CMD can potentially interfere with Clink (including tools like ConsoleZ and ConEmu).  Clink tries very hard to minimize opportunities for interference, but there&#39;s no way to eliminate the possibility for interference (except by not using the other tools or not using Clink).</li>
 <li>If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the <a href="#rlcmd-clink-diagnostics"><code>clink-diagnostics</code></a> command.  Any problems it finds in the prompt string are reported at the end.</li>
 <li>Check <code>clink info</code>.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?</li>
 <li>Check <code>clink set</code>.  E.g. do the settings look right?</li>
@@ -8785,6 +8814,25 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1714"><a class="wlink" href="#v1714"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.14 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added a new <code>clink.scroll_offset</code> setting which controls how many lines to show above or below the selected item in popup lists or the <code>clink-select-complete</code> command (default is 3).</li>
+<li>Changed <code>clink set <span class="arg">name</span></code> to include the default value of the named setting.</li>
+<li>The Antares clinkprompt now allows configuring the characters for showing the previous command&#39;s exit code (refer to the Antares.clinkprompt file for details).</li>
+<li>The <code>clink-diagnostics</code> and <code>clink-diagnostics-output</code> bindable commands also show the current *.clinkprompt custom prompt file, if any.</li>
+<li>Fixed a problem where <kbd>Esc</kbd> could leak or corrupt history undo lists when used after searching history (the problem existed since v0.1 in 2012).</li>
+<li>Fixed the <code>clink-show-help</code> command to stop listing the <code>A-f</code> default key binding as an &quot;Uncategorized&quot; command.</li>
+<li>Fixed a typo in the Antares clinkprompt when trying to detect a bare git repo.</li>
+<li>Fixed the <code>history.sticky_search</code> setting (regression introduced in v1.5.12).</li>
+<li>Fixed default color for <code>color.selected_completion</code> to have better contrast ratio in light terminal themes.</li>
+<li>Fixed input edge cases in the <code>win-history-list</code> command which missed updating the display.</li>
+<li>Fixed a color glitch in the <code>clink-popup-history</code> command for history lines marked as having been modified in memory.</li>
+<li>Fixed the <code>win-history-list</code> command to show a mark for history lines that have been modified in memory, like the <code>clink-popup-history</code> command already does.</li>
+<li>Fixed an issue where instead of always starting on a new line, output from a command could potentially accidentally start at the end of the input line.</li>
+<li>Fixed some memory management bugs in history item undo lists.</li>
+<li>Added a workaround to fix <a href="https://github.com/chrisant996/clink/issues/738">#738</a>; Windows Terminal does not handle the <code>CSI K</code> code correctly when the cursor is past the end of the screen line.</li>
+<li>Improvements for <a href="https://github.com/chrisant996/clink/issues/739">#739</a>; ConsoleZ, ConEmu, and other tools can interfere with injecting Clink (there&#39;s no way to completely prevent opportunities for interference, but this reduces the chances).</li>
+</ul>
 <h4 id="v1713"><a class="wlink" href="#v1713"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.13 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added an error message when <code>clink set</code> fails to write the <code>clink_settings</code> file (e.g. no permission or the file is marked read-only).</li>
