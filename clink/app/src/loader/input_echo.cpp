@@ -102,7 +102,7 @@ int32 input_echo(int32 argc, char** argv)
             else if (c == 0x1b)
                 printf("\\e");
             else if (c == 0x7f)
-                printf("Rubout");
+                printf("\\C-?");    // "\C-?" or Rubout (without quotes).
             else if (c < 0x20)
                 printf("\\C-%c", c|0x40);
             else
