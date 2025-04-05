@@ -47,31 +47,48 @@ const rl_buffer_lua::method rl_buffer_lua::c_methods[] = {
 
 
 //------------------------------------------------------------------------------
+int32 rl_buffer_lua::s_nested = 0;
+bool rl_buffer_lua::s_began_output = false;
+
+//------------------------------------------------------------------------------
 rl_buffer_lua::rl_buffer_lua(line_buffer& buffer)
 : m_rl_buffer(buffer)
 {
+    if (!s_nested)
+        s_began_output = false;
+    ++s_nested;
 }
 
 //------------------------------------------------------------------------------
 rl_buffer_lua::~rl_buffer_lua()
 {
+    const bool last = (s_nested == 1);
+    assert(s_nested > 0);
+    s_nested = max(0, s_nested - 1);
+
     while (m_num_undo > 0)
     {
         m_rl_buffer.end_undo_group();
         m_num_undo--;
     }
 
-    if (m_began_output)
-        m_rl_buffer.redraw();
+    if (last)
+    {
+        if (s_began_output)
+        {
+            m_rl_buffer.redraw();
+            s_began_output = false;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 void rl_buffer_lua::do_begin_output()
 {
-    if (!m_began_output)
+    if (!s_began_output)
     {
         end_prompt(true/*crlf*/);
-        m_began_output = true;
+        s_began_output = true;
     }
 }
 

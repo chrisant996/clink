@@ -42,7 +42,9 @@ protected:
 private:
     line_buffer&            m_rl_buffer;
     int32                   m_num_undo = 0;
-    bool                    m_began_output = false;
+
+    static int32            s_nested;
+    static bool             s_began_output;
 
     friend class lua_bindable<rl_buffer_lua>;
     static const char* const c_name;
