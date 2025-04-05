@@ -6,6 +6,7 @@
 
 - Fixed the sequence of characters `clink echo` reports for <kbd>Ctrl</kbd>-<kbd>Bkspc</kbd>.
 - Fixed an issue where the `match.expand_abbrev` setting could accidentally move the cursor position when trying to complete `x:\does_not_exist`.
+- Fixed extra prompt(s) that could printed if a `luafunc:` command used `rl_buffer:beginoutput()` and then `rl.invokecommand()` to invoke another `luafunc:` command that did the same, nesting multiple times.
 
 #### v1.7.14
 
