@@ -1407,9 +1407,16 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
     }
     parse << tmp2;
 
+    // Don't operate on just a drive.
+    const uint32 parse_len = uint32(last_sep - tmp.c_str());
+    if (parse.length() >= parse_len)
+    {
+        out.clear();
+        return false;
+    }
+
     // Identify the range to be parsed, up to but not including the last path
     // separator character.
-    uint32 parse_len = uint32(last_sep - tmp.c_str());
     wstr_moveable disambiguated;
     disambiguated = parse.c_str();
 
