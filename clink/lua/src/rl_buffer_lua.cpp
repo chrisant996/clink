@@ -285,7 +285,7 @@ int32 rl_buffer_lua::get_argument(lua_State* state)
 {
     if (rl_explicit_arg)
     {
-        lua_pushinteger(state, rl_numeric_arg);
+        lua_pushinteger(state, rl_numeric_arg * rl_arg_sign);
         return 1;
     }
     return 0;
@@ -311,7 +311,7 @@ int32 rl_buffer_lua::set_argument(lua_State* state)
         {
             rl_arg_sign = (arg < 0) ? -1 : 1;
             rl_explicit_arg = 1;
-            rl_numeric_arg = arg;
+            rl_numeric_arg = abs(arg);
         }
     }
     return 0;
