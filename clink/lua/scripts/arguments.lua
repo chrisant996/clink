@@ -2376,6 +2376,9 @@ function clink.argmatcher(...)
         for _, i in ipairs(input) do
             _argmatchers[path.normalise(clink.lower(i))] = matcher
         end
+        if input[1] then
+            clink._signal_reclassifyline()
+        end
     end
 
     if matcher then
@@ -3578,5 +3581,6 @@ function clink.arg.register_parser(cmd, parser)
 
     -- Register the parser.
     _argmatchers[cmd] = parser
+    clink._signal_reclassifyline()
     return matcher
 end

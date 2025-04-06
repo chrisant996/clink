@@ -9,6 +9,7 @@ enum class reclassify_reason : uint8
     recognizer,
     hinter,
     force,
+    lazy_force,
 };
 
 //------------------------------------------------------------------------------

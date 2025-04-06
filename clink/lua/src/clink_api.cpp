@@ -1770,6 +1770,13 @@ static int32 signal_delayed_init(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 signal_reclassify_line(lua_State* state)
+{
+    reclassify(reclassify_reason::lazy_force);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int32 get_cmd_commands(lua_State* state)
 {
     lua_createtable(state, 64, 0);
@@ -2328,6 +2335,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_reset_generate_matches", &api_reset_generate_matches },
         { 0,    "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { 0,    "_signal_delayed_init",   &signal_delayed_init },
+        { 0,    "_signal_reclassifyline", &signal_reclassify_line },
         { 0,    "_get_cmd_commands",      &get_cmd_commands },
         { 0,    "is_cmd_command",         &is_cmd_command },
         { 0,    "is_cmd_wordbreak",       &is_cmd_wordbreak },

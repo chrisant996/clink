@@ -1259,24 +1259,35 @@ void line_editor_impl::maybe_send_oncommand_event()
 //------------------------------------------------------------------------------
 void line_editor_impl::reclassify(reclassify_reason why)
 {
-    // Test check_recognizer_refresh() first, to ensure its side effects occur
-    // when necessary.
-    const bool refresh = check_recognizer_refresh();
+    bool refresh = false;
 
-    if (refresh)
+    if (why != reclassify_reason::lazy_force)
     {
-        why = reclassify_reason::force;
-        maybe_send_oncommand_event();
+        // Test check_recognizer_refresh() first, to ensure its side effects
+        // occur when necessary.
+        refresh = check_recognizer_refresh();
+        if (refresh)
+        {
+            why = reclassify_reason::force;
+            maybe_send_oncommand_event();
+        }
+    }
+
+    if (why == reclassify_reason::force || why == reclassify_reason::lazy_force)
+    {
+        m_prev_plain = false;
+        m_prev_cursor = 0;
+        m_prev_classify.clear();
+
+        if (why == reclassify_reason::lazy_force)
+        {
+            _rl_want_redisplay = true;
+            return;
+        }
     }
 
     if (refresh || why == reclassify_reason::force || why == reclassify_reason::hinter)
     {
-        if (why == reclassify_reason::force)
-        {
-            m_prev_plain = false;
-            m_prev_cursor = 0;
-            m_prev_classify.clear();
-        }
         m_buffer.set_need_draw();
         m_buffer.draw();
     }
