@@ -1,0 +1,30 @@
+local args = {...}
+
+require("arghelper")
+
+local function test_names(_, _, _, builder, _)
+	local matches = {}
+	local testcmd = path.join(path.getdirectory(args[1]), "test.cmd")
+	local p = io.popen(testcmd.." --list-tests")
+	if p then
+		for l in p:lines() do
+			table.insert(matches, l)
+		end
+		builder:setnosort()
+		builder:setforcequoting()
+		p:close()
+	end
+	return matches
+end
+
+clink.argmatcher(args[1])
+:_addexflags({
+	{ "/dbg",			"Run test under the debugger" },
+	{ "/x64",			"Run clink_test_x64.exe (the default)" },
+	{ "/x86",			"Run clink_test_x86.exe" },
+	{ "/rel",			"Run release version (runs debug version by default)" },
+	{ "-d",				"Load Lua debugger" },
+	{ "-t",				"Show execution time" },
+})
+:addarg(test_names)
+:nofiles()
