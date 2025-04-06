@@ -72,13 +72,12 @@ rl_buffer_lua::~rl_buffer_lua()
         m_num_undo--;
     }
 
-    if (last)
+    if (last && s_began_output)
     {
-        if (s_began_output)
-        {
-            m_rl_buffer.redraw();
-            s_began_output = false;
-        }
+        // Set flag to force redisplay when the dispatch loop gets back to an
+        // appropriate point.
+        rl_set_forced_display(true);
+        s_began_output = false;
     }
 }
 

@@ -328,6 +328,10 @@ extern void _rl_clean_up_for_exit (void);
 extern void _rl_erase_entire_line (void);
 extern int _rl_current_display_line (void);
 extern void _rl_refresh_line (void);
+/* begin_clink_change */
+extern int rl_get_forced_display (void);
+extern void rl_set_forced_display (int force);
+/* end_clink_change */
 
 /* input.c */
 extern int _rl_any_typein (void);

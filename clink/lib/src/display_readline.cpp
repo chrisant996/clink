@@ -71,9 +71,6 @@ extern void (*rl_fflush_function)(FILE*);
 extern char* tgetstr(const char*, char**);
 extern char* tgoto(const char* base, int x, int y);
 
-extern int rl_get_forced_display(void);
-extern void rl_set_forced_display(int force);
-
 extern int _rl_last_v_pos;
 int _rl_rprompt_shown_len = 0;
 } // extern "C"
