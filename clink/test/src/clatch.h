@@ -103,6 +103,13 @@ struct cleanup
 };
 
 //------------------------------------------------------------------------------
+inline void list()
+{
+    for (test* test = test::get_head(); test != nullptr; test = test->m_next)
+        puts(test->m_name);
+}
+
+//------------------------------------------------------------------------------
 inline bool run(const char* prefix="", bool times=false)
 {
     int32 fail_count = 0;

@@ -4,6 +4,7 @@ set __DBG=
 set __ME=%~dp0
 set __CPU=x64
 set __FLAVOR=debug
+set __FLAGS=
 
 :arg
 if x%1x == x?x goto :usage
@@ -26,6 +27,7 @@ if x%1x == x/releasex set __FLAVOR=release& goto:nextarg
 if x%1x == x--releasex set __FLAVOR=release& goto:nextarg
 if x%1x == x/shipx set __FLAVOR=release& goto:nextarg
 if x%1x == x--shipx set __FLAVOR=release& goto:nextarg
+if x%1x == x--list-testsx set __FLAGS= --list-tests& goto:nextarg
 
 if x%2x == x/relx goto:oopsflag
 if x%2x == x-relx goto:oopsflag
@@ -34,8 +36,8 @@ if x%2x == x--releasex goto:oopsflag
 if x%2x == x/shipx goto:oopsflag
 if x%2x == x--shipx goto:oopsflag
 
-echo %__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe %1 %2 %3
-%__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe %1 %2 %3
+if "%__FLAGS%" == "" echo %__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe%__FLAGS% %1 %2 %3
+%__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe%__FLAGS% %1 %2 %3
 goto :eof
 
 :nextarg

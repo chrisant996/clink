@@ -86,6 +86,7 @@ int32 main(int32 argc, char** argv)
 
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
+    bool list = false;
     bool times = false;
     int32 d_flag = 0;
 
@@ -115,6 +116,10 @@ int32 main(int32 argc, char** argv)
         {
             times = true;
         }
+        else if (!strcmp(argv[0], "--list-tests"))
+        {
+            list = true;
+        }
         else if (!strcmp(argv[0], "--"))
         {
         }
@@ -124,6 +129,12 @@ int32 main(int32 argc, char** argv)
         }
 
         argc--, argv++;
+    }
+
+    if (list)
+    {
+        clatch::list();
+        return 0;
     }
 
     // Make console input work, e.g. for the Lua debugger.
