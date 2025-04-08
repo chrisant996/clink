@@ -9,6 +9,7 @@
 - Fixed input line coloring to refresh the display if `clink.argmatcher()` registers a new argmatcher in response to an event such as `clink.oncommand`.
 - Fixed extra prompt(s) that could printed if a `luafunc:` command used `rl_buffer:beginoutput()` and then `rl.invokecommand()` to invoke another `luafunc:` command that did the same, nesting multiple times.
 - Fixed negative numeric arguments with `rl_buffer:getargument()` and `rl_buffer:setargument()`.
+- Fixed [#743](https://github.com/chrisant996/clink/issues/743); output doesn't scroll terminal correctly when the terminal screen buffer width is wider than the terminal window width (regression introduced in v1.6.2).
 
 #### v1.7.14
 
