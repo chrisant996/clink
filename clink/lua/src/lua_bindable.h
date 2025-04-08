@@ -312,7 +312,7 @@ int32 lua_bindable<T>::__gc(lua_State* state)
 #ifdef DEBUG
         (*self)->m_deleteable = true;
 #endif
-        m_state_unbind = state;
+        (*self)->m_state_unbind = state;
         delete *self;
     }
     return 0;
