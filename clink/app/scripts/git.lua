@@ -92,6 +92,7 @@ local function read_from_file(fileName, as_num)
     if not file then return nil end
 
     local line = file:read()
+    file:close()
     if not line or line == "" then return nil end
 
     if as_num then
