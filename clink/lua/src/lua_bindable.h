@@ -202,6 +202,13 @@ T* lua_bindable<T>::make_new(lua_State* state, Args... args)
 
     (*self)->make_metatable(state);
 
+    // Always bind, so that push() is possible.  Otherwise push() will bind,
+    // which will create a new userdata pointing at the same *self, and then
+    // both userdata's will delete *self during __gc.
+    (*self)->m_state_unbind = state;
+    lua_pushvalue(state, -1);
+    (*self)->m_registry_ref = luaL_ref(state, LUA_REGISTRYINDEX);
+
 #ifdef DEBUG
     int32 newtop = lua_gettop(state);
     assert(oldtop + 1 == newtop);
