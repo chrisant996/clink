@@ -141,6 +141,7 @@ void lua_bindable<T>::bind(lua_State* state)
 {
     assert(m_state_unbind == nullptr);
     assert(m_registry_ref == LUA_NOREF);
+    assert(!m_owned);
 
 #ifdef DEBUG
     int32 oldtop = lua_gettop(state);
@@ -167,8 +168,10 @@ void lua_bindable<T>::bind(lua_State* state)
 template <class T>
 void lua_bindable<T>::unbind()
 {
-    if (m_state_unbind == nullptr || m_registry_ref == LUA_NOREF)
+    if (m_registry_ref == LUA_NOREF)
         return;
+
+    assert(m_state_unbind != nullptr);
 
     lua_rawgeti(m_state_unbind, LUA_REGISTRYINDEX, m_registry_ref);
     if (auto** self = (T**)lua_touserdata(m_state_unbind, -1))
@@ -205,7 +208,7 @@ T* lua_bindable<T>::make_new(lua_State* state, Args... args)
     // Always bind, so that push() is possible.  Otherwise push() will bind,
     // which will create a new userdata pointing at the same *self, and then
     // both userdata's will delete *self during __gc.
-    (*self)->m_state_unbind = state;
+    assert(!(*self)->m_state_unbind); // Filled in by __gc().
     lua_pushvalue(state, -1);
     (*self)->m_registry_ref = luaL_ref(state, LUA_REGISTRYINDEX);
 
@@ -309,6 +312,7 @@ int32 lua_bindable<T>::__gc(lua_State* state)
 #ifdef DEBUG
         (*self)->m_deleteable = true;
 #endif
+        m_state_unbind = state;
         delete *self;
     }
     return 0;
