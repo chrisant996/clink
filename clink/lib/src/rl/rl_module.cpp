@@ -2816,6 +2816,10 @@ void rl_module::on_end_line()
     if (!m_done)
         done(rl_line_buffer);
 
+#ifdef DEBUG
+    ignore_column_in_uninit_display_readline();
+#endif
+
     uninit_display_readline();
 
 #ifdef USE_MEMORY_TRACKING
