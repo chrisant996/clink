@@ -292,11 +292,11 @@ done:
 
 
 //------------------------------------------------------------------------------
-class preserve_window_scroll_position
+class preserve_window_horiz_scroll_position
 {
 public:
-                        preserve_window_scroll_position(HANDLE h);
-                        ~preserve_window_scroll_position();
+                        preserve_window_horiz_scroll_position(HANDLE h);
+                        ~preserve_window_horiz_scroll_position();
 private:
     static int32        s_nested;
     static char*        s_saved_rl_term_clreol;
@@ -305,13 +305,13 @@ private:
 };
 
 //------------------------------------------------------------------------------
-int32 preserve_window_scroll_position::s_nested = 0;
-char* preserve_window_scroll_position::s_saved_rl_term_clreol = nullptr;
-HANDLE preserve_window_scroll_position::s_h = nullptr;
-CONSOLE_SCREEN_BUFFER_INFO preserve_window_scroll_position::s_window;
+int32 preserve_window_horiz_scroll_position::s_nested = 0;
+char* preserve_window_horiz_scroll_position::s_saved_rl_term_clreol = nullptr;
+HANDLE preserve_window_horiz_scroll_position::s_h = nullptr;
+CONSOLE_SCREEN_BUFFER_INFO preserve_window_horiz_scroll_position::s_window;
 
 //------------------------------------------------------------------------------
-preserve_window_scroll_position::preserve_window_scroll_position(HANDLE h)
+preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HANDLE h)
 {
     assertimplies(!s_nested, !s_h);
     ++s_nested;
@@ -326,7 +326,7 @@ preserve_window_scroll_position::preserve_window_scroll_position(HANDLE h)
 }
 
 //------------------------------------------------------------------------------
-preserve_window_scroll_position::~preserve_window_scroll_position()
+preserve_window_horiz_scroll_position::~preserve_window_horiz_scroll_position()
 {
     assert(s_nested > 0);
     if (s_h)
@@ -336,11 +336,20 @@ preserve_window_scroll_position::~preserve_window_scroll_position()
         GetConsoleScreenBufferInfo(s_h, &cursor);
         if (cursor.srWindow.Right - cursor.srWindow.Left == s_window.srWindow.Right - s_window.srWindow.Left &&
             cursor.srWindow.Bottom - cursor.srWindow.Top == s_window.srWindow.Bottom - s_window.srWindow.Top &&
+            cursor.srWindow.Left != s_window.srWindow.Left &&
             cursor.dwCursorPosition.X >= cursor.srWindow.Left &&
             cursor.dwCursorPosition.X <= cursor.srWindow.Right &&
             cursor.dwCursorPosition.Y >= cursor.srWindow.Top &&
             cursor.dwCursorPosition.Y <= cursor.srWindow.Bottom)
-            SetConsoleWindowInfo(s_h, true, &s_window.srWindow);
+        {
+            // Issue 743; only restore the horizontal scroll position.  If the
+            // vertical scroll position is also restored, then this interferes
+            // with text output scrolling the terminal vertically when it
+            // goes past the bottom of the visible window.
+            cursor.srWindow.Left = s_window.srWindow.Left;
+            cursor.srWindow.Right = s_window.srWindow.Right;
+            SetConsoleWindowInfo(s_h, true, &cursor.srWindow);
+        }
     }
     --s_nested;
     if (!s_nested)
@@ -1550,7 +1559,7 @@ void display_manager::end_prompt_lf()
         return;
 
     init_horizpos_workaround();
-    preserve_window_scroll_position preserve(m_horizpos_workaround);
+    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
 
     // FUTURE: When in a scrolling mode (vert or horz), reprint the entire
     // prompt and input line without the scroll constraints?
@@ -1672,7 +1681,7 @@ void display_manager::display()
         return;
 
     init_horizpos_workaround();
-    preserve_window_scroll_position preserve(m_horizpos_workaround);
+    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
 
 #ifdef REPORT_REDISPLAY
     ++s_calls;
@@ -2320,7 +2329,7 @@ void display_manager::clear_comment_row()
         assert(m_initialized);
 
         init_horizpos_workaround();
-        preserve_window_scroll_position preserve(m_horizpos_workaround);
+        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
 
         clear_comment_row_internal();
     }
@@ -2571,7 +2580,7 @@ void display_manager::move_to_column(uint32 col, bool force)
         GetConsoleScreenBufferInfo(m_horizpos_workaround, &csbi);
         csbi.dwCursorPosition.X = col;
 
-        preserve_window_scroll_position preserve(m_horizpos_workaround);
+        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
         SetConsoleCursorPosition(m_horizpos_workaround, csbi.dwCursorPosition);
     }
     else if (col)
@@ -2598,7 +2607,7 @@ void display_manager::move_to_row(int32 row)
     if (row == _rl_last_v_pos)
         return;
 
-    preserve_window_scroll_position preserve(m_horizpos_workaround);
+    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
     _rl_move_vert(row);
 }
 
