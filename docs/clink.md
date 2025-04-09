@@ -441,8 +441,10 @@ The following sections describe how to configure Clink itself.  To learn about t
 <table class="linkmenu">
 <tr><td><a href="#clinksettings">Clink Settings</a></td><td>How to customize Clink's settings.</td></tr>
 <tr><td><a href="#colorsettings">Color Settings</a></td><td>Describes the syntax used by color settings.</td></tr>
+<tr><td><a href="#custom-prompts">Custom Prompts</a></td><td>How to select a custom prompt to use.</td></tr>
 <tr><td><a href="#filelocations">File Locations</a></td><td>Where Clink stores its history and settings files.</td></tr>
 <tr><td><a href="#command-line-options">Command Line Options</a></td><td>Describes the command line options for the Clink program.</td></tr>
+<tr><td><a href="#automatic-updates">Automatic Updates</a></td><td>How to configure automatic updates.</td></tr>
 <tr><td><a href="#portable-configuration">Portable Configuration</a></td><td>How to set up a "portable" installation of Clink, e.g. on a USB drive or network location.</td></tr>
 </table>
 
