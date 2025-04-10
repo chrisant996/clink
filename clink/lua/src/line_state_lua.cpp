@@ -58,7 +58,7 @@ line_state_copy::line_state_copy(const line_state& line)
 {
     m_buffer.concat(line.get_line(), line.get_length());
     m_words = line.get_words(); // Deep copy.
-    m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_command_offset(), line.get_range_offset(), line.get_range_length(), m_words);
+    m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_words_limit(), line.get_command_offset(), line.get_range_offset(), line.get_range_length(), m_words);
 }
 
 //------------------------------------------------------------------------------
@@ -551,14 +551,18 @@ int32 line_state_lua::unbreak_word(lua_State* state)
     if (word.quoted)
         return 0;
 
+    // Cannot unbreak further than the beginning of the next word!
+    uint32 max_len = m_line->get_words_limit();
+    if (index + 1 < words.size())
+        max_len = min(max_len, words[index + 1].offset);
+
     const char* const line = m_line->get_line();
-    const uint32 line_len = m_line->get_length();
     const uint32 comma_index = word.offset + word.length;
-    if (!is_unbreakchar(unbreakchars, line, line_len, comma_index))
+    if (!is_unbreakchar(unbreakchars, line, max_len, comma_index))
         return 0;
 
     uint32 append_len = 1;
-    while (is_unbreakchar(unbreakchars, line, line_len, comma_index + append_len))
+    while (is_unbreakchar(unbreakchars, line, max_len, comma_index + append_len))
         ++append_len;
 
     line_state_copy* copy = make_line_state_copy(*m_line);

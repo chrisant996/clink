@@ -32,6 +32,7 @@ line_state::line_state(
     const char* line,
     uint32 length,
     uint32 cursor,
+    uint32 words_limit,
     uint32 command_offset,
     uint32 range_offset,
     uint32 range_length,
@@ -40,6 +41,7 @@ line_state::line_state(
 , m_line(line)
 , m_length(length)
 , m_cursor(cursor)
+, m_words_limit(words_limit)
 , m_command_offset(command_offset)
 , m_range_offset(range_offset)
 , m_range_length(range_length)
@@ -62,6 +64,12 @@ uint32 line_state::get_length() const
 uint32 line_state::get_cursor() const
 {
     return m_cursor;
+}
+
+//------------------------------------------------------------------------------
+uint32 line_state::get_words_limit() const
+{
+    return m_words_limit;
 }
 
 //------------------------------------------------------------------------------

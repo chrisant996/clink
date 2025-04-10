@@ -415,8 +415,12 @@ uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word
 }
 
 //------------------------------------------------------------------------------
-void command_line_states::set(const char* line_buffer, uint32 line_length, uint32 line_cursor,
-                              const std::vector<word>& words, const std::vector<command>& commands)
+void command_line_states::set(const char* line_buffer,
+                              uint32 line_length,
+                              uint32 line_cursor,
+                              const std::vector<word>& words,
+                              collect_words_mode mode,
+                              const std::vector<command>& commands)
 {
     clear_internal();
 
@@ -459,15 +463,19 @@ void command_line_states::set(const char* line_buffer, uint32 line_length, uint3
                 assert(command_iter != commands.end());
             }
 
-            m_linestates.emplace_back(
+            const bool limit_cursor = (mode == collect_words_mode::stop_at_cursor);
+            const uint32 words_limit = limit_cursor ? line_cursor : line_length;
+
+            m_linestates.emplace_back(std::move(line_state(
                 line_buffer,
                 line_length,
                 line_cursor,
+                words_limit,
                 command_char_offset,
                 command_iter->offset,
                 command_iter->length,
                 m_words_storage.back()
-            );
+            )));
         }
 
         if (i >= words.size())
@@ -487,9 +495,11 @@ void command_line_states::set(const char* line_buffer, uint32 line_length, uint3
 
 //------------------------------------------------------------------------------
 void command_line_states::set(const line_buffer& buffer,
-                              const std::vector<word>& words, const std::vector<command>& commands)
+                              const std::vector<word>& words,
+                              collect_words_mode mode,
+                              const std::vector<command>& commands)
 {
-    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, commands);
+    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands);
 }
 
 //------------------------------------------------------------------------------
@@ -531,7 +541,7 @@ void command_line_states::clear()
     clear_internal();
 
     m_words_storage.emplace_back();
-    m_linestates.emplace_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, m_words_storage[0])));
+    m_linestates.emplace_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, 0, m_words_storage[0])));
 }
 
 //------------------------------------------------------------------------------
@@ -557,7 +567,7 @@ const line_states& command_line_states::get_linestates(const char* buffer, uint3
             dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
             s_none = new line_states;
-            s_none->push_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, *wv)));
+            s_none->push_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, 0, *wv)));
         }
         return *s_none;
     }
@@ -582,7 +592,7 @@ const line_state& command_line_states::get_linestate(const char* buffer, uint32 
         {
             dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
-            s_none = new line_state(nullptr, 0, 0, 0, 0, 0, *wv);
+            s_none = new line_state(nullptr, 0, 0, 0, 0, 0, 0, *wv);
         }
         return *s_none;
     }

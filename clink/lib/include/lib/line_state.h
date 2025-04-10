@@ -30,10 +30,11 @@ class line_state
 #endif
 {
 public:
-                        line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, uint32 range_offset, uint32 range_length, const std::vector<word>& words);
+                        line_state(const char* line, uint32 length, uint32 cursor, uint32 words_limit, uint32 command_offset, uint32 range_offset, uint32 range_length, const std::vector<word>& words);
     const char*         get_line() const;
     uint32              get_length() const;
     uint32              get_cursor() const;
+    uint32              get_words_limit() const;
     uint32              get_command_offset() const;
     uint32              get_command_word_index() const;
     uint32              get_end_word_offset() const;
@@ -55,6 +56,7 @@ private:
     const char*         m_line;
     uint32              m_length;
     uint32              m_cursor;
+    uint32              m_words_limit;
     uint32              m_command_offset;
     uint32              m_range_offset;
     uint32              m_range_length;

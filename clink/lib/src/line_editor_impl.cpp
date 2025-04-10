@@ -897,7 +897,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 {
     std::vector<command> commands;
     uint32 command_offset = m_collector.collect_words(m_buffer, words, mode, &commands);
-    command_line_states.set(m_buffer, words, commands);
+    command_line_states.set(m_buffer, words, mode, commands);
 
 #ifdef DEBUG
     const int32 dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");

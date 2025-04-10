@@ -1342,11 +1342,12 @@ static int32 parse_line(lua_State* state)
     std::vector<word> tmp_words;
     std::vector<command> tmp_commands;
     uint32 len = uint32(strlen(line));
-    collector.collect_words(line, len, 0, tmp_words, collect_words_mode::whole_command, &tmp_commands);
+    const collect_words_mode tmp_mode = collect_words_mode::whole_command;
+    collector.collect_words(line, len, 0, tmp_words, tmp_mode, &tmp_commands);
 
     // Group words into one line_state per command.
     command_line_states command_line_states;
-    command_line_states.set(line, len, 0, tmp_words, tmp_commands);
+    command_line_states.set(line, len, 0, tmp_words, tmp_mode, tmp_commands);
 
     // Make a deep copy in an object allocated in the Lua heap.  Garbage
     // collection will free it.
@@ -1724,8 +1725,9 @@ static int32 generate_from_history(lua_State* state)
         std::vector<word> words;
         std::vector<command> commands;
         command_line_states command_line_states;
-        collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command, &commands);
-        command_line_states.set(buffer, len, 0, words, commands);
+        const collect_words_mode mode = collect_words_mode::whole_command;
+        collector.collect_words(buffer, len, len/*cursor*/, words, mode, &commands);
+        command_line_states.set(buffer, len, 0, words, mode, commands);
 
         for (const line_state& line : command_line_states.get_linestates(buffer, len))
         {
