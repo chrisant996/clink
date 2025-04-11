@@ -225,6 +225,20 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                     doskey_len = first_word_len;
                     words.push_back({command.offset, doskey_len, first, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
                     first = false;
+
+                    // Consume spaces after the alias, to ensure the tokeniser
+                    // doesn't start on a space.  If it does and the rest of
+                    // the line is spaces, then the loop will incorrectly add
+                    // an empty word, which will make an argmatcher consume an
+                    // extra argument slot by mistake when it internally
+                    // expands a doskey alias.
+                    while (command.offset + doskey_len < line_length)
+                    {
+                        const char c = line_buffer[command.offset + doskey_len];
+                        if (c != ' ' && c != '\t')
+                            break;
+                        ++doskey_len;
+                    }
                 }
 
                 if (m_command_tokeniser)

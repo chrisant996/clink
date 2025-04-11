@@ -676,21 +676,14 @@ TEST_CASE("Lua advanced arg parsers")
         tester.run();
 
         // Doskey alias with flag, with onalias expansion.
-        //
-        // It seems like "md" would be more correct, but even before the
-        // argmatcher next_word refactor in commit 7b46891e76efd6dd077f this
-        // "o" quirk was present:
-        //  - "somealias " yields "mdo".
-        //  - "actualpgm " yields "mo".
-        //  - "actualpgm  " yields "moo".
 
         tester.set_input("qaz ");
-        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_classifications("md", true);
         tester.set_expected_matches("red", "green", "blue");
         tester.run();
 
         tester.set_input("qd9 ");
-        tester.set_expected_classifications("mdo", true);
+        tester.set_expected_classifications("md", true);
         tester.set_expected_matches("yellow", "cyan", "magenta");
         tester.run();
 
