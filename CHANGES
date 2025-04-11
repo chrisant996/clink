@@ -10,6 +10,7 @@
 - Fixed extra prompt(s) that could printed if a `luafunc:` command used `rl_buffer:beginoutput()` and then `rl.invokecommand()` to invoke another `luafunc:` command that did the same, nesting multiple times.
 - Fixed negative numeric arguments with `rl_buffer:getargument()` and `rl_buffer:setargument()`.
 - Fixed potential heap corruption in `os.enumshares()`.
+- Fixed both completions and `clink.parseline()` when a command is a doskey alias but ends up with only a command name and spaces after expanding the alias (completions got confused about which argument slot was being completed, and `clink.parseline()` accidentally reported an extra empty word at the end of the input line).
 - Fixed [#743](https://github.com/chrisant996/clink/issues/743); output doesn't scroll terminal correctly when the terminal screen buffer width is wider than the terminal window width (regression introduced in v1.6.2).
 - Fixed [#744](https://github.com/chrisant996/clink/issues/744); `git.getaction()` prevents git from properly cleaning up rebase files if you edit a commit during a rebase.
 - Fixed [#745](https://github.com/chrisant996/clink/issues/745); out of bounds read in memcpy after typing `cmd /;=` and then moving the cursor left twice (regression introduced in v1.5.17).
