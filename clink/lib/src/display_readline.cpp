@@ -3000,6 +3000,16 @@ void display_readline()
 }
 
 //------------------------------------------------------------------------------
+void maybe_redisplay_readline()
+{
+    if (_rl_want_redisplay && rl_redisplay_function)
+    {
+        (*rl_redisplay_function)();
+        assert(!_rl_want_redisplay);
+    }
+}
+
+//------------------------------------------------------------------------------
 void set_history_expansions(history_expansion* list)
 {
     s_display_manager.set_history_expansions(list);

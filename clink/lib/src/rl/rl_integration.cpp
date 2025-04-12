@@ -6,6 +6,7 @@
 #include "rl_commands.h"
 #include "editor_module.h"
 #include "line_editor_integration.h"
+#include "display_readline.h"
 #include "matches.h"
 
 #include <core/base.h>
@@ -193,6 +194,7 @@ void last_func_hook_func()
     }
 
     host_send_event("onaftercommand");
+    maybe_redisplay_readline();
 }
 
 //------------------------------------------------------------------------------

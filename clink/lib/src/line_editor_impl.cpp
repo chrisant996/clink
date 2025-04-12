@@ -1520,6 +1520,7 @@ void line_editor_impl::update_internal()
 
     // Send oncommand event when command word changes.
     maybe_send_oncommand_event();
+    maybe_redisplay_readline(); // In case a new argmatcher got registered.
 
     // Should we collect suggestions?
     try_suggest();

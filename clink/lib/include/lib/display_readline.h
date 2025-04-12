@@ -29,6 +29,7 @@ extern "C" void reset_display_readline(void);
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();
 void display_readline();
+void maybe_redisplay_readline();
 void set_history_expansions(history_expansion* list=nullptr);
 void force_comment_row(const char* text);
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
