@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.7.14</title>
+<title>Clink v1.7.15</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -958,7 +958,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.14</div>
+                <div id="title">Clink v1.7.15</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1357,8 +1357,10 @@ $endif
 <table class="linkmenu">
 <tr><td><a href="#clinksettings">Clink Settings</a></td><td>How to customize Clink's settings.</td></tr>
 <tr><td><a href="#colorsettings">Color Settings</a></td><td>Describes the syntax used by color settings.</td></tr>
+<tr><td><a href="#custom-prompts">Custom Prompts</a></td><td>How to select a custom prompt to use.</td></tr>
 <tr><td><a href="#filelocations">File Locations</a></td><td>Where Clink stores its history and settings files.</td></tr>
 <tr><td><a href="#command-line-options">Command Line Options</a></td><td>Describes the command line options for the Clink program.</td></tr>
+<tr><td><a href="#automatic-updates">Automatic Updates</a></td><td>How to configure automatic updates.</td></tr>
 <tr><td><a href="#portable-configuration">Portable Configuration</a></td><td>How to set up a "portable" installation of Clink, e.g. on a USB drive or network location.</td></tr>
 </table>
 
@@ -3291,7 +3293,7 @@ $endif              # end clink-only section
 <tbody><tr>
 <td><a class="wlink" href="#rlcmd-digit-argument"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-digit-argument"></a><code>digit-argument</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd><em>digit</em></kbd> or <kbd>Alt</kbd>-<kbd>-</kbd></td>
-<td>Add this <em>digit</em> to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.</td>
+<td>Add this <em>digit</em> to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.<br/><strong>Note:</strong> to enter a negative number that doesn&#39;t start with the digit <code>1</code>, type the digits without holding <kbd>Alt</kbd>  For example, to enter -2 you can type <kbd>Alt</kbd>-<kbd>-</kbd> and then <kbd>2</kbd>.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-universal-argument"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-universal-argument"></a><code>universal-argument</code></td>
@@ -8814,6 +8816,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1715"><a class="wlink" href="#v1715"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.15 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Fixed the sequence of characters <code>clink echo</code> reports for <kbd>Ctrl</kbd>-<kbd>Bkspc</kbd>.</li>
+<li>Fixed an issue where the <code>match.expand_abbrev</code> setting could accidentally move the cursor position when trying to complete <code>x:\does_not_exist</code>.</li>
+<li>Fixed input line coloring to refresh the display if <code>clink.argmatcher()</code> registers a new argmatcher in response to an event such as <code>clink.oncommand</code>.</li>
+<li>Fixed extra prompt(s) that could printed if a <code>luafunc:</code> command used <code>rl_buffer:beginoutput()</code> and then <code>rl.invokecommand()</code> to invoke another <code>luafunc:</code> command that did the same, nesting multiple times.</li>
+<li>Fixed negative numeric arguments with <code>rl_buffer:getargument()</code> and <code>rl_buffer:setargument()</code>.</li>
+<li>Fixed potential heap corruption in <code>os.enumshares()</code>.</li>
+<li>Fixed both completions and <code>clink.parseline()</code> when a command is a doskey alias but ends up with only a command name and spaces after expanding the alias (completions got confused about which argument slot was being completed, and <code>clink.parseline()</code> accidentally reported an extra empty word at the end of the input line).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/743">#743</a>; output doesn&#39;t scroll terminal correctly when the terminal screen buffer width is wider than the terminal window width (regression introduced in v1.6.2).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/744">#744</a>; <code>git.getaction()</code> prevents git from properly cleaning up rebase files if you edit a commit during a rebase.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/745">#745</a>; out of bounds read in memcpy after typing <code>cmd /;=</code> and then moving the cursor left twice (regression introduced in v1.5.17).</li>
+</ul>
 <h4 id="v1714"><a class="wlink" href="#v1714"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.14 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added a new <code>clink.scroll_offset</code> setting which controls how many lines to show above or below the selected item in popup lists or the <code>clink-select-complete</code> command (default is 3).</li>
