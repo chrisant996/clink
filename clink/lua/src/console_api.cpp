@@ -970,7 +970,7 @@ static int32 cell_count_iter(lua_State* state)
 ///
 /// <table>
 /// <tr><th>Value</th><th>Description</th></tr>
-/// <tr><td><code>"right"</code></td><td>Truncates from the right end of the input string.</td></tr>
+/// <tr><td><code>"right"</code></td><td>Truncates from the right end of the input string (this is the default).</td></tr>
 /// <tr><td><code>"left"</code></td><td>Truncates from the left end of the input string.</td></tr>
 /// <tr><td><code>"path"</code></td><td>Treats the input string as a file path and keeps any drive specifier, and truncates any directory portion from its left end.</td></tr>
 /// </table>
