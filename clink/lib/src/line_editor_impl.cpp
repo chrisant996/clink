@@ -900,7 +900,18 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     command_line_states.set(m_buffer, words, mode, commands);
 
 #ifdef DEBUG
-    const int32 dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
+    const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
+    int32 dbg_row_stop = dbg_get_env_int("DEBUG_COLLECTWORDS");
+    int32 dbg_row_whole = dbg_get_env_int("DEBUG_COLLECTWORDS_CLASSIFY");
+    if (dbg_row_stop && dbg_row_whole)
+    {
+        // Don't let the two debug output modes overlap.
+        if (dbg_row_whole == dbg_row_stop)
+            ++dbg_row_stop;
+        else if (dbg_row_whole == dbg_row_stop + 1)
+            ++dbg_row_whole;
+    }
+    const int32 dbg_row = stop_at_cursor ? dbg_row_stop : dbg_row_whole;
     str<> tmp1;
     str<> tmp2;
     if (dbg_row > 0)
@@ -1001,17 +1012,6 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
         assert(matches);
         matches->set_word_break_position(end_word_offset);
     }
-
-#ifdef DEBUG
-    if (dbg_row > 0)
-    {
-        if (tmp2.empty())
-        {
-            tmp2.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
-            m_printer.print(tmp2.c_str(), tmp2.length());
-        }
-    }
-#endif
 
     words.clear();
     for (const auto& w : command_line_states.get_linestate(m_buffer).get_words())

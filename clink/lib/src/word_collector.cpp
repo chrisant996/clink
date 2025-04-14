@@ -415,9 +415,11 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
     }
 
 #ifdef DEBUG
-    if (dbg_get_env_int("DEBUG_COLLECTWORDS") < 0)
+    if (dbg_get_env_int(stop_at_cursor ? "DEBUG_COLLECTWORDS" : "DEBUG_COLLECTWORDS_CLASSIFY") < 0)
     {
         int32 i = 0;
+        if (words.size() > 0)
+            printf("collect words (%s):\n", stop_at_cursor ? "stop_at_cursor" : "whole_command");
         for (const word& word : words)
         {
             str<> tmp;
