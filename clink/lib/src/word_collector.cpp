@@ -107,7 +107,7 @@ char word_collector::get_closing_quote() const
 void word_collector::find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
                                          std::vector<command>& commands, bool stop_at_cursor) const
 {
-    uint32 line_stop = stop_at_cursor ? cursor : length;
+    const uint32 line_stop = stop_at_cursor ? cursor : length;
 
     commands.clear();
 
@@ -192,6 +192,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
 
     commands.reserve(5);
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
+    const uint32 line_stop = stop_at_cursor ? line_cursor : line_length;
     find_command_bounds(line_buffer, line_length, line_cursor, commands, stop_at_cursor);
 
     uint32 command_offset = 0;
@@ -232,7 +233,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                     // an empty word, which will make an argmatcher consume an
                     // extra argument slot by mistake when it internally
                     // expands a doskey alias.
-                    while (command.offset + doskey_len < line_length)
+                    while (command.offset + doskey_len < line_stop)
                     {
                         const char c = line_buffer[command.offset + doskey_len];
                         if (c != ' ' && c != '\t')
@@ -246,7 +247,16 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             }
         }
 
-        m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len), m_quote_pair, first);
+        assert(command.offset + command.length <= line_stop);
+        assert(command.offset + doskey_len <= line_stop);
+        assert(command.length >= doskey_len);
+        uint32 tokeniser_len = command.length - doskey_len;
+        if (!(command.offset + command.length <= line_stop &&
+              command.offset + doskey_len <= line_stop &&
+              command.length >= doskey_len))
+            tokeniser_len = 0;
+
+        m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, tokeniser_len), m_quote_pair, first);
         while (1)
         {
             uint32 word_offset = 0;
