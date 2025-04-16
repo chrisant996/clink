@@ -152,6 +152,8 @@ static void clear_to_end_of_screen()
 {
     static const char* const termcap_cd = tgetstr("cd", nullptr);
     rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+    if (_rl_last_v_pos == 0)
+        _rl_rprompt_shown_len = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1643,6 +1645,7 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
     while (remaining > 0)
     {
         bool erase_in_line = true;
+        uint32 erase_length = _rl_screenwidth;
 
         const char* eol = strpbrk(text, "\r\n");
         length = eol ? int(eol - text) : remaining;
@@ -1654,6 +1657,8 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
                 lines += mc.get_line_count() - 1;
             if (!mc.get_column() && mc.get_line_count() > 1)
                 erase_in_line = false;
+            else
+                erase_length -= mc.get_column();
             rl_fwrite_function(stream, text, length);
             text += length;
             remaining -= length;
@@ -1666,7 +1671,7 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
                 ++text, --remaining;
             length = int(text - eol);
             if (erase_in_line)
-                rl_fwrite_function(stream, "\x1b[K", 3);
+                _rl_clear_to_eol(erase_length);
             if (length > 0)
                 rl_fwrite_function(stream, eol, length);
         }
@@ -1677,6 +1682,8 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
 //------------------------------------------------------------------------------
 void display_manager::display()
 {
+    static const char* const UP = tgetstr("UP", nullptr);
+
     if (!_rl_echoing_p || !m_initialized)
         return;
 
@@ -1739,13 +1746,18 @@ void display_manager::display()
     if (s_defer_clear_lines > 0)
     {
         // Clear the lines within the display_accumulator scope.
+        move_to_column(0);
         for (int32 lines = s_defer_clear_lines; lines--;)
-            rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", lines ? 5 : 4);
+        {
+            _rl_clear_to_eol(_rl_screenwidth);
+            if (lines)
+                rl_fwrite_function(_rl_out_stream, "\n", 1);
+        }
         // Go back up to where the cursor was before clearing lines.
         if (s_defer_clear_lines > 1)
         {
             str<16> tmp;
-            tmp.format("\x1b[%uA", s_defer_clear_lines - 1);
+            tmp.format(UP, s_defer_clear_lines - 1);
             rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
         }
         s_defer_clear_lines = 0;
@@ -2147,11 +2159,15 @@ void display_manager::display()
 #endif
             const int32 delta = old_height - next_height;
             for (int32 lines = delta; lines--;)
-                print("\x1b[K\n", lines ? 4 : 3);
+            {
+                _rl_clear_to_eol(_rl_screenwidth);
+                if (lines)
+                    print("\n", 1);
+            }
             if (delta > 1)
             {
                 str<16> tmp;
-                tmp.format("\x1b[%uA", delta - 1);
+                tmp.format(UP, delta - 1);
                 print(tmp.c_str(), tmp.length());
             }
         }
