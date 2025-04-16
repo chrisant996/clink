@@ -1984,7 +1984,7 @@ void display_manager::display()
             if (rows++ > new_botlin)
                 break;
 
-            auto o = m_curr.get(i - m_top + old_top);
+            auto o = s_defer_erase_extra_lines ? nullptr : m_curr.get(i - m_top + old_top);
             update_line(i, o, d, _rl_rprompt_shown_len > 0);
         }
 
