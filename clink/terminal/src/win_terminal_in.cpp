@@ -81,6 +81,7 @@ extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
 static HANDLE s_interrupt = NULL;
+static bool s_sending_terminal_request = false;
 
 //------------------------------------------------------------------------------
 static const int32 CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
@@ -220,6 +221,9 @@ const char* get_bindable_esc()
     // Loading this before settings makes it impossible for the setting to ever
     // take effect, since it takes effect only once during a session.
     assert(settings::get_ever_loaded());
+
+    if (s_sending_terminal_request)
+        return nullptr;
 
     static const char* const bindableEsc = g_terminal_raw_esc.get() ? nullptr : "\x1b[27;27~";
     return bindableEsc;
@@ -636,7 +640,7 @@ int32 win_terminal_in::end(bool can_show_cursor)
 //------------------------------------------------------------------------------
 bool win_terminal_in::available(uint32 _timeout)
 {
-    bool ret = (m_buffer_count > 0 || m_has_pending_record);
+    bool ret = (m_buffer_count > 0 || !m_pending_records.empty());
     const DWORD stop = GetTickCount() + _timeout;
     while (!ret)
     {
@@ -650,7 +654,7 @@ bool win_terminal_in::available(uint32 _timeout)
         assert(!m_buffer_count);
 
         // If real input is available, break out.
-        if (m_has_pending_record)
+        if (!m_pending_records.empty())
         {
             ret = true;
             break;
@@ -684,10 +688,10 @@ int32 win_terminal_in::read()
 
     if (!m_buffer_count)
     {
-        if (m_has_pending_record)
+        if (!m_pending_records.empty())
         {
-            const INPUT_RECORD record = m_pending_record;
-            m_has_pending_record = false;
+            const INPUT_RECORD record = m_pending_records.back();
+            m_pending_records.pop_back();
             process_record(record);
         }
 
@@ -711,14 +715,105 @@ int32 win_terminal_in::peek()
     if (m_buffer_count)
         return m_buffer[m_buffer_head];
 
-    if (m_has_pending_record)
+    if (!m_pending_records.empty())
     {
         int32 peeked;
-        if (peek_record(m_pending_record, &peeked))
+        if (peek_record(m_pending_records.back(), &peeked))
             return peeked;
     }
 
     return terminal_in::input_none;
+}
+
+//------------------------------------------------------------------------------
+// In the pattern string, use '0' as a wildcard meaning "one or more digits".
+bool win_terminal_in::send_terminal_request(const char* request, const char* pattern, str_base& out)
+{
+    assert(request && *request);
+    assert(pattern && *pattern);
+
+    out.clear();
+    assert(false);
+
+    if (get_native_ansi_handler() < ansi_handler::first_native)
+        return false;
+
+    // The actual terminal discards all its pending input when it receives a
+    // terminal request sequence, so this wrapper must as well.
+    m_pending_records.clear();
+    m_processed_records.clear();
+    m_buffer_head = 0;
+    m_buffer_count = 0;
+    m_lead_surrogate = 0;
+
+    assert(!s_sending_terminal_request);
+    rollback<bool> str(s_sending_terminal_request, true);
+
+    // Print the request.
+    DWORD written;
+    wstr<16> tmp(request);
+    WriteConsoleW(m_stdout, tmp.c_str(), tmp.length(), &written, nullptr);
+
+    // Read input and match against the pattern.
+    if (available(0))
+    {
+        bool digits = false;
+        std::vector<INPUT_RECORD> pending_records;
+        while (available(0))
+        {
+            const uint32 buffer_count = m_buffer_count;
+            read_console(nullptr, 0, false);
+
+            while (m_buffer_count && (digits || *pattern))
+            {
+                const uint8 c = pop();
+                out.concat(reinterpret_cast<const char*>(&c), 1);
+
+                if (digits || *pattern == '0')
+                {
+                    if (c >= '0' && c <= '9')
+                    {
+                        if (!digits)
+                        {
+                            ++pattern;
+                            if (!*pattern)
+                                goto nope;  // Report sequences cannot end in a digit.
+                        }
+                        digits = true;
+                        continue;
+                    }
+                    else
+                    {
+                        if (digits)
+                            digits = false; // Done with digits.
+                        else
+                            goto nope;      // Digit expected; something else found.
+                    }
+                }
+
+                if (c != *pattern)
+                    goto nope;
+
+                ++pattern;
+            }
+
+            if (!*pattern)
+            {
+                assert(m_pending_records.empty());
+                m_pending_records.clear();
+                m_processed_records.clear();
+                return true;
+            }
+        }
+    }
+
+nope:
+    // The response did not match the pattern; push the input records back
+    // into the terminal input queue.
+    m_pending_records.clear();
+    m_pending_records.swap(m_processed_records);
+    out.clear();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -804,6 +899,7 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
 bool win_terminal_in::process_record(const INPUT_RECORD& record)
 {
     const uint32 buffer_count = m_buffer_count;
+    bool ret = false;
 
     switch (record.EventType)
     {
@@ -821,15 +917,17 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
         // wrapping adjustments.  If the width changes then return to give
         // editor modules a chance to respond to the width change.
         reset_wcwidths();
-        if (get_dimensions() != m_dimensions)
-            return true;
+        ret = (get_dimensions() != m_dimensions);
         break;
 
     default:
         return false;
     }
 
-    return m_buffer_count > buffer_count;
+    if (s_sending_terminal_request)
+        m_processed_records.push_back(record);
+
+    return (m_buffer_count > buffer_count) || ret;
 }
 
 //------------------------------------------------------------------------------
@@ -838,12 +936,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
     // If there's already input buffered, then don't read further.
     if (m_buffer_count > 0)
         return;
-    if (m_has_pending_record)
+    if (!m_pending_records.empty())
     {
         if (!peek)
         {
-            const INPUT_RECORD record = m_pending_record;
-            m_has_pending_record = false;
+            const INPUT_RECORD record = m_pending_records.back();
+            m_pending_records.pop_back();
             process_record(record);
         }
         return;
@@ -958,9 +1056,9 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         {
             if (peek_record(record))
             {
-                assert(!m_has_pending_record);
-                m_has_pending_record = true;
-                m_pending_record = record;
+                assert(m_pending_records.empty());
+                m_pending_records.clear();
+                m_pending_records.push_back(record);
                 return;
             }
         }
@@ -1603,6 +1701,7 @@ void win_terminal_in::push(const char* seq)
 //------------------------------------------------------------------------------
 void win_terminal_in::push(uint32 value)
 {
+    static_assert(sizeof_array(m_buffer) && !(sizeof_array(m_buffer) & sizeof_array(m_buffer) - 1), "size of m_buffer must be a non-zero power of 2");
     static const uint32 mask = sizeof_array(m_buffer) - 1;
 
     int32 index = m_buffer_head + m_buffer_count;

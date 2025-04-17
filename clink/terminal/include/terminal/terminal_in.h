@@ -5,6 +5,7 @@
 
 class input_idle;
 class key_tester;
+class str_base;
 
 //------------------------------------------------------------------------------
 class terminal_in
@@ -24,5 +25,6 @@ public:
     virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) = 0;
     virtual int32   read() = 0;
     virtual int32   peek() = 0;
+    virtual bool    send_terminal_request(const char* request, const char* pattern, str_base& out) { return false; }
     virtual key_tester* set_key_tester(key_tester* keys) = 0;
 };

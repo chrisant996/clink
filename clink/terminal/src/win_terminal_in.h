@@ -5,6 +5,7 @@
 
 #include "terminal_in.h"
 #include <assert.h>
+#include <vector>
 
 class input_idle;
 class key_tester;
@@ -15,12 +16,14 @@ class win_terminal_in
 {
 public:
                     win_terminal_in(bool cursor_visibility=true);
+                    ~win_terminal_in() = default;
     virtual int32   begin(bool can_hide_cursor=true) override;
     virtual int32   end(bool can_show_cursor=true) override;
     virtual bool    available(uint32 timeout) override;
     virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) override;
     virtual int32   read() override;
     virtual int32   peek() override;
+    virtual bool    send_terminal_request(const char* request, const char* pattern, str_base& out) override;
     virtual key_tester* set_key_tester(key_tester* keys) override;
 
 private:
@@ -46,7 +49,7 @@ private:
     uint8           m_buffer_count = 0;
     wchar_t         m_lead_surrogate = 0;
     uint8           m_buffer[16]; // must be power of two.
-    INPUT_RECORD    m_pending_record;
-    bool            m_has_pending_record = false;
+    std::vector<INPUT_RECORD> m_pending_records;
+    std::vector<INPUT_RECORD> m_processed_records;
     const bool      m_cursor_visibility = true;
 };
