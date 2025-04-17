@@ -4,6 +4,7 @@
 
 #### v1.7.17
 
+- Changed the default behavior for throttling Lua coroutines.  By default there is no throttling anymore.  The new `lua.throttle_interval` setting can be used to enable throttling of Lua coroutines if they cause responsiveness issues.  Prior to this, the throttling interval had been hard-coded to 5 seconds, but now it's configurable and is 0 by default (no throttling).
 - Fixed erasing leftover input text if the prompt height changes while typing.
 
 #### v1.7.16
