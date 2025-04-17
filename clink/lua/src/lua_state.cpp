@@ -81,6 +81,16 @@ setting_bool g_lua_strict(
     "about the issue so they can fix the script.",
     true);
 
+static setting_int g_lua_throttle_coroutines(
+    "lua.throttle_interval",
+    "Restricts coroutine execution",
+    "This is off (0) by default, which allows coroutines to freely control\n"
+    "their own execution times and rates.  If coroutines interfere with\n"
+    "responsiveness, you can set this to a number that restricts how often (in\n"
+    "seconds) a long-running coroutine can actually run.  Until v1.7.17, the\n"
+    "default value was 5 seconds, but now it's 0 (no throttling).",
+    0);
+
 extern setting_bool g_debug_log_terminal;
 #ifdef _MSC_VER
 extern setting_bool g_debug_log_output_callstacks;

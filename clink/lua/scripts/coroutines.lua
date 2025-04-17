@@ -15,6 +15,7 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
 local _pending_on_main = nil            -- Funcs to run when control returns to the main coroutine.
+local _can_throttle = nil               -- Whether to throttle long-running coroutines.
 
 local _main_perthread_state = {}
 clink.co_state = _main_perthread_state
@@ -71,6 +72,11 @@ local function clear_coroutines()
 
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
     _trimmed = 0
+
+    _can_throttle = settings.get("lua.throttle_interval")
+    if _can_throttle == 0 then
+        _can_throttle = nil
+    end
 
     for _, entry in ipairs(preserve) do
         _coroutines[entry.coroutine] = entry
@@ -180,22 +186,29 @@ local function next_entry_target(entry, now)
 
         -- Multiple kinds of throttling for coroutines that want to run more
         -- frequently than every 5 seconds:
+        --
         --  1.  Throttle if running for 5 or more seconds, but reset the elapsed
         --      timer every time io.popenyield() finishes or resuming after
         --      asyncyield.
         --  2.  Throttle if running for more than 30 seconds total.
+        --
         -- Throttled coroutines can only run once every 5 seconds.
         --
         -- NOTE:  Throttling is intentionally based on elapsed clock time, not
         -- on coroutine execution time.  The intent is responsiveness for the
         -- user, not "fairness" to coroutines.
+        --
+        -- UPDATE:  Throttling is now disabled by default, but can be enabled
+        -- via the lua.throttle_interval setting.
         local interval = entry.interval
-        local throttleclock = entry.throttleclock or entry.firstclock
-        if now and interval < 5 then
-            if throttleclock and now - throttleclock > 5 then
-                interval = 5
-            elseif entry.firstclock and now - entry.firstclock > 30 then
-                interval = 5
+        if _can_throttle then
+            local throttleclock = entry.throttleclock or entry.firstclock
+            if now and interval < 5 then
+                if throttleclock and now - throttleclock > 5 then
+                    interval = 5
+                elseif entry.firstclock and now - entry.firstclock > 30 then
+                    interval = 5
+                end
             end
         end
         return entry.lastclock + interval
@@ -719,7 +732,7 @@ end
 ---
 --- If a coroutine's interval is less than 5 seconds and the coroutine has been
 --- alive for more than 5 seconds, then the coroutine is throttled to run no
---- more often than once every 5 seconds (regardless how much total time is has
+--- more often than once every 5 seconds (regardless how much total time it has
 --- spent running).  Throttling is meant to prevent long-running coroutines from
 --- draining battery power, interfering with responsiveness, or other potential
 --- problems.
