@@ -406,6 +406,7 @@ int32 tagged_prompt::is_tagged(const wchar_t* chars, int32 char_count)
 
 //------------------------------------------------------------------------------
 bool prompt_filter::s_filtering = false;
+bool prompt_filter::s_transient_filtering = false;
 
 //------------------------------------------------------------------------------
 prompt_filter::prompt_filter(lua_state& lua)
@@ -451,7 +452,8 @@ bool prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
         lua_pushnil(state);
     }
 
-    rollback<bool> rb(s_filtering, true);
+    rollback<bool> rb1(s_filtering, true);
+    rollback<bool> rb2(s_transient_filtering, transient);
     if (m_lua.pcall(state, 5, 3) != 0)
     {
         lua_settop(state, top);

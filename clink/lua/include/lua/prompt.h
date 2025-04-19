@@ -46,11 +46,13 @@ public:
     bool            filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient=false, bool final=false);
 
     static bool     is_filtering() { return s_filtering; }
+    static bool     is_transient_filtering() { return s_transient_filtering; }
 
 private:
     lua_state&      m_lua;
 
     static bool s_filtering;
+    static bool s_transient_filtering;
 };
 
 //------------------------------------------------------------------------------

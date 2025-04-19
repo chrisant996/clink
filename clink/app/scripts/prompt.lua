@@ -567,7 +567,7 @@ function clink.promptcoroutine(func, cookie)
             entry.result = o
         end)
 
-        local async = settings.get("prompt.async")
+        local async = settings.get("prompt.async") and not clink.istransientpromptfilter()
 
         if async then
             -- Add the coroutine.

@@ -1369,7 +1369,7 @@ static int32 get_refilter_redisplay_count(lua_State* state)
 // UNDOCUMENTED; internal use only.
 static int32 is_transient_prompt_filter(lua_State* state)
 {
-    lua_pushboolean(state, prompt_filter::is_filtering());
+    lua_pushboolean(state, prompt_filter::is_transient_filtering());
     return 1;
 }
 
