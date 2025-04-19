@@ -902,6 +902,9 @@ int32 get_command_bindings(lua_State* state)
 /// <a href="#clink_onendedit">clink.onendedit()</a> event handler, or any other
 /// output that the Readline library wouldn't know about).
 ///
+/// This cannot be used during prompt filtering.  However, in Clink v1.7.17 and
+/// higher, this can be used during transient prompt filtering.
+///
 /// The returned table has the following scheme:
 /// -show:  local info = rl.getpromptinfo()
 /// -show:  -- info.promptprefix              [string] The prompt string, minus the last line of the prompt string.
@@ -913,7 +916,7 @@ int32 get_command_bindings(lua_State* state)
 /// -show:  -- info.inputlinecount            [integer] Number of lines in the input text.
 static int32 get_prompt_info(lua_State* state)
 {
-    if (prompt_filter::is_filtering())
+    if (prompt_filter::is_filtering() && !prompt_filter::is_transient_filtering())
         return luaL_error(state, LUA_QL("rl.getpromptinfo") " may not be used during prompt filtering");
 
     lua_createtable(state, 0, 7);
