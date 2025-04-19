@@ -5,7 +5,9 @@
 #### v1.7.17
 
 - Changed the default behavior for throttling Lua coroutines.  By default there is no throttling anymore.  The new `lua.throttle_interval` setting can be used to enable throttling of Lua coroutines if they cause responsiveness issues.  Prior to this, the throttling interval had been hard-coded to 5 seconds, but now it's configurable and is 0 by default (no throttling).
+- Changed `rl.getpromptinfo()` to be allowed during transient prompt filtering (but still not during normal prompt filtering).
 - Fixed erasing leftover input text if the prompt height changes while typing.
+- Fixed use of `clink.promptcoroutine()` during transient prompt filtering (it was accidentally trying to do asynchronous prompt filtering, which isn't possible duirng transient prompt filtering).
 
 #### v1.7.16
 
