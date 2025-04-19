@@ -2910,7 +2910,7 @@ In addition to the normal prompt filtering, Clink can also show a prompt on the 
 
 Clink expands CMD prompt `$` codes in `%CLINK_RPROMPT%`, with a few exceptions:  `$+` is not supported, `$_` ends the prompt string (it can't be more than one line), and `$V` is not supported.  Additionally, if `%CLINK_RPROMPT%` ends with `$M` then trailing spaces are trimmed from the expanded string, to maintain right alignment since `$M` includes a space if the current drive is a network drive (so e.g. `$t $d $m` is right-aligned regardless whether the current drive has a remote name).
 
-The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to [clink.promptfilter()](#clink.promptfilter).  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
+The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  To use this, Clink v1.2.24 or higher is required.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to [clink.promptfilter()](#clink.promptfilter).  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
 
 The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.
 
@@ -2936,7 +2936,7 @@ Prompt filtering needs to be fast, or it can interfere with using the shell (e.g
 
 Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using [Lua coroutines](https://www.lua.org/manual/5.2/manual.html#2.6), but Clink simplifies and streamlines the process.
 
-A prompt filter can call [clink.promptcoroutine(my_func)](#clink.promptcoroutine) to run `my_func()` inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
+A prompt filter can call [clink.promptcoroutine(my_func)](#clink.promptcoroutine) to run `my_func()` inside a coroutine.  To use this, Clink v1.2.10 or higher is required.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
 
 Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with [io.popenyield()](#io.popenyield) calls inside the prompt coroutine to let them run in the background.
 
@@ -2960,7 +2960,7 @@ Clink can replace a past prompt with a differently formatted "transient" prompt.
 
 The `%CLINK_TRANSIENT_PROMPT%` environment variable provides the initial prompt string for the transient prompt.
 
-Turn on the transient prompt with <code>clink set <a href="#prompt_transient">prompt.transient</a> always</code>.  Or use `same_dir` instead of `always` to only use a transient prompt when the current directory is the same as the previous prompt.
+Turn on the transient prompt with <code>clink set <a href="#prompt-transient">prompt.transient</a> always</code>.  Or use `same_dir` instead of `always` to only use a transient prompt when the current directory is the same as the previous prompt.  To use this, Clink v1.2.29 or higher is required.
 
 The transient prompt can be customized by a prompt filter:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
