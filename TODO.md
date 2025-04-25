@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Edge case interaction between `onadvance` and completion:  type `procdump -r` `Alt-=` to list matches, then type `13` `Alt-=` and it doesn't clear the cached matches and doesn't generate PID matches.
 - `ESC` is still leaking undo history in some situation, but I haven't yet identified reliable repro steps.
 
 ## Low Priority
