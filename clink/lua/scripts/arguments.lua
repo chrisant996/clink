@@ -778,6 +778,17 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             do_delayed_init(arg, realmatcher, arg_index)
         end
         if arg.onadvance then
+            if last_onadvance and self._match_builder then
+                -- If onadvance is encountered while parsing the end word then
+                -- it can influence which argmatcher and arg slot end up being
+                -- the match generator.  So, mark the matches as volatile so
+                -- they get regenerated, just in case.
+                -- A specific example is the `procdump` argmatcher from
+                -- clink-completions.  `procdump -r` and `procdump -e` use
+                -- onadvance to make the next word an optional argument to the
+                -- preceding flag depending on what the word is.
+                self._match_builder:setvolatile()
+            end
             react, react_modes = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
             if react then
                 -- 1 = Ignore; advance to next arg_index.
@@ -2021,6 +2032,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     end
 
     -- Special processing for last word, in case there's an onadvance callback.
+    reader._match_builder = match_builder
     if reader:update(word, word_index, true--[[last_onadvance]]) then
         if reader._line_state:getwordcount() > word_index then
             return true, true
