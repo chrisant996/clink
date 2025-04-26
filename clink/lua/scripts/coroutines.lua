@@ -15,7 +15,7 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
 local _pending_on_main = nil            -- Funcs to run when control returns to the main coroutine.
-local _can_throttle = nil               -- Whether to throttle long-running coroutines.
+local _throttle_interval = nil          -- Whether to throttle long-running coroutines.
 
 local _main_perthread_state = {}
 clink.co_state = _main_perthread_state
@@ -73,9 +73,9 @@ local function clear_coroutines()
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
     _trimmed = 0
 
-    _can_throttle = settings.get("lua.throttle_interval")
-    if _can_throttle == 0 then
-        _can_throttle = nil
+    _throttle_interval = settings.get("lua.throttle_interval")
+    if _throttle_interval == 0 then
+        _throttle_interval = nil
     end
 
     for _, entry in ipairs(preserve) do
@@ -192,7 +192,8 @@ local function next_entry_target(entry, now)
         --      asyncyield.
         --  2.  Throttle if running for more than 30 seconds total.
         --
-        -- Throttled coroutines can only run once every 5 seconds.
+        -- Throttled coroutines can only run once every N seconds, per the
+        -- lua.throttle_interval setting.
         --
         -- NOTE:  Throttling is intentionally based on elapsed clock time, not
         -- on coroutine execution time.  The intent is responsiveness for the
@@ -201,14 +202,12 @@ local function next_entry_target(entry, now)
         -- UPDATE:  Throttling is now disabled by default, but can be enabled
         -- via the lua.throttle_interval setting.
         local interval = entry.interval
-        if _can_throttle then
+        if _throttle_interval and now and interval < _throttle_interval then
             local throttleclock = entry.throttleclock or entry.firstclock
-            if now and interval < 5 then
-                if throttleclock and now - throttleclock > 5 then
-                    interval = 5
-                elseif entry.firstclock and now - entry.firstclock > 30 then
-                    interval = 5
-                end
+            if throttleclock and now - throttleclock > 5 then
+                interval = _throttle_interval
+            elseif entry.firstclock and now - entry.firstclock > 30 then
+                interval = _throttle_interval
             end
         end
         return entry.lastclock + interval
