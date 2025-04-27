@@ -365,17 +365,6 @@ rl_callback_handler_remove (void)
       temp = savestring (rl_line_buffer);
       rl_revert_line (1, 0);
       entry = replace_history_entry (where_history (), rl_line_buffer, (histdata_t)NULL);
-/* begin_clink_change */
-#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
-      if (entry && entry->data)
-	{
-	  int not_leaked = 0;
-	  for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
-	    not_leaked |= (walk == entry->data);
-	  assert (not_leaked);
-	}
-#endif
-/* end_clink_change */
       _rl_free_history_entry (entry);
 
       strcpy (rl_line_buffer, temp);

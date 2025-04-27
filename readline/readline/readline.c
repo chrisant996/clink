@@ -511,17 +511,6 @@ readline_internal_teardown (int eof)
       temp = savestring (the_line);
       rl_revert_line (1, 0);
       entry = replace_history_entry (where_history (), the_line, (histdata_t)NULL);
-/* begin_clink_change */
-#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
-      if (entry && entry->data)
-	{
-	  int not_leaked = 0;
-	  for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
-	    not_leaked |= (walk == entry->data);
-	  assert (not_leaked);
-	}
-#endif
-/* end_clink_change */
       _rl_free_history_entry (entry);
 
       strcpy (the_line, temp);
