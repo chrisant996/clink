@@ -9,8 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Edge case interaction between `onadvance` and completion:  type `procdump -r` `Alt-=` to list matches, then type `13` `Alt-=` and it doesn't clear the cached matches and doesn't generate PID matches.
-- `ESC` is still leaking undo history in some situation, but I haven't yet identified reliable repro steps.
+- `collect_words` only happens in the `line_editor_impl` layer, not in the `rl_module` layer -- as a result, key macros can end up with an empty fake `line_state` if the key macro changed the input line before reaching something that needs a `line_state`.
 
 ## Low Priority
 - The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
