@@ -9,6 +9,7 @@
 - Fixed erasing leftover input text if the prompt height changes while typing.
 - Fixed use of `clink.promptcoroutine()` during transient prompt filtering (it was accidentally trying to do asynchronous prompt filtering, which isn't possible during transient prompt filtering).
 - Fixed the `onadvance` callback in argmatchers so it doesn't interfere with match generation.
+- Fixed a problem where `clink-popup-history` could leak or lose the undo list from the current input line.
 
 #### v1.7.16
 
