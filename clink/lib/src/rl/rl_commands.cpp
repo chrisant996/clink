@@ -369,13 +369,15 @@ public:
     void check_undo_entry_leaks()
     {
         uint32 leaks = 0;
-        bool new_leaks = false;
+        uint32 new_leaks = 0;
         for (const auto tracker : m_allocated)
         {
             if (!tracker.second->m_freed)
+            {
                 ++leaks;
-            if (!tracker.second->m_seen)
-                new_leaks = true;
+                if (!tracker.second->m_seen)
+                    ++new_leaks;
+            }
         }
 
         if (leaks)
@@ -384,26 +386,33 @@ public:
             {
                 assert(!leaks);
 
-                dbgtracef("----- UNDO_LIST leaks: %u -----", leaks);
+                dbgtracef("----- UNDO_LIST leaks: new %u (total %u) -----", new_leaks, leaks);
 
 #ifdef INCLUDE_CALLSTACKS
                 char stack[4096];
+#endif
                 for (const auto alloc : m_allocated)
                 {
                     if (!alloc.second->m_seen)
                     {
                         alloc.second->m_seen = true;
-                        stack[0] = '\0';
-                        format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
-                        dbgtracef("Leak:  0x%p (#%u),  text \"%s\",  context: %s", alloc.first, alloc.second->m_num, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
+#ifdef INCLUDE_CALLSTACKS
+                        if (!alloc.second->m_freed)
+                        {
+                            stack[0] = '\0';
+                            format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
+                            dbgtracef("Leak:  0x%p (#%u),  text \"%s\",  context: %s", alloc.first, alloc.second->m_num, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
+                        }
+#endif
                     }
                 }
+#ifdef INCLUDE_CALLSTACKS
                 dbgtracef("----- end of UNDO_LIST leaks -----");
 #endif
             }
             else
             {
-                dbgtracef("----- UNDO_LIST leaks: %u; can't reset undo_entry_heap -----", leaks);
+                dbgtracef("----- UNDO_LIST leaks: total %u; can't reset undo_entry_heap -----", leaks);
             }
         }
         else
@@ -460,6 +469,8 @@ private:
     int32           m_current = -1;
     HIST_ENTRY*     m_saved_line = nullptr;
     int32           m_saved_point = -1;
+    bool            m_in_history_entry = false;
+    bool            m_restore = true;
 };
 
 //------------------------------------------------------------------------------
@@ -467,14 +478,24 @@ history_infos::~history_infos()
 {
     free(m_history);
     free(m_infos);
-    if (m_saved_line)
+    if (m_restore)
     {
-        _rl_unsave_line(m_saved_line);
-        m_saved_line = nullptr;
-        if (m_saved_point >= 0)
+        if (m_saved_line)
         {
-            assert(m_saved_point <= rl_end);
-            rl_point = m_saved_point;
+            assert(!rl_undo_list);
+            _rl_unsave_line(m_saved_line);
+            m_saved_line = nullptr;
+            if (m_saved_point >= 0)
+            {
+                assert(m_saved_point <= rl_end);
+                rl_point = m_saved_point;
+            }
+        }
+        else
+        {
+            HIST_ENTRY* entry = current_history();
+            if (entry)
+                rl_replace_from_history(entry, 0);
         }
     }
 }
@@ -482,13 +503,26 @@ history_infos::~history_infos()
 //------------------------------------------------------------------------------
 bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
 {
+    assert(!m_saved_line);
+    assert(m_saved_point < 0);
+
     HIST_ENTRY** list = history_list();
     if (!list || !history_length)
         return false;
 
-    m_saved_line = _rl_alloc_saved_line();
-    m_saved_point = rl_point;
-    rl_maybe_replace_line();
+    const bool had_undo_list = !!rl_undo_list;
+    if (current_history())
+    {
+        m_in_history_entry = true;
+        rl_maybe_replace_line();
+    }
+    else
+    {
+        m_in_history_entry = false;
+        m_saved_line = _rl_alloc_saved_line();
+        m_saved_point = rl_point;
+    }
+    rl_undo_list = 0;
 
     m_history = (char**)malloc(sizeof(*m_history) * history_length);
     m_infos = (entry_info*)malloc(sizeof(*m_infos) * history_length);
@@ -504,7 +538,10 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
         m_infos[m_total].index = i;
         m_infos[m_total].marked = (list[i]->data != nullptr);
         if (i == orig_pos)
+        {
+            m_infos[m_total].marked = had_undo_list;
             m_current = m_total;
+        }
         ++m_total;
     }
 
@@ -524,14 +561,18 @@ popup_results history_infos::activate_history_text_list(bool win_history)
 
     popup_results results = ::activate_history_text_list(const_cast<const char**>(m_history), m_total, m_current, m_infos, win_history);
 
+    assert(!rl_undo_list);
     switch (results.m_result)
     {
     case popup_result::cancel:
         if (results.m_reset_history_index)
         {
-            discard();
-            rl_replace_line("", 1);
-            using_history();
+            if (m_in_history_entry)
+            {
+                discard();
+                rl_replace_line("", 1);
+                using_history();
+            }
             results.m_reset_history_index = false;
         }
         break;
@@ -550,9 +591,12 @@ popup_results history_infos::activate_history_text_list(bool win_history)
 //------------------------------------------------------------------------------
 void history_infos::discard()
 {
+    if (m_saved_line)
+        _rl_free_undo_list(static_cast<UNDO_LIST*>(m_saved_line->data));
     _rl_free_history_entry(m_saved_line);
     m_saved_line = nullptr;
     m_saved_point = -1;
+    m_restore = false;
 }
 
 
@@ -1625,7 +1669,7 @@ ding:
 
             (*rl_redisplay_function)();
             if (results.m_result == popup_result::use)
-                rl_newline(1, invoking_key);
+                rl_newline(1, 0);
         }
         break;
     }
@@ -2081,12 +2125,15 @@ ding:
         goto ding;
     case popup_result::use:
     case popup_result::select:
-        history_set_pos(results.m_index);
-        rl_replace_from_history(current_history(), 0);
-        suppress_suggestions();
-        (*rl_redisplay_function)();
-        if (results.m_result == popup_result::use)
-            rl_newline(1, 0);
+        {
+            history_set_pos(results.m_index);
+            rl_replace_from_history(current_history(), 0);
+            suppress_suggestions();
+
+            (*rl_redisplay_function)();
+            if (results.m_result == popup_result::use)
+                rl_newline(1, 0);
+        }
         break;
     }
 
