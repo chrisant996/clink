@@ -1029,7 +1029,10 @@ rl_insert (int count, int c)
   n = (unsigned short)-2;
   while (_rl_optimize_typeahead &&
 	 rl_num_chars_to_read == 0 &&
-	 (RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
+/* begin_clink_change */
+	 //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
+	 (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
+/* end_clink_change */
 	 _rl_pushed_input_available () == 0 &&
 	 _rl_input_queued (0) &&
 	 (n = rl_read_key ()) > 0 &&
