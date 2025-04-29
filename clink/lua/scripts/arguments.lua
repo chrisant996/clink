@@ -2777,11 +2777,20 @@ local function _has_argmatcher(command_word, quoted, no_cmd)
 end
 
 --------------------------------------------------------------------------------
--- Finds an argmatcher for the first word and returns:
+-- Finds an argmatcher for the first word.
+--
+-- Arguments:
+--  line_state  = The line_state being parsed.
+--  check_existence = Check whether an argmatcher exists, but don't return it.
+--  lookup      = Override command word to look up (for chaincommand).
+--  no_cmd      = Don't find argmatchers for CMD builtin commands.
+--  has_extra   = Parsing an extra line_state (doskey expansion).
+--  force       = Force even if last word (for generating hints).
+--
+-- Returns:
 --  argmatcher  = The argmatcher, unless there are too few words to use it.
 --  exists      = True if argmatcher exists (even if too few words to use it).
 --  extra       = Extra line_state to run through reader before continuing.
---  no_cmd      = Don't find argmatchers for CMD builtin commands.
 local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force)
     -- Running an argmatcher only makes sense if there's two or more words,
     -- but allowing forcing it to be returned when getting input hints.
