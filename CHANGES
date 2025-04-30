@@ -8,6 +8,7 @@
 - Changed `rl.getpromptinfo()` to be allowed during transient prompt filtering (but still not during normal prompt filtering).
 - Added an optimization to replay keyboard macros faster.
 - Fixed erasing leftover input text if the prompt height changes while typing.
+- Fixed the `oncommand` event when an argmatcher uses `:chaincommand()`.
 - Fixed use of `clink.promptcoroutine()` during transient prompt filtering (it was accidentally trying to do asynchronous prompt filtering, which isn't possible during transient prompt filtering).
 - Fixed the `onadvance` callback in argmatchers so it doesn't interfere with match generation.
 - Fixed a problem where `clink-popup-history` could leak or lose the undo list from the current input line.
