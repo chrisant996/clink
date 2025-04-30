@@ -587,6 +587,7 @@ const line_states& command_line_states::get_linestates(const char* buffer, uint3
     const auto& front = m_linestates.front();
     if (buffer != front.get_line() || len != front.get_length())
     {
+        assert(false);
         static line_states* s_none = nullptr;
         if (!s_none)
         {
@@ -613,6 +614,7 @@ const line_state& command_line_states::get_linestate(const char* buffer, uint32 
     const auto& back = m_linestates.back();
     if (buffer != back.get_line() || len != back.get_length())
     {
+        assert(false);
         static line_state* s_none = nullptr;
         if (!s_none)
         {
