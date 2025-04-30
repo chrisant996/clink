@@ -12,7 +12,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `collect_words` only happens in the `line_editor_impl` layer, not in the `rl_module` layer -- as a result, key macros can end up with an empty fake `line_state` if the key macro changed the input line before reaching something that needs a `line_state`.
 
 ## Low Priority
-- The `oncommand` event isn't sent when the command word is determined by chaincommand parsing; `line_editor_impl::maybe_send_oncommand_event()` needs to let `_argreader` determine the command word.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - Event handler enhancements:
