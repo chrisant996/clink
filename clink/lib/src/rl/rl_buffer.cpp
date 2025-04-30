@@ -23,6 +23,15 @@ extern "C" {
 // It's more accurate and efficient to directly use _rl_want_redisplay.
 
 //------------------------------------------------------------------------------
+static uint32 s_line_generation_id = 0;
+
+//------------------------------------------------------------------------------
+void increment_line_generation_id()
+{
+    ++s_line_generation_id;
+}
+
+//------------------------------------------------------------------------------
 void rl_buffer::reset()
 {
     assert(m_attached);
@@ -31,6 +40,8 @@ void rl_buffer::reset()
     using_history();
     rl_maybe_unsave_line();
     remove(0, ~0u);
+    assert(!rl_point);
+    assert(!rl_end);
 }
 
 //------------------------------------------------------------------------------
@@ -39,6 +50,7 @@ void rl_buffer::begin_line()
     m_attached = true;
     _rl_want_redisplay = true;
     clear_override();
+    increment_line_generation_id();
 }
 
 //------------------------------------------------------------------------------
@@ -223,4 +235,13 @@ void rl_buffer::override(const char* line, int32 pos)
     m_override_line = line;
     m_override_len = uint32(strlen(line));
     m_override_pos = min<uint32>(pos, m_override_len);
+}
+
+//------------------------------------------------------------------------------
+rl_buffer_fingerprint rl_buffer::get_fingerprint() const
+{
+    rl_buffer_fingerprint fp;
+    fp.m_cursor = get_cursor();
+    fp.m_gen_id = s_line_generation_id;
+    return fp;
 }

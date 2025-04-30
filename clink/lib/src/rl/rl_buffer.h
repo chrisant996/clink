@@ -6,6 +6,28 @@
 #include "line_buffer.h"
 
 //------------------------------------------------------------------------------
+class rl_buffer_fingerprint
+{
+    friend class rl_buffer;
+
+public:
+    void clear()
+    {
+        memset(this, 0, sizeof(*this));
+    }
+
+    bool operator==(const rl_buffer_fingerprint& o) const
+    {
+        return (m_cursor == o.m_cursor &&
+                m_gen_id == o.m_gen_id);
+    }
+
+private:
+    uint32                  m_cursor = 0;
+    uint32                  m_gen_id = 0;
+};
+
+//------------------------------------------------------------------------------
 class rl_buffer
     : public line_buffer
 {
@@ -31,6 +53,8 @@ public:
     bool                    has_override() const;
     void                    clear_override();
     void                    override(const char* line, int32 pos);
+
+    rl_buffer_fingerprint   get_fingerprint() const;
 
 private:
     bool                    m_attached = false;

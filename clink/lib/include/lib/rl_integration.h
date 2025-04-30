@@ -26,6 +26,9 @@ void    update_rl_modes_from_matches(const matches* matches, const matches_iter&
 const char* get_last_prompt();
 
 //------------------------------------------------------------------------------
+void    increment_line_generation_id();
+
+//------------------------------------------------------------------------------
 void    set_prev_inputline(const char* line, uint32 length=-1);
 void    set_pending_luafunc(const char* macro);
 void    override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);

@@ -1393,6 +1393,8 @@ static bool ensure_matches_size(char**& matches, int32 count, int32& reserved)
 //------------------------------------------------------------------------------
 static void buffer_changing(int32 event)
 {
+    increment_line_generation_id();
+
     // Reset the history position for the next input line prompt, upon changing
     // the input text at all.
     if (event != CHG_REPLACE && has_sticky_search_position())
