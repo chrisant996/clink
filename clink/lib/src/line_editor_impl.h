@@ -180,7 +180,7 @@ private:
     words               m_classify_words;
 
     str<16>             m_prev_command_word;
-    uint32              m_prev_command_word_offset;
+    rl_buffer_fingerprint m_prev_command_buffer_fingerprint;
     bool                m_prev_command_word_quoted;
 
     const char*         m_override_needle = nullptr;

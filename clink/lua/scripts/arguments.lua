@@ -2780,20 +2780,21 @@ end
 -- Finds an argmatcher for the first word.
 --
 -- Arguments:
---  line_state  = The line_state being parsed.
+--  line_state      = The line_state being parsed.
 --  check_existence = Check whether an argmatcher exists, but don't return it.
---  lookup      = Override command word to look up (for chaincommand).
---  no_cmd      = Don't find argmatchers for CMD builtin commands.
---  has_extra   = Parsing an extra line_state (doskey expansion).
---  force       = Force even if last word (for generating hints).
+--  lookup          = Override command word to look up (for chaincommand).
+--  no_cmd          = Don't find argmatchers for CMD builtin commands.
+--  has_extra       = Parsing an extra line_state (doskey expansion).
+--  force           = Force even if last word (for generating hints).
+--  oncommand       = Optional table to be filled in (for oncommand event).
 --
 -- Returns:
---  argmatcher  = The argmatcher, unless there are too few words to use it.
---  exists      = True if argmatcher exists (even if too few words to use it).
---  extra       = Extra line_state to run through reader before continuing.
-local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force)
+--  argmatcher      = The argmatcher, unless there are too few words to use it.
+--  exists          = True if argmatcher exists (even if too few words to use it).
+--  extra           = Extra line_state to run through reader before continuing.
+local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force, oncommand)
     -- Running an argmatcher only makes sense if there's two or more words,
-    -- but allowing forcing it to be returned when getting input hints.
+    -- but allow forcing it to be returned when getting input hints.
     local word_count = line_state:getwordcount()
     local command_word_index = line_state:getcommandwordindex()
     if word_count < command_word_index + ((check_existence or has_extra or force) and 0 or 1) then
@@ -2846,6 +2847,10 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has
                             word_index = ecwi + 1,
                             stop_after = stop_after,
                         }
+                        if oncommand then
+                            oncommand.quoted = einfo and einfo.quoted
+                            oncommand.word = eword
+                        end
                         return argmatcher, true, extra
                     end
                 end
@@ -2855,13 +2860,24 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has
 
     -- Don't invoke the recognizer while generating matches from history, as
     -- that could be excessively expensive (could queue thousands of lookups).
+    local recognized
+    local recognition
     if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Pass true because argmatcher lookups always treat ^ literally.
-        local _, _, file = clink.recognizecommand(command_word, true)
+        local file
+        recognition, _, file = clink.recognizecommand(command_word, true)
         if file then
+            recognized = file
             command_word = file
             info = nil
         end
+    end
+
+    if oncommand then
+        oncommand.quoted = info and info.quoted
+        oncommand.word = original_command_word
+        oncommand.recognized = recognized
+        oncommand.recognition = recognition
     end
 
     -- Pass original_command_word, otherwise it can end up stripping TWO
@@ -3359,6 +3375,46 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     end
 
     return besthint, bestpos
+end
+
+--------------------------------------------------------------------------------
+function clink._get_command_word(line_state)
+    local lookup
+    local no_cmd
+    local reader
+    local oncommand = {}
+::do_command::
+    local argmatcher, has_argmatcher, extra, command_word = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, nil, oncommand) -- luacheck: no unused
+    if argmatcher then
+        lookup = nil -- luacheck: ignore 311
+
+        if reader then
+            reader:start_command(argmatcher)
+        else
+            reader = _argreader(argmatcher, line_state)
+        end
+        if extra and not reader._extra then
+            extra.line_state = break_slash(extra.line_state) or extra.line_state
+            reader:push_line_state(extra)
+        end
+
+        -- Consume words and use them to move through matchers' arguments.
+        local word, word_index, last_word, info -- luacheck: no unused
+        while true do
+            word, word_index, line_state, last_word, info = reader:next_word() -- luacheck: no unused
+            if not word then
+                break
+            end
+            local chain, chainlookup = reader:update(word, word_index)
+            if chain then
+                line_state = reader._line_state -- reader:update() can swap to a different line_state.
+                lookup = chainlookup
+                no_cmd = reader._no_cmd
+                goto do_command
+            end
+        end
+    end
+    return oncommand.word, oncommand.quoted, oncommand.recognition, oncommand.recgonized
 end
 
 

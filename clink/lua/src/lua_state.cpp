@@ -809,6 +809,54 @@ bool lua_state::send_oninputlinechanged_event(const char* line)
 }
 
 //------------------------------------------------------------------------------
+bool lua_state::get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file)
+{
+    lua_State* L = get_state();
+    save_stack_top ss(L);
+
+    command_word.clear();
+    quoted = false;
+    recog = recognition::unknown;
+    file.clear();
+
+    // Call to Lua to calculate prefix length.
+    lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_get_command_word");
+    lua_rawget(L, -2);
+
+    line_state_lua line_lua(line);
+    line_lua.push(L);
+
+    os::cwd_restorer cwd;
+
+    if (lua_state::pcall(L, 1, 4) != 0)
+        return false;
+
+    if (lua_isstring(L, -4))
+        command_word = lua_tostring(L, -4);
+
+    quoted = !!lua_toboolean(L, -3);
+
+    if (lua_isstring(L, -2))
+    {
+        const char* r = lua_tostring(L, -2);
+        if (r)
+        {
+            switch (*r)
+            {
+            case 'x':   recog = recognition::executable; break;
+            case 'u':   recog = recognition::unrecognized; break;
+            }
+        }
+
+        const char* f = lua_tostring(L, -1);
+        file = f;
+    }
+
+    return !command_word.empty();
+}
+
+//------------------------------------------------------------------------------
 bool lua_state::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     lua_State* L = get_state();

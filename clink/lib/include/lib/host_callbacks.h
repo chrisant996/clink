@@ -37,6 +37,7 @@ public:
     virtual void send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) = 0;
     virtual void send_oninputlinechanged_event(const char* line) = 0;
     virtual bool has_event_handler(const char* event_name) = 0;
+    virtual bool get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file) = 0;
 };
 
 //------------------------------------------------------------------------------

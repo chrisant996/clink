@@ -321,7 +321,7 @@ void line_editor_impl::begin_line()
     m_prev_cursor = 0;
     m_prev_classify.clear();
     m_prev_command_word.clear();
-    m_prev_command_word_offset = -1;
+    m_prev_command_buffer_fingerprint.clear();
     m_prev_command_word_quoted = false;
 
     m_words.clear();
@@ -1188,71 +1188,38 @@ void line_editor_impl::maybe_send_oncommand_event()
     if (!m_desc.callbacks)
         return;
 
+    const rl_buffer_fingerprint fp = m_buffer.get_fingerprint();
+    if (fp == m_prev_command_buffer_fingerprint)
+        return;
+
     line_state line = get_linestate();
     if (line.get_word_count() <= 1)
         return;
 
-    const word* p = nullptr;
-    for (size_t i = 0; i < line.get_words().size(); ++i)
-    {
-        const word& tmp = line.get_words()[i];
-        if (!tmp.is_redir_arg)
-        {
-            p = &tmp;
-            break;
-        }
-    }
-    if (!p || !p->length)
-        return;
-
-    const word& info = *p;
-    if (m_prev_command_word_quoted == info.quoted &&
-        m_prev_command_word_offset == info.offset &&
-        m_prev_command_word.length() == info.length &&
-        _strnicmp(m_prev_command_word.c_str(), m_buffer.get_buffer() + info.offset, info.length) == 0)
-        return;
-
-    str<> first_word;
-    uint32 offset = info.offset;
-    bool quoted = info.quoted;
-    first_word.concat(line.get_line() + info.offset, info.length);
-
+    str<> command_word;
+    bool quoted = false;
     if (m_desc.callbacks->has_event_handler("oncommand"))
     {
-        doskey_alias resolved;
-        doskey doskey("cmd.exe");
-        doskey.resolve(line.get_line(), resolved);
-
-        str<32> command;
-        str_moveable tmp;
-        const char* lookup = first_word.c_str();
-        if (resolved && resolved.next(tmp))
+        str<> file;
+        recognition recog;
+        if (m_desc.callbacks->get_command_word(line, command_word, quoted, recog, file) &&
+            file.empty())
         {
-            str_tokeniser tokens(tmp.c_str(), " \t");
-            tokens.add_quote_pair("\"");
-
-            const char *start;
-            int32 length;
-            str_token token = tokens.next(start, length);
-            if (token)
-            {
-                command.concat(start, length);
-                quoted = (start > line.get_line() && start[-1] == '"');
-                lookup = command.c_str();
-            }
+            bool ready;
+            recog = recognize_command(line.get_line(), command_word.c_str(), quoted, ready, &file);
+            if (!ready)
+                return;
         }
 
-        bool ready;
-        str<> file;
-        const recognition recognized = recognize_command(line.get_line(), lookup, quoted, ready, &file);
-        if (!ready || recognized == recognition::unknown)
+        if (recog == recognition::unknown)
             return;
 
-        m_desc.callbacks->send_oncommand_event(line, lookup, quoted, recognized, file.c_str());
+        if (!m_prev_command_word.equals(command_word.c_str()))
+            m_desc.callbacks->send_oncommand_event(line, command_word.c_str(), quoted, recog, file.c_str());
     }
 
-    m_prev_command_word = first_word.c_str();
-    m_prev_command_word_offset = offset;
+    m_prev_command_buffer_fingerprint = fp;
+    m_prev_command_word = command_word.c_str();
     m_prev_command_word_quoted = quoted;
 }
 

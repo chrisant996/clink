@@ -764,6 +764,15 @@ bool host::has_event_handler(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
+bool host::get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file)
+{
+    if (!m_lua)
+        return false;
+
+    return m_lua->get_command_word(line, command_word, quoted, recog, file);
+}
+
+//------------------------------------------------------------------------------
 std::unique_ptr<printer_context> host::make_printer_context()
 {
     return std::make_unique<printer_context>(m_terminal.out, m_printer);

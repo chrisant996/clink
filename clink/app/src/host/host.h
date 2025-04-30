@@ -72,6 +72,7 @@ public:
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;
     void            send_oninputlinechanged_event(const char* line) override;
     bool            has_event_handler(const char* event_name) override;
+    bool            get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file) override;
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();

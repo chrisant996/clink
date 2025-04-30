@@ -317,6 +317,12 @@ bool host_lua::call_lua_filter_matches(char** matches, int32 completion_type, in
 }
 
 //------------------------------------------------------------------------------
+bool host_lua::get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file)
+{
+    return m_state.get_command_word(line, command_word, quoted, recog, file);
+}
+
+//------------------------------------------------------------------------------
 #ifdef DEBUG
 void host_lua::force_gc()
 {
