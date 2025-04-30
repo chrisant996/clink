@@ -1263,6 +1263,8 @@ void line_editor_impl::reclassify(reclassify_reason why)
 //------------------------------------------------------------------------------
 line_state line_editor_impl::get_linestate() const
 {
+    m_module.maybe_collect_words();
+
     if (m_buffer.has_override())
         return m_override_command_line_states.get_linestate(m_buffer);
 
@@ -1272,6 +1274,8 @@ line_state line_editor_impl::get_linestate() const
 //------------------------------------------------------------------------------
 line_states line_editor_impl::get_linestates() const
 {
+    m_module.maybe_collect_words();
+
     if (m_buffer.has_override())
         return m_override_command_line_states.get_linestates(m_buffer);
 

@@ -53,6 +53,7 @@ public:
 
     static bool     is_showing_argmatchers();
     static void     clear_need_collect_words();
+    static void     maybe_collect_words();
 
 private:
     virtual void    bind_input(binder& binder) override;

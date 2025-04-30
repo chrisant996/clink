@@ -2699,6 +2699,12 @@ void rl_module::clear_need_collect_words()
 }
 
 //------------------------------------------------------------------------------
+void rl_module::maybe_collect_words()
+{
+    ::maybe_collect_words();
+}
+
+//------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
     int32 default_group = binder.get_group();
