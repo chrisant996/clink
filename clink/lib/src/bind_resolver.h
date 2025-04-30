@@ -49,6 +49,7 @@ public:
     bool                step(uint8 key);
     binding             next();
     void                reset();
+    bool                is_done() const;
 
     int32               is_bound(const char* seq, int32 len) const;
     bool                more_than(uint32 len) const;

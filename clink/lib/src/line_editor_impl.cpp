@@ -500,7 +500,7 @@ bool line_editor_impl::update()
             m_buffer.draw();
             m_insert_on_begin = nullptr;
         }
-        update_internal();
+        update_internal(true/*force*/);
         return true;
     }
 
@@ -533,7 +533,7 @@ void line_editor_impl::reselect_matches()
 //------------------------------------------------------------------------------
 void line_editor_impl::force_update_internal(bool restrict)
 {
-    update_internal();
+    update_internal(true/*force*/);
     if (restrict) set_flag(flag_restrict);
     set_flag(flag_select);
 }
@@ -1414,16 +1414,29 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::update_internal()
+void line_editor_impl::update_internal(bool force)
 {
     // This is responsible for updating the matches for the word under the
     // cursor.  It tries to call match generators only once for the current
     // word, and then repeatedly filter the results as the word is edited.
 
-    // Collect words.  To keep things simple for match generators, only text to
-    // to the cursor word is relevant, so that the "end word" is the word at the
-    // cursor.  To separate the generate phase and select+sort phase, the end
-    // word is always returned as empty.
+    if (!force)
+    {
+        // Optimization:  While in the middle of reading a key sequence, this
+        // can be skipped because it's redundant:  this will get called again
+        // when the key sequence is finished.  For example, in a key sequence
+        // like "\e[27;5;32~" (Ctrl-Space) this is called 10 times, and the
+        // first 9 are redundant since the line can't have changed yet.
+        if (RL_ISSTATE(RL_STATE_MULTIKEY))
+            return;     // Readline is reading a multikey sequence.
+        if (!m_bind_resolver.is_done())
+            return;     // m_bind_resolver is reading a multikey sequence.
+    }
+
+    // Collect words.  To keep things simple for match generators, only text
+    // to the cursor word is relevant, so that the "end word" is the word at
+    // the cursor.  To separate the generate phase and select+sort phase, the
+    // end word is always returned as empty.
     collect_words();
 
     assert(m_words.size() > 0);

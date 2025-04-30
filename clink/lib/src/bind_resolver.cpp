@@ -117,10 +117,18 @@ void bind_resolver::reset()
     m_group = group;
     m_node_index = m_group;
 
-    m_params.clear();
-    m_param_accumulator = 0;
-    m_param_len = 0;
-    m_pending_param = false;
+    // The placement new operator should have reset these.
+    assert(m_params.count() == 0);
+    assert(m_params.length() == 0);
+    assert(m_param_accumulator == 0);
+    assert(m_param_len == 0);
+    assert(m_pending_param == false);
+}
+
+//------------------------------------------------------------------------------
+bool bind_resolver::is_done() const
+{
+    return m_node_index == m_group;
 }
 
 //------------------------------------------------------------------------------

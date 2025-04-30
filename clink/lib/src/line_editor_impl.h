@@ -131,7 +131,7 @@ private:
     void                before_display_readline();
     void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
-    void                update_internal();
+    void                update_internal(bool force=false);
     bool                update_input();
     module::context     get_context() const;
     line_state          get_linestate() const;
