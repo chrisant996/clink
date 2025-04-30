@@ -7,8 +7,10 @@
 - Changed the default behavior for throttling Lua coroutines.  By default there is no throttling anymore.  The new `lua.throttle_interval` setting can be used to enable throttling of Lua coroutines if they cause responsiveness issues.  Prior to this, the throttling interval had been hard-coded to 5 seconds, but now it's configurable and is 0 by default (no throttling).
 - Changed `rl.getpromptinfo()` to be allowed during transient prompt filtering (but still not during normal prompt filtering).
 - Added an optimization to replay keyboard macros faster.
+- Added an optimization to read key sequences faster, which makes Clink a little more responsive while typing.
 - Fixed erasing leftover input text if the prompt height changes while typing.
 - Fixed the `oncommand` event when an argmatcher uses `:chaincommand()`.
+- Fixed the `line_state` sent to `luafunc:` macros invoked during a keyboard macro (it was empty if the keyboard macro had changed the input line).
 - Fixed use of `clink.promptcoroutine()` during transient prompt filtering (it was accidentally trying to do asynchronous prompt filtering, which isn't possible during transient prompt filtering).
 - Fixed the `onadvance` callback in argmatchers so it doesn't interfere with match generation.
 - Fixed a problem where `clink-popup-history` could leak or lose the undo list from the current input line.
