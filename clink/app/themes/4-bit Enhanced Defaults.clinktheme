@@ -1,0 +1,37 @@
+# Name: 4-bit Enhanced Defaults
+
+[set]
+color.arg                       = bold
+color.arginfo                   = yellow
+color.argmatcher                = bold bright green
+color.cmd                       = bold
+color.cmdredir                  = yellow
+color.cmdsep                    = magenta
+color.comment_row               = bright cyan on blue
+color.common_match_prefix       =
+color.description               = blue
+color.doskey                    = bold bright cyan
+color.executable                = bold bright blue
+color.filtered                  = bold
+color.flag                      = cyan
+color.hidden                    = red
+color.histexpand                = bright white on magenta
+color.horizscroll               = black on green
+color.input                     = bright yellow
+color.interact                  = bold
+color.message                   = default
+color.modmark                   =
+color.popup                     =
+color.popup_border              =
+color.popup_desc                =
+color.popup_footer              =
+color.popup_header              =
+color.popup_select              =
+color.popup_selectdesc          =
+color.prompt                    =
+color.readonly                  = green
+color.selected_completion       = sgr 7
+color.selection                 = black on bright yellow
+color.suggestion                =
+color.unexpected                = default
+color.unrecognized              = bright red
