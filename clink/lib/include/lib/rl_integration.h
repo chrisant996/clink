@@ -35,7 +35,7 @@ void    override_rl_last_func(rl_command_func_t* func, bool force_when_null=fals
 const char* get_last_luafunc();
 void*   get_effective_last_func();
 int32   macro_hook_func(const char* macro);
-void    last_func_hook_func();
+void    last_func_hook_func(int32 dispatched);
 void    apply_pending_lastfunc();
 void    clear_pending_lastfunc();
 

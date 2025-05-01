@@ -255,7 +255,7 @@ Keymap _rl_dispatching_keymap;
 
 /* begin_clink_change */
 rl_macro_hook_func_t *rl_macro_hook_func = (rl_macro_hook_func_t *)NULL;
-rl_voidfunc_t *rl_last_func_hook_func = (rl_voidfunc_t *)NULL;
+rl_vintfunc_t *rl_last_func_hook_func = (rl_vintfunc_t *)NULL;
 /* end_clink_change */
 
 /* Non-zero means to erase entire line, including prompt, on empty input lines. */
@@ -1026,7 +1026,7 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	      rl_last_func = map[key].function;
 /* begin_clink_change */
 	      if (rl_last_func_hook_func)
-		rl_last_func_hook_func ();
+		rl_last_func_hook_func (1);
 /* end_clink_change */
 	    }
 
@@ -1335,7 +1335,7 @@ rl_initialize (void)
   rl_last_func = (rl_command_func_t *)NULL;
 /* begin_clink_change */
   if (rl_last_func_hook_func)
-    rl_last_func_hook_func ();
+    rl_last_func_hook_func (0);
 /* end_clink_change */
 
   /* Parsing of key-bindings begins in an enabled state. */
@@ -1668,7 +1668,7 @@ rl_restore_state (struct readline_state *sp)
   rl_last_func = sp->lastfunc;
 /* begin_clink_change */
   if (rl_last_func_hook_func)
-    rl_last_func_hook_func ();
+    rl_last_func_hook_func (0);
 /* end_clink_change */
   rl_insert_mode = sp->insmode;
   rl_editing_mode = sp->edmode;

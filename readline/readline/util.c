@@ -154,7 +154,7 @@ _rl_abort_internal (void)
   rl_last_func = (rl_command_func_t *)NULL;
 /* begin_clink_change */
   if (rl_last_func_hook_func)
-    rl_last_func_hook_func ();
+    rl_last_func_hook_func (0);
 /* end_clink_change */
 
   _rl_longjmp (_rl_top_level, 1);

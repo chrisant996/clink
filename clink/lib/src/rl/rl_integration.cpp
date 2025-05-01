@@ -175,7 +175,7 @@ int32 macro_hook_func(const char* macro)
 }
 
 //------------------------------------------------------------------------------
-void last_func_hook_func()
+void last_func_hook_func(int32 dispatched)
 {
     if (s_has_override_rl_last_func)
     {
@@ -185,6 +185,9 @@ void last_func_hook_func()
 
     cua_after_command();
     s_last_luafunc.clear();
+
+    if (!dispatched)
+        return;
 
     if (s_prev_inputline.length() != rl_end || memcmp(s_prev_inputline.c_str(), rl_line_buffer, rl_end))
     {
