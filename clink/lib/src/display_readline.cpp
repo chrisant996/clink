@@ -1575,11 +1575,14 @@ void display_manager::end_prompt_lf()
     const uint32 count = m_curr.count();
     if (_rl_vis_botlin &&
         m_top - m_last_prompt_line_botlin + _rl_vis_botlin + 1 == count &&
-        count > 0 &&
-        m_curr.get(count - 1)->m_len == 0)
+        count > 0)
     {
-        _rl_vis_botlin--;
-        unwrap = true;
+        const display_line* const last = m_curr.get(count - 1);
+        if (last->m_x == 0 && last->m_len == 0)
+        {
+            _rl_vis_botlin--;
+            unwrap = true;
+        }
     }
     _rl_move_vert(_rl_vis_botlin);
 
