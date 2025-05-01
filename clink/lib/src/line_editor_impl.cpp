@@ -1504,10 +1504,13 @@ void line_editor_impl::update_internal(bool force)
 
     // Send oncommand event when command word changes.
     maybe_send_oncommand_event();
-    maybe_redisplay_readline(); // In case a new argmatcher got registered.
 
     // Should we collect suggestions?
     try_suggest();
+
+    // In case a new argmatcher got registered during the oncommand event.
+    // Wait until after try_suggest in case that already did a redisplay.
+    maybe_redisplay_readline();
 
     // Must defer updating m_prev_generate since the old value is still needed
     // for deciding whether to sort/select, after deciding whether to generate.
