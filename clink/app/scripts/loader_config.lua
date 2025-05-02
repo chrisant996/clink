@@ -326,7 +326,7 @@ local function write_one_setting(o, clear_list, name, color)
 end
 
 local function write_color_theme(o, all, clear_def, rules)
-    local clear_list = {}
+    local clear_list = clear_def and {} or nil
 
     o:write("[set]\n")
 

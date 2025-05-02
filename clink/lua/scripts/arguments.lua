@@ -2864,7 +2864,7 @@ local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has
     local recognition
     if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Pass true because argmatcher lookups always treat ^ literally.
-        local file
+        local _, file
         recognition, _, file = clink.recognizecommand(command_word, true)
         if file then
             recognized = file
