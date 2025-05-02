@@ -23,8 +23,7 @@ local release_manifest = {
     "clink_dll_x*.pdb",
     "_default_settings",
     "_default_inputrc",
-    -- FUTURE: This isn't ready for release yet, due to contrast issues.
-    --"4-bit Enhanced Defaults.clinktheme",
+    "4-bit Enhanced Defaults.clinktheme",
     "Dracula.clinktheme",
     "Enhanced Defaults.clinktheme",
     "Plain.clinktheme",

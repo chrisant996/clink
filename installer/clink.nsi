@@ -145,6 +145,7 @@ Section "!Application files" app_files_id
 
     CreateDirectory $INSTDIR\themes
     SetOutPath $INSTDIR\themes
+    File "${CLINK_BUILD}\themes\4-bit Enhanced Defaults.clinktheme"
     File "${CLINK_BUILD}\themes\Dracula.clinktheme"
     File "${CLINK_BUILD}\themes\Enhanced Defaults.clinktheme"
     File "${CLINK_BUILD}\themes\Plain.clinktheme"
@@ -370,6 +371,7 @@ Section "!un.Application files" section_un_app_files
     Delete $INSTDIR\LICENSE
     Delete $INSTDIR\default_settings
     Delete $INSTDIR\default_inputrc
+    Delete "$INSTDIR\themes\4-bit Enhanced Defaults.clinktheme"
     Delete "$INSTDIR\themes\Dracula.clinktheme"
     Delete "$INSTDIR\themes\Enhanced Defaults.clinktheme"
     Delete "$INSTDIR\themes\Plain.clinktheme"
