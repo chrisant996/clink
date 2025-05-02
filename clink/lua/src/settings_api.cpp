@@ -326,6 +326,52 @@ static int32 overlay(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 get_default(lua_State* state)
+{
+    const char* key = checkstring(state, 1);
+    if (!key)
+        return 0;
+
+    const setting* setting = settings::find(key);
+    if (setting == nullptr)
+        return 0;
+
+    int32 type = setting->get_type();
+    switch (type)
+    {
+    case setting::type_bool:
+        {
+            bool value = ((setting_bool*)setting)->get_default();
+            lua_pushboolean(state, value == true);
+        }
+        break;
+
+    case setting::type_int:
+        {
+            int32 value = ((setting_int*)setting)->get_default();
+            lua_pushinteger(state, value);
+        }
+        break;
+
+    default:
+        {
+            str<> value;
+            setting->get_default(value);
+            if (!lua_toboolean(state, 2) && !strncmp("color.", key, 6))
+            {
+                str<> tmp;
+                settings::parse_color(value.c_str(), tmp);
+                value = tmp.c_str();
+            }
+            lua_pushlstring(state, value.c_str(), value.length());
+        }
+        break;
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 {
     const char* name = checkstring(state, 1);
@@ -744,6 +790,7 @@ void settings_lua_initialise(lua_state& lua)
         { 1, "match",       &match },
         { 1, "_parseini",   &parse_ini },
         { 1, "_overlay",    &overlay },
+        { 1, "_get_default", &get_default },
     };
 
     lua_State* state = lua.get_state();

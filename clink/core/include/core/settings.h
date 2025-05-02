@@ -143,6 +143,7 @@ public:
                     setting_impl(const char* name, const char* short_desc, T default_value);
                     setting_impl(const char* name, const char* short_desc, const char* long_desc, T default_value);
     T               get() const;
+    T               get_default() const;
     virtual bool    is_default() const override;
     virtual bool    is_saveable() const override;
     virtual void    set() override;
@@ -214,6 +215,12 @@ template <typename T> bool setting_impl<T>::is_saveable() const
 template <typename T> T setting_impl<T>::get() const
 {
     return T(m_store);
+}
+
+//------------------------------------------------------------------------------
+template <typename T> T setting_impl<T>::get_default() const
+{
+    return T(m_default);
 }
 
 //------------------------------------------------------------------------------

@@ -312,17 +312,39 @@ local function list_color_themes(args)
 end
 
 --------------------------------------------------------------------------------
-local function write_color_theme(o, all, rules)
+local function write_one_setting(o, clear_list, name, color)
+    local descriptive = color
+    local value = settings.get(name, descriptive) or ""
+    if clear_list then
+        local def = settings._get_default(name, descriptive) or ""
+        if value == def then
+            table.insert(clear_list, name)
+            return
+        end
+    end
+    o:write(string.format("%s=%s\n", name, value))
+end
+
+local function write_color_theme(o, all, clear_def, rules)
+    local clear_list = {}
+
     o:write("[set]\n")
 
     local list = settings.list()
     for _,entry in ipairs(list) do
         if entry.match:find("^color%.") then
             if all or not entry.source then
-                o:write(string.format("%s=%s\n", entry.match, settings.get(entry.match, true) or ""))
+                write_one_setting(o, clear_list, entry.match, true)
             end
         elseif rules and entry.match == "match.coloring_rules" then
-            o:write(string.format("%s=%s\n", entry.match, settings.get(entry.match) or ""))
+            write_one_setting(o, clear_list, entry.match)
+        end
+    end
+
+    if clear_list[1] then
+        o:write("[clear]\n")
+        for _,name in ipairs(clear_list) do
+            o:write(string.format("%s\n", name))
         end
     end
 end
@@ -331,6 +353,7 @@ local function save_color_theme(args, silent)
     local file
     local yes
     local all
+    local clear_def
     local rules
     if not args or not args[1] then
         args = {""}
@@ -339,6 +362,8 @@ local function save_color_theme(args, silent)
         local arg = args[i]
         if arg == "-a" or arg == "--all" then
             all = true
+        elseif arg == "-d" or arg == "--default" then
+            clear_def = true
         elseif arg == "-r" or arg == "--rules" then
             rules = true
         elseif arg == "-y" or arg == "--yes" then
@@ -354,6 +379,7 @@ local function save_color_theme(args, silent)
             print()
             print("Options:")
             print("  -a, --all         Save all color settings, even colors added by Lua scripts.")
+            print("  -d, --default     Omit values that match the default for each color setting.")
             print("  -r, --rules       Also save match coloring rules.")
             print("  -y, --yes         Allow overwriting an existing file.")
             print("  -h, --help        Show this help text.")
@@ -403,7 +429,7 @@ local function save_color_theme(args, silent)
         return
     end
 
-    write_color_theme(o, all, rules)
+    write_color_theme(o, all, clear_def, rules)
 
     o:close()
 

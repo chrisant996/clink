@@ -799,6 +799,7 @@ local theme_save = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
     "-a", "--all",
+    "-d", "--default",
     "-r", "--rules",
     "-y", "--yes",
     "-h", "--help", "-?",
@@ -807,6 +808,7 @@ local theme_save = clink.argmatcher()
 :nofiles()
 :adddescriptions({
     ["-a"] = "Save all color settings, even colors added by Lua scripts",
+    ["-d"] = "Omit values that match the default for each color setting",
     ["-r"] = "Also save match coloring rules",
     ["-y"] = "Allow overwriting an existing file",
     ["-h"] = "Show help text",
