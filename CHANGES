@@ -5,6 +5,7 @@
 #### v1.7.17
 
 - Added "4-bit Enhanced Defaults.clinktheme" color theme which approximates the "Enhanced Defaults" colors using only 4-bit terminal colors.
+- Added a `clink config theme save -d` flag to save a color theme with placeholders for color settings whose current value matches its default value.  Loading a color theme saved this way resets those colors to whatever default values are defined at the moment the file is loaded.
 - Changed the default behavior for throttling Lua coroutines.  By default there is no throttling anymore.  The new `lua.throttle_interval` setting can be used to enable throttling of Lua coroutines if they cause responsiveness issues.  Prior to this, the throttling interval had been hard-coded to 5 seconds, but now it's configurable and is 0 by default (no throttling).
 - Changed `rl.getpromptinfo()` to be allowed during transient prompt filtering (but still not during normal prompt filtering).
 - Added an optimization to replay keyboard macros faster.
@@ -15,6 +16,7 @@
 - Fixed use of `clink.promptcoroutine()` during transient prompt filtering (it was accidentally trying to do asynchronous prompt filtering, which isn't possible during transient prompt filtering).
 - Fixed the `onadvance` callback in argmatchers so it doesn't interfere with match generation.
 - Fixed a problem where `clink-popup-history` could leak or lose the undo list from the current input line.
+- Fixed an error when applying a `*.clinktheme` file with a `[clear]` section.
 - Fixed [#751](https://github.com/chrisant996/clink/issues/751); multi-line oh-my-posh config without newlines causes display problem.
 
 #### v1.7.16
