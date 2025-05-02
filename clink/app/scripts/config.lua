@@ -241,7 +241,9 @@ function clink.readtheme(theme)
         elseif not t.name:find("^color.") then
             return nil, "Unexpected setting name '"..t.name.."' in '"..theme.."'."
         end
-        ini[t.name] = settings.parsecolor(t.value)  -- Allow indexed lookup.
+        if t.value then
+            ini[t.name] = settings.parsecolor(t.value)  -- Allow indexed lookup.
+        end
     end
 
     return ini, message
