@@ -341,7 +341,7 @@ local function write_color_theme(o, all, clear_def, rules)
         end
     end
 
-    if clear_list[1] then
+    if clear_list and clear_list[1] then
         o:write("[clear]\n")
         for _,name in ipairs(clear_list) do
             o:write(string.format("%s\n", name))
