@@ -24,7 +24,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Extra Low Priority
 - Option for the installer to add the Clink directory to the system PATH?  **WARNING:**  The main problem is about All Users...
 - I'd love to let the installer run without Admin privilege, but I don't see how to do that safely because of the need for updating All Users AutoRun.
-- Windows Terminal now has 3 ways of measuring character widths.  There's no way for Clink to ask which mode is being used (but it might be possible to deduce on the fly using techniques from the wcwidth-verifier repo).  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
+- Windows Terminal now has 3 ways of measuring character widths.  There's an escape code to ask which mode is being used, but the escape code clears all queued input, so using it can be disruptive.  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
@@ -92,6 +92,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
 - The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
 - Lua code can check if there is real console input available, and can read real console input.  But there is no way for Lua code to check whether there is any input queued for Readline (pending input, pushed input, macro text).  That probably makes sense, since there is (correctly) no way for Lua code to read input queued for Readline.
+- Readline history bug:  With `UP` bound to `history-search-backward` --> `UP` to a history line with 2 or more characters, `Backspace` until 1 character remains, `UP` a few times, `Home`, `Right`, `UP`, `Ctrl-Z` --> The history is left in a state where the original history line is lost until the history file is reloaded; it loses its undo list (and thus also its modmark).
 
 ## Mystery
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30)?]_
