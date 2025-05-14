@@ -148,7 +148,7 @@ static int32 docall (lua_State *L, int32 narg, int32 nres) {
 //------------------------------------------------------------------------------
 int32 interpreter(int32 argc, char** argv)
 {
-    static const char* help_usage = "Usage: interpreter [options] [script]\n";
+    static const char* help_usage = "Usage: clink lua [options] [script]\n";
 
     static const struct option options[] = {
         { "debug",      required_argument,  nullptr, 'D' },
