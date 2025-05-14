@@ -565,10 +565,18 @@ enum : uint8
 //------------------------------------------------------------------------------
 uint32 win_terminal_in::get_dimensions()
 {
+    uint16 cols, rows;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    auto cols = short(csbi.dwSize.X);
-    auto rows = short(csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+    if (GetConsoleScreenBufferInfo(m_stdout, &csbi))
+    {
+        cols = uint16(csbi.dwSize.X);
+        rows = uint16(csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+    }
+    else
+    {
+        cols = 80;
+        rows = 25;
+    }
     return (cols << 16) | rows;
 }
 

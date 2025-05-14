@@ -363,9 +363,16 @@ void win_screen_buffer::begin()
     GetConsoleMode(m_handle, &m_prev_mode);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    m_default_attr = csbi.wAttributes & attr_mask_all;
-    m_bold = !!(m_default_attr & attr_mask_bold);
+    if (GetConsoleScreenBufferInfo(m_handle, &csbi))
+    {
+        m_default_attr = csbi.wAttributes & attr_mask_all;
+        m_bold = !!(m_default_attr & attr_mask_bold);
+    }
+    else
+    {
+        m_default_attr = 0x07;
+        m_bold = false;
+    }
     m_reverse = false;
 
     char native_vt = m_native_vt;
@@ -478,15 +485,16 @@ void win_screen_buffer::flush()
     // timer and hide it which can be disorientating, especially when moving
     // around a line. The below will make sure it stays visible.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
+    if (GetConsoleScreenBufferInfo(m_handle, &csbi))
+        SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
 }
 
 //------------------------------------------------------------------------------
 int32 win_screen_buffer::get_columns() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return 80;
     return csbi.dwSize.X;
 }
 
@@ -494,7 +502,8 @@ int32 win_screen_buffer::get_columns() const
 int32 win_screen_buffer::get_rows() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return 25;
     return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
 }
 
@@ -532,7 +541,8 @@ bool win_screen_buffer::has_native_vt_processing() const
 void win_screen_buffer::clear(clear_type type)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     int32 width, height, count = 0;
     COORD xy;
@@ -571,7 +581,8 @@ void win_screen_buffer::clear(clear_type type)
 void win_screen_buffer::clear_line(clear_type type)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     int32 width;
     COORD xy;
@@ -602,7 +613,8 @@ void win_screen_buffer::clear_line(clear_type type)
 void win_screen_buffer::set_horiz_cursor(int32 column)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     const SMALL_RECT& window = csbi.srWindow;
     int32 width = (window.Right - window.Left) + 1;
@@ -618,7 +630,8 @@ void win_screen_buffer::set_horiz_cursor(int32 column)
 void win_screen_buffer::set_cursor(int32 column, int32 row)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     const SMALL_RECT& window = csbi.srWindow;
     int32 width = (window.Right - window.Left) + 1;
@@ -635,7 +648,8 @@ void win_screen_buffer::set_cursor(int32 column, int32 row)
 void win_screen_buffer::move_cursor(int32 dx, int32 dy)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     COORD xy = {
         short(clamp(csbi.dwCursorPosition.X + dx, 0, csbi.dwSize.X - 1)),
@@ -648,7 +662,8 @@ void win_screen_buffer::move_cursor(int32 dx, int32 dy)
 void win_screen_buffer::save_cursor()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     const SMALL_RECT& window = csbi.srWindow;
     int32 width = (window.Right - window.Left) + 1;
@@ -663,7 +678,8 @@ void win_screen_buffer::save_cursor()
 //------------------------------------------------------------------------------
 void win_screen_buffer::restore_cursor()
 {
-    set_cursor(m_saved_cursor.X, m_saved_cursor.Y);
+    if (m_saved_cursor.X >= 0 && m_saved_cursor.Y >= 0)
+        set_cursor(m_saved_cursor.X, m_saved_cursor.Y);
 }
 
 //------------------------------------------------------------------------------
@@ -673,7 +689,8 @@ void win_screen_buffer::insert_chars(int32 count)
         return;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     SMALL_RECT rect;
     rect.Left = csbi.dwCursorPosition.X;
@@ -696,7 +713,8 @@ void win_screen_buffer::delete_chars(int32 count)
         return;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     SMALL_RECT rect;
     rect.Left = csbi.dwCursorPosition.X + count;
@@ -727,7 +745,8 @@ void win_screen_buffer::delete_chars(int32 count)
 void win_screen_buffer::set_attributes(attributes attr)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return;
 
     int32 out_attr = csbi.wAttributes & attr_mask_all;
 

@@ -53,9 +53,9 @@ private:
     };
 
     void*           m_handle = nullptr;
-    unsigned long   m_prev_mode = 0;
-    unsigned short  m_default_attr = 0x07;
-    unsigned short  m_ready = 0;
+    DWORD           m_prev_mode = 0;
+    uint16          m_default_attr = 0x07;
+    uint16          m_ready = 0;
     bool            m_bold = false;
     bool            m_reverse = false;
     char            m_native_vt = -1;
@@ -66,5 +66,5 @@ private:
     mutable WCHAR*  m_chars = nullptr;
     mutable SHORT   m_chars_capacity = 0;
 
-    COORD           m_saved_cursor = {};
+    COORD           m_saved_cursor = { -1, -1 };
 };
