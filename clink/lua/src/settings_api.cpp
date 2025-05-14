@@ -773,7 +773,7 @@ static int32 match(lua_State* state)
 //------------------------------------------------------------------------------
 void settings_lua_initialise(lua_state& lua)
 {
-    struct {
+    static const struct {
         int32       always;
         const char* name;
         int32       (*method)(lua_State*);

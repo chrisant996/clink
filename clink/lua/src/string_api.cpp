@@ -190,7 +190,7 @@ static int32 api_compare_matches(lua_State* state)
 //------------------------------------------------------------------------------
 void string_lua_initialise(lua_state& lua)
 {
-    struct {
+    static const struct {
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {

@@ -1465,7 +1465,7 @@ static int32 get_inputrc_file_name(lua_State* state)
 //------------------------------------------------------------------------------
 void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
 {
-    struct {
+    static const struct {
         int32       always;
         const char* name;
         int32       (*method)(lua_State*);

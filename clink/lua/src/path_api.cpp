@@ -350,7 +350,7 @@ static int32 is_device(lua_State* state)
 //------------------------------------------------------------------------------
 void path_lua_initialise(lua_state& lua)
 {
-    struct {
+    static const struct {
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {

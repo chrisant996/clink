@@ -1101,10 +1101,12 @@ static int32 set_width(lua_State* state)
 //------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
-    struct {
+    struct method_def {
         const char* name;
         int32       (*method)(lua_State*);
-    } methods[] = {
+    };
+
+    static const method_def methods[] = {
         { "scroll",                 &scroll },
         { "cellcount",              &get_cell_count },
         { "plaintext",              &get_plain_text },

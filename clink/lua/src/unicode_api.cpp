@@ -459,7 +459,7 @@ static int32 uni_char(lua_State* state)
 //------------------------------------------------------------------------------
 void unicode_lua_initialise(lua_state& lua)
 {
-    struct {
+    static const struct {
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {
