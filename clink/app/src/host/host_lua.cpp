@@ -113,6 +113,9 @@ host_lua::operator input_idle* ()
 //------------------------------------------------------------------------------
 void host_lua::load_scripts()
 {
+    assert(!m_loaded_scripts);
+    m_loaded_scripts = true;
+
     // Load scripts.
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
@@ -250,6 +253,9 @@ bool host_lua::is_script_path_changed() const
 {
     if (is_force_reload_scripts())
         return true;
+
+    if (!m_loaded_scripts)
+        return false;
 
     str<280> script_path;
     app_context::get()->get_script_path(script_path);

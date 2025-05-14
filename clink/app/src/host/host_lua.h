@@ -23,6 +23,7 @@ public:
                         operator input_idle* ();
     void                load_scripts();
     bool                is_script_path_changed() const;
+    bool                loaded_scripts() const { return m_loaded_scripts; }
 
     void                activate_clinkprompt_module(const char* module=nullptr);
     void                load_colortheme_in_memory(const char* theme);
@@ -51,4 +52,5 @@ private:
     lua_word_classifier m_classifier;
     lua_input_idle      m_idle;
     str<>               m_prev_script_path;
+    bool                m_loaded_scripts = false;
 };

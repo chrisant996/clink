@@ -936,7 +936,7 @@ force_reload_lua:
 
     // Set up Lua.
     if (m_lua)
-        init_scripts = false;
+        init_scripts = !m_lua->loaded_scripts();
     {
         dbg_ignore_scope(snapshot, "Initialization overhead");
         if (!m_lua)
