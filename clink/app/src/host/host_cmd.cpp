@@ -217,30 +217,6 @@ static void write_line_feed()
     __Real_WriteConsoleW(handle, L"\n", 1, &written, nullptr);
 }
 
-//------------------------------------------------------------------------------
-static bool is_elevated()
-{
-    static bool s_initialized = false;
-    static bool s_elevated = false;
-
-    if (!s_initialized)
-    {
-        HANDLE token = 0;
-        if (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, false, &token) ||
-            OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-        {
-            DWORD size = 0;
-            TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
-            if (GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size))
-                s_elevated = (type == TokenElevationTypeFull);
-            CloseHandle(token);
-        }
-        s_initialized = true;
-    }
-
-    return s_elevated;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -968,7 +944,7 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
 {
     wstr<> clink_prefix;
 
-    if (is_elevated())
+    if (os::is_elevated())
     {
         str<> tmp;
         wstr<280> cmd_prefix;

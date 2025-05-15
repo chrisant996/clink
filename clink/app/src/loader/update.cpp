@@ -74,7 +74,7 @@ static bool is_redirected()
 //------------------------------------------------------------------------------
 static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
 {
-    const bool elevated = os::is_user_admin();
+    const bool elevated = os::is_elevated();
     const bool redirected = is_redirected();
 
     auto app_ctx = app_context::get();

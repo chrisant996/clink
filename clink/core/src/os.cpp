@@ -106,16 +106,14 @@ static class delay_load_shell32
 public:
                         delay_load_shell32();
     bool                init();
-    BOOL                IsUserAnAdmin();
     BOOL                ShellExecuteExW(SHELLEXECUTEINFOW* pExecInfo);
 private:
     bool                m_initialized = false;
     bool                m_ok = false;
     union
     {
-        FARPROC         proc[2];
+        FARPROC         proc[1];
         struct {
-            BOOL (WINAPI* IsUserAnAdmin)();
             BOOL (WINAPI* ShellExecuteExW)(SHELLEXECUTEINFOW* pExecInfo);
         };
     } m_procs;
@@ -152,8 +150,7 @@ bool delay_load_shell32::init()
                 if (dwVersion < MAKELONG(0, 5))
                     break;
 
-                m_procs.proc[0] = GetProcAddress(hlib, "IsUserAnAdmin");
-                m_procs.proc[1] = GetProcAddress(hlib, "ShellExecuteExW");
+                m_procs.proc[0] = GetProcAddress(hlib, "ShellExecuteExW");
             }
             while (false);
         }
@@ -170,12 +167,6 @@ bool delay_load_shell32::init()
     }
 
     return m_ok;
-}
-
-//------------------------------------------------------------------------------
-BOOL delay_load_shell32::IsUserAnAdmin()
-{
-    return init() && m_procs.IsUserAnAdmin();
 }
 
 //------------------------------------------------------------------------------
@@ -1605,9 +1596,36 @@ close_bail:
 }
 
 //------------------------------------------------------------------------------
-bool is_user_admin()
+bool is_elevated()
 {
-    return s_shell32.IsUserAnAdmin();
+    bool elevated = false;
+
+    HANDLE token = 0;
+    if (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, false, &token) ||
+        OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        DWORD size = 0;
+        TOKEN_ELEVATION_TYPE elevation_type = TokenElevationTypeDefault;
+        if (GetTokenInformation(token, TokenElevationType, &elevation_type, sizeof(elevation_type), &size))
+        {
+            switch (elevation_type)
+            {
+            case TokenElevationTypeFull:
+                elevated = true;
+                break;
+            case TokenElevationTypeDefault:
+                {
+                    TOKEN_ELEVATION elevation = {};
+                    if (GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size))
+                        elevated = !!elevation.TokenIsElevated;
+                }
+                break;
+            }
+        }
+        CloseHandle(token);
+    }
+
+    return elevated;
 }
 
 //------------------------------------------------------------------------------

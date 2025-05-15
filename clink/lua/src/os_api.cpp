@@ -2761,10 +2761,10 @@ static int32 expand_abbreviated_path(lua_State *state)
 /// -name:  os.isuseradmin
 /// -ver:   1.4.17
 /// -ret:   boolean
-/// Returns true if running as an administrator account.
+/// Returns true if running as an elevated (administrator) account.
 static int32 is_user_admin(lua_State *state)
 {
-    const bool is = os::is_user_admin();
+    const bool is = os::is_elevated();
     lua_pushboolean(state, is);
     return 1;
 }
