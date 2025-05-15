@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "os.h"
+#include "cwd_restorer.h"
 #include "path.h"
 #include "str.h"
 #include "str_iter.h"
@@ -292,16 +293,18 @@ double os::high_resolution_clock::elapsed() const
 //------------------------------------------------------------------------------
 cwd_restorer::cwd_restorer()
 {
-    GetCurrentDirectoryW(sizeof_array(m_path), m_path);
+    os::get_current_dir(m_path);
 }
 
 //------------------------------------------------------------------------------
 cwd_restorer::~cwd_restorer()
 {
-    wchar_t path[288];
-    DWORD dw = GetCurrentDirectoryW(sizeof_array(path), path);
-    if (!dw || dw >= sizeof_array(path) || wcscmp(path, m_path) != 0)
-        SetCurrentDirectoryW(m_path);
+    str<> path;
+    path.reserve(m_path.size(), true);
+    os::get_current_dir(path);
+
+    if (!path.equals(m_path.c_str()))
+        os::set_current_dir(m_path.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -488,11 +491,35 @@ int32 get_file_size(const char* path)
 }
 
 //------------------------------------------------------------------------------
-void get_current_dir(str_base& out)
+bool get_current_dir(str_base& out)
 {
-    wstr<280> wdir;
-    GetCurrentDirectoryW(wdir.size(), wdir.data());
+    wstr<> wdir;
+
+    const DWORD dwNeeded = GetCurrentDirectoryW(0, nullptr);
+    if (!dwNeeded)
+    {
+error:
+        map_errno();
+clear_out:
+        out.clear();
+        return false;
+    }
+
+    if (!wdir.reserve(dwNeeded, true))
+    {
+nomem:
+        map_errno(ENOMEM);
+        goto clear_out;
+    }
+
+    const DWORD dwUsed = GetCurrentDirectoryW(wdir.size(), wdir.data());
+    if (!dwUsed)
+        goto error;
+    if (dwUsed >= dwNeeded)
+        goto nomem;
+
     out = wdir.c_str();
+    return true;
 }
 
 //------------------------------------------------------------------------------

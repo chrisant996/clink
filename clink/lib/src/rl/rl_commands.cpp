@@ -781,17 +781,13 @@ Nope:
 //------------------------------------------------------------------------------
 int32 clink_copy_cwd(int32 count, int32 invoking_key)
 {
-    wstr<270> cwd;
-    uint32 length = GetCurrentDirectoryW(cwd.size(), cwd.data());
-    if (length < cwd.size())
+    str<> cwd;
+    if (os::get_current_dir(cwd))
     {
-        str<> tmp;
-        to_utf8(tmp, cwd.c_str());
-        tmp << PATH_SEP;
-        path::normalise(tmp);
-        os::set_clipboard_text(tmp.c_str(), tmp.length());
+        cwd << PATH_SEP;
+        path::normalise(cwd);
     }
-
+    os::set_clipboard_text(cwd.c_str(), cwd.length());
     return 0;
 }
 

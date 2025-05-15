@@ -17,6 +17,7 @@
 
 #include <core/base.h>
 #include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <core/str_compare.h>
 #include <core/str_transform.h>
 #include <core/str_unordered_set.h>

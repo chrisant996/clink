@@ -61,20 +61,13 @@ private:
     int64       m_start;
 };
 
-struct cwd_restorer
-{
-    cwd_restorer();
-    ~cwd_restorer();
-    wchar_t m_path[288];
-};
-
 DWORD   get_file_attributes(const wchar_t* path, bool* symlink=nullptr);
 DWORD   get_file_attributes(const char* path, bool* symlink=nullptr);
 int32   get_path_type(const char* path);
 int32   get_drive_type(const char* path, uint32 len=-1);
 int32   get_file_size(const char* path);
 bool    is_hidden(const char* path);
-void    get_current_dir(str_base& out);
+bool    get_current_dir(str_base& out);
 bool    set_current_dir(const char* dir);
 bool    make_dir(const char* dir);
 bool    remove_dir(const char* dir);

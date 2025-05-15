@@ -7,6 +7,7 @@
 
 #include <core/globber.h>
 #include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>

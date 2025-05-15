@@ -9,7 +9,7 @@
 #include <core/str_iter.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
-#include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <lib/suggestions.h>

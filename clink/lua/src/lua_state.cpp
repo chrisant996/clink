@@ -12,6 +12,7 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <core/debugheap.h>
 #include <core/callstack.h>
 #include <core/log.h>

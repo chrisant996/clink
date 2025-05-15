@@ -7,7 +7,7 @@
 #include "line_states_lua.h"
 
 #include <core/base.h>
-#include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <lib/line_state.h>
 #include <lib/word_classifications.h>
 

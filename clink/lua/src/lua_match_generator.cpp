@@ -13,7 +13,7 @@
 #include <core/str_hash.h>
 #include <core/str_unordered_set.h>
 #include <core/str_compare.h>
-#include <core/os.h>
+#include <core/cwd_restorer.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <lib/matches_lookaside.h>
