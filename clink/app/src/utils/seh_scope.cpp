@@ -15,7 +15,7 @@ static thread_local int32 s_filter = 0;
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
-    if (s_filter <= 0)
+    if (s_filter <= 0) // It's thread_local, so no explicit synchronization is needed.
         return EXCEPTION_CONTINUE_SEARCH;
 
 #if defined(_MSC_VER)
@@ -122,13 +122,13 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 //------------------------------------------------------------------------------
 seh_scope::seh_scope()
 {
-    ++s_filter;
+    ++s_filter; // It's thread_local, so no explicit synchronization is needed.
 }
 
 //------------------------------------------------------------------------------
 seh_scope::~seh_scope()
 {
-    --s_filter;
+    --s_filter; // It's thread_local, so no explicit synchronization is needed.
 }
 
 //------------------------------------------------------------------------------

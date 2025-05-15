@@ -50,6 +50,7 @@ static func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnviro
 static func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 static bool s_detoured_write_console = false;
 static int32 s_in_read_console = 0;
+static DWORD s_main_thread = 0;
 
 //------------------------------------------------------------------------------
 extern printer* g_printer;
@@ -288,7 +289,8 @@ int32 host_cmd::validate()
 //------------------------------------------------------------------------------
 static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWORD to_write, LPDWORD written, LPVOID reserved)
 {
-    if (g_debug_log_terminal.get() &&
+    if (GetCurrentThreadId() == s_main_thread &&
+        g_debug_log_terminal.get() &&
         s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
         !suppress_implicit_write_console_logging::is_suppressed())
     {
@@ -341,7 +343,8 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
 //------------------------------------------------------------------------------
 static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD to_write, LPDWORD written, LPOVERLAPPED overlapped)
 {
-    if (g_debug_log_terminal.get() &&
+    if (GetCurrentThreadId() == s_main_thread &&
+        g_debug_log_terminal.get() &&
         s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
         !suppress_implicit_write_console_logging::is_suppressed())
     {
@@ -599,18 +602,23 @@ BOOL WINAPI host_cmd::read_console(
 #else
     const CONSOLE_READCONSOLE_CONTROL* const control = __control;
 #endif
+    wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
+
+    if (GetCurrentThreadId() != s_main_thread)
+    {
+LReturnReal:
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
+    }
 
     seh_scope seh;
     read_console_scope reading;
-
-    wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
 
     const bool more_continuation = s_more_continuation;
     s_more_continuation = false;
 
     // if the input handle isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
+        goto LReturnReal;
 
     host_cmd* const hc = host_cmd::get();
 
@@ -645,7 +653,7 @@ BOOL WINAPI host_cmd::read_console(
         // Default behaviour.
         if (hc->dequeue_char(chars))
             return TRUE;
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
+        goto LReturnReal;
     }
 
     s_answered = 0;
@@ -699,7 +707,7 @@ BOOL WINAPI host_cmd::read_console(
             // line as though it ended with a newline.
             return true;
         }
-        return __Real_ReadConsoleW(input, chars, max_chars, read_in, __control);
+        goto LReturnReal;
     }
 
     // Respond with a queued line, if available.
@@ -787,8 +795,15 @@ BOOL WINAPI host_cmd::write_console(
     LPDWORD written,
     LPVOID unused)
 {
-    seh_scope seh;
     const wchar_t* const chars = reinterpret_cast<const wchar_t*>(_chars);
+
+    if (GetCurrentThreadId() != s_main_thread)
+    {
+LReturnReal:
+        return __Real_WriteConsoleW(output, chars, to_write, written, unused);
+    }
+
+    seh_scope seh;
 
     // If the output handle is a console handle then handle prompts.
     if (GetFileType(output) == FILE_TYPE_CHAR)
@@ -810,7 +825,7 @@ BOOL WINAPI host_cmd::write_console(
         }
     }
 
-    return __Real_WriteConsoleW(output, chars, to_write, written, unused);
+    goto LReturnReal;
 }
 
 //------------------------------------------------------------------------------
@@ -894,10 +909,16 @@ bool host_cmd::capture_prompt(const wchar_t* chars, int32 char_count)
 //------------------------------------------------------------------------------
 BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 {
+    if (GetCurrentThreadId() != s_main_thread)
+    {
+LReturnReal:
+        return __Real_SetEnvironmentVariableW(name, value);
+    }
+
     seh_scope seh;
 
     if (value == nullptr || _wcsicmp(name, L"prompt") != 0)
-        return __Real_SetEnvironmentVariableW(name, value);
+        goto LReturnReal;
 
     tagged_prompt prompt;
     prompt.tag(value);
@@ -907,10 +928,14 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 //------------------------------------------------------------------------------
 BOOL WINAPI host_cmd::set_env_strs(wchar_t* enviro)
 {
-    seh_scope seh;
-
     const BOOL ok = __Real_SetEnvironmentStringsW(enviro);
-    tag_prompt();
+
+    if (GetCurrentThreadId() == s_main_thread)
+    {
+        seh_scope seh;
+
+        tag_prompt();
+    }
 
     return ok;
 }
@@ -919,6 +944,12 @@ BOOL WINAPI host_cmd::set_env_strs(wchar_t* enviro)
 static bool s_initialised_system = false;
 DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 {
+    // CAVEAT:  If GetEnvironmentVariableW is called from a background thread
+    // while Clink is being injected, then the system could potentially get
+    // confused about which thread is the main thread, and things could go
+    // haywire.  But it doesn't seem like a realistic scenario, because CMD is
+    // single-threaded.
+
     seh_scope seh;
 
     DWORD ret = __Real_GetEnvironmentVariableW(lpName, lpBuffer, nSize);
@@ -933,6 +964,7 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 
         host_cmd::get()->initialise_system();
     }
+
     return ret;
 }
 
@@ -942,6 +974,12 @@ static linear_allocator s_old_prefix_store(1024);
 static bool s_ever_prefix = false;
 BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
 {
+    if (GetCurrentThreadId() != s_main_thread)
+    {
+LReturnReal:
+        return __Real_SetConsoleTitleW(lpConsoleTitle);
+    }
+
     wstr<> clink_prefix;
 
     if (os::is_elevated())
@@ -989,12 +1027,14 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
         }
     }
 
-    return __Real_SetConsoleTitleW(lpConsoleTitle);
+    goto LReturnReal;
 }
 
 //------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
+    s_main_thread = GetCurrentThreadId();
+
     {
         hook_type type = get_hook_type();
         const char* module = get_kernel_module();
