@@ -38,6 +38,12 @@ ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 }
 
 //------------------------------------------------------------------------------
+void ecma48_terminal_out::override_handle()
+{
+    m_screen.override_handle();
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::open()
 {
     m_screen.open();

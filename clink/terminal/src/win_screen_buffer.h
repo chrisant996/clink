@@ -39,6 +39,8 @@ public:
     virtual int32   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const override;
     virtual int32   find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const override;
 
+    virtual void    override_handle() override;
+
 private:
     bool            ensure_chars_buffer(int32 width) const;
     bool            ensure_attrs_buffer(int32 width) const;
@@ -67,4 +69,6 @@ private:
     mutable SHORT   m_chars_capacity = 0;
 
     COORD           m_saved_cursor = { -1, -1 };
+
+    void*           m_override_handle = nullptr;
 };

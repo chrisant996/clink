@@ -41,6 +41,8 @@ extern "C" {
 extern int _rl_last_v_pos;
 };
 
+class standalone_input;
+
 
 
 //------------------------------------------------------------------------------
@@ -95,6 +97,7 @@ extern bool host_remove_dir_history(int32 index);
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
 static bool s_standalone = false;
+static standalone_input* s_standalone_input = nullptr;
 static int32 s_old_default_popup_search_mode = -1;
 static int32 s_default_popup_search_mode = -1;
 const int32 min_screen_cols = 20;
@@ -304,6 +307,44 @@ void popup_results::clear()
 
 
 //------------------------------------------------------------------------------
+class standalone_input : public input_dispatcher, public key_tester
+{
+    typedef editor_module                       module;
+    typedef fixed_array<editor_module*, 16>     modules;
+
+public:
+                        standalone_input(terminal& term);
+    void                on_resize();
+
+    // input_dispatcher
+    void                dispatch(int32 bind_group) override;
+    bool                available(uint32 timeout) override;
+    uint8               peek() override;
+
+    // key_tester
+    bool                is_bound(const char* seq, int32 len);
+    bool                accepts_mouse_input(mouse_input_type type);
+    bool                translate(const char* seq, int32 len, str_base& out);
+
+private:
+    module::context     get_context();
+    bool                update_input();
+
+    terminal&           m_terminal;
+    modules             m_modules;
+    binder              m_binder;
+    bind_resolver       m_bind_resolver = { m_binder };
+    textlist_impl       m_textlist;
+
+    // State for dispatch().
+    uint8               m_dispatching = 0;
+    bool                m_invalid_dispatch = false;
+    bind_resolver::binding* m_pending_binding = nullptr;
+};
+
+
+
+//------------------------------------------------------------------------------
 textlist_impl::addl_columns::addl_columns(textlist_impl::item_store& store)
     : m_store(store)
 {
@@ -468,6 +509,9 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 popup_results textlist_impl::activate(const char* title, const char** entries, int32 count, int32 index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
 {
+    if (s_standalone_input)
+        s_standalone_input->on_resize();
+
     if (s_old_default_popup_search_mode != g_popup_search_mode.get())
     {
         s_old_default_popup_search_mode = g_popup_search_mode.get();
@@ -2207,41 +2251,6 @@ popup_results activate_history_text_list(const char** history, int32 count, int3
 
 
 //------------------------------------------------------------------------------
-class standalone_input : public input_dispatcher, public key_tester
-{
-    typedef editor_module                       module;
-    typedef fixed_array<editor_module*, 16>     modules;
-
-public:
-                        standalone_input(terminal& term);
-
-    // input_dispatcher
-    void                dispatch(int32 bind_group) override;
-    bool                available(uint32 timeout) override;
-    uint8               peek() override;
-
-    // key_tester
-    bool                is_bound(const char* seq, int32 len);
-    bool                accepts_mouse_input(mouse_input_type type);
-    bool                translate(const char* seq, int32 len, str_base& out);
-
-private:
-    module::context     get_context();
-    bool                update_input();
-
-    terminal&           m_terminal;
-    modules             m_modules;
-    binder              m_binder;
-    bind_resolver       m_bind_resolver = { m_binder };
-    textlist_impl       m_textlist;
-
-    // State for dispatch().
-    uint8               m_dispatching = 0;
-    bool                m_invalid_dispatch = false;
-    bind_resolver::binding* m_pending_binding = nullptr;
-};
-
-//------------------------------------------------------------------------------
 standalone_input::standalone_input(terminal& term)
 : m_terminal(term)
 , m_textlist(*this)
@@ -2278,6 +2287,17 @@ standalone_input::standalone_input(terminal& term)
     module::context context = get_context();
     for (auto* module : m_modules)
         module->on_begin_line(context);
+}
+
+//------------------------------------------------------------------------------
+void standalone_input::on_resize()
+{
+    auto cols = m_terminal.out->get_columns();
+    auto rows = m_terminal.out->get_rows();
+
+    module::context context = get_context();
+    for (auto* module : m_modules)
+        module->on_terminal_resize(cols, rows, context);
 }
 
 //------------------------------------------------------------------------------
@@ -2498,9 +2518,11 @@ bool standalone_input::translate(const char* seq, int32 len, str_base& out)
 //------------------------------------------------------------------------------
 void init_standalone_textlist(terminal& term)
 {
+    assert(!s_standalone_input);
+
     // This initializes s_textlist.
     s_standalone = true;
-    new standalone_input(term);
+    s_standalone_input = new standalone_input(term);
 
     // Since there is no inputrc file in standalone mode, set some defaults.
     _rl_menu_complete_wraparound = false;   // Affects textlist_impl.

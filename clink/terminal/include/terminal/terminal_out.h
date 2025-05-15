@@ -19,6 +19,7 @@ public:
     virtual void            begin() = 0;
     virtual void            end() = 0;
     virtual void            close() = 0;    // Should be not strictly required.
+    virtual void            override_handle() {}
     virtual void            write(const char* chars, int32 length) = 0;
     template <int32 S> void write(const char (&chars)[S]);
     virtual bool            get_line_text(int32 line, str_base& out) const = 0;

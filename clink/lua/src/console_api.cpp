@@ -11,6 +11,7 @@
 #include "terminal/wcwidth.h"
 #include "terminal/terminal.h"
 #include "terminal/terminal_in.h"
+#include "terminal/terminal_out.h"
 #include "terminal/terminal_helpers.h"
 
 #include <core/base.h>
@@ -1099,7 +1100,37 @@ static int32 set_width(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void console_lua_initialise(lua_state& lua)
+static int32 use_direct_io(lua_State* state)
+{
+    HANDLE hconin = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+    HANDLE hconout = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+    if (!hconin || !hconout)
+    {
+        lua_pushboolean(state, false);
+        return 1;
+    }
+
+    SetStdHandle(STD_INPUT_HANDLE, hconin);
+    SetStdHandle(STD_OUTPUT_HANDLE, hconout);
+    SetStdHandle(STD_ERROR_HANDLE, hconout);
+
+    if (get_lua_terminal_input())
+        get_lua_terminal_input()->override_handle();
+    if (get_lua_terminal_output())
+        get_lua_terminal_output()->override_handle();
+
+    DWORD mode;
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
+        SetConsoleMode(hconin, cleanup_console_input_mode(mode));
+    if (GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode))
+        SetConsoleMode(hconout, mode);
+
+    lua_pushboolean(state, true);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+void console_lua_initialise(lua_state& lua, bool lua_interpreter)
 {
     struct method_def {
         const char* name;
@@ -1141,6 +1172,20 @@ void console_lua_initialise(lua_state& lua)
         lua_pushstring(state, method.name);
         lua_pushcfunction(state, method.method);
         lua_rawset(state, -3);
+    }
+
+    if (lua_interpreter)
+    {
+        static const method_def methods_standalone[] = {
+            { "usedirectio",        &use_direct_io },
+        };
+
+        for (const auto& method : methods_standalone)
+        {
+            lua_pushstring(state, method.name);
+            lua_pushcfunction(state, method.method);
+            lua_rawset(state, -3);
+        }
     }
 
     lua_setglobal(state, "console");

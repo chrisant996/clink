@@ -102,7 +102,7 @@ extern setting_bool g_debug_log_output_callstacks;
 void clink_lua_initialise(lua_state&, bool lua_interpreter=false);
 void os_lua_initialise(lua_state&);
 void io_lua_initialise(lua_state&);
-void console_lua_initialise(lua_state&);
+void console_lua_initialise(lua_state&, bool lua_interpreter=false);
 void path_lua_initialise(lua_state&);
 void rl_lua_initialise(lua_state&, bool lua_interpreter=false);
 void settings_lua_initialise(lua_state&);
@@ -266,7 +266,7 @@ void lua_state::initialise(lua_state_flags flags)
     clink_lua_initialise(self, interpreter);
     os_lua_initialise(self);
     io_lua_initialise(self);
-    console_lua_initialise(self);
+    console_lua_initialise(self, interpreter);
     path_lua_initialise(self);
     rl_lua_initialise(self, interpreter);
     settings_lua_initialise(self);

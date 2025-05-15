@@ -589,6 +589,16 @@ win_terminal_in::win_terminal_in(bool cursor_visibility)
 }
 
 //------------------------------------------------------------------------------
+void win_terminal_in::override_handle()
+{
+    m_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    m_dimensions = get_dimensions();
+    GetConsoleMode(m_stdin, &m_prev_mode);
+}
+
+//------------------------------------------------------------------------------
 int32 win_terminal_in::begin(bool can_hide_cursor)
 {
     if (!s_interrupt)

@@ -19,6 +19,7 @@ public:
     virtual void        begin() override;
     virtual void        end() override;
     virtual void        close() override;
+    virtual void        override_handle() override;
     virtual void        write(const char* chars, int32 length) override;
     virtual void        flush() override;
     virtual int32       get_columns() const override;

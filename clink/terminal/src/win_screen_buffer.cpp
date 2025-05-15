@@ -203,10 +203,28 @@ win_screen_buffer::~win_screen_buffer()
 }
 
 //------------------------------------------------------------------------------
+void win_screen_buffer::override_handle()
+{
+    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (m_handle && hout == m_handle)
+        return;
+
+    m_override_handle = hout;
+
+    if (m_handle)
+    {
+        rollback<uint16> rb(m_ready, 0);
+        m_handle = nullptr;
+        open();
+        begin();
+    }
+}
+
+//------------------------------------------------------------------------------
 void win_screen_buffer::open()
 {
     assert(!m_handle);
-    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    m_handle = m_override_handle ? m_override_handle : GetStdHandle(STD_OUTPUT_HANDLE);
 }
 
 //------------------------------------------------------------------------------
@@ -360,7 +378,8 @@ void win_screen_buffer::begin()
         break;
     }
 
-    GetConsoleMode(m_handle, &m_prev_mode);
+    if (!GetConsoleMode(m_handle, &m_prev_mode))
+        assert(!m_prev_mode);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (GetConsoleScreenBufferInfo(m_handle, &csbi))

@@ -19,6 +19,7 @@ public:
                     ~win_terminal_in() = default;
     virtual int32   begin(bool can_hide_cursor=true) override;
     virtual int32   end(bool can_show_cursor=true) override;
+    virtual void    override_handle() override;
     virtual bool    available(uint32 timeout) override;
     virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) override;
     virtual int32   read() override;
