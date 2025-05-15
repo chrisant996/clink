@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.7.19
+
+- Fixed [#756](https://github.com/chrisant996/clink/issues/756); Clink could potentially think it wasn't elevated when running as `LOCAL_SYSTEM` or the builtin `Administrator` account.
+- Fixed [#758](https://github.com/chrisant996/clink/issues/758); avoid crashing in a pathological case where something else abuses CMD by injecting background threads that actively garble input and output.
+
 #### v1.7.18
 
 - Fixed [#752](https://github.com/chrisant996/clink/issues/752); `clink config theme use {name}` reports an error (regression introduced in v1.7.17).
