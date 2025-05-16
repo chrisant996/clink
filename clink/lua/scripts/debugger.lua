@@ -421,10 +421,12 @@ The level is a candidate for use by the 'set' command.
 ]],
 
 info    = [[
-info                -- dumps the complete debug info captured|
+info [depth]        -- dumps the complete debug info captured|
 
 Only useful as a diagnostic aid for the debugger itself. This information
-can be HUGE as it dumps all variables to the maximum depth, so be careful.
+can be HUGE as it dumps all variables to the maximum depth if depth is
+omitted, so be careful. Use a depth to limit the output (0 is unlimited,
+which is the default).
 ]],
 
 show    = [[
@@ -711,9 +713,9 @@ local function trace(set)
 end
 
 --}}}
---{{{  local function info()
+--{{{  local function info(limit)
 
-local function info() dumpvar( traceinfo, 0, 'traceinfo' ) end
+local function info(limit) dumpvar( traceinfo, limit or 0, 'traceinfo' ) end
 
 --}}}
 
@@ -1379,7 +1381,8 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
 
     elseif command == "info" then
       --{{{  dump all debug info captured
-      info()
+      local limit = getargs('N')
+      info(limit)
       --}}}
 
     elseif command == "pause" then
