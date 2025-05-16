@@ -205,11 +205,9 @@ win_screen_buffer::~win_screen_buffer()
 //------------------------------------------------------------------------------
 void win_screen_buffer::override_handle()
 {
-    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hout = get_std_handle(STD_OUTPUT_HANDLE);
     if (m_handle && hout == m_handle)
         return;
-
-    m_override_handle = hout;
 
     if (m_handle)
     {
@@ -224,7 +222,7 @@ void win_screen_buffer::override_handle()
 void win_screen_buffer::open()
 {
     assert(!m_handle);
-    m_handle = m_override_handle ? m_override_handle : GetStdHandle(STD_OUTPUT_HANDLE);
+    m_handle = get_std_handle(STD_OUTPUT_HANDLE);
 }
 
 //------------------------------------------------------------------------------

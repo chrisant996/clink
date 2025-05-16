@@ -110,7 +110,7 @@ static int32 scroll(lua_State* state)
         amount.minus_one();
     }
 
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     int32 scrolled = ScrollConsoleRelative(h, amount, scrmode);
     lua_pushinteger(state, scrolled);
     return 1;
@@ -215,7 +215,7 @@ int32 explode_ansi(lua_State* state)
 static int32 get_width(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
         return 0;
 
@@ -231,7 +231,7 @@ static int32 get_width(lua_State* state)
 static int32 get_height(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
         return 0;
 
@@ -247,7 +247,7 @@ static int32 get_height(lua_State* state)
 static int32 get_num_lines(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
         return 0;
 
@@ -263,7 +263,7 @@ static int32 get_num_lines(lua_State* state)
 static int32 get_top(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
         return 0;
 
@@ -282,7 +282,7 @@ static int32 get_top(lua_State* state)
 static int32 get_cursor_pos(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
         return 0;
 
@@ -311,7 +311,7 @@ static int32 get_line_text(lua_State* state)
     SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
@@ -382,7 +382,7 @@ static int32 is_line_default_color(lua_State* state)
     SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
@@ -454,7 +454,7 @@ static int32 line_has_color(lua_State* state)
     SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
@@ -518,7 +518,7 @@ static int32 find_line(lua_State* state, int32 direction)
     SHORT starting_line = _starting_line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
@@ -825,7 +825,7 @@ static int32 get_color_table(lua_State* state)
     if (!proc)
         return 0;
 
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
     if (!GCSBIEx(proc)(h, &csbix))
         return 0;
@@ -1087,7 +1087,7 @@ static int32 set_width(lua_State* state)
     if (!proc_get || !proc_set)
         return 0;
 
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
     if (!GCSBIEx(proc_get)(h, &csbix))
         return 0;
@@ -1199,15 +1199,23 @@ static int32 use_direct_io(lua_State* state)
 
             // FUTURE:  Optionally don't override these?  But Clink relies on
             // these in some places.
-            SetStdHandle(STD_INPUT_HANDLE, s_hconin);
-            SetStdHandle(STD_OUTPUT_HANDLE, s_hconout);
-            SetStdHandle(STD_ERROR_HANDLE, s_hconout);
+            if (true)
+            {
+                SetStdHandle(STD_INPUT_HANDLE, s_hconin);
+                SetStdHandle(STD_OUTPUT_HANDLE, s_hconout);
+                SetStdHandle(STD_ERROR_HANDLE, s_hconout);
+                // FUTURE:  What about reset_stdio_handles()?
+            }
 
             // FUTURE:  Optionally don't redirect Clink's own IO?
-            if (get_lua_terminal_input())
-                get_lua_terminal_input()->override_handle();
-            if (get_lua_terminal_output())
-                get_lua_terminal_output()->override_handle();
+            if (true)
+            {
+                override_stdio_handles(s_hconin, s_hconout);
+                if (get_lua_terminal_input())
+                    get_lua_terminal_input()->override_handle();
+                if (get_lua_terminal_output())
+                    get_lua_terminal_output()->override_handle();
+            }
 
             DWORD mode;
             if (GetConsoleMode(hstdin, &mode))
@@ -1218,10 +1226,10 @@ static int32 use_direct_io(lua_State* state)
             s_fconin = make_file_from_handle(s_hconin, _O_RDONLY|_O_TEXT, "r");
             s_fconout = make_file_from_handle(s_hconout, _O_WRONLY|_O_TEXT, "w");
 
-            // FUTURE:  Update debugger.lua to always use conin/conout?
-            // FUTURE:  Always init conin/conout in the standalone
-            // interpreter, and console.usedirectio() would only be about
-            // redirecting Clink's own IO?
+            // FUTURE:  Update debugger.lua to always use conin/conout?  The
+            // debugger would have to call some API to init conin/conout, but
+            // without redirecting the rest of Clink's IO until/unless
+            // specifically requested by something later.
             // FUTURE:  Make sure io.conout:write() goes through
             // ecma_terminal_out.
             init_io_conio(state);

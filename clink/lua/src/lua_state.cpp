@@ -1020,7 +1020,7 @@ extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* 
         suppress_implicit_write_console_logging nolog;
 
         DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        HANDLE h = get_std_handle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
         if (GetConsoleMode(h, &dw))
         {
             // Maybe log.

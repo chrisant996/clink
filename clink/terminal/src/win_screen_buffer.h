@@ -69,6 +69,4 @@ private:
     mutable SHORT   m_chars_capacity = 0;
 
     COORD           m_saved_cursor = { -1, -1 };
-
-    void*           m_override_handle = nullptr;
 };

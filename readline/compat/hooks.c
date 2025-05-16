@@ -35,6 +35,7 @@ extern int is_display_readline_initialized();
 extern void host_filter_transient_prompt(int crlf);
 extern void terminal_begin_command();
 extern int show_cursor(int visible);
+extern HANDLE get_std_handle(DWORD n);
 extern int _rl_last_v_pos;
 extern int _rl_rprompt_shown_len;
 
@@ -131,7 +132,7 @@ int hooked_fwrite(const void* data, int size, int count, FILE* stream)
         fwrite_buf[characters] = L'\0';
 
         DWORD i;
-        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        HANDLE handle = get_std_handle(STD_OUTPUT_HANDLE);
         WriteConsoleW(handle, fwrite_buf, (DWORD)wcslen(fwrite_buf), &i, NULL);
     }
 
@@ -328,7 +329,7 @@ void end_prompt(int crlf)
 void wait_for_input(unsigned long timeout)
 {
     DWORD dummy;
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_INPUT_HANDLE);
     if (h && GetConsoleMode(h, &dummy))
     {
         int was_visible = show_cursor(1);

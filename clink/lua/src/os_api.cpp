@@ -15,6 +15,7 @@
 #include <core/str_iter.h>
 #include <lib/doskey.h>
 #include <lib/clink_ctrlevent.h>
+#include <terminal/terminal_helpers.h>
 #include <process/process.h>
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
@@ -2248,7 +2249,7 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
     int32 values[4];
     CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (GetConsoleScreenBufferInfo(get_std_handle(STD_OUTPUT_HANDLE), &csbi))
     {
         values[0] = csbi.dwSize.X;
         values[1] = csbi.dwSize.Y;

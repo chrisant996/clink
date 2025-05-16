@@ -40,7 +40,7 @@ static bool is_cursor_blink_code(const wchar_t* chars)
 //------------------------------------------------------------------------------
 extern "C" int32 show_cursor(int32 visible)
 {
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
 
     if (visible)
     {
@@ -212,7 +212,7 @@ void ecma48_terminal_out::visible_bell()
         return;
 
     const bool enhanced = g_enhanced_cursor;
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE handle = get_std_handle(STD_OUTPUT_HANDLE);
 
     // Remember the cursor visibility.
     int32 was_visible = cursor_style(handle, -1, -1);
@@ -259,7 +259,7 @@ static int32 get_cap(const char* name)
 //------------------------------------------------------------------------------
 static void get_screen_size(int32& width, int32& height)
 {
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE handle = get_std_handle(STD_OUTPUT_HANDLE);
     if (handle && handle != INVALID_HANDLE_VALUE)
     {
         CONSOLE_SCREEN_BUFFER_INFO csbi;

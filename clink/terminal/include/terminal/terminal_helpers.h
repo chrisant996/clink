@@ -32,6 +32,8 @@ extern const char* get_found_ansi_handler();
 extern const char* get_ansicon_problem();
 extern bool get_is_auto_ansi_handler();
 extern void debug_show_console_mode(const DWORD* prev_mode=nullptr, const char* tag=nullptr);
+extern void override_stdio_handles(HANDLE hin, HANDLE hout);
+extern "C" HANDLE get_std_handle(DWORD n);
 
 //------------------------------------------------------------------------------
 // Scoped configuration of console mode.

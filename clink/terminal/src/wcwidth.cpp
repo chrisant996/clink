@@ -70,6 +70,7 @@
 #include "screen_buffer.h"
 #include "ecma48_iter.h"
 #include "wcwidth.h"
+#include "terminal_helpers.h"
 
 extern bool g_color_emoji;
 
@@ -686,7 +687,7 @@ void reset_cached_font()
 static void init_cached_font()
 {
   CONSOLE_FONT_INFOEX info = { sizeof(info) };
-  if (!GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), false, &info))
+  if (!GetCurrentConsoleFontEx(get_std_handle(STD_OUTPUT_HANDLE), false, &info))
   {
     ERR("unable to get console font");
     return;

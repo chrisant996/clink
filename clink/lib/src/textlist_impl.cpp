@@ -1553,7 +1553,7 @@ void textlist_impl::update_display()
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        const HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        const HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
         COORD restore = csbi.dwCursorPosition;
         const int32 vpos = _rl_last_v_pos;

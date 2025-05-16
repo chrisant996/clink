@@ -137,7 +137,7 @@ extern "C" int32 lock_cursor(int32 lock)
 extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible)
 {
     if (!handle)
-        handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        handle = get_std_handle(STD_OUTPUT_HANDLE);
 
     CONSOLE_CURSOR_INFO ci;
     GetConsoleCursorInfo(handle, &ci);
@@ -209,7 +209,7 @@ void detect_console_theme()
         return;
 
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
     if (!GCSBIEx(proc)(h, &csbix))
     {
         s_console_theme = console_theme::unknown;
@@ -323,7 +323,7 @@ const char* get_popup_colors()
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
     typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!proc || !GCSBIEx(proc)(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+    if (!proc || !GCSBIEx(proc)(get_std_handle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;30;47";
 
     WORD attr = csbiex.wPopupAttributes;
@@ -348,7 +348,7 @@ const char* get_popup_desc_colors()
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
     typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!proc || !GCSBIEx(proc)(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+    if (!proc || !GCSBIEx(proc)(get_std_handle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;90;47";
 
     int32 dim = 30;
@@ -462,6 +462,40 @@ const char* get_popup_selectdesc_colors(const char* preferred)
             s_popup_selectdesc = get_popup_select_colors();
     }
     return s_popup_selectdesc.c_str();
+}
+
+
+
+//------------------------------------------------------------------------------
+static HANDLE s_override_hstdin = 0;
+static HANDLE s_override_hstdout = 0;
+
+//------------------------------------------------------------------------------
+void override_stdio_handles(HANDLE hin, HANDLE hout)
+{
+    assert(!s_override_hstdin);
+    assert(!s_override_hstdout);
+    s_override_hstdin = hin;
+    s_override_hstdout = hout;
+}
+
+//------------------------------------------------------------------------------
+extern "C" HANDLE get_std_handle(DWORD n)
+{
+    switch (n)
+    {
+    case STD_INPUT_HANDLE:
+        if (s_override_hstdin)
+            return s_override_hstdin;
+        break;
+    case STD_OUTPUT_HANDLE:
+    case STD_ERROR_HANDLE:
+        if (s_override_hstdout)
+            return s_override_hstdout;
+        break;
+    }
+
+    return GetStdHandle(n);
 }
 
 
@@ -609,7 +643,7 @@ int32 console_config::s_nested = 0;
 
 //------------------------------------------------------------------------------
 console_config::console_config(HANDLE handle, bool accept_mouse_input)
-    : m_handle(handle ? handle : GetStdHandle(STD_INPUT_HANDLE))
+    : m_handle(handle ? handle : get_std_handle(STD_INPUT_HANDLE))
 {
 #ifdef DEBUG
     ++s_nested;
@@ -777,8 +811,8 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
         {
             DWORD mode = 0;
             CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
+            HANDLE hOut = get_std_handle(STD_OUTPUT_HANDLE);
+            if (!GetConsoleMode(get_std_handle(STD_INPUT_HANDLE), &mode))
                 return;
             if (!GetConsoleScreenBufferInfo(hOut, &csbi))
                 return;

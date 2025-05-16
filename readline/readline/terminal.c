@@ -84,11 +84,15 @@
    as it normally does with respect to terminal support. */
 #undef CUSTOM_REDISPLAY_FUNC
 #define CUSTOM_REDISPLAY_FUNC() (0)
+/* end_clink_change */
 
 #if defined (_WIN32)
 #  include <windows.h>
 #  include <wincon.h>
 
+/* begin_clink_change */
+extern HANDLE get_std_handle (DWORD n);
+/* end_clink_change */
 static void _win_get_screensize (int *, int *);
 #endif
 
@@ -265,7 +269,10 @@ _win_get_screensize (int *swp, int *shp)
   HANDLE hConOut;
   CONSOLE_SCREEN_BUFFER_INFO scr;
 
-  hConOut = GetStdHandle (STD_OUTPUT_HANDLE);
+/* begin_clink_change */
+  //hConOut = GetStdHandle (STD_OUTPUT_HANDLE);
+  hConOut = get_std_handle (STD_OUTPUT_HANDLE);
+/* end_clink_change */
   if (hConOut != INVALID_HANDLE_VALUE)
     {
       if (GetConsoleScreenBufferInfo (hConOut, &scr))

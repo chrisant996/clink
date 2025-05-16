@@ -295,9 +295,9 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
         !suppress_implicit_write_console_logging::is_suppressed())
     {
         const char* context = nullptr;
-        if (handle == GetStdHandle(STD_OUTPUT_HANDLE))
+        if (handle == get_std_handle(STD_OUTPUT_HANDLE))
             context = "CONOUT";
-        else if (handle == GetStdHandle(STD_ERROR_HANDLE))
+        else if (handle == get_std_handle(STD_ERROR_HANDLE))
             context = "CONERR";
         if (context)
         {
@@ -349,9 +349,9 @@ static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD 
         !suppress_implicit_write_console_logging::is_suppressed())
     {
         const char* context = nullptr;
-        if (handle == GetStdHandle(STD_OUTPUT_HANDLE))
+        if (handle == get_std_handle(STD_OUTPUT_HANDLE))
             context = "FILESTDOUT";
-        else if (handle == GetStdHandle(STD_ERROR_HANDLE))
+        else if (handle == get_std_handle(STD_ERROR_HANDLE))
             context = "FILESTDERR";
         if (context)
         {
