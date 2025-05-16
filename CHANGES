@@ -7,8 +7,10 @@
 - Fixed some unnecessary work that was performed when starting the Lua engine (a tiny performance boost).
 - Fixed `os.getcwd()` when the [LongPathsEnabled](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#registry-setting-to-enable-long-paths) regkey is set.
 - Fixed the application manifest for the `clink_*.exe` programs to mark them as longPathAware (this doesn't affect CMD; while Clink is injected in CMD, then CMD's manifest is what controls long path awareness).
+- Fixed the `oncommand` event when using `clink-popup-history` to select and execute a command from history.
 - Fixed [#756](https://github.com/chrisant996/clink/issues/756); Clink could potentially think it wasn't elevated when running as `LOCAL_SYSTEM` or the builtin `Administrator` account.
 - Fixed [#758](https://github.com/chrisant996/clink/issues/758); avoid crashing in a pathological case where something else abuses CMD by injecting background threads that actively garble input and output.
+- Fixed the `info` command in the Lua debugger.
 
 #### v1.7.18
 
