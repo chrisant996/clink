@@ -766,10 +766,6 @@ readline_internal_charloop (void)
 	  rl_dispatching = 1;
 	  RL_SETSTATE(RL_STATE_DISPATCHING);
 	  r = (*(_rl_command_to_execute->func)) (_rl_command_to_execute->count, _rl_command_to_execute->key);
-/* begin_clink_change */
-	  if (rl_after_dispatch_hook)
-	    (*rl_after_dispatch_hook) ();
-/* end_clink_change */
 	  _rl_command_to_execute = 0;
 	  RL_UNSETSTATE(RL_STATE_DISPATCHING);
 	  rl_dispatching = 0;
@@ -1007,10 +1003,6 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	  rl_dispatching = 1;
 	  RL_SETSTATE(RL_STATE_DISPATCHING);
 	  r = (*func) (rl_numeric_arg * rl_arg_sign, key);
-/* begin_clink_change */
-	  if (rl_after_dispatch_hook)
-	    (*rl_after_dispatch_hook) ();
-/* end_clink_change */
 	  RL_UNSETSTATE(RL_STATE_DISPATCHING);
 	  rl_dispatching = 0;
 

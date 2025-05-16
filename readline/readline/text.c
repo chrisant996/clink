@@ -76,7 +76,6 @@ int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 /* begin_clink_change */
 rl_vintfunc_t *rl_buffer_changing_hook = 0;
 rl_intfunc_t *rl_selection_event_hook = 0;
-rl_voidfunc_t *rl_after_dispatch_hook = 0;
 rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook = 0;
 int _rl_readstr_pchar = 0;
 /* end_clink_change */

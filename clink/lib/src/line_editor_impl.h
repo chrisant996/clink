@@ -85,6 +85,10 @@ public:
     void                reclassify(reclassify_reason why);
     void                try_suggest();
     void                force_update_internal(bool restrict=false);
+#ifdef DEBUG
+    bool                need_collect_words() const;
+#endif
+    void                maybe_collect_words();
     bool                notify_matches_ready(int32 generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
     uint32              collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const;
@@ -173,6 +177,7 @@ private:
     words               m_words;
     unsigned short      m_command_offset = 0;
     command_line_states m_command_line_states;
+    rl_buffer_fingerprint m_prev_words_buffer_fingerprint;
 
     bool                m_prev_plain = false;
     int32               m_prev_cursor = 0;

@@ -326,6 +326,7 @@ void line_editor_impl::begin_line()
 
     m_words.clear();
     m_command_line_states.clear();
+    m_prev_words_buffer_fingerprint.clear();
     m_classify_words.clear();
 
     m_override_needle = nullptr;
@@ -539,6 +540,22 @@ void line_editor_impl::force_update_internal(bool restrict)
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+bool line_editor_impl::need_collect_words() const
+{
+    return !(m_buffer.get_fingerprint() == m_prev_words_buffer_fingerprint);
+}
+#endif
+
+//------------------------------------------------------------------------------
+void line_editor_impl::maybe_collect_words()
+{
+    const rl_buffer_fingerprint fp = m_buffer.get_fingerprint();
+    if (!(fp == m_prev_words_buffer_fingerprint))
+        force_update_internal(false);
+}
+
+//------------------------------------------------------------------------------
 bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matches)
 {
 #ifdef DEBUG
@@ -581,6 +598,8 @@ void line_editor_impl::update_matches()
 {
     if (m_matches.is_volatile())
         reset_generate_matches();
+
+    maybe_collect_words();
 
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
@@ -880,7 +899,7 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words()
 {
-    m_module.clear_need_collect_words();
+    m_prev_words_buffer_fingerprint = m_buffer.get_fingerprint();
     m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_command_line_states);
 }
 
@@ -1192,6 +1211,8 @@ void line_editor_impl::maybe_send_oncommand_event()
     if (fp == m_prev_command_buffer_fingerprint)
         return;
 
+    maybe_collect_words();
+
     line_state line = get_linestate();
     if (line.get_word_count() <= 1)
         return;
@@ -1263,7 +1284,7 @@ void line_editor_impl::reclassify(reclassify_reason why)
 //------------------------------------------------------------------------------
 line_state line_editor_impl::get_linestate() const
 {
-    m_module.maybe_collect_words();
+    assert(!need_collect_words());
 
     if (m_buffer.has_override())
         return m_override_command_line_states.get_linestate(m_buffer);
@@ -1274,7 +1295,7 @@ line_state line_editor_impl::get_linestate() const
 //------------------------------------------------------------------------------
 line_states line_editor_impl::get_linestates() const
 {
-    m_module.maybe_collect_words();
+    assert(!need_collect_words());
 
     if (m_buffer.has_override())
         return m_override_command_line_states.get_linestates(m_buffer);
@@ -1587,6 +1608,8 @@ void line_editor_impl::try_suggest()
 //------------------------------------------------------------------------------
 bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 {
+    maybe_collect_words();
+
     line_state line = get_linestate();
     return host_call_lua_rl_global_function(func_name, &line);
 }

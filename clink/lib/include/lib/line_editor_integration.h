@@ -27,6 +27,10 @@ void set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool tr
 
 //------------------------------------------------------------------------------
 void force_update_internal(bool restrict=false);
+#ifdef DEBUG
+bool need_collect_words();
+#endif
+void maybe_collect_words();
 
 //------------------------------------------------------------------------------
 bool is_regen_blocked();

@@ -145,6 +145,28 @@ void force_update_internal(bool restrict)
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+bool need_collect_words()
+{
+    assert(s_editor);
+    if (!s_editor)
+        return false;
+
+    return s_editor->need_collect_words();
+}
+#endif
+
+//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
+void maybe_collect_words()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->maybe_collect_words();
+}
+
+//------------------------------------------------------------------------------
 // WARNING:  This calls Lua using the MAIN coroutine.
 void update_matches()
 {

@@ -122,7 +122,6 @@ editor_module::result* g_result = nullptr;
 
 static str<>        s_last_prompt;
 static str_moveable s_needle;
-static bool         s_need_collect_words = false;
 
 static suggestion_manager s_suggestion;
 
@@ -1254,12 +1253,6 @@ const char* get_last_prompt()
 }
 
 //------------------------------------------------------------------------------
-static void after_dispatch_hook()
-{
-    s_need_collect_words = true;
-}
-
-//------------------------------------------------------------------------------
 static int can_concat_undo_hook(UNDO_LIST* undo, const char* string)
 {
     const double clock = os::clock();
@@ -1275,16 +1268,6 @@ static int can_concat_undo_hook(UNDO_LIST* undo, const char* string)
     if (can)
         undo->clock = clock;
     return can;
-}
-
-//------------------------------------------------------------------------------
-static void maybe_collect_words()
-{
-    if (s_need_collect_words)
-    {
-        s_need_collect_words = false;
-        force_update_internal(false);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -1432,7 +1415,7 @@ static char** alternative_matches(const char* text, int32 start, int32 end)
 
     // If this assertion fails, the word break info may be out of sync, so a
     // fix would need to located further upstream.
-    assert(!s_need_collect_words);
+    assert(!need_collect_words());
 
     update_matches();
     const display_filter_flags flags = display_filter_flags::none;
@@ -1773,7 +1756,6 @@ static void init_readline_hooks()
     rl_read_key_hook = read_key_hook;
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
-    rl_after_dispatch_hook = after_dispatch_hook;
     rl_can_concat_undo_hook = can_concat_undo_hook;
 
     // History hooks.
@@ -2690,18 +2672,6 @@ bool rl_module::next_line(str_base& out)
 bool rl_module::is_showing_argmatchers()
 {
     return !!s_argmatcher_color;
-}
-
-//------------------------------------------------------------------------------
-void rl_module::clear_need_collect_words()
-{
-    s_need_collect_words = false;
-}
-
-//------------------------------------------------------------------------------
-void rl_module::maybe_collect_words()
-{
-    ::maybe_collect_words();
 }
 
 //------------------------------------------------------------------------------
