@@ -259,7 +259,7 @@ static int32 get_cap(const char* name)
 static void get_screen_size(int32& width, int32& height)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (handle != INVALID_HANDLE_VALUE)
+    if (handle && handle != INVALID_HANDLE_VALUE)
     {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         if (GetConsoleScreenBufferInfo(handle, &csbi))

@@ -620,8 +620,9 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     os::get_env("CLINK_DEBUG_CONSOLE_MODE", value);
     s_debug_console_mode = atoi(value.c_str());
 
-    GetConsoleMode(m_handle, &m_prev_mode);
-    save_host_input_mode(m_prev_mode);
+    const BOOL is_console = GetConsoleMode(m_handle, &m_prev_mode);
+    if (is_console)
+        save_host_input_mode(m_prev_mode);
 
     m_prev_accept_mouse_input = g_accept_mouse_input;
     g_accept_mouse_input = accept_mouse_input;
@@ -643,7 +644,7 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     mode = select_mouse_input(mode);
     mode = cleanup_console_input_mode(mode);
 
-    if (mode != m_prev_mode)
+    if (is_console && mode != m_prev_mode)
     {
         SetConsoleMode(m_handle, mode);
         debug_show_console_mode(&m_prev_mode, "config");
@@ -777,8 +778,10 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
             DWORD mode = 0;
             CONSOLE_SCREEN_BUFFER_INFO csbi = {};
             HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
-            GetConsoleScreenBufferInfo(hOut, &csbi);
+            if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
+                return;
+            if (!GetConsoleScreenBufferInfo(hOut, &csbi))
+                return;
 
             const int32 row = atoi(value.c_str());
             const char* color = (row > 0) ? ";7" : ";7;90";

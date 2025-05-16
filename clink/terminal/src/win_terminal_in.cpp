@@ -646,8 +646,8 @@ int32 win_terminal_in::end(bool can_show_cursor)
 
     if (!m_began)
     {
-        SetConsoleMode(m_stdin, m_prev_mode);
-        debug_show_console_mode(nullptr, "termend");
+        if (SetConsoleMode(m_stdin, m_prev_mode))
+            debug_show_console_mode(nullptr, "termend");
         m_stdin = nullptr;
         m_stdout = nullptr;
     }

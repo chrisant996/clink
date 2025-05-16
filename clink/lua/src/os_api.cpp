@@ -2248,11 +2248,18 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
     int32 values[4];
     CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    values[0] = csbi.dwSize.X;
-    values[1] = csbi.dwSize.Y;
-    values[2] = csbi.srWindow.Right - csbi.srWindow.Left;
-    values[3] = csbi.srWindow.Bottom - csbi.srWindow.Top;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    {
+        values[0] = csbi.dwSize.X;
+        values[1] = csbi.dwSize.Y;
+        values[2] = csbi.srWindow.Right - csbi.srWindow.Left;
+        values[3] = csbi.srWindow.Bottom - csbi.srWindow.Top;
+    }
+    else
+    {
+        values[0] = values[2] = 80;
+        values[1] = values[3] = 25;
+    }
 
     lua_createtable(state, 0, 4);
     {

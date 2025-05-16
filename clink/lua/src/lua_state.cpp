@@ -452,9 +452,10 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     DWORD modeIn, modeOut;
     HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleMode(hIn, &modeIn);
-    GetConsoleMode(hOut, &modeOut);
-    modeIn = cleanup_console_input_mode(modeIn);
+    BOOL has_modeIn = GetConsoleMode(hIn, &modeIn);
+    BOOL has_modeOut = GetConsoleMode(hOut, &modeOut);
+    if (has_modeIn)
+        modeIn = cleanup_console_input_mode(modeIn);
 
     // Calculate stack position for message handler.
     int32 hpos = lua_gettop(L) - nargs;
@@ -472,16 +473,29 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     lua_remove(L, hpos);
 
     // Restore the console mode.
-    DWORD afterIn, afterOut;
-    GetConsoleMode(hIn, &afterIn);
-    GetConsoleMode(hOut, &afterOut);
-    if (modeOut != afterOut)
-        SetConsoleMode(hOut, modeOut);
-    if (modeIn != afterIn)
+    bool different = false;
+    if (has_modeOut)
     {
-        SetConsoleMode(hIn, modeIn);
-        debug_show_console_mode(nullptr, "Lua pcall");
+        DWORD afterOut;
+        GetConsoleMode(hOut, &afterOut);
+        if (modeOut != afterOut)
+        {
+            different = true;
+            SetConsoleMode(hOut, modeOut);
+        }
     }
+    if (has_modeIn)
+    {
+        DWORD afterIn;
+        GetConsoleMode(hIn, &afterIn);
+        if (modeIn != afterIn)
+        {
+            different = true;
+            SetConsoleMode(hIn, modeIn);
+        }
+    }
+    if (different)
+        debug_show_console_mode(nullptr, "Lua pcall");
     return ret;
 }
 
