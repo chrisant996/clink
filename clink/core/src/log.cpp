@@ -8,12 +8,6 @@
 #include <stdarg.h>
 
 //------------------------------------------------------------------------------
-void LOGCURSORPOS()
-{
-    LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
-}
-
-//------------------------------------------------------------------------------
 void LOGCURSORPOS(HANDLE h)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;

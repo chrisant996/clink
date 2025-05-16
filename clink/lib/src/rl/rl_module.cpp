@@ -703,7 +703,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
     if (stream == out_stream)
     {
         assert(g_printer);
-        LOGCURSORPOS();
+        LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
         LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
 #ifdef _MSC_VER
         if (g_debug_log_output_callstacks.get())
@@ -745,7 +745,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
     }
 
     assert(false);
-    LOGCURSORPOS();
+    LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
     LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
     fwrite(chars, char_count, 1, stream);
 }
