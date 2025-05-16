@@ -71,6 +71,15 @@ else
   end
 end
 
+local function io_read(format)
+  if io.conin then
+    -- Read input directly from the console, when available.
+    return io.conin:read(format)
+  else
+    return io.read(format)
+  end
+end
+
 local bold = "\x1b[1m"
 local normal = "\x1b[m"
 local show_cursor = "\x1b[?25h"
@@ -1067,7 +1076,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
 
   while true do
     io_write(bold .. "[DEBUG]>" .. normal .. " ")
-    local line = io.read("*line")
+    local line = io_read("*line")
     if line == nil then io_write('\n'); line = 'exit' end
 
     if line == "" then
