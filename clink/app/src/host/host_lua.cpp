@@ -29,23 +29,29 @@ namespace host_lua_callbacks {
 void before_read_stdin(lua_saved_console_mode* saved, void* stream)
 {
     saved->h = 0;
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    HANDLE h_stream = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
-    if (h_stdin && h_stdin == h_stream)
-    {
-        saved->h = h_stdin;
-        use_host_input_mode();
-        saved->cursor_visible = show_cursor(1);
-    }
+
+    HANDLE h = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
+    if (!h)
+        return;
+
+    if (!lua_state::is_interpreter() && GetStdHandle(STD_INPUT_HANDLE) != h)
+        return;
+
+    if (!GetConsoleMode(h, &saved->mode))
+        return;
+
+    saved->h = h;
+    use_host_input_mode(h, saved->mode);
+    saved->cursor_visible = show_cursor(1);
 }
 
 void after_read_stdin(lua_saved_console_mode* saved)
 {
-    if (saved->h)
-    {
-        show_cursor(saved->cursor_visible);
-        use_clink_input_mode();
-    }
+    if (!saved->h)
+        return;
+
+    show_cursor(saved->cursor_visible);
+    use_clink_input_mode(saved->h);
 }
 
 };

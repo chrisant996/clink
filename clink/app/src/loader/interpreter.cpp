@@ -50,18 +50,14 @@ extern "C" {
 void before_read_stdin(lua_saved_console_mode* saved, void* stream)
 {
     saved->h = 0;
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    HANDLE h_stream = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
-    if (h_stdin && h_stdin == h_stream)
+    HANDLE h = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
+    if (h && GetConsoleMode(h, &saved->mode))
     {
-        if (GetConsoleMode(h_stdin, &saved->mode))
-        {
-            saved->h = h_stdin;
-            DWORD new_mode = saved->mode;
-            new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT;
-            new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT);
-            SetConsoleMode(h_stdin, new_mode | ENABLE_PROCESSED_INPUT);
-        }
+        saved->h = h;
+        DWORD new_mode = saved->mode;
+        new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT;
+        new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT);
+        SetConsoleMode(h, new_mode);
     }
 }
 void after_read_stdin(lua_saved_console_mode* saved)

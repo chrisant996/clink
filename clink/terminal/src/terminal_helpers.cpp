@@ -503,38 +503,32 @@ extern "C" DWORD cleanup_console_input_mode(DWORD mode)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void use_host_input_mode(void)
+extern "C" void use_host_input_mode(HANDLE h, DWORD current_mode)
 {
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    if (h && h != INVALID_HANDLE_VALUE)
-    {
-        DWORD mode = 0;
-        if (GetConsoleMode(h, &mode))
-            s_clink_input_mode = cleanup_console_input_mode(mode);
+    assert(h && h != INVALID_HANDLE_VALUE);
 
-        if (s_host_input_mode != -1 && s_host_input_mode != mode)
-        {
-            SetConsoleMode(h, s_host_input_mode);
-            debug_show_console_mode(nullptr, "host");
-        }
+    s_clink_input_mode = cleanup_console_input_mode(current_mode);
+
+    if (s_host_input_mode != -1 && s_host_input_mode != current_mode)
+    {
+        SetConsoleMode(h, s_host_input_mode);
+        debug_show_console_mode(nullptr, "host");
     }
 }
 
 //------------------------------------------------------------------------------
-extern "C" void use_clink_input_mode(void)
+extern "C" void use_clink_input_mode(HANDLE h)
 {
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    if (h && h != INVALID_HANDLE_VALUE)
-    {
-        DWORD mode = 0;
-        if (GetConsoleMode(h, &mode) && s_host_input_mode == -1)
-            s_host_input_mode = mode;
+    assert(h && h != INVALID_HANDLE_VALUE);
 
-        if (s_clink_input_mode != -1 && s_clink_input_mode != mode)
-        {
-            SetConsoleMode(h, s_clink_input_mode);
-            debug_show_console_mode(nullptr, "clink");
-        }
+    DWORD mode = 0;
+    if (GetConsoleMode(h, &mode) && s_host_input_mode == -1)
+        s_host_input_mode = mode;
+
+    if (s_clink_input_mode != -1 && s_clink_input_mode != mode)
+    {
+        SetConsoleMode(h, s_clink_input_mode);
+        debug_show_console_mode(nullptr, "clink");
     }
 }
 
