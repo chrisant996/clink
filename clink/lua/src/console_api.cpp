@@ -19,10 +19,19 @@
 #include <core/str_tokeniser.h>
 #include <lib/ellipsify.h>
 
+#include <io.h>
+#include <fcntl.h>
+
 extern "C" {
 #include <readline/readline.h>
 extern "C" int _rl_last_v_pos;
 };
+
+//------------------------------------------------------------------------------
+static HANDLE s_hconin = 0;
+static HANDLE s_hconout = 0;
+static FILE* s_fconin = nullptr;
+static FILE* s_fconout = nullptr;
 
 //------------------------------------------------------------------------------
 static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
@@ -1100,32 +1109,126 @@ static int32 set_width(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int32 use_direct_io(lua_State* state)
+static FILE* make_file_from_handle(HANDLE h, int32 flags, const char* mode)
 {
-    HANDLE hconin = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
-    HANDLE hconout = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
-    if (!hconin || !hconout)
+    HANDLE hdup = 0;
+    HANDLE hproc = GetCurrentProcess();
+    if (!DuplicateHandle(hproc, h, hproc, &hdup, 0, true, DUPLICATE_SAME_ACCESS))
+        return nullptr;
+
+    int32 fd = _open_osfhandle(intptr_t(hdup), flags);
+    if (fd < 0)
     {
-        lua_pushboolean(state, false);
-        return 1;
+        CloseHandle(hdup);
+        return nullptr;
     }
 
-    SetStdHandle(STD_INPUT_HANDLE, hconin);
-    SetStdHandle(STD_OUTPUT_HANDLE, hconout);
-    SetStdHandle(STD_ERROR_HANDLE, hconout);
+    FILE* f = _fdopen(fd, mode);
+    if (!f)
+    {
+        _close(fd);
+        return nullptr;
+    }
 
-    if (get_lua_terminal_input())
-        get_lua_terminal_input()->override_handle();
-    if (get_lua_terminal_output())
-        get_lua_terminal_output()->override_handle();
+    return f;
+}
 
-    DWORD mode;
-    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
-        SetConsoleMode(hconin, cleanup_console_input_mode(mode));
-    if (GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode))
-        SetConsoleMode(hconout, mode);
+//------------------------------------------------------------------------------
+int32 no_close(lua_State* L)
+{
+    luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(L, 1, LUA_FILEHANDLE));
+    assert(p);
+    if (!p)
+        return 0;
 
-    lua_pushboolean(state, true);
+    errno = EPERM;
+    return luaL_fileresult(L, false, nullptr);
+}
+
+//------------------------------------------------------------------------------
+static void set_lua_io_file(lua_State *state, const char* name, FILE* file)
+{
+    if (!file)
+        return;
+
+    lua_pushstring(state, name);
+
+    if (file)
+    {
+        luaL_Stream* p = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
+        luaL_setmetatable(state, LUA_FILEHANDLE);
+        p->f = file;
+        p->closef = &no_close;
+    }
+    else
+    {
+        lua_pushnil(state);
+    }
+
+    lua_rawset(state, -3);
+}
+
+//------------------------------------------------------------------------------
+static void init_io_conio(lua_State* state)
+{
+    if (s_fconin || s_fconout)
+    {
+        lua_getglobal(state, "io");
+        set_lua_io_file(state, "conin", s_fconin);
+        set_lua_io_file(state, "conout", s_fconout);
+        lua_pop(state, 1);
+    }
+}
+
+//------------------------------------------------------------------------------
+static int32 use_direct_io(lua_State* state)
+{
+    static bool s_already = false;
+
+    if (!s_already)
+    {
+        s_already = true;
+
+        s_hconin = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+        s_hconout = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+
+        if (s_hconin && s_hconout)
+        {
+            HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
+            HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+            // FUTURE:  Optionally don't override these?  But Clink relies on
+            // these in some places.
+            SetStdHandle(STD_INPUT_HANDLE, s_hconin);
+            SetStdHandle(STD_OUTPUT_HANDLE, s_hconout);
+            SetStdHandle(STD_ERROR_HANDLE, s_hconout);
+
+            // FUTURE:  Optionally don't redirect Clink's own IO?
+            if (get_lua_terminal_input())
+                get_lua_terminal_input()->override_handle();
+            if (get_lua_terminal_output())
+                get_lua_terminal_output()->override_handle();
+
+            DWORD mode;
+            if (GetConsoleMode(hstdin, &mode))
+                SetConsoleMode(s_hconin, cleanup_console_input_mode(mode));
+            if (GetConsoleMode(hstdout, &mode))
+                SetConsoleMode(s_hconout, mode);
+
+            s_fconin = make_file_from_handle(s_hconin, _O_RDONLY|_O_TEXT, "r");
+            s_fconout = make_file_from_handle(s_hconout, _O_WRONLY|_O_TEXT, "w");
+
+            // FUTURE:  Update debugger.lua to always use conin/conout?
+            // FUTURE:  Always init conin/conout in the standalone
+            // interpreter, and console.usedirectio() would only be about
+            // redirecting Clink's own IO?
+            // FUTURE:  Make sure io.conout:write() goes through
+            // ecma_terminal_out.
+            init_io_conio(state);
+        }
+    }
+
+    lua_pushboolean(state, s_hconin && s_hconout);
     return 1;
 }
 
@@ -1186,6 +1289,8 @@ void console_lua_initialise(lua_state& lua, bool lua_interpreter)
             lua_pushcfunction(state, method.method);
             lua_rawset(state, -3);
         }
+
+        init_io_conio(state);
     }
 
     lua_setglobal(state, "console");
