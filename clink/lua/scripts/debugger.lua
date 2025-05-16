@@ -206,10 +206,14 @@ end
 local function dump_order(t, a, b)
   local ta = type(a)
   local tb = type(b)
-  if ta == tb then
-    return a < b
-  else
+  if ta ~= tb then
     return ta < tb
+  elseif ta == "function" then
+    return tostring(a) < tostring(b)
+  elseif ta == "boolean" then
+    return (not a) and (b) and true or false
+  else
+    return a < b
   end
 end
 
