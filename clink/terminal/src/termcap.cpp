@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "terminal_out.h"
 #include "terminal_helpers.h"
+#include "ecma48_terminal_out.h"
 #include "screen_buffer.h"
 
 #include <core/base.h>
@@ -152,7 +153,7 @@ static void fetch_term_string(const char* envvar, wstr_moveable& out)
 }
 
 //------------------------------------------------------------------------------
-void terminal_out::init_termcap_intercept()
+void ecma48_terminal_out::init_termcap_intercept()
 {
     fetch_term_string("CLINK_TERM_VE", s_term_ve);
     fetch_term_string("CLINK_TERM_VS", s_term_vs);
@@ -162,7 +163,7 @@ void terminal_out::init_termcap_intercept()
 // Returns:
 //  - false = not intercepted; process normally.
 //  - true  = intercepted and handled.
-bool terminal_out::do_termcap_intercept(const char* chars)
+bool ecma48_terminal_out::do_termcap_intercept(const char* chars)
 {
     // If it's the 've' or 'vs' termcap string and there's a custom string then
     // use the custom string.  And if the custom string is exactly and only a
@@ -205,7 +206,7 @@ bool terminal_out::do_termcap_intercept(const char* chars)
 }
 
 //------------------------------------------------------------------------------
-void terminal_out::visible_bell()
+void ecma48_terminal_out::visible_bell()
 {
     if (!g_adjust_cursor_style.get())
         return;
@@ -218,9 +219,9 @@ void terminal_out::visible_bell()
 
     // Use the opposite cursor style from whatever is currently active.
     if (enhanced)
-        write(c_default_term_ve);
+        terminal_out::write(c_default_term_ve);
     else
-        write(c_default_term_vs);
+        terminal_out::write(c_default_term_vs);
 
     // Not sure why the cursor position gets refreshed here.  Maybe it resets
     // the blink timer?
@@ -234,9 +235,9 @@ void terminal_out::visible_bell()
 
     // Restore the previous cursor style.  Also shows the cursor.
     if (enhanced)
-        write(c_default_term_vs);
+        terminal_out::write(c_default_term_vs);
     else
-        write(c_default_term_ve);
+        terminal_out::write(c_default_term_ve);
 
     // If the cursor was not previously visible, hide it.
     if (!was_visible)

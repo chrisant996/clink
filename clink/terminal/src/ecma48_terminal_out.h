@@ -29,6 +29,10 @@ public:
     virtual int32       line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const override;
     virtual int32       find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const override;
 
+    static void         init_termcap_intercept();
+    bool                do_termcap_intercept(const char* chars);
+    void                visible_bell();
+
 private:
     void                write_c1(const ecma48_code& code);
     void                write_c0(int32 c0);

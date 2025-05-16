@@ -29,10 +29,6 @@ public:
     virtual int32           is_line_default_color(int32 line) const = 0;
     virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const = 0;
     virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const = 0;
-
-    static void             init_termcap_intercept();
-    bool                    do_termcap_intercept(const char* chars);
-    void                    visible_bell();
 };
 
 //------------------------------------------------------------------------------
