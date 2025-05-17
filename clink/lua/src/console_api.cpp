@@ -1197,14 +1197,31 @@ static int32 use_direct_io(lua_State* state)
             HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
             HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
-            // FUTURE:  Optionally don't override these?  But Clink relies on
-            // these in some places.
+            // FUTURE:  Maybe the first call to console.usedirectio(...) could
+            // create the conin/conout handles.  And passing true (or nil)
+            // could mean save the stdio handles and replace them with conio
+            // handles.  And passing false could mean restore the stdio
+            // handles.
+            //
+            // That could give scripts maximum freedom:
+            //  - console.usedirectio(false) would mean they could use
+            //    io.conin and io.conout for direct console IO, and everything
+            //    else would continue to go to stdio handles.
+            //  - console.usedirectio(true) would mean everything would go to
+            //    conio handles.
+            //      - Should io.stdin/etc swap to the conio handles?
+            //      - If not, then the Lua engine might need changes if there
+            //        are places where it internally uses the io.stdin/etc
+            //        variables.
+            //  - And scripts could use console.usedirectio(...) repeatedly,
+            //    to toggle where print() and etc write to.
+
+            // FUTURE:  Optionally don't override these?
             if (true)
             {
                 SetStdHandle(STD_INPUT_HANDLE, s_hconin);
                 SetStdHandle(STD_OUTPUT_HANDLE, s_hconout);
                 SetStdHandle(STD_ERROR_HANDLE, s_hconout);
-                // FUTURE:  What about reset_stdio_handles()?
             }
 
             // FUTURE:  Optionally don't redirect Clink's own IO?
