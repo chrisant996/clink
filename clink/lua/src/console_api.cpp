@@ -28,10 +28,31 @@ extern "C" int _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------
-static HANDLE s_hconin = 0;
-static HANDLE s_hconout = 0;
-static FILE* s_fconin = nullptr;
-static FILE* s_fconout = nullptr;
+struct stdcon_handle_info
+{
+    void        init(DWORD n, FILE* f)
+                {
+                    assert(!m_handle);
+                    assert(!m_file);
+                    DWORD mode;
+                    m_handle = GetStdHandle(n);
+                    m_file = f;
+                    m_is_console = m_handle && !!GetConsoleMode(m_handle, &mode);
+                    m_is_input = (n == STD_INPUT_HANDLE);
+                }
+
+    HANDLE      m_handle;
+    FILE*       m_file;
+    bool        m_is_console;
+    bool        m_is_input;
+};
+static stdcon_handle_info s_stdin = {};
+static stdcon_handle_info s_stdout = {};
+static stdcon_handle_info s_stderr = {};
+static stdcon_handle_info s_conin = {};
+static stdcon_handle_info s_conout = {};
+
+
 
 //------------------------------------------------------------------------------
 static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
@@ -1171,89 +1192,104 @@ static void set_lua_io_file(lua_State *state, const char* name, FILE* file)
 //------------------------------------------------------------------------------
 static void init_io_conio(lua_State* state)
 {
-    if (s_fconin || s_fconout)
+    if (s_conin.m_file || s_conout.m_file)
     {
         lua_getglobal(state, "io");
-        set_lua_io_file(state, "conin", s_fconin);
-        set_lua_io_file(state, "conout", s_fconout);
+        set_lua_io_file(state, "conin", s_conin.m_file);
+        set_lua_io_file(state, "conout", s_conout.m_file);
         lua_pop(state, 1);
     }
 }
 
 //------------------------------------------------------------------------------
+static void copy_console_mode(stdcon_handle_info& from, stdcon_handle_info& to)
+{
+    assert(from.m_is_input == to.m_is_input);
+    if (!from.m_is_console || !to.m_is_console)
+        return;
+
+    DWORD mode;
+    if (!GetConsoleMode(from.m_handle, &mode))
+        return;
+
+    if (to.m_is_input)
+        mode = cleanup_console_input_mode(mode);
+
+    SetConsoleMode(to.m_handle, mode);
+}
+
+//------------------------------------------------------------------------------
 static int32 use_direct_io(lua_State* state)
 {
-    static bool s_already = false;
+    // The first call to console.usedirectio(...) creates the io.conin and
+    // io.conout handles.  Each call returns the current mode as "stdio" or
+    // "conio".
+    //
+    // That gives scripts maximum freedom:
+    //  - Passing false makes Clink and print() and clink.print() use stdio.
+    //  - Passing true makes Clink and print() and clink.print() use conio.
+    //  - Passing nil doesn't change the mode; it just returns the current
+    //    mode ("stdio" or "conio").
 
+    const int32 which = (lua_isnil(state, -1) ? -1 : lua_toboolean(state, -1));
+
+    // Only initialize the direct console handles once.
+    static bool s_already = false;
     if (!s_already)
     {
         s_already = true;
 
-        s_hconin = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
-        s_hconout = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+        s_stdin.init(STD_INPUT_HANDLE, stdin);
+        s_stdout.init(STD_OUTPUT_HANDLE, stdout);
+        s_stderr.init(STD_ERROR_HANDLE, stderr);
 
-        if (s_hconin && s_hconout)
+        assert(!s_conin.m_handle);
+        assert(!s_conout.m_handle);
+        s_conin.m_handle = CreateFile("CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+        s_conout.m_handle = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+
+        if (s_conin.m_handle && s_conout.m_handle)
         {
-            HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
-            HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+            s_conin.m_file = make_file_from_handle(s_conin.m_handle, _O_RDONLY|_O_TEXT, "r");
+            s_conout.m_file = make_file_from_handle(s_conout.m_handle, _O_WRONLY|_O_TEXT, "w");
 
-            // FUTURE:  Maybe the first call to console.usedirectio(...) could
-            // create the conin/conout handles.  And passing true (or nil)
-            // could mean save the stdio handles and replace them with conio
-            // handles.  And passing false could mean restore the stdio
-            // handles.
-            //
-            // That could give scripts maximum freedom:
-            //  - console.usedirectio(false) would mean they could use
-            //    io.conin and io.conout for direct console IO, and everything
-            //    else would continue to go to stdio handles.
-            //  - console.usedirectio(true) would mean everything would go to
-            //    conio handles.
-            //      - Should io.stdin/etc swap to the conio handles?
-            //      - If not, then the Lua engine might need changes if there
-            //        are places where it internally uses the io.stdin/etc
-            //        variables.
-            //  - And scripts could use console.usedirectio(...) repeatedly,
-            //    to toggle where print() and etc write to.
+            s_conin.m_is_input = true;
+            s_conin.m_is_console = true;
+            s_conout.m_is_console = true;
 
-            // FUTURE:  Optionally don't override these?
-            if (true)
-            {
-                SetStdHandle(STD_INPUT_HANDLE, s_hconin);
-                SetStdHandle(STD_OUTPUT_HANDLE, s_hconout);
-                SetStdHandle(STD_ERROR_HANDLE, s_hconout);
-            }
+            copy_console_mode(s_stdin, s_conin);
+            copy_console_mode(s_stdout, s_conout);
 
-            // FUTURE:  Optionally don't redirect Clink's own IO?
-            if (true)
-            {
-                override_stdio_handles(s_hconin, s_hconout);
-                if (get_lua_terminal_input())
-                    get_lua_terminal_input()->override_handle();
-                if (get_lua_terminal_output())
-                    get_lua_terminal_output()->override_handle();
-            }
-
-            DWORD mode;
-            if (GetConsoleMode(hstdin, &mode))
-                SetConsoleMode(s_hconin, cleanup_console_input_mode(mode));
-            if (GetConsoleMode(hstdout, &mode))
-                SetConsoleMode(s_hconout, mode);
-
-            s_fconin = make_file_from_handle(s_hconin, _O_RDONLY|_O_TEXT, "r");
-            s_fconout = make_file_from_handle(s_hconout, _O_WRONLY|_O_TEXT, "w");
-
-            // FUTURE:  Update debugger.lua to always use conin/conout?  The
-            // debugger would have to call some API to init conin/conout, but
-            // without redirecting the rest of Clink's IO until/unless
-            // specifically requested by something later.
-            // FUTURE:  Make sure io.conout:write() goes through
-            // ecma_terminal_out.
+// TODO:  Make sure io.conout:write() goes through ecma_terminal_out.
+// TODO:  How should io.conin:read() behave?
             init_io_conio(state);
         }
     }
 
-    lua_pushboolean(state, s_hconin && s_hconout);
+    // IMPORTANT:  This doesn't override the STD handles, so that piping
+    // continues to work how it normally would.
+
+    // FUTURE:  Update debugger.lua to always use direct console IO?  The
+    // debugger would have to call this to init io.conin and io.conout, but
+    // without redirecting the rest of Clink's IO (until/unless specifically
+    // requested by something later).
+
+    static bool s_use_conio = false;
+    if (which >= 0)
+    {
+        s_use_conio = (which >= 1);
+        if (s_use_conio)
+            override_stdio_handles(s_conin.m_handle, s_conout.m_handle);
+        else
+            override_stdio_handles(0, 0);
+
+        if (get_lua_terminal_input())
+            get_lua_terminal_input()->override_handle();
+        if (get_lua_terminal_output())
+            get_lua_terminal_output()->override_handle();
+    }
+
+    lua_pushstring(state, s_use_conio ? "conio" : "stdio");
     return 1;
 }
 

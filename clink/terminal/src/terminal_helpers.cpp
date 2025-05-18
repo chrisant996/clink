@@ -473,8 +473,6 @@ static HANDLE s_override_hstdout = 0;
 //------------------------------------------------------------------------------
 void override_stdio_handles(HANDLE hin, HANDLE hout)
 {
-    assert(!s_override_hstdin);
-    assert(!s_override_hstdout);
     s_override_hstdin = hin;
     s_override_hstdout = hout;
 }
