@@ -1039,10 +1039,10 @@ extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* 
             }
 
             // g_printer is needed for terminal emulation.
-            assertimplies(stream != stderr, g_printer);
+            assert(g_printer);
 
             // Print the buffer.
-            if (stream != stderr && g_printer)
+            if (g_printer)
             {
                 g_printer->print(static_cast<const char*>(buffer), uint32(count));
             }
