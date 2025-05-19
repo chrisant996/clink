@@ -576,12 +576,18 @@ static int g_write (lua_State *L, FILE *f, int arg) {
     if (lua_type(L, arg) == LUA_TNUMBER) {
       /* optimization: could be done exactly as for strings */
       status = status &&
-          fprintf(f, LUA_NUMBER_FMT, lua_tonumber(L, arg)) > 0;
+/* begin_clink_change */
+          //fprintf(f, LUA_NUMBER_FMT, lua_tonumber(L, arg)) > 0;
+          lua_fprintf(f, LUA_NUMBER_FMT, lua_tonumber(L, arg)) > 0;
+/* end_clink_change */
     }
     else {
       size_t l;
       const char *s = luaL_checklstring(L, arg, &l);
-      status = status && (fwrite(s, sizeof(char), l, f) == l);
+/* begin_clink_change */
+      //status = status && (fwrite(s, sizeof(char), l, f) == l);
+      status = status && (lua_fwrite(s, sizeof(char), l, f) == l);
+/* end_clink_change */
     }
   }
   if (status) return 1;  /* file handle already on stack top */

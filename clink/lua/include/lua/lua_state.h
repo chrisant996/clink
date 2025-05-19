@@ -146,6 +146,8 @@ void get_lua_srcinfo(lua_State* L, str_base& out);
 void set_lua_terminal(terminal_in* in, terminal_out* out);
 terminal_in* get_lua_terminal_input();
 terminal_out* get_lua_terminal_output();
+void set_lua_conout(FILE* file);
+bool is_lua_conout(FILE* file);
 
 //------------------------------------------------------------------------------
 // Dumps from pos to top of stack (use negative pos for relative position, use

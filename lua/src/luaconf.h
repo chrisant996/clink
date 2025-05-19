@@ -216,7 +216,8 @@
 #   ifdef __cplusplus
 extern "C" {
 #   endif // __cplusplus
-extern void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream);
+extern size_t lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream);
+extern int lua_fprintf(FILE* stream, const char* format, ...);
 #   ifdef __cplusplus
 }
 #   endif // __cplusplus

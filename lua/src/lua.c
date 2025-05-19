@@ -51,9 +51,18 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 /* end_clink_change */
 
 /* begin_clink_change */
-void lua_fwrite(const void* buffer, size_t size, size_t count, FILE* stream)
+size_t lua_fwrite(const void* buffer, size_t size, size_t count, FILE* stream)
 {
-    fwrite(buffer, size, count, stream);
+    return fwrite(buffer, size, count, stream);
+}
+
+int lua_fprintf(FILE* stream, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    const int ret = vfprintf_s(stream, format, args);
+    va_end(args);
+    return ret;
 }
 /* end_clink_change */
 

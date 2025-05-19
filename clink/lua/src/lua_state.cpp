@@ -1004,8 +1004,13 @@ terminal_in* get_lua_terminal_input() { return s_lua_term_in; }
 terminal_out* get_lua_terminal_output() { return s_lua_term_out; }
 
 //------------------------------------------------------------------------------
+static FILE* s_lua_conout = nullptr;
+void set_lua_conout(FILE* file) { s_lua_conout = file; }
+bool is_lua_conout(FILE* file) { return s_lua_conout && file == s_lua_conout; }
+
+//------------------------------------------------------------------------------
 bool g_direct_lua_fwrite = false;
-extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream)
+extern "C" size_t lua_fwrite(void const* buffer, size_t size, size_t count, FILE* stream)
 {
     // The C runtime implementation of fwrite has two undesirable
     // characteristics when printing a UTF8 string:  it performs one
@@ -1015,7 +1020,7 @@ extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* 
     // This replacement for fwrite adds optional logging and converts from
     // UTF8 to UTF16 when writing to a console handle.
 
-    if ((stream == stderr || stream == stdout) && size == 1 && !(count & ~uint32(0x7fffffff)) && !g_direct_lua_fwrite)
+    if ((stream == stderr || stream == stdout || is_lua_conout(stream)) && size == 1 && !(count & ~uint32(0x7fffffff)) && !g_direct_lua_fwrite)
     {
         suppress_implicit_write_console_logging nolog;
 
@@ -1055,11 +1060,39 @@ extern "C" void lua_fwrite(void const* buffer, size_t size, size_t count, FILE* 
                 // Write in a single OS console call.
                 WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
             }
-            return;
+            return count;
         }
     }
 
-    fwrite(buffer, size, count, stream);
+    return fwrite(buffer, size, count, stream);
+}
+
+//------------------------------------------------------------------------------
+extern "C" int lua_fprintf(FILE* stream, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    str_moveable tmp;
+    tmp.vformat(format, args);
+
+    int ret = 0;
+    if (!tmp.empty())
+    {
+        const size_t ret2 = lua_fwrite(tmp.c_str(), 1, tmp.length(), stream);
+        if (ret2)
+        {
+            assert(!(ret2 & ~0x7fffffff));
+            ret = int(ret2);
+        }
+        else
+        {
+            ret = -1;
+        }
+    }
+
+    va_end(args);
+    return ret;
 }
 
 
