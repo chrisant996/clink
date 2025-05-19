@@ -1260,7 +1260,6 @@ static int32 use_direct_io(lua_State* state)
             copy_console_mode(s_stdin, s_conin);
             copy_console_mode(s_stdout, s_conout);
 
-// TODO:  How should io.conin:read() behave?
             init_io_conio(state);
             set_lua_conout(s_conout.m_file);
         }
