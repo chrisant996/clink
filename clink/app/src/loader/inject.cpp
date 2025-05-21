@@ -179,6 +179,9 @@ static int32 check_dll_version(const char* clink_dll)
 struct wait_monitor : public process_wait_callback
 {
     wait_monitor(const char* op) : m_op(op)
+#ifdef DEBUG
+        , m_wait_mode(get_wait_for_attach())
+#endif
     {
         GetLocalTime(&m_started);
     }
@@ -188,6 +191,9 @@ struct wait_monitor : public process_wait_callback
         switch (wait_result)
         {
         case WAIT_TIMEOUT:
+#ifdef DEBUG
+            if (m_wait_mode == wait_for_attach_mode::NONE)
+#endif
             {
                 static const char c_msg_slow[] =
                     " is taking a long time...";
@@ -242,6 +248,9 @@ private:
     const char* m_op = "Something";
     SYSTEMTIME m_started;
     DWORD m_elapsed = 0;
+#ifdef DEBUG
+    const wait_for_attach_mode m_wait_mode;
+#endif
 };
 
 //------------------------------------------------------------------------------

@@ -53,3 +53,9 @@ private:
     str<16>     m_host_name;
     mutable str_moveable m_validated;
 };
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+enum class wait_for_attach_mode { NONE, WAIT, CTRL500 };
+wait_for_attach_mode get_wait_for_attach();
+#endif

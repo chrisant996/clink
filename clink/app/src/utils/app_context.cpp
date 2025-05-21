@@ -37,6 +37,26 @@ static setting_str g_clink_autostart(
 
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+wait_for_attach_mode get_wait_for_attach()
+{
+    DWORD type;
+    DWORD data;
+    DWORD size = sizeof(data);
+    LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"WaitForAttach", RRF_RT_REG_DWORD, &type, &data, &size);
+    if (status == ERROR_SUCCESS && type == REG_DWORD)
+    {
+        switch (data)
+        {
+        case 1: return wait_for_attach_mode::WAIT;
+        case 2: return wait_for_attach_mode::CTRL500;
+        }
+    }
+    return wait_for_attach_mode::NONE;
+}
+#endif
+
+//------------------------------------------------------------------------------
 void get_installed_scripts(str_base& out)
 {
     out.clear();

@@ -128,15 +128,13 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
 #ifdef DEBUG
     {
-        DWORD type;
-        DWORD data;
-        DWORD size = sizeof(data);
-        LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"WaitForAttach", RRF_RT_REG_DWORD, &type, &data, &size);
-        if (status == ERROR_SUCCESS && type == REG_DWORD)
+        const wait_for_attach_mode wait_mode = get_wait_for_attach();
+        if (wait_mode != wait_for_attach_mode::NONE)
         {
-            bool wait = (data == 1);
-            if (data == 2)
+            bool wait = (wait_mode == wait_for_attach_mode::WAIT);
+            if (wait_mode == wait_for_attach_mode::CTRL500)
             {
+                // Wait for attach if CTRL is held for more than 500 ms.
                 const DWORD began = GetTickCount();
                 while (GetKeyState(VK_CONTROL) < 0)
                 {
