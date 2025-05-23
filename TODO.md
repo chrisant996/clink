@@ -17,7 +17,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
     - Watch out for back-compat:  Consider making _new API functions_ for adding one-time event handlers.  Adding an optional parameter is dangerous because a script author could use it without taking steps to ensure backward compatibility, and then potentially significant malfunctions could occur.  And anyway, probably only a small number of events would actually need support for one-time handlers (maybe even only `onbeginedit`).
-- Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
@@ -29,7 +28,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
-- line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?
 
 ## Argmatcher syntax
 - See the argmatcher_syntax branch.
@@ -99,6 +97,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 
 ## Punt
+- Some wizard for interactively binding/unbinding keys and changing init file settings; can write back to the .inputrc file.  _[This is something that fits better in a script, perhaps in clink-gizmos, if at all.]_
+- line_state parsed `foo^ bar` as a single word "foo^ bar", but CMD parses it as two words "foo" and "bar".  The parser is fixed now, but what about downstream edge cases where things check the next character after a word (or try to skip a run of spaces but get confused by `foo ^ ^ bar`)?  _[Not worth spending time on this outlier edge case until/unless someone can present a compelling situation.]_
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Not fixed by [bb870fc494](https://github.com/chrisant996/clink/commit/bb870fc49472a64bc1ea9194fe941a4948362d30).]_ _[Have not seen for many weeks.]_ _[Likely due to `ENABLE_VIRTUAL_TERMINAL_INPUT` and largely mitigated by [a8d80b752a](https://github.com/chrisant996/clink/commit/a8d80b752a3c4ff8660debeec0133a009fb04051).]_ _[Root cause is https://github.com/microsoft/terminal/issues/15711]_
   - It continues to happen.  Repro is something like this:  run some command like `git pull`; while it's running type a few letters and then the UP key; when the command finishes the input line will contain `[A`.
   - It might be that 15711 isn't fixed yet, or it could be an inherent problem in toggling `ENABLE_VIRTUAL_TERMINAL_INPUT`.  The console subsystem seems to process input before it's actually read.  If that's indeed what's happening, then that is probably too big of a change for the OS to make (e.g. risk of regression for breaking app scenarios that currently rely on that behavior to work).
