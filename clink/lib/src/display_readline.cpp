@@ -90,6 +90,7 @@ extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
 static bool s_ever_input_hint = false;
+static bool s_transient_prompt_context = false;
 bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
@@ -1399,6 +1400,14 @@ void display_accumulator::fflush_proc(FILE*)
 
 
 //------------------------------------------------------------------------------
+transient_prompt_context::transient_prompt_context(bool is_transient)
+: m_rollback(s_transient_prompt_context, is_transient)
+{
+}
+
+
+
+//------------------------------------------------------------------------------
 class display_manager
 {
 public:
@@ -1452,6 +1461,7 @@ private:
     bool                m_last_modmark = false;
     bool                m_horz_scroll = false;
     bool                m_clear_to_end_of_screen_on_next_display = false;
+    bool                m_is_transient = false;
 
     const bool          m_autowrap_bug;
     HANDLE              m_horizpos_workaround = nullptr;
@@ -1518,6 +1528,8 @@ void display_manager::clear()
     m_last_point = -1;
     m_last_modmark = false;
     m_horz_scroll = false;
+    m_clear_to_end_of_screen_on_next_display = false;
+    m_is_transient = false;
 
     m_pending_wrap = false;
     m_pending_wrap_display = nullptr;
@@ -1716,8 +1728,15 @@ void display_manager::display()
         rl_display_prompt = const_cast<char *>("");
     }
 
+    // Latch the display_manager into transient mode until the next reset.
+    // This ensures the comment row cannot accidentally show up during a
+    // transient prompt (e.g. from an input hint).
+    if (s_transient_prompt_context)
+        m_is_transient = true;
+
     // Is history expansion preview desired?
-    const bool want_histexpand_preview = (!g_display_manager_no_comment_row &&
+    const bool want_histexpand_preview = (!m_is_transient &&
+                                          !g_display_manager_no_comment_row &&
                                           g_history_show_preview.get() &&
                                           g_history_autoexpand.get() &&
                                           g_expand_mode.get() > 0);
@@ -2036,7 +2055,7 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
-    if (need_update && _rl_vis_botlin < _rl_screenheight && !g_display_manager_no_comment_row)
+    if (need_update && _rl_vis_botlin < _rl_screenheight && !m_is_transient && !g_display_manager_no_comment_row)
     {
         str_moveable in;
         if (m_forced_comment_row_cursorpos == rl_point)
@@ -2861,6 +2880,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
 //------------------------------------------------------------------------------
 extern "C" void reset_display_readline(void)
 {
+    s_transient_prompt_context = false;
     s_display_manager.on_new_line();
 
 #ifdef REPORT_REDISPLAY

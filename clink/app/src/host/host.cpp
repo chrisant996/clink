@@ -668,12 +668,6 @@ void host::filter_transient_prompt(const bool final)
         prompt = filter_prompt(&rprompt, ok, false/*transient*/);
         set_prompt(prompt, rprompt, false/*redisplay*/);
     }
-    else
-    {
-        // Must ensure display_manager gets reset, so it doesn't try to
-        // optimize away printing the new prompt.
-        reset_display_readline();
-    }
 }
 
 //------------------------------------------------------------------------------

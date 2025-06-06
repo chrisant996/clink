@@ -2637,15 +2637,20 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
         if (transient)
             reset_display_readline();
         defer_clear_lines(clear_lines, transient);
-        rl_forced_update_display();
+
+        {
+            // Let readline_display know whether it's a transient prompt, so
+            // it can keep the comment row disabled until the display manager
+            // gets reset.
+            transient_prompt_context tpc(transient);
+
+            rl_forced_update_display();
+        }
 
         lock_cursor(false);
         if (was_visible)
             show_cursor(true);
     }
-
-    if (transient)
-        reset_display_readline();
 }
 
 //------------------------------------------------------------------------------

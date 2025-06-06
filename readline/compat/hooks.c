@@ -317,6 +317,10 @@ void end_prompt(int crlf)
     _rl_last_v_pos = 0;
     _rl_vis_botlin = 0;
 
+    // Must ensure display_manager gets reset, so it doesn't try to optimize
+    // away printing the next prompt.
+    reset_display_readline();
+
     // Block any further prompt display if this is final.
     if (crlf < 0)
         uninit_display_readline();

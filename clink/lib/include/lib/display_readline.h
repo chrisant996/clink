@@ -115,3 +115,14 @@ private:
     static int32    s_nested;
     static bool     s_active;
 };
+
+//------------------------------------------------------------------------------
+// Transient prompt context.
+class transient_prompt_context
+{
+public:
+                    transient_prompt_context(bool is_transient);
+                    ~transient_prompt_context() = default;
+private:
+    rollback<bool>  m_rollback;
+};
