@@ -952,8 +952,6 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 
     seh_scope seh;
 
-    DWORD ret = __Real_GetEnvironmentVariableW(lpName, lpBuffer, nSize);
-
     if (!s_initialised_system) // In case detaching fails.
     {
         s_initialised_system = true;
@@ -965,7 +963,9 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
         host_cmd::get()->initialise_system();
     }
 
-    return ret;
+    // This has to go after the initialise_system() call otherwise the
+    // tag_prompt() call inside it may accidentally have no effect.
+    return __Real_GetEnvironmentVariableW(lpName, lpBuffer, nSize);
 }
 
 //------------------------------------------------------------------------------
