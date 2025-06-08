@@ -5,6 +5,7 @@
 #### v1.7.20
 
 - Fixed [#763](https://github.com/chrisant996/clink/issues/763); transient prompt has blank line after it if the input line is the width of the terminal (regression introduced in v1.7.0).
+- Fixed [#765](https://github.com/chrisant996/clink/issues/765); inside a batch script, `setlocal` interferes with injecting Clink (regression introduced in v1.1.1).
 
 #### v1.7.19
 
