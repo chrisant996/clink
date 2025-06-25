@@ -89,9 +89,6 @@ end
 --------------------------------------------------------------------------------
 function file_match_generator:generate(line_state, match_builder) -- luacheck: no self
     local root = line_state:getendword()
-    if root == "~" then
-        root = path.join(root, "")
-    end
     match_builder:addmatches(clink.filematches(root))
     return true
 end
