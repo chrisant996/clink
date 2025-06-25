@@ -1944,10 +1944,7 @@ int32 expand_env(lua_State* state)
 /// -name:  os.getenvnames
 /// -ver:   1.0.0
 /// -ret:   table
-/// Returns all environment variables in a table with the following scheme:
-/// -show:  local t = os.getenvnames()
-/// -show:  -- t[index].name        [string] The environment variable's name.
-/// -show:  -- t[index].value       [string] The environment variable's value.
+/// Returns a table of environment variable name strings.
 int32 get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
