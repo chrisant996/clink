@@ -1061,21 +1061,16 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>Or by using <a href="https://scoop.sh/">scoop</a> and running <code>scoop install clink</code>.</p>
 <p>Or by downloading the ZIP file from <a href="https://github.com/chrisant996/clink/releases">releases page</a>, and extracting the files to a directory of your choosing.</p>
 <h3 id="using-clink"><a class="wlink" href="#using-clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Using Clink <span class="uplinks"><a href="#usage">up</a> <a href="#toc">top</a></span></h3>
-<p>Once installed, there are several ways to start Clink.</p>
+<p>Clink works by being injected it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
+<p>Once Clink is installed, there are several ways to start it.</p>
 <ol>
-<li>If Clink is configured for autorun, just start <code>cmd.exe</code> and Clink is automatically injected and ready to use.</li>
+<li><strong>Autorun.</strong>  Clink can be configured to start automatically whenever <code>cmd.exe</code> is started.  If you use the Setup EXE to install Clink, it has an option for &quot;Autorun when cmd.exe starts&quot;.  If you didn&#39;t use the Setup EXE, or if you want to change the autorun configuration later, you can use <code>clink autorun install</code> or <code>clink autorun uninstall</code>.  Run <code>clink autorun --help</code> for more info.</li>
+<li><strong>Manual start.</strong>  You can run the Clink shortcut from the Start menu (or the clink.bat file located in the install directory).</li>
+<li><strong>Inject into an existing <code>cmd.exe</code> process.</strong>  In a <code>cmd.exe</code> process that doesn&#39;t have Clink yet, you can run <code>clink inject</code>.</li>
 </ol>
 <blockquote>
-<p>The setup EXE has an option &quot;Autorun when cmd.exe starts&quot;.  If you didn&#39;t use the setup EXE, or if you want to enable or disable autorun later, you can run <code>clink autorun install</code> or <code>clink autorun uninstall</code> to change the autorun configuration.  Run <code>clink autorun --help</code> for more info.</p>
+<p>If the Clink install directory isn&#39;t in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of <code>clink</code> to run Clink commands.  Once Clink is injected into a <code>cmd.exe</code> process, then it automatically sets a doskey alias so that you can simply use <code>clink</code>.</p>
 </blockquote>
-<ol start="2">
-<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
-<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>clink inject</code>.</li>
-</ol>
-<blockquote>
-<p>If the Clink install directory isn&#39;t in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of <code>clink</code> to run Clink commands.  Once Clink is injected into a <code>cmd.exe</code> process, then it automatically sets an alias so that you can simply use <code>clink</code>.</p>
-</blockquote>
-<p>Starting Clink injects it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
 <h1 id="getting-started"><a class="wlink" href="#getting-started"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Getting Started <span class="uplinks"><a href="#toc">top</a></span></h1>
 <p>You can use Clink right away without configuring anything:</p>
 <ul>
@@ -8091,9 +8086,7 @@ end</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.getenv" class="name"><a class="wlink" href="#os.getenv"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.getenv</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> <strong>Note:</strong> Certain environment variable names receive special treatment:</p><p class="desc"> <table> <tr><th>Name</th><th>Special Behavior</th></tr> <tr><td><code>"CD"</code></td><td>If %CD% is not set then a return value is synthesized from the current working directory path name.</td></tr> <tr><td><code>"CMDCMDLINE"</code></td><td>If %CMDCMDLINE% is not set then this returns the command line that started the CMD process.</td></tr> <tr><td><code>"ERRORLEVEL"</code></td><td>If %ERRORLEVEL% is not set and the <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting is enabled this returns the most recent exit code, just like the <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns 0.</td></tr> <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</td></tr> <tr><td><code>"RANDOM"</code></td><td>If %RANDOM% is not set then this returns a random integer.</td></tr> </table></p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="os.getenvnames" class="name"><a class="wlink" href="#os.getenvnames"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.getenvnames</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme:</p><pre class="language-lua"><code>local t = os.getenvnames()
--- t[index].name        [string] The environment variable's name.
--- t[index].value       [string] The environment variable's value.</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div id="os.getenvnames" class="name"><a class="wlink" href="#os.getenvnames"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.getenvnames</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns a table of environment variable name strings.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.geterrorlevel" class="name"><a class="wlink" href="#os.geterrorlevel"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.geterrorlevel</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.2.14 and newer</div></div></div><div class="body"><p class="desc">Returns the last command's exit code, if the <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting is enabled.  Otherwise it returns 0.</p></div></div><hr/>
 
