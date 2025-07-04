@@ -112,18 +112,15 @@ Or by downloading the ZIP file from [releases page](https://github.com/chrisant9
 
 ### Using Clink
 
-Once installed, there are several ways to start Clink.
+Clink works by being injected it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
 
-1. If Clink is configured for autorun, just start `cmd.exe` and Clink is automatically injected and ready to use.
+Once Clink is installed, there are several ways to start it.
 
-> The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
+1. **Autorun.**  Clink can optionally start automatically whenever `cmd.exe` is started.  If you use the Setup EXE to install Clink, it has an option for "Autorun when cmd.exe starts".  If you didn't use the Setup EXE, or if you want to change the autorun configuration later, you can run `clink autorun install` or `clink autorun uninstall`.  Run `clink autorun --help` for more info.
+2. **Manual start.**  You can run the Clink shortcut from the Start menu (or the clink.bat file located in the install directory).
+3. **Inject into an existing `cmd.exe` process.**  In a `cmd.exe` process that doesn't have Clink yet, you can run `clink inject`.
 
-2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
-
-> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
-
-Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
+> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets a doskey alias so that you can simply use `clink`.
 
 # Getting Started
 
