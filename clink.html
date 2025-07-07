@@ -1064,7 +1064,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>Clink works by being injected it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
 <p>Once Clink is installed, there are several ways to start it.</p>
 <ol>
-<li><strong>Autorun.</strong>  Clink can be configured to start automatically whenever <code>cmd.exe</code> is started.  If you use the Setup EXE to install Clink, it has an option for &quot;Autorun when cmd.exe starts&quot;.  If you didn&#39;t use the Setup EXE, or if you want to change the autorun configuration later, you can use <code>clink autorun install</code> or <code>clink autorun uninstall</code>.  Run <code>clink autorun --help</code> for more info.</li>
+<li><strong>Autorun.</strong>  Clink can optionally start automatically whenever <code>cmd.exe</code> is started.  If you use the Setup EXE to install Clink, it has an option for &quot;Autorun when cmd.exe starts&quot;.  If you didn&#39;t use the Setup EXE, or if you want to change the autorun configuration later, you can run <code>clink autorun install</code> or <code>clink autorun uninstall</code>.  Run <code>clink autorun --help</code> for more info.</li>
 <li><strong>Manual start.</strong>  You can run the Clink shortcut from the Start menu (or the clink.bat file located in the install directory).</li>
 <li><strong>Inject into an existing <code>cmd.exe</code> process.</strong>  In a <code>cmd.exe</code> process that doesn&#39;t have Clink yet, you can run <code>clink inject</code>.</li>
 </ol>
@@ -1078,7 +1078,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.</li>
 <li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match <a href="#how-completion-works">completion</a> two different ways.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.</li>
-<li>Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.</li>
+<li>Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the <code>/</code> and <code>?</code> symbols are on the same physical key).</li>
 </ul>
 <p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.</p>
 <p><a name="how-completion-works"></a></p>
@@ -1169,7 +1169,7 @@ $endif
 <p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, and <kbd>Ctrl</kbd>-<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
 <p>To instead use the familiar <a href="#default_bindings">Windows default key bindings</a> you can run <code>clink set <a href="#clink_default_bindings">clink.default_bindings</a> windows</code>.</p>
 <p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then &quot;windows&quot; key bindings are the default, and you can run <code>clink set <a href="#clink_default_bindings">clink.default_bindings</a> bash</code> to use the bash default key bindings.</p>
-<p>Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>?</kbd> to check what is bound to a specific key.  See <a href="#gettingstarted_keybindings">Key Bindings</a> to get started configuring your own key bindings.</p>
+<p>Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>?</kbd> to check what is bound to a specific key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the <code>/</code> and <code>?</code> symbols are on the same physical key).  See <a href="#gettingstarted_keybindings">Key Bindings</a> to get started configuring your own key bindings.</p>
 <p>Here are the differences between the Windows defaults and the bash defaults:</p>
 <table>
 <thead>
@@ -3792,7 +3792,7 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-what-is"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-what-is"></a><code>clink-what-is</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>?</kbd></td>
 <td>Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.</td>
 </tr>
 <tr>
