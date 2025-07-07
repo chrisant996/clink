@@ -130,7 +130,7 @@ You can use Clink right away without configuring anything:
 - [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
-- Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
+- Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the `/` and `?` symbols are on the same physical key).
 
 There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
 
@@ -250,7 +250,7 @@ To instead use the familiar [Windows default key bindings](#default_bindings) yo
 
 Or, if you use the setup program with "Use enhanced default settings" checked then "windows" key bindings are the default, and you can run <code>clink set <a href="#clink_default_bindings">clink.default_bindings</a> bash</code> to use the bash default key bindings.
 
-Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>?</kbd> to check what is bound to a specific key.  See [Key Bindings](#gettingstarted_keybindings) to get started configuring your own key bindings.
+Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>?</kbd> to check what is bound to a specific key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the `/` and `?` symbols are on the same physical key).  See [Key Bindings](#gettingstarted_keybindings) to get started configuring your own key bindings.
 
 Here are the differences between the Windows defaults and the bash defaults:
 
@@ -1568,7 +1568,7 @@ Command | Key | Description
 <a name="rlcmd-clink-show-help-raw"></a>`clink-show-help-raw` | | Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.
 <a name="rlcmd-clink-toggle-slashes"></a>`clink-toggle-slashes` | <kbd>Ctrl</kbd>-<kbd>/</kbd> | Toggle between forward and backslashes in the word at the cursor point, or toggle in the <em>n</em>-th word if a numeric argument is provided via the [`digit-argument`](#rlcmd-digit-argument) keys.
 <a name="rlcmd-clink-up-directory"></a>`clink-up-directory` | <kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Execute `cd ..` to move up one directory.
-<a name="rlcmd-clink-what-is"></a>`clink-what-is` | <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> | Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.
+<a name="rlcmd-clink-what-is"></a>`clink-what-is` | <kbd>Alt</kbd>-<kbd>?</kbd> | Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.
 <a name="rlcmd-cua-backward-bigword"></a>`cua-backward-bigword` | | Extend the selection backward one space delimited word.
 <a name="rlcmd-cua-backward-char"></a>`cua-backward-char` | <kbd>Shift</kbd>-<kbd>Left</kbd> | Extend the selection backward one character.
 <a name="rlcmd-cua-backward-word"></a>`cua-backward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd> | Extend the selection backward one word.
