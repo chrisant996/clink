@@ -35,6 +35,20 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 <br/>
 
+# NOTES TO SELF
+
+## Renewing Certum Code Signing Certificate
+
+- For the Open Source cert, there isn't an option to purchase a renewal, instead you purchase a new certificate which ends up acting like a renewal.
+- The new certificate expiration starts when it's purchased and activated, NOT when the old certificate expires.
+- After activating the new certificate, it must be installed onto the card via the Install Certificate button in the web page for the cert.
+- The certificates are in the Common profile on the card.
+- After the new cert is installed, the old cert must be removed from the card, otherwise SignTool can't figure out to ignore the expired cert.
+- The Remove button is normally hidden, but in the Settings dialog there is an option to show the Remove button in the Common profile.
+
+<br/>
+<br/>
+
 # "New" commits from Martin
 
 ## To Be Considered
