@@ -2,11 +2,16 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "fs_fixture.h"
+#include "line_editor_tester.h"
 
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/doskey.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_script_loader.h>
+#include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
 static void use_enhanced(bool state)
@@ -573,4 +578,79 @@ TEST_CASE("Doskey cursor point : grouping parens")
 
         doskey.remove_alias("alias");
     }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("Doskey issue 773")
+{
+    static const char* dir_fs[] = {
+        "foo.txt",
+        "ver.txt",
+        nullptr,
+    };
+
+    fs_fixture fs(dir_fs);
+
+    doskey doskey("clink_test_harness");
+    doskey.add_alias("dir", "program $*");
+
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, exec);
+
+    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor_tester tester(desc, nullptr, nullptr);
+    tester.get_editor()->set_generator(lua_generator);
+    tester.set_tab_binding("old-menu-complete");
+
+    str<> cmd;
+    str<> result;
+    static const char* const c_pgm[] = { "bar", "dir" };
+    auto make = [&](int32 i, const char* line, str<>& out)
+    {
+        out.format(line, c_pgm[i]);
+    };
+    auto runtest = [&]()
+    {
+        tester.set_input(cmd.c_str());
+        tester.set_expected_output(result.c_str());
+        tester.run();
+    };
+
+    for (int32 i = 0; i < 2; ++i)
+    {
+        make(i, "%s asdf\t", cmd);
+        make(i, "%s asdf", result);
+        runtest();
+
+        make(i, "%s asdf.\t", cmd);
+        make(i, "%s asdf.", result);
+        runtest();
+
+        make(i, "%s foo\t", cmd);
+        make(i, "%s foo.txt ", result);
+        runtest();
+
+        make(i, "%s foo.\t", cmd);
+        make(i, "%s foo.txt ", result);
+        runtest();
+
+        make(i, "%s foo.t\t", cmd);
+        make(i, "%s foo.txt ", result);
+        runtest();
+
+        make(i, "%s ver\t", cmd);
+        make(i, "%s ver.txt ", result);
+        runtest();
+
+        make(i, "%s ver.\t", cmd);
+        make(i, "%s ver.txt ", result);
+        runtest();
+
+        make(i, "%s ver.t\t", cmd);
+        make(i, "%s ver.txt ", result);
+        runtest();
+    }
+
+    doskey.remove_alias("dir");
 }

@@ -33,7 +33,7 @@ class cmd_state
 {
 public:
     cmd_state(bool only_rem=false) : m_only_rem(only_rem) {}
-    void clear();
+    void clear(bool first);
     void next_word();
     bool test(int32 c, tokeniser_state new_state);
     bool is_first() const { return m_first; }

@@ -39,6 +39,7 @@ class test_module
     : public empty_module
 {
 public:
+    test_module(const char* tab_binding=nullptr) : m_tab_binding(tab_binding) {}
     ~test_module() { delete m_line_state; }
     void set_need_line_state(bool need);
     const matches*  get_matches() const;
@@ -56,6 +57,7 @@ private:
     const word_classifications* m_classifications = nullptr;
     const input_hint* m_input_hint = nullptr;
     bool            m_need_line_state = false;
+    const char*     m_tab_binding = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -93,7 +95,7 @@ const char* test_module::get_input_hint() const
 //------------------------------------------------------------------------------
 void test_module::bind_input(binder& binder)
 {
-    rl_bind_keyseq("\t", rl_named_function("complete"));
+    rl_bind_keyseq("\t", rl_named_function(m_tab_binding ? m_tab_binding : "complete"));
 }
 
 //------------------------------------------------------------------------------
@@ -195,6 +197,12 @@ void line_editor_tester::set_expected_output(const char* expected)
 }
 
 //------------------------------------------------------------------------------
+void line_editor_tester::set_tab_binding(const char* tab_binding)
+{
+    m_tab_binding = tab_binding;
+}
+
+//------------------------------------------------------------------------------
 static const char* sanitize(const char* text)
 {
     static str<280> s_s;
@@ -230,7 +238,7 @@ void line_editor_tester::run(bool expectationless)
 
     // If we're expecting some matches then add a module to catch the
     // matches object.
-    test_module match_catch;
+    test_module match_catch(m_tab_binding);
     if (m_has_words)
         match_catch.set_need_line_state(true);
     m_editor->add_module(match_catch);

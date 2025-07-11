@@ -74,6 +74,7 @@ public:
     void                        set_expected_faces(const char* faces);
     void                        set_expected_hint(const char* expected);
     void                        set_expected_output(const char* expected);
+    void                        set_tab_binding(const char* tab_binding=nullptr);
     void                        run(bool expectationless=false);
 
 private:
@@ -103,6 +104,7 @@ private:
     bool                        m_has_faces = false;
     bool                        m_has_hint = false;
     bool                        m_mark_argmatchers = false;
+    const char*                 m_tab_binding = nullptr;
 };
 
 //------------------------------------------------------------------------------

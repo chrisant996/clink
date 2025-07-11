@@ -184,10 +184,10 @@ state_flag is_cmd_command(const char* word)
 }
 
 //------------------------------------------------------------------------------
-void cmd_state::clear()
+void cmd_state::clear(bool first)
 {
     m_word.clear();
-    m_first = true;
+    m_first = first;
     m_failed = false;
     m_match = false;
     m_match_flag = flag_none;
@@ -497,7 +497,7 @@ bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
 void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair, bool at_beginning)
 {
     base::start(iter, quote_pair);
-    m_cmd_state.clear();
+    m_cmd_state.clear(at_beginning);
     m_command_word = at_beginning;
 }
 
