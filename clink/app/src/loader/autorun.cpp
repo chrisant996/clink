@@ -5,7 +5,9 @@
 #include "utils/usage.h"
 
 #include <core/base.h>
+#include <core/path.h>
 #include <core/str.h>
+#include <core/str_transform.h>
 
 #include <getopt.h>
 
@@ -13,14 +15,19 @@
 typedef bool    (dispatch_func_t)(const char*, int32);
 str<>           g_clink_args;
 int32           g_all_users  = 0;
+int32           g_enum_users  = 0;
 static bool     s_was_installed = false;
 
 
 
 //------------------------------------------------------------------------------
-static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, int32 writable)
+static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, int32 writable, const WCHAR* userid=nullptr)
 {
     wstr<> key;
+    if (all_users)
+        userid = nullptr;
+    if (userid)
+        key << userid << L"\\";
     key << L"Software\\";
     if (wow64)
         key << L"Wow6432Node\\";
@@ -31,11 +38,19 @@ static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, in
     flags |= KEY_WOW64_64KEY;
 
     HKEY result;
-    BOOL ok = RegCreateKeyExW(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
-        key.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr,
-        &result, nullptr);
+    LSTATUS status;
+    if (userid)
+    {
+        status = RegOpenKeyExW(HKEY_USERS, key.c_str(), 0, KEY_READ|KEY_WRITE, &result);
+    }
+    else
+    {
+        HKEY hive = all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
+        status = RegCreateKeyExW(hive, key.c_str(), 0, nullptr,
+            REG_OPTION_NON_VOLATILE, flags, nullptr, &result, nullptr);
+    }
 
-    return (ok == 0) ? result : nullptr;
+    return (status == 0) ? result : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -112,9 +127,9 @@ static bool delete_value(HKEY key, const char* _name)
 
 
 //------------------------------------------------------------------------------
-static HKEY open_cmd_proc_key(int32 all_users, int32 wow64, int32 writable)
+static HKEY open_cmd_proc_key(int32 all_users, int32 wow64, int32 writable, const WCHAR* userid=nullptr)
 {
-    return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable);
+    return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable, userid);
 }
 
 //------------------------------------------------------------------------------
@@ -137,7 +152,7 @@ static bool check_registry_access()
 }
 
 //------------------------------------------------------------------------------
-static bool find_clink_entry(const char* value, int32* left, int32* right)
+static bool find_clink_entry(const char* value, int32* left, int32* right, const char* clink_path)
 {
     int32 quoted = false;
     int32 i;
@@ -181,6 +196,27 @@ static bool find_clink_entry(const char* value, int32* left, int32* right)
     else
         *right = (int32)strlen(value);
 
+    // When enumerating users, only respond to entries referencing /this/
+    // instance of clink.
+    if (g_enum_users && !g_all_users)
+    {
+        i = quoted ? '\"' : ' ';
+        c = tag;
+        while (c > value && c[-1] != i)
+            --c;
+
+        str<> lower_entry;
+        str<> lower_clink_path;
+        str_transform(c, uint32(tag - c), lower_entry, transform_mode::lower);
+        str_transform(clink_path, -1, lower_clink_path, transform_mode::lower);
+        path::normalise_separators(lower_entry);
+        path::normalise_separators(lower_clink_path);
+        path::maybe_strip_last_separator(lower_entry);
+        path::maybe_strip_last_separator(lower_clink_path);
+        if (!lower_entry.equals(lower_clink_path.c_str()))
+            return false;
+    }
+
     // And find the left most extent. First search for opening quote if need
     // be, then search for command separator.
     i = quoted ? '\"' : '&';
@@ -218,24 +254,15 @@ static const char* get_cmd_start(const char* cmd)
 }
 
 //------------------------------------------------------------------------------
-static bool uninstall_autorun(const char* clink_path, int32 wow64)
+static bool uninstall_autorun_from_key(HKEY cmd_proc_key, const char* clink_path)
 {
-    HKEY cmd_proc_key;
-    char* key_value;
-    int32 left, right;
+    bool ret = true;
 
-    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
-    if (cmd_proc_key == nullptr)
-    {
-        printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return false;
-    }
-
-    key_value = nullptr;
+    char* key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
-    bool ret = 0;
-    if (key_value && find_clink_entry(key_value, &left, &right))
+    int32 left, right;
+    if (key_value && find_clink_entry(key_value, &left, &right, clink_path))
     {
         const char* read;
         char* write;
@@ -266,15 +293,49 @@ static bool uninstall_autorun(const char* clink_path, int32 wow64)
             ret = set_value(cmd_proc_key, "AutoRun", read);
         }
     }
+
+    free(key_value);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+static bool uninstall_autorun(const char* clink_path, int32 wow64)
+{
+    bool ret = false;
+    if (g_enum_users)
+    {
+        WCHAR userid[MAX_PATH];
+        for (DWORD index = 0; true; ++index)
+        {
+            // Get user key.
+            DWORD size = sizeof_array(userid); // Characters, not bytes, for RegEnumKeyExW.
+            ZeroMemory(userid, size);
+            if (ERROR_SUCCESS != RegEnumKeyExW(HKEY_USERS, index, userid, &size, 0, nullptr, nullptr, nullptr))
+                break;
+            userid[size] = '\0';
+
+            // Check AutoRun for the user.
+            const HKEY cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1, userid);
+            if (cmd_proc_key)
+            {
+                ret |= uninstall_autorun_from_key(cmd_proc_key, clink_path);
+                close_key(cmd_proc_key);
+            }
+        }
+    }
     else
     {
-        s_was_installed = false;
-        ret = true;
-    }
+        const HKEY cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
+        if (cmd_proc_key == nullptr)
+        {
+            printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
+            return false;
+        }
 
-    // Tidy up.
-    close_key(cmd_proc_key);
-    free(key_value);
+        ret = uninstall_autorun_from_key(cmd_proc_key, clink_path);
+
+        close_key(cmd_proc_key);
+    }
     return ret;
 }
 
@@ -498,6 +559,7 @@ int32 autorun(int32 argc, char** argv)
     struct option options[] = {
         { "help",       no_argument,    nullptr, 'h' },
         { "allusers",   no_argument,    nullptr, 'a' },
+        { "enumusers",  no_argument,    nullptr, '|' }, // For internal use by the uninstaller.
         {}
     };
 
@@ -511,6 +573,11 @@ int32 autorun(int32 argc, char** argv)
         {
         case 'a':
             g_all_users = 1;
+            g_enum_users = 0;
+            break;
+        case '|':
+            if (!g_all_users)
+                g_enum_users = 1;
             break;
 
         case '?':
@@ -539,11 +606,15 @@ int32 autorun(int32 argc, char** argv)
     }
 
     // Get path where clink is installed (assumed to be where this executable is)
-    if (function == install_autorun)
+    if (function == install_autorun || function == uninstall_autorun)
     {
         clink_path << _pgmptr;
         clink_path.truncate(clink_path.last_of('\\'));
     }
+
+    // --enumusers only applies when using "clink autorun uninstall".
+    if (function != uninstall_autorun)
+        g_enum_users = false;
 
     // Collect the remainder of the command line.
     if (function == install_autorun || function == set_autorun_value)

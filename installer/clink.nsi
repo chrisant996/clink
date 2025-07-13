@@ -362,7 +362,7 @@ Section "!un.Application files" section_un_app_files
     SetShellVarContext all
 
     ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun --allusers uninstall" SW_HIDE
-    ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun uninstall" SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun --enumusers uninstall" SW_HIDE
 
     ; Delete the installation directory and root directory if it's empty.
     ;
