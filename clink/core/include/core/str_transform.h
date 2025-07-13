@@ -7,6 +7,7 @@
 
 #include <assert.h>
 
+class str_base;
 class wstr_base;
 
 //------------------------------------------------------------------------------
@@ -18,4 +19,5 @@ enum transform_mode : int32
 };
 
 //------------------------------------------------------------------------------
+void str_transform(const char* in, uint32 len, str_base& out, transform_mode mode);
 void str_transform(const wchar_t* in, uint32 len, wstr_base& out, transform_mode mode);

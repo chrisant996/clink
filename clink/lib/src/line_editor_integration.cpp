@@ -125,10 +125,8 @@ void mark_deprecated_argmatcher(const char* command)
 //------------------------------------------------------------------------------
 bool has_deprecated_argmatcher(const char* command)
 {
-    wstr<32> in(command);
-    wstr<32> out;
-    str_transform(in.c_str(), in.length(), out, transform_mode::lower);
-    str<32> name(out.c_str());
+    str<32> name;
+    str_transform(command, -1, name, transform_mode::lower);
     return s_deprecated_argmatchers.find(name.c_str()) != s_deprecated_argmatchers.end();
 }
 

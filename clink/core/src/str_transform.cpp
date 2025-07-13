@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "str.h"
+#include "str_iter.h"
 #include "str_transform.h"
 
 #include <assert.h>
@@ -25,6 +26,16 @@ inline int32 __ascii_towupper(int32 c)
 #endif
 
 //------------------------------------------------------------------------------
+void str_transform(const char* in, uint32 len, str_base& out, transform_mode mode)
+{
+    wstr<> win;
+    wstr<> wout;
+    to_utf16(win, str_iter(in, len));
+    str_transform(win.c_str(), win.length(), wout, mode);
+    out = wout.c_str();
+}
+
+//------------------------------------------------------------------------------
 void str_transform(const wchar_t* in, uint32 len, wstr_base& out, transform_mode mode)
 {
     DWORD mapflags;
@@ -36,6 +47,9 @@ void str_transform(const wchar_t* in, uint32 len, wstr_base& out, transform_mode
     case transform_mode::title:     mapflags = LCMAP_TITLECASE; break;
     default:                        assert(false); return;
     }
+
+    if (len == uint32(-1))
+        len = uint32(wcslen(in));
 
     out.reserve(len + max<uint32>(len / 10, 10));
     int32 cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags, in, len, out.data(), out.size());

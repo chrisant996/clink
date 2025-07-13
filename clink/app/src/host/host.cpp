@@ -13,7 +13,6 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
-#include <core/str_transform.h>
 #include <core/log.h>
 #include <core/debugheap.h>
 #include <core/callstack.h>

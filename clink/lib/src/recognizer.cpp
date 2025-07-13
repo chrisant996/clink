@@ -725,10 +725,7 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         return recognition::unknown;
 
     // Make sure the recognizer is always dealing with lowercase names.
-    wstr<> win, wout;
-    win = word;
-    str_transform(win.c_str(), win.length(), wout, transform_mode::lower);
-    tmp = wout.c_str();
+    str_transform(word, -1, tmp, transform_mode::lower);
     word = tmp.c_str();
 
     // Device names are always unrecognized.

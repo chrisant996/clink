@@ -577,25 +577,20 @@ static int32 map_string(lua_State* state, transform_mode mode)
     string = lua_tostring(state, 1);
     length = (int32)strlen(string);
 
-    wstr<> out;
+    str<> text;
     if (length)
-    {
-        wstr<> in(string);
-        str_transform(in.c_str(), in.length(), out, mode);
-    }
+        str_transform(string, length, text, mode);
 
     if (_rl_completion_case_map)
     {
-        for (uint32 i = 0; i < out.length(); ++i)
+        for (uint32 i = 0; i < text.length(); ++i)
         {
-            if (out[i] == '-' && (mode != transform_mode::upper))
-                out.data()[i] = '_';
-            else if (out[i] == '_' && (mode == transform_mode::upper))
-                out.data()[i] = '-';
+            if (text[i] == '-' && (mode != transform_mode::upper))
+                text.data()[i] = '_';
+            else if (text[i] == '_' && (mode == transform_mode::upper))
+                text.data()[i] = '-';
         }
     }
-
-    str<> text(out.c_str());
 
     lua_pushlstring(state, text.c_str(), text.length());
 
