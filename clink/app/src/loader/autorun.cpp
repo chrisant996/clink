@@ -139,7 +139,7 @@ static bool check_registry_access()
 //------------------------------------------------------------------------------
 static bool find_clink_entry(const char* value, int32* left, int32* right)
 {
-    int32 quoted;
+    int32 quoted = false;
     int32 i;
     const char* tag;
     const char* c;
@@ -162,7 +162,13 @@ static bool find_clink_entry(const char* value, int32* left, int32* right)
     {
         tag = strstr(value, needles[i]);
         if (tag != nullptr)
+        {
+            // Check if clink's path is quoted.  Checking the needle makes
+            // sure not to get tricked by a false positive from something else
+            // later on in the value.
+            quoted = !!strchr(needles[i], ' ');
             break;
+        }
     }
 
     if (tag == nullptr)
@@ -174,10 +180,6 @@ static bool find_clink_entry(const char* value, int32* left, int32* right)
         *right = (int32)(c - value);
     else
         *right = (int32)strlen(value);
-
-    // Is clink's path quoted?
-    c = strchr(tag, ' ');
-    quoted = (c != 0) && (c[-1] == '\"');
 
     // And find the left most extent. First search for opening quote if need
     // be, then search for command separator.
