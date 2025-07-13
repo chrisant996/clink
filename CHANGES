@@ -5,6 +5,7 @@
 #### v1.7.21
 
 - Fixed TAB expansion of `foo ~` when there is no argmatcher for `foo`.
+- Fixed [#772](https://github.com/chrisant996/clink/issues/772); uninstall fails to uninstall autorun if the logged on user is not an administrator.
 - Fixed [#773](https://github.com/chrisant996/clink/issues/773); unexpected completion behavior after a doskey alias command.
 
 #### v1.7.20
