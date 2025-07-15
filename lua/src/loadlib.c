@@ -223,7 +223,10 @@ static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
 #define LIB_FAIL	"absent"
 
 
-#define DLMSG	"dynamic libraries not enabled; check your Lua installation"
+/* begin_clink_change */
+//#define DLMSG	"dynamic libraries not enabled; check your Lua installation"
+#define DLMSG	"dynamic libraries not enabled in Clink"
+/* end_clink_change */
 
 
 static void ll_unloadlib (void *lib) {

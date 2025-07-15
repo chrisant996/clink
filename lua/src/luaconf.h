@@ -633,5 +633,11 @@ extern char g_track_loaded_files;
 #endif
 /* end_clink_change */
 
+/* begin_clink_change
+ * Clink uses a statically linked Lua engine and does not support loadlib.
+ */
+#undef LUA_DL_DLL
+/* end_clink_change */
+
 #endif
 
