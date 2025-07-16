@@ -908,10 +908,6 @@ skip_errorlevel:
     bool init_editor = interactive;
     bool init_history = reset || (interactive && !rl_has_saved_history());
 
-    // Update last cwd and whether transient prompt can be applied later.
-    if (init_editor)
-        update_last_cwd();
-
     // Delete Lua if the script path has changed, to reinitialize Lua.
     if (m_lua && m_lua->is_script_path_changed())
     {
@@ -1040,6 +1036,12 @@ force_reload_lua:
         }
         m_skip_provide_line = false;
     }
+
+    // Update last cwd and whether transient prompt can be applied later.
+    // Must wait until after onprovideline, otherwise the "same_dir" transient
+    // prompt mode gets broken.
+    if (init_editor)
+        update_last_cwd();
 
     // Reset input idle.  Must happen before filtering the prompt, so that the
     // wake event is available.
