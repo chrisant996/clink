@@ -10,6 +10,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
+- ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
+  - F2 = toggle ListView (is there a persistent way to enable it?).
+  - Ctrl-Z = revert to original line, but don't dismiss the ListView.
+  - ESC = dismiss ListView mode until further text is input (ESC enables using other keys like UP/DOWN to use their normal key bindings instead of the ListView behaviors).
+  - UP/DOWN = navigate through available ListView items.
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority
