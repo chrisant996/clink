@@ -6,6 +6,8 @@
 
 - Explicitly disable `loadlib` and related support in Lua; Clink uses a statically linked Lua engine and does not support dynamic C libraries.
 - Fixed the `onprovideline` event so it doesn't interfere with the `same_dir` mode of `prompt.transient`.
+- Fixed input line coloring of `echo` in `for %i (1 2 3) do @echo %i` (regression introduced in v1.6.16).
+- Fixed [#782](https://github.com/chrisant996/clink/issues/782); on Windows 8.1, some multiline prompts may render with extra blank lines.
 
 #### v1.7.21
 
