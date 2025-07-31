@@ -2872,6 +2872,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             input.params.get(1, p1);
             int32 pos;
             const bool drag = (input.id == bind_id_drag);
+// TODO: do the '<' and '>' horizontal scroll markers accept mouse input?
+// TODO: not exactly, but probably they should.
             if (translate_xy_to_readline(p0, p1, pos, drag && m_mouse.clicked()))
             {
                 const int32 clicks = drag ? m_mouse.clicked() : m_mouse.on_click(p0, p1, input.id == bind_id_double_click);

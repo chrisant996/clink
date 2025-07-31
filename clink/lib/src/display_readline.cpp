@@ -84,6 +84,8 @@ int32 rl_visible_rprompt_length = 0;
 #error HANDLE_MULTIBYTE is required.
 #endif
 
+const uint32 c_horz_scroll_indicator_chars = 2;
+
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
@@ -737,7 +739,7 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
         next_line(0);
 
     const int32 scroll_stride = _rl_screenwidth / 3;
-    const int32 limit = _rl_screenwidth - 2; // -1 for `>` marker, -1 for space.
+    const int32 limit = _rl_screenwidth - c_horz_scroll_indicator_chars - 1; // `>` marker(s) and -1 for space.
 
     // Adjust horizontal scroll offset to ensure point is visible.
     if (point < m_horz_start)
@@ -764,10 +766,11 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
     if (m_horz_start)
     {
         d->m_x = 0;
-        d->m_lead = 1;
-        d->append('<', FACE_SCROLL);
+        d->m_lead = c_horz_scroll_indicator_chars;
+        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+            d->append('<', FACE_SCROLL);
         d->appendnul();
-        col = 1;
+        col = c_horz_scroll_indicator_chars;
     }
     else
     {
@@ -849,8 +852,11 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
 
     if (iter.more() || overflow)
     {
-        d->append('>', FACE_SCROLL);
-        d->m_lastcol++;
+        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+        {
+            d->append('>', FACE_SCROLL);
+            d->m_lastcol++;
+        }
         d->m_toeol = false;
     }
 
@@ -878,7 +884,8 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
 
         if (!d.m_len)
         {
-            d.append('<', FACE_SCROLL);
+            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+                d.append('<', FACE_SCROLL);
             d.appendnul();
         }
         else
@@ -896,11 +903,14 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
                     break;
 
                 uint32 i = 0;
-                d.m_chars[i] = '<';
-                d.m_faces[i] = FACE_SCROLL;
-                bytes--;
-                i++;
-                d.m_scroll_mark = 1;
+                while (i < c_horz_scroll_indicator_chars)
+                {
+                    d.m_chars[i] = '<';
+                    d.m_faces[i] = FACE_SCROLL;
+                    bytes--;
+                    i++;
+                }
+                d.m_scroll_mark = c_horz_scroll_indicator_chars;
                 if (bytes > 0)
                 {
                     memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
@@ -925,21 +935,24 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
         if (d.m_lastcol - d.m_x > 2)
         {
             d.m_len -= d.m_trail;
-            while (d.m_x + d.m_lastcol + 1 >= _rl_screenwidth)
+            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars >= _rl_screenwidth)
             {
                 const int32 bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
                 d.m_lastcol -= clink_wcswidth(d.m_chars + bytes, d.m_len - bytes);
                 d.m_len = bytes;
             }
 
-            while (d.m_x + d.m_lastcol + 2 < _rl_screenwidth)
+            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars + 1 < _rl_screenwidth)
             {
                 d.append(' ', FACE_NORMAL);
                 d.m_lastcol++;
             }
-            d.append('>', FACE_SCROLL);
+            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+            {
+                d.append('>', FACE_SCROLL);
+                d.m_lastcol++;
+            }
             d.m_scroll_mark = -1;
-            d.m_lastcol++;
             d.m_toeol = false;
             d.appendnul();
         }
@@ -1892,6 +1905,7 @@ void display_manager::display()
         m_top = next->count() - 1 - input_botlin_offset;
 
     // Scroll when cursor is on a scroll marker.
+// TODO: update this per c_horz_scroll_indicator_chars...
     if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
     {
         const display_line* d = next->get(m_top);
