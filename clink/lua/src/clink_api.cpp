@@ -1448,6 +1448,8 @@ static int32 set_suggestion_result(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     const auto _endword_offset = checkinteger(state, 2);
+// TODO: args 3 and 4 will be passed as a table of suggestions, each of which
+// is a table of fields defining the suggestion.
     const char* suggestion = optstring(state, 3, nullptr);
     const auto _offset = optinteger(state, 4, 0);
     if (!line || !_endword_offset.isnum() || !_offset.isnum())

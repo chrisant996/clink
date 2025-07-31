@@ -34,6 +34,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                         return
                     end
                     if suggestion ~= nil then
+-- TODO: in ListView mode, keep collecting suggestions until there are 30.
                         return suggestion, offset
                     end
                 end
@@ -56,6 +57,8 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
         return true
     end
 
+-- TODO: pass a table as arg 3, with the table containing one subtable per
+-- suggestion (suggestion, suggestion_offset, source).
     local info = line:getwordinfo(line:getwordcount())
     clink.set_suggestion_result(line:getline(), info and info.offset or 1, ret, ret2)
 end
