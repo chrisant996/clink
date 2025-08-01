@@ -626,8 +626,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         return
     end
 
-    local reacted
-
 ::retry::
     local arg_match_type = "a" --arg
     local line_state = self._line_state
@@ -776,10 +774,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
 
     -- Determine next arg index.
     local react, react_modes
-    if reacted then
-        -- Once onadvance has reacted, then don't auto-advance next_arg_index.
-        react = 0
-    end
     if arg and not is_flag then
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
@@ -925,8 +919,6 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         if self:_detect_arg_cycle() then
             return
         end
-        self._arginfo = nil
-        reacted = true
         goto retry
     elseif last_onadvance then
         return
