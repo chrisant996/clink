@@ -626,6 +626,8 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         return
     end
 
+    local reacted
+
 ::retry::
     local arg_match_type = "a" --arg
     local line_state = self._line_state
@@ -726,6 +728,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
+                            -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                             if self._word_classifier then
                                 if not self._extra then
                                     self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -773,6 +776,10 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
 
     -- Determine next arg index.
     local react, react_modes
+    if reacted then
+        -- Once onadvance has reacted, then don't auto-advance next_arg_index.
+        react = 0
+    end
     if arg and not is_flag then
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
@@ -810,6 +817,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
+                    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                     if self._word_classifier then
                         if not self._extra then
                             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -917,6 +925,8 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
         if self:_detect_arg_cycle() then
             return
         end
+        self._arginfo = nil
+        reacted = true
         goto retry
     elseif last_onadvance then
         return
@@ -928,6 +938,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     end
 
     -- Parse the word type.
+    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
     if self._word_classifier then
         if not self._extra then
             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -3298,15 +3309,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 break
             end
 
-            if chained then
-                -- When chained, don't carry previous arginfo past the
-                -- argmatcher word.
-                -- REVIEW:  When does this have an actual effect?  Setting it
-                -- to a gibberish string has no effect on the unit tests, and
-                -- I haven't found repro steps that show the gibberish string.
-                prev_arginfo = nil
-            end
-
             -- Advance the parser.
             local chain, chainlookup = reader:update(word, word_index)
             if chain then
@@ -3355,16 +3357,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 end
                 prev_info = info
             end
-
-            -- When chained, don't carry previous arginfo past the argmatcher
-            -- word.
-            -- REVIEW:  This has no effect since prev_arginfo goes out of
-            -- scope a couple of lines later.  This is probably leftover from
-            -- when prev_arginfo was declare outside the loop.  But should
-            -- this instead be setting reader._arginfo = nil?
-            -- if chained then
-            --     prev_arginfo = nil
-            -- end
 
             -- Clear any chained flag for subsequence words.
             chained = nil
