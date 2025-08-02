@@ -562,15 +562,36 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep)
 }
 
 //------------------------------------------------------------------------------
-void command_line_states::ensure_cursorpos_word_for_hinter()
+void command_line_states::split_for_hinter()
 {
-    // Add an empty word when the cursor is past the last word.
     auto& line_state = m_linestates.back();
-    const word* const end_word = const_cast<word*>(&line_state.get_words().back());
-    const uint32 nextposafterendword = end_word->offset + end_word->length;
+    std::vector<word>* const words = const_cast<std::vector<word>*>(&m_words_storage.back());
     const uint32 cursorpos = line_state.get_cursor();
-    if ((cursorpos > nextposafterendword) ||
-        (end_word->length && cursorpos == nextposafterendword && strpbrk(line_state.get_line() + nextposafterendword - 1, ":=")))
+
+    // Discard words after the cursor.
+    while (words->size())
+    {
+        word& end_word = words->back();
+        if (cursorpos < end_word.offset)
+        {
+            words->pop_back();
+        }
+        else
+        {
+            if (end_word.offset <= cursorpos && cursorpos <= end_word.offset + end_word.length)
+                end_word.length = cursorpos - end_word.offset;
+            break;
+        }
+    }
+
+    // Ensure the last word contains the cursor.
+    bool add = words->empty();
+    if (!add)
+    {
+        const word& end_word = words->back();
+        add = (cursorpos > end_word.offset + end_word.length);
+    }
+    if (add)
     {
         word empty_word;
         empty_word.offset = cursorpos;
@@ -581,7 +602,6 @@ void command_line_states::ensure_cursorpos_word_for_hinter()
         empty_word.quoted = false;
         empty_word.delim = str_token::invalid_delim;
 
-        std::vector<word>* words = const_cast<std::vector<word>*>(&m_words_storage.back());
         words->push_back(empty_word);
     }
 }
