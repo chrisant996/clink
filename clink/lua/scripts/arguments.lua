@@ -3296,8 +3296,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                             -- When chained, don't carry previous arginfo
                             -- past the last word.
                             prev_arginfo = nil
-                            -- REVIEW: Is this needed?
-                            --reader._arginfo = nil
+                            reader._arginfo = nil
                         end
                     elseif cursorpos >= nextposafterendword then
                         -- If the cursor is at the end of the last word and
@@ -3305,13 +3304,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         -- follow the argmatcher.
                         no_follow_argmatcher = true
                     end
-                    if chained then
-                        -- When chained, don't use previous arginfo.
-                        prev_arginfo = nil
-                        -- REVIEW: Is this needed?
-                        --reader._arginfo = nil
-                    end
                 end
+            end
+            if chained then
+                -- When chained, don't use previous arginfo.  Note that this
+                -- only kicks in _after_ the command word that chained, and
+                -- only if an argmatcher was found.
+                prev_arginfo = nil
+                reader._arginfo = nil
             end
 
             -- Advance the parser.
@@ -3347,8 +3347,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         arg_index = 0
                         args = argmatcher._flags._args[1]
                         prev_arginfo = nil
-                        -- REVIEW: Is this needed?
-                        --reader._arginfo = nil
+                        reader._arginfo = nil
                     else
                         args = argmatcher._args[arg_index]
                     end

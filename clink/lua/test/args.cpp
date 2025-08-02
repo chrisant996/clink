@@ -1184,6 +1184,7 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('foo')\
             :addflags({'-a'..x})\
             :addflags({'-b'..y})\
+            :addflags({'-c'})\
             :addarg({'aa', 'bb', 'cc'})\
             :addarg({'dd', 'ee', 'ff', hint='arg two'})\
             :adddescriptions({\
@@ -1256,6 +1257,11 @@ TEST_CASE("Lua arg parsers")
                 tester.run();
 
                 tester.set_input("devenv /debugexe foo xyz" META_B);
+                tester.set_expected_hint(nullptr);
+                tester.run();
+
+                // Don't carry arginfo past a chained command word.
+                tester.set_input("devenv /debugexe foo -c ");
                 tester.set_expected_hint(nullptr);
                 tester.run();
             }
