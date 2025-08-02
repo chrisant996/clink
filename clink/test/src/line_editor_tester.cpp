@@ -342,7 +342,7 @@ void line_editor_tester::run(bool expectationless)
     {
         const word_classifications* classifications = match_catch.get_classifications();
         REQUIRE(classifications, [&]() {
-            printf(" input; %s\n", sanitize(m_input));
+            printf(" input; %s#\n", sanitize(m_input));
 
             puts("expected classifications but got none");
         });
@@ -390,7 +390,7 @@ void line_editor_tester::run(bool expectationless)
     {
         const word_classifications* classifications = match_catch.get_classifications();
         REQUIRE(classifications, [&]() {
-            printf(" input; %s\n", sanitize(m_input));
+            printf(" input; %s#\n", sanitize(m_input));
 
             puts("expected classifications but got none");
         });
@@ -419,7 +419,7 @@ void line_editor_tester::run(bool expectationless)
         if (m_expected_hint && !hint)
         {
             REQUIRE(hint, [&]() {
-                printf(" input; %s\n", sanitize(m_input));
+                printf(" input; %s#\n", sanitize(m_input));
 
                 puts("expected input hint but got none");
             });
@@ -427,7 +427,7 @@ void line_editor_tester::run(bool expectationless)
         else if (!m_expected_hint && hint)
         {
             REQUIRE(!hint, [&]() {
-                printf(" input; %s\n", sanitize(m_input));
+                printf(" input; %s#\n", sanitize(m_input));
 
                 printf("expected no input hint but got \"%s\"\n", hint);
             });

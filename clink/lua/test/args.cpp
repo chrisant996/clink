@@ -998,6 +998,10 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("foo xx yy" CTRL_B);
             tester.set_expected_hint("arg two");
             tester.run();
+
+            tester.set_input("foo xx yy" META_B META_B);
+            tester.set_expected_hint("arg one");
+            tester.run();
         }
     }
 
@@ -1095,6 +1099,10 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("foo xx -e 123 yy" CTRL_B);
             tester.set_expected_hint("arg two");
             tester.run();
+
+            tester.set_input("foo -b 123 aa" META_B META_B);
+            tester.set_expected_hint("Argument expected:  xx!");
+            tester.run();
         }
     }
 
@@ -1116,41 +1124,51 @@ TEST_CASE("Lua arg parsers")
 
         REQUIRE_LUA_DO_STRING(lua, script);
 
-        tester.set_input("prog ");
-        tester.set_expected_hint("looping");
-        tester.run();
+        SECTION("at end")
+        {
+            tester.set_input("prog ");
+            tester.set_expected_hint("looping");
+            tester.run();
 
-        tester.set_input("prog t1");
-        tester.set_expected_hint("looping");
-        tester.run();
+            tester.set_input("prog t1");
+            tester.set_expected_hint("looping");
+            tester.run();
 
-        tester.set_input("prog t1 ");
-        tester.set_expected_hint("looping");
-        tester.run();
+            tester.set_input("prog t1 ");
+            tester.set_expected_hint("looping");
+            tester.run();
 
-        tester.set_input("prog t1 --");
-        tester.set_expected_hint("looping");
-        tester.run();
+            tester.set_input("prog t1 --");
+            tester.set_expected_hint("looping");
+            tester.run();
 
-        tester.set_input("prog --");
-        tester.set_expected_hint("looping");
-        tester.run();
+            tester.set_input("prog --");
+            tester.set_expected_hint("looping");
+            tester.run();
 
-        tester.set_input("prog t1 -- ");
-        tester.set_expected_hint("done looping");
-        tester.run();
+            tester.set_input("prog t1 -- ");
+            tester.set_expected_hint("done looping");
+            tester.run();
 
-        tester.set_input("prog -- ");
-        tester.set_expected_hint("done looping");
-        tester.run();
+            tester.set_input("prog -- ");
+            tester.set_expected_hint("done looping");
+            tester.run();
 
-        tester.set_input("prog t1 -- d");
-        tester.set_expected_hint("done looping");
-        tester.run();
+            tester.set_input("prog t1 -- d");
+            tester.set_expected_hint("done looping");
+            tester.run();
 
-        tester.set_input("prog -- d");
-        tester.set_expected_hint("done looping");
-        tester.run();
+            tester.set_input("prog -- d");
+            tester.set_expected_hint("done looping");
+            tester.run();
+        }
+
+        SECTION("in word")
+        {
+            tester.set_input("prog t1 -- d" META_B META_B);
+            tester.set_expected_hint("looping");
+            tester.run();
+        }
     }
 
     SECTION("Chaincommand input hints")
@@ -1219,53 +1237,86 @@ TEST_CASE("Lua arg parsers")
 
         SECTION("chain argmatcher")
         {
-            // If there's an argmatcher for the chained command, then it
-            // shouldn't influence hints until it's followed by a delimiter
-            // (such as a space).
-            tester.set_input("devenv /debugexe foo");
-            tester.set_expected_hint("Argument expected:  exe [args...]");
-            tester.run();
+            SECTION("special cases")
+            {
+                // If there's an argmatcher for the chained command, it
+                // shouldn't influence hints until it's followed by a
+                // delimiter (such as a space).
+                tester.set_input("devenv /debugexe foo");
+                tester.set_expected_hint("Argument expected:  exe [args...]");
+                tester.run();
 
-            // Once there's a delimiter, the argmatcher exerts influence.
-            tester.set_input("devenv /debugexe foo ");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                tester.set_input("devenv /debugexe foo xyz" META_B CTRL_B);
+                tester.set_expected_hint("Argument expected:  exe [args...]");
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                // Once there's a delimiter, the argmatcher exerts influence.
+                tester.set_input("devenv /debugexe foo ");
+                tester.set_expected_hint(nullptr);
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a ");
-            tester.set_expected_hint("Argument expected:  xx!");
-            tester.run();
+                tester.set_input("devenv /debugexe foo xyz" META_B);
+                tester.set_expected_hint(nullptr);
+                tester.run();
+            }
 
-            tester.set_input("devenv /debugexe foo -a zz");
-            tester.set_expected_hint("Argument expected:  xx!");
-            tester.run();
+            SECTION("at end")
+            {
+                tester.set_input("devenv /debugexe foo -a");
+                tester.set_expected_hint(nullptr);
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a zz ");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a ");
+                tester.set_expected_hint("Argument expected:  xx!");
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a zz aa");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a zz");
+                tester.set_expected_hint("Argument expected:  xx!");
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a zz aa ");
-            tester.set_expected_hint("arg two");
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a zz ");
+                tester.set_expected_hint(nullptr);
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a zz aa zz");
-            tester.set_expected_hint("arg two");
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a zz aa");
+                tester.set_expected_hint(nullptr);
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo -a zz aa zz ");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a zz aa ");
+                tester.set_expected_hint("arg two");
+                tester.run();
 
-            tester.set_input("devenv /debugexe foo x");
-            tester.set_expected_hint(nullptr);
-            tester.run();
+                tester.set_input("devenv /debugexe foo -a zz aa zz");
+                tester.set_expected_hint("arg two");
+                tester.run();
+
+                tester.set_input("devenv /debugexe foo -a zz aa zz ");
+                tester.set_expected_hint(nullptr);
+                tester.run();
+
+                tester.set_input("devenv /debugexe foo x");
+                tester.set_expected_hint(nullptr);
+                tester.run();
+            }
+
+            SECTION("in word")
+            {
+                tester.set_input("devenv /debugexe foo -a " CTRL_B);
+                tester.set_expected_hint(nullptr);
+                tester.run();
+
+                tester.set_input("devenv /debugexe foo -a zz" META_B);
+                tester.set_expected_hint("Argument expected:  xx!");
+                tester.run();
+
+                tester.set_input("devenv /debugexe foo -a zz aa zz" META_B);
+                tester.set_expected_hint("arg two");
+                tester.run();
+
+                tester.set_input("devenv /debugexe foo -a zz aa zz" META_B CTRL_B);
+                tester.set_expected_hint(nullptr);
+                tester.run();
+            }
         }
     }
 

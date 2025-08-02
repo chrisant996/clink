@@ -3286,8 +3286,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- Handle cases where cursor is in the last word.
             if last_word then
-                -- Refer to tests for "Chaincommand input hints" and "chain
-                -- argmatcher".
+                -- Refer to tests for "Chaincommand input hints".
                 local endinfo = line_state:getwordinfo(word_index)
                 if endinfo then
                     local nextposafterendword = endinfo.offset + endinfo.length
@@ -3297,7 +3296,8 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                             -- When chained, don't carry previous arginfo
                             -- past the last word.
                             prev_arginfo = nil
-                            reader._arginfo = nil
+                            -- REVIEW: Is this needed?
+                            --reader._arginfo = nil
                         end
                     elseif cursorpos >= nextposafterendword then
                         -- If the cursor is at the end of the last word and
@@ -3325,7 +3325,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- Process the word.
             if not reader._extra then
-                -- REVIEW: Understand and explain why only in the last word...
+                -- TODO: Understand and explain why only in the last word...
                 if last_word then
                     -- In the last word, must get arg_index again in case
                     -- onadvance changed it.
