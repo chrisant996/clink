@@ -1921,12 +1921,12 @@ void display_manager::display()
     if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
     {
         const display_line* d = next->get(m_top);
-        if (next->cpos() == d->m_x)
+        if (next->cpos() >= d->m_x && next->cpos() < d->m_x + c_horz_scroll_indicator_chars)
             m_top--;
     }
     else if (m_top + input_botlin_offset < next->count() - 1 && m_top + input_botlin_offset == next->vpos())
     {
-        if (next->cpos() + 1 == _rl_screenwidth)
+        if (next->cpos() + c_horz_scroll_indicator_chars >= _rl_screenwidth && next->cpos() < _rl_screenwidth)
             m_top++;
     }
     assert(m_top >= m_last_prompt_line_botlin);
