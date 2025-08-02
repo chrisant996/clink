@@ -2576,6 +2576,9 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
 
     _rl_last_c_pos = rcol;
 
+    // Scroll marker should have a trailing space.
+    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
+
     // Clear anything leftover from o.
     const uint32 lastcol = (o ? o->m_lastcol : _rl_screenwidth);
     if (d->m_lastcol < lastcol)
@@ -2601,9 +2604,6 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
             _rl_last_c_pos += erase_cols;
         }
     }
-
-    // Scroll marker should have a trailing space.
-    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
 
     // Update cursor position and deal with autowrap.
     detect_pending_wrap();
