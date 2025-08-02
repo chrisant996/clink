@@ -34,6 +34,12 @@
 #define INCLUDE_MATCH_COLORING_RULES
 
 //------------------------------------------------------------------------------
+// Define to make the horizontal scroll markers be 2 characters wide, instead
+// of 1 character wide.  These are the "<" and ">" markers displayed when the
+// input line exceeds the allotted screen area for the input line.
+//#define WIDE_HORZ_SCROLL_MARKERS
+
+//------------------------------------------------------------------------------
 // Debugging options.
 #ifdef DEBUG
 //#define TRACE_ASSERT_STACK
