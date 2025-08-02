@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
   - It can't be truly modal: it has to integrate with the core input loop so that all normal key bindings still work, which implies that Clink/Readline need to automatically erase/cancel (or display/enable) the ListView as appropriate when key bindings need to do something for which the ListView shouldn't be visible.
