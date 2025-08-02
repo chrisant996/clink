@@ -84,7 +84,11 @@ int32 rl_visible_rprompt_length = 0;
 #error HANDLE_MULTIBYTE is required.
 #endif
 
+#ifdef WIDE_HORZ_SCROLL_MARKERS
 const uint32 c_horz_scroll_indicator_chars = 2;
+#else
+const uint32 c_horz_scroll_indicator_chars = 1;
+#endif
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
