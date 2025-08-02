@@ -2023,12 +2023,13 @@ static int32 get_errorlevel(lua_State* state)
 /// -ret:   string, boolean
 /// Generates a 128-bit unique ID represented as 32 hexadecimal characters.
 ///
-/// By default, this uses the OS `UuidCreate()` API to create a unique ID.
+/// By default, this uses the OS <code>UuidCreate()</code> API to create a
+/// unique ID.
 ///
 /// When the optional <span class="arg">faster</span> argument is
-/// <code>true</code> then this uses `UuidCreateSequential()` instead, which
-/// is faster but can potentially be traced back to the ethernet address of
-/// the computer.
+/// <code>true</code> then this uses the OS <code>UuidCreateSequential()</code>
+/// API instead, which is faster but can potentially be traced back to the
+/// ethernet address of the computer.
 ///
 /// If successful, this returns a 32 digit hexadecimal string and a boolean
 /// value.  When the boolean value is true then the ID is only locally unique,
