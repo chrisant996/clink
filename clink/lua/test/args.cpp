@@ -1098,6 +1098,61 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
+    SECTION("Onadvance input hints")
+    {
+        const char* script = "\
+            function loop_arg(_, _, word_index, line_state)\
+                local prev_word = line_state:getword(word_index - 1)\
+                if prev_word == '--' then\
+                    return 1\
+                end\
+                return 0\
+            end\
+            \
+            clink.argmatcher('prog')\
+            :addarg({'t1', 't2', 't3', hint='looping', onadvance=loop_arg})\
+            :addarg({'done', hint='done looping'})\
+        ";
+
+        REQUIRE_LUA_DO_STRING(lua, script);
+
+        tester.set_input("prog ");
+        tester.set_expected_hint("looping");
+        tester.run();
+
+        tester.set_input("prog t1");
+        tester.set_expected_hint("looping");
+        tester.run();
+
+        tester.set_input("prog t1 ");
+        tester.set_expected_hint("looping");
+        tester.run();
+
+        tester.set_input("prog t1 --");
+        tester.set_expected_hint("looping");
+        tester.run();
+
+        tester.set_input("prog --");
+        tester.set_expected_hint("looping");
+        tester.run();
+
+        tester.set_input("prog t1 -- ");
+        tester.set_expected_hint("done looping");
+        tester.run();
+
+        tester.set_input("prog -- ");
+        tester.set_expected_hint("done looping");
+        tester.run();
+
+        tester.set_input("prog t1 -- d");
+        tester.set_expected_hint("done looping");
+        tester.run();
+
+        tester.set_input("prog -- d");
+        tester.set_expected_hint("done looping");
+        tester.run();
+    }
+
     SECTION("Chaincommand input hints")
     {
         const char* script = "\
@@ -1134,23 +1189,44 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("devenv /debugexe f");
             tester.set_expected_hint("Argument expected:  exe [args...]");
             tester.run();
+        }
 
+        SECTION("chain no argmatcher")
+        {
             // If there's no argmatcher for the chained command, then the rest
             // of the line should continue to use the same hint.
+
             tester.set_input("devenv /debugexe f ");
             tester.set_expected_hint("Argument expected:  exe [args...]");
             tester.run();
 
-            // If there's an argmatcher for the chained command, then it
-            // shouldn't influence hints until it's followed by a delimiter
-            // (such as a space).
-            tester.set_input("devenv /debugexe foo");
+            tester.set_input("devenv /debugexe f x");
+            tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            tester.set_input("devenv /debugexe f x ");
+            tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            tester.set_input("devenv /debugexe f x y");
+            tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            tester.set_input("devenv /debugexe f x y ");
             tester.set_expected_hint("Argument expected:  exe [args...]");
             tester.run();
         }
 
         SECTION("chain argmatcher")
         {
+            // If there's an argmatcher for the chained command, then it
+            // shouldn't influence hints until it's followed by a delimiter
+            // (such as a space).
+            tester.set_input("devenv /debugexe foo");
+            tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            // Once there's a delimiter, the argmatcher exerts influence.
             tester.set_input("devenv /debugexe foo ");
             tester.set_expected_hint(nullptr);
             tester.run();
@@ -1184,6 +1260,10 @@ TEST_CASE("Lua arg parsers")
             tester.run();
 
             tester.set_input("devenv /debugexe foo -a zz aa zz ");
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("devenv /debugexe foo x");
             tester.set_expected_hint(nullptr);
             tester.run();
         }

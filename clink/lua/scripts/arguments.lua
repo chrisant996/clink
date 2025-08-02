@@ -3245,13 +3245,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local lookup
     local no_cmd
     local reader
+    local no_follow_argmatcher
 ::do_command::
 
     local chained = (lookup and true)
     local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
 
-    if argmatcher then
+    if argmatcher and not no_follow_argmatcher then
         if reader then
             local last_word = reader._last_word
             reader._last_word = nil
@@ -3278,31 +3279,43 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             argmatcher = reader._realmatcher
 
             -- Get the next word.
-            local word, word_index = reader:next_word()
+            local word, word_index, _, last_word = reader:next_word()
             if not word then
-                -- Handle case where cursor is past the last word.
-                local endinfo = line_state:getwordinfo(line_state:getwordcount())
-                if endinfo then
-                    local nextposafterendword = endinfo.offset + endinfo.length
-                    if (cursorpos > nextposafterendword) or
-                            (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
-                        if chained then
-                            -- When chained, don't carry previous arginfo past
-                            -- the last word.
-                            prev_arginfo = nil
-                        end
-                        return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, user_data, prev_arginfo)
-                    elseif chained and prev_arginfo then
-                        -- When chained, use previous arginfo if argmatcher
-                        -- was found and cursor is still in argmatcher word.
-                        return hint_from_prev_arginfo(line_state, prev_arginfo)
-                    end
-                end
                 break
             end
 
+            -- Handle cases where cursor is in the last word.
+            if last_word then
+                -- Refer to tests for "Chaincommand input hints" and "chain
+                -- argmatcher".
+                local endinfo = line_state:getwordinfo(word_index)
+                if endinfo then
+                    local nextposafterendword = endinfo.offset + endinfo.length
+                    if chained and endinfo.length == 0 then
+                        if (cursorpos > nextposafterendword) or
+                                (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                            -- When chained, don't carry previous arginfo
+                            -- past the last word.
+                            prev_arginfo = nil
+                            reader._arginfo = nil
+                        end
+                    elseif cursorpos >= nextposafterendword then
+                        -- If the cursor is at the end of the last word and
+                        -- there is a chained argmatcher, then don't actually
+                        -- follow the argmatcher.
+                        no_follow_argmatcher = true
+                    end
+                    if chained then
+                        -- When chained, don't use previous arginfo.
+                        prev_arginfo = nil
+                        -- REVIEW: Is this needed?
+                        --reader._arginfo = nil
+                    end
+                end
+            end
+
             -- Advance the parser.
-            local chain, chainlookup = reader:update(word, word_index)
+            local chain, chainlookup = reader:update(word, word_index, last_word)
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 lookup = chainlookup
@@ -3312,6 +3325,13 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- Process the word.
             if not reader._extra then
+                -- REVIEW: Understand and explain why only in the last word...
+                if last_word then
+                    -- In the last word, must get arg_index again in case
+                    -- onadvance changed it.
+                    arg_index = reader._arg_index
+                end
+
                 local info = line_state:getwordinfo(word_index)
                 if not info then
                     break
@@ -3327,6 +3347,8 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         arg_index = 0
                         args = argmatcher._flags._args[1]
                         prev_arginfo = nil
+                        -- REVIEW: Is this needed?
+                        --reader._arginfo = nil
                     else
                         args = argmatcher._args[arg_index]
                     end
