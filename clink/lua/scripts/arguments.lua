@@ -726,6 +726,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
+                            -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                             if self._word_classifier then
                                 if not self._extra then
                                     self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -810,6 +811,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
+                    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                     if self._word_classifier then
                         if not self._extra then
                             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -928,6 +930,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     end
 
     -- Parse the word type.
+    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
     if self._word_classifier then
         if not self._extra then
             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -3142,7 +3145,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 local m = has_argmatcher and "m" or ""
                 if info.alias then
                     word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-                elseif not info.quoted and not no_cmd and clink.is_cmd_command(command_word) then
+                elseif not info.quoted and not no_cmd and clink.is_cmd_command(cw) then
                     word_classifier:classifyword(command_word_index, m.."c", false); --command
                 elseif unrecognized_color or executable_color then
                     local cl
@@ -3242,13 +3245,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local lookup
     local no_cmd
     local reader
+    local no_follow_argmatcher
 ::do_command::
 
     local chained = (lookup and true)
     local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
 
-    if argmatcher then
+    if argmatcher and not no_follow_argmatcher then
         if reader then
             local last_word = reader._last_word
             reader._last_word = nil
@@ -3275,40 +3279,43 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             argmatcher = reader._realmatcher
 
             -- Get the next word.
-            local word, word_index = reader:next_word()
+            local word, word_index, _, last_word = reader:next_word()
             if not word then
-                -- Handle case where cursor is past the last word.
-                local endinfo = line_state:getwordinfo(line_state:getwordcount())
-                if endinfo then
-                    local nextposafterendword = endinfo.offset + endinfo.length
-                    if (cursorpos > nextposafterendword) or
-                            (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
-                        if chained then
-                            -- When chained, don't carry previous arginfo past
-                            -- the last word.
-                            prev_arginfo = nil
-                        end
-                        return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, user_data, prev_arginfo)
-                    elseif chained and prev_arginfo then
-                        -- When chained, use previous arginfo if argmatcher
-                        -- was found and cursor is still in argmatcher word.
-                        return hint_from_prev_arginfo(line_state, prev_arginfo)
-                    end
-                end
                 break
             end
 
+            -- Handle cases where cursor is in the last word.
+            if last_word then
+                -- Refer to tests for "Chaincommand input hints".
+                local endinfo = line_state:getwordinfo(word_index)
+                if endinfo then
+                    local nextposafterendword = endinfo.offset + endinfo.length
+                    if chained and endinfo.length == 0 then
+                        if (cursorpos > nextposafterendword) or
+                                (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                            -- When chained, don't carry previous arginfo
+                            -- past the last word.
+                            prev_arginfo = nil
+                            reader._arginfo = nil
+                        end
+                    elseif cursorpos >= nextposafterendword then
+                        -- If the cursor is at the end of the last word and
+                        -- there is a chained argmatcher, then don't actually
+                        -- follow the argmatcher.
+                        no_follow_argmatcher = true
+                    end
+                end
+            end
             if chained then
-                -- When chained, don't carry previous arginfo past the
-                -- argmatcher word.
-                -- REVIEW:  When does this have an actual effect?  Setting it
-                -- to a gibberish string has no effect on the unit tests, and
-                -- I haven't found repro steps that show the gibberish string.
+                -- When chained, don't use previous arginfo.  Note that this
+                -- only kicks in _after_ the command word that chained, and
+                -- only if an argmatcher was found.
                 prev_arginfo = nil
+                reader._arginfo = nil
             end
 
             -- Advance the parser.
-            local chain, chainlookup = reader:update(word, word_index)
+            local chain, chainlookup = reader:update(word, word_index, last_word)
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 lookup = chainlookup
@@ -3318,6 +3325,13 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- Process the word.
             if not reader._extra then
+                -- TODO: Understand and explain why only in the last word...
+                if last_word then
+                    -- In the last word, must get arg_index again in case
+                    -- onadvance changed it.
+                    arg_index = reader._arg_index
+                end
+
                 local info = line_state:getwordinfo(word_index)
                 if not info then
                     break
@@ -3333,6 +3347,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         arg_index = 0
                         args = argmatcher._flags._args[1]
                         prev_arginfo = nil
+                        reader._arginfo = nil
                     else
                         args = argmatcher._args[arg_index]
                     end
@@ -3355,16 +3370,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 end
                 prev_info = info
             end
-
-            -- When chained, don't carry previous arginfo past the argmatcher
-            -- word.
-            -- REVIEW:  This has no effect since prev_arginfo goes out of
-            -- scope a couple of lines later.  This is probably leftover from
-            -- when prev_arginfo was declare outside the loop.  But should
-            -- this instead be setting reader._arginfo = nil?
-            -- if chained then
-            --     prev_arginfo = nil
-            -- end
 
             -- Clear any chained flag for subsequence words.
             chained = nil

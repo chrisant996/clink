@@ -1153,6 +1153,9 @@ void line_editor_impl::before_display_readline()
         const double clock = os::clock();
 #endif
 
+        // Ensure a word covers the cursorpos, so onadvance has a chance to
+        // run for the cursorpos.
+        command_line_states.split_for_hinter();
         m_hinter->get_hint(command_line_states.get_linestate(m_buffer), m_input_hint);
 
 #ifdef DEBUG

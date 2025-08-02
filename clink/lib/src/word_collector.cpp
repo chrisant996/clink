@@ -562,6 +562,51 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep)
 }
 
 //------------------------------------------------------------------------------
+void command_line_states::split_for_hinter()
+{
+    auto& line_state = m_linestates.back();
+    std::vector<word>* const words = const_cast<std::vector<word>*>(&m_words_storage.back());
+    const uint32 cursorpos = line_state.get_cursor();
+
+    // Discard words after the cursor.
+    while (words->size())
+    {
+        word& end_word = words->back();
+        if (cursorpos < end_word.offset)
+        {
+            words->pop_back();
+        }
+        else
+        {
+            if (end_word.offset <= cursorpos && cursorpos <= end_word.offset + end_word.length)
+                end_word.length = cursorpos - end_word.offset;
+            break;
+        }
+    }
+
+    // Ensure the last word contains the cursor.
+    bool add = words->empty();
+    if (!add)
+    {
+        const word& end_word = words->back();
+        add = (cursorpos > end_word.offset + end_word.length);
+    }
+    if (add)
+    {
+        word empty_word;
+        empty_word.offset = cursorpos;
+        empty_word.length = 0;
+        empty_word.command_word = false;
+        empty_word.is_alias = false;
+        empty_word.is_redir_arg = false;
+        empty_word.quoted = false;
+        empty_word.delim = str_token::invalid_delim;
+
+        words->push_back(empty_word);
+    }
+}
+
+//------------------------------------------------------------------------------
 void command_line_states::clear()
 {
     clear_internal();

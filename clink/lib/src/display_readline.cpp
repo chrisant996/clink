@@ -1153,6 +1153,7 @@ public:
     int32           get_column() const { return m_col; }
     int32           get_line_count() const { return m_line_count - m_join_count; }
     bool            get_force_wrap() const { return m_force_wrap; }
+    bool            has_autowrap_at_end() const { return m_has_autowrap_at_end; }
 private:
     const measure_mode m_mode;
     const uint32    m_width;
@@ -1160,6 +1161,7 @@ private:
     int32           m_line_count = 1;
     int32           m_join_count = 0;
     bool            m_force_wrap = false;
+    bool            m_has_autowrap_at_end = false;
 };
 
 //------------------------------------------------------------------------------
@@ -1176,6 +1178,7 @@ void measure_columns::measure(const char* text, uint32 length, bool is_prompt)
     ecma48_iter iter(text, state, length);
     const char* last_lf = nullptr;
     bool wrapped = false;
+    m_has_autowrap_at_end = false;
     while (const ecma48_code &code = iter.next())
     {
         switch (code.get_type())
@@ -1277,6 +1280,7 @@ ctrl_char:
     if (wrapped)
     {
         wrapped = false;
+        m_has_autowrap_at_end = true;
         ++m_line_count;
     }
 
@@ -1448,6 +1452,7 @@ public:
 #endif
 
 private:
+    int32               write_with_clear(FILE* stream, const char* text, int length);
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
     void                clear_comment_row_internal();
     void                move_to_column(uint32 col, bool force=false);
@@ -1666,7 +1671,7 @@ void display_manager::clear_to_end_of_screen_on_next_display()
 }
 
 //------------------------------------------------------------------------------
-static int32 write_with_clear(FILE* stream, const char* text, int length)
+int32 display_manager::write_with_clear(FILE* stream, const char* text, int length)
 {
     int32 remaining = length;
     int32 lines = 0;
@@ -1690,6 +1695,13 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
             rl_fwrite_function(stream, text, length);
             text += length;
             remaining -= length;
+
+            // Windows 8.1 autowrap issue:  if a line in a multiline prompt
+            // reaches the right edge of the terminal and is followed by a CR
+            // or LF then the cursor ends on the wrong line.  Compensate by
+            // first moving the cursor up a line.
+            if (eol && m_autowrap_bug && mc.has_autowrap_at_end())
+                tputs(tgetstr("up", nullptr));
         }
 
         if (eol)
