@@ -555,12 +555,22 @@ static bool safe_append_quoted(str_base& s, const char* append)
     // https://devblogs.microsoft.com/oldnewthing/20100917-00/?p=12833
     // https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
 
-    const char* quote = strchr(append, '\"');
-    if (quote && quote[1])
-        return false;
+    // Check if the first quote in the argument is at the END of a word AND
+    // the argument contains a space or a path separator.  This suggests the
+    // input was something like "foo bar\" or "c:\foo\" which are incorrect;
+    // it should be "c:\foo\\" because of how command line argument quoting
+    // works on Windows.  Input like "foobar\" is ambiguous, so warning about
+    // it would break input like \"foo bar\" which is correct but is parsed as
+    // two separate arguments '"foo' and 'bar"'.
+    const bool space = !!strchr(append, ' ');
+    if (space || strchr(append, '/') || strchr(append, '\\'))
+    {
+        const char* quote = strchr(append, '\"');
+        if (quote && quote > append && !quote[1])
+            return false;
+    }
 
     unsigned backslashes = 0;
-    const bool space = !!strchr(append, ' ');
 
     if (space)
     {
@@ -573,8 +583,6 @@ static bool safe_append_quoted(str_base& s, const char* append)
 
     if (space)
     {
-        if (quote)
-            s.truncate(s.length() - 1);
         while (backslashes--)
             s << "\\";
         s << "\"";
