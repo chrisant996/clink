@@ -3,12 +3,22 @@
 
 #pragma once
 
+#include <core/str_iter.h>
+
 //------------------------------------------------------------------------------
 enum class suggestion_action : uint8
 {
     insert_to_end,
     insert_next_word,
     insert_next_full_word,
+};
+
+//------------------------------------------------------------------------------
+struct suggestion
+{
+    str_moveable    m_suggestion;
+    uint32          m_suggestion_offset = -1;
+    const char*     m_source = "Unknown";
 };
 
 //------------------------------------------------------------------------------

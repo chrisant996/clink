@@ -78,6 +78,9 @@ bool    point_in_select_complete(int32 in);
 int32   clink_select_complete(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
+int32   clink_toggle_listview(int32 count, int32 invoking_key);
+
+//------------------------------------------------------------------------------
 bool    cua_clear_selection();
 bool    cua_set_selection(int32 anchor, int32 point);
 int32   cua_get_anchor();

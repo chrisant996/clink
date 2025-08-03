@@ -11,14 +11,6 @@ class line_states;
 class matches;
 
 //------------------------------------------------------------------------------
-struct suggestion
-{
-    str_moveable    m_suggestion;
-    uint32          m_suggestion_offset = -1;
-    str_moveable    m_source;
-};
-
-//------------------------------------------------------------------------------
 class suggester
 {
 public:

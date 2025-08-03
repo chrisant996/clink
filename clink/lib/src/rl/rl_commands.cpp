@@ -1252,6 +1252,24 @@ ding:
 
 
 //------------------------------------------------------------------------------
+int32 clink_toggle_listview(int32 count, int32 invoking_key)
+{
+    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+    {
+ding:
+        rl_ding();
+        return 0;
+    }
+
+    extern bool activate_suggestion_list(editor_module::result& result, bool reactivate);
+    if (!g_result || !activate_suggestion_list(*g_result, rl_last_func == clink_toggle_listview))
+        goto ding;
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
 bool cua_clear_selection()
 {
     if (s_cua_anchor < 0)

@@ -57,6 +57,9 @@ enum {
     bind_id_suggestionlist_catchall,
 };
 
+const int32 c_max_suggestion_rows = 10;
+const int32 c_max_listview_width = 100;
+
 
 
 //------------------------------------------------------------------------------
@@ -75,6 +78,7 @@ bool suggestionlist_impl::activate(editor_module::result& result, bool reactivat
     if (!m_buffer)
         return false;
 
+#if 0
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {
 #ifdef DEBUG
@@ -82,39 +86,24 @@ bool suggestionlist_impl::activate(editor_module::result& result, bool reactivat
 #endif
         insert_needle();
     }
+#endif
 
-    pause_suggestions(true);
+    m_applied = false;
 
-    m_inserted = false;
+    init_suggestions();
 
-    init_matches();
-    assert(m_anchor >= 0);
-    if (m_anchor < 0)
+    if (!m_count)
     {
-bail_out:
-        pause_suggestions(false);
+cant_activate:
+        m_index = -1;
         return false;
     }
 
-    if (!m_matches.get_match_count())
-    {
-cant_activate:
-        m_anchor = -1;
-        reset_generate_matches();
-        goto bail_out;
-    }
-
-    if (reactivate)
-    {
-        m_comment_row_displayed = false;
-    }
-    else
+    if (!reactivate)
     {
         assert(!m_any_displayed);
-        assert(!m_comment_row_displayed);
         assert(!m_clear_display);
         m_any_displayed = false;
-        m_comment_row_displayed = false;
         m_clear_display = false;
     }
 
@@ -130,18 +119,9 @@ cant_activate:
     assert(m_prev_bind_group < 0);
     m_prev_bind_group = result.set_bind_group(m_bind_group);
 
-    // Insert first match.
-
-    bool only_one = (m_matches.get_match_count() == 1);
-    m_point = m_buffer->get_cursor();
+    // Update the display.
     reset_top();
-    insert_match(only_one/*final*/);
-
-    // If there's only one match, then we're done.
-    if (only_one)
-        cancel(result);
-    else
-        update_display();
+    update_display();
 
     return true;
 }
@@ -149,7 +129,8 @@ cant_activate:
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::point_within(int32 in) const
 {
-    return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
+    // return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -201,7 +182,6 @@ void suggestionlist_impl::on_end_line()
     m_buffer = nullptr;
     m_printer = nullptr;
     m_clear_display = false;
-    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------
@@ -218,23 +198,28 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
         return;
     }
 
-    m_ignore_scroll_offset = false;
-
     bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
     {
     case bind_id_suggestionlist_up:
-        m_index--;
-        if (m_index < -1)
-            m_index = wrap ? count - 1 : 0;
+        if (wrap)
+        {
+            m_index--;
+            if (m_index < -1)
+                m_index = m_count - 1;
+        }
+        else if (m_index >= 0)
+        {
+            m_index--;
+        }
 navigated:
         apply_suggestion(m_index);
         update_display();
         break;
     case bind_id_suggestionlist_down:
         m_index++;
-        if (m_index >= count)
-            m_index = wrap ? -1 : count - 1;
+        if (m_index >= m_count)
+            m_index = wrap ? -1 : m_count - 1;
         goto navigated;
 
 #if 0
@@ -454,8 +439,7 @@ do_mouse_position:
 #endif
 
     case bind_id_suggestionlist_enter:
-enter:
-        apply_suggestion(m_index, true/*final*/);
+        apply_suggestion(m_index);
         cancel(result);
         m_applied = false;
         break;
@@ -482,19 +466,18 @@ enter:
         break;
 #endif
 
-#if 0
     case bind_id_suggestionlist_f2:
+        // TODO:  It would be better to match whatever key(s) are bound to the
+        // clink-toggle-listview command.
+        goto escape;
+#if 0
     case bind_id_suggestionlist_f4:
         break;
 #endif
 
     case bind_id_suggestionlist_escape:
-revert:
-        if (m_applied)
-        {
-            m_buffer->undo();
-            m_applied = false;
-        }
+escape:
+        m_applied = false;
         cancel(result);
         return;
 
@@ -507,6 +490,11 @@ revert:
         }
         break;
     }
+}
+
+//------------------------------------------------------------------------------
+void suggestionlist_impl::on_matches_changed(const context& context, const line_state& line, const char* needle)
+{
 }
 
 //------------------------------------------------------------------------------
@@ -547,9 +535,6 @@ void suggestionlist_impl::cancel(editor_module::result& result, bool can_reactiv
 {
     assert(is_active());
 
-    // Leave m_point and m_len alone so that activate() can reactivate if
-    // necessary.
-
     m_buffer->set_need_draw();
 
     result.set_bind_group(m_prev_bind_group);
@@ -557,10 +542,6 @@ void suggestionlist_impl::cancel(editor_module::result& result, bool can_reactiv
 
     if (!can_reactivate)
         override_rl_last_func(nullptr, true/*force_when_null*/);
-
-    pause_suggestions(false);
-
-    reset_generate_matches();
 
     update_display();
 
@@ -571,6 +552,18 @@ void suggestionlist_impl::cancel(editor_module::result& result, bool can_reactiv
 void suggestionlist_impl::init_suggestions()
 {
     // TODO: get suggestions from suggestion_manager.
+    suggestion s;
+    m_suggestions.clear();
+    s.m_suggestion = "abc def";
+    s.m_suggestion_offset = 0;
+    s.m_source = "History";
+    m_suggestions.emplace_back(std::move(s));
+    s.m_suggestion = "abc xyz";
+    s.m_suggestion_offset = 0;
+    s.m_source = "History";
+    m_suggestions.emplace_back(std::move(s));
+
+    m_count = m_suggestions.size();
 
     m_clear_display = m_any_displayed;
 }
@@ -578,15 +571,19 @@ void suggestionlist_impl::init_suggestions()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_layout()
 {
-    // TODO: limit to showing 10 rows, plus "tooltip", plus counts "<-/10>etc".
-    //m_visible_rows = ?;
-
     // TODO: this kind of has to hide the comment row, but then that disables
     // features like input hints...
 
-    // At least 5 rows must fit.
-    if (m_visible_rows < 5)
+    const int32 input_height = (_rl_vis_botlin + 1);
+    const int32 header_row = 1;
+    int32 available_rows = m_screen_rows - input_height - header_row;
+    available_rows = min<>(available_rows, m_screen_rows / 2);
+    m_visible_rows = min<>(c_max_suggestion_rows, m_count);
+
+    // At least 3 rows must fit.
+    if (m_visible_rows > available_rows && available_rows < 3)
         m_visible_rows = 0;
+    m_visible_rows = min<>(m_visible_rows, available_rows);
 
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
@@ -597,21 +594,21 @@ void suggestionlist_impl::update_layout()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_top()
 {
-#if 0
-    const int32 y = get_match_row(m_index);
+    const int32 y = m_index;
     if (m_top > y)
     {
-        set_top(y);
+        set_top(max<>(0, y));
     }
     else
     {
-        const int32 rows = min<int32>(m_match_rows, m_visible_rows);
+        const int32 rows = min<int32>(m_count, m_visible_rows);
         int32 top = max<int32>(0, y - (rows - 1));
         if (m_top < top)
             set_top(top);
     }
 
-    if (m_expanded && !m_ignore_scroll_offset)
+#if 0
+    if (m_expanded)
     {
         const int32 scroll_ofs = get_scroll_offset();
         if (scroll_ofs > 0)
@@ -624,437 +621,200 @@ void suggestionlist_impl::update_top()
                 set_top(min(last_row, y + scroll_ofs - m_displayed_rows + 1));
         }
     }
+#endif
 
     assert(m_top >= 0);
-    assert(m_top <= max<int32>(0, m_match_rows - m_visible_rows));
-#endif
+    assert(m_top <= max<int32>(0, m_count - m_visible_rows));
 }
 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_display()
 {
-#if 0
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
     m_vert_scroll_column = 0;
 #endif
 
-    if (m_visible_rows > 0)
+    if (m_visible_rows <= 0)
+        return;
+
+    // Remember the cursor position so it can be restored later to stay
+    // consistent with Readline's view of the world.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
+    COORD restore = csbi.dwCursorPosition;
+    const int32 vpos = _rl_last_v_pos;
+    const int32 cpos = _rl_last_c_pos;
+
+    // Move cursor after the input line.
+    _rl_move_vert(_rl_vis_botlin);
+
+    const char* const normal_color[] = { "\x1b[m", "\x1b[0;100m" };
+    const char* const highlight_color[] = { "\x1b[0;1m", "\x1b[0;100;1m" };
+    const char* const markup_color[] = { "\x1b[0;33m", "\x1b[0;100;33m" };
+
+    // Display suggestions.
+    int32 up = 0;
+    if (is_active() && m_count > 0)
     {
-        // Remember the cursor position so it can be restored later to stay
-        // consistent with Readline's view of the world.
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(h, &csbi);
-        COORD restore = csbi.dwCursorPosition;
-        const int32 vpos = _rl_last_v_pos;
-        const int32 cpos = _rl_last_c_pos;
-
-        // Move cursor after the input line.
-        _rl_move_vert(_rl_vis_botlin);
-
-#ifdef SHOW_DISPLAY_GENERATION
-        static char s_chGen = '0';
-#endif
-
-        const char* normal_color = "\x1b[m";
-        int32 normal_color_len = 3;
-
-        const char* description_color = normal_color;
-        int32 description_color_len = normal_color_len;
-        if (_rl_description_color)
-        {
-            description_color = _rl_description_color;
-            description_color_len = strlen(description_color);
-        }
-
-        str<16> desc_select_color;
-        ecma48_processor(description_color, &desc_select_color, nullptr, ecma48_processor_flags::colorless);
-
-        // Display matches.
-        int32 up = 0;
-        const int32 count = m_matches.get_match_count();
-        if (is_active() && count > 0)
-        {
-            const int32 preview_rows = g_preview_rows.get();
-            if (!m_expanded)
-            {
-                if (preview_rows <= 0 || preview_rows + 1 >= m_visible_rows)
-                {
-                    m_expanded = true;
-                    m_prev_displayed = -1;
-                }
-                else if (m_index >= 0)
-                {
-                    if (_rl_print_completions_horizontally)
-                        m_expanded = (m_index / m_match_cols) >= preview_rows;
-                    else
-                        m_expanded = (m_index % m_match_rows) >= preview_rows;
-                    if (m_expanded)
-                        m_prev_displayed = -1;
-                }
-                if (m_expanded)
-                    m_comment_row_displayed = false;
-            }
-
-            const bool show_descriptions = !m_desc_below && m_matches.has_descriptions();
-            const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
-            const int32 rows = min<int32>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
-            m_displayed_rows = rows;
-
-            // Can't update top until after m_displayed_rows is known, so that
-            // the scroll offset can be accounted for accurately in all cases.
-            update_top();
+        str_moveable tmp;
+        const int32 rows = min<>(m_visible_rows, m_count);
+        m_displayed_rows = rows;
 
 #ifdef SHOW_VERT_SCROLLBARS
-            m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
-            if (m_vert_scroll_car)
-                m_vert_scroll_column = m_screen_cols - 2;
-            const int32 car_top = calc_scroll_car_offset(m_top, rows, m_match_rows, m_vert_scroll_car);
-#endif
-
-            const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-            const int32 minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
-#ifdef DEBUG
-            const int32 col_extra = m_col_extra;
+        const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
 #else
-            const int32 col_extra = 0;
+        const int32 reserve_cols = 1;
 #endif
+        const int32 max_width = min<>(m_screen_cols - reserve_cols, c_max_listview_width);
 
-            int32 shown = 0;
-            for (int32 row = 0; row < rows; row++)
-            {
-                int32 i = (m_top + row) * major_stride;
-                if (i >= count)
-                    break;
+        rl_crlf();
+        up++;
 
-                rl_crlf();
-                up++;
-
-                if (m_clear_display && row == 0)
-                {
-                    m_printer->print("\x1b[m\x1b[J");
-                    m_comment_row_displayed = false;
-                    m_prev_displayed = -1;
-                    m_clear_display = false;
-                }
-
-                // Count matches on the row.
-                if (show_more_comment_row)
-                {
-                    assert(m_top == 0);
-                    int32 t = i;
-                    for (int32 col = 0; col < m_match_cols; col++)
-                    {
-                        if (t >= count)
-                            break;
-                        shown++;
-                        t += minor_stride;
-                    }
-                }
-
-                // Print matches on the row.
-                if (m_prev_displayed < 0 ||
-                    row + m_top == get_match_row(m_index) ||
-                    row + m_top == get_match_row(m_prev_displayed))
-                {
-                    str<> truncated;
-                    str<> tmp;
-                    reset_tmpbuf();
-#ifdef SHOW_DISPLAY_GENERATION
-                    append_tmpbuf_char(s_chGen);
-#endif
-                    for (int32 col = 0; col < m_match_cols; col++)
-                    {
-                        if (i >= count)
-                            break;
-
-#ifdef SHOW_VERT_SCROLLBARS
-                        const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
-#else
-                        const int32 reserve_cols = 1;
-#endif
-                        const bool right_justify = m_widths.m_right_justify;
-                        const int32 col_max = ((show_descriptions && !right_justify) ?
-                                               m_screen_cols - reserve_cols :
-                                               min<int32>(m_screen_cols - 1, m_widths.column_width(col))) - col_extra;
-
-                        const int32 selected = (i == m_index);
-                        const char* const display = m_matches.get_match_display(i);
-                        const match_type type = m_matches.get_match_type(i);
-                        const bool append = m_matches.is_append_display(i);
-
-                        mark_tmpbuf();
-                        int32 printed_len;
-                        if (use_display(append, type, i))
-                        {
-                            printed_len = 0;
-                            if (append)
-                            {
-                                const char* match = m_matches.get_match(i);
-                                char* temp = __printable_part(const_cast<char*>(match));
-                                printed_len = append_filename(temp, match, 0, 0, type, selected, nullptr);
-                            }
-                            append_display(display, selected, append ? _rl_arginfo_color : _rl_filtered_color);
-                            printed_len += m_matches.get_match_visible_display(i);
-
-                            if (printed_len > col_max || selected)
-                            {
-                                str<> buf(get_tmpbuf_rollback());
-                                const char* temp = buf.c_str();
-
-                                if (printed_len > col_max)
-                                {
-                                    printed_len = ellipsify(temp, col_max, truncated, false/*expand_ctrl*/);
-                                    temp = truncated.c_str();
-                                }
-                                if (selected)
-                                {
-                                    ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::colorless);
-                                    temp = tmp.c_str();
-                                }
-
-                                rollback_tmpbuf();
-                                append_display(temp, selected, "");
-                            }
-                        }
-                        else
-                        {
-                            int32 vis_stat_char;
-                            char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : __printable_part(const_cast<char*>(display));
-                            printed_len = append_filename(temp, display, 0, 0, type, selected, &vis_stat_char);
-                            if (printed_len > col_max)
-                            {
-                                rollback_tmpbuf();
-                                ellipsify(temp, col_max - !!vis_stat_char, truncated, true/*expand_ctrl*/);
-                                temp = truncated.data();
-                                printed_len = append_filename(temp, display, 0, 0, type, selected, nullptr);
-                            }
-                        }
-
-                        const int32 next = i + minor_stride;
-                        const width_t max_match_len = m_widths.max_match_len(col);
-
-                        if (show_descriptions && !right_justify)
-                        {
-                            pad_filename(printed_len, -max_match_len, selected);
-                            printed_len = max_match_len;
-                        }
-
-                        const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
-                        if (desc && *desc)
-                        {
-                            // Leave at least one space at end of line, or else
-                            // "\x1b[K" can erase part of the intended output.
-#ifdef USE_DESC_PARENS
-                            const int32 parens = right_justify ? 2 : 0;
-#else
-                            const int32 parens = 0;
-#endif
-                            const int32 pad_to = (right_justify ?
-                                max<int32>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
-                                max_match_len + m_widths.m_desc_padding);
-                            if (pad_to < m_screen_cols - 1)
-                            {
-                                const bool use_sel_color = (selected && right_justify);
-                                const char* const dc = use_sel_color ? desc_select_color.c_str() : description_color;
-                                const int32 dc_len = use_sel_color ? desc_select_color.length() : description_color_len;
-                                pad_filename(printed_len, pad_to, -1);
-                                printed_len = pad_to + parens;
-                                append_tmpbuf_string(dc, dc_len);
-                                if (parens)
-                                {
-                                    append_tmpbuf_string("(", 1);
-                                    mark_tmpbuf();
-                                }
-                                printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/,
-                                    use_sel_color ? append_tmpbuf_string_colorless : append_tmpbuf_string);
-                                if (parens)
-                                {
-                                    if (strchr(get_tmpbuf_rollback(), '\x1b'))
-                                        append_tmpbuf_string(dc, dc_len);
-                                    append_tmpbuf_string(")", 1);
-                                }
-                                if (!selected || !right_justify)
-                                    append_tmpbuf_string(normal_color, normal_color_len);
-                            }
-                        }
-
-#ifdef DEBUG
-                        if (col_extra)
-                        {
-                            pad_filename(printed_len, col_max + 1, -1);
-                            printed_len = col_max + col_extra;
-
-                            if (!selected)
-                                append_tmpbuf_string("\x1b[36m", 5);
-
-                            char _extra[3];
-                            str_base extra(_extra);
-                            extra.format("%2x", type);
-                            append_tmpbuf_string(_extra, 2);
-                        }
-#endif
-
-                        const bool last_col = (col + 1 >= m_match_cols || next >= count);
-                        if (!last_col || selected)
-                            pad_filename(printed_len, -col_max, selected);
-                        if (!last_col)
-                            pad_filename(0, m_widths.m_col_padding, 0);
-
-                        i = next;
-                    }
-
-#ifdef SHOW_VERT_SCROLLBARS
-                    if (m_vert_scroll_car)
-                    {
-#ifdef USE_FULL_SCROLLBAR
-                        constexpr bool floating = false;
-#else
-                        constexpr bool floating = true;
-#endif
-                        const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, floating);
-                        if (car)
-                        {
-                            // Space was reserved by update_layout() or col_max.
-                            const uint32 pad_to = m_screen_cols - 2;
-                            const uint32 len = calc_tmpbuf_cell_count();
-                            if (pad_to >= len)
-                            {
-                                make_spaces(pad_to - len, tmp);
-                                append_tmpbuf_string(tmp.c_str(), tmp.length());
-                                append_tmpbuf_string("\x1b[0;90m", 7);
-                                append_tmpbuf_string(car, -1);          // ┃ or etc
-                            }
-                        }
-#ifdef USE_FULL_SCROLLBAR
-                        else
-                        {
-                            // Space was reserved by update_layout() or col_max.
-                            const uint32 pad_to = m_screen_cols - 2;
-                            const uint32 len = calc_tmpbuf_cell_count();
-                            if (pad_to >= len)
-                            {
-                                make_spaces(pad_to - len, tmp);
-                                append_tmpbuf_string(tmp.c_str(), tmp.length());
-                                append_tmpbuf_string("\x1b[0;90m", 7);
-                                append_tmpbuf_string("\xe2\x94\x82", 3);// │
-                            }
-                        }
-#endif
-                    }
-#endif // SHOW_VERT_SCROLLBARS
-
-                    flush_tmpbuf();
-
-                    // Clear to end of line.
-                    m_printer->print("\x1b[m\x1b[K");
-                }
-            }
-
-            if (show_more_comment_row || (m_visible_rows < m_match_rows))
-            {
-                rl_crlf();
-                up++;
-
-                if (!m_comment_row_displayed)
-                {
-                    str<> tmp;
-                    if (!m_expanded)
-                    {
-                        const int32 more = m_matches.get_match_count() - shown;
-                        tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
-                    }
-                    else
-                    {
-                        tmp.format("\x1b[%smrows %u to %u of %u\x1b[m\x1b[K", g_color_comment_row.get(), m_top + 1, m_top + m_visible_rows, m_match_rows);
-                    }
-                    m_printer->print(tmp.c_str(), tmp.length());
-                    m_comment_row_displayed = true;
-                }
-            }
-
-            assert(!m_clear_display);
-            m_prev_displayed = m_index;
-            m_any_displayed = true;
-
-            // Show match description.
-            if (m_desc_below && m_matches.has_descriptions())
-            {
-                rl_crlf();
-                m_printer->print("\x1b[m\x1b[J");
-                rl_crlf();
-                up += 2;
-
-                static const char c_footer[] = "\x1b[7mF1\x1b[27m-InlineDescs";
-                int32 footer_cols = cell_count(c_footer);
-                if (footer_cols + 2 > m_screen_cols / 2)
-                    footer_cols = 0;
-
-                const int32 fit_cols = m_screen_cols - 1 - (footer_cols ? footer_cols + 2 : 0);
-
-                str<> s;
-                if (m_index >= 0 && m_index < m_matches.get_match_count())
-                {
-                    const char* desc = m_matches.get_match_description(m_index);
-                    if (desc && *desc)
-                        ellipsify(desc, fit_cols, s, false);
-                }
-
-                m_printer->print(description_color, description_color_len);
-                m_printer->print(s.c_str(), s.length());
-                if (footer_cols)
-                {
-                    s.format("\x1b[%uG", m_screen_cols - footer_cols);
-                    m_printer->print(description_color, description_color_len);
-                    m_printer->print(s.c_str(), s.length());
-                    m_printer->print(c_footer);
-                }
-                m_printer->print("\x1b[m");
-            }
-        }
-        else
+        if (m_clear_display)
         {
-            if (m_any_displayed)
-            {
-                // Move cursor to next line, then clear to end of screen.
-                rl_crlf();
-                up++;
-                m_printer->print("\x1b[m\x1b[J");
-            }
+            m_printer->print("\x1b[m\x1b[J");
             m_prev_displayed = -1;
-            m_any_displayed = false;
-            m_comment_row_displayed = false;
-            m_expanded = false;
             m_clear_display = false;
         }
 
-#ifdef SHOW_DISPLAY_GENERATION
-        s_chGen++;
-        if (s_chGen > 'Z')
-            s_chGen = '0';
+        // Build the header row.
+        str<64> left;
+        str<64> right;
+        str<16> num;
+        if (m_index < 0)
+            num = "-";
+        else
+            num.format("%u", m_index + 1);
+        left.format("%s<%s/%u>%s", markup_color[0], num.c_str(), m_count, normal_color[0]);
+        // TODO: show sources in right.c_str().
+        right.format("<%s...%s>", markup_color[0], normal_color[0]);
+
+        // Show the header row.
+        {
+            const int32 left_cells = cell_count(left.c_str());
+            const int32 right_cells = cell_count(right.c_str());
+            const int32 spaces = max_width - (left_cells + right_cells);
+            // TODO: what if spaces is negative?
+            concat_spaces(tmp, spaces);
+        }
+        m_printer->print(left.c_str(), left.length());
+        m_printer->print(tmp.c_str(), tmp.length());
+        m_printer->print(right.c_str(), right.length());
+
+        // Can't update top until after m_displayed_rows is known, so that the
+        // scroll offset can be accounted for accurately in all cases.
+        update_top();
+
+#ifdef SHOW_VERT_SCROLLBARS
+        m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_count) : 0;
+        if (m_vert_scroll_car)
+            m_vert_scroll_column = m_screen_cols - 2;
+        const int32 car_top = calc_scroll_car_offset(m_top, rows, m_count, m_vert_scroll_car);
 #endif
 
-        // Restore cursor position.
-        if (up > 0)
+        int32 shown = 0;
+        for (int32 row = 0; row < rows; row++)
         {
-            str<16> s;
-            s.format("\x1b[%dA", up);
-            m_printer->print(s.c_str(), s.length());
-        }
-        GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
-        _rl_move_vert(vpos);
-        _rl_last_c_pos = cpos;
-        GetConsoleScreenBufferInfo(h, &csbi);
-        restore.Y = csbi.dwCursorPosition.Y;
-        SetConsoleCursorPosition(h, restore);
-    }
+            int32 i = (m_top + row);
+            if (i >= m_count)
+                break;
+
+            rl_crlf();
+            up++;
+
+            // Print entry.
+            if (m_prev_displayed < 0 ||
+                row + m_top == m_index ||
+                row + m_top == m_prev_displayed)
+            {
+                const bool selected = (i == m_index);
+
+                // TODO: build string with potential ellipses on both ends,
+                // and with matching text highlighted...
+                tmp.clear();
+                tmp = m_suggestions[i].m_suggestion.c_str();
+
+                left.format("%s>%s ", markup_color[selected], normal_color[selected]);
+                right.format("[%s%s%s]", markup_color[selected], m_suggestions[i].m_source, normal_color[selected]);
+                {
+                    const int32 spaces = max_width - (cell_count(left.c_str()) + cell_count(tmp.c_str()) + cell_count(right.c_str()));
+                    // TODO: what if spaces is negative?
+                    tmp.concat(normal_color[selected]);
+                    concat_spaces(tmp, spaces);
+                }
+                m_printer->print(left.c_str(), left.length());
+                m_printer->print(tmp.c_str(), tmp.length());
+                m_printer->print(right.c_str(), right.length());
+
+#ifdef SHOW_VERT_SCROLLBARS
+                if (m_vert_scroll_car)
+                {
+#ifdef USE_FULL_SCROLLBAR
+                    constexpr bool floating = false;
+#else
+                    constexpr bool floating = true;
 #endif
+                    const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, floating);
+                    if (car)
+                    {
+                        // Space was reserved by update_layout().
+                        tmp.format("%s \x1b[0;90m%s", normal_color[0], car);
+                        m_printer->print(tmp.c_str(), tmp.length());
+                    }
+#ifdef USE_FULL_SCROLLBAR
+                    else
+                    {
+                        // Space was reserved by update_layout().
+                        tmp.format("%s \x1b[0;90m\xe2\x94\x82", normal_color[0]);// │
+                        m_printer->print(tmp.c_str(), tmp.length());
+                    }
+#endif
+                }
+#endif // SHOW_VERT_SCROLLBARS
+
+                // Clear to end of line.
+                m_printer->print("\x1b[m\x1b[K");
+            }
+        }
+
+        assert(!m_clear_display);
+        m_prev_displayed = m_index;
+        m_any_displayed = true;
+    }
+    else
+    {
+        if (m_any_displayed)
+        {
+            // Move cursor to next line, then clear to end of screen.
+            rl_crlf();
+            up++;
+            m_printer->print("\x1b[m\x1b[J");
+        }
+        m_prev_displayed = -1;
+        m_any_displayed = false;
+        m_clear_display = false;
+    }
+
+    // Restore cursor position.
+    if (up > 0)
+    {
+        str<16> s;
+        s.format("\x1b[%dA", up);
+        m_printer->print(s.c_str(), s.length());
+    }
+    GetConsoleScreenBufferInfo(h, &csbi);
+    m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
+    _rl_move_vert(vpos);
+    _rl_last_c_pos = cpos;
+    GetConsoleScreenBufferInfo(h, &csbi);
+    restore.Y = csbi.dwCursorPosition.Y;
+    SetConsoleCursorPosition(h, restore);
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::apply_suggestion(int32 index, int32 final)
+void suggestionlist_impl::apply_suggestion(int32 index)
 {
 #if 0
     assert(is_active());
@@ -1224,32 +984,27 @@ void suggestionlist_impl::apply_suggestion(int32 index, int32 final)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::set_top(int32 top)
 {
-#if 0
     assert(top >= 0);
-    assert(top <= max<int32>(0, m_match_rows - m_visible_rows));
+    assert(top <= max<int32>(0, m_count - m_visible_rows));
     if (top != m_top)
     {
         m_top = top;
         m_prev_displayed = -1;
-        m_comment_row_displayed = false;
     }
-#endif
 }
 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::reset_top()
 {
     m_top = 0;
-    m_index = 0;
+    m_index = -1;
     m_prev_displayed = -1;
 }
 
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active() const
 {
-#if 0
-    return m_prev_bind_group >= 0 && m_buffer && m_printer && m_anchor >= 0 && m_point >= m_anchor;
-#endif
+    return m_prev_bind_group >= 0 && m_buffer && m_printer;
 }
 
 //------------------------------------------------------------------------------
@@ -1270,16 +1025,16 @@ bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
 
 
 
-#if 0
 //------------------------------------------------------------------------------
-bool activate_select_complete(editor_module::result& result, bool reactivate)
+bool activate_suggestion_list(editor_module::result& result, bool reactivate)
 {
-    if (!s_selectcomplete)
+    if (!s_suggestionlist)
         return false;
 
-    return s_selectcomplete->activate(result, reactivate);
+    return s_suggestionlist->activate(result, reactivate);
 }
 
+#if 0
 //------------------------------------------------------------------------------
 bool point_in_select_complete(int32 in)
 {

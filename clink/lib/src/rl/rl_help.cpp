@@ -457,6 +457,7 @@ void init_readline_funmap()
     clink_add_funmap_entry("clink-shift-space", clink_shift_space, keycat_misc, "Invoke the normal Space key binding, so that Shift-Space behaves the same as Space");
     clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions:  0=neither, 1=categories, 2=descriptions, 3=both (default).  Add 4 to include unbound commands");
     clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
+    clink_add_funmap_entry("clink-toggle-listview", clink_toggle_listview, keycat_misc, "PROTOTYPE -- TOGGLE LISTVIEW");
     clink_add_funmap_entry("clink-toggle-slashes", clink_toggle_slashes, keycat_misc, "Toggle between forward and backslashes in the word at the cursor point, or in the Nth word if a numeric argument is provided");
     clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory");
     clink_add_funmap_entry("clink-what-is", clink_what_is, keycat_misc, "Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name");

@@ -236,11 +236,13 @@ line_editor_impl::line_editor_impl(const desc& desc)
 , m_pager(*this)
 , m_selectcomplete(*this)
 , m_textlist(*this)
+, m_listview(*this)
 {
     add_module(m_module);
     add_module(m_pager);
     add_module(m_selectcomplete);
     add_module(m_textlist);
+    add_module(m_listview);
 
     key_tester* old_tester = desc.input->set_key_tester(this);
     assert(!old_tester);
@@ -736,6 +738,8 @@ bool line_editor_impl::accepts_mouse_input(mouse_input_type type)
         return m_selectcomplete.accepts_mouse_input(type);
     if (m_textlist.is_active())
         return m_textlist.accepts_mouse_input(type);
+    if (m_listview.is_active())
+        return m_listview.accepts_mouse_input(type);
     if (m_bind_resolver.get_group() == m_binder.get_group())
         return m_module.accepts_mouse_input(type);
     return false;

@@ -7,9 +7,9 @@
 #include "input_dispatcher.h"
 #include "match_adapter.h"
 #include "scroll_helper.h"
+#include "suggestions.h"
 
 #include <core/str.h>
-#include <lua/suggest.h>
 
 #include <vector>
 
@@ -34,6 +34,7 @@ private:
     virtual void    on_begin_line(const context& context) override;
     virtual void    on_end_line() override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
+    virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
     virtual void    on_signal(int32 sig) override;
 
@@ -53,6 +54,7 @@ private:
     line_buffer*    m_buffer = nullptr;
 // TODO: access list of suggestions from suggestion_manager?
     std::vector<suggestion> m_suggestions;
+    int32           m_count;
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
@@ -76,7 +78,7 @@ private:
 
     // Current suggestion index.
     int32           m_top = 0;
-    int32           m_index = 0;
+    int32           m_index = -1;
     int32           m_prev_displayed = -1;
 
     // Current input.

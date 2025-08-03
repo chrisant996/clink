@@ -12,6 +12,7 @@
 #include "pager_impl.h"
 #include "selectcomplete_impl.h"
 #include "textlist_impl.h"
+#include "suggestionlist_impl.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
@@ -168,6 +169,7 @@ private:
     pager_impl          m_pager;
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;
+    suggestionlist_impl m_listview;
     key_t               m_prev_key;
     uint8               m_flags = 0;
     int32               m_generation_id = 0;
