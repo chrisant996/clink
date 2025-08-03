@@ -21,6 +21,77 @@ static bool     s_was_installed = false;
 
 
 //------------------------------------------------------------------------------
+static void print_help()
+{
+    static const char* const help_verbs[] = {
+        "install [-- <args...>]", "Installs a command to cmd.exe's autorun to start Clink.",
+        "uninstall",         "Does the opposite of 'install'.",
+        "show",              "Displays the values of cmd.exe's autorun variables.",
+        "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>.",
+        nullptr
+    };
+
+    static const char* const help_args[] = {
+        "-a, --allusers",       "Modifies autorun for all users (requires admin rights).",
+        "-h, --help",           "Shows this help text.",
+        nullptr
+    };
+
+    puts_clink_header();
+
+    puts("Usage: autorun [options] <verb> [<string>] [-- <clink_args>]\n");
+
+    puts("Verbs:");
+    puts_help(help_verbs, help_args);
+
+    puts("Options:");
+    puts_help(help_args, help_verbs);
+
+    puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
+        "variables. The value of these variables are read and executed by cmd.exe when\n"
+        "it starts. The 'install/uninstall' verbs add/remove the correct command to run\n"
+        "Clink when cmd.exe starts. All '<args>' that follow 'install' are passed to\n"
+        "Clink - see 'clink inject --help' for reference.\n");
+
+    puts("To include quotes they must be escaped with a backslash;\n");
+    puts("  clink autorun set \\\"foobar\\\"");
+
+    puts("\nWrite access to cmd.exe's AutoRun registry entry will require\n"
+        "administrator privileges when using the --allusers option.");
+}
+
+//------------------------------------------------------------------------------
+static bool parse_autorun_flags(int32 argc, char** argv, const struct option* options, int32* ret)
+{
+    int32 i;
+    while ((i = getopt_long(argc, argv, "+?ha", options, nullptr)) != -1)
+    {
+        switch (i)
+        {
+        case 'a':
+            g_all_users = 1;
+            g_enum_users = 0;
+            break;
+        case '|':
+            if (!g_all_users)
+                g_enum_users = 1;
+            break;
+
+        case '?':
+        case 'h':
+            print_help();
+            *ret = 0;
+            return false;
+
+        default:
+            *ret = 1;
+            return false;
+        }
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, int32 writable, const WCHAR* userid=nullptr)
 {
     wstr<> key;
@@ -472,46 +543,6 @@ static bool dispatch(dispatch_func_t* function, const char* clink_path)
 }
 
 //------------------------------------------------------------------------------
-static void print_help()
-{
-    static const char* const help_verbs[] = {
-        "install [-- <args...>]", "Installs a command to cmd.exe's autorun to start Clink.",
-        "uninstall",         "Does the opposite of 'install'.",
-        "show",              "Displays the values of cmd.exe's autorun variables.",
-        "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>.",
-        nullptr
-    };
-
-    static const char* const help_args[] = {
-        "-a, --allusers",       "Modifies autorun for all users (requires admin rights).",
-        "-h, --help",           "Shows this help text.",
-        nullptr
-    };
-
-    puts_clink_header();
-
-    puts("Usage: autorun [options] <verb> [<string>] [-- <clink_args>]\n");
-
-    puts("Verbs:");
-    puts_help(help_verbs, help_args);
-
-    puts("Options:");
-    puts_help(help_args, help_verbs);
-
-    puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
-        "variables. The value of these variables are read and executed by cmd.exe when\n"
-        "it starts. The 'install/uninstall' verbs add/remove the correct command to run\n"
-        "Clink when cmd.exe starts. All '<args>' that follow 'install' are passed to\n"
-        "Clink - see 'clink inject --help' for reference.\n");
-
-    puts("To include quotes they must be escaped with a backslash;\n");
-    puts("  clink autorun set \\\"foobar\\\"");
-
-    puts("\nWrite access to cmd.exe's AutoRun registry entry will require\n"
-        "administrator privileges when using the --allusers option.");
-}
-
-//------------------------------------------------------------------------------
 static void success_message(const char* message)
 {
     show_autorun();
@@ -564,37 +595,18 @@ int32 autorun(int32 argc, char** argv)
     };
 
     str<MAX_PATH> clink_path;
-
-    int32 i;
     int32 ret = 0;
-    while ((i = getopt_long(argc, argv, "?ha", options, nullptr)) != -1)
-    {
-        switch (i)
-        {
-        case 'a':
-            g_all_users = 1;
-            g_enum_users = 0;
-            break;
-        case '|':
-            if (!g_all_users)
-                g_enum_users = 1;
-            break;
 
-        case '?':
-        case 'h':
-            print_help();
-            return 0;
-
-        default:
-            return 1;
-        }
-    }
+    // Parse flags before the verb.
+    if (!parse_autorun_flags(argc, argv, options, &ret))
+        return ret;
 
     dispatch_func_t* function = nullptr;
 
     // Find out what to do by parsing the verb.
     if (optind < argc)
     {
+        bool show = false;
         if (!strcmp(argv[optind], "install"))
             function = install_autorun;
         else if (!strcmp(argv[optind], "uninstall"))
@@ -602,6 +614,20 @@ int32 autorun(int32 argc, char** argv)
         else if (!strcmp(argv[optind], "set"))
             function = set_autorun_value;
         else if (!strcmp(argv[optind], "show"))
+            show = true;
+
+        // Parse flags after the verb.  This is necessary so the 'install' and
+        // 'set' verbs can accept and preserve flags for the command line that
+        // follows them.  E.g. "clink autorun set clink inject --autorun".
+        if (function || show)
+        {
+            ++optind;
+            const bool ok = parse_autorun_flags(argc, argv, options, &ret);
+            if (!ok)
+                return ret;
+        }
+
+        if (show)
             return show_autorun();
     }
 
@@ -619,7 +645,7 @@ int32 autorun(int32 argc, char** argv)
     // Collect the remainder of the command line.
     if (function == install_autorun || function == set_autorun_value)
     {
-        for (i = optind + 1; i < argc; ++i)
+        for (int32 i = optind; i < argc; ++i)
         {
             if (!safe_append_quoted(g_clink_args, argv[i]))
             {
