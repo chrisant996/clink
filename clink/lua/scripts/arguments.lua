@@ -3098,7 +3098,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 pos = next
             end
             if pos > 0 then
-                return pos, 0, line_state
+                return pos, 0
             end
         end
 
@@ -3113,12 +3113,12 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 if attached_arg then
                     return attach_pos, 0, line_state
                 end
-                return 0, 1, line_state
+                return 0, 1
             end
         end
     end
 
-    return 0, nil, line_state
+    return 0, nil
 end
 
 --------------------------------------------------------------------------------
