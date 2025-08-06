@@ -529,7 +529,7 @@ void command_line_states::set(const line_buffer& buffer,
 }
 
 //------------------------------------------------------------------------------
-uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep)
+uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool discard)
 {
 #ifdef DEBUG
     assert(!m_broke_end_word);
@@ -537,7 +537,15 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep)
 #endif
 
     word* end_word = const_cast<word*>(&m_linestates.back().get_words().back());
-    if (truncate)
+    if (discard)
+    {
+        end_word->offset += truncate;
+        if (end_word->length > truncate)
+            end_word->length -= truncate;
+        else
+            end_word->length = 0;
+    }
+    else if (truncate)
     {
         truncate = min<uint32>(truncate, end_word->length);
 

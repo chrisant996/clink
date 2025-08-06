@@ -549,10 +549,11 @@ end
 --------------------------------------------------------------------------------
 function _argreader:start_chained_command(word_index, mode, expand_aliases)
     local line_state = self._line_state
+    mode = mode or "cmd"
     self._no_cmd = nil
     self._chain_command = true
     self._chain_command_expand_aliases = expand_aliases
-    mode = mode or "cmd"
+    self._chain_command_mode = mode
     for i = word_index, line_state:getwordcount() do
         local info = line_state:getwordinfo(i)
         if not info.redir then
@@ -621,6 +622,7 @@ local default_flag_nowordbreakchars = "'`=+;,"
 function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unused
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
+    self._chain_command_mode = nil
     self._cycle_detection = nil
     if self._disabled then
         return
@@ -2721,7 +2723,7 @@ end
 local function sanitize_command_word(command_word, quoted)
     if command_word then
         if not quoted and command_word:find("^@") then
-            local cw = command_word:gsub("^@\"?", "")
+            local cw = command_word:sub(2)
             return cw, true
         else
             return command_word, false
@@ -3111,14 +3113,26 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 -- quotes) so that matching can happen for the `text` portion.
                 local attached_arg,attach_pos = word:find("^[^:=][^:=]+[:=]")
                 if attached_arg then
-                    return attach_pos, 0, line_state
+                    return attach_pos, 0
                 end
                 return 0, 1
             end
         end
-    end
 
-    return 0, nil
+        if argmatcher._chain_command or reader._chain_command then
+            if word:find("^%@") then
+                -- The third return value is undocumented, but 'true' discards
+                -- the text before the break point, keeping only the text after
+                -- the break point as a word.
+                if (reader._chain_command_mode or argmatcher._chain_command_mode) == "cmd" then
+                    local info = line_state:getwordinfo(line_state:getwordcount())
+                    if not info.quoted then
+                        return 1, info.length - 1, true
+                    end
+                end
+            end
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -3142,14 +3156,22 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             local command_word = line_state:getword(command_word_index) or ""
             local cw, sanitized = sanitize_command_word(command_word, info.quoted)
             if #cw > 0 then
+                local cquoted = info.quoted
+                if sanitized then
+                    local line = line_state:getline()
+                    if line:sub(info.offset, info.offset + info.length - 1):find('"') then
+                        cquoted = true
+                    end
+                end
                 local m = has_argmatcher and "m" or ""
                 if info.alias then
                     word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-                elseif not info.quoted and not no_cmd and clink.is_cmd_command(cw) then
+                elseif not cquoted and not no_cmd and (not sanitized or reader._chain_command_mode == "cmd") and clink.is_cmd_command(cw) then
                     word_classifier:classifyword(command_word_index, m.."c", false); --command
                 elseif unrecognized_color or executable_color then
                     local cl
-                    local recognized = clink._recognize_command(line_state:getline(), cw, info.quoted)
+                    local line = line_state:getline()
+                    local recognized = clink._recognize_command(line, cw, info.quoted)
                     if recognized < 0 then
                         cl = unrecognized_color and "u" or "o"      --unrecognized
                     elseif recognized > 0 then
@@ -3158,7 +3180,19 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                         cl = "o"                                    --other
                     end
                     if sanitized then
-                        word_classifier:applycolor(info.offset + info.length - #cw, #cw, get_classify_color(m..cl))
+                        local ofs = info.offset + 1
+                        local len = info.length - 1
+                        if len > 0 and line:find('^"', ofs) then
+                            ofs = ofs + 1
+                            len = len - 1
+                        end
+                        if len > 0 and line:find('^"', ofs + len - 1) then
+                            local quotes = line:sub(info.offset, info.offset + info.length - 1):gsub('[^"]', '')
+                            if #quotes % 2 == 0 then
+                                len = len - 1
+                            end
+                        end
+                        word_classifier:applycolor(ofs, len, get_classify_color(m..cl))
                     else
                         word_classifier:classifyword(command_word_index, m..cl, false);
                     end

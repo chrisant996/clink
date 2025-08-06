@@ -100,7 +100,7 @@ public:
     command_line_states() { clear(); }
     void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words, collect_words_mode mode, const std::vector<command>& commands);
     void set(const line_buffer& buffer, const std::vector<word>& words, collect_words_mode mode, const std::vector<command>& commands);
-    uint32 break_end_word(uint32 truncate, uint32 keep);
+    uint32 break_end_word(uint32 truncate, uint32 keep, bool discard);
     void split_for_hinter();
     void clear();
     const line_states& get_linestates(const char* buffer, uint32 len) const;

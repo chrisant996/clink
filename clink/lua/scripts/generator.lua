@@ -283,14 +283,16 @@ function clink._get_word_break_info(line_state)
     local impl = function ()
         local truncate = 0
         local keep = 0
+        local discard
 
         local doeach = function (generator)
-            local t, k = generator:getwordbreakinfo(line_state)
+            local t, k, d = generator:getwordbreakinfo(line_state)
             t = t or 0
             k = k or 0
             if (t > truncate) or (t == truncate and k > keep) then
                 truncate = t
                 keep = k
+                discard = d
             end
         end
 
@@ -302,12 +304,12 @@ function clink._get_word_break_info(line_state)
 
         doeach(file_match_generator)
 
-        return truncate, keep
+        return truncate, keep, discard
     end
 
     prepare()
 
-    local ok, ret1, ret2 = xpcall(impl, _error_handler_ret)
+    local ok, ret1, ret2, ret3 = xpcall(impl, _error_handler_ret)
     if not ok then
         print("")
         print("getting word break info failed:")
@@ -315,7 +317,7 @@ function clink._get_word_break_info(line_state)
         return
     end
 
-    return ret1, ret2
+    return ret1, ret2, ret3
 end
 
 
