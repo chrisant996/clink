@@ -926,7 +926,7 @@ extern "C" void enable_suggestion_list(int enable)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void clear_suggestionlist_index(void)
+extern "C" void clear_suggestion_list_index(void)
 {
     if (!s_suggestionlist)
         return;
@@ -934,9 +934,18 @@ extern "C" void clear_suggestionlist_index(void)
     s_suggestionlist->clear_index();
 }
 
+//------------------------------------------------------------------------------
+bool is_suggestion_list_active()
+{
+    if (!s_suggestionlist)
+        return false;
+
+    return s_suggestionlist->is_active();
+}
+
 #if 0
 //------------------------------------------------------------------------------
-bool point_in_select_complete(int32 in)
+bool point_in_suggestion_list(int32 in)
 {
     if (!s_selectcomplete)
         return false;

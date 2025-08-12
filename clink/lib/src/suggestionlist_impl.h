@@ -98,4 +98,5 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool point_in_ssuggestion_list(int32 in);
+bool is_suggestion_list_active();
+bool point_in_suggestion_list(int32 in);

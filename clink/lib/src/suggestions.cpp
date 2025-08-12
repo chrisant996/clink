@@ -7,6 +7,7 @@
 #include "display_readline.h"
 #include "matches_impl.h"
 #include "suggestions.h"
+#include "suggestionlist_impl.h"
 
 #include <core/base.h>
 #include <core/str_compare.h>
@@ -89,6 +90,8 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
 
     out.clear();
     if (!g_rl_buffer)
+        return false;
+    if (is_suggestion_list_active())
         return false;
     if (m_suggestion_offset > g_rl_buffer->get_length())
         return false;
@@ -340,6 +343,9 @@ void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 bool suggestion_manager::insert(suggestion_action action)
 {
     if (!g_autosuggest_enable.get())
+        return false;
+
+    if (is_suggestion_list_active())
         return false;
 
     if (!m_iter.more() || g_rl_buffer->get_cursor() != g_rl_buffer->get_length())

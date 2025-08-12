@@ -56,7 +56,7 @@ struct hooked_stat
 
 void reset_display_readline(void);
 void end_prompt(int crlf);
-void clear_suggestionlist_index(void);
+void clear_suggestion_list_index(void);
 void wait_for_input(unsigned long timeout);
 
 #define HAVE_GETTIMEOFDAY 1

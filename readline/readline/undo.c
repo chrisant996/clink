@@ -376,7 +376,7 @@ rl_undo_command (int count, int key)
     return 0;	/* Nothing to do. */
 
 /* begin_clink_change */
-  clear_suggestionlist_index ();
+  clear_suggestion_list_index ();
 /* end_clink_change */
 
   while (count)
