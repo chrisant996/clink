@@ -32,7 +32,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority
-- Chicken and egg problem:  `sudo @``TAB` doesn't work.  If `_argmatcher:getwordbreakinfo()` is updated to split out the `@` to fix that, then there's a problem:  `:next_word()` doesn't return `last_word == true` for the `@` word because it isn't the last word, and so chaining occurs, which means the reader is already _past_ the point where executable completion could be invoked.  The only way to support `@` prefix in executable completion for chaincommand situations is to make `clink._exec_matches` strip the `@` before generating matches and produce `display` _without_ the `@` and produce `match` _with_ the `@`.
 - On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
