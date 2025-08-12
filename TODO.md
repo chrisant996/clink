@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
 
 ## Normal Priority
 - Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
