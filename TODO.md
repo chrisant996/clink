@@ -9,6 +9,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
+  - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).
+  - Maybe `onbeforereload` and `onafterreload`?
+  - Maybe `onbeginreload` and `onendreload`?
+  - Or come up with some kind of session-specific temporary file that survives Lua reload but is automatically deleted upon session end?
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
