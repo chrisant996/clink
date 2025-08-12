@@ -375,6 +375,10 @@ rl_undo_command (int count, int key)
   if (count < 0)
     return 0;	/* Nothing to do. */
 
+/* begin_clink_change */
+  clear_suggestionlist_index ();
+/* end_clink_change */
+
   while (count)
     {
       if (rl_do_undo ())

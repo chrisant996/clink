@@ -86,11 +86,17 @@ void suggestionlist_impl::enable(bool enable)
 }
 
 //------------------------------------------------------------------------------
-bool suggestionlist_impl::activate(editor_module::result& result, bool reactivate)
+bool suggestionlist_impl::toggle(editor_module::result& result)
 {
     assert(m_buffer);
     if (!m_buffer)
         return false;
+
+    if (is_active())
+    {
+        cancel(result);
+        return true;
+    }
 
 #if 0
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
@@ -102,7 +108,7 @@ bool suggestionlist_impl::activate(editor_module::result& result, bool reactivat
     }
 #endif
 
-    m_applied = false;
+    m_applied.clear();
 
     init_suggestions();
 
@@ -113,13 +119,10 @@ cant_activate:
         return false;
     }
 
-    if (!reactivate)
-    {
-        assert(!m_any_displayed);
-        assert(!m_clear_display);
-        m_any_displayed = false;
-        m_clear_display = false;
-    }
+    assert(!m_any_displayed);
+    assert(!m_clear_display);
+    m_any_displayed = false;
+    m_clear_display = false;
 
     // Make sure there's room.
     update_layout();
@@ -468,13 +471,11 @@ do_mouse_position:
 
     case bind_id_suggestionlist_enter:
         apply_suggestion(m_index);
+        m_applied.clear();
         cancel(result);
-        m_applied = false;
         break;
 
     case bind_id_suggestionlist_escape:
-escape:
-        m_applied = false;
         cancel(result);
         return;
 
@@ -525,17 +526,16 @@ void suggestionlist_impl::on_signal(int32 sig)
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::cancel(editor_module::result& result, bool can_reactivate)
+void suggestionlist_impl::cancel(editor_module::result& result)
 {
     assert(is_active());
 
-    m_buffer->set_need_draw();
+    if (m_buffer->get_fingerprint(false) == m_applied)
+        m_buffer->undo();
+    m_applied.clear();
 
     result.set_bind_group(m_prev_bind_group);
     m_prev_bind_group = -1;
-
-    if (!can_reactivate)
-        override_rl_last_func(nullptr, true/*force_when_null*/);
 
     update_display();
 
@@ -727,6 +727,8 @@ void suggestionlist_impl::update_display()
 
                 // TODO: build string with potential ellipses on both ends,
                 // and with matching text highlighted...
+                // TODO: expand control characters the same way as
+                // display_manager does.
                 tmp.clear();
                 tmp = m_suggestions[i].m_suggestion.c_str();
 
@@ -810,169 +812,40 @@ void suggestionlist_impl::update_display()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::apply_suggestion(int32 index)
 {
-#if 0
     assert(is_active());
 
-    if (m_inserted)
+    if (m_buffer->get_fingerprint(false) == m_applied)
     {
         m_buffer->undo();
-        m_inserted = false;
-        m_quoted = false;
+        assert(!(m_buffer->get_fingerprint(false) == m_applied));
     }
 
-    m_len = 0;
+    const int32 old_botlin = _rl_vis_botlin;
 
-    assert(m_index < m_matches.get_match_count());
-    const char* match = m_matches.get_match(m_index);
-    match_type type = m_matches.get_match_type(m_index);
-    char append_char = m_matches.get_match_append_char(m_index);
-    uint8 flags = m_matches.get_match_flags(m_index);
-
-    char qs[2] = {};
-    if (match &&
-        !rl_completion_found_quote &&
-        rl_completer_quote_characters &&
-        rl_completer_quote_characters[0] &&
-        rl_need_match_quoting(match))
+    if (index >= 0 && index < m_suggestions.size())
     {
-        qs[0] = rl_completer_quote_characters[0];
-        m_quoted = true;
+        const suggestion& suggestion = m_suggestions[index];
+        m_buffer->begin_undo_group();
+        m_buffer->remove(suggestion.m_suggestion_offset, m_buffer->get_length());
+        m_buffer->set_cursor(suggestion.m_suggestion_offset);
+        m_buffer->insert(suggestion.m_suggestion.c_str());
+        m_buffer->end_undo_group();
+
+        m_applied = m_buffer->get_fingerprint(false);
     }
 
-    m_buffer->begin_undo_group();
-    m_buffer->remove(m_anchor, m_buffer->get_cursor());
-    m_buffer->set_cursor(m_anchor);
-    m_buffer->insert(qs);
-    m_buffer->insert(match);
-
-    bool removed_dir_mark = false;
-    if (is_match_type(type, match_type::dir) && !_rl_complete_mark_directories)
-    {
-        int32 cursor = m_buffer->get_cursor();
-        if (cursor >= 2 &&
-            m_buffer->get_buffer()[cursor - 1] == '\\' &&
-            m_buffer->get_buffer()[cursor - 2] != ':')
-        {
-            m_buffer->remove(cursor - 1, cursor);
-            cursor--;
-            m_buffer->set_cursor(cursor);
-            removed_dir_mark = true;
-        }
-    }
-
-    uint32 needle_len = 0;
-    if (final)
-    {
-        int32 nontrivial_lcd = __compare_match(const_cast<char*>(m_needle.c_str()), match);
-
-        bool append_space = false;
-        // UGLY: __append_to_match() circumvents the m_buffer abstraction.
-        set_matches_lookaside_oneoff(match, type, append_char, flags);
-        __append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
-        clear_matches_lookaside_oneoff();
-        m_point = m_buffer->get_cursor();
-
-        // Pressing Space to insert a final match needs to maybe add a quote,
-        // and then maybe add a space, depending on what __append_to_match did.
-        if (final == 2 || !is_match_type(type, match_type::dir))
-        {
-            // A space may or may not be present.  Delete it if one is.
-            bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');
-            bool append_space = (final == 2);
-            int32 cursor = m_buffer->get_cursor();
-            if (have_space)
-            {
-                append_space = true;
-                have_space = false;
-                m_buffer->remove(m_point - 1, m_point);
-                m_point--;
-                cursor--;
-            }
-
-            // Add closing quote if a typed or inserted opening quote is present
-            // but no closing quote is present.
-            if (!m_quoted &&
-                m_anchor > 0 &&
-                rl_completion_found_quote &&
-                rl_completion_quote_character)
-            {
-                // Remove a preceding backslash unless it is preceded by colon.
-                // Because programs compiled with MSVC treat `\"` as an escape.
-                // So `program "c:\dir\" file` is interpreted as having one
-                // argument which is `c:\dir" file`.  Be nice and avoid
-                // inserting such things on behalf of users.
-                //
-                // "What's up with the strange treatment of quotation marks and
-                // backslashes by CommandLineToArgvW"
-                // https://devblogs.microsoft.com/oldnewthing/20100917-00/?p=12833
-                //
-                // "Everyone quotes command line arguments the wrong way"
-                // https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
-                if (!removed_dir_mark &&
-                    cursor >= 2 &&
-                    m_buffer->get_buffer()[cursor - 1] == '\\' &&
-                    m_buffer->get_buffer()[cursor - 2] != ':')
-                {
-                    m_buffer->remove(cursor - 1, cursor);
-                    cursor--;
-                    removed_dir_mark = true;
-                }
-
-                qs[0] = rl_completion_quote_character;
-                if (m_buffer->get_buffer()[cursor] != qs[0])
-                    m_buffer->insert(qs);
-                else if (append_space)
-                    m_buffer->set_cursor(++cursor);
-            }
-
-            // Add space.
-            if (append_space && !have_space)
-                m_buffer->insert(" ");
-            m_point = m_buffer->get_cursor();
-        }
-    }
-    else
-    {
-        m_buffer->insert(qs);
-        m_point = m_anchor + strlen(qs);
-        str_iter lhs(m_needle);
-        str_iter rhs(m_buffer->get_buffer() + m_point, m_buffer->get_length() - m_point);
-        const int32 cmp_len = str_compare(lhs, rhs);
-        if (cmp_len < 0)
-            needle_len = m_needle.length();
-        else if (cmp_len == m_needle.length())
-            needle_len = cmp_len;
-    }
-
-    m_point += needle_len;
-
-    m_buffer->set_cursor(m_point);
-    m_buffer->end_undo_group();
-
-    update_len(needle_len);
-    m_inserted = true;
-
-    const int32 botlin = _rl_vis_botlin;
     m_buffer->draw();
-    if (botlin != _rl_vis_botlin)
+
+    if (old_botlin != _rl_vis_botlin)
     {
-        // Coax the cursor to the end of the input line.
-        const int32 cursor = m_buffer->get_cursor();
-        m_buffer->set_cursor(m_buffer->get_length());
-        m_buffer->set_need_draw();
-        m_buffer->draw();
         // Clear to end of screen.
         m_printer->print("\x1b[J");
-        // Restore cursor position.
-        m_buffer->set_cursor(cursor);
-        m_buffer->set_need_draw();
-        m_buffer->draw();
+
         // Update layout.
         m_prev_displayed = -1;
-        m_comment_row_displayed = false;
         update_layout();
+        update_display();
     }
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -993,6 +866,18 @@ void suggestionlist_impl::reset_top()
     m_top = 0;
     m_index = -1;
     m_prev_displayed = -1;
+}
+
+//------------------------------------------------------------------------------
+void suggestionlist_impl::clear_index()
+{
+    if (m_buffer->get_fingerprint(false) == m_applied)
+    {
+        m_index = -1;
+        m_applied.clear();
+        update_layout();
+        update_display();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1038,6 +923,15 @@ extern "C" void enable_suggestion_list(int enable)
 
     if (s_suggestionlist && !!enable != s_suggestionlist->is_active())
         s_suggestionlist->enable(enable);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clear_suggestionlist_index(void)
+{
+    if (!s_suggestionlist)
+        return;
+
+    s_suggestionlist->clear_index();
 }
 
 #if 0

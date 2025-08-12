@@ -564,7 +564,7 @@ bool line_editor_impl::need_collect_words() const
 //------------------------------------------------------------------------------
 void line_editor_impl::maybe_collect_words()
 {
-    const rl_buffer_fingerprint fp = m_buffer.get_fingerprint();
+    const line_buffer_fingerprint fp = m_buffer.get_fingerprint();
     if (!(fp == m_prev_words_buffer_fingerprint))
         force_update_internal(false);
 }
@@ -1226,7 +1226,7 @@ void line_editor_impl::maybe_send_oncommand_event()
     if (!m_desc.callbacks)
         return;
 
-    const rl_buffer_fingerprint fp = m_buffer.get_fingerprint();
+    const line_buffer_fingerprint fp = m_buffer.get_fingerprint();
     if (fp == m_prev_command_buffer_fingerprint)
         return;
 

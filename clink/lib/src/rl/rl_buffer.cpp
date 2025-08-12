@@ -29,6 +29,8 @@ static uint32 s_line_generation_id = 0;
 void increment_line_generation_id()
 {
     ++s_line_generation_id;
+    if (!s_line_generation_id)
+        ++s_line_generation_id;
 }
 
 //------------------------------------------------------------------------------
@@ -238,10 +240,10 @@ void rl_buffer::override(const char* line, int32 pos)
 }
 
 //------------------------------------------------------------------------------
-rl_buffer_fingerprint rl_buffer::get_fingerprint() const
+line_buffer_fingerprint rl_buffer::get_fingerprint(bool include_cursor) const
 {
-    rl_buffer_fingerprint fp;
-    fp.m_cursor = get_cursor();
+    line_buffer_fingerprint fp;
+    fp.m_cursor = include_cursor ? get_cursor() : 0;
     fp.m_gen_id = s_line_generation_id;
     return fp;
 }

@@ -179,7 +179,7 @@ private:
     words               m_words;
     unsigned short      m_command_offset = 0;
     command_line_states m_command_line_states;
-    rl_buffer_fingerprint m_prev_words_buffer_fingerprint;
+    line_buffer_fingerprint m_prev_words_buffer_fingerprint;
 
     bool                m_prev_plain = false;
     int32               m_prev_cursor = 0;
@@ -187,7 +187,7 @@ private:
     words               m_classify_words;
 
     str<16>             m_prev_command_word;
-    rl_buffer_fingerprint m_prev_command_buffer_fingerprint;
+    line_buffer_fingerprint m_prev_command_buffer_fingerprint;
     bool                m_prev_command_word_quoted;
 
     const char*         m_override_needle = nullptr;

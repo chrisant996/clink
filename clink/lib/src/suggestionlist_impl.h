@@ -8,6 +8,7 @@
 #include "match_adapter.h"
 #include "scroll_helper.h"
 #include "suggestions.h"
+#include "line_buffer.h"
 
 #include <core/str.h>
 
@@ -24,8 +25,9 @@ public:
                     suggestionlist_impl(input_dispatcher& dispatcher);
 
     void            enable(bool enable);
-    bool            activate(editor_module::result& result, bool reactivate);
+    bool            toggle(editor_module::result& result);
     bool            point_within(int32 in) const;
+    void            clear_index();
     bool            is_active() const;
     bool            accepts_mouse_input(mouse_input_type type) const;
 
@@ -41,7 +43,7 @@ private:
     virtual void    on_signal(int32 sig) override;
 
     // Internal methods.
-    void            cancel(editor_module::result& result, bool can_reactivate=false);
+    void            cancel(editor_module::result& result);
     void            init_suggestions();
     void            update_layout();
     void            update_top();
@@ -54,6 +56,7 @@ private:
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
+// TODO: access m_line and m_started from suggestion_manager?
 // TODO: access list of suggestions from suggestion_manager?
     std::vector<suggestion> m_suggestions;
     int32           m_count;
@@ -75,9 +78,8 @@ private:
     bool            m_clear_display = false;
     bool            m_any_displayed = false;
 
-    // Inserting matches.
-// TODO: access m_line and m_started from suggestion_manager?
-    bool            m_applied = false;
+    // Applying suggestions.
+    line_buffer_fingerprint m_applied;
 
     // Current suggestion index.
     int32           m_top = 0;
