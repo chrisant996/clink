@@ -251,10 +251,15 @@ navigated:
             m_index = wrap ? -1 : m_count - 1;
         goto navigated;
 
-#if 0
     case bind_id_suggestionlist_pgup:
     case bind_id_suggestionlist_pgdn:
+        if (m_index < 0)
         {
+            goto catchall;
+        }
+        else
+        {
+#if 0
             const int32 y = get_match_row(m_index);
             const int32 rows = min<int32>(m_match_rows, m_visible_rows);
             const int32 scroll_ofs = get_scroll_offset();
@@ -313,9 +318,9 @@ navigated:
                 }
                 goto navigated;
             }
+#endif
         }
         break;
-#endif
 
 #if 0
     case bind_id_suggestionlist_leftclick:
@@ -511,6 +516,7 @@ escape:
         return;
 
     case bind_id_suggestionlist_catchall:
+catchall:
         result.set_bind_group(m_prev_bind_group);
         result.pass();
         break;
