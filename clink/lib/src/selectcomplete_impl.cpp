@@ -206,6 +206,8 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (!m_buffer)
         return false;
 
+    enable_suggestion_list(0);
+
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {
 #ifdef DEBUG
@@ -434,6 +436,11 @@ void selectcomplete_impl::on_end_line()
     m_can_prompt = true;
     m_clear_display = false;
     m_ignore_scroll_offset = false;
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::on_need_input(int32& bind_group)
+{
 }
 
 //------------------------------------------------------------------------------
@@ -2120,4 +2127,12 @@ bool point_in_select_complete(int32 in)
     if (!s_selectcomplete)
         return false;
     return s_selectcomplete->point_within(in);
+}
+
+//------------------------------------------------------------------------------
+bool is_select_complete_active()
+{
+    if (!s_selectcomplete)
+        return false;
+    return s_selectcomplete->is_active();
 }

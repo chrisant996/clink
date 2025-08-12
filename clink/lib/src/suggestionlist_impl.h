@@ -23,6 +23,7 @@ class suggestionlist_impl
 public:
                     suggestionlist_impl(input_dispatcher& dispatcher);
 
+    void            enable(bool enable);
     bool            activate(editor_module::result& result, bool reactivate);
     bool            point_within(int32 in) const;
     bool            is_active() const;
@@ -33,6 +34,7 @@ private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const context& context) override;
     virtual void    on_end_line() override;
+    virtual void    on_need_input(int32& bind_group) override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
@@ -58,6 +60,7 @@ private:
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
+    bool            m_hide = false;
 
     // Layout.
     int32           m_screen_cols = 0;

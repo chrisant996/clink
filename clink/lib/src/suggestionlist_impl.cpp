@@ -4,6 +4,7 @@
 #include "pch.h"
 #include <assert.h>
 #include "suggestionlist_impl.h"
+#include "selectcomplete_impl.h" // For is_select_complete_active().
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
@@ -63,12 +64,28 @@ const int32 c_max_listview_width = 100;
 
 
 //------------------------------------------------------------------------------
+static bool s_enable_suggestion_list = false;
 static suggestionlist_impl* s_suggestionlist = nullptr;
 
 //------------------------------------------------------------------------------
 suggestionlist_impl::suggestionlist_impl(input_dispatcher& dispatcher)
     : m_dispatcher(dispatcher)
 {
+}
+
+//------------------------------------------------------------------------------
+void suggestionlist_impl::enable(bool enable)
+{
+    const bool was_active = is_active();
+
+    m_hide = !enable;
+
+    if (was_active != is_active())
+    {
+        if (enable)
+            update_layout();
+        update_display();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -182,6 +199,18 @@ void suggestionlist_impl::on_end_line()
     m_buffer = nullptr;
     m_printer = nullptr;
     m_clear_display = false;
+}
+
+//------------------------------------------------------------------------------
+void suggestionlist_impl::on_need_input(int32& bind_group)
+{
+    if (!is_select_complete_active())
+    {
+        enable_suggestion_list(1);
+
+        if (is_active())
+            bind_group = m_bind_group;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -482,12 +511,8 @@ escape:
         return;
 
     case bind_id_suggestionlist_catchall:
-        {
-            // TODO:  I don't think the catchall technique works for the
-            // suggestionlist, because other inputs need to do their normal
-            // things without cancelling the mode.  But some states (not
-            // necessarily commands) require cancelling.
-        }
+        result.set_bind_group(m_prev_bind_group);
+        result.pass();
         break;
     }
 }
@@ -1004,7 +1029,7 @@ void suggestionlist_impl::reset_top()
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_printer;
+    return m_prev_bind_group >= 0 && m_buffer && m_printer && !m_hide;
 }
 
 //------------------------------------------------------------------------------
@@ -1032,6 +1057,18 @@ bool activate_suggestion_list(editor_module::result& result, bool reactivate)
         return false;
 
     return s_suggestionlist->activate(result, reactivate);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void enable_suggestion_list(int enable)
+{
+    if (s_enable_suggestion_list == !!enable)
+        return;
+
+    s_enable_suggestion_list = !!enable;
+
+    if (s_suggestionlist && !!enable != s_suggestionlist->is_active())
+        s_suggestionlist->enable(enable);
 }
 
 #if 0

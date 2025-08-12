@@ -2858,6 +2858,11 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
+void rl_module::on_need_input(int32& bind_group)
+{
+}
+
+//------------------------------------------------------------------------------
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
     assert(!g_result);

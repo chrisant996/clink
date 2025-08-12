@@ -76,6 +76,11 @@ void pager_impl::on_end_line()
 }
 
 //------------------------------------------------------------------------------
+void pager_impl::on_need_input(int32& bind_group)
+{
+}
+
+//------------------------------------------------------------------------------
 void pager_impl::on_input(const input& input, result& result, const context& context)
 {
     switch (input.id)
