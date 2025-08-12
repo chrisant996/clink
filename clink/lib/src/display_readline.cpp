@@ -84,6 +84,12 @@ int32 rl_visible_rprompt_length = 0;
 #error HANDLE_MULTIBYTE is required.
 #endif
 
+#ifdef WIDE_HORZ_SCROLL_MARKERS
+const uint32 c_horz_scroll_indicator_chars = 2;
+#else
+const uint32 c_horz_scroll_indicator_chars = 1;
+#endif
+
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
@@ -737,7 +743,7 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
         next_line(0);
 
     const int32 scroll_stride = _rl_screenwidth / 3;
-    const int32 limit = _rl_screenwidth - 2; // -1 for `>` marker, -1 for space.
+    const int32 limit = _rl_screenwidth - c_horz_scroll_indicator_chars - 1; // `>` marker(s) and -1 for space.
 
     // Adjust horizontal scroll offset to ensure point is visible.
     if (point < m_horz_start)
@@ -764,10 +770,11 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
     if (m_horz_start)
     {
         d->m_x = 0;
-        d->m_lead = 1;
-        d->append('<', FACE_SCROLL);
+        d->m_lead = c_horz_scroll_indicator_chars;
+        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+            d->append('<', FACE_SCROLL);
         d->appendnul();
-        col = 1;
+        col = c_horz_scroll_indicator_chars;
     }
     else
     {
@@ -849,8 +856,11 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
 
     if (iter.more() || overflow)
     {
-        d->append('>', FACE_SCROLL);
-        d->m_lastcol++;
+        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+        {
+            d->append('>', FACE_SCROLL);
+            d->m_lastcol++;
+        }
         d->m_toeol = false;
     }
 
@@ -878,7 +888,8 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
 
         if (!d.m_len)
         {
-            d.append('<', FACE_SCROLL);
+            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+                d.append('<', FACE_SCROLL);
             d.appendnul();
         }
         else
@@ -896,11 +907,14 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
                     break;
 
                 uint32 i = 0;
-                d.m_chars[i] = '<';
-                d.m_faces[i] = FACE_SCROLL;
-                bytes--;
-                i++;
-                d.m_scroll_mark = 1;
+                while (i < c_horz_scroll_indicator_chars)
+                {
+                    d.m_chars[i] = '<';
+                    d.m_faces[i] = FACE_SCROLL;
+                    bytes--;
+                    i++;
+                }
+                d.m_scroll_mark = c_horz_scroll_indicator_chars;
                 if (bytes > 0)
                 {
                     memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
@@ -925,21 +939,24 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
         if (d.m_lastcol - d.m_x > 2)
         {
             d.m_len -= d.m_trail;
-            while (d.m_x + d.m_lastcol + 1 >= _rl_screenwidth)
+            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars >= _rl_screenwidth)
             {
                 const int32 bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
                 d.m_lastcol -= clink_wcswidth(d.m_chars + bytes, d.m_len - bytes);
                 d.m_len = bytes;
             }
 
-            while (d.m_x + d.m_lastcol + 2 < _rl_screenwidth)
+            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars + 1 < _rl_screenwidth)
             {
                 d.append(' ', FACE_NORMAL);
                 d.m_lastcol++;
             }
-            d.append('>', FACE_SCROLL);
+            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
+            {
+                d.append('>', FACE_SCROLL);
+                d.m_lastcol++;
+            }
             d.m_scroll_mark = -1;
-            d.m_lastcol++;
             d.m_toeol = false;
             d.appendnul();
         }
@@ -1140,6 +1157,7 @@ public:
     int32           get_column() const { return m_col; }
     int32           get_line_count() const { return m_line_count - m_join_count; }
     bool            get_force_wrap() const { return m_force_wrap; }
+    bool            has_autowrap_at_end() const { return m_has_autowrap_at_end; }
 private:
     const measure_mode m_mode;
     const uint32    m_width;
@@ -1147,6 +1165,7 @@ private:
     int32           m_line_count = 1;
     int32           m_join_count = 0;
     bool            m_force_wrap = false;
+    bool            m_has_autowrap_at_end = false;
 };
 
 //------------------------------------------------------------------------------
@@ -1163,6 +1182,7 @@ void measure_columns::measure(const char* text, uint32 length, bool is_prompt)
     ecma48_iter iter(text, state, length);
     const char* last_lf = nullptr;
     bool wrapped = false;
+    m_has_autowrap_at_end = false;
     while (const ecma48_code &code = iter.next())
     {
         switch (code.get_type())
@@ -1264,6 +1284,7 @@ ctrl_char:
     if (wrapped)
     {
         wrapped = false;
+        m_has_autowrap_at_end = true;
         ++m_line_count;
     }
 
@@ -1435,6 +1456,7 @@ public:
 #endif
 
 private:
+    int32               write_with_clear(FILE* stream, const char* text, int length);
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
     void                clear_comment_row_internal();
     void                move_to_column(uint32 col, bool force=false);
@@ -1653,7 +1675,7 @@ void display_manager::clear_to_end_of_screen_on_next_display()
 }
 
 //------------------------------------------------------------------------------
-static int32 write_with_clear(FILE* stream, const char* text, int length)
+int32 display_manager::write_with_clear(FILE* stream, const char* text, int length)
 {
     int32 remaining = length;
     int32 lines = 0;
@@ -1677,6 +1699,13 @@ static int32 write_with_clear(FILE* stream, const char* text, int length)
             rl_fwrite_function(stream, text, length);
             text += length;
             remaining -= length;
+
+            // Windows 8.1 autowrap issue:  if a line in a multiline prompt
+            // reaches the right edge of the terminal and is followed by a CR
+            // or LF then the cursor ends on the wrong line.  Compensate by
+            // first moving the cursor up a line.
+            if (eol && m_autowrap_bug && mc.has_autowrap_at_end())
+                tputs(tgetstr("up", nullptr));
         }
 
         if (eol)
@@ -1892,15 +1921,16 @@ void display_manager::display()
         m_top = next->count() - 1 - input_botlin_offset;
 
     // Scroll when cursor is on a scroll marker.
+// TODO: update this per c_horz_scroll_indicator_chars...
     if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
     {
         const display_line* d = next->get(m_top);
-        if (next->cpos() == d->m_x)
+        if (next->cpos() >= d->m_x && next->cpos() < d->m_x + c_horz_scroll_indicator_chars)
             m_top--;
     }
     else if (m_top + input_botlin_offset < next->count() - 1 && m_top + input_botlin_offset == next->vpos())
     {
-        if (next->cpos() + 1 == _rl_screenwidth)
+        if (next->cpos() + c_horz_scroll_indicator_chars >= _rl_screenwidth && next->cpos() < _rl_screenwidth)
             m_top++;
     }
     assert(m_top >= m_last_prompt_line_botlin);
@@ -2564,6 +2594,9 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
 
     _rl_last_c_pos = rcol;
 
+    // Scroll marker should have a trailing space.
+    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
+
     // Clear anything leftover from o.
     const uint32 lastcol = (o ? o->m_lastcol : _rl_screenwidth);
     if (d->m_lastcol < lastcol)
@@ -2589,9 +2622,6 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
             _rl_last_c_pos += erase_cols;
         }
     }
-
-    // Scroll marker should have a trailing space.
-    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
 
     // Update cursor position and deal with autowrap.
     detect_pending_wrap();

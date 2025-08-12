@@ -9,6 +9,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
+  - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).
+  - Maybe `onbeforereload` and `onafterreload`?
+  - Maybe `onbeginreload` and `onendreload`?
+  - Or come up with some kind of session-specific temporary file that survives Lua reload but is automatically deleted upon session end?
+- Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
   - It can't be truly modal: it has to integrate with the core input loop so that all normal key bindings still work, which implies that Clink/Readline need to automatically erase/cancel (or display/enable) the ListView as appropriate when key bindings need to do something for which the ListView shouldn't be visible.
@@ -25,6 +31,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority
+- Chicken and egg problem:  `sudo @``TAB` doesn't work.  If `_argmatcher:getwordbreakinfo()` is updated to split out the `@` to fix that, then there's a problem:  `:next_word()` doesn't return `last_word == true` for the `@` word because it isn't the last word, and so chaining occurs, which means the reader is already _past_ the point where executable completion could be invoked.  The only way to support `@` prefix in executable completion for chaincommand situations is to make `clink._exec_matches` strip the `@` before generating matches and produce `display` _without_ the `@` and produce `match` _with_ the `@`.
+- On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - Event handler enhancements:

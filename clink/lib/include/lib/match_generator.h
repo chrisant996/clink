@@ -13,10 +13,11 @@ enum class display_filter_flags;
 struct word_break_info
 {
                     word_break_info() { clear(); }
-    void            clear() { truncate = 0; keep = 0; }
+    void            clear() { truncate = 0; keep = 0; discard = false; }
 
     int32           truncate : 16;
     int32           keep : 16;
+    bool            discard;
 };
 
 //------------------------------------------------------------------------------

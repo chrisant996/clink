@@ -38,7 +38,7 @@ settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 and will do normal files matching instead.  (See exec.enable)]])
 
 --------------------------------------------------------------------------------
-local function add_commands(line_state, match_builder)
+local function add_commands(line_state, match_builder, chained)
     -- Cmd commands cannot be quoted.
     local word_info = line_state:getwordinfo(line_state:getwordcount())
     if word_info.quoted then
@@ -46,7 +46,7 @@ local function add_commands(line_state, match_builder)
     end
 
     -- They should be skipped if the line's whitespace prefixed.
-    if settings.get("exec.space_prefix") then
+    if not chained and settings.get("exec.space_prefix") then
         local offset = line_state:getcommandoffset()
         if line_state:getline():sub(offset, offset):find("[ \t]") then
             return
@@ -198,7 +198,7 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
 
     -- Include commands.
     if settings.get("exec.commands") then
-        add_commands(line_state, match_builder)
+        add_commands(line_state, match_builder, chained)
     end
 
     -- Include files.

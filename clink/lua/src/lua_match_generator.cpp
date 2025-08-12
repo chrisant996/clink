@@ -104,7 +104,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
     // into the input line buffer.
     line_state::set_can_strip_quotes(false);
 
-    if (lua_state::pcall(state, 1, 2) != 0)
+    if (lua_state::pcall(state, 1, 3) != 0)
     {
         line_state::set_can_strip_quotes(true);
         info.clear();
@@ -113,8 +113,9 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     line_state::set_can_strip_quotes(true);
 
-    info.truncate = int32(lua_tointeger(state, -2));
-    info.keep = int32(lua_tointeger(state, -1));
+    info.truncate = int32(lua_tointeger(state, -3));
+    info.keep = int32(lua_tointeger(state, -2));
+    info.discard = int32(lua_toboolean(state, -1));
 }
 
 //------------------------------------------------------------------------------

@@ -549,10 +549,11 @@ end
 --------------------------------------------------------------------------------
 function _argreader:start_chained_command(word_index, mode, expand_aliases)
     local line_state = self._line_state
+    mode = mode or "cmd"
     self._no_cmd = nil
     self._chain_command = true
     self._chain_command_expand_aliases = expand_aliases
-    mode = mode or "cmd"
+    self._chain_command_mode = mode
     for i = word_index, line_state:getwordcount() do
         local info = line_state:getwordinfo(i)
         if not info.redir then
@@ -621,6 +622,7 @@ local default_flag_nowordbreakchars = "'`=+;,"
 function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unused
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
+    self._chain_command_mode = nil
     self._cycle_detection = nil
     if self._disabled then
         return
@@ -726,6 +728,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
+                            -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                             if self._word_classifier then
                                 if not self._extra then
                                     self:classify_word(is_flag, self._arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -810,6 +813,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
+                    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
                     if self._word_classifier then
                         if not self._extra then
                             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -928,6 +932,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     end
 
     -- Parse the word type.
+    -- Note: _word_classifier and _need_arginfo are mutually exclusive.
     if self._word_classifier then
         if not self._extra then
             self:classify_word(is_flag, arg_index, realmatcher, word, word_index, arg, arg_match_type, end_flags)
@@ -2718,7 +2723,7 @@ end
 local function sanitize_command_word(command_word, quoted)
     if command_word then
         if not quoted and command_word:find("^@") then
-            local cw = command_word:gsub("^@\"?", "")
+            local cw = command_word:sub(2)
             return cw, true
         else
             return command_word, false
@@ -3095,7 +3100,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 pos = next
             end
             if pos > 0 then
-                return pos, 0, line_state
+                return pos, 0
             end
         end
 
@@ -3108,14 +3113,26 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
                 -- quotes) so that matching can happen for the `text` portion.
                 local attached_arg,attach_pos = word:find("^[^:=][^:=]+[:=]")
                 if attached_arg then
-                    return attach_pos, 0, line_state
+                    return attach_pos, 0
                 end
-                return 0, 1, line_state
+                return 0, 1
+            end
+        end
+
+        if argmatcher._chain_command or reader._chain_command then
+            if word:find("^%@") then
+                -- The third return value is undocumented, but 'true' discards
+                -- the text before the break point, keeping only the text after
+                -- the break point as a word.
+                if (reader._chain_command_mode or argmatcher._chain_command_mode) == "cmd" then
+                    local info = line_state:getwordinfo(line_state:getwordcount())
+                    if not info.quoted then
+                        return 1, info.length - 1, true
+                    end
+                end
             end
         end
     end
-
-    return 0, nil, line_state
 end
 
 --------------------------------------------------------------------------------
@@ -3139,14 +3156,22 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             local command_word = line_state:getword(command_word_index) or ""
             local cw, sanitized = sanitize_command_word(command_word, info.quoted)
             if #cw > 0 then
+                local cquoted = info.quoted
+                if sanitized then
+                    local line = line_state:getline()
+                    if line:sub(info.offset, info.offset + info.length - 1):find('"') then
+                        cquoted = true
+                    end
+                end
                 local m = has_argmatcher and "m" or ""
                 if info.alias then
                     word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-                elseif not info.quoted and not no_cmd and clink.is_cmd_command(command_word) then
+                elseif not cquoted and not no_cmd and (not sanitized or reader._chain_command_mode == "cmd") and clink.is_cmd_command(cw) then
                     word_classifier:classifyword(command_word_index, m.."c", false); --command
                 elseif unrecognized_color or executable_color then
                     local cl
-                    local recognized = clink._recognize_command(line_state:getline(), cw, info.quoted)
+                    local line = line_state:getline()
+                    local recognized = clink._recognize_command(line, cw, info.quoted)
                     if recognized < 0 then
                         cl = unrecognized_color and "u" or "o"      --unrecognized
                     elseif recognized > 0 then
@@ -3155,7 +3180,19 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                         cl = "o"                                    --other
                     end
                     if sanitized then
-                        word_classifier:applycolor(info.offset + info.length - #cw, #cw, get_classify_color(m..cl))
+                        local ofs = info.offset + 1
+                        local len = info.length - 1
+                        if len > 0 and line:find('^"', ofs) then
+                            ofs = ofs + 1
+                            len = len - 1
+                        end
+                        if len > 0 and line:find('^"', ofs + len - 1) then
+                            local quotes = line:sub(info.offset, info.offset + info.length - 1):gsub('[^"]', '')
+                            if #quotes % 2 == 0 then
+                                len = len - 1
+                            end
+                        end
+                        word_classifier:applycolor(ofs, len, get_classify_color(m..cl))
                     else
                         word_classifier:classifyword(command_word_index, m..cl, false);
                     end
@@ -3242,13 +3279,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local lookup
     local no_cmd
     local reader
+    local no_follow_argmatcher
 ::do_command::
 
     local chained = (lookup and true)
     local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
 
-    if argmatcher then
+    if argmatcher and not no_follow_argmatcher then
         if reader then
             local last_word = reader._last_word
             reader._last_word = nil
@@ -3275,40 +3313,43 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             argmatcher = reader._realmatcher
 
             -- Get the next word.
-            local word, word_index = reader:next_word()
+            local word, word_index, _, last_word = reader:next_word()
             if not word then
-                -- Handle case where cursor is past the last word.
-                local endinfo = line_state:getwordinfo(line_state:getwordcount())
-                if endinfo then
-                    local nextposafterendword = endinfo.offset + endinfo.length
-                    if (cursorpos > nextposafterendword) or
-                            (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
-                        if chained then
-                            -- When chained, don't carry previous arginfo past
-                            -- the last word.
-                            prev_arginfo = nil
-                        end
-                        return between_words(argmatcher, arg_index, line_state:getwordcount() + 1, line_state, user_data, prev_arginfo)
-                    elseif chained and prev_arginfo then
-                        -- When chained, use previous arginfo if argmatcher
-                        -- was found and cursor is still in argmatcher word.
-                        return hint_from_prev_arginfo(line_state, prev_arginfo)
-                    end
-                end
                 break
             end
 
+            -- Handle cases where cursor is in the last word.
+            if last_word then
+                -- Refer to tests for "Chaincommand input hints".
+                local endinfo = line_state:getwordinfo(word_index)
+                if endinfo then
+                    local nextposafterendword = endinfo.offset + endinfo.length
+                    if chained and endinfo.length == 0 then
+                        if (cursorpos > nextposafterendword) or
+                                (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
+                            -- When chained, don't carry previous arginfo
+                            -- past the last word.
+                            prev_arginfo = nil
+                            reader._arginfo = nil
+                        end
+                    elseif cursorpos >= nextposafterendword then
+                        -- If the cursor is at the end of the last word and
+                        -- there is a chained argmatcher, then don't actually
+                        -- follow the argmatcher.
+                        no_follow_argmatcher = true
+                    end
+                end
+            end
             if chained then
-                -- When chained, don't carry previous arginfo past the
-                -- argmatcher word.
-                -- REVIEW:  When does this have an actual effect?  Setting it
-                -- to a gibberish string has no effect on the unit tests, and
-                -- I haven't found repro steps that show the gibberish string.
+                -- When chained, don't use previous arginfo.  Note that this
+                -- only kicks in _after_ the command word that chained, and
+                -- only if an argmatcher was found.
                 prev_arginfo = nil
+                reader._arginfo = nil
             end
 
             -- Advance the parser.
-            local chain, chainlookup = reader:update(word, word_index)
+            local chain, chainlookup = reader:update(word, word_index, last_word)
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 lookup = chainlookup
@@ -3318,6 +3359,13 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 
             -- Process the word.
             if not reader._extra then
+                -- TODO: Understand and explain why only in the last word...
+                if last_word then
+                    -- In the last word, must get arg_index again in case
+                    -- onadvance changed it.
+                    arg_index = reader._arg_index
+                end
+
                 local info = line_state:getwordinfo(word_index)
                 if not info then
                     break
@@ -3333,6 +3381,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                         arg_index = 0
                         args = argmatcher._flags._args[1]
                         prev_arginfo = nil
+                        reader._arginfo = nil
                     else
                         args = argmatcher._args[arg_index]
                     end
@@ -3355,16 +3404,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 end
                 prev_info = info
             end
-
-            -- When chained, don't carry previous arginfo past the argmatcher
-            -- word.
-            -- REVIEW:  This has no effect since prev_arginfo goes out of
-            -- scope a couple of lines later.  This is probably leftover from
-            -- when prev_arginfo was declare outside the loop.  But should
-            -- this instead be setting reader._arginfo = nil?
-            -- if chained then
-            --     prev_arginfo = nil
-            -- end
 
             -- Clear any chained flag for subsequence words.
             chained = nil

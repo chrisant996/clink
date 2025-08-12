@@ -993,7 +993,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
         word_break_info break_info;
         if (m_generator)
             m_generator->get_word_break_info(command_line_states.get_linestate(m_buffer), break_info);
-        const uint32 end_word_offset = command_line_states.break_end_word(break_info.truncate, break_info.keep);
+        const uint32 end_word_offset = command_line_states.break_end_word(break_info.truncate, break_info.keep, break_info.discard);
 
 #ifdef DEBUG
         if (dbg_row > 0)
@@ -1157,6 +1157,9 @@ void line_editor_impl::before_display_readline()
         const double clock = os::clock();
 #endif
 
+        // Ensure a word covers the cursorpos, so onadvance has a chance to
+        // run for the cursorpos.
+        command_line_states.split_for_hinter();
         m_hinter->get_hint(command_line_states.get_linestate(m_buffer), m_input_hint);
 
 #ifdef DEBUG
