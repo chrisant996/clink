@@ -51,9 +51,6 @@ enum {
     bind_id_suggestionlist_drag,
     bind_id_suggestionlist_enter,
     bind_id_suggestionlist_escape,
-    bind_id_suggestionlist_f1,
-    bind_id_suggestionlist_f2,
-    bind_id_suggestionlist_f4,
 
     bind_id_suggestionlist_catchall,
 };
@@ -166,9 +163,6 @@ void suggestionlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*B", bind_id_suggestionlist_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_suggestionlist_drag, true/*has_params*/);
     binder.bind(m_bind_group, "\\r", bind_id_suggestionlist_enter);
-    binder.bind(m_bind_group, "\\eOP", bind_id_suggestionlist_f1);
-    binder.bind(m_bind_group, "\\eOQ", bind_id_suggestionlist_f2);
-    binder.bind(m_bind_group, "\\eOS", bind_id_suggestionlist_f4);
 
     binder.bind(m_bind_group, "^g", bind_id_suggestionlist_escape);
     if (esc)
@@ -477,37 +471,6 @@ do_mouse_position:
         cancel(result);
         m_applied = false;
         break;
-
-#if 0
-    case bind_id_suggestionlist_f1:
-        if (m_matches.has_descriptions())
-        {
-            const int32 delta = get_match_row(m_index) - m_top;
-
-            m_desc_below = !m_desc_below;
-            m_calc_widths = true;
-            update_layout();
-
-            int32 top = max<int32>(0, get_match_row(m_index) - delta);
-            const int32 max_top = max<int32>(0, m_match_rows - m_visible_rows);
-            if (top > max_top)
-                top = max_top;
-            set_top(top);
-
-            m_clear_display = true;
-            update_display();
-        }
-        break;
-#endif
-
-    case bind_id_suggestionlist_f2:
-        // TODO:  It would be better to match whatever key(s) are bound to the
-        // clink-toggle-listview command.
-        goto escape;
-#if 0
-    case bind_id_suggestionlist_f4:
-        break;
-#endif
 
     case bind_id_suggestionlist_escape:
 escape:
@@ -1057,12 +1020,12 @@ bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
 
 
 //------------------------------------------------------------------------------
-bool activate_suggestion_list(editor_module::result& result, bool reactivate)
+bool toggle_suggestion_list(editor_module::result& result)
 {
     if (!s_suggestionlist)
         return false;
 
-    return s_suggestionlist->activate(result, reactivate);
+    return s_suggestionlist->toggle(result);
 }
 
 //------------------------------------------------------------------------------

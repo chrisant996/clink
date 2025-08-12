@@ -1261,8 +1261,8 @@ ding:
         return 0;
     }
 
-    extern bool activate_suggestion_list(editor_module::result& result, bool reactivate);
-    if (!g_result || !activate_suggestion_list(*g_result, rl_last_func == clink_toggle_listview))
+    extern bool toggle_suggestion_list(editor_module::result& result);
+    if (!g_result || !toggle_suggestion_list(*g_result))
         goto ding;
     return 0;
 }
