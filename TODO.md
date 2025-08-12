@@ -17,11 +17,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
-  - It can't be truly modal: it has to integrate with the core input loop so that all normal key bindings still work, which implies that Clink/Readline need to automatically erase/cancel (or display/enable) the ListView as appropriate when key bindings need to do something for which the ListView shouldn't be visible.
-  - F2 = toggle ListView (is there a persistent way to enable it?).
-  - Ctrl-Z = revert to original line, but don't dismiss the ListView.
-  - ESC = dismiss ListView mode until further text is input (ESC enables using other keys like UP/DOWN to use their normal key bindings instead of the ListView behaviors).
-  - UP/DOWN = navigate through available ListView items.
+  - [x] It can't be truly modal: it has to integrate with the core input loop so that all normal key bindings still work, which implies that Clink/Readline need to automatically erase/cancel (or display/enable) the ListView as appropriate when key bindings need to do something for which the ListView shouldn't be visible.
+  - [x] F2 = toggle ListView (is there a persistent way to enable it?).
+  - [x] ESC = dismiss ListView mode until further text is input (ESC enables using other keys like UP/DOWN to use their normal key bindings instead of the ListView behaviors).
+  - [x] UP/DOWN = navigate through available ListView items.
+  - [x] PGUP/PGDN = handled by Readline when index is not in the suggestion list.
+  - [ ] PGUP/PGDN = page up/down when index is in the suggestion list.
+  - [ ] Ctrl-Z = revert to original line, but don't dismiss the ListView.
   - Allow suggesters to return a table.
     - Limit the number of accepted entries, to encourage writing efficient suggesters?  Powershell appears to limit the total number of predictions to 30 items.
     - Allow suggesters to provide a friendly name to show up in the `[Source]` column at the right side.
