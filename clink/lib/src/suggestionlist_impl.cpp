@@ -698,15 +698,10 @@ void suggestionlist_impl::update_display()
             {
                 const bool selected = (i == m_index);
 
-                // TODO: build string with potential ellipses on both ends,
-                // and with matching text highlighted...
-                // TODO: expand control characters the same way as
-                // display_manager does.
-                tmp.clear();
-                tmp = m_suggestions[i].m_suggestion.c_str();
+                make_suggestion_list_string(i, tmp);
 
                 left.format("%s>%s ", markup_color[selected], normal_color[selected]);
-                right.format("[%s%s%s]", markup_color[selected], m_suggestions[i].m_source, normal_color[selected]);
+                right.format("[%s%s%s]", markup_color[selected], m_suggestions[i].m_source.c_str(), normal_color[selected]);
                 {
                     const int32 spaces = max_width - (cell_count(left.c_str()) + cell_count(tmp.c_str()) + cell_count(right.c_str()));
                     // TODO: what if spaces is negative?
@@ -780,6 +775,18 @@ void suggestionlist_impl::update_display()
     GetConsoleScreenBufferInfo(h, &csbi);
     restore.Y = csbi.dwCursorPosition.Y;
     SetConsoleCursorPosition(h, restore);
+}
+
+//------------------------------------------------------------------------------
+void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out)
+{
+    const auto& s = m_suggestions[index];
+    out.clear();
+// TODO: build string with potential ellipses on both ends, and with matching
+// text highlighted...
+// TODO: expand control characters the same way as display_manager does.
+    out.concat(m_suggestions.get_line().c_str(), s.m_suggestion_offset);
+    out.concat(m_suggestions[index].m_suggestion.c_str());
 }
 
 //------------------------------------------------------------------------------

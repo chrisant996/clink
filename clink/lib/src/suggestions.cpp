@@ -75,19 +75,48 @@ extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 
 //------------------------------------------------------------------------------
-suggestion::suggestion(const suggestion& other)
+suggestions::suggestions(const suggestions& other)
 {
     *this = other;
 }
 
 //------------------------------------------------------------------------------
-suggestion& suggestion::operator = (const suggestion& other)
+suggestions& suggestions::operator = (const suggestions& other)
 {
-    m_suggestion = other.m_suggestion.c_str();
-    m_suggestion_offset = other.m_suggestion_offset;
-    m_source = other.m_source;
+    clear();
+
+    m_line = other.m_line.c_str();
+
+    for (const auto& s : other.m_items)
+        add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str());
+
     return *this;
 }
+
+//------------------------------------------------------------------------------
+void suggestions::clear()
+{
+    m_line.clear();
+    m_items.clear();
+}
+
+//------------------------------------------------------------------------------
+void suggestions::set_line(const char* line, int32 length)
+{
+    m_line.concat(line, length);
+}
+
+//------------------------------------------------------------------------------
+void suggestions::add(const char* text, uint32 offset, const char* source)
+{
+    suggestion suggestion;
+    suggestion.m_suggestion = text;
+    suggestion.m_suggestion_offset = offset;
+    suggestion.m_source = source;
+    m_items.emplace_back(std::move(suggestion));
+}
+
+
 
 //------------------------------------------------------------------------------
 bool suggestion_manager::more() const
@@ -164,7 +193,6 @@ void suggestion_manager::clear()
         g_rl_buffer->set_need_draw();
 
     new (&m_iter) str_iter();
-    m_line.free();
     m_started.free();
     m_suggestions.clear();
     m_endword_offset = -1;
@@ -201,6 +229,7 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (g_rl_buffer->get_anchor() >= 0)
         return false;
 
+    const auto& m_line = m_suggestions.get_line();
     const bool diff = (m_line.length() != g_rl_buffer->get_length() ||
                        strncmp(m_line.c_str(), g_rl_buffer->get_buffer(), m_line.length()) != 0);
 
@@ -244,7 +273,7 @@ bool suggestion_manager::can_update_matches()
 void suggestion_manager::suppress_suggestions()
 {
     clear();
-    m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    m_suggestions.set_line(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     m_suppress = true;
 }
@@ -285,7 +314,7 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, const char
         first_suggestion.m_suggestion_offset == offset &&
         m_endword_offset == endword_offset &&
         (!suggestion || first_suggestion.m_suggestion.equals(suggestion)) &&
-        m_line.equals(line))
+        m_suggestions.get_line().equals(line))
     {
         return;
     }
@@ -294,7 +323,7 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, const char
     {
 malformed:
         clear();
-        m_line = line;
+        m_suggestions.set_line(line);
         m_started = line;
         if (g_rl_buffer)
             g_rl_buffer->draw();
@@ -309,12 +338,8 @@ malformed:
     }
 
     m_suggestions.clear();
-
-    ::suggestion new_suggestion;
-    new_suggestion.m_suggestion = suggestion;
-    new_suggestion.m_suggestion_offset = offset;
-// TODO: new_suggestion.m_source
-    m_suggestions.emplace_back(std::move(new_suggestion));
+// TODO: use the real source name.
+    m_suggestions.add(suggestion, offset, "*TBD*");
     new (&m_iter) str_iter(suggestion);
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
@@ -332,12 +357,12 @@ malformed:
 
     m_endword_offset = endword_offset;
 
-    m_line = line;
+    m_suggestions.set_line(line);
     m_started = line;
 
 #ifdef DEBUG
     if (dbg_get_env_int("CLINK_DEBUG_SUGGEST"))
-        printf("\x1b[s\x1b[2Hline:     \"%s\"\x1b[K\x1b[u", m_line.c_str());
+        printf("\x1b[s\x1b[2Hline:     \"%s\"\x1b[K\x1b[u", m_suggestions.get_line().c_str());
 #endif
 
     if (g_rl_buffer)
@@ -348,7 +373,7 @@ malformed:
 }
 
 //------------------------------------------------------------------------------
-bool suggestion_manager::get(std::vector<suggestion>& out)
+bool suggestion_manager::get(suggestions& out)
 {
     out.clear();
 
@@ -533,8 +558,7 @@ bool suggestion_manager::insert(suggestion_action action)
     }
     else
     {
-        m_line.clear();
-        m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+        m_suggestions.set_line(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
         m_started.clear();
         m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     }

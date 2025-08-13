@@ -49,6 +49,7 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
+    void            make_suggestion_list_string(int32 index, str_base& out);
     void            apply_suggestion(int32 index);
     int32           get_scroll_offset() const;
     void            set_top(int32 top);
@@ -57,9 +58,7 @@ private:
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
-// TODO: access m_line and m_started from suggestion_manager?
-// TODO: access list of suggestions from suggestion_manager?
-    std::vector<suggestion> m_suggestions;
+    suggestions     m_suggestions;
     int32           m_count;
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;

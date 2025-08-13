@@ -1056,7 +1056,7 @@ void set_suggestion(const char* line, uint32 endword_offset, const char* suggest
 }
 
 //------------------------------------------------------------------------------
-bool get_suggestions(std::vector<suggestion>& out)
+bool get_suggestions(suggestions& out)
 {
     return s_suggestion.get(out);
 }
