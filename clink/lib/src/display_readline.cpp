@@ -2274,7 +2274,7 @@ void display_manager::display()
 
     coalesce.flush();
 
-    if (is_suggestion_list_active())
+    if (is_suggestion_list_active(false/*even_if_hidden*/))
     {
         if (old_botlin != _rl_vis_botlin)
             clear_suggestion_list = true;

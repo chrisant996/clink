@@ -76,6 +76,8 @@ void suggestionlist_impl::enable(bool enable)
     const bool was_active = is_active();
 
     m_hide = !enable;
+    if (enable)
+        m_hide_while_fingerprint = false;
 
     if (was_active != is_active())
     {
@@ -112,13 +114,6 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
 
     init_suggestions();
 
-    if (!m_count)
-    {
-cant_activate:
-        m_index = -1;
-        return false;
-    }
-
     assert(!m_any_displayed);
     assert(!m_clear_display);
     m_any_displayed = false;
@@ -126,8 +121,6 @@ cant_activate:
 
     // Make sure there's room.
     update_layout();
-    if (m_visible_rows <= 0)
-        goto cant_activate;
 
     // Disable the comment row.
     g_display_manager_no_comment_row = true;
@@ -182,6 +175,8 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_buffer = &context.buffer;
     m_printer = &context.printer;
     m_clear_display = false;
+    m_hide_while_fingerprint = false;
+    m_hide_fingerprint.clear();
     m_scroll_helper.clear();
 
     m_normal_color[0] = "\x1b[m";
@@ -203,18 +198,27 @@ void suggestionlist_impl::on_end_line()
     m_buffer = nullptr;
     m_printer = nullptr;
     m_clear_display = false;
+    m_hide_while_fingerprint = false;
+    m_hide_fingerprint.clear();
 }
 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_need_input(int32& bind_group)
 {
-    if (!is_select_complete_active())
-    {
-        enable_suggestion_list(1);
+    if (is_select_complete_active())
+        return;
 
-        if (is_active())
-            bind_group = m_bind_group;
+    if (m_hide_while_fingerprint)
+    {
+        if (m_buffer->get_fingerprint(false) == m_hide_fingerprint)
+            return;
+        m_hide_while_fingerprint = false;
     }
+
+    enable_suggestion_list(1);
+
+    if (is_active())
+        bind_group = m_bind_group;
 }
 
 //------------------------------------------------------------------------------
@@ -224,12 +228,8 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
 
     input input = _input;
 
-    // Cancel if no room.
     if (m_visible_rows <= 0)
-    {
-        cancel(result);
-        return;
-    }
+        goto catchall;
 
     bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
@@ -477,13 +477,26 @@ do_mouse_position:
 #endif
 
     case bind_id_suggestionlist_enter:
+        if (m_index < 0)
+            goto catchall;
         apply_suggestion(m_index);
         m_applied.clear();
         cancel(result);
+        result.pass();
         break;
 
     case bind_id_suggestionlist_escape:
-        cancel(result);
+        // Hide suggestion list until the input line is changed by something
+        // other than the suggestion list.
+        enable_suggestion_list(0);
+        result.set_bind_group(m_prev_bind_group);
+        m_hide_while_fingerprint = true;
+        m_hide_fingerprint = m_buffer->get_fingerprint(false);
+        m_suggestions.clear(m_suggestions.get_generation_id());
+        m_count = 0;
+        assert(!is_active());
+        update_layout();
+        update_display();
         return;
 
     case bind_id_suggestionlist_catchall:
@@ -552,10 +565,22 @@ void suggestionlist_impl::cancel(editor_module::result& result)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::init_suggestions()
 {
-    get_suggestions(m_suggestions);
-    m_count = m_suggestions.size();
+    // Don't update suggestions if the cursor isn't at the end of the line.
+    // There will be no suggestions, so the suggestion list would disappear,
+    // which isn't the intended behavior for the suggestion list.
+    if (m_buffer->get_cursor() < m_buffer->get_length())
+        return;
 
-    m_clear_display = m_any_displayed;
+    const auto& id = m_suggestions.get_generation_id();
+
+    get_suggestions(m_suggestions);
+
+    if (id != m_suggestions.get_generation_id())
+    {
+        m_index = -1;
+        m_count = m_suggestions.size();
+        m_clear_display = m_any_displayed;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -658,16 +683,18 @@ void suggestionlist_impl::update_display()
         else
             num.format("%u", m_index + 1);
         left.format("%s<%s/%u>%s", m_markup_color[0].c_str(), num.c_str(), m_count, m_normal_color[0].c_str());
-        // TODO: show sources in right.c_str().
-        right.format("<%s...%s>", m_markup_color[0].c_str(), m_normal_color[0].c_str());
+        const int32 left_header_cells = cell_count(left.c_str());
+        if (m_max_width > left_header_cells + 2) // At least 2 spaces after.
+            make_sources_header(right, m_max_width - (left_header_cells + 2));
 
         // Show the header row.
         {
-            const int32 left_cells = cell_count(left.c_str());
-            const int32 right_cells = cell_count(right.c_str());
-            const int32 spaces = m_max_width - (left_cells + right_cells);
-            // TODO: what if spaces is negative?
-            concat_spaces(tmp, spaces);
+            const int32 right_header_cells = cell_count(right.c_str());
+            if (m_max_width > (left_header_cells + right_header_cells))
+            {
+                const int32 spaces = m_max_width - (left_header_cells + right_header_cells);
+                concat_spaces(tmp, spaces);
+            }
         }
         m_printer->print(left.c_str(), left.length());
         m_printer->print(tmp.c_str(), tmp.length());
@@ -781,6 +808,24 @@ void suggestionlist_impl::update_display()
 }
 
 //------------------------------------------------------------------------------
+void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
+{
+    // Ensure room for the "<" and ">" ends.
+    if (max_width <= 2)
+        return;
+    max_width -= 2;
+
+    str<128> tmp;
+// TODO: show sources summary.
+    tmp = "...";
+
+    str<128> tmp2;
+    ellipsify(tmp.c_str(), max_width, tmp2, true/*expand_ctrl*/);
+
+    out.format("<%s%s%s>", m_markup_color[0].c_str(), tmp2.c_str(), m_normal_color[0].c_str());
+}
+
+//------------------------------------------------------------------------------
 void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
     const auto& s = m_suggestions[index];
@@ -827,6 +872,8 @@ void suggestionlist_impl::apply_suggestion(int32 index)
         m_buffer->set_cursor(suggestion.m_suggestion_offset);
         m_buffer->insert(suggestion.m_suggestion.c_str());
         m_buffer->end_undo_group();
+// BUGBUG: this needs to prevent generating suggestions, just like the
+// clink-insert-suggestion command does.
 
         m_applied = m_buffer->get_fingerprint(false);
     }
@@ -884,6 +931,12 @@ bool suggestionlist_impl::is_active() const
 }
 
 //------------------------------------------------------------------------------
+bool suggestionlist_impl::is_active_even_if_hidden() const
+{
+    return m_prev_bind_group >= 0 && m_buffer && m_printer;
+}
+
+//------------------------------------------------------------------------------
 void suggestionlist_impl::refresh_display(bool clear)
 {
     if (!is_active())
@@ -891,6 +944,12 @@ void suggestionlist_impl::refresh_display(bool clear)
 
     if (clear)
         m_clear_display = true;
+
+    // This sounds like it would be too expensive to happen every time the
+    // input line is displayed.  But it's optimized to be a no-op if the
+    // suggestions haven't changed.  So it ends up nicely encapsulating the
+    // details so callers don't have to know anything.
+    init_suggestions();
 
     update_layout();
     update_display();
@@ -945,12 +1004,14 @@ extern "C" void clear_suggestion_list_index(void)
 }
 
 //------------------------------------------------------------------------------
-bool is_suggestion_list_active()
+bool is_suggestion_list_active(bool even_if_hidden)
 {
     if (!s_suggestionlist)
         return false;
 
-    return s_suggestionlist->is_active();
+    return even_if_hidden ?
+        s_suggestionlist->is_active_even_if_hidden() :
+        s_suggestionlist->is_active();
 }
 
 //------------------------------------------------------------------------------

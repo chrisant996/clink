@@ -86,6 +86,7 @@ suggestions& suggestions::operator = (const suggestions& other)
     clear();
 
     m_line = other.m_line.c_str();
+    m_generation_id = other.m_generation_id;
 
     for (const auto& s : other.m_items)
         add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str());
@@ -94,10 +95,32 @@ suggestions& suggestions::operator = (const suggestions& other)
 }
 
 //------------------------------------------------------------------------------
-void suggestions::clear()
+bool suggestions::is_same(const suggestions& other) const
+{
+    if (other.m_generation_id != m_generation_id)
+        return false;
+#ifdef DEBUG
+    if (m_generation_id)
+    {
+        assert(other.m_line.equals(m_line.c_str()));
+        assert(other.m_items.size() == m_items.size());
+        if (other.m_items.size() && m_items.size())
+        {
+            assert(other.m_items[0].m_suggestion.equals(m_items[0].m_suggestion.c_str()));
+            assert(other.m_items[0].m_suggestion_offset == m_items[0].m_suggestion_offset);
+            assert(other.m_items[0].m_source.equals(m_items[0].m_source.c_str()));
+        }
+    }
+#endif
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void suggestions::clear(uint32 generation_id)
 {
     m_line.clear();
     m_items.clear();
+    m_generation_id = generation_id;
 }
 
 //------------------------------------------------------------------------------
@@ -119,6 +142,9 @@ void suggestions::add(const char* text, uint32 offset, const char* source)
 
 
 //------------------------------------------------------------------------------
+uint32 suggestion_manager::s_generation_id = 0;
+
+//------------------------------------------------------------------------------
 bool suggestion_manager::more() const
 {
     return m_iter.more();
@@ -135,7 +161,7 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
     out.clear();
     if (!g_rl_buffer)
         return false;
-    if (is_suggestion_list_active() || m_suggestions.empty())
+    if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.empty())
         return false;
 
     const suggestion& first_suggestion = m_suggestions[0];
@@ -197,6 +223,8 @@ void suggestion_manager::clear()
     m_suggestions.clear();
     m_endword_offset = -1;
     m_suppress = false;
+
+    new_generation();
 }
 
 //------------------------------------------------------------------------------
@@ -337,7 +365,8 @@ malformed:
         goto malformed;
     }
 
-    m_suggestions.clear();
+    new_generation();
+    m_suggestions.clear(s_generation_id);
 // TODO: use the real source name.
     m_suggestions.add(suggestion, offset, "*TBD*");
     new (&m_iter) str_iter(suggestion);
@@ -375,14 +404,14 @@ malformed:
 //------------------------------------------------------------------------------
 bool suggestion_manager::get(suggestions& out)
 {
-    out.clear();
-
     if (!g_autosuggest_enable.get())
+    {
+        out.clear();
         return false;
-    if (m_suggestions.empty())
-        return false;
+    }
 
-    out = m_suggestions;
+    if (!m_suggestions.is_same(out))
+        out = m_suggestions;
     return true;
 }
 
@@ -406,12 +435,20 @@ void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 }
 
 //------------------------------------------------------------------------------
+void suggestion_manager::new_generation()
+{
+    ++s_generation_id;
+    if (!s_generation_id)
+        ++s_generation_id;
+}
+
+//------------------------------------------------------------------------------
 bool suggestion_manager::insert(suggestion_action action)
 {
     if (!g_autosuggest_enable.get())
         return false;
 
-    if (is_suggestion_list_active() || m_suggestions.empty())
+    if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.empty())
         return false;
 
     if (!m_iter.more() || g_rl_buffer->get_cursor() != g_rl_buffer->get_length())

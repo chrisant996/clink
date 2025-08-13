@@ -30,16 +30,19 @@ public:
                     suggestions() = default;
                     suggestions(const suggestions& other);
     suggestions&    operator = (const suggestions& other);
-    void            clear();
+    bool            is_same(const suggestions& other) const;
+    void            clear(uint32 generation_id=0);
     bool            empty() const { return m_items.empty(); }
     size_t          size() const { return m_items.size(); }
     const suggestion& operator [] (uint32 index) const { return m_items[index]; }
     const str_moveable& get_line() const { return m_line; }
     void            set_line(const char* line, int32 length=-1);
     void            add(const char* text, uint32 offset, const char* source);
+    uint32          get_generation_id() const { return m_generation_id; }
 private:
     str_moveable    m_line;         // Input line off which suggestions are based.
     std::vector<suggestion> m_items;
+    uint32          m_generation_id = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -68,6 +71,9 @@ private:
     uint32          m_endword_offset = -1;
     bool            m_paused = false;
     bool            m_suppress = false;
+
+    static void     new_generation();
+    static uint32   s_generation_id;
 };
 
 //------------------------------------------------------------------------------

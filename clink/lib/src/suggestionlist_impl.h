@@ -29,6 +29,7 @@ public:
     bool            point_within(int32 in) const;
     void            clear_index();
     bool            is_active() const;
+    bool            is_active_even_if_hidden() const;
     void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
 
@@ -49,6 +50,7 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
+    void            make_sources_header(str_base& out, uint32 max_width);
     void            make_suggestion_list_string(int32 index, str_base& out, uint32 width);
     void            apply_suggestion(int32 index);
     int32           get_scroll_offset() const;
@@ -64,6 +66,8 @@ private:
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
     bool            m_hide = false;
+    bool            m_hide_while_fingerprint = false;
+    line_buffer_fingerprint m_hide_fingerprint;
 
     // Configuration.
     str<16>         m_normal_color[2];      // 0=normal, 1=selected
@@ -104,6 +108,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool is_suggestion_list_active();
+bool is_suggestion_list_active(bool even_if_hidden);
 void update_suggestion_list_display(bool clear=false);
 bool point_in_suggestion_list(int32 in);
