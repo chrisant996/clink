@@ -106,6 +106,7 @@ class display_accumulator
 public:
                     display_accumulator();
                     ~display_accumulator();
+    void            end();
     static void     flush();
 private:
     static void     fwrite_proc(FILE*, const char*, int32);
@@ -114,6 +115,7 @@ private:
     static void (*s_saved_fflush)(FILE*);
     static int32    s_nested;
     static bool     s_active;
+    bool            m_active;
 };
 
 //------------------------------------------------------------------------------

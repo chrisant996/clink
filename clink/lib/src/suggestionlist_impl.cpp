@@ -184,6 +184,13 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_clear_display = false;
     m_scroll_helper.clear();
 
+    m_normal_color[0] = "\x1b[m";
+    m_normal_color[1] = "\x1b[0;100m";
+    m_highlight_color[0] = "\x1b[0;1m";
+    m_highlight_color[1] = "\x1b[0;100;1m";
+    m_markup_color[0] = "\x1b[0;33m";
+    m_markup_color[1] = "\x1b[0;100;33m";
+
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
     update_layout();
@@ -572,6 +579,13 @@ void suggestionlist_impl::update_layout()
     m_vert_scroll_car = 0;
     m_vert_scroll_column = 0;
 #endif
+
+#ifdef SHOW_VERT_SCROLLBARS
+    const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
+#else
+    const int32 reserve_cols = 1;
+#endif
+    m_max_width = min<>(m_screen_cols - reserve_cols, c_max_listview_width);
 }
 
 //------------------------------------------------------------------------------
@@ -617,10 +631,6 @@ void suggestionlist_impl::update_display()
     // Move cursor after the input line.
     _rl_move_vert(_rl_vis_botlin);
 
-    const char* const normal_color[] = { "\x1b[m", "\x1b[0;100m" };
-    const char* const highlight_color[] = { "\x1b[0;1m", "\x1b[0;100;1m" };
-    const char* const markup_color[] = { "\x1b[0;33m", "\x1b[0;100;33m" };
-
     // Display suggestions.
     int32 up = 0;
     if (is_active() && m_count > 0)
@@ -629,19 +639,12 @@ void suggestionlist_impl::update_display()
         const int32 rows = min<>(m_visible_rows, m_count);
         m_displayed_rows = rows;
 
-#ifdef SHOW_VERT_SCROLLBARS
-        const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
-#else
-        const int32 reserve_cols = 1;
-#endif
-        const int32 max_width = min<>(m_screen_cols - reserve_cols, c_max_listview_width);
-
         rl_crlf();
         up++;
 
+        const bool clear_display = m_clear_display;
         if (m_clear_display)
         {
-            m_printer->print("\x1b[m\x1b[J");
             m_prev_displayed = -1;
             m_clear_display = false;
         }
@@ -654,15 +657,15 @@ void suggestionlist_impl::update_display()
             num = "-";
         else
             num.format("%u", m_index + 1);
-        left.format("%s<%s/%u>%s", markup_color[0], num.c_str(), m_count, normal_color[0]);
+        left.format("%s<%s/%u>%s", m_markup_color[0].c_str(), num.c_str(), m_count, m_normal_color[0].c_str());
         // TODO: show sources in right.c_str().
-        right.format("<%s...%s>", markup_color[0], normal_color[0]);
+        right.format("<%s...%s>", m_markup_color[0].c_str(), m_normal_color[0].c_str());
 
         // Show the header row.
         {
             const int32 left_cells = cell_count(left.c_str());
             const int32 right_cells = cell_count(right.c_str());
-            const int32 spaces = max_width - (left_cells + right_cells);
+            const int32 spaces = m_max_width - (left_cells + right_cells);
             // TODO: what if spaces is negative?
             concat_spaces(tmp, spaces);
         }
@@ -698,16 +701,13 @@ void suggestionlist_impl::update_display()
             {
                 const bool selected = (i == m_index);
 
-                make_suggestion_list_string(i, tmp);
-
-                left.format("%s>%s ", markup_color[selected], normal_color[selected]);
-                right.format("[%s%s%s]", markup_color[selected], m_suggestions[i].m_source.c_str(), normal_color[selected]);
-                {
-                    const int32 spaces = max_width - (cell_count(left.c_str()) + cell_count(tmp.c_str()) + cell_count(right.c_str()));
-                    // TODO: what if spaces is negative?
-                    tmp.concat(normal_color[selected]);
-                    concat_spaces(tmp, spaces);
-                }
+                left.format("%s>%s ", m_markup_color[selected].c_str(), m_normal_color[selected].c_str());
+                right.format("[%s%s%s]", m_markup_color[selected].c_str(), m_suggestions[i].m_source.c_str(), m_normal_color[selected].c_str());
+                const uint32 used_width = cell_count(left.c_str()) + cell_count(right.c_str());
+                if (used_width < m_max_width)
+                    make_suggestion_list_string(i, tmp, m_max_width - used_width);
+                else
+                    tmp.clear();
                 m_printer->print(left.c_str(), left.length());
                 m_printer->print(tmp.c_str(), tmp.length());
                 m_printer->print(right.c_str(), right.length());
@@ -724,14 +724,14 @@ void suggestionlist_impl::update_display()
                     if (car)
                     {
                         // Space was reserved by update_layout().
-                        tmp.format("%s \x1b[0;90m%s", normal_color[0], car);
+                        tmp.format("%s \x1b[0;90m%s", m_normal_color[0].c_str(), car);
                         m_printer->print(tmp.c_str(), tmp.length());
                     }
 #ifdef USE_FULL_SCROLLBAR
                     else
                     {
                         // Space was reserved by update_layout().
-                        tmp.format("%s \x1b[0;90m\xe2\x94\x82", normal_color[0]);// │
+                        tmp.format("%s \x1b[0;90m\xe2\x94\x82", m_normal_color[0].c_str());// │
                         m_printer->print(tmp.c_str(), tmp.length());
                     }
 #endif
@@ -742,6 +742,9 @@ void suggestionlist_impl::update_display()
                 m_printer->print("\x1b[m\x1b[K");
             }
         }
+
+        if (clear_display)
+            m_printer->print("\x1b[m\x1b[J");
 
         assert(!m_clear_display);
         m_prev_displayed = m_index;
@@ -778,15 +781,29 @@ void suggestionlist_impl::update_display()
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out)
+void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
     const auto& s = m_suggestions[index];
-    out.clear();
-// TODO: build string with potential ellipses on both ends, and with matching
-// text highlighted...
-// TODO: expand control characters the same way as display_manager does.
-    out.concat(m_suggestions.get_line().c_str(), s.m_suggestion_offset);
-    out.concat(m_suggestions[index].m_suggestion.c_str());
+
+    str<128> tmp;
+    tmp.concat(m_suggestions.get_line().c_str(), s.m_suggestion_offset);
+    tmp.concat(m_suggestions[index].m_suggestion.c_str());
+
+// TODO: find match in the suggestion.
+// TODO: highlight the match, ellipsify, and expand ctrl chars.
+// TODO: calc how much text before/after the match can be added.
+// TODO: prepend/append the extra text, with ellipsis and expanding ctrl chars.
+
+    // Rely on ellipsify_ex both for truncation and also for expanding control
+    // characters.
+    const int32 cells = ellipsify_ex(tmp.c_str(), width, ellipsify_mode::RIGHT, out, nullptr, true/*expand_ctrl*/);
+
+    // Pad with spaces to the specified width.
+    if (cells < width)
+    {
+        // out.concat(m_normal_color[index == m_index].c_str());
+        concat_spaces(out, width - cells);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -867,10 +884,13 @@ bool suggestionlist_impl::is_active() const
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::refresh_display()
+void suggestionlist_impl::refresh_display(bool clear)
 {
     if (!is_active())
         return;
+
+    if (clear)
+        m_clear_display = true;
 
     update_layout();
     update_display();
@@ -934,12 +954,12 @@ bool is_suggestion_list_active()
 }
 
 //------------------------------------------------------------------------------
-void update_suggestion_list_display()
+void update_suggestion_list_display(bool clear)
 {
     if (!s_suggestionlist)
         return;
 
-    s_suggestionlist->refresh_display();
+    s_suggestionlist->refresh_display(clear);
 }
 
 #if 0

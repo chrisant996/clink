@@ -1371,6 +1371,7 @@ display_accumulator::display_accumulator()
     }
 
     s_active = true;
+    m_active = true;
 
     rl_fwrite_function = fwrite_proc;
     rl_fflush_function = fflush_proc;
@@ -1379,16 +1380,26 @@ display_accumulator::display_accumulator()
 //------------------------------------------------------------------------------
 display_accumulator::~display_accumulator()
 {
-    if (--s_nested == 0)
+    end();
+}
+
+//------------------------------------------------------------------------------
+void display_accumulator::end()
+{
+    if (m_active)
     {
-        flush();
-        rl_fwrite_function = s_saved_fwrite;
-        rl_fflush_function = s_saved_fflush;
-        s_saved_fwrite = nullptr;
-        s_saved_fflush = nullptr;
-        s_active = false;
+        m_active = false;
+        if (--s_nested == 0)
+        {
+            flush();
+            rl_fwrite_function = s_saved_fwrite;
+            rl_fflush_function = s_saved_fflush;
+            s_saved_fwrite = nullptr;
+            s_saved_fflush = nullptr;
+            s_active = false;
+        }
+        assert(s_nested >= 0);
     }
-    assert(s_nested >= 0);
 }
 
 //------------------------------------------------------------------------------
@@ -1748,7 +1759,6 @@ void display_manager::display()
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
 
-    { // BEGIN COALESCE.
     display_accumulator coalesce;
 
     m_pending_wrap = false;
@@ -2028,6 +2038,7 @@ void display_manager::display()
     // updated, unless someone is forcing an update.
     bool can_show_rprompt = false;
     const int32 old_botlin = _rl_vis_botlin;
+    bool clear_suggestion_list = false;
     if (need_update)
     {
         // If the right side prompt is shown but shouldn't be, erase it.
@@ -2225,6 +2236,7 @@ void display_manager::display()
                 print(tmp.c_str(), tmp.length());
             }
         }
+        clear_suggestion_list = true;
         s_defer_erase_extra_lines = 0;
     }
 
@@ -2261,13 +2273,13 @@ void display_manager::display()
     rl_display_fixed = 0;
 
     coalesce.flush();
-    } // END COALESCE BEFORE DISPLAYING SUGGESTION LIST.
 
     if (is_suggestion_list_active())
     {
-// TODO: when does this need to force a full redisplay?
-// TODO: certainly at least when display() has changed _rl_vis_botlin or erased extra lines.
-        update_suggestion_list_display();
+        if (old_botlin != _rl_vis_botlin)
+            clear_suggestion_list = true;
+        coalesce.end(); // Important!  suggestionlist_impl uses m_printer directly.
+        update_suggestion_list_display(clear_suggestion_list);
     }
 
 #ifdef REPORT_REDISPLAY

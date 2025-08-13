@@ -29,7 +29,7 @@ public:
     bool            point_within(int32 in) const;
     void            clear_index();
     bool            is_active() const;
-    void            refresh_display();
+    void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
 
 private:
@@ -49,7 +49,7 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
-    void            make_suggestion_list_string(int32 index, str_base& out);
+    void            make_suggestion_list_string(int32 index, str_base& out, uint32 width);
     void            apply_suggestion(int32 index);
     int32           get_scroll_offset() const;
     void            set_top(int32 top);
@@ -65,10 +65,16 @@ private:
     int32           m_prev_bind_group = -1;
     bool            m_hide = false;
 
+    // Configuration.
+    str<16>         m_normal_color[2];      // 0=normal, 1=selected
+    str<16>         m_highlight_color[2];   // 0=normal, 1=selected
+    str<16>         m_markup_color[2];      // 0=normal, 1=selected
+
     // Layout.
     int32           m_screen_cols = 0;
     int32           m_screen_rows = 0;
     int32           m_mouse_offset = 0;
+    int32           m_max_width = 0;
     int32           m_visible_rows = 0;
     int32           m_displayed_rows = 0;
 #ifdef SHOW_VERT_SCROLLBARS
@@ -99,5 +105,5 @@ private:
 
 //------------------------------------------------------------------------------
 bool is_suggestion_list_active();
-void update_suggestion_list_display();
+void update_suggestion_list_display(bool clear=false);
 bool point_in_suggestion_list(int32 in);
