@@ -29,6 +29,7 @@ public:
     bool            point_within(int32 in) const;
     void            clear_index();
     bool            is_active() const;
+    void            refresh_display();
     bool            accepts_mouse_input(mouse_input_type type) const;
 
 private:
@@ -99,4 +100,5 @@ private:
 
 //------------------------------------------------------------------------------
 bool is_suggestion_list_active();
+void update_suggestion_list_display();
 bool point_in_suggestion_list(int32 in);

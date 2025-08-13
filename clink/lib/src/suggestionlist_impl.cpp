@@ -545,18 +545,7 @@ void suggestionlist_impl::cancel(editor_module::result& result)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::init_suggestions()
 {
-    // TODO: get suggestions from suggestion_manager.
-    suggestion s;
-    m_suggestions.clear();
-    s.m_suggestion = "abc def";
-    s.m_suggestion_offset = 0;
-    s.m_source = "History";
-    m_suggestions.emplace_back(std::move(s));
-    s.m_suggestion = "abc xyz";
-    s.m_suggestion_offset = 0;
-    s.m_source = "History";
-    m_suggestions.emplace_back(std::move(s));
-
+    get_suggestions(m_suggestions);
     m_count = m_suggestions.size();
 
     m_clear_display = m_any_displayed;
@@ -601,22 +590,6 @@ void suggestionlist_impl::update_top()
             set_top(top);
     }
 
-#if 0
-    if (m_expanded)
-    {
-        const int32 scroll_ofs = get_scroll_offset();
-        if (scroll_ofs > 0)
-        {
-            const int32 y = get_match_row(m_index);
-            const int32 last_row = max<int32>(0, m_match_rows - m_visible_rows);
-            if (m_top > max(0, y - scroll_ofs))
-                set_top(max(0, y - scroll_ofs));
-            else if (m_top < min(last_row, y + scroll_ofs - m_displayed_rows + 1))
-                set_top(min(last_row, y + scroll_ofs - m_displayed_rows + 1));
-        }
-    }
-#endif
-
     assert(m_top >= 0);
     assert(m_top <= max<int32>(0, m_count - m_visible_rows));
 }
@@ -629,7 +602,7 @@ void suggestionlist_impl::update_display()
     m_vert_scroll_column = 0;
 #endif
 
-    if (m_visible_rows <= 0)
+    if (m_visible_rows <= 0 && !m_any_displayed)
         return;
 
     // Remember the cursor position so it can be restored later to stay
@@ -887,6 +860,16 @@ bool suggestionlist_impl::is_active() const
 }
 
 //------------------------------------------------------------------------------
+void suggestionlist_impl::refresh_display()
+{
+    if (!is_active())
+        return;
+
+    update_layout();
+    update_display();
+}
+
+//------------------------------------------------------------------------------
 bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
 {
     switch (type)
@@ -941,6 +924,15 @@ bool is_suggestion_list_active()
         return false;
 
     return s_suggestionlist->is_active();
+}
+
+//------------------------------------------------------------------------------
+void update_suggestion_list_display()
+{
+    if (!s_suggestionlist)
+        return;
+
+    s_suggestionlist->refresh_display();
 }
 
 #if 0

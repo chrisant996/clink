@@ -26,6 +26,7 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "line_editor_integration.h"
+#include "suggestionlist_impl.h"
 #include "hinter.h"
 
 #include <core/base.h>
@@ -1747,6 +1748,7 @@ void display_manager::display()
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
 
+    { // BEGIN COALESCE.
     display_accumulator coalesce;
 
     m_pending_wrap = false;
@@ -2259,6 +2261,14 @@ void display_manager::display()
     rl_display_fixed = 0;
 
     coalesce.flush();
+    } // END COALESCE BEFORE DISPLAYING SUGGESTION LIST.
+
+    if (is_suggestion_list_active())
+    {
+// TODO: when does this need to force a full redisplay?
+// TODO: certainly at least when display() has changed _rl_vis_botlin or erased extra lines.
+        update_suggestion_list_display();
+    }
 
 #ifdef REPORT_REDISPLAY
     {

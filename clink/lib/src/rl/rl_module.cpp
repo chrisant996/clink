@@ -1056,6 +1056,12 @@ void set_suggestion(const char* line, uint32 endword_offset, const char* suggest
 }
 
 //------------------------------------------------------------------------------
+bool get_suggestions(std::vector<suggestion>& out)
+{
+    return s_suggestion.get(out);
+}
+
+//------------------------------------------------------------------------------
 static bool s_force_signaled_redisplay = false;
 void force_signaled_redisplay()
 {
