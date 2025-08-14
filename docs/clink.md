@@ -3019,6 +3019,8 @@ The function takes a [line_state](#line_state) argument that contains the input 
 
 If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.  The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
 
+In Clink v1.7.23 or higher, the function takes a third `limit` argument which indicates the maximum number of suggestions the function may return, and the function may optionally return multiple pairs of suggestion string and offset in table.  Each entry in the table can have a `suggestion` field and an `offset` field.
+
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
 ```lua
