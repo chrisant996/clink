@@ -1374,8 +1374,9 @@ static int32 is_transient_prompt_filter(lua_State* state)
 static int32 history_suggester(lua_State* state)
 {
     const char* line = checkstring(state, 1);
-    const int32 match_prev_cmd = lua_toboolean(state, 2);
-    if (!line)
+    const int32 limit = checkinteger(state, 2);
+    const int32 match_prev_cmd = lua_toboolean(state, 3);
+    if (!line || limit <= 0)
         return 0;
 
     HIST_ENTRY** history = history_list();
@@ -1391,6 +1392,9 @@ static int32 history_suggester(lua_State* state)
 
     const int32 scan_min = 200;
     const DWORD ms_max = 50;
+
+    int32 n = 0;
+    lua_createtable(state, 30, 0);
 
     const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
     for (int32 i = history_length; --i >= 0;)
@@ -1422,11 +1426,25 @@ static int32 history_suggester(lua_State* state)
         }
 
         // Suggest this history entry.
+        lua_createtable(state, 0, 2);
+
+        lua_pushliteral(state, "suggestion");
         lua_pushstring(state, history[i]->line);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "offset");
         lua_pushinteger(state, 1);
-        return 2;
+        lua_rawset(state, -3);
+
+        lua_rawseti(state, -2, ++n);
+        if (n >= limit)
+            break;
     }
 
+    if (n)
+        return 1;
+
+    lua_pop(state, 1);
     return 0;
 }
 
@@ -1448,24 +1466,69 @@ static int32 set_suggestion_result(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     const auto _endword_offset = checkinteger(state, 2);
-// TODO: args 3 and 4 will be passed as a table of suggestions, each of which
-// is a table of fields defining the suggestion.
-    const char* suggestion = optstring(state, 3, nullptr);
-    const auto _offset = optinteger(state, 4, 0);
-    if (!line || !_endword_offset.isnum() || !_offset.isnum())
+    if (!line || !_endword_offset.isnum() || !lua_istable(state, 3))
         return 0;
-    const int32 endword_offset = _endword_offset - 1;
-    int32 offset = _offset - 1;
 
     const int32 line_len = strlen(line);
+    const int32 endword_offset = _endword_offset - 1;
     if (endword_offset < 0 || endword_offset > line_len)
         return 0;
 
-    if (offset < 0 || offset > line_len)
-        offset = line_len;
+    suggestions suggestions;
 
-    set_suggestion(line, endword_offset, suggestion, offset);
+    if (lua_istable(state, 3))
+    {
+        lua_pushvalue(state, 3);
+
+        const int32 len = int32(lua_rawlen(state, -1));
+        for (int32 idx = 1; idx <= len; ++idx)
+        {
+            lua_rawgeti(state, -1, idx);
+
+            if (lua_istable(state, -1))
+            {
+                lua_pushliteral(state, "suggestion");
+                lua_rawget(state, -2);
+                const char* suggestion = optstring(state, -1, nullptr);
+                lua_pop(state, 1);
+
+                lua_pushliteral(state, "offset");
+                lua_rawget(state, -2);
+                const auto _offset = optinteger(state, -1, 0);
+                if (!_offset.isnum())
+                    return 0;
+                lua_pop(state, 1);
+
+                lua_pushliteral(state, "source");
+                lua_rawget(state, -2);
+                const char* source = optstring(state, -1, nullptr);
+                lua_pop(state, 1);
+
+                int32 offset = _offset - 1;
+                if (offset < 0 || offset > line_len)
+                    offset = line_len;
+                if (!source || !*source)
+                    source = "unknown";
+
+                suggestions.add(suggestion, offset, source);
+            }
+
+            lua_pop(state, 1);
+        }
+
+        lua_pop(state, 1);
+    }
+
+    set_suggestions(line, endword_offset, &suggestions);
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int32 is_suggestionlist_mode(lua_State* state)
+{
+    lua_pushboolean(state, is_suggestion_list_active(true/*even_if_hidden*/));
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -2328,6 +2391,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "history_suggester",      &history_suggester },
         { 0,    "set_suggestion_started", &set_suggestion_started },
         { 0,    "set_suggestion_result",  &set_suggestion_result },
+        { 0,    "_is_suggestionlist_mode", &is_suggestionlist_mode },
         { 0,    "kick_idle",              &kick_idle },
         { 0,    "_recognize_command",     &recognize_command },
         { 0,    "_async_path_type",       &async_path_type },

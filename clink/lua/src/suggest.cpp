@@ -37,14 +37,14 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-bool suggester::suggest(const line_states& lines, matches* matches, int32 generation_id)
+bool suggester::suggest(const line_states& lines, matches* matches, int32 matches_generation_id)
 {
     const line_state& line = lines.back();
 
     if (!line.get_length())
     {
 nosuggest:
-        set_suggestion("", 0, nullptr, 0);
+        set_suggestions("", 0, nullptr);
         return true;
     }
 
@@ -77,14 +77,14 @@ nosuggest:
         matches_lua.push(state);
 
         lua_pushnil(state);
-        lua_pushinteger(state, generation_id);
+        lua_pushinteger(state, matches_generation_id);
 
         if (m_lua.pcall(state, 5, 1) != 0)
             goto nosuggest;
     }
     else
     {
-        std::shared_ptr<match_builder_toolkit> toolkit = make_match_builder_toolkit(generation_id, line.get_end_word_offset());
+        std::shared_ptr<match_builder_toolkit> toolkit = make_match_builder_toolkit(matches_generation_id, line.get_end_word_offset());
 
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.
@@ -92,7 +92,7 @@ nosuggest:
         line_states_lua::make_new(state, lines);
         matches_lua::make_new(state, toolkit);
         match_builder_lua::make_new(state, toolkit);
-        lua_pushinteger(state, generation_id);
+        lua_pushinteger(state, matches_generation_id);
 
         if (m_lua.pcall(state, 5, 1) != 0)
             goto nosuggest;

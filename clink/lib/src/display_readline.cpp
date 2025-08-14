@@ -2278,7 +2278,7 @@ void display_manager::display()
     {
         if (old_botlin != _rl_vis_botlin)
             clear_suggestion_list = true;
-        coalesce.end(); // Important!  suggestionlist_impl uses m_printer directly.
+        coalesce.end(); // Because suggestionlist_impl uses m_printer directly.
         update_suggestion_list_display(clear_suggestion_list);
     }
 

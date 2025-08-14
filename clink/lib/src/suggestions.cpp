@@ -8,6 +8,7 @@
 #include "matches_impl.h"
 #include "suggestions.h"
 #include "suggestionlist_impl.h"
+#include "line_editor_integration.h"
 
 #include <core/base.h>
 #include <core/str_compare.h>
@@ -75,22 +76,23 @@ extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 
 //------------------------------------------------------------------------------
-suggestions::suggestions(const suggestions& other)
-{
-    *this = other;
-}
-
-//------------------------------------------------------------------------------
 suggestions& suggestions::operator = (const suggestions& other)
 {
     clear();
-
     m_line = other.m_line.c_str();
-    m_generation_id = other.m_generation_id;
-
     for (const auto& s : other.m_items)
         add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str());
+    m_generation_id = other.m_generation_id;
+    return *this;
+}
 
+//------------------------------------------------------------------------------
+suggestions& suggestions::operator = (suggestions&& other)
+{
+    m_line = std::move(other.m_line);
+    m_items = std::move(other.m_items);
+    m_generation_id = other.m_generation_id;
+    other.clear();
     return *this;
 }
 
@@ -139,6 +141,12 @@ void suggestions::add(const char* text, uint32 offset, const char* source)
     m_items.emplace_back(std::move(suggestion));
 }
 
+//------------------------------------------------------------------------------
+void suggestions::remove(uint32 index)
+{
+    m_items.erase(m_items.begin() + index);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -147,6 +155,7 @@ uint32 suggestion_manager::s_generation_id = 0;
 //------------------------------------------------------------------------------
 bool suggestion_manager::more() const
 {
+    assertimplies(m_iter.more(), m_suggestions.size() == 1);
     return m_iter.more();
 }
 
@@ -322,32 +331,63 @@ void suggestion_manager::set_started(const char* line)
 //------------------------------------------------------------------------------
 // TODO: mechanism for setting multiple suggestions.
 // TODO: kick suggestionlist_impl when new suggestions are available.
-void suggestion_manager::set(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset)
+void suggestion_manager::set(const char* line, uint32 endword_offset, suggestions* suggestions)
 {
-    assertimplies(suggestion && *suggestion && line != suggestion, g_autosuggest_enable.get());
+#ifdef DEBUG
+    if (suggestions && !suggestions->empty())
+    {
+        assertimplies(suggestions->size() > 1, g_autosuggest_enable.get());
+        assertimplies(suggestions->size() == 1 && !suggestions->get(0).m_suggestion.equals(line), g_autosuggest_enable.get());
+    }
+#endif
 
 #ifdef DEBUG
     if (dbg_get_env_int("CLINK_DEBUG_SUGGEST"))
     {
         static int32 s_suggnum = 0;
-        printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
-               ++s_suggnum, suggestion, offset, endword_offset);
+        if (!suggestions || suggestions->empty())
+            printf("\x1b[s\x1b[H#%u:  set suggestions:  none, endword ofs %d\x1b[K\x1b[u",
+                   ++s_suggnum, endword_offset);
+        else
+            printf("\x1b[s\x1b[H#%u:  set suggestions:  \"%s\"%s, offset %d, endword ofs %d\x1b[K\x1b[u",
+                   ++s_suggnum, suggestions->get(0).m_suggestion.c_str(),
+                   suggestions->size() > 1 ? " ..." : "",
+                   suggestions->get(0).m_suggestion_offset, endword_offset);
     }
 #endif
 
-    const ::suggestion empty_suggestion;
-    const ::suggestion& first_suggestion = m_suggestions.empty() ? empty_suggestion : m_suggestions[0];
-
-    if ((first_suggestion.m_suggestion.length() == 0) == (!suggestion || !*suggestion) &&
-        first_suggestion.m_suggestion_offset == offset &&
+    // Are the new suggestions different?
+    if (m_suggestions.size() == (suggestions ? suggestions->size() : 0) &&
         m_endword_offset == endword_offset &&
-        (!suggestion || first_suggestion.m_suggestion.equals(suggestion)) &&
         m_suggestions.get_line().equals(line))
     {
-        return;
+        bool same = true;
+        for (size_t ii = 0; same && ii < suggestions->size(); ++ii)
+        {
+            same = (m_suggestions[ii].m_suggestion.equals(suggestions->get(ii).m_suggestion.c_str()) &&
+                    m_suggestions[ii].m_suggestion_offset == suggestions->get(ii).m_suggestion_offset &&
+                    m_suggestions[ii].m_source.equals(suggestions->get(ii).m_source.c_str()));
+        }
+        if (same)
+            return;
     }
 
-    if (!suggestion || !*suggestion || !g_autosuggest_enable.get())
+    // Validate offsets.
+    if (suggestions && !suggestions->empty())
+    {
+        const uint32 line_len = uint32(strlen(line));
+        for (size_t ii = suggestions->size(); ii--;)
+        {
+            if (line_len < suggestions->get(ii).m_suggestion_offset)
+            {
+                assert(false);
+                suggestions->remove(ii);
+            }
+        }
+    }
+
+    // Are the new suggestions empty?
+    if (!suggestions || suggestions->empty() || !g_autosuggest_enable.get())
     {
 malformed:
         clear();
@@ -358,30 +398,29 @@ malformed:
         return;
     }
 
-    const uint32 line_len = uint32(strlen(line));
-    if (line_len < offset)
-    {
-        assert(false);
-        goto malformed;
-    }
-
     new_generation();
-    m_suggestions.clear(s_generation_id);
-// TODO: use the real source name.
-    m_suggestions.add(suggestion, offset, "*TBD*");
-    new (&m_iter) str_iter(suggestion);
-
-    // Do not allow relaxed comparison for suggestions, as it is too confusing,
-    // as a result of the logic to respect original case.
+    suggestions->m_generation_id = s_generation_id;
+    m_suggestions = std::move(*suggestions);
+    if (m_suggestions.size() != 1)
     {
-        int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
-        str_compare_scope compare(scope, g_fuzzy_accent.get());
+        new (&m_iter) str_iter(nullptr, 0);
+    }
+    else
+    {
+        new (&m_iter) str_iter(m_suggestions[0].m_suggestion);
 
-        str_iter orig(line + offset);
-        const int32 matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(orig, m_iter);
+        // Do not allow relaxed comparison for suggestions, as it is too
+        // confusing, as a result of the logic to respect original case.
+        {
+            int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
+            str_compare_scope compare(scope, g_fuzzy_accent.get());
 
-        if (orig.more())
-            goto malformed;
+            str_iter orig(line + m_suggestions[0].m_suggestion_offset);
+            const int32 matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(orig, m_iter);
+
+            if (orig.more())
+                goto malformed;
+        }
     }
 
     m_endword_offset = endword_offset;
@@ -425,6 +464,7 @@ static bool is_suggestion_word_break(int32 c)
 void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 {
     assert(g_autosuggest_enable.get());
+    assert(m_suggestions.size() == 1);
 
     const int32 consume = g_rl_buffer->get_cursor() - old_cursor;
     assert(consume >= 0);
@@ -448,7 +488,7 @@ bool suggestion_manager::insert(suggestion_action action)
     if (!g_autosuggest_enable.get())
         return false;
 
-    if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.empty())
+    if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.size() != 1)
         return false;
 
     if (!m_iter.more() || g_rl_buffer->get_cursor() != g_rl_buffer->get_length())

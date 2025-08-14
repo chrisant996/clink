@@ -20,32 +20,53 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Reset cancel flag.
     _cancel = nil
 
+    local limit = clink._is_suggestionlist_mode() and 30 or 1
+    local results = {}
+    local num = 0
+
     -- Protected call to suggesters.
     local impl = function(line, matches) -- luacheck: ignore 432
+        local ran = {}
         local suggestion, offset
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
-            local suggester = suggesters[name]
-            if suggester then
-                local func = suggester.suggest
-                if func then
-                    suggestion, offset = func(suggester, line, matches)
-                    if _cancel then
-                        return
-                    end
-                    if suggestion ~= nil then
--- TODO: in ListView mode, keep collecting suggestions until there are 30.
-                        return suggestion, offset
+            if not ran[name] then
+                ran[name] = true
+                local suggester = suggesters[name]
+                if suggester then
+                    local func = suggester.suggest
+                    if func then
+                        local s, o = func(suggester, line, matches, math.min(10, limit - num))
+                        if _cancel then
+                            return
+                        end
+                        if s ~= nil then
+                            if type(s) == "table" then
+                                for _, e in ipairs(s) do
+                                    table.insert(results, { suggestion=e.suggestion, offset=e.offset, source=name })
+                                    num = num + 1
+                                    if num >= limit then
+                                        return
+                                    end
+                                end
+                            else
+                                table.insert(results, { suggestion=s, offset=o, source=name })
+                                num = num + 1
+                                if num >= limit then
+                                    return
+                                end
+                            end
+                        end
                     end
                 end
-            end
-            if _cancel then
-                return
+                if _cancel then
+                    return
+                end
             end
         end
     end
 
-    local ok, ret, ret2 = xpcall(impl, _error_handler_ret, line, matches)
+    local ok, ret = xpcall(impl, _error_handler_ret, line, matches)
     if not ok then
         print("")
         print("suggester failed:")
@@ -57,10 +78,8 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
         return true
     end
 
--- TODO: pass a table as arg 3, with the table containing one subtable per
--- suggestion (suggestion, suggestion_offset, source).
     local info = line:getwordinfo(line:getwordcount())
-    clink.set_suggestion_result(line:getline(), info and info.offset or 1, ret, ret2)
+    clink.set_suggestion_result(line:getline(), info and info.offset or 1, results)
 end
 
 --------------------------------------------------------------------------------
@@ -239,14 +258,14 @@ end
 
 --------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
-function history_suggester:suggest(line, matches) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), false)
+function history_suggester:suggest(line, matches, limit) -- luacheck: no unused
+    return clink.history_suggester(line:getline(), limit, false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
-function prevcmd_suggester:suggest(line, matches) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), true)
+function prevcmd_suggester:suggest(line, matches, limit) -- luacheck: no unused
+    return clink.history_suggester(line:getline(), limit, true)
 end
 
 --------------------------------------------------------------------------------

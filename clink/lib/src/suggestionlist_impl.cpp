@@ -112,6 +112,7 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
 
     m_applied.clear();
 
+    clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
     init_suggestions();
 
     assert(!m_any_displayed);

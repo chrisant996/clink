@@ -65,8 +65,9 @@ bool has_deprecated_argmatcher(const char* name);
 
 //------------------------------------------------------------------------------
 bool host_can_suggest(const line_state& line);
-bool host_suggest(const line_states& lines, matches* matches, int32 generation_id);
+bool host_suggest(const line_states& lines, matches* matches, int32 matches_generation_id);
 extern "C" void enable_suggestion_list(int enable);
+bool is_suggestion_list_active(bool even_if_hidden);
 
 //------------------------------------------------------------------------------
 DWORD host_get_input_hint_timeout();

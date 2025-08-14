@@ -172,7 +172,7 @@ private:
     suggestionlist_impl m_listview;
     key_t               m_prev_key;
     uint8               m_flags = 0;
-    int32               m_generation_id = 0;
+    int32               m_matches_generation_id = 0;
     str<64>             m_needle;
 
     prev_buffer         m_prev_generate;

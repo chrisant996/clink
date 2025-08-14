@@ -366,12 +366,12 @@ bool host_can_suggest(const line_state& line)
 
 //------------------------------------------------------------------------------
 // WARNING:  This calls Lua using the MAIN coroutine.
-bool host_suggest(const line_states& lines, matches* matches, int32 generation_id)
+bool host_suggest(const line_states& lines, matches* matches, int32 matches_generation_id)
 {
     if (!s_callbacks)
         return false;
 
-    return s_callbacks->suggest(lines, matches, generation_id);
+    return s_callbacks->suggest(lines, matches, matches_generation_id);
 }
 
 

@@ -578,7 +578,7 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
 #endif
 
     // The generation matches, then use the newly generated matches.
-    if (matches && generation_id == m_generation_id)
+    if (matches && generation_id == m_matches_generation_id)
     {
         assert(&m_matches != matches);
         m_matches.transfer(static_cast<matches_impl&>(*matches));
@@ -1337,7 +1337,7 @@ void line_editor_impl::set_flag(uint8 flag)
     m_flags |= flag;
 
     if (flag & flag_generate)
-        m_generation_id = max<int32>(m_generation_id + 1, 1);
+        m_matches_generation_id = max<int32>(m_matches_generation_id + 1, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -1618,7 +1618,7 @@ void line_editor_impl::try_suggest()
             matches = &m_matches;
         }
 
-        host_suggest(lines, matches, m_generation_id);
+        host_suggest(lines, matches, m_matches_generation_id);
 
         delete empty_matches;
     }

@@ -1050,9 +1050,9 @@ void set_suggestion_started(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset)
+void set_suggestions(const char* line, uint32 endword_offset, suggestions* suggestions)
 {
-    s_suggestion.set(line, endword_offset, suggestion, offset);
+    s_suggestion.set(line, endword_offset, suggestions);
 }
 
 //------------------------------------------------------------------------------

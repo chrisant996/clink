@@ -108,6 +108,5 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool is_suggestion_list_active(bool even_if_hidden);
 void update_suggestion_list_display(bool clear=false);
 bool point_in_suggestion_list(int32 in);
