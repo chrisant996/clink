@@ -1933,7 +1933,6 @@ void display_manager::display()
         m_top = next->count() - 1 - input_botlin_offset;
 
     // Scroll when cursor is on a scroll marker.
-// TODO: update this per c_horz_scroll_indicator_chars...
     if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
     {
         const display_line* d = next->get(m_top);
