@@ -329,8 +329,6 @@ void suggestion_manager::set_started(const char* line)
 }
 
 //------------------------------------------------------------------------------
-// TODO: mechanism for setting multiple suggestions.
-// TODO: kick suggestionlist_impl when new suggestions are available.
 void suggestion_manager::set(const char* line, uint32 endword_offset, suggestions* suggestions)
 {
 #ifdef DEBUG

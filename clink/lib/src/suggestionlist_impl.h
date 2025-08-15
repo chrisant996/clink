@@ -30,6 +30,7 @@ public:
     void            clear_index();
     bool            is_active() const;
     bool            is_active_even_if_hidden() const;
+    bool            is_frozen() const;
     void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
 

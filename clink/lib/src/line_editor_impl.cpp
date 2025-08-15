@@ -1567,6 +1567,11 @@ void line_editor_impl::try_suggest()
     if (!g_autosuggest_enable.get())
         return;
 
+    // This prevents generating suggestions while navigating in the suggestion
+    // list (UP, DOWN, etc).
+    if (m_listview.is_frozen())
+        return;
+
     const line_states& lines = m_command_line_states.get_linestates(m_buffer);
     line_state line = lines.back();
     if (host_can_suggest(line))

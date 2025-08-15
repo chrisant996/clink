@@ -873,8 +873,6 @@ void suggestionlist_impl::apply_suggestion(int32 index)
         m_buffer->set_cursor(suggestion.m_suggestion_offset);
         m_buffer->insert(suggestion.m_suggestion.c_str());
         m_buffer->end_undo_group();
-// BUGBUG: this needs to prevent generating suggestions, just like the
-// clink-insert-suggestion command does.
 
         m_applied = m_buffer->get_fingerprint(false);
     }
@@ -935,6 +933,12 @@ bool suggestionlist_impl::is_active() const
 bool suggestionlist_impl::is_active_even_if_hidden() const
 {
     return m_prev_bind_group >= 0 && m_buffer && m_printer;
+}
+
+//------------------------------------------------------------------------------
+bool suggestionlist_impl::is_frozen() const
+{
+    return m_index >= 0 && m_buffer && m_buffer->get_fingerprint(false) == m_applied;
 }
 
 //------------------------------------------------------------------------------
