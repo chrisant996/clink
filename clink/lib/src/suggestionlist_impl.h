@@ -27,10 +27,10 @@ public:
     void            enable(bool enable);
     bool            toggle(editor_module::result& result);
     bool            point_within(int32 in) const;
-    void            clear_index();
+    void            clear_index(bool force=false);
     bool            is_active() const;
     bool            is_active_even_if_hidden() const;
-    bool            is_frozen() const;
+    bool            test_frozen();
     void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
 

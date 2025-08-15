@@ -1569,7 +1569,7 @@ void line_editor_impl::try_suggest()
 
     // This prevents generating suggestions while navigating in the suggestion
     // list (UP, DOWN, etc).
-    if (m_listview.is_frozen())
+    if (m_listview.test_frozen())
         return;
 
     const line_states& lines = m_command_line_states.get_linestates(m_buffer);

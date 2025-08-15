@@ -216,6 +216,9 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         m_hide_while_fingerprint = false;
     }
 
+    if (m_index >= 0 && !(m_buffer->get_fingerprint(false) == m_applied))
+        clear_index();
+
     enable_suggestion_list(1);
 
     if (is_active())
@@ -912,9 +915,9 @@ void suggestionlist_impl::reset_top()
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::clear_index()
+void suggestionlist_impl::clear_index(bool force)
 {
-    if (m_buffer->get_fingerprint(false) == m_applied)
+    if (force || m_buffer->get_fingerprint(false) == m_applied)
     {
         m_index = -1;
         m_applied.clear();
@@ -936,9 +939,14 @@ bool suggestionlist_impl::is_active_even_if_hidden() const
 }
 
 //------------------------------------------------------------------------------
-bool suggestionlist_impl::is_frozen() const
+bool suggestionlist_impl::test_frozen()
 {
-    return m_index >= 0 && m_buffer && m_buffer->get_fingerprint(false) == m_applied;
+    if (m_index < 0 || !m_buffer)
+        return false;
+    if (m_buffer->get_fingerprint(false) == m_applied)
+        return true;
+    clear_index(true/*force*/);
+    return false;
 }
 
 //------------------------------------------------------------------------------
