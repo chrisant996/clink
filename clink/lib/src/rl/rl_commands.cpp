@@ -1947,9 +1947,6 @@ ding:
     // previous command, otherwise it's often only possible to insert one
     // character before suggestions take over.
     suggestions suggestions;
-// TODO: source?
-// TODO: won't this make suggestionlist_impl try to show a list of suggestions?
-    suggestions.add(rl_line_buffer, 0, nullptr);
     set_suggestions(rl_line_buffer, 0, &suggestions);
 
     return 0;

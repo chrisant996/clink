@@ -30,10 +30,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Allow suggesters to provide a friendly name to show up in the `[Source]` column at the right side.
   - [x] BUG: `F2``g``DOWN` clears the list of matches.
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
-  - [ ] Problem in `win_f1()` (see TODO comments there).
-  - `<-/30>                      <History(3) Completion(27)>`
-  - `<2/30>                    <History(2/3) Completion(27)>`
-  - `<5/30>                    <History(3) Completion(2/27)>`
+  - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
+  - [ ] Truncate each suggestion entry to fit in one line.
+  - [ ] Show list of suggestion sources in top right:
+    - `<-/30>                      <History(3) Completion(27)>`
+    - `<2/30>                    <History(2/3) Completion(27)>`
+    - `<5/30>                    <History(3) Completion(2/27)>`
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority
