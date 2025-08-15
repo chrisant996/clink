@@ -31,6 +31,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] BUG: `F2``g``DOWN` clears the list of matches.
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
+  - [ ] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
+  - [ ] Remove duplicates from suggestions.
   - [ ] Truncate each suggestion entry to fit in one line.
   - [ ] Show list of suggestion sources in top right:
     - `<-/30>                      <History(3) Completion(27)>`
