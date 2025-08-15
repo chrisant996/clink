@@ -32,8 +32,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
   - [ ] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
+  - [ ] BUG: sometimes UP/DOWN glitches and suggestions get re-generated; maybe it happens when the prompt gets refiltered?
   - [ ] Remove duplicates from suggestions.
-  - [ ] Truncate each suggestion entry to fit in one line.
+  - [x] Truncate each suggestion entry to fit in one line.
+  - [ ] Some way for suggesters to indicate what substring to highlight in the suggestion list.
   - [ ] Show list of suggestion sources in top right:
     - `<-/30>                      <History(3) Completion(27)>`
     - `<2/30>                    <History(2/3) Completion(27)>`
