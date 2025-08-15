@@ -62,7 +62,7 @@ private:
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
     suggestions     m_suggestions;
-    int32           m_count;
+    int32           m_count = 0;
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;

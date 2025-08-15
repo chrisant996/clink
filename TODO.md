@@ -25,6 +25,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] PGUP/PGDN = handled by Readline when index is not in the suggestion list.
   - [ ] PGUP/PGDN = page up/down when index is in the suggestion list.
   - [ ] Problem in `win_f1()` (see TODO comments there).
+  - [ ] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] Ctrl-Z = revert to original line, but don't dismiss the ListView.
   - [x] Allow suggesters to return a table.
     - [x] Limit the number of accepted entries, to encourage writing efficient suggesters?  Powershell appears to limit the total number of predictions to 30 items.
