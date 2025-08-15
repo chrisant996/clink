@@ -392,7 +392,11 @@ malformed:
         m_suggestions.set_line(line);
         m_started = line;
         if (g_rl_buffer)
+        {
+            if (is_suggestion_list_active(true/*even_if_hidden*/))
+                g_rl_buffer->set_need_draw();
             g_rl_buffer->draw();
+        }
         return;
     }
 
