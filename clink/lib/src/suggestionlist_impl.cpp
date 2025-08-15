@@ -26,6 +26,7 @@
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>
+#include <terminal/wcwidth.h>
 
 extern "C" {
 #include <compat/config.h>
@@ -833,19 +834,42 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
 void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
     const auto& s = m_suggestions[index];
+    int32 match_offset = max<int32>(0, min<int32>(s.m_suggestion_offset, m_suggestions.get_line().length()));
+
+
+    // FUTURE:  There's currently no way to highlight what matched, because
+    // suggesters can do whatever they want, and don't say what they matched.
 
     str<128> tmp;
-    tmp.concat(m_suggestions.get_line().c_str(), s.m_suggestion_offset);
-    tmp.concat(m_suggestions[index].m_suggestion.c_str());
+    tmp.concat(m_suggestions.get_line().c_str(), match_offset);
 
-// TODO: find match in the suggestion.
-// TODO: highlight the match, ellipsify, and expand ctrl chars.
-// TODO: calc how much text before/after the match can be added.
-// TODO: prepend/append the extra text, with ellipsis and expanding ctrl chars.
-
-    // Rely on ellipsify_ex both for truncation and also for expanding control
-    // characters.
-    const int32 cells = ellipsify_ex(tmp.c_str(), width, ellipsify_mode::RIGHT, out, nullptr, true/*expand_ctrl*/);
+    // Show as much of the suggestion as possible, with at least 1/8 of the
+    // available width as chars of context to the left of the start of the
+    // suggestion.  This relies on ellipsify_ex both for truncation and also
+    // for expanding control characters.
+    uint32 pre_cells = clink_wcswidth_expandctrl(m_suggestions.get_line().c_str(), match_offset);
+    const uint32 suggestion_cells = clink_wcswidth_expandctrl(s.m_suggestion.c_str(), s.m_suggestion.length());
+    int32 cells = 0;
+    if (pre_cells + suggestion_cells <= width - 1)
+    {
+        tmp.concat(s.m_suggestion.c_str());
+        cells = ellipsify_ex(tmp.c_str(), width - 1, ellipsify_mode::RIGHT, out, nullptr, true/*expand_ctrl*/);
+    }
+    else
+    {
+        str<128> tmp2;
+        if (int32(width) - int32(suggestion_cells + 1) > int32(width) / 8)
+            pre_cells = width - (suggestion_cells + 1);
+        else
+            pre_cells = width / 8;
+        const int32 pre_width = ellipsify_ex(tmp.c_str(), pre_cells, ellipsify_mode::LEFT, tmp2, nullptr, true/*expand_ctrl*/);
+        const int32 post_width = ellipsify_ex(s.m_suggestion.c_str(), width - 1 - pre_width, ellipsify_mode::RIGHT, tmp, nullptr, true/*expand_ctrl*/);
+        out.clear();
+        out.concat(tmp2.c_str());
+        out.concat(tmp.c_str());
+        cells = pre_width + post_width;
+        assert(cells <= width);
+    }
 
     // Pad with spaces to the specified width.
     if (cells < width)

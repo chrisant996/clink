@@ -32,6 +32,27 @@ extern "C" uint32 cell_count(const char* in)
 }
 
 //------------------------------------------------------------------------------
+uint32 cell_count(const char* in, int32 len, int32* end_offset)
+{
+    uint32 count = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(in, state, len);
+    while (const ecma48_code& code = iter.next())
+    {
+        if (code.get_type() != ecma48_code::type_chars)
+            continue;
+
+        count += clink_wcswidth(code.get_pointer(), code.get_length());
+    }
+
+    if (end_offset)
+        *end_offset = int32(iter.get_pointer() - in);
+
+    return count;
+}
+
+//------------------------------------------------------------------------------
 static bool in_range(int32 value, int32 left, int32 right)
 {
     return (unsigned(right - value) <= unsigned(right - left));

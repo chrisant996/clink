@@ -10,6 +10,7 @@ enum class ecma48_processor_flags { none = 0, bracket = 1<<0, apply_title = 1<<1
 DEFINE_ENUM_FLAG_OPERATORS(ecma48_processor_flags);
 void ecma48_processor(const char* in, str_base* out, uint32* cell_count, ecma48_processor_flags flags=ecma48_processor_flags::none);
 extern "C" uint32 cell_count(const char*);
+uint32 cell_count(const char*, int32 len, int32* end_offset=nullptr);
 
 //------------------------------------------------------------------------------
 enum ecma48_state_enum
