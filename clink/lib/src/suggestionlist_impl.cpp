@@ -40,6 +40,16 @@ extern int _rl_last_v_pos;
 
 
 //------------------------------------------------------------------------------
+static setting_bool s_suggestionlist_default(
+    "suggestionlist.default",
+    "Start with the suggestion list enabled",
+    "TBD",
+    false);
+
+
+
+
+//------------------------------------------------------------------------------
 enum {
     bind_id_suggestionlist_up = 60,
     bind_id_suggestionlist_down,
@@ -50,66 +60,56 @@ enum {
     bind_id_suggestionlist_wheelup,
     bind_id_suggestionlist_wheeldown,
     bind_id_suggestionlist_drag,
-    bind_id_suggestionlist_enter,
     bind_id_suggestionlist_escape,
 
     bind_id_suggestionlist_catchall,
 };
 
 const int32 c_max_suggestion_rows = 10;
-const int32 c_max_listview_width = 100;
+const int32 c_max_suggestionlist_width = 100;
 
 
 
 //------------------------------------------------------------------------------
-static bool s_enable_suggestion_list = false;
+static bool s_suggestion_list_allowed = false;
+static bool s_suggestion_list_default = false;
+static bool s_suggestion_list_enabled = false;
 static suggestionlist_impl* s_suggestionlist = nullptr;
 
 //------------------------------------------------------------------------------
 suggestionlist_impl::suggestionlist_impl(input_dispatcher& dispatcher)
     : m_dispatcher(dispatcher)
 {
+    if (s_suggestion_list_default != s_suggestionlist_default.get())
+    {
+        // If the setting's value changed since last we saw it, then update
+        // the enabled status so the setting change takes effect immediately.
+        s_suggestion_list_default = s_suggestionlist_default.get();
+        s_suggestion_list_enabled = s_suggestion_list_default;
+    }
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::enable(bool enable)
+void suggestionlist_impl::allow(bool allow)
 {
     const bool was_active = is_active();
 
-    m_hide = !enable;
-    if (enable)
+    m_hide = !allow;
+    if (allow)
         m_hide_while_fingerprint = false;
 
     if (was_active != is_active())
     {
-        if (enable)
+        if (allow)
             update_layout();
         update_display();
     }
 }
 
 //------------------------------------------------------------------------------
-bool suggestionlist_impl::toggle(editor_module::result& result)
+void suggestionlist_impl::enable(editor_module::result& result)
 {
-    assert(m_buffer);
-    if (!m_buffer)
-        return false;
-
-    if (is_active())
-    {
-        cancel(result);
-        return true;
-    }
-
-#if 0
-    if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
-    {
-#ifdef DEBUG
-        rollback<int32> rb(m_prev_bind_group, 999999); // Dummy to make assertion happy in insert_needle().
-#endif
-        insert_needle();
-    }
-#endif
+    s_suggestion_list_enabled = true;
 
     m_applied.clear();
 
@@ -134,7 +134,19 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
     // Update the display.
     reset_top();
     update_display();
+}
 
+//------------------------------------------------------------------------------
+bool suggestionlist_impl::toggle(editor_module::result& result)
+{
+    assert(m_buffer);
+    if (!m_buffer)
+        return false;
+
+    if (is_active())
+        cancel(result);
+    else
+        enable(result);
     return true;
 }
 
@@ -160,7 +172,6 @@ void suggestionlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*A", bind_id_suggestionlist_wheelup, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*B", bind_id_suggestionlist_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_suggestionlist_drag, true/*has_params*/);
-    binder.bind(m_bind_group, "\\r", bind_id_suggestionlist_enter);
 
     binder.bind(m_bind_group, "^g", bind_id_suggestionlist_escape);
     if (esc)
@@ -179,6 +190,7 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_clear_display = false;
     m_hide_while_fingerprint = false;
     m_hide_fingerprint.clear();
+    m_applied.clear();
     m_scroll_helper.clear();
 
     m_normal_color[0] = "\x1b[m";
@@ -202,6 +214,7 @@ void suggestionlist_impl::on_end_line()
     m_clear_display = false;
     m_hide_while_fingerprint = false;
     m_hide_fingerprint.clear();
+    m_applied.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -220,7 +233,38 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
     if (m_index >= 0 && !(m_buffer->get_fingerprint(false) == m_applied))
         clear_index();
 
-    enable_suggestion_list(1);
+    allow_suggestion_list(1);
+
+    if (m_first_input)
+    {
+        // At the beginning of a new input line, maybe automatically enable
+        // the suggestion list.  This applies the suggestionlist.default
+        // setting, as well as carrying over the suggestion list mode from
+        // the previous input line.
+        m_first_input = false;
+        assert(m_buffer);
+        assert(m_printer);
+        assert(m_bind_group >= 0);
+        if (s_suggestion_list_enabled && m_prev_bind_group < 0 &&
+            bind_group >= 0 && bind_group != m_bind_group)
+        {
+            class result_shim : public editor_module::result
+            {
+            public:
+                                result_shim(int32& bind_group) : m_bind_group(bind_group) {}
+                virtual void    pass() override { assert(false); }
+                virtual void    loop() override { assert(false); }
+                virtual void    done(bool eof) override { assert(false); }
+                virtual void    redraw() override { assert(false); }
+                virtual int32   set_bind_group(int32 id) override { int32 t = m_bind_group; m_bind_group = id; return t; }
+            private:
+                int32&          m_bind_group;
+            };
+
+            result_shim result(bind_group);
+            enable(result);
+        }
+    }
 
     if (is_active())
         bind_group = m_bind_group;
@@ -481,19 +525,10 @@ do_mouse_position:
         break;
 #endif
 
-    case bind_id_suggestionlist_enter:
-        if (m_index < 0)
-            goto catchall;
-        apply_suggestion(m_index);
-        m_applied.clear();
-        cancel(result);
-        result.pass();
-        break;
-
     case bind_id_suggestionlist_escape:
         // Hide suggestion list until the input line is changed by something
         // other than the suggestion list.
-        enable_suggestion_list(0);
+        allow_suggestion_list(0);
         result.set_bind_group(m_prev_bind_group);
         m_hide_while_fingerprint = true;
         m_hide_fingerprint = m_buffer->get_fingerprint(false);
@@ -565,6 +600,7 @@ void suggestionlist_impl::cancel(editor_module::result& result)
     update_display();
 
     g_display_manager_no_comment_row = false;
+    s_suggestion_list_enabled = false;
 }
 
 //------------------------------------------------------------------------------
@@ -615,7 +651,7 @@ void suggestionlist_impl::update_layout()
 #else
     const int32 reserve_cols = 1;
 #endif
-    m_max_width = min<>(m_screen_cols - reserve_cols, c_max_listview_width);
+    m_max_width = min<>(m_screen_cols - reserve_cols, c_max_suggestionlist_width);
 }
 
 //------------------------------------------------------------------------------
@@ -1020,15 +1056,15 @@ bool toggle_suggestion_list(editor_module::result& result)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void enable_suggestion_list(int enable)
+extern "C" void allow_suggestion_list(int allow)
 {
-    if (s_enable_suggestion_list == !!enable)
+    if (s_suggestion_list_allowed == !!allow)
         return;
 
-    s_enable_suggestion_list = !!enable;
+    s_suggestion_list_allowed = !!allow;
 
-    if (s_suggestionlist && !!enable != s_suggestionlist->is_active())
-        s_suggestionlist->enable(enable);
+    if (s_suggestionlist && !!allow != s_suggestionlist->is_active())
+        s_suggestionlist->allow(allow);
 }
 
 //------------------------------------------------------------------------------

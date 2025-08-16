@@ -206,7 +206,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (!m_buffer)
         return false;
 
-    enable_suggestion_list(0);
+    allow_suggestion_list(0);
 
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {

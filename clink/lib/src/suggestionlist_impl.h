@@ -24,7 +24,7 @@ class suggestionlist_impl
 public:
                     suggestionlist_impl(input_dispatcher& dispatcher);
 
-    void            enable(bool enable);
+    void            allow(bool allow);
     bool            toggle(editor_module::result& result);
     bool            point_within(int32 in) const;
     void            clear_index(bool force=false);
@@ -47,6 +47,7 @@ private:
 
     // Internal methods.
     void            cancel(editor_module::result& result);
+    void            enable(editor_module::result& result);
     void            init_suggestions();
     void            update_layout();
     void            update_top();
@@ -66,6 +67,7 @@ private:
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
+    bool            m_first_input = true;
     bool            m_hide = false;
     bool            m_hide_while_fingerprint = false;
     line_buffer_fingerprint m_hide_fingerprint;

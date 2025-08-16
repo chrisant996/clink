@@ -27,7 +27,7 @@ static wchar_t  fwrite_buf[2048];
 void            (*rl_fwrite_function)(FILE*, const char*, int)  = NULL;
 void            (*rl_fflush_function)(FILE*)                    = NULL;
 extern int is_exec_ext(const char* ext);
-extern void enable_suggestion_list(int enable);
+extern void allow_suggestion_list(int enable);
 extern void clear_suggestion();
 extern void end_recognizer();
 extern void end_task_manager();
@@ -294,7 +294,7 @@ void end_prompt(int crlf)
 {
     extern void end_prompt_lf();
 
-    enable_suggestion_list(0);
+    allow_suggestion_list(0);
     clear_suggestion();
 
     if (crlf < 0)

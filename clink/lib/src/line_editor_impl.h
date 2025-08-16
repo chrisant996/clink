@@ -169,7 +169,7 @@ private:
     pager_impl          m_pager;
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;
-    suggestionlist_impl m_listview;
+    suggestionlist_impl m_suggestionlist;
     key_t               m_prev_key;
     uint8               m_flags = 0;
     int32               m_matches_generation_id = 0;

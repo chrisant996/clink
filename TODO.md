@@ -31,7 +31,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] BUG: `F2``g``DOWN` clears the list of matches.
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
-  - [ ] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
+  - [x] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
   - [ ] BUG: sometimes UP/DOWN glitches and suggestions get re-generated; maybe it happens when the prompt gets refiltered?
   - [ ] Remove duplicates from suggestions.
   - [x] Truncate each suggestion entry to fit in one line.
@@ -40,6 +40,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - `<-/30>                      <History(3) Completion(27)>`
     - `<2/30>                    <History(2/3) Completion(27)>`
     - `<5/30>                    <History(3) Completion(2/27)>`
+  - [ ] Command description for `clink-toggle-suggestion-list`.
+  - [ ] Documentation for `clink-toggle-suggestion-list`.
+  - [ ] Documentation for `suggestionlist.default` setting.
+  - [ ] Update documentation about suggestions and completion.
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority

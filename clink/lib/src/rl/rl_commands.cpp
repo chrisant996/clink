@@ -1252,7 +1252,7 @@ ding:
 
 
 //------------------------------------------------------------------------------
-int32 clink_toggle_listview(int32 count, int32 invoking_key)
+int32 clink_toggle_suggestion_list(int32 count, int32 invoking_key)
 {
     if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
     {

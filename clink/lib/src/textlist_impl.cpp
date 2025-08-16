@@ -509,7 +509,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 popup_results textlist_impl::activate(const char* title, const char** entries, int32 count, int32 index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
 {
-    enable_suggestion_list(0);
+    allow_suggestion_list(0);
 
     if (s_standalone_input)
         s_standalone_input->on_resize();

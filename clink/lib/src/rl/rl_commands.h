@@ -78,7 +78,7 @@ bool    point_in_select_complete(int32 in);
 int32   clink_select_complete(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
-int32   clink_toggle_listview(int32 count, int32 invoking_key);
+int32   clink_toggle_suggestion_list(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 bool    cua_clear_selection();

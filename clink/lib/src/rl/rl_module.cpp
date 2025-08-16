@@ -2102,7 +2102,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\eOP",          "win-cursor-forward" },      // F1
         //{ "\\eOQ",          "win-copy-up-to-char" },     // F2
-        { "\\eOQ",          "clink-toggle-listview" },   // F2
+        { "\\eOQ",          "clink-toggle-suggestion-list" }, // F2
         { "\\eOR",          "win-copy-up-to-end" },      // F3
         { "\\eOS",          "win-delete-up-to-char" },   // F4
         { "\\e[15~",        "previous-history" },        // F5
