@@ -201,6 +201,7 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_highlight_color[1] = "\x1b[0;100;1m";
     m_markup_color[0] = "\x1b[0;33m";
     m_markup_color[1] = "\x1b[0;100;33m";
+    m_dim_color = "\x1b[0;90m";
 
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
@@ -855,7 +856,8 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
     str<128> tmp2;
     ellipsify(tmp.c_str(), max_width, tmp2, true/*expand_ctrl*/);
 
-    out.format("%s<%s%s%s%s%s>", ital, m_markup_color[0].c_str(), ital, tmp2.c_str(), m_normal_color[0].c_str(), ital);
+    // out.format("%s%s<%s%s%s%s%s>", m_dim_color.c_str(), ital, m_markup_color[0].c_str(), ital, tmp2.c_str(), m_dim_color.c_str(), ital);
+    out.format("%s%s<%s%s%s>", m_dim_color.c_str(), ital, tmp2.c_str(), m_dim_color.c_str(), ital);
 }
 
 //------------------------------------------------------------------------------

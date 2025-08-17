@@ -76,6 +76,7 @@ private:
     str<16>         m_normal_color[2];      // 0=normal, 1=selected
     str<16>         m_highlight_color[2];   // 0=normal, 1=selected
     str<16>         m_markup_color[2];      // 0=normal, 1=selected
+    str<16>         m_dim_color;
 
     // Layout.
     int32           m_screen_cols = 0;
