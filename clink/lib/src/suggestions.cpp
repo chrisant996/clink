@@ -355,18 +355,19 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, suggestion
 #endif
 
     // Are the new suggestions different?
-    if (!m_suggestions.size() && (!suggestions || !suggestions->size()))
-        return;
-    if (m_suggestions.size() == suggestions->size() &&
+    if (m_suggestions.size() == (suggestions ? suggestions->size() : 0) &&
         m_endword_offset == endword_offset &&
         m_suggestions.get_line().equals(line))
     {
         bool same = true;
-        for (size_t ii = 0; same && ii < suggestions->size(); ++ii)
+        if (suggestions)
         {
-            same = (m_suggestions[ii].m_suggestion.equals(suggestions->get(ii).m_suggestion.c_str()) &&
-                    m_suggestions[ii].m_suggestion_offset == suggestions->get(ii).m_suggestion_offset &&
-                    m_suggestions[ii].m_source.equals(suggestions->get(ii).m_source.c_str()));
+            for (size_t ii = 0; same && ii < suggestions->size(); ++ii)
+            {
+                same = (m_suggestions[ii].m_suggestion.equals(suggestions->get(ii).m_suggestion.c_str()) &&
+                        m_suggestions[ii].m_suggestion_offset == suggestions->get(ii).m_suggestion_offset &&
+                        m_suggestions[ii].m_source.equals(suggestions->get(ii).m_source.c_str()));
+            }
         }
         if (same)
             return;
