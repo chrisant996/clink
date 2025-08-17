@@ -42,16 +42,18 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                         end
                         if s ~= nil then
                             if type(s) ~= "table" then
-                                s = { { suggestion=s, offset=o } }
+                                s = { { s, o } }
                             end
                             if type(s) == "table" then
                                 for _, e in ipairs(s) do
-                                    if e.suggestion then
+                                    local es = e[1] or e.suggestion or nil
+                                    local eo = e[2] or e.offset or nil
+                                    if es then
                                         -- Don't add duplicates.
-                                        local full = line:getline():sub(1, (e.offset or 0) - 1)..e.suggestion
+                                        local full = line:getline():sub(1, (eo or 0) - 1)..es
                                         if not dupes[full] then
                                             dupes[full] = true
-                                            table.insert(results, { suggestion=e.suggestion, offset=e.offset, source=name })
+                                            table.insert(results, { es, eo, source=name })
                                             num = num + 1
                                             if num >= limit then
                                                 return

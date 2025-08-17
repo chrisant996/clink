@@ -1428,13 +1428,11 @@ static int32 history_suggester(lua_State* state)
         // Suggest this history entry.
         lua_createtable(state, 0, 2);
 
-        lua_pushliteral(state, "suggestion");
         lua_pushstring(state, history[i]->line);
-        lua_rawset(state, -3);
+        lua_rawseti(state, -2, 1);
 
-        lua_pushliteral(state, "offset");
         lua_pushinteger(state, 1);
-        lua_rawset(state, -3);
+        lua_rawseti(state, -2, 2);
 
         lua_rawseti(state, -2, ++n);
         if (n >= limit)
@@ -1487,13 +1485,11 @@ static int32 set_suggestion_result(lua_State* state)
 
             if (lua_istable(state, -1))
             {
-                lua_pushliteral(state, "suggestion");
-                lua_rawget(state, -2);
+                lua_rawgeti(state, -1, 1);
                 const char* suggestion = optstring(state, -1, nullptr);
                 lua_pop(state, 1);
 
-                lua_pushliteral(state, "offset");
-                lua_rawget(state, -2);
+                lua_rawgeti(state, -1, 2);
                 const auto _offset = optinteger(state, -1, 0);
                 if (!_offset.isnum())
                     return 0;
