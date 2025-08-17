@@ -27,6 +27,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Protected call to suggesters.
     local impl = function(line, matches) -- luacheck: ignore 432
         local ran = {}
+        local dupes = {}
         local suggestion, offset
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
@@ -41,19 +42,21 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                             return
                         end
                         if s ~= nil then
+                            if type(s) ~= "table" then
+                                s = { suggestion=s, offset=o, source=name }
+                            end
                             if type(s) == "table" then
                                 for _, e in ipairs(s) do
-                                    table.insert(results, { suggestion=e.suggestion, offset=e.offset, source=name })
-                                    num = num + 1
-                                    if num >= limit then
-                                        return
+                                    -- Don't add duplicates.
+                                    local full = line:getline():sub(1, (e.offset or 0) - 1)..e.suggestion
+                                    if not dupes[full] then
+                                        dupes[full] = true
+                                        table.insert(results, { suggestion=e.suggestion, offset=e.offset, source=name })
+                                        num = num + 1
+                                        if num >= limit then
+                                            return
+                                        end
                                     end
-                                end
-                            else
-                                table.insert(results, { suggestion=s, offset=o, source=name })
-                                num = num + 1
-                                if num >= limit then
-                                    return
                                 end
                             end
                         end
