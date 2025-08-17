@@ -28,7 +28,6 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     local impl = function(line, matches) -- luacheck: ignore 432
         local ran = {}
         local dupes = {}
-        local suggestion, offset
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
             if not ran[name] then
