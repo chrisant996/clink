@@ -1148,9 +1148,12 @@ bool pause_suggestions(bool pause)
 //------------------------------------------------------------------------------
 extern "C" void clear_suggestion()
 {
-    s_suggestion.clear();
-    if (g_rl_buffer)
-        g_rl_buffer->draw();
+    if (!test_suggestion_list_frozen())
+    {
+        s_suggestion.clear();
+        if (g_rl_buffer)
+            g_rl_buffer->draw();
+    }
 }
 
 //------------------------------------------------------------------------------

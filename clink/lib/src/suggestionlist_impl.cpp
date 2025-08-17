@@ -1088,6 +1088,15 @@ bool is_suggestion_list_active(bool even_if_hidden)
 }
 
 //------------------------------------------------------------------------------
+bool test_suggestion_list_frozen()
+{
+    if (!s_suggestionlist)
+        return false;
+
+    return s_suggestionlist->test_frozen();
+}
+
+//------------------------------------------------------------------------------
 void update_suggestion_list_display(bool clear)
 {
     if (!s_suggestionlist)
