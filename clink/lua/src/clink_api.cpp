@@ -1374,8 +1374,9 @@ static int32 is_transient_prompt_filter(lua_State* state)
 static int32 history_suggester(lua_State* state)
 {
     const char* line = checkstring(state, 1);
-    const int32 limit = checkinteger(state, 2);
-    const int32 match_prev_cmd = lua_toboolean(state, 3);
+    const bool firstword = lua_toboolean(state, 2);
+    int32 limit = checkinteger(state, 3);
+    const int32 match_prev_cmd = lua_toboolean(state, 4);
     if (!line || limit <= 0)
         return 0;
 
@@ -1387,6 +1388,9 @@ static int32 history_suggester(lua_State* state)
     if (match_prev_cmd && g_dupe_mode.get() != 0)
         return 0;
 
+    if (match_prev_cmd || !firstword)
+        limit = min(limit, 3);
+
     int32 scanned = 0;
     const DWORD tick = GetTickCount();
 
@@ -1394,7 +1398,7 @@ static int32 history_suggester(lua_State* state)
     const DWORD ms_max = 50;
 
     int32 n = 0;
-    lua_createtable(state, 30, 0);
+    lua_createtable(state, limit, 0);
 
     const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
     for (int32 i = history_length; --i >= 0;)

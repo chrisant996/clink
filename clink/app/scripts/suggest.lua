@@ -263,22 +263,31 @@ local function suffix(line, suggestion, minlen) -- luacheck: no unused
 end
 
 --------------------------------------------------------------------------------
+local function is_first_word(line)
+    return line:getwordcount() <= 1 or line:getword(2) == ""
+end
+
+--------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
 function history_suggester:suggest(line, matches, limit) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), limit, false)
+    return clink.history_suggester(line:getline(), is_first_word(line), limit, false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
 function prevcmd_suggester:suggest(line, matches, limit) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), limit, true)
+    return clink.history_suggester(line:getline(), is_first_word(line), limit, true)
 end
 
 --------------------------------------------------------------------------------
 local completion_suggester = clink.suggester("completion")
-function completion_suggester:suggest(line, matches) -- luacheck: no unused
+function completion_suggester:suggest(line, matches, limit) -- luacheck: no unused
+    local results = {}
     local count = line:getwordcount()
     if count > 0 then
+        if count == 1 then
+            limit = 1
+        end
         local info = line:getwordinfo(count)
         if info.offset < line:getcursor() then
             local typed = line:getline():sub(info.offset, line:getcursor())
@@ -287,9 +296,14 @@ function completion_suggester:suggest(line, matches) -- luacheck: no unused
                 if not m then
                     break
                 elseif m ~= typed and (info.quoted or not rl.needquotes(m)) then
-                    return m, info.offset
+                    table.insert(results, { m, info.offset })
+                    limit = limit - 1
+                    if limit <= 0 then
+                        break
+                    end
                 end
             end
         end
     end
+    return results
 end
