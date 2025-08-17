@@ -355,7 +355,9 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, suggestion
 #endif
 
     // Are the new suggestions different?
-    if (m_suggestions.size() == (suggestions ? suggestions->size() : 0) &&
+    if (!m_suggestions.size() && (!suggestions || !suggestions->size()))
+        return;
+    if (m_suggestions.size() == suggestions->size() &&
         m_endword_offset == endword_offset &&
         m_suggestions.get_line().equals(line))
     {
