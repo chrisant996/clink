@@ -68,6 +68,7 @@ enum {
 
 const int32 c_max_suggestion_rows = 10;
 const int32 c_max_suggestionlist_width = 100;
+const char ital[] = "\x1b[3m";
 
 
 
@@ -714,7 +715,7 @@ void suggestionlist_impl::update_display()
             num = "-";
         else
             num.format("%u", m_index + 1);
-        left.format("%s<%s/%u>%s", m_markup_color[0].c_str(), num.c_str(), m_count, m_normal_color[0].c_str());
+        left.format("%s%s<%s/%u>%s", m_markup_color[0].c_str(), ital, num.c_str(), m_count, m_normal_color[0].c_str());
         const int32 left_header_cells = cell_count(left.c_str());
         if (m_max_width > left_header_cells + 2) // At least 2 spaces after.
             make_sources_header(right, m_max_width - (left_header_cells + 2));
@@ -854,7 +855,7 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
     str<128> tmp2;
     ellipsify(tmp.c_str(), max_width, tmp2, true/*expand_ctrl*/);
 
-    out.format("<%s%s%s>", m_markup_color[0].c_str(), tmp2.c_str(), m_normal_color[0].c_str());
+    out.format("%s<%s%s%s%s%s>", ital, m_markup_color[0].c_str(), ital, tmp2.c_str(), m_normal_color[0].c_str(), ital);
 }
 
 //------------------------------------------------------------------------------
