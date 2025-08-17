@@ -23,7 +23,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] ESC = dismiss ListView mode until further text is input (ESC enables using other keys like UP/DOWN to use their normal key bindings instead of the ListView behaviors).
   - [x] UP/DOWN = navigate through available ListView items.
   - [x] PGUP/PGDN = handled by Readline when index is not in the suggestion list.
-  - [ ] PGUP/PGDN = page up/down when index is in the suggestion list.
+  - [x] PGUP/PGDN = page up/down when index is in the suggestion list.
   - [x] Ctrl-Z = revert to original line, but don't dismiss the ListView.
   - [x] Allow suggesters to return a table.
     - [x] Limit the number of accepted entries, to encourage writing efficient suggesters?  Powershell appears to limit the total number of predictions to 30 items.
@@ -32,8 +32,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
   - [x] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
-  - [ ] BUG: sometimes UP/DOWN glitches and suggestions get re-generated; maybe it happens when the prompt gets refiltered?
-  - [ ] Remove duplicates from suggestions.
+  - [x] BUG: sometimes UP/DOWN glitches and suggestions get re-generated; maybe it happens when the prompt gets refiltered?
+  - [x] Remove duplicates from suggestions.
   - [x] Truncate each suggestion entry to fit in one line.
   - [ ] Some way for suggesters to indicate what substring to highlight in the suggestion list.
   - [ ] Show list of suggestion sources in top right:
