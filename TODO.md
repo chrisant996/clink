@@ -32,8 +32,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
   - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
   - [x] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
-  - [x] BUG: refilter prompt while UP/DOWN in suggestion list glitches re-generates new suggestions based on the selected suggestion.
-  - [ ] BUG: refilter prompt while UP/DOWN through history (with suggestion list OFF) glitches and suggestions get re-generated based on the input line (**pre-existing issue**).
+  - [x] BUG: delayinit argmatcher while UP/DOWN in suggestion list glitches and re-generates new suggestions based on the selected suggestion.
+  - [ ] BUG: delayinit argmatcher while UP/DOWN through history (with suggestion list OFF) glitches and suggestions get re-generated based on the input line (**pre-existing issue** i.e. it also affects inline suggestions).
   - [x] Remove duplicates from suggestions.
   - [x] Truncate each suggestion entry to fit in one line.
   - [ ] Some way for suggesters to indicate what substring to highlight in the suggestion list.
