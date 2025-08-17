@@ -100,6 +100,7 @@ private:
     int32           m_prev_displayed = -1;
 
     // Current input.
+    bool            m_ignore_scroll_offset = false;
     scroll_helper   m_scroll_helper;
 #ifdef SHOW_VERT_SCROLLBARS
     bool            m_scroll_bar_clicked = false;

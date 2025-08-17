@@ -46,6 +46,7 @@ static setting_bool s_suggestionlist_default(
     "TBD",
     false);
 
+extern setting_int g_clink_scroll_offset;
 
 
 
@@ -215,6 +216,7 @@ void suggestionlist_impl::on_end_line()
     m_hide_while_fingerprint = false;
     m_hide_fingerprint.clear();
     m_applied.clear();
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------
@@ -280,6 +282,8 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
     if (m_visible_rows <= 0)
         goto catchall;
 
+    m_ignore_scroll_offset = false;
+
     bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
     {
@@ -312,66 +316,36 @@ navigated:
         }
         else
         {
-#if 0
-            const int32 y = get_match_row(m_index);
-            const int32 rows = min<int32>(m_match_rows, m_visible_rows);
+            const int32 y = m_index;
+            const int32 rows = min<int32>(m_count, m_visible_rows);
             const int32 scroll_ofs = get_scroll_offset();
-            const int32 scroll_rows = (rows - scroll_ofs - 1);
+            // Use rows as the page size (vs the more common rows-1) for
+            // compatibility with Conhost's F7 popup list behavior.
+            const int32 scroll_rows = (rows - scroll_ofs);
             if (input.id == bind_id_suggestionlist_pgup)
             {
-                if (!y)
-                {
-                    m_index = 0;
-                }
-                else
+                if (y > 0)
                 {
                     int32 new_y = max<int32>(0, (y <= m_top + scroll_ofs) ? y - scroll_rows : m_top + scroll_ofs);
-                    int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                    m_index += (new_y - y) * stride;
+                    m_index += (new_y - y);
+                    goto navigated;
                 }
-                goto navigated;
             }
             else if (input.id == bind_id_suggestionlist_pgdn)
             {
-                if (y == m_match_rows - 1)
+                if (y < m_count - 1)
                 {
-                    m_index = count - 1;
-                }
-                else
-                {
-                    int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                    int32 new_y = min<int32>(m_match_rows - 1, (y >= m_top + scroll_rows) ? y + scroll_rows : m_top + scroll_rows);
-                    int32 new_index = m_index + (new_y - y) * stride;
-                    int32 new_top = m_top;
-                    if (new_index >= count)
+                    int32 bottom_y = m_top + scroll_rows - 1;
+                    int32 new_y = min<int32>(m_count - 1, (y == bottom_y) ? y + scroll_rows : bottom_y);
+                    m_index += (new_y - y);
+                    if (m_index > m_count - 1)
                     {
-                        if (_rl_print_completions_horizontally)
-                        {
-                            new_top = m_match_rows - rows;
-                            if (y + 1 < new_y)
-                            {
-                                new_y--;
-                                new_index -= stride;
-                            }
-                            else
-                            {
-                                new_index = count - 1;
-                            }
-                        }
-                        else
-                        {
-                            new_index = count - 1;
-                            if (get_match_row(new_index) >= m_top + rows)
-                                new_top = min<int32>(get_match_row(new_index),
-                                                     m_match_rows - rows);
-                        }
+                        set_top(max<int32>(0, m_count - m_visible_rows));
+                        m_index = m_count - 1;
                     }
-                    m_index = new_index;
-                    set_top(max<int32>(0, new_top));
+                    goto navigated;
                 }
-                goto navigated;
             }
-#endif
         }
         break;
 
@@ -621,6 +595,7 @@ void suggestionlist_impl::init_suggestions()
         m_index = -1;
         m_count = m_suggestions.size();
         m_clear_display = m_any_displayed;
+        m_ignore_scroll_offset = false;
     }
 }
 
@@ -641,6 +616,8 @@ void suggestionlist_impl::update_layout()
         m_visible_rows = 0;
     m_visible_rows = min<>(m_visible_rows, available_rows);
 
+    m_ignore_scroll_offset = false;
+
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
     m_vert_scroll_column = 0;
@@ -657,7 +634,7 @@ void suggestionlist_impl::update_layout()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_top()
 {
-    const int32 y = m_index;
+    int32 y = m_index;
     if (m_top > y)
     {
         set_top(max<>(0, y));
@@ -668,6 +645,20 @@ void suggestionlist_impl::update_top()
         int32 top = max<int32>(0, y - (rows - 1));
         if (m_top < top)
             set_top(top);
+    }
+
+    if (!m_ignore_scroll_offset)
+    {
+        const int32 scroll_ofs = get_scroll_offset();
+        if (scroll_ofs > 0)
+        {
+            y = m_index;
+            const int32 last_row = max<int32>(0, m_count - m_visible_rows);
+            if (m_top > max(0, y - scroll_ofs))
+                set_top(max(0, y - scroll_ofs));
+            else if (m_top < min(last_row, y + scroll_ofs - m_displayed_rows + 1))
+                set_top(min(last_row, y + scroll_ofs - m_displayed_rows + 1));
+        }
     }
 
     assert(m_top >= 0);
@@ -955,6 +946,15 @@ void suggestionlist_impl::apply_suggestion(int32 index)
 }
 
 //------------------------------------------------------------------------------
+int32 suggestionlist_impl::get_scroll_offset() const
+{
+    const int32 ofs = g_clink_scroll_offset.get();
+    if (ofs <= 0)
+        return 0;
+    return min(ofs, max(0, (m_visible_rows - 1) / 2));
+}
+
+//------------------------------------------------------------------------------
 void suggestionlist_impl::set_top(int32 top)
 {
     assert(top >= 0);
@@ -972,6 +972,7 @@ void suggestionlist_impl::reset_top()
     m_top = 0;
     m_index = -1;
     m_prev_displayed = -1;
+    m_ignore_scroll_offset = false;
 }
 
 //------------------------------------------------------------------------------

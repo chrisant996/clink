@@ -94,9 +94,9 @@ setting_int g_match_limit_fitted(
 setting_int g_clink_scroll_offset(
     "clink.scroll_offset",
     "Scroll offset above/below selected item in list",
-    "Number of screen lines to show above or below a selected item in popup\n"
-    "lists or the clink-select-complete command.  The list scrolls up or down\n"
-    "as needed to maintain the scroll offset (except after a mouse click).\n",
+    "Number of screen lines to show above or below a selected item in scrollable\n"
+    "lists or the clink-select-complete command.  The list scrolls up or down as\n"
+    "needed to maintain the scroll offset (except after a mouse click).\n",
     3);
 
 extern setting_bool g_match_expand_abbrev;
