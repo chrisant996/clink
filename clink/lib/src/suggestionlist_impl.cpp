@@ -26,6 +26,7 @@
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/wcwidth.h>
 
 extern "C" {
@@ -678,6 +679,9 @@ void suggestionlist_impl::update_display()
     if (m_visible_rows <= 0 && !m_any_displayed)
         return;
 
+    // Hide cursor.
+    const bool was_visible = show_cursor(false);
+
     // Remember the cursor position so it can be restored later to stay
     // consistent with Readline's view of the world.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -839,6 +843,9 @@ void suggestionlist_impl::update_display()
     GetConsoleScreenBufferInfo(h, &csbi);
     restore.Y = csbi.dwCursorPosition.Y;
     SetConsoleCursorPosition(h, restore);
+
+    // Restore cursor.
+    show_cursor(was_visible);
 }
 
 //------------------------------------------------------------------------------
