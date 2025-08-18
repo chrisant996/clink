@@ -105,8 +105,8 @@ static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, in
     key << L"Software\\";
     to_utf16(key, _key);
 
-    DWORD flags;
-    flags = KEY_READ|(writable ? KEY_WRITE : 0);
+    DWORD flags = KEY_READ;
+    flags |= writable ? KEY_WRITE : 0;
     flags |= wow64 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
 
     HKEY result;
@@ -215,11 +215,16 @@ static bool check_registry_access()
 
     close_key(key);
 
-    key = open_cmd_proc_key(g_all_users, 1, 1);
-    if (key == nullptr)
-        return false;
+    // skip the wow64 key for the current user (as HKCU\Software\Microsoft is not redirected).
+    if (g_all_users)
+    {
+        key = open_cmd_proc_key(g_all_users, 1, 1);
+        if (key == nullptr)
+            return false;
 
-    close_key(key);
+        close_key(key);
+    }
+
     return true;
 }
 
@@ -374,7 +379,7 @@ static bool uninstall_autorun_from_key(HKEY cmd_proc_key, const char* clink_path
 static bool uninstall_autorun(const char* clink_path, int32 wow64)
 {
     bool ret = false;
-    if (g_enum_users)
+    if (g_enum_users) // g_all_users should be 0, otherwise open_cmd_proc_key ignores the userid if passed
     {
         WCHAR userid[MAX_PATH];
         for (DWORD index = 0; true; ++index)
@@ -474,6 +479,12 @@ static bool show_autorun()
 
         for (wow64 = 0; wow64 < 2; ++wow64)
         {
+            if (!all_users && wow64)
+            {
+                // skip the wow64 key for the current user (as HKCU\Software\Microsoft is not redirected).
+                continue;
+            }
+
             HKEY cmd_proc_key;
             char* key_value;
 
@@ -531,8 +542,8 @@ static bool dispatch(dispatch_func_t* function, const char* clink_path)
     SYSTEM_INFO system_info;
 
     GetNativeSystemInfo(&system_info);
-    is_x64_os = system_info.wProcessorArchitecture;
-    is_x64_os = (is_x64_os == PROCESSOR_ARCHITECTURE_AMD64);
+    is_x64_os = (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+    is_x64_os &= g_all_users == 1; // call the function again with wow64 set only for "all users" (not for "current user")
 
     bool ok = true;
     for (wow64 = 0; wow64 <= is_x64_os; ++wow64)
