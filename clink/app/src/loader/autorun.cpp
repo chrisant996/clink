@@ -98,21 +98,22 @@ static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, in
     if (all_users)
         userid = nullptr;
     if (userid)
+    {
+        writable = 1;
         key << userid << L"\\";
+    }
     key << L"Software\\";
-    if (wow64)
-        key << L"Wow6432Node\\";
     to_utf16(key, _key);
 
     DWORD flags;
     flags = KEY_READ|(writable ? KEY_WRITE : 0);
-    flags |= KEY_WOW64_64KEY;
+    flags |= wow64 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
 
     HKEY result;
     LSTATUS status;
     if (userid)
     {
-        status = RegOpenKeyExW(HKEY_USERS, key.c_str(), 0, KEY_READ|KEY_WRITE, &result);
+        status = RegOpenKeyExW(HKEY_USERS, key.c_str(), 0, flags, &result);
     }
     else
     {
