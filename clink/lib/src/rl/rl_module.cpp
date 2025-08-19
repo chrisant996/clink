@@ -1146,9 +1146,21 @@ bool pause_suggestions(bool pause)
 }
 
 //------------------------------------------------------------------------------
+bool is_locked_against_suggestions()
+{
+    return s_suggestion.is_locked_against_suggestions();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void lock_against_suggestions(int lock)
+{
+    s_suggestion.lock_against_suggestions(!!lock);
+}
+
+//------------------------------------------------------------------------------
 extern "C" void clear_suggestion()
 {
-    if (!test_suggestion_list_frozen())
+    if (!is_locked_against_suggestions())
     {
         s_suggestion.clear();
         if (g_rl_buffer)
@@ -1389,7 +1401,7 @@ static void buffer_changing(int32 event)
 
     // Reset the history position for the next input line prompt, upon changing
     // the input text at all.
-    if (event != CHG_REPLACE && has_sticky_search_position())
+    if (event != CHG_REPLACE && event != CHG_REPLACEEMPTY && has_sticky_search_position())
     {
         clear_sticky_search_position();
         if (!rl_end)
@@ -1403,6 +1415,10 @@ static void buffer_changing(int32 event)
     // The buffer text is changing, so the selection will be invalidated and
     // needs to be cleared.
     cua_clear_selection();
+
+    // Lock against suggestions when rl_replace_text() is used.
+    if (event == CHG_REPLACE || event == CHG_REPLACEEMPTY)
+        lock_against_suggestions(event == CHG_REPLACE);
 
     // When the buffer changes, rl_display_fixed is no longer accurate.
     rl_display_fixed = false;

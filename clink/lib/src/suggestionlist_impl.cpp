@@ -114,7 +114,7 @@ void suggestionlist_impl::enable(editor_module::result& result)
 {
     s_suggestion_list_enabled = true;
 
-    m_applied.clear();
+    lock_against_suggestions(false);
 
     clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
     init_suggestions();
@@ -146,7 +146,7 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
     if (!m_buffer)
         return false;
 
-    if (is_active())
+    if (is_active_even_if_hidden())
         cancel(result);
     else
         enable(result);
@@ -193,7 +193,7 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_clear_display = false;
     m_hide_while_fingerprint = false;
     m_hide_fingerprint.clear();
-    m_applied.clear();
+    m_applied = false;
     m_scroll_helper.clear();
 
     m_normal_color[0] = "\x1b[m";
@@ -218,7 +218,7 @@ void suggestionlist_impl::on_end_line()
     m_clear_display = false;
     m_hide_while_fingerprint = false;
     m_hide_fingerprint.clear();
-    m_applied.clear();
+    m_applied = false;
     m_ignore_scroll_offset = false;
 }
 
@@ -235,7 +235,7 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         m_hide_while_fingerprint = false;
     }
 
-    if (m_index >= 0 && !(m_buffer->get_fingerprint(false) == m_applied))
+    if (m_index >= 0 && !is_locked_against_suggestions())
         clear_index();
 
     allow_suggestion_list(1);
@@ -507,9 +507,8 @@ do_mouse_position:
         // other than the suggestion list.
         allow_suggestion_list(0);
         result.set_bind_group(m_prev_bind_group);
-        m_hide_while_fingerprint = true;
-        m_hide_fingerprint = m_buffer->get_fingerprint(false);
-        m_suggestions.clear(m_suggestions.get_generation_id());
+        suppress_suggestions();
+        m_suggestions.clear();
         m_count = 0;
         assert(!is_active());
         update_layout();
@@ -565,11 +564,12 @@ void suggestionlist_impl::on_signal(int32 sig)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::cancel(editor_module::result& result)
 {
-    assert(is_active());
+    assert(is_active_even_if_hidden());
 
-    if (m_buffer->get_fingerprint(false) == m_applied)
+    if (m_applied && is_locked_against_suggestions())
         m_buffer->undo();
-    m_applied.clear();
+    m_applied = false;
+    lock_against_suggestions(false);
 
     result.set_bind_group(m_prev_bind_group);
     m_prev_bind_group = -1;
@@ -921,10 +921,11 @@ void suggestionlist_impl::apply_suggestion(int32 index)
 {
     assert(is_active());
 
-    if (m_buffer->get_fingerprint(false) == m_applied)
+    if (m_applied && is_locked_against_suggestions())
     {
         m_buffer->undo();
-        assert(!(m_buffer->get_fingerprint(false) == m_applied));
+        assert(m_applied);
+        assert(!is_locked_against_suggestions());
     }
 
     const int32 old_botlin = _rl_vis_botlin;
@@ -938,7 +939,8 @@ void suggestionlist_impl::apply_suggestion(int32 index)
         m_buffer->insert(suggestion.m_suggestion.c_str());
         m_buffer->end_undo_group();
 
-        m_applied = m_buffer->get_fingerprint(false);
+        m_applied = true;
+        lock_against_suggestions(true);
     }
 
     m_buffer->draw();
@@ -988,10 +990,11 @@ void suggestionlist_impl::reset_top()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::clear_index(bool force)
 {
-    if (force || m_buffer->get_fingerprint(false) == m_applied)
+    if (force || is_locked_against_suggestions())
     {
         m_index = -1;
-        m_applied.clear();
+        m_applied = false;
+        lock_against_suggestions(false);
         update_layout();
         update_display();
     }
@@ -1014,7 +1017,7 @@ bool suggestionlist_impl::test_frozen()
 {
     if (m_index < 0 || !m_buffer)
         return false;
-    if (m_buffer->get_fingerprint(false) == m_applied)
+    if (is_locked_against_suggestions())
         return true;
     clear_index(true/*force*/);
     return false;

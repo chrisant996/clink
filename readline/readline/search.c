@@ -145,6 +145,9 @@ make_history_line_current (HIST_ENTRY *entry)
        current editing buffer. */
     rl_free_undo_list ();
 #endif
+/* begin_clink_change */
+  lock_against_suggestions (1);
+/* end_clink_change */
 }
 
 /* begin_clink_change */

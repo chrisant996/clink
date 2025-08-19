@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "line_buffer.h"
+
 #include <core/str_iter.h>
 
 #include <vector>
@@ -58,6 +60,8 @@ public:
     void            clear();
     bool            can_suggest(const line_state& line);
     bool            can_update_matches();
+    bool            is_locked_against_suggestions();
+    void            lock_against_suggestions(bool lock);
     bool            is_suppressing_suggestions() const { return m_suppress; }
     void            suppress_suggestions();
     void            set_started(const char* line);
@@ -69,18 +73,21 @@ public:
 private:
     void            resync_suggestion_iterator(uint32 old_cursor);
     str_iter        m_iter;
-    str_moveable    m_started;      // Input line that started generating a suggestion.
+    str_moveable    m_started;          // Input line that started generating a suggestion.
+    line_buffer_fingerprint m_locked;   // Locks against generating suggestions for this buffer generation ID.
     suggestions     m_suggestions;
     uint32          m_endword_offset = -1;
     bool            m_paused = false;
-    bool            m_suppress = false;
+    bool            m_suppress = false; // Locks and also keeps it locked after backspace-like commands.
 
-    static void     new_generation();
+    static uint32   new_generation();
     static uint32   s_generation_id;
 };
 
 //------------------------------------------------------------------------------
 bool has_suggestion();
+bool is_locked_against_suggestions();
+extern "C" void lock_against_suggestions(int lock);
 extern "C" void clear_suggestion();
 bool can_show_suggestion_hint();
 void suppress_suggestions();

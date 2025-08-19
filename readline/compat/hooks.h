@@ -56,6 +56,7 @@ struct hooked_stat
 
 void reset_display_readline(void);
 void end_prompt(int crlf);
+void lock_against_suggestions(int lock);
 void clear_suggestion_list_index(void);
 void wait_for_input(unsigned long timeout);
 

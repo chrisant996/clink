@@ -230,6 +230,7 @@ void suggestion_manager::clear()
     new (&m_iter) str_iter();
     m_started.free();
     m_suggestions.clear();
+    m_locked.clear();
     m_endword_offset = -1;
     m_suppress = false;
 
@@ -307,9 +308,30 @@ bool suggestion_manager::can_update_matches()
 }
 
 //------------------------------------------------------------------------------
+bool suggestion_manager::is_locked_against_suggestions()
+{
+    assert(g_rl_buffer);
+    return g_rl_buffer && g_rl_buffer->get_fingerprint(false) == m_locked;
+}
+
+//------------------------------------------------------------------------------
+void suggestion_manager::lock_against_suggestions(bool lock)
+{
+    assert(g_rl_buffer);
+    if (g_rl_buffer)
+    {
+        if (lock)
+            m_locked = g_rl_buffer->get_fingerprint(false);
+        else
+            m_locked.clear();
+    }
+}
+
+//------------------------------------------------------------------------------
 void suggestion_manager::suppress_suggestions()
 {
     clear();
+    lock_against_suggestions(true);
     m_suggestions.set_line(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     m_suppress = true;
@@ -392,6 +414,7 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, suggestion
     {
 malformed:
         clear();
+        m_suggestions.m_generation_id = new_generation();
         m_suggestions.set_line(line);
         m_started = line;
         if (g_rl_buffer)
@@ -403,8 +426,7 @@ malformed:
         return;
     }
 
-    new_generation();
-    suggestions->m_generation_id = s_generation_id;
+    suggestions->m_generation_id = new_generation();
     m_suggestions = std::move(*suggestions);
     if (m_suggestions.size() != 1)
     {
@@ -480,11 +502,12 @@ void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::new_generation()
+uint32 suggestion_manager::new_generation()
 {
     ++s_generation_id;
     if (!s_generation_id)
         ++s_generation_id;
+    return s_generation_id;
 }
 
 //------------------------------------------------------------------------------

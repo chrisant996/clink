@@ -93,7 +93,7 @@ private:
     bool            m_any_displayed = false;
 
     // Applying suggestions.
-    line_buffer_fingerprint m_applied;
+    bool            m_applied = false;
 
     // Current suggestion index.
     int32           m_top = 0;

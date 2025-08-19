@@ -237,7 +237,7 @@ rl_replace_line (const char *text, int clear_undo)
   len = strlen (text);
 /* begin_clink_change */
   if (rl_buffer_changing_hook && (len != rl_end || memcmp(rl_line_buffer, text, len)))
-    rl_buffer_changing_hook (CHG_REPLACE);
+    rl_buffer_changing_hook (len ? CHG_REPLACE : CHG_REPLACEEMPTY);
 /* end_clink_change */
   if (len >= rl_line_buffer_len)
     rl_extend_line_buffer (len);
