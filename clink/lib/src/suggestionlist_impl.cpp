@@ -884,20 +884,22 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
     str<128> tmp;
     int32 num = 0;
     uint32 total_width = 0;
+    const uint32 max_width_for_one = max_width * 2 / 3;
     for (auto& group : groups)
     {
         if (num <= m_index && m_index < num + group.m_count)
             tmp.format("%s(%u/%u)", group.m_source, m_index - num + 1, group.m_count);
         else
             tmp.format("%s(%u)", group.m_source, group.m_count);
-        group.m_width = ellipsify_ex(tmp.c_str(), max_width, ellipsify_mode::LEFT, group.m_caption, nullptr, true/*expand_ctrl*/);
+        group.m_width = ellipsify_ex(tmp.c_str(), max_width_for_one, ellipsify_mode::LEFT, group.m_caption, nullptr, true/*expand_ctrl*/);
         total_width += !!num + group.m_width;
         group.m_gray = !(num <= m_index && m_index < num + group.m_count);
         num += group.m_count;
     }
 
-// TODO: compact and/or drop groups as needed for fitment.
     bool gray = false;
+    uint32 pre_width = 0;   // Width before current group.
+    uint32 curr_width = 0;  // Width of current group.
     tmp.clear();
     for (auto& group : groups)
     {
@@ -915,12 +917,35 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
 
         if (!group.m_gray)
         {
+            pre_width = cell_count(tmp.c_str());
             gray = false;
             tmp.concat(m_markup_color[0].c_str());
             tmp.concat(ital);
         }
 
         tmp.concat(group.m_caption.c_str());
+
+        if (!group.m_gray)
+            curr_width = group.m_width;
+    }
+
+    if (total_width > max_width)
+    {
+        const uint32 min_width_pre = (max_width - curr_width) / 2;
+        const uint32 min_width_post = (max_width - curr_width) - min_width_pre;
+        uint32 post_width = total_width - curr_width - pre_width;
+        uint32 keep_width = max_width - curr_width;
+        uint32 pre_keep = min<>(pre_width, min_width_pre);
+        uint32 post_keep = min<>(post_width, min_width_post);
+        if (pre_keep < min_width_pre)
+            post_keep += (min_width_pre - pre_keep);
+        if (post_keep < min_width_post)
+            pre_keep += (min_width_post - post_keep);
+        assert(pre_keep + curr_width + post_keep == max_width);
+
+        str_moveable tmp2;
+        ellipsify_ex(tmp.c_str(), total_width - (pre_width - pre_keep), ellipsify_mode::LEFT, tmp2);
+        ellipsify_ex(tmp2.c_str(), total_width - (pre_width - pre_keep) - (post_width - post_keep), ellipsify_mode::RIGHT, tmp);
     }
 
     out.format("%s%s<%s%s%s>", m_dim_color.c_str(), ital, tmp.c_str(), m_dim_color.c_str(), ital);

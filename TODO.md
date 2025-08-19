@@ -38,7 +38,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] Remove duplicates from suggestions.
   - [x] Truncate each suggestion entry to fit in one line.
   - [ ] Some way for suggesters to indicate what substring to highlight in the suggestion list.
-  - [ ] Show list of suggestion sources in top right:
+  - [x] Show list of suggestion sources in top right:
     - `<-/30>                      <History(3) Completion(27)>`
     - `<2/30>                    <History(2/3) Completion(27)>`
     - `<5/30>                    <History(3) Completion(2/27)>`
