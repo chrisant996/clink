@@ -856,15 +856,74 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
         return;
     max_width -= 2;
 
+    struct source_group
+    {
+        const char* m_source;
+        str<32> m_caption;
+        uint32 m_count = 0;
+        uint32 m_width = 0;
+        bool m_gray = true;
+    };
+
+    const char* source = nullptr;
+    std::vector<source_group> groups;
+    for (size_t index = 0; index < m_suggestions.size(); ++index)
+    {
+        auto& s = m_suggestions[index].m_source;
+        if (!source || !s.equals(source))
+        {
+            groups.emplace_back();
+            auto& back = groups.back();
+            back.m_source = s.c_str();
+            source = s.c_str();
+        }
+        auto& back = groups.back();
+        ++back.m_count;
+    }
+
     str<128> tmp;
-// TODO: show sources summary.
-    tmp = "...";
+    int32 num = 0;
+    uint32 total_width = 0;
+    for (auto& group : groups)
+    {
+        if (num <= m_index && m_index < num + group.m_count)
+            tmp.format("%s(%u/%u)", group.m_source, m_index - num + 1, group.m_count);
+        else
+            tmp.format("%s(%u)", group.m_source, group.m_count);
+        group.m_width = ellipsify_ex(tmp.c_str(), max_width, ellipsify_mode::LEFT, group.m_caption, nullptr, true/*expand_ctrl*/);
+        total_width += !!num + group.m_width;
+        group.m_gray = !(num <= m_index && m_index < num + group.m_count);
+        num += group.m_count;
+    }
 
-    str<128> tmp2;
-    ellipsify(tmp.c_str(), max_width, tmp2, true/*expand_ctrl*/);
+// TODO: compact and/or drop groups as needed for fitment.
+    bool gray = false;
+    tmp.clear();
+    for (auto& group : groups)
+    {
+        const bool was_empty = tmp.empty();
 
-    // out.format("%s%s<%s%s%s%s%s>", m_dim_color.c_str(), ital, m_markup_color[0].c_str(), ital, tmp2.c_str(), m_dim_color.c_str(), ital);
-    out.format("%s%s<%s%s%s>", m_dim_color.c_str(), ital, tmp2.c_str(), m_dim_color.c_str(), ital);
+        if (!gray && group.m_gray)
+        {
+            gray = true;
+            tmp.concat(m_dim_color.c_str());
+            tmp.concat(ital);
+        }
+
+        if (!was_empty)
+            tmp.concat(" ", 1);
+
+        if (!group.m_gray)
+        {
+            gray = false;
+            tmp.concat(m_markup_color[0].c_str());
+            tmp.concat(ital);
+        }
+
+        tmp.concat(group.m_caption.c_str());
+    }
+
+    out.format("%s%s<%s%s%s>", m_dim_color.c_str(), ital, tmp.c_str(), m_dim_color.c_str(), ital);
 }
 
 //------------------------------------------------------------------------------
