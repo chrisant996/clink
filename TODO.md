@@ -46,6 +46,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - `<2/30>                    <History(2/3) Completion(27)>`
     - `<5/30>                    <History(3) Completion(2/27)>`
   - [ ] When can `history` suggester show substring matches?
+  - [ ] Maybe show a "tooltip" below the suggestion?  E.g. the `completion` suggester could send the description field as the tooltip.
   - [ ] Configurable colors for suggestion list.
   - [ ] Command description for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `clink-toggle-suggestion-list`.
