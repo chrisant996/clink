@@ -198,8 +198,8 @@ void suggestionlist_impl::on_begin_line(const context& context)
 
     m_normal_color[0] = "\x1b[m";
     m_normal_color[1] = "\x1b[0;100m";
-    m_highlight_color[0] = "\x1b[0;1m";
-    m_highlight_color[1] = "\x1b[0;100;1m";
+    m_highlight_color[0] = "\x1b[0;96m";
+    m_highlight_color[1] = "\x1b[0;100;96m";
     m_markup_color[0] = "\x1b[0;33m";
     m_markup_color[1] = "\x1b[0;100;33m";
     m_dim_color = "\x1b[0;90m";
@@ -955,47 +955,110 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
 void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
     const auto& s = m_suggestions[index];
+    const bool selected = (index == m_index);
     int32 match_offset = max<int32>(0, min<int32>(s.m_suggestion_offset, m_suggestions.get_line().length()));
+    int32 suggestion_len = s.m_suggestion.length();
 
+    str<128> whole;
+    str<128> tmp2;
 
-    // FUTURE:  There's currently no way to highlight what matched, because
-    // suggesters can do whatever they want, and don't say what they matched.
+    // Build the whole line.
+    whole.concat(m_suggestions.get_line().c_str(), match_offset);
+    uint32 pre_cells = clink_wcswidth_expandctrl(whole.c_str(), match_offset);
+    whole.concat(s.m_suggestion.c_str(), s.m_suggestion.length());
+    const uint32 suggestion_cells = clink_wcswidth_expandctrl(whole.c_str() + match_offset, whole.length() - match_offset);
+    assert(s.m_suggestion.length() == whole.length() - match_offset);
 
-    str<128> tmp;
-    tmp.concat(m_suggestions.get_line().c_str(), match_offset);
+    // Add highlight colors.
+    const int32 hs = min<int32>(s.m_highlight_offset, whole.length());
+    const int32 he = min<int32>(s.m_highlight_offset + s.m_highlight_length, whole.length());
+    const char* after_highlight = whole.c_str();
+    if (hs >= 0 && he > hs)
+    {
+        int32 adjust_match_offset = 0;
+        int32 adjust_suggestion_len = 0;
+        tmp2.concat(whole.c_str(), hs);
+        {
+            const str_base& color = m_highlight_color[selected];
+            if (hs < match_offset)
+                adjust_match_offset += color.length();
+            else
+                adjust_suggestion_len += color.length();
+            tmp2.concat(color.c_str());
+        }
+        tmp2.concat(whole.c_str() + hs, he - hs);
+        {
+            const str_base& color = m_normal_color[selected];
+            if (he <= match_offset)
+                adjust_match_offset += color.length();
+            else
+                adjust_suggestion_len += color.length();
+            tmp2.concat(color.c_str());
+        }
+        tmp2.concat(whole.c_str() + he);
+        after_highlight = tmp2.c_str();
+        match_offset += adjust_match_offset;
+        suggestion_len += adjust_suggestion_len;
+    }
 
     // Show as much of the suggestion as possible, with at least 1/8 of the
     // available width as chars of context to the left of the start of the
     // suggestion.  This relies on ellipsify_ex both for truncation and also
     // for expanding control characters.
-    uint32 pre_cells = clink_wcswidth_expandctrl(m_suggestions.get_line().c_str(), match_offset);
-    const uint32 suggestion_cells = clink_wcswidth_expandctrl(s.m_suggestion.c_str(), s.m_suggestion.length());
-    int32 cells = 0;
-    if (pre_cells + suggestion_cells <= width - 1)
+    str<128> tmp3;
+    str<128> tmp4;
+    const char* unexpanded_out = after_highlight;
+    int32 cells = pre_cells + suggestion_cells;
+    if (cells >= width)
     {
-        tmp.concat(s.m_suggestion.c_str());
-        cells = ellipsify_ex(tmp.c_str(), width - 1, ellipsify_mode::RIGHT, out, nullptr, true/*expand_ctrl*/);
-    }
-    else
-    {
-        str<128> tmp2;
         if (int32(width) - int32(suggestion_cells + 1) > int32(width) / 8)
-            pre_cells = width - (suggestion_cells + 1);
+            pre_cells = min<>(pre_cells, width - (suggestion_cells + 1));
         else
-            pre_cells = width / 8;
-        const int32 pre_width = ellipsify_ex(tmp.c_str(), pre_cells, ellipsify_mode::LEFT, tmp2, nullptr, true/*expand_ctrl*/);
-        const int32 post_width = ellipsify_ex(s.m_suggestion.c_str(), width - 1 - pre_width, ellipsify_mode::RIGHT, tmp, nullptr, true/*expand_ctrl*/);
-        out.clear();
-        out.concat(tmp2.c_str());
-        out.concat(tmp.c_str());
-        cells = pre_width + post_width;
+            pre_cells = min<>(pre_cells, width / 8);
+        const int32 pre_width = ellipsify_ex(after_highlight, pre_cells + suggestion_cells, ellipsify_mode::LEFT, tmp3, nullptr, true/*expand_ctrl*/);
+        const int32 pre_len = tmp3.length() - suggestion_len;
+        assert(cell_count(tmp3.c_str(), pre_len) == pre_width - suggestion_cells);
+        cells = ellipsify_ex(tmp3.c_str(), width - 1, ellipsify_mode::RIGHT, tmp4, nullptr, true/*expand_ctrl*/);
         assert(cells <= width);
+        assert(cells == cell_count(tmp4.c_str()));
+        unexpanded_out = tmp4.c_str();
+    }
+
+    // Copy into out buffer, expanding ctrl characters along the way.
+    out.clear();
+    out.reserve(whole.length());
+    ecma48_state state;
+    ecma48_iter iter(unexpanded_out, state);
+    while (const ecma48_code& code = iter.next())
+    {
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            char ctrl[3] = { '^' };
+            assert(!ctrl[2]);
+            const char* ptr = code.get_pointer();
+            for (uint32 num = code.get_length(); num--; ++ptr)
+            {
+                if (*ptr >= 0 && *ptr < ' ')
+                {
+                    ctrl[1] = char(*ptr + 'A' - 1);
+                    out.concat(ctrl, 2);
+                }
+                else
+                {
+                    out.concat(ptr, 1);
+                }
+            }
+        }
+        else
+        {
+            out.concat(code.get_pointer(), code.get_length());
+        }
     }
 
     // Pad with spaces to the specified width.
     if (cells < width)
     {
-        // out.concat(m_normal_color[index == m_index].c_str());
+        out.concat(m_normal_color[selected].c_str());
         concat_spaces(out, width - cells);
     }
 }

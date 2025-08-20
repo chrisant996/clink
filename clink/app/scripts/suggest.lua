@@ -48,12 +48,13 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                                 for _, e in ipairs(s) do
                                     local es = e[1] or e.suggestion or nil
                                     local eo = e[2] or e.offset or nil
+                                    local eh = e.highlight
                                     if es then
                                         -- Don't add duplicates.
                                         local full = line:getline():sub(1, (eo or 0) - 1)..es
                                         if not dupes[full] then
                                             dupes[full] = true
-                                            table.insert(results, { es, eo, source=name })
+                                            table.insert(results, { es, eo, highlight=eh, source=name })
                                             num = num + 1
                                             if num >= limit then
                                                 return
@@ -291,12 +292,30 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
         local info = line:getwordinfo(count)
         if info.offset < line:getcursor() then
             local typed = line:getline():sub(info.offset, line:getcursor())
+            local no_quotes = matches:getsuppressquoting()
             for i = 1, 10, 1 do
                 local m = matches:getmatch(i)
                 if not m then
                     break
-                elseif m ~= typed and (info.quoted or not rl.needquotes(m)) then
-                    table.insert(results, { m, info.offset })
+                elseif m ~= typed and (info.quoted or no_quotes or not rl.needquotes(m)) then
+                    local matchlen = string.matchlen(m, typed)
+                    if matchlen < 0 then
+                        matchlen = #m
+                    end
+                    local append = matches:getappendchar(i)
+                    if append and append ~= "" then
+                        -- If append char and quoted, add closing quote.
+                        if info.quoted then
+                            m = m..'"'
+                        end
+                        -- Add append char.  This makes suggestions more
+                        -- consistent with completion.  It also helps make
+                        -- completion suggestions more likely to match history
+                        -- suggestions so that the suggestion list's duplicate
+                        -- removal works better.
+                        m = m..append
+                    end
+                    table.insert(results, { m, info.offset, highlight={info.offset, matchlen} })
                     limit = limit - 1
                     if limit <= 0 then
                         break

@@ -22,6 +22,8 @@ struct suggestion
 {
     str_moveable    m_suggestion;
     uint32          m_suggestion_offset = -1;
+    int32           m_highlight_offset = -1;
+    int32           m_highlight_length = -1;
     str_moveable    m_source;
 };
 
@@ -39,7 +41,7 @@ public:
     size_t          size() const { return m_items.size(); }
     const str_moveable& get_line() const { return m_line; }
     void            set_line(const char* line, int32 length=-1);
-    void            add(const char* text, uint32 offset, const char* source);
+    void            add(const char* text, uint32 offset, const char* source, int32 highlight_offset, int32 highlight_length);
     const suggestion& operator [] (uint32 index) const { return m_items[index]; }
     const suggestion& get(uint32 index) const { return m_items[index]; }
     void            remove(uint32 index);

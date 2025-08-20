@@ -1438,6 +1438,16 @@ static int32 history_suggester(lua_State* state)
         lua_pushinteger(state, 1);
         lua_rawseti(state, -2, 2);
 
+        lua_pushliteral(state, "highlight");
+        lua_createtable(state, 2, 0);
+        {
+            lua_pushinteger(state, 1);
+            lua_rawseti(state, -2, 1);
+            lua_pushinteger(state, matchlen);
+            lua_rawseti(state, -2, 2);
+        }
+        lua_rawset(state, -3);
+
         lua_rawseti(state, -2, ++n);
         if (n >= limit)
             break;
@@ -1499,6 +1509,23 @@ static int32 set_suggestion_result(lua_State* state)
                     return 0;
                 lua_pop(state, 1);
 
+                int32 hs = -1;
+                int32 hl = -1;
+                lua_pushliteral(state, "highlight");
+                lua_rawget(state, -2);
+                if (lua_istable(state, -1))
+                {
+                    lua_rawgeti(state, -1, 1);
+                    hs = optinteger(state, -1, 0) - 1;
+                    lua_pop(state, 1);
+                    lua_rawgeti(state, -1, 2);
+                    hl = optinteger(state, -1, 0);
+                    lua_pop(state, 1);
+                    if (hs < 0 || hl <= 0)
+                        hs = hl = -1;
+                }
+                lua_pop(state, 1);
+
                 lua_pushliteral(state, "source");
                 lua_rawget(state, -2);
                 const char* source = optstring(state, -1, nullptr);
@@ -1510,7 +1537,7 @@ static int32 set_suggestion_result(lua_State* state)
                 if (!source || !*source)
                     source = "unknown";
 
-                suggestions.add(suggestion, offset, source);
+                suggestions.add(suggestion, offset, source, hs, hl);
             }
 
             lua_pop(state, 1);

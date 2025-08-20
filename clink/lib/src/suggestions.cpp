@@ -81,7 +81,7 @@ suggestions& suggestions::operator = (const suggestions& other)
     clear();
     m_line = other.m_line.c_str();
     for (const auto& s : other.m_items)
-        add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str());
+        add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str(), s.m_highlight_offset, s.m_highlight_length);
     m_generation_id = other.m_generation_id;
     return *this;
 }
@@ -132,11 +132,13 @@ void suggestions::set_line(const char* line, int32 length)
 }
 
 //------------------------------------------------------------------------------
-void suggestions::add(const char* text, uint32 offset, const char* source)
+void suggestions::add(const char* text, uint32 offset, const char* source, int32 highlight_offset, int32 highlight_length)
 {
     suggestion suggestion;
     suggestion.m_suggestion = text;
     suggestion.m_suggestion_offset = offset;
+    suggestion.m_highlight_offset = highlight_offset;
+    suggestion.m_highlight_length = highlight_length;
     suggestion.m_source = source;
     m_items.emplace_back(std::move(suggestion));
 }
