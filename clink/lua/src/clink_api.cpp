@@ -1483,7 +1483,7 @@ again:
 
     // If no prefix match found in first pass, do a second pass looking for
     // substring matches.
-    if (!match_prev_cmd && !substr)
+    if (!match_prev_cmd && !substr && limit > 1)
     {
         substr = true;
         goto again;
