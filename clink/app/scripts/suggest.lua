@@ -299,26 +299,28 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                     break
                 elseif m ~= typed and (info.quoted or no_quotes or not rl.needquotes(m)) then
                     local matchlen = string.matchlen(m, typed)
-                    if matchlen < 0 then
-                        matchlen = #m
-                    end
-                    local append = matches:getappendchar(i)
-                    if append and append ~= "" then
-                        -- If append char and quoted, add closing quote.
-                        if info.quoted then
-                            m = m..'"'
+                    if matchlen ~= 0 then
+                        if matchlen < 0 then
+                            matchlen = #m
                         end
-                        -- Add append char.  This makes suggestions more
-                        -- consistent with completion.  It also helps make
-                        -- completion suggestions more likely to match history
-                        -- suggestions so that the suggestion list's duplicate
-                        -- removal works better.
-                        m = m..append
-                    end
-                    table.insert(results, { m, info.offset, highlight={info.offset, matchlen} })
-                    limit = limit - 1
-                    if limit <= 0 then
-                        break
+                        local append = matches:getappendchar(i)
+                        if append and append ~= "" then
+                            -- If append char and quoted, add closing quote.
+                            if info.quoted then
+                                m = m..'"'
+                            end
+                            -- Add append char.  This makes suggestions more
+                            -- consistent with completion.  It also helps make
+                            -- completion suggestions more likely to match
+                            -- history suggestions so that the suggestion
+                            -- list's duplicate removal works better.
+                            m = m..append
+                        end
+                        table.insert(results, { m, info.offset, highlight={info.offset, matchlen} })
+                        limit = limit - 1
+                        if limit <= 0 then
+                            break
+                        end
                     end
                 end
             end
