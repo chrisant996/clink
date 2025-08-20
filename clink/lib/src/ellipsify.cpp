@@ -119,7 +119,20 @@ int32 ellipsify_ex(const char* in, int32 limit, ellipsify_mode mode, str_base& o
         *truncated = false;
 
     // Does the whole string fit?
-    const int32 total_cells = cell_count(in);
+    int32 total_cells = 0;
+    {
+        ecma48_state state;
+        ecma48_iter iter(in, state);
+        while (const ecma48_code& code = iter.next())
+        {
+            if (code.get_type() != ecma48_code::type_chars)
+                continue;
+
+            total_cells += (expand_ctrl ?
+                            clink_wcswidth_expandctrl(code.get_pointer(), code.get_length()) :
+                            clink_wcswidth(code.get_pointer(), code.get_length()));
+        }
+    }
     if (total_cells <= limit)
     {
 no_truncate:
