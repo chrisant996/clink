@@ -1391,16 +1391,18 @@ static int32 history_suggester(lua_State* state)
     if (match_prev_cmd || !firstword)
         limit = min(limit, 3);
 
-    int32 scanned = 0;
-    const DWORD tick = GetTickCount();
+    const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
 
-    const int32 scan_min = 200;
-    const DWORD ms_max = 50;
-
+    bool substr = false;
     int32 n = 0;
     lua_createtable(state, limit, 0);
 
-    const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
+again:
+    const DWORD tick = GetTickCount();
+    const int32 scan_min = 100;
+    const DWORD ms_max = substr ? 25 : 25;
+
+    int32 scanned = 0;
     for (int32 i = history_length; --i >= 0;)
     {
         // Search at least SCAN_MIN entries.  But after that don't keep going
@@ -1409,13 +1411,36 @@ static int32 history_suggester(lua_State* state)
             break;
         scanned++;
 
-        str_iter lhs(line);
-        str_iter rhs(history[i]->line);
-        int32 matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
+        int32 offset;
+        int32 matchlen;
+        if (substr)
+        {
+            offset = 0;
+            matchlen = 0;
+            for (const char* hline = history[i]->line; *hline; ++hline, ++offset)
+            {
+                str_iter lhs(line);
+                str_iter rhs(hline);
+                const int32 sublen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
+                if (sublen && !lhs.more() && (rhs.more() || sublen < 0))
+                {
+                    ++offset; // Convert from 0-based to 1-based.
+                    matchlen = (sublen < 0) ? str_len(hline) : sublen;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            str_iter lhs(line);
+            str_iter rhs(history[i]->line);
+            matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
+            offset = 1;
 
-        // lhs isn't exhausted, or rhs is exhausted?  Continue searching.
-        if (lhs.more() || !rhs.more())
-            continue;
+            // lhs isn't exhausted, or rhs is exhausted?  Continue searching.
+            if (lhs.more() || !rhs.more())
+                continue;
+        }
 
         // Zero matching length?  Is ok with 'match_prev_cmd', otherwise
         // continue searching.
@@ -1441,7 +1466,7 @@ static int32 history_suggester(lua_State* state)
         lua_pushliteral(state, "highlight");
         lua_createtable(state, 2, 0);
         {
-            lua_pushinteger(state, 1);
+            lua_pushinteger(state, offset);
             lua_rawseti(state, -2, 1);
             lua_pushinteger(state, matchlen);
             lua_rawseti(state, -2, 2);
@@ -1456,7 +1481,16 @@ static int32 history_suggester(lua_State* state)
     if (n)
         return 1;
 
+    // If no prefix match found in first pass, do a second pass looking for
+    // substring matches.
+    if (!match_prev_cmd && !substr)
+    {
+        substr = true;
+        goto again;
+    }
+
     lua_pop(state, 1);
+
     return 0;
 }
 
