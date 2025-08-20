@@ -37,11 +37,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] Regression: the current attempted fix for that seems to work ... but also makes UP/DOWN in the suggestion list re-generate suggestions when going to index -1.
   - [x] Remove duplicates from suggestions.
   - [x] Truncate each suggestion entry to fit in one line.
-  - [ ] Some way for suggesters to indicate what substring to highlight in the suggestion list.
+  - [x] Some way for suggesters to indicate what substring to highlight in the suggestion list.
+    - [x] Use the highlight info to apply highlight in the suggestion list.
+  - [x] Suggestions from completion strategy are missing trailing space when appropriate?
+  - [x] Why doesn't `completion` suggester show any suggestions for `echo %user`?  _[Pre-existing bug that didn't take into account `setsuppressquoting`.]_
   - [x] Show list of suggestion sources in top right:
     - `<-/30>                      <History(3) Completion(27)>`
     - `<2/30>                    <History(2/3) Completion(27)>`
     - `<5/30>                    <History(3) Completion(2/27)>`
+  - [ ] When can `history` suggester show substring matches?
   - [ ] Configurable colors for suggestion list.
   - [ ] Command description for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `clink-toggle-suggestion-list`.
