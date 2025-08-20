@@ -14,6 +14,8 @@ const matches_lua::method matches_lua::c_methods[] = {
     { "getcount",               &get_count },
     { "getmatch",               &get_match },
     { "gettype",                &get_type },
+    { "getappendchar",          &get_append_char },
+    { "getsuppressquoting",     &get_suppress_quoting },
     {}
 };
 
@@ -104,5 +106,51 @@ int32 matches_lua::get_type(lua_State* state)
     str<> type;
     match_type_to_string(m_matches->get_match_type(index), type);
     lua_pushlstring(state, type.c_str(), type.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  matches:getappendchar
+/// -ver:   1.7.23
+/// -arg:   index:integer
+/// -ret:   string
+/// Returns what the completion generator suggested should be appended after
+/// the match.
+int32 matches_lua::get_append_char(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1;
+
+    if (index >= m_matches->get_match_count())
+        return 0;
+
+    shadow_bool suppress = m_matches->get_match_suppress_append(index);
+    if (!suppress.is_explicit())
+        suppress.set_explicit(m_matches->is_suppress_append());
+
+    str<16> tmp;
+    if (!suppress.get())
+    {
+        char c = m_matches->get_match_append_char(index);
+        if (!c && !is_match_type(m_matches->get_match_type(index), match_type::dir))
+            c = ' ';
+        if (c)
+            tmp.format("%c", c);
+    }
+    lua_pushlstring(state, tmp.c_str(), tmp.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  matches:getsuppressquoting
+/// -ver:   1.7.23
+/// -ret:   boolean
+/// Returns whether the completion generator indicated that automatic quoting
+/// should be suppressed for the matches.
+int32 matches_lua::get_suppress_quoting(lua_State* state)
+{
+    lua_pushboolean(state, !!m_matches->get_suppress_quoting());
     return 1;
 }
