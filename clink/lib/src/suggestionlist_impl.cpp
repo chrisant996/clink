@@ -10,6 +10,7 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "display_readline.h"
+#include "display_matches.h"
 #include "ellipsify.h"
 #include "line_editor_integration.h"
 #include "rl_integration.h"
@@ -119,9 +120,11 @@ void suggestionlist_impl::enable(editor_module::result& result)
     clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
     init_suggestions();
 
-    assert(!m_any_displayed);
+    assert(m_any_displayed.empty());
+    assert(m_tooltip_displayed < 0);
     assert(!m_clear_display);
-    m_any_displayed = false;
+    m_any_displayed.clear();
+    m_tooltip_displayed = -1;
     m_clear_display = false;
 
     // Make sure there's room.
@@ -202,6 +205,7 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_highlight_color[1] = "\x1b[0;100;96m";
     m_markup_color[0] = "\x1b[0;33m";
     m_markup_color[1] = "\x1b[0;100;33m";
+    m_tooltip_color = _rl_description_color;
     m_dim_color = "\x1b[0;90m";
 
     m_screen_cols = context.printer.get_columns();
@@ -597,7 +601,7 @@ void suggestionlist_impl::init_suggestions()
     {
         m_index = -1;
         m_count = m_suggestions.size();
-        m_clear_display = m_any_displayed;
+        m_clear_display = !m_any_displayed.empty();
         m_ignore_scroll_offset = false;
     }
 }
@@ -610,7 +614,8 @@ void suggestionlist_impl::update_layout()
 
     const int32 input_height = (_rl_vis_botlin + 1);
     const int32 header_row = 1;
-    int32 available_rows = m_screen_rows - input_height - header_row;
+    const int32 tooltip_row = 1;
+    int32 available_rows = m_screen_rows - input_height - header_row - tooltip_row;
     available_rows = min<>(available_rows, m_screen_rows / 2);
     m_visible_rows = min<>(c_max_suggestion_rows, m_count);
 
@@ -676,7 +681,7 @@ void suggestionlist_impl::update_display()
     m_vert_scroll_column = 0;
 #endif
 
-    if (m_visible_rows <= 0 && !m_any_displayed)
+    if (m_visible_rows <= 0 && m_any_displayed.empty())
         return;
 
     // Hide cursor.
@@ -709,6 +714,7 @@ void suggestionlist_impl::update_display()
         if (m_clear_display)
         {
             m_prev_displayed = -1;
+            m_tooltip_displayed = -1;
             m_clear_display = false;
         }
 
@@ -750,24 +756,36 @@ void suggestionlist_impl::update_display()
 #endif
 
         int32 shown = 0;
-        for (int32 row = 0; row < rows; row++)
+        int32 tooltip = -1;
+        const int32 was_tooltip = m_tooltip_displayed;
+        int32 screen_row = 0;
+        for (int32 row = 0; row < rows; ++row, ++screen_row)
         {
-            int32 i = (m_top + row);
+            const int32 i = (m_top + row);
             if (i >= m_count)
                 break;
 
             rl_crlf();
-            up++;
+            ++up;
 
             // Print entry.
+            const auto& s = m_suggestions[i];
             if (m_prev_displayed < 0 ||
-                row + m_top == m_index ||
-                row + m_top == m_prev_displayed)
+                i == m_index ||
+                i == m_prev_displayed ||
+                screen_row >= m_any_displayed.size() ||
+                m_any_displayed[screen_row] != i)
             {
                 const bool selected = (i == m_index);
 
+                if (screen_row >= m_any_displayed.size())
+                    m_any_displayed.emplace_back(i);
+                else
+                    m_any_displayed[screen_row] = i;
+                assert(m_any_displayed.size() >= screen_row);
+
                 left.format("%s>%s ", m_markup_color[selected].c_str(), m_normal_color[selected].c_str());
-                right.format("[%s%s%s]", m_markup_color[selected].c_str(), m_suggestions[i].m_source.c_str(), m_normal_color[selected].c_str());
+                right.format("[%s%s%s]", m_markup_color[selected].c_str(), s.m_source.c_str(), m_normal_color[selected].c_str());
                 const uint32 used_width = cell_count(left.c_str()) + cell_count(right.c_str());
                 if (used_width < m_max_width)
                     make_suggestion_list_string(i, tmp, m_max_width - used_width);
@@ -778,46 +796,68 @@ void suggestionlist_impl::update_display()
                 m_printer->print(right.c_str(), right.length());
 
 #ifdef SHOW_VERT_SCROLLBARS
-                if (m_vert_scroll_car)
-                {
-#ifdef USE_FULL_SCROLLBAR
-                    constexpr bool floating = false;
-#else
-                    constexpr bool floating = true;
-#endif
-                    const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, floating);
-                    if (car)
-                    {
-                        // Space was reserved by update_layout().
-                        tmp.format("%s \x1b[0;90m%s", m_normal_color[0].c_str(), car);
-                        m_printer->print(tmp.c_str(), tmp.length());
-                    }
-#ifdef USE_FULL_SCROLLBAR
-                    else
-                    {
-                        // Space was reserved by update_layout().
-                        tmp.format("%s \x1b[0;90m\xe2\x94\x82", m_normal_color[0].c_str());// │
-                        m_printer->print(tmp.c_str(), tmp.length());
-                    }
-#endif
-                }
+                draw_scrollbar_char(screen_row, car_top);
 #endif // SHOW_VERT_SCROLLBARS
 
                 // Clear to end of line.
                 m_printer->print("\x1b[m\x1b[K");
+
+                // Draw or remove tooltip if needed.
+                if (selected)
+                {
+                    if (!s.m_tooltip.empty())
+                    {
+                        // When inserting a tooltip, must redraw subsequent rows.
+                        if (was_tooltip < 0)
+                            m_prev_displayed = -1;
+
+                        if (screen_row >= m_any_displayed.size())
+                            m_any_displayed.emplace_back(-1);
+                        else
+                            m_any_displayed[screen_row] = -1;
+                        assert(m_any_displayed.size() >= screen_row);
+
+                        tooltip = m_index;
+                        rl_crlf();
+                        ++up;
+                        m_printer->print("      ");
+                        m_printer->print(m_tooltip_color.c_str(), m_tooltip_color.length());
+                        m_printer->print(ital, str_len(ital));
+                        const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width, tmp, false);
+                        tmp.concat(m_normal_color[0].c_str(), m_normal_color[0].length());
+                        const int32 spaces = m_max_width - (6 + tooltip_width);
+                        if (spaces > 0)
+                            concat_spaces(tmp, m_max_width - (6 + tooltip_width));
+                        m_printer->print(tmp.c_str(), tmp.length());
+#ifdef SHOW_VERT_SCROLLBARS
+                        draw_scrollbar_char(screen_row, car_top);
+#endif // SHOW_VERT_SCROLLBARS
+                        m_printer->print("\x1b[m\x1b[K");
+                        ++screen_row;
+                    }
+                    else
+                    {
+                        // When removing a tooltip, must redraw subsequent rows.
+                        if (was_tooltip >= 0)
+                            m_prev_displayed = -1;
+                    }
+                }
             }
         }
 
-        if (clear_display)
+        if (clear_display || (was_tooltip >= 0 && tooltip < 0))
             m_printer->print("\x1b[m\x1b[J");
 
         assert(!m_clear_display);
         m_prev_displayed = m_index;
-        m_any_displayed = true;
+        assert(m_any_displayed.size() >= screen_row);
+        if (m_any_displayed.size() > screen_row)
+            m_any_displayed.resize(screen_row);
+        m_tooltip_displayed = tooltip;
     }
     else
     {
-        if (m_any_displayed)
+        if (!m_any_displayed.empty())
         {
             // Move cursor to next line, then clear to end of screen.
             rl_crlf();
@@ -825,7 +865,8 @@ void suggestionlist_impl::update_display()
             m_printer->print("\x1b[m\x1b[J");
         }
         m_prev_displayed = -1;
-        m_any_displayed = false;
+        m_any_displayed.clear();
+        m_tooltip_displayed = -1;
         m_clear_display = false;
     }
 
@@ -847,6 +888,37 @@ void suggestionlist_impl::update_display()
     // Restore cursor.
     show_cursor(was_visible);
 }
+
+//------------------------------------------------------------------------------
+#ifdef SHOW_VERT_SCROLLBARS
+void suggestionlist_impl::draw_scrollbar_char(int32 row, int32 car_top)
+{
+    if (m_vert_scroll_car)
+    {
+#ifdef USE_FULL_SCROLLBAR
+        constexpr bool floating = false;
+#else
+        constexpr bool floating = true;
+#endif
+        str<16> tmp;
+        const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, floating);
+        if (car)
+        {
+            // Space was reserved by update_layout().
+            tmp.format("%s \x1b[0;90m%s", m_normal_color[0].c_str(), car);
+            m_printer->print(tmp.c_str(), tmp.length());
+        }
+#ifdef USE_FULL_SCROLLBAR
+        else
+        {
+            // Space was reserved by update_layout().
+            tmp.format("%s \x1b[0;90m\xe2\x94\x82", m_normal_color[0].c_str());// │
+            m_printer->print(tmp.c_str(), tmp.length());
+        }
+#endif
+    }
+}
+#endif // SHOW_VERT_SCROLLBARS
 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
@@ -1122,15 +1194,17 @@ void suggestionlist_impl::set_top(int32 top)
     {
         m_top = top;
         m_prev_displayed = -1;
+        // IMPORTANT:  Do not clear m_tooltip_displayed here; update_display()
+        // still needs to know whether it was set so it knows whether to clear
+        // the display at the end to erase lingering rows.
     }
 }
 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::reset_top()
 {
-    m_top = 0;
-    m_index = -1;
-    m_prev_displayed = -1;
+    m_top = -1;
+    set_top(0);
     m_ignore_scroll_offset = false;
 }
 

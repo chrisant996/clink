@@ -52,6 +52,9 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
+#ifdef SHOW_VERT_SCROLLBARS
+    void            draw_scrollbar_char(int32 row, int32 car_top);
+#endif
     void            make_sources_header(str_base& out, uint32 max_width);
     void            make_suggestion_list_string(int32 index, str_base& out, uint32 width);
     void            apply_suggestion(int32 index);
@@ -76,6 +79,7 @@ private:
     str<16>         m_normal_color[2];      // 0=normal, 1=selected
     str<16>         m_highlight_color[2];   // 0=normal, 1=selected
     str<16>         m_markup_color[2];      // 0=normal, 1=selected
+    str<16>         m_tooltip_color;
     str<16>         m_dim_color;
 
     // Layout.
@@ -90,7 +94,8 @@ private:
     int32           m_vert_scroll_column = 0;
 #endif
     bool            m_clear_display = false;
-    bool            m_any_displayed = false;
+    std::vector<int32> m_any_displayed;
+    int32           m_tooltip_displayed = -1;
 
     // Applying suggestions.
     bool            m_applied = false;

@@ -49,12 +49,13 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                                     local es = e[1] or e.suggestion or nil
                                     local eo = e[2] or e.offset or nil
                                     local eh = e.highlight
+                                    local et = e.tooltip
                                     if es then
                                         -- Don't add duplicates.
                                         local full = line:getline():sub(1, (eo or 0) - 1)..es
                                         if not dupes[full] then
                                             dupes[full] = true
-                                            table.insert(results, { es, eo, highlight=eh, source=name })
+                                            table.insert(results, { es, eo, highlight=eh, tooltip=et, source=name })
                                             num = num + 1
                                             if num >= limit then
                                                 return
@@ -316,7 +317,7 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                             -- list's duplicate removal works better.
                             m = m..append
                         end
-                        table.insert(results, { m, info.offset, highlight={info.offset, matchlen} })
+                        table.insert(results, { m, info.offset, highlight={info.offset, matchlen}, tooltip=matches:getdescription(i) })
                         limit = limit - 1
                         if limit <= 0 then
                             break

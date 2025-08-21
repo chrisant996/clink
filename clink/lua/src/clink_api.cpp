@@ -1560,6 +1560,11 @@ static int32 set_suggestion_result(lua_State* state)
                 }
                 lua_pop(state, 1);
 
+                lua_pushliteral(state, "tooltip");
+                lua_rawget(state, -2);
+                const char* tooltip = optstring(state, -1, nullptr);
+                lua_pop(state, 1);
+
                 lua_pushliteral(state, "source");
                 lua_rawget(state, -2);
                 const char* source = optstring(state, -1, nullptr);
@@ -1571,7 +1576,7 @@ static int32 set_suggestion_result(lua_State* state)
                 if (!source || !*source)
                     source = "unknown";
 
-                suggestions.add(suggestion, offset, source, hs, hl);
+                suggestions.add(suggestion, offset, source, hs, hl, tooltip);
             }
 
             lua_pop(state, 1);

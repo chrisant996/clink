@@ -14,6 +14,7 @@ const matches_lua::method matches_lua::c_methods[] = {
     { "getcount",               &get_count },
     { "getmatch",               &get_match },
     { "gettype",                &get_type },
+    { "getdescription",         &get_description },
     { "getappendchar",          &get_append_char },
     { "getsuppressquoting",     &get_suppress_quoting },
     {}
@@ -106,6 +107,27 @@ int32 matches_lua::get_type(lua_State* state)
     str<> type;
     match_type_to_string(m_matches->get_match_type(index), type);
     lua_pushlstring(state, type.c_str(), type.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  matches:getdescription
+/// -ver:   1.7.23
+/// -arg:   index:integer
+/// -ret:   string
+/// Returns the match description for the <span class="arg">index</span> match.
+int32 matches_lua::get_description(lua_State* state)
+{
+    const auto _index = checkinteger(state, LUA_SELF + 1);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1;
+
+    if (index >= m_matches->get_match_count())
+        return 0;
+
+    const char* desc = m_matches->get_match_description(index);
+    lua_pushstring(state, desc ? desc : "");
     return 1;
 }
 
