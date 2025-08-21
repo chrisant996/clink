@@ -215,7 +215,8 @@ static bool check_registry_access()
 
     close_key(key);
 
-    // skip the wow64 key for the current user (as HKCU\Software\Microsoft is not redirected).
+    // Skip the wow64 key for the current user (as HKCU\Software\Microsoft is
+    // not redirected).
     if (g_all_users)
     {
         key = open_cmd_proc_key(g_all_users, 1, 1);
@@ -379,8 +380,9 @@ static bool uninstall_autorun_from_key(HKEY cmd_proc_key, const char* clink_path
 static bool uninstall_autorun(const char* clink_path, int32 wow64)
 {
     bool ret = false;
-    if (g_enum_users) // g_all_users should be 0, otherwise open_cmd_proc_key ignores the userid if passed
+    if (g_enum_users)
     {
+        assert(!g_all_users); // Ensured by parse_autorun_flags().
         WCHAR userid[MAX_PATH];
         for (DWORD index = 0; true; ++index)
         {
@@ -481,7 +483,8 @@ static bool show_autorun()
         {
             if (!all_users && wow64)
             {
-                // skip the wow64 key for the current user (as HKCU\Software\Microsoft is not redirected).
+                // Skip the wow64 key for the current user (as
+                // HKCU\Software\Microsoft is not redirected).
                 continue;
             }
 
@@ -543,7 +546,7 @@ static bool dispatch(dispatch_func_t* function, const char* clink_path)
 
     GetNativeSystemInfo(&system_info);
     is_x64_os = (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-    is_x64_os &= g_all_users == 1; // call the function again with wow64 set only for "all users" (not for "current user")
+    is_x64_os &= !!g_all_users; // Only show "wow64" for "all users".
 
     bool ok = true;
     for (wow64 = 0; wow64 <= is_x64_os; ++wow64)
