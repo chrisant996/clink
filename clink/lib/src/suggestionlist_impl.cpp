@@ -820,10 +820,10 @@ void suggestionlist_impl::update_display()
                         tooltip = m_index;
                         rl_crlf();
                         ++up;
-                        m_printer->print("      ");
-                        m_printer->print(m_tooltip_color.c_str(), m_tooltip_color.length());
-                        m_printer->print(ital, str_len(ital));
-                        const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width, tmp, false);
+                        tmp.format("   %s>> ", m_tooltip_color.c_str());
+                        m_printer->print(tmp.c_str(), tmp.length());
+// TODO: how hard is it to intercept all SGI sequences and re-apply italics everywhere?
+                        const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width - 6, tmp, false);
                         tmp.concat(m_normal_color[0].c_str(), m_normal_color[0].length());
                         const int32 spaces = m_max_width - (6 + tooltip_width);
                         if (spaces > 0)
