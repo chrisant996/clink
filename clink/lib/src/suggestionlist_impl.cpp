@@ -811,6 +811,7 @@ void suggestionlist_impl::update_display()
                         if (was_tooltip < 0)
                             m_prev_displayed = -1;
 
+                        ++screen_row;
                         if (screen_row >= m_any_displayed.size())
                             m_any_displayed.emplace_back(-1);
                         else
@@ -820,20 +821,21 @@ void suggestionlist_impl::update_display()
                         tooltip = m_index;
                         rl_crlf();
                         ++up;
-                        tmp.format("   %s>> ", m_tooltip_color.c_str());
+                        const int32 indent_width = 4;
+                        tmp.clear();
+                        concat_spaces(tmp, indent_width);
+                        tmp.concat(m_tooltip_color.c_str(), m_tooltip_color.length());
                         m_printer->print(tmp.c_str(), tmp.length());
-// TODO: how hard is it to intercept all SGI sequences and re-apply italics everywhere?
-                        const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width - 6, tmp, false);
+                        const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width - indent_width, tmp, false);
                         tmp.concat(m_normal_color[0].c_str(), m_normal_color[0].length());
-                        const int32 spaces = m_max_width - (6 + tooltip_width);
+                        const int32 spaces = m_max_width - (indent_width + tooltip_width);
                         if (spaces > 0)
-                            concat_spaces(tmp, m_max_width - (6 + tooltip_width));
+                            concat_spaces(tmp, spaces);
                         m_printer->print(tmp.c_str(), tmp.length());
 #ifdef SHOW_VERT_SCROLLBARS
                         draw_scrollbar_char(screen_row, car_top);
 #endif // SHOW_VERT_SCROLLBARS
                         m_printer->print("\x1b[m\x1b[K");
-                        ++screen_row;
                     }
                     else
                     {

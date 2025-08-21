@@ -26,6 +26,7 @@ protected:
     int32               get_description(lua_State* state);
     int32               get_append_char(lua_State* state);
     int32               get_suppress_quoting(lua_State* state);
+    int32               get_force_quoting(lua_State* state);
 
 private:
     const matches*      m_matches;

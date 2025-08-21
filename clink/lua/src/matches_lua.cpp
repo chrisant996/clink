@@ -17,6 +17,7 @@ const matches_lua::method matches_lua::c_methods[] = {
     { "getdescription",         &get_description },
     { "getappendchar",          &get_append_char },
     { "getsuppressquoting",     &get_suppress_quoting },
+    { "getforcequoting",        &get_force_quoting },
     {}
 };
 
@@ -169,10 +170,23 @@ int32 matches_lua::get_append_char(lua_State* state)
 /// -name:  matches:getsuppressquoting
 /// -ver:   1.7.23
 /// -ret:   boolean
-/// Returns whether the completion generator indicated that automatic quoting
-/// should be suppressed for the matches.
+/// Returns whether automatic quoting should be suppressed for the matches.
 int32 matches_lua::get_suppress_quoting(lua_State* state)
 {
-    lua_pushboolean(state, !!m_matches->get_suppress_quoting());
+    const bool suppress = (!m_matches->get_force_quoting() &&
+                           (m_matches->get_suppress_quoting() ||
+                            !m_matches->is_filename_completion_desired()));
+    lua_pushboolean(state, suppress);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  matches:getforcequoting
+/// -ver:   1.7.23
+/// -ret:   boolean
+/// Returns whether automatic quoting should be forced for the matches.
+int32 matches_lua::get_force_quoting(lua_State* state)
+{
+    lua_pushboolean(state, !!m_matches->get_force_quoting());
     return 1;
 }

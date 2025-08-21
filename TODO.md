@@ -48,9 +48,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] When can `history` suggester show substring matches?
   - [x] BUG: `\repos\clink\``ENTER` then `F2` then `j` produces no suggestions from history.
   - [x] Maybe show a "tooltip" below the suggestion?  E.g. the `completion` suggester could send the description field as the tooltip.
-  - [ ] BUG: why does `ugrep --l` not list `--label=`?  Are matches with linked argmatchers broken?
+  - [x] BUG: why does `ugrep --l` not list `--label=`?  Are matches with linked argmatchers broken?
   - [ ] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
   - [ ] Configurable colors for suggestion list.
+  - [ ] Update color themes per suggestion list colors.
   - [ ] Command description for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `suggestionlist.default` setting.
