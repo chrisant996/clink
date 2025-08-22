@@ -74,9 +74,10 @@ private:
     bool            m_hide = false;
 
     // Configuration.
-    str<16>         m_normal_color[2];      // 0=normal, 1=selected
-    str<16>         m_highlight_color[2];   // 0=normal, 1=selected
-    str<16>         m_markup_color[2];      // 0=normal, 1=selected
+    str<16>         m_normal_color;
+    str<16>         m_highlight_color;
+    str<16>         m_markup_color;
+    str<16>         m_selected_color;
     str<16>         m_tooltip_color;
     str<16>         m_dim_color;
 

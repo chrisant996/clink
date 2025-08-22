@@ -198,12 +198,10 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_applied = false;
     m_scroll_helper.clear();
 
-    m_normal_color[0] = "\x1b[m";
-    m_normal_color[1] = "\x1b[0;100m";
-    m_highlight_color[0] = "\x1b[0;96m";
-    m_highlight_color[1] = "\x1b[0;100;96m";
-    m_markup_color[0] = "\x1b[0;33m";
-    m_markup_color[1] = "\x1b[0;100;33m";
+    m_normal_color = "\x1b[m";
+    m_highlight_color = "\x1b[0;96m";
+    m_markup_color = "\x1b[0;33m";
+    m_selected_color = "\x1b[48;5;242m";
     m_tooltip_color = _rl_description_color;
     m_dim_color = "\x1b[0;90m";
 
@@ -727,7 +725,7 @@ void suggestionlist_impl::update_display()
             num = "-";
         else
             num.format("%u", m_index + 1);
-        left.format("%s%s<%s/%u>%s", m_markup_color[0].c_str(), ital, num.c_str(), m_count, m_normal_color[0].c_str());
+        left.format("%s%s<%s/%u>%s", m_markup_color.c_str(), ital, num.c_str(), m_count, m_normal_color.c_str());
         const int32 left_header_cells = cell_count(left.c_str());
         if (m_max_width > left_header_cells + 2) // At least 2 spaces after.
             make_sources_header(right, m_max_width - (left_header_cells + 2));
@@ -778,6 +776,7 @@ void suggestionlist_impl::update_display()
                 m_any_displayed[screen_row] != i)
             {
                 const bool selected = (i == m_index);
+                const char* const selected_color = selected ? m_selected_color.c_str() : "";
 
                 if (screen_row >= m_any_displayed.size())
                     m_any_displayed.emplace_back(i);
@@ -785,8 +784,8 @@ void suggestionlist_impl::update_display()
                     m_any_displayed[screen_row] = i;
                 assert(m_any_displayed.size() >= screen_row);
 
-                left.format("%s>%s ", m_markup_color[selected].c_str(), m_normal_color[selected].c_str());
-                right.format("[%s%s%s]", m_markup_color[selected].c_str(), s.m_source.c_str(), m_normal_color[selected].c_str());
+                left.format("%s%s>%s%s ", m_markup_color.c_str(), selected_color, m_normal_color.c_str(), selected_color);
+                right.format("[%s%s%s%s%s]", m_markup_color.c_str(), selected_color, s.m_source.c_str(), m_normal_color.c_str(), selected_color);
                 const uint32 used_width = cell_count(left.c_str()) + cell_count(right.c_str());
                 if (used_width < m_max_width)
                     make_suggestion_list_string(i, tmp, m_max_width - used_width);
@@ -828,7 +827,7 @@ void suggestionlist_impl::update_display()
                         tmp.concat(m_tooltip_color.c_str(), m_tooltip_color.length());
                         m_printer->print(tmp.c_str(), tmp.length());
                         const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width - indent_width, tmp, false);
-                        tmp.concat(m_normal_color[0].c_str(), m_normal_color[0].length());
+                        tmp.concat(m_normal_color.c_str(), m_normal_color.length());
                         const int32 spaces = m_max_width - (indent_width + tooltip_width);
                         if (spaces > 0)
                             concat_spaces(tmp, spaces);
@@ -908,14 +907,14 @@ void suggestionlist_impl::draw_scrollbar_char(int32 row, int32 car_top)
         if (car)
         {
             // Space was reserved by update_layout().
-            tmp.format("%s \x1b[0;90m%s", m_normal_color[0].c_str(), car);
+            tmp.format("%s \x1b[0;90m%s", m_normal_color.c_str(), car);
             m_printer->print(tmp.c_str(), tmp.length());
         }
 #ifdef USE_FULL_SCROLLBAR
         else
         {
             // Space was reserved by update_layout().
-            tmp.format("%s \x1b[0;90m\xe2\x94\x82", m_normal_color[0].c_str());// │
+            tmp.format("%s \x1b[0;90m\xe2\x94\x82", m_normal_color.c_str());// │
             m_printer->print(tmp.c_str(), tmp.length());
         }
 #endif
@@ -994,7 +993,7 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
         {
             pre_width = cell_count(tmp.c_str());
             gray = false;
-            tmp.concat(m_markup_color[0].c_str());
+            tmp.concat(m_markup_color.c_str());
             tmp.concat(ital);
         }
 
@@ -1031,6 +1030,7 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
 {
     const auto& s = m_suggestions[index];
     const bool selected = (index == m_index);
+    const char* const selected_color = selected ? m_selected_color.c_str() : nullptr;
     int32 match_offset = max<int32>(0, min<int32>(s.m_suggestion_offset, m_suggestions.get_line().length()));
     int32 suggestion_len = s.m_suggestion.length();
 
@@ -1054,21 +1054,27 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
         int32 adjust_suggestion_len = 0;
         tmp2.concat(whole.c_str(), hs);
         {
-            const str_base& color = m_highlight_color[selected];
-            if (hs < match_offset)
-                adjust_match_offset += color.length();
-            else
-                adjust_suggestion_len += color.length();
+            const str_base& color = m_highlight_color;
+            const uint32 color_len = m_highlight_color.length() + (selected_color ? str_len(selected_color) : 0);
             tmp2.concat(color.c_str());
+            if (selected_color)
+                tmp2.concat(selected_color);
+            if (hs < match_offset)
+                adjust_match_offset += color_len;
+            else
+                adjust_suggestion_len += color_len;
         }
         tmp2.concat(whole.c_str() + hs, he - hs);
         {
-            const str_base& color = m_normal_color[selected];
-            if (he <= match_offset)
-                adjust_match_offset += color.length();
-            else
-                adjust_suggestion_len += color.length();
+            const str_base& color = m_normal_color;
+            const uint32 color_len = m_normal_color.length() + (selected_color ? str_len(selected_color) : 0);
             tmp2.concat(color.c_str());
+            if (selected_color)
+                tmp2.concat(selected_color);
+            if (he <= match_offset)
+                adjust_match_offset += color_len;
+            else
+                adjust_suggestion_len += color_len;
         }
         tmp2.concat(whole.c_str() + he);
         after_highlight = tmp2.c_str();
@@ -1133,7 +1139,9 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
     // Pad with spaces to the specified width.
     if (cells < width)
     {
-        out.concat(m_normal_color[selected].c_str());
+        out.concat(m_normal_color.c_str());
+        if (selected_color)
+            out.concat(selected_color);
         concat_spaces(out, width - cells);
     }
 }
