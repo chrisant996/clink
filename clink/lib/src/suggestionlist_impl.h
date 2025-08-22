@@ -85,6 +85,7 @@ private:
     int32           m_screen_rows = 0;
     int32           m_mouse_offset = 0;
     int32           m_max_width = 0;
+    int32           m_max_rows = 0;         // Max for m_visible_rows until next init_suggestions().
     int32           m_visible_rows = 0;
     int32           m_displayed_rows = 0;
 #ifdef SHOW_VERT_SCROLLBARS

@@ -595,6 +595,7 @@ void suggestionlist_impl::init_suggestions()
         m_count = m_suggestions.size();
         m_clear_display = !m_any_displayed.empty();
         m_ignore_scroll_offset = false;
+        m_max_rows = 0;
     }
 }
 
@@ -629,6 +630,14 @@ void suggestionlist_impl::update_layout()
     const int32 reserve_cols = 1;
 #endif
     m_max_width = min<>(m_screen_cols - reserve_cols, c_max_suggestionlist_width);
+
+    // If the number of visible rows shrinks, then make that the new max
+    // number of visible rows.  This happens when applying the selected
+    // suggestion makes the input line so large that it reduces how much room
+    // is left over below it for the suggestion list.
+    if (m_max_rows)
+        m_visible_rows = min<>(m_visible_rows, m_max_rows);
+    m_max_rows = m_visible_rows;
 }
 
 //------------------------------------------------------------------------------
