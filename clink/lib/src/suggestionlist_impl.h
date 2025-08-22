@@ -72,8 +72,6 @@ private:
     int32           m_prev_bind_group = -1;
     bool            m_first_input = true;
     bool            m_hide = false;
-    bool            m_hide_while_fingerprint = false;
-    line_buffer_fingerprint m_hide_fingerprint;
 
     // Configuration.
     str<16>         m_normal_color[2];      // 0=normal, 1=selected

@@ -99,8 +99,6 @@ void suggestionlist_impl::allow(bool allow)
     const bool was_active = is_active();
 
     m_hide = !allow;
-    if (allow)
-        m_hide_while_fingerprint = false;
 
     if (was_active != is_active())
     {
@@ -197,8 +195,6 @@ void suggestionlist_impl::on_begin_line(const context& context)
     m_buffer = &context.buffer;
     m_printer = &context.printer;
     m_clear_display = false;
-    m_hide_while_fingerprint = false;
-    m_hide_fingerprint.clear();
     m_applied = false;
     m_scroll_helper.clear();
 
@@ -223,8 +219,6 @@ void suggestionlist_impl::on_end_line()
     m_buffer = nullptr;
     m_printer = nullptr;
     m_clear_display = false;
-    m_hide_while_fingerprint = false;
-    m_hide_fingerprint.clear();
     m_applied = false;
     m_ignore_scroll_offset = false;
 }
@@ -235,12 +229,6 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
     if (is_select_complete_active())
         return;
 
-    if (m_hide_while_fingerprint)
-    {
-        if (m_buffer->get_fingerprint(false) == m_hide_fingerprint)
-            return;
-        m_hide_while_fingerprint = false;
-    }
 
     if (m_index >= 0 && !is_locked_against_suggestions())
         clear_index();
