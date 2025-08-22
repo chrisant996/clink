@@ -115,8 +115,6 @@ void suggestionlist_impl::enable(editor_module::result& result)
 {
     s_suggestion_list_enabled = true;
 
-    lock_against_suggestions(false);
-
     clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
     init_suggestions();
 
@@ -150,9 +148,14 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
         return false;
 
     if (is_active_even_if_hidden())
+    {
         cancel(result);
+    }
     else
+    {
+        lock_against_suggestions(false);
         enable(result);
+    }
     return true;
 }
 
@@ -255,7 +258,8 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         assert(m_printer);
         assert(m_bind_group >= 0);
         if (s_suggestion_list_enabled && m_prev_bind_group < 0 &&
-            bind_group >= 0 && bind_group != m_bind_group)
+            bind_group >= 0 && bind_group != m_bind_group &&
+            !rl_has_saved_history())
         {
             class result_shim : public editor_module::result
             {
