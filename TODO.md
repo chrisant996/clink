@@ -52,7 +52,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] `operate-and-get-next` should initially suppress the suggestion list (and suggestions in general) just like `history-search-backward` and etc do.
   - [ ] `git mer` is annoying because the list shows 10 completions before the history entries (because of my custom strategy order).  Investigate how PowerShell chooses what order to list predictions in, and how many predictions it allows from each source and under what conditions.
   - [x] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
-  - [ ] Configurable colors for suggestion list.
+  - [x] Configurable colors for suggestion list.
+  - [ ] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
   - [ ] Update color themes per suggestion list colors.
   - [ ] Command description for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `clink-toggle-suggestion-list`.

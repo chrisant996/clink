@@ -74,12 +74,13 @@ private:
     bool            m_hide = false;
 
     // Configuration.
-    str<16>         m_normal_color;
-    str<16>         m_highlight_color;
+    str<16>         m_list_color;
     str<16>         m_markup_color;
+    str<16>         m_header_markup_color;
+    str<16>         m_dim_color;
+    str<16>         m_highlight_color;
     str<16>         m_selected_color;
     str<16>         m_tooltip_color;
-    str<16>         m_dim_color;
 
     // Layout.
     int32           m_screen_cols = 0;

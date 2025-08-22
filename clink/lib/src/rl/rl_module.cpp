@@ -179,7 +179,7 @@ static setting_color g_color_cmdsep(
     "Color for & and | command separators",
     "bold");
 
-static setting_color g_color_description(
+setting_color g_color_description(
     "color.description",
     "Description completion color",
     "The default color for descriptions of completions.",
