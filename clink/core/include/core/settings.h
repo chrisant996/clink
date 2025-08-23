@@ -153,7 +153,7 @@ public:
     void            deferred_load();
 
 protected:
-    virtual bool    parse(const char* value, store<T>& out);
+    virtual bool    parse(const char* value, store<T>& out) const;
     struct          type;
     store<T>        m_store;
     store<T>        m_default;
@@ -257,7 +257,7 @@ public:
     using setting_impl<int32>::get;
 
 protected:
-    virtual bool       parse(const char* value, store<int32>& out) override;
+    virtual bool       parse(const char* value, store<int32>& out) const override;
     void               get_option_name(int32 index, str_base& out) const;
     static const char* next_option(const char* option);
     str<48>            m_options;
@@ -270,9 +270,10 @@ class setting_color
 public:
                        setting_color(const char* name, const char* short_desc, const char* default_value);
                        setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value);
+    virtual bool       is_default() const override;
     virtual void       set() override;
     virtual bool       set(const char* value) override { return setting_str::set(value); }
     virtual void       get_descriptive(str_base& out, bool compat=true) const override;
 protected:
-    virtual bool       parse(const char* value, store<const char*>& out) override;
+    virtual bool       parse(const char* value, store<const char*>& out) const override;
 };

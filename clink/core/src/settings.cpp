@@ -1338,7 +1338,7 @@ const char* setting::get_source() const
 
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out)
+template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out) const
 {
     // In issue 372 someone tried to manually modify the clink_settings file,
     // and they accidentally added a trailing space, which Clink did not expect.
@@ -1370,7 +1370,7 @@ template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out)
 }
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<int32>::parse(const char* value, store<int32>& out)
+template <> bool setting_impl<int32>::parse(const char* value, store<int32>& out) const
 {
     if ((*value < '0' || *value > '9') && *value != '-')
         return false;
@@ -1380,7 +1380,7 @@ template <> bool setting_impl<int32>::parse(const char* value, store<int32>& out
 }
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<const char*>::parse(const char* value, store<const char*>& out)
+template <> bool setting_impl<const char*>::parse(const char* value, store<const char*>& out) const
 {
     out.value = value;
     return true;
@@ -1464,7 +1464,7 @@ setting_enum::setting_enum(
 }
 
 //------------------------------------------------------------------------------
-bool setting_enum::parse(const char* value, store<int32>& out)
+bool setting_enum::parse(const char* value, store<int32>& out) const
 {
     int32 by_int = -1;
     if (*value >= '0' && *value <= '9')
@@ -1519,7 +1519,15 @@ void setting_enum::get(str_base& out) const
 //------------------------------------------------------------------------------
 void setting_enum::get_default(str_base& out) const
 {
-    get_option_name(m_default.value, out);
+    int32 default_value = m_default.value;
+    const char* custom_default = get_custom_default();
+    if (custom_default)
+    {
+        setting::store<int32> tmp;
+        if (parse(custom_default, tmp))
+            default_value = tmp.value;
+    }
+    get_option_name(default_value, out);
 }
 
 //------------------------------------------------------------------------------
@@ -1577,9 +1585,19 @@ setting_color::setting_color(const char* name, const char* short_desc, const cha
 }
 
 //------------------------------------------------------------------------------
-bool setting_color::parse(const char* value, store<const char*>& out)
+bool setting_color::parse(const char* value, store<const char*>& out) const
 {
     return settings::parse_color(value, out.value);
+}
+
+//------------------------------------------------------------------------------
+bool setting_color::is_default() const
+{
+    store<const char*> tmp;
+    if (parse(m_default.value.c_str(), tmp))
+        return tmp.value.equals(m_store.value.c_str());
+    else
+        return m_store.value.empty();
 }
 
 //------------------------------------------------------------------------------
