@@ -49,6 +49,10 @@ color.popup_selectdesc=
 color.selected_completion=#073642 on #93a1a1
 color.selection=#073642 on #93a1a1
 color.suggestion=#586e75
+color.suggestionlist=#839496
+color.suggestionlist_dim=#586e75
+color.suggestionlist_highlight=bold #eee8d5
+color.suggestionlist_selected=default on #073642
 
 # Colors
 color.arginfo=underline #6c71c4
@@ -62,9 +66,10 @@ color.flag=#2aa198
 color.hidden=#dc322f
 color.modmark=#2aa198
 color.prompt=#b58900
+color.suggestionlist_markup=#b58900
 color.unexpected=#b58900
 color.unrecognized=#dc322f
 
 # Other
 color.readonly=
-match.coloring_rules=di=38;2;38;139;210:ln=38;2;42;161;152:ex=38;2;133;153;0:no=38;2;147;161;161:hi=38;2;220;50;47
+match.coloring_rules=
