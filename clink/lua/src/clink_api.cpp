@@ -1375,9 +1375,10 @@ static int32 history_suggester(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     const bool firstword = lua_toboolean(state, 2);
-    int32 limit = checkinteger(state, 3);
+    const bool has_limit = !lua_isnoneornil(state, 3);
+    int32 limit = has_limit ? checkinteger(state, 3).get() : -1;
     const int32 match_prev_cmd = lua_toboolean(state, 4);
-    if (!line || limit <= 0)
+    if (!line || (has_limit && limit <= 0))
         return 0;
 
     HIST_ENTRY** history = history_list();
@@ -1388,14 +1389,14 @@ static int32 history_suggester(lua_State* state)
     if (match_prev_cmd && g_dupe_mode.get() != 0)
         return 0;
 
-    if (match_prev_cmd || !firstword)
+    if (has_limit && (match_prev_cmd || !firstword))
         limit = min(limit, 3);
 
     const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
 
     bool substr = false;
     int32 n = 0;
-    lua_createtable(state, limit, 0);
+    lua_createtable(state, has_limit ? limit : 1, 0);
 
 again:
     const DWORD tick = GetTickCount();
@@ -1481,9 +1482,9 @@ again:
     if (n)
         return 1;
 
-    // If no prefix match found in first pass, do a second pass looking for
-    // substring matches.
-    if (!match_prev_cmd && !substr && limit > 1)
+    // If collecting suggestions for the suggestion list and no prefix match
+    // found in first pass, do a second pass looking for substring matches.
+    if (has_limit && !match_prev_cmd && !substr)
     {
         substr = true;
         goto again;

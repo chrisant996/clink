@@ -20,7 +20,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Reset cancel flag.
     _cancel = nil
 
-    local limit = clink._is_suggestionlist_mode() and 30 or 1
+    local limit = clink._is_suggestionlist_mode() and 30 or nil
     local results = {}
     local num = 0
 
@@ -36,7 +36,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                 if suggester then
                     local func = suggester.suggest
                     if func then
-                        local s, o = func(suggester, line, matches, math.min(10, limit - num))
+                        local s, o = func(suggester, line, matches, limit and math.min(10, limit - num) or nil)
                         if _cancel then
                             return
                         end
@@ -57,7 +57,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                                             dupes[full] = true
                                             table.insert(results, { es, eo, highlight=eh, tooltip=et, source=name })
                                             num = num + 1
-                                            if num >= limit then
+                                            if not limit or num >= limit then
                                                 return
                                             end
                                         end
@@ -287,7 +287,7 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
     local results = {}
     local count = line:getwordcount()
     if count > 0 then
-        if count == 1 then
+        if limit and count == 1 then
             limit = 1
         end
         local info = line:getwordinfo(count)
@@ -298,16 +298,23 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                 local m = matches:getmatch(i)
                 if not m then
                     break
-                elseif m ~= typed and (info.quoted or no_quotes or not rl.needquotes(m)) then
+                elseif m ~= typed and (limit or info.quoted or no_quotes or not rl.needquotes(m)) then
                     local matchlen = string.matchlen(m, typed)
                     if matchlen ~= 0 then
+                        local hofs = info.offset
+                        local append_quote = info.quoted
                         if matchlen < 0 then
                             matchlen = #m
+                        end
+                        if limit and not info.quoted and not no_quotes and rl.needquotes(m) then
+                            m = '"'..m
+                            hofs = hofs + 1
+                            append_quote = true
                         end
                         local append = matches:getappendchar(i)
                         if append and append ~= "" then
                             -- If append char and quoted, add closing quote.
-                            if info.quoted then
+                            if append_quote  then
                                 m = m..'"'
                             end
                             -- Add append char.  This makes suggestions more
@@ -317,9 +324,13 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                             -- list's duplicate removal works better.
                             m = m..append
                         end
-                        table.insert(results, { m, info.offset, highlight={info.offset, matchlen}, tooltip=matches:getdescription(i) })
-                        limit = limit - 1
-                        if limit <= 0 then
+                        table.insert(results, { m, info.offset, highlight={hofs, matchlen}, tooltip=matches:getdescription(i) })
+                        if limit then
+                            limit = limit - 1
+                            if limit <= 0 then
+                                break
+                            end
+                        else
                             break
                         end
                     end
