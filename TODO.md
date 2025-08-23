@@ -54,7 +54,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
   - [x] Configurable colors for suggestion list.
   - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
-  - [ ] Update color themes per suggestion list colors.
+  - [x] Update color themes per suggestion list colors.
   - [ ] Command description for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `clink-toggle-suggestion-list`.
   - [ ] Documentation for `suggestionlist.default` setting.
