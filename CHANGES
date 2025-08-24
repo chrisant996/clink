@@ -4,6 +4,10 @@
 
 #### v1.7.23
 
+- Added an interactive list mode for choosing from available suggestions.  This is similar to PowerShell's "listview" mode.
+  - Added a `clink-toggle-suggestion-list` command (<kbd>F2</kbd> by default) which toggles the suggestion list mode on/off.
+  - Added a `suggestionlist.default` setting which can make a Clink session start with the suggestion list mode on.
+  - Added new `color.suggestionlist*` color settings for the suggestion list colors.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
 
 #### v1.7.22
