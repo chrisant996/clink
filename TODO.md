@@ -62,10 +62,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] Configurable colors for suggestion list.
   - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
   - [x] Update color themes per suggestion list colors.
-  - [ ] Command description for `clink-toggle-suggestion-list`.
-  - [ ] Documentation for `clink-toggle-suggestion-list`.
-  - [ ] Documentation for `suggestionlist.default` setting.
-  - [ ] Update documentation about suggestions and completion.
+  - [x] Command description for `clink-toggle-suggestion-list`.
+  - [x] Documentation for `clink-toggle-suggestion-list`.
+  - [x] Documentation for `suggestionlist.default` setting.
+  - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
 ## Low Priority

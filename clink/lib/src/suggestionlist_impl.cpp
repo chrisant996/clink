@@ -46,17 +46,23 @@ extern int _rl_last_v_pos;
 static setting_bool s_suggestionlist_default(
     "suggestionlist.default",
     "Start with the suggestion list enabled",
-    "TBD",
+    "When this is true, a Clink session starts with the suggestion list enabled.\n"
+    "The suggestion list can be toggled on/off with F2 or whatever key is bound\n"
+    "to the clink-toggle-suggestion-list command.",
     false);
 
 static setting_color s_color_suggestionlist(
     "color.suggestionlist",
     "Color for suggestions in the suggestion list",
+    "For the selected suggestion, this is added to color.suggestionlist_selected.\n"
+    "Typically what works well is having this specify a foreground color.",
     "");
 
 static setting_color s_color_suggestionlist_markup(
     "color.suggestionlist_markup",
     "Color for markup in the suggestion list",
+    "For the selected suggestion, this is added to color.suggestionlist_selected.\n"
+    "Typically what works well is having this specify a foreground color.",
     "yellow");
 
 static setting_color s_color_suggestionlist_dim(
@@ -67,11 +73,17 @@ static setting_color s_color_suggestionlist_dim(
 static setting_color s_color_suggestionlist_highlight(
     "color.suggestionlist_highlight",
     "Color for highlight in the suggestion list",
+    "For the selected suggestion, this is added to color.suggestionlist_selected.\n"
+    "Typically what works well is having this specify a foreground color and/or\n"
+    "styles such as bold or underline.",
     "bright cyan");
 
 static setting_color s_color_suggestionlist_selected(
     "color.suggestionlist_selected",
     "Color for the current selected suggestion",
+    "This is combined with other suggestion list colors.  Typically what works\n"
+    "well is having this specify a background color, and having the other\n"
+    "suggestion list colors specify a foreground color.",
     "default on bright black");
 
 extern setting_int g_clink_scroll_offset;
