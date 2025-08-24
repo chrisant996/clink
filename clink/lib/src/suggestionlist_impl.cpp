@@ -763,7 +763,13 @@ void suggestionlist_impl::update_display()
     m_vert_scroll_column = 0;
 #endif
 
+    // No-op if there are no visible rows and nothing needs to be erased.
     if (m_visible_rows <= 0 && m_any_displayed.empty())
+        return;
+
+    // No-op if the selected item hasn't changed.  All other no-op cases set
+    // m_prev_displayed to -1 to force updating the display.
+    if (m_prev_displayed >= 0 && m_prev_displayed == m_index)
         return;
 
     // Hide cursor.
