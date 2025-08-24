@@ -50,14 +50,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] Maybe show a "tooltip" below the suggestion?  E.g. the `completion` suggester could send the description field as the tooltip.
   - [x] BUG: why does `ugrep --l` not list `--label=`?  Are matches with linked argmatchers broken?
   - [x] `operate-and-get-next` should initially suppress the suggestion list (and suggestions in general) just like `history-search-backward` and etc do.
-  - [ ] `git mer` is annoying because the list shows 10 completions before the history entries (because of my custom strategy order).
+  - [x] `git mer` is annoying because the list shows 10 completions before the history entries (because of my custom strategy order).
     - PSReadline `AggregateSuggestions()` works like this:
       - Always lists History first, followed by other predictor results.
       - If any custom predictors have results, then History is limited to only 3 results, and the rest of the 30 slots are divided evenly among the other predictors.
       - History always wins while removing duplicates.
-    - Maybe Clink should always put the "history" results first, and then aggregate the rest in the order they were provided?
-    - Maybe Clink should always tell suggesters that their limit is 30, and then discard surplus when aggregating?
-    - Maybe Clink should perform aggregation and duplicate removal in suggestionlist_impl?
+    - [x] Maybe Clink should always put the "history" results first, and then aggregate the rest in the order they were provided?
+    - [x] Maybe Clink should always tell suggesters that their limit is 30, and then discard surplus when aggregating?
+    - ~~Maybe Clink should perform aggregation and duplicate removal in suggestionlist_impl?~~
   - [x] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
   - [x] Configurable colors for suggestion list.
   - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?

@@ -15,6 +15,150 @@ end
 
 
 --------------------------------------------------------------------------------
+local function test_dupe(seen, entry, line, add)
+    local es = entry[1] or entry.suggestion or nil
+    local eo = entry[2] or entry.offset or nil
+    local full = line:getline():sub(1, (eo or 0) - 1)..es
+    if seen[full] then
+        return true
+    end
+    if add then
+        seen[full] = true
+    end
+end
+
+--------------------------------------------------------------------------------
+local function aggregate(line, results, limit)
+    local seen = {}
+    local uniques = {}
+    local begin_agg_index = 1
+    local count = 0
+
+    -- Remove duplicates for the first 3 history suggestions.  If any
+    -- suggestions remain for other suggesters after that, then only keep the
+    -- first 3 history suggestions.
+    if results[1] and results[1][1] and results[1][1].source == "history" then
+        begin_agg_index = 2
+        local index_analyzed_history
+        uniques[1] = {}
+        for j = 1, limit do
+            local e = results[1][j]
+            if not e then
+                break
+            end
+            if not test_dupe(seen, e, line, true--[[add]]) then
+                table.insert(uniques[1], e)
+                index_analyzed_history = j
+                count = count + 1
+                if count >= 3 then
+                    break
+                end
+            end
+        end
+        uniques[1].keep = #uniques[1]
+        local all_dupes = true
+        for i = 2, limit do
+            if not all_dupes then
+                break
+            end
+            local t = results[i]
+            if not t then
+                break
+            end
+            for j = 1, limit do
+                local e = t[j]
+                if not e then
+                    break
+                end
+                if not test_dupe(seen, e, line) then
+                    all_dupes = false
+                    break
+                end
+            end
+        end
+        if all_dupes then
+            -- Add the rest of the history entries, removing duplicates.
+            for j = index_analyzed_history + 1, limit do
+                local e = results[1][j]
+                if not e then
+                    break
+                end
+                if not test_dupe(seen, e, line, true--[[add]]) then
+                    table.insert(uniques[1], e)
+                end
+            end
+            uniques[1].keep = #uniques[1]
+            count = uniques[1].keep
+        end
+    end
+
+    -- Collect the rest of the non-dupe entries.
+    local total = count
+    for i = begin_agg_index, limit do
+        if not results[i] then
+            break
+        end
+        local sub_results = { keep=0 }
+        for j = 1, limit do
+            local e = results[i][j]
+            if not e then
+                break
+            end
+            if not test_dupe(seen, e, line, true--[[add]]) then
+                table.insert(sub_results, e)
+            end
+        end
+        if sub_results[1] then
+            sub_results.count = #sub_results
+            total = total + sub_results.count
+            table.insert(uniques, sub_results)
+        end
+    end
+
+    -- Aggregate evenly from the suggestion sources.
+    local kept = count
+    local done = (kept == total)
+    while not done do
+        local any
+        for i = begin_agg_index, limit do
+            local t = uniques[i]
+            if not t then
+                break
+            end
+            if t.keep < t.count then
+                any = true
+                t.keep = t.keep + 1
+                kept = kept + 1
+                if kept >= limit then
+                    done = true
+                    break
+                end
+            end
+        end
+        if not any then
+            done = true
+        end
+    end
+
+    -- Finally build the final result list.
+    local out = {}
+    for i = 1, limit do
+        local t = uniques[i]
+        if not t then
+            break
+        end
+        for j = 1, t.keep do
+            table.insert(out, t[j])
+        end
+    end
+
+    assert(#out <= limit)
+    assert(#out <= total)
+
+    return out
+end
+
+--------------------------------------------------------------------------------
 -- Returns true when canceled; otherwise nil.
 local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Reset cancel flag.
@@ -22,13 +166,25 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
 
     local limit = clink._is_suggestionlist_mode() and 30 or nil
     local results = {}
-    local num = 0
 
     -- Protected call to suggesters.
     local impl = function(line, matches) -- luacheck: ignore 432
         local ran = {}
-        local dupes = {}
         local strategy = settings.get("autosuggest.strategy"):explode()
+
+        if limit then
+            -- Move "history" to the front so it always shows up first in the
+            -- suggestion list (like in PSReadline for PowerShell).
+            for index, name in ipairs(strategy) do
+                if name == "history" then
+                    table.remove(strategy, index)
+                    table.insert(strategy, 1, name)
+                    break
+                end
+            end
+        end
+
+        -- Call the strategies in order.
         for _, name in ipairs(strategy) do
             if not ran[name] then
                 ran[name] = true
@@ -36,7 +192,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                 if suggester then
                     local func = suggester.suggest
                     if func then
-                        local s, o = func(suggester, line, matches, limit and math.min(10, limit - num) or nil)
+                        local s, o = func(suggester, line, matches, limit)
                         if _cancel then
                             return
                         end
@@ -44,23 +200,24 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                             if type(s) ~= "table" then
                                 s = { { s, o } }
                             end
-                            if type(s) == "table" then
+                            if type(s) == "table" and s[1] then
+                                local sub_results = {}
                                 for _, e in ipairs(s) do
                                     local es = e[1] or e.suggestion or nil
                                     local eo = e[2] or e.offset or nil
                                     local eh = e.highlight
                                     local et = e.tooltip
                                     if es then
-                                        -- Don't add duplicates.
-                                        local full = line:getline():sub(1, (eo or 0) - 1)..es
-                                        if not dupes[full] then
-                                            dupes[full] = true
-                                            table.insert(results, { es, eo, highlight=eh, tooltip=et, source=name })
-                                            num = num + 1
-                                            if not limit or num >= limit then
-                                                return
-                                            end
+                                        table.insert(sub_results, { es, eo, highlight=eh, tooltip=et, source=name })
+                                        if not limit then
+                                            break
                                         end
+                                    end
+                                end
+                                if sub_results[1] then
+                                    table.insert(results, sub_results)
+                                    if not limit then
+                                        break
                                     end
                                 end
                             end
@@ -84,6 +241,12 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
 
     if _cancel then
         return true
+    end
+
+    if limit then
+        results = aggregate(line, results, limit)
+    else
+        results = results[1]
     end
 
     local info = line:getwordinfo(line:getwordcount())
@@ -287,14 +450,15 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
     local results = {}
     local count = line:getwordcount()
     if count > 0 then
-        if limit and count == 1 then
-            limit = 1
-        end
+        -- if limit and count == 1 then
+        --     limit = 1
+        -- end
         local info = line:getwordinfo(count)
         if info.offset < line:getcursor() then
             local typed = line:getline():sub(info.offset, line:getcursor())
             local no_quotes = matches:getsuppressquoting()
-            for i = 1, 10, 1 do
+            local loop_max = limit or 99
+            for i = 1, loop_max do
                 local m = matches:getmatch(i)
                 if not m then
                     break
@@ -324,7 +488,7 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                             -- list's duplicate removal works better.
                             m = m..append
                         end
-                        table.insert(results, { m, info.offset, highlight={hofs, matchlen}, tooltip=matches:getdescription(i) })
+                        table.insert(results, { m, info.offset, highlight={hofs, matchlen}, tooltip=matches:getdescription(i) }) -- luacheck: no max line length
                         if limit then
                             limit = limit - 1
                             if limit <= 0 then
