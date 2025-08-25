@@ -81,7 +81,7 @@ suggestions& suggestions::operator = (const suggestions& other)
     clear();
     m_line = other.m_line.c_str();
     for (const auto& s : other.m_items)
-        add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str(), s.m_highlight_offset, s.m_highlight_length, s.m_tooltip.c_str());
+        add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str(), s.m_highlight_offset, s.m_highlight_length, s.m_tooltip.c_str(), s.m_history_index);
     m_generation_id = other.m_generation_id;
     return *this;
 }
@@ -108,9 +108,16 @@ bool suggestions::is_same(const suggestions& other) const
         assert(other.m_items.size() == m_items.size());
         if (other.m_items.size() && m_items.size())
         {
-            assert(other.m_items[0].m_suggestion.equals(m_items[0].m_suggestion.c_str()));
-            assert(other.m_items[0].m_suggestion_offset == m_items[0].m_suggestion_offset);
-            assert(other.m_items[0].m_source.equals(m_items[0].m_source.c_str()));
+            for (size_t index = 0; index < m_items.size(); ++index)
+            {
+                assert(other.m_items[index].m_suggestion.equals(m_items[index].m_suggestion.c_str()));
+                assert(other.m_items[index].m_suggestion_offset == m_items[index].m_suggestion_offset);
+                assert(other.m_items[index].m_highlight_offset == m_items[index].m_highlight_offset);
+                assert(other.m_items[index].m_highlight_length == m_items[index].m_highlight_length);
+                assert(other.m_items[index].m_tooltip.equals(m_items[index].m_tooltip.c_str()));
+                assert(other.m_items[index].m_source.equals(m_items[index].m_source.c_str()));
+                assert(other.m_items[index].m_history_index == m_items[index].m_history_index);
+            }
         }
     }
 #endif
@@ -134,7 +141,7 @@ void suggestions::set_line(const char* line, int32 length)
 //------------------------------------------------------------------------------
 void suggestions::add(const char* text, uint32 offset, const char* source,
                       int32 highlight_offset, int32 highlight_length,
-                      const char* tooltip)
+                      const char* tooltip, int32 history_index)
 {
     suggestion suggestion;
     suggestion.m_suggestion = text;
@@ -143,6 +150,7 @@ void suggestions::add(const char* text, uint32 offset, const char* source,
     suggestion.m_highlight_length = highlight_length;
     suggestion.m_tooltip = tooltip;
     suggestion.m_source = source;
+    suggestion.m_history_index = history_index;
     m_items.emplace_back(std::move(suggestion));
 }
 

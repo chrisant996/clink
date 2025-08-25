@@ -823,13 +823,18 @@ set_saved_history (void)
 int
 rl_operate_and_get_next (int count, int c)
 {
+/* begin_clink_change */
+  int where = get_suggestion_list_selected_history_index ();
+/* end_clink_change */
+
   /* Accept the current line. */
   rl_newline (1, c);
 
 /* begin_clink_change */
   //saved_history_logical_offset = rl_explicit_arg ? count : where_history () + history_base + 1;
   {
-    int where = rl_get_history_search_pos ();
+    if (where < 0)
+      where = rl_get_history_search_pos ();
     if (where < 0)
       where = where_history ();
     saved_history_logical_offset = rl_explicit_arg ? count : where + history_base + 1;

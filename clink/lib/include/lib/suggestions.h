@@ -26,6 +26,7 @@ struct suggestion
     int32           m_highlight_length = -1;
     str_moveable    m_tooltip;
     str_moveable    m_source;
+    int32           m_history_index = -1;
 };
 
 //------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ public:
     void            set_line(const char* line, int32 length=-1);
     void            add(const char* text, uint32 offset, const char* source,
                         int32 highlight_offset, int32 highlight_length,
-                        const char* tooltip);
+                        const char* tooltip, int32 history_index);
     const suggestion& operator [] (uint32 index) const { return m_items[index]; }
     const suggestion& get(uint32 index) const { return m_items[index]; }
     void            remove(uint32 index);

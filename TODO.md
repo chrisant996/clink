@@ -62,6 +62,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] Configurable colors for suggestion list.
   - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
   - [x] Update color themes per suggestion list colors.
+  - [x] Make `operate-and-get-next` work when a suggestion is selected!
+    - [x] Make `history_suggester` report the history index for each entry.
+    - [x] Make `operate-and-get-next` able to ask the suggestion list what is the current selected history index.
+    - [x] Make sure that editing the input line after selecting a history index reports `-1` for the history index.
+  - [ ] Make ESC or cancelling from the suggestion list set the actual history index?
+  - [ ] Should enabling the suggestion list always reset the history index back to the end of the history?
   - [x] Command description for `clink-toggle-suggestion-list`.
   - [x] Documentation for `clink-toggle-suggestion-list`.
   - [x] Documentation for `suggestionlist.default` setting.

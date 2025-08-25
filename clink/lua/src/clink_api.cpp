@@ -1474,6 +1474,10 @@ again:
         }
         lua_rawset(state, -3);
 
+        lua_pushliteral(state, "history");
+        lua_pushinteger(state, i + 1);
+        lua_rawset(state, -3);
+
         lua_rawseti(state, -2, ++n);
         if (n >= limit)
             break;
@@ -1571,13 +1575,25 @@ static int32 set_suggestion_result(lua_State* state)
                 const char* source = optstring(state, -1, nullptr);
                 lua_pop(state, 1);
 
+                int32 history = -1;
+                if (source && !strcmp(source, "history"))
+                {
+                    lua_pushliteral(state, "history");
+                    lua_rawget(state, -2);
+                    const auto _history = optinteger(state, -1, -1);
+                    lua_pop(state, 1);
+                    history = _history - 1;
+                    if (history < 0 || history >= history_length)
+                        history = -1;
+                }
+
                 int32 offset = _offset - 1;
                 if (offset < 0 || offset > line_len)
                     offset = line_len;
                 if (!source || !*source)
                     source = "unknown";
 
-                suggestions.add(suggestion, offset, source, hs, hl, tooltip);
+                suggestions.add(suggestion, offset, source, hs, hl, tooltip, history);
             }
 
             lua_pop(state, 1);
