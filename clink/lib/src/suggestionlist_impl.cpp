@@ -673,6 +673,7 @@ void suggestionlist_impl::init_suggestions()
     if (id != m_suggestions.get_generation_id())
     {
         m_index = -1;
+        m_prev_displayed = -1;
         m_count = m_suggestions.size();
         m_clear_display = !m_any_displayed.empty();
         m_ignore_scroll_offset = false;
@@ -767,9 +768,11 @@ void suggestionlist_impl::update_display()
     if (m_visible_rows <= 0 && m_any_displayed.empty())
         return;
 
-    // No-op if the selected item hasn't changed.  All other no-op cases set
+    // No-op if the selected item hasn't changed, unless the list is not
+    // active and m_any_displayed is not empty.  All other no-op cases set
     // m_prev_displayed to -1 to force updating the display.
-    if (m_prev_displayed >= 0 && m_prev_displayed == m_index)
+    if (m_prev_displayed >= 0 && m_prev_displayed == m_index &&
+        !(!is_active() && !m_any_displayed.empty()))
         return;
 
     // Hide cursor.
