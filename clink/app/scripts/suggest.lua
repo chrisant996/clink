@@ -209,7 +209,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
                                     local et = e.tooltip
                                     local ei = e.history
                                     if es then
-                                        table.insert(sub_results, { es, eo, highlight=eh, tooltip=et, source=name, history=ei })
+                                        table.insert(sub_results, { es, eo, highlight=eh, tooltip=et, source=name, history=ei }) -- luacheck: no max line length
                                         if not limit then
                                             break
                                         end
