@@ -73,6 +73,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - ~~Make ESC or cancelling from the suggestion list set the actual history index?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - [x] Look for other commands that might not yet interact well with suggestion list.  _[I didn't see any more commands that seem like they would need special treatment in the suggestion list.]_
+  - [ ] BUG: type `ii` and `make_suggestion_list_string()` formats the first entry wrongly -- the matching `ii` part is way off the screen to the right, but it should have been roughly centered and highlighted, with the left and right ends truncated with an ellipsis.
   - [x] Command description for `clink-toggle-suggestion-list`.
   - [x] Documentation for `clink-toggle-suggestion-list`.
   - [x] Documentation for `suggestionlist.default` setting.
