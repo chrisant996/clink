@@ -120,5 +120,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
+bool is_suggestion_list_enabled();
 void update_suggestion_list_display(bool clear=false);
 bool point_in_suggestion_list(int32 in);

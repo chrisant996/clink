@@ -1780,7 +1780,8 @@ void display_manager::display()
                                           !g_display_manager_no_comment_row &&
                                           g_history_show_preview.get() &&
                                           g_history_autoexpand.get() &&
-                                          g_expand_mode.get() > 0);
+                                          g_expand_mode.get() > 0 &&
+                                          !is_suggestion_list_enabled());
 
     // Max number of rows to use when displaying the input line.
     uint32 max_rows = g_input_rows.get();
@@ -2097,7 +2098,8 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
-    if (need_update && _rl_vis_botlin < _rl_screenheight && !m_is_transient && !g_display_manager_no_comment_row)
+    if (need_update && _rl_vis_botlin < _rl_screenheight && !m_is_transient &&
+        !g_display_manager_no_comment_row && !is_suggestion_list_enabled())
     {
         str_moveable in;
         if (m_forced_comment_row_cursorpos == rl_point)

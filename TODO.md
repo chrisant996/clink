@@ -66,6 +66,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] Make `history_suggester` report the history index for each entry.
     - [x] Make `operate-and-get-next` able to ask the suggestion list what is the current selected history index.
     - [x] Make sure that editing the input line after selecting a history index reports `-1` for the history index.
+  - [x] BUG: using and canceling/finishing `clink-select-complete` while the suggestion list is enabled accidentally allowed the comment row to show over top of the suggestion list.
+  - [ ] REVIEW: double check that line_buffer_fingerprint changes haven't broken the match pipeline optimization and started running generators on every key press.
   - [ ] Make ESC or cancelling from the suggestion list set the actual history index?
   - [ ] Should enabling the suggestion list always reset the history index back to the end of the history?
   - [x] Command description for `clink-toggle-suggestion-list`.

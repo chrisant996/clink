@@ -151,7 +151,7 @@ void suggestionlist_impl::allow(bool allow)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::enable(editor_module::result& result)
 {
-    s_suggestion_list_enabled = true;
+    s_suggestion_list_enabled = true; // Also disables the comment row.
 
     clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
     init_suggestions();
@@ -165,9 +165,6 @@ void suggestionlist_impl::enable(editor_module::result& result)
 
     // Make sure there's room.
     update_layout();
-
-    // Disable the comment row.
-    g_display_manager_no_comment_row = true;
 
     // Activate key bindings.
     assert(m_prev_bind_group < 0);
@@ -653,8 +650,7 @@ void suggestionlist_impl::cancel(editor_module::result& result)
 
     update_display();
 
-    g_display_manager_no_comment_row = false;
-    s_suggestion_list_enabled = false;
+    s_suggestion_list_enabled = false; // Also re-enables the comment row.
 }
 
 //------------------------------------------------------------------------------
@@ -1431,6 +1427,12 @@ extern "C" int get_suggestion_list_selected_history_index(void)
         return -1;
 
     return s_suggestionlist->get_selected_history_index();
+}
+
+//------------------------------------------------------------------------------
+bool is_suggestion_list_enabled()
+{
+    return s_suggestion_list_enabled;
 }
 
 //------------------------------------------------------------------------------
