@@ -68,8 +68,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] Make sure that editing the input line after selecting a history index reports `-1` for the history index.
   - [x] BUG: using and canceling/finishing `clink-select-complete` while the suggestion list is enabled accidentally allowed the comment row to show over top of the suggestion list.
   - [x] Make `remove-history` get the history index from the selected suggestion list entry.  And if an entry is selected but doesn't have a history index, then `remove-history` should do nothing.
-  - [ ] REVIEW: is there a bug if UP to a history entry, make edits, then make more edits to return the line to its original content, then invoke `remove-history`?  Does it mess up the undo list(s)?
-  - [ ] REVIEW: is there a bug if UP to a history entry, make edits, then DOWN in suggestion list to a history entry, then invoke `remove-history`?  What should happen?  What does happen?
+  - [x] REVIEW: is there a bug if UP to a history entry, make edits, then make more edits to return the line to its original content, then invoke `remove-history`?  Does it mess up the undo list(s)?  _[Seems to work fine.]_
+  - [x] REVIEW: is there a bug if UP to a history entry, make edits, then DOWN in suggestion list to a history entry, then invoke `remove-history`?  What should happen?  What does happen?  _[Seems to work fine.]_
   - ~~Make ESC or cancelling from the suggestion list set the actual history index?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - [ ] Look for other commands that might not yet interact well with suggestion list.
