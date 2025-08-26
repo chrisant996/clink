@@ -58,7 +58,7 @@ void reset_display_readline(void);
 void end_prompt(int crlf);
 void lock_against_suggestions(int lock);
 void clear_suggestion_list_index(void);
-int get_suggestion_list_selected_history_index(void);
+int get_suggestion_list_selected_history_index(int* index);
 void wait_for_input(unsigned long timeout);
 
 #define HAVE_GETTIMEOFDAY 1

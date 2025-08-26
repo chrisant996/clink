@@ -28,7 +28,7 @@ public:
     bool            toggle(editor_module::result& result);
     bool            point_within(int32 in) const;
     void            clear_index(bool force=false);
-    int32           get_selected_history_index() const;
+    bool            get_selected_history_index(int32& index) const;
     bool            is_active() const;
     bool            is_active_even_if_hidden() const;
     bool            test_frozen();

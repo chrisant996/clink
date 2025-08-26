@@ -824,7 +824,8 @@ int
 rl_operate_and_get_next (int count, int c)
 {
 /* begin_clink_change */
-  int where = get_suggestion_list_selected_history_index ();
+  int where;
+  get_suggestion_list_selected_history_index (&where);
 /* end_clink_change */
 
   /* Accept the current line. */
@@ -890,10 +891,18 @@ get_effective_where (void)
 }
 
 /* Remove the current line from the history.  If the line is modified or
-   empty,just ding. */
+   empty, just ding. */
 int
 rl_remove_history (int count, int key)
 {
+  int suggestionlist_history_index;
+  if (get_suggestion_list_selected_history_index (&suggestionlist_history_index))
+    {
+      /* For now, just do nothing while a suggestion list item is selected. */
+      rl_ding ();
+      return 0;
+    }
+
   int search_pos = rl_get_history_search_pos ();
   const int old_where = get_effective_where ();
 

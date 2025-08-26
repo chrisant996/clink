@@ -1328,12 +1328,16 @@ void suggestionlist_impl::clear_index(bool force)
 }
 
 //------------------------------------------------------------------------------
-int32 suggestionlist_impl::get_selected_history_index() const
+bool suggestionlist_impl::get_selected_history_index(int32& index) const
 {
     if (!is_active() || m_index < 0)
-        return -1;
+    {
+        index = -1;
+        return false;
+    }
 
-    return m_suggestions[m_index].m_history_index;
+    index = m_suggestions[m_index].m_history_index;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -1427,12 +1431,15 @@ extern "C" void clear_suggestion_list_index(void)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int get_suggestion_list_selected_history_index(void)
+extern "C" int get_suggestion_list_selected_history_index(int* index)
 {
     if (!s_suggestionlist)
-        return -1;
+    {
+        *index = -1;
+        return false;
+    }
 
-    return s_suggestionlist->get_selected_history_index();
+    return s_suggestionlist->get_selected_history_index(*index);
 }
 
 //------------------------------------------------------------------------------
