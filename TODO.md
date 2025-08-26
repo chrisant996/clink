@@ -72,7 +72,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [x] REVIEW: is there a bug if UP to a history entry, make edits, then DOWN in suggestion list to a history entry, then invoke `remove-history`?  What should happen?  What does happen?  _[Seems to work fine.]_
   - ~~Make ESC or cancelling from the suggestion list set the actual history index?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
-  - [ ] Look for other commands that might not yet interact well with suggestion list.
+  - [x] Look for other commands that might not yet interact well with suggestion list.  _[I didn't see any more commands that seem like they would need special treatment in the suggestion list.]_
   - [x] Command description for `clink-toggle-suggestion-list`.
   - [x] Documentation for `clink-toggle-suggestion-list`.
   - [x] Documentation for `suggestionlist.default` setting.
