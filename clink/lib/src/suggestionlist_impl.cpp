@@ -769,7 +769,13 @@ void suggestionlist_impl::update_display()
     // m_prev_displayed to -1 to force updating the display.
     if (m_prev_displayed >= 0 && m_prev_displayed == m_index &&
         !(!is_active() && !m_any_displayed.empty()))
-        return;
+    {
+#ifdef DEBUG
+        str<> value;
+        if (!os::get_env("DEBUG_NO_SUGGESTIONLIST_DISPLAY_OPTIMIZATION", value) || !atoi(value.c_str()))
+#endif
+            return;
+    }
 
     // Hide cursor.
     const bool was_visible = show_cursor(false);
