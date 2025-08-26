@@ -1134,14 +1134,18 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
 
     // Build the whole line.
     whole.concat(m_suggestions.get_line().c_str(), match_offset);
-    uint32 pre_cells = clink_wcswidth_expandctrl(whole.c_str(), match_offset);
+    const uint32 pre_cells = clink_wcswidth_expandctrl(whole.c_str(), match_offset);
     whole.concat(s.m_suggestion.c_str(), s.m_suggestion.length());
     const uint32 suggestion_cells = clink_wcswidth_expandctrl(whole.c_str() + match_offset, whole.length() - match_offset);
     assert(s.m_suggestion.length() == whole.length() - match_offset);
 
-    // Add highlight colors.
+    // Find the highlight inside it.
     const int32 hs = min<int32>(s.m_highlight_offset, whole.length());
     const int32 he = min<int32>(s.m_highlight_offset + s.m_highlight_length, whole.length());
+    uint32 pre_highlight = hs >= 0 ? clink_wcswidth_expandctrl(whole.c_str(), hs) : 0;
+    uint32 post_highlight = hs >= 0 ? clink_wcswidth_expandctrl(whole.c_str() + hs, whole.length() - hs) : 0;
+
+    // Add highlight colors.
     const char* after_highlight = whole.c_str();
     if (hs >= 0 && he > hs)
     {
@@ -1185,15 +1189,15 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
     str<128> tmp4;
     const char* unexpanded_out = after_highlight;
     int32 cells = pre_cells + suggestion_cells;
-    if (cells >= width)
+    if (cells >= width && hs >= 0)
     {
-        if (int32(width) - int32(suggestion_cells + 1) > int32(width) / 8)
-            pre_cells = min<>(pre_cells, width - (suggestion_cells + 1));
+        if (int32(width) - int32(post_highlight + 1) > int32(width) / 8)
+            pre_highlight = min<>(pre_highlight, width - (post_highlight + 1));
         else
-            pre_cells = min<>(pre_cells, width / 8);
-        const int32 pre_width = ellipsify_ex(after_highlight, pre_cells + suggestion_cells, ellipsify_mode::LEFT, tmp3, nullptr, true/*expand_ctrl*/);
-        const int32 pre_len = tmp3.length() - suggestion_len;
-        assert(cell_count(tmp3.c_str(), pre_len) == pre_width - suggestion_cells);
+            pre_highlight = min<>(pre_highlight, width / 8);
+        const int32 width_after_trim1 = ellipsify_ex(after_highlight, pre_highlight + post_highlight, ellipsify_mode::LEFT, tmp3, nullptr, true/*expand_ctrl*/);
+        const int32 len_of_trim1 = tmp3.length() - (str_len(after_highlight) - hs);
+        assert(cell_count(tmp3.c_str(), len_of_trim1) == width_after_trim1 - post_highlight);
         cells = ellipsify_ex(tmp3.c_str(), width - 1, ellipsify_mode::RIGHT, tmp4, nullptr, true/*expand_ctrl*/);
         assert(cells <= width);
         assert(cells == cell_count(tmp4.c_str()));
