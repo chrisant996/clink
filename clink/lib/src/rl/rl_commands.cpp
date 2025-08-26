@@ -285,7 +285,12 @@ int32 host_add_history(int32, const char* line)
 int32 host_remove_history(int32 rl_history_index, const char* line)
 {
     history_database* h = history_database::get();
-    return h && h->remove(rl_history_index, line);
+    if (!h || !h->remove(rl_history_index, line))
+        return false;
+
+    extern bool remove_suggestion_list_history_index(int32 rl_history_index);
+    remove_suggestion_list_history_index(rl_history_index);
+    return true;
 }
 
 

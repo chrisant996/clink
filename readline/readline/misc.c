@@ -897,14 +897,16 @@ rl_remove_history (int count, int key)
 {
   int suggestionlist_history_index;
   if (get_suggestion_list_selected_history_index (&suggestionlist_history_index))
-    {
-      /* For now, just do nothing while a suggestion list item is selected. */
-      rl_ding ();
-      return 0;
-    }
+    if (suggestionlist_history_index < 0)
+      {
+      	rl_ding ();
+      	return 0;
+      }
 
   int search_pos = rl_get_history_search_pos ();
-  const int old_where = get_effective_where ();
+  const int old_where = ((suggestionlist_history_index >= 0) ?
+			  suggestionlist_history_index :
+			  get_effective_where ());
 
   /* The history search commands use rl_last_func to identify the active
      history search mode.  rl_remove_history messes that up, so it gives
@@ -935,41 +937,49 @@ rl_remove_history (int count, int key)
     }
 
   /* Queue up the next entry along the current history search route. */
-  int flags = rl_get_history_search_flags ();
-  if (search_pos >= 0)
-    {
-      if (flags & ANCHORED_SEARCH)
-	rl_history_search_backward (1, key);
-      else
-	rl_history_substr_search_backward (1, key);
-    }
-  else
-    rl_get_previous_history (1, key);
-
-  /* No more in that direction?  Try the other direction. */
   int no_more = 0;
-  if (get_effective_where () == old_where)
+  if (suggestionlist_history_index < 0)
     {
+      int flags = rl_get_history_search_flags ();
       if (search_pos >= 0)
 	{
 	  if (flags & ANCHORED_SEARCH)
-	    rl_history_search_backward (-1, key);
+	    rl_history_search_backward (1, key);
 	  else
-	    rl_history_substr_search_backward (-1, key);
+	    rl_history_substr_search_backward (1, key);
 	}
       else
-	rl_get_previous_history (-1, key);
+	rl_get_previous_history (1, key);
 
-      /* No more in the other direction, either?  The route is empty. */
+      /* No more in that direction?  Try the other direction. */
       if (get_effective_where () == old_where)
-	no_more = 1;
+	{
+	  if (search_pos >= 0)
+	    {
+	      if (flags & ANCHORED_SEARCH)
+		rl_history_search_backward (-1, key);
+	      else
+		rl_history_substr_search_backward (-1, key);
+	    }
+	  else
+	    rl_get_previous_history (-1, key);
+
+	  /* No more in the other direction, either?  The route is empty. */
+	  if (get_effective_where () == old_where)
+	    no_more = 1;
+	}
     }
 
   /* Remove the history entry. */
   hist = remove_history (old_where);
   free_history_entry (hist);
 
-  if (no_more)
+  if (suggestionlist_history_index >= 0)
+    {
+      /* Nothing to do here.  rl_remove_history_hook already let
+         suggestionlist_impl update the suggestion list accordingly. */
+    }
+  else if (no_more)
     {
       rl_replace_line ("", 1);
       using_history ();

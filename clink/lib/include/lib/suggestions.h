@@ -49,11 +49,13 @@ public:
     const suggestion& operator [] (uint32 index) const { return m_items[index]; }
     const suggestion& get(uint32 index) const { return m_items[index]; }
     void            remove(uint32 index);
+    void            remove_if_history_index(uint32 history_index);
     uint32          get_generation_id() const { return m_generation_id; }
 private:
     str_moveable    m_line;         // Input line off which suggestions are based.
     std::vector<suggestion> m_items;
     uint32          m_generation_id = 0;
+    bool            m_dirtied = false;
 };
 
 //------------------------------------------------------------------------------

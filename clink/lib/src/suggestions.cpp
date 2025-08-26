@@ -83,6 +83,7 @@ suggestions& suggestions::operator = (const suggestions& other)
     for (const auto& s : other.m_items)
         add(s.m_suggestion.c_str(), s.m_suggestion_offset, s.m_source.c_str(), s.m_highlight_offset, s.m_highlight_length, s.m_tooltip.c_str(), s.m_history_index);
     m_generation_id = other.m_generation_id;
+    m_dirtied = other.m_dirtied;
     return *this;
 }
 
@@ -92,6 +93,7 @@ suggestions& suggestions::operator = (suggestions&& other)
     m_line = std::move(other.m_line);
     m_items = std::move(other.m_items);
     m_generation_id = other.m_generation_id;
+    m_dirtied = other.m_dirtied;
     other.clear();
     return *this;
 }
@@ -102,11 +104,11 @@ bool suggestions::is_same(const suggestions& other) const
     if (other.m_generation_id != m_generation_id)
         return false;
 #ifdef DEBUG
-    if (m_generation_id)
+    if (m_generation_id && !m_dirtied && !other.m_dirtied)
     {
         assert(other.m_line.equals(m_line.c_str()));
         assert(other.m_items.size() == m_items.size());
-        if (other.m_items.size() && m_items.size())
+        if (other.m_items.size() == m_items.size())
         {
             for (size_t index = 0; index < m_items.size(); ++index)
             {
@@ -130,6 +132,7 @@ void suggestions::clear(uint32 generation_id)
     m_line.clear();
     m_items.clear();
     m_generation_id = generation_id;
+    m_dirtied = false;
 }
 
 //------------------------------------------------------------------------------
@@ -158,6 +161,27 @@ void suggestions::add(const char* text, uint32 offset, const char* source,
 void suggestions::remove(uint32 index)
 {
     m_items.erase(m_items.begin() + index);
+    m_dirtied = true;
+}
+
+//------------------------------------------------------------------------------
+void suggestions::remove_if_history_index(uint32 history_index)
+{
+    assert(history_index >= 0);
+    for (auto it = m_items.begin(); it != m_items.end();)
+    {
+        if (it->m_history_index == history_index)
+        {
+            it = m_items.erase(it);
+        }
+        else
+        {
+            if (it->m_history_index > history_index)
+                --it->m_history_index;
+            ++it;
+        }
+    }
+    m_dirtied = true;
 }
 
 

@@ -768,7 +768,7 @@ void suggestionlist_impl::update_display()
     // active and m_any_displayed is not empty.  All other no-op cases set
     // m_prev_displayed to -1 to force updating the display.
     if (m_prev_displayed >= 0 && m_prev_displayed == m_index &&
-        !(!is_active() && !m_any_displayed.empty()))
+        !(!is_active() && !m_any_displayed.empty()) && !m_clear_display)
     {
 #ifdef DEBUG
         str<> value;
@@ -1270,16 +1270,9 @@ void suggestionlist_impl::apply_suggestion(int32 index)
 
     m_buffer->draw();
 
-    if (old_botlin != _rl_vis_botlin)
-    {
-        // Clear to end of screen.
-        m_printer->print("\x1b[J");
-
-        // Update layout.
-        m_prev_displayed = -1;
-        update_layout();
-        update_display();
-    }
+    // NOTE:  This doesn't need to clear the screen or update layout and
+    // display when _rl_vis_botlin changes, because display_manager (inside
+    // the draw() call above) calls update_suggestion_list to redisplay it.
 }
 
 //------------------------------------------------------------------------------
@@ -1337,6 +1330,32 @@ bool suggestionlist_impl::get_selected_history_index(int32& index) const
     }
 
     index = m_suggestions[m_index].m_history_index;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool suggestionlist_impl::remove_history_index(int32 history_index)
+{
+    if (!is_active() || m_index < 0)
+        return false;
+
+    if (m_suggestions[m_index].m_history_index != history_index)
+        return false;
+
+    m_suggestions.remove_if_history_index(history_index);
+    m_count = m_suggestions.size();
+    if (m_index >= m_count)
+        m_index = m_count - 1;
+
+    // Set m_clear_display before calling apply_suggestion so it can do the
+    // clear if necessary.  That lets the subsequent update_display call turn
+    // into a no-op in that case.
+    m_clear_display = true;
+
+    apply_suggestion(m_index);
+
+    update_layout();
+    update_display();
     return true;
 }
 
@@ -1440,6 +1459,15 @@ extern "C" int get_suggestion_list_selected_history_index(int* index)
     }
 
     return s_suggestionlist->get_selected_history_index(*index);
+}
+
+//------------------------------------------------------------------------------
+bool remove_suggestion_list_history_index(int32 rl_history_index)
+{
+    if (!s_suggestionlist)
+        return false;
+
+    return s_suggestionlist->remove_history_index(rl_history_index);
 }
 
 //------------------------------------------------------------------------------

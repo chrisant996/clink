@@ -29,6 +29,7 @@ public:
     bool            point_within(int32 in) const;
     void            clear_index(bool force=false);
     bool            get_selected_history_index(int32& index) const;
+    bool            remove_history_index(int32 history_index);
     bool            is_active() const;
     bool            is_active_even_if_hidden() const;
     bool            test_frozen();

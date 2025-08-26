@@ -57,7 +57,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
       - History always wins while removing duplicates.
     - [x] Maybe Clink should always put the "history" results first, and then aggregate the rest in the order they were provided?
     - [x] Maybe Clink should always tell suggesters that their limit is 30, and then discard surplus when aggregating?
-    - ~~Maybe Clink should perform aggregation and duplicate removal in suggestionlist_impl?~~
+    - ~~Maybe Clink should perform aggregation and duplicate removal in suggestionlist_impl?~~  _[No, do it in Lua where it's easier to do, at least until/unless any performance issues are encountered.]_
   - [x] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
   - [x] Configurable colors for suggestion list.
   - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
@@ -67,9 +67,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] Make `operate-and-get-next` able to ask the suggestion list what is the current selected history index.
     - [x] Make sure that editing the input line after selecting a history index reports `-1` for the history index.
   - [x] BUG: using and canceling/finishing `clink-select-complete` while the suggestion list is enabled accidentally allowed the comment row to show over top of the suggestion list.
-  - [ ] Make `remove-history` get the history index from the selected suggestion list entry.  And if an entry is selected but doesn't have a history index, then `remove-history` should do nothing.
-  - [ ] Make ESC or cancelling from the suggestion list set the actual history index?
-  - [ ] Should enabling the suggestion list always reset the history index back to the end of the history?
+  - [x] Make `remove-history` get the history index from the selected suggestion list entry.  And if an entry is selected but doesn't have a history index, then `remove-history` should do nothing.
+  - [ ] REVIEW: is there a bug if UP to a history entry, make edits, then make more edits to return the line to its original content, then invoke `remove-history`?  Does it mess up the undo list(s)?
+  - [ ] REVIEW: is there a bug if UP to a history entry, make edits, then DOWN in suggestion list to a history entry, then invoke `remove-history`?  What should happen?  What does happen?
+  - ~~Make ESC or cancelling from the suggestion list set the actual history index?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
+  - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
+  - [ ] Look for other commands that might not yet interact well with suggestion list.
   - [x] Command description for `clink-toggle-suggestion-list`.
   - [x] Documentation for `clink-toggle-suggestion-list`.
   - [x] Documentation for `suggestionlist.default` setting.

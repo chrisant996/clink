@@ -1389,8 +1389,9 @@ static int32 history_suggester(lua_State* state)
     if (match_prev_cmd && g_dupe_mode.get() != 0)
         return 0;
 
-    if (has_limit && (match_prev_cmd || !firstword))
-        limit = min(limit, 3);
+    // Make 'history' never contribute more than 10 suggestions.
+    if (has_limit)
+        limit = min(limit, 10);
 
     const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
 
