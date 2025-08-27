@@ -72,9 +72,9 @@ int _rl_history_saved_point = -1;
 
 /* begin_clink_change */
 /* If non-null, called when rl_add_history adds a history line. */
-rl_history_hook_func_t *rl_add_history_hook = (rl_history_hook_func_t *)NULL;
+rl_add_history_hook_func_t *rl_add_history_hook = (rl_add_history_hook_func_t *)NULL;
 /* If non-null, called when rl_remove_history removes a history line. */
-rl_history_hook_func_t *rl_remove_history_hook = (rl_history_hook_func_t *)NULL;
+rl_remove_history_hook_func_t *rl_remove_history_hook = (rl_remove_history_hook_func_t *)NULL;
 /* If non-null, called when the line buffer is replaced from history. */
 rl_voidfunc_t *rl_on_replace_from_history_hook = (rl_voidfunc_t *)NULL;
 /* end_clink_change */
@@ -859,12 +859,14 @@ rl_add_history (int count, int key)
       rl_ding ();
       return 0;
     }
-  if (rl_add_history_hook && !(*rl_add_history_hook) (history_length - 1, rl_line_buffer))
+  const char* timestamp = 0;
+  if (rl_add_history_hook && !(*rl_add_history_hook) (history_length - 1, rl_line_buffer, &timestamp))
     {
       rl_ding ();
       return 0;
     }
   add_history (rl_line_buffer);
+  add_history_time(timestamp);
 
   rl_maybe_replace_line ();
   using_history ();

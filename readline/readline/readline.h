@@ -701,9 +701,9 @@ extern rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook;
 
 /* begin_clink_change */
 /* Called when rl_add_history adds a history line. */
-extern rl_history_hook_func_t *rl_add_history_hook;
+extern rl_add_history_hook_func_t *rl_add_history_hook;
 /* Called when rl_remove_history removes a history line. */
-extern rl_history_hook_func_t *rl_remove_history_hook;
+extern rl_remove_history_hook_func_t *rl_remove_history_hook;
 /* Called when the line buffer is replaced from history. */
 extern rl_voidfunc_t *rl_on_replace_from_history_hook;
 

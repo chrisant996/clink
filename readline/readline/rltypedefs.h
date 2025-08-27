@@ -64,8 +64,10 @@ typedef void rl_macro_print_func_t (const char *, const char *, int, const char 
 typedef int rl_hook_func_t (void);
 
 /* begin_clink_change */
-/* Type for add/remove history hook function */
-typedef int rl_history_hook_func_t (int rl_history_index, const char* line);
+/* Type for add history hook function */
+typedef int rl_add_history_hook_func_t (int rl_history_index, const char* line, const char** timestamp);
+/* Type for remove history hook function */
+typedef int rl_remove_history_hook_func_t (int rl_history_index, const char* line);
 /* Type for readkey input in modal situations like the pager */
 typedef int rl_read_key_hook_func_t (void);
 /* Type for logging readkey input */

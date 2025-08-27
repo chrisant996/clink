@@ -119,7 +119,7 @@ public:
     void                        load_rl_history(bool can_clean=true);
     void                        clear();
     bool                        compact(bool force=false, bool uniq=false, int32 limit=-1);
-    bool                        add(const char* line);
+    bool                        add(const char* line, time_t* out_timestamp=nullptr);
     int32                       remove(const char* line);
     bool                        remove(line_id id) { return remove_internal(id, true); }
     bool                        remove(int32 rl_history_index, const char* line);

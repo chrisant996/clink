@@ -18,7 +18,7 @@ void    reset_command_states();
 int32   read_key_direct(bool wait);
 
 //------------------------------------------------------------------------------
-int32   host_add_history(int32, const char* line);
+int32   host_add_history(int32, const char* line, const char** out_timestamp=nullptr);
 int32   host_remove_history(int32 rl_history_index, const char* line);
 
 //------------------------------------------------------------------------------

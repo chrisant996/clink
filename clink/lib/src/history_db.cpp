@@ -1756,7 +1756,7 @@ bool history_db::compact(bool force, bool uniq, int32 _limit)
 }
 
 //------------------------------------------------------------------------------
-bool history_db::add(const char* line)
+bool history_db::add(const char* line, time_t* out_timestamp)
 {
     // Ignore empty and/or whitespace prefixed lines?
     if (!line[0] || (g_ignore_space.get() && (line[0] == ' ' || line[0] == '\t')))
@@ -1786,6 +1786,8 @@ bool history_db::add(const char* line)
     {
         str<32> timestamp;
         const time_t now = time(0);
+        if (out_timestamp)
+            *out_timestamp = now;
         timestamp.format("|\ttime=%u", now);
         lock.add(timestamp.c_str());
     }
