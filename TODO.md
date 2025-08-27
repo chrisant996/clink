@@ -74,7 +74,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
   - [x] Look for other commands that might not yet interact well with suggestion list.  _[I didn't see any more commands that seem like they would need special treatment in the suggestion list.]_
   - [x] BUG: type `ii` and `make_suggestion_list_string()` formats the first entry wrongly -- the matching `ii` part is way off the screen to the right, but it should have been roughly centered and highlighted, with the left and right ends truncated with an ellipsis.
-  - [ ] BUG: `add-history` is leaving the current line with a modmark, and the actual added line is not shown in the history until history is reloaded (e.g. at the next input line).
+  - [x] BUG: `add-history` is leaving the current line with a modmark (e.g. in history popup list). _[Oh that's actually correct.]_
+  - [x] BUG: `add-history` shows the wrong input line at the end of the history popup list.
+  - [ ] BUG: some combination of `add-history` followed by navigating to the just-added history line and then undoing, then navigating to the same history line, then undoing some more --> fired assert about freeing already-freed undo list memory.
   - [x] Command description for `clink-toggle-suggestion-list`.
   - [x] Documentation for `clink-toggle-suggestion-list`.
   - [x] Documentation for `suggestionlist.default` setting.

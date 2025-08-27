@@ -879,7 +879,9 @@ rl_add_history (int count, int key)
   /* It would be too confusing to unsave, so just discard. */
   _rl_free_saved_history_line ();
 
+  ++_rl_doing_an_undo; /* Block creating undo history for clearing the line. */
   rl_delete_text (0, rl_end);
+  --_rl_doing_an_undo;
   rl_point = 0;
   return 0;
 }
