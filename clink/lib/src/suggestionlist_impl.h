@@ -51,7 +51,7 @@ private:
     void            cancel(editor_module::result& result);
     void            enable(editor_module::result& result);
     void            init_suggestions();
-    void            update_layout();
+    void            update_layout(bool refreshing_display=false);
     void            update_top();
     void            update_display();
 #ifdef SHOW_VERT_SCROLLBARS
@@ -123,4 +123,3 @@ private:
 //------------------------------------------------------------------------------
 bool is_suggestion_list_enabled();
 void update_suggestion_list_display(bool clear=false);
-bool point_in_suggestion_list(int32 in);

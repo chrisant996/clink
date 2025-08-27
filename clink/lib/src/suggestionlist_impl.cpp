@@ -98,7 +98,6 @@ enum {
     bind_id_suggestionlist_pgup,
     bind_id_suggestionlist_pgdn,
     bind_id_suggestionlist_leftclick,
-    bind_id_suggestionlist_doubleclick,
     bind_id_suggestionlist_wheelup,
     bind_id_suggestionlist_wheeldown,
     bind_id_suggestionlist_drag,
@@ -206,13 +205,12 @@ void suggestionlist_impl::bind_input(binder& binder)
 {
     const char* esc = get_bindable_esc();
 
-    m_bind_group = binder.create_group("selectcomplete");
+    m_bind_group = binder.create_group("suggestionlist");
     binder.bind(m_bind_group, "\\e[A", bind_id_suggestionlist_up);
     binder.bind(m_bind_group, "\\e[B", bind_id_suggestionlist_down);
     binder.bind(m_bind_group, "\\e[5~", bind_id_suggestionlist_pgup);
     binder.bind(m_bind_group, "\\e[6~", bind_id_suggestionlist_pgdn);
     binder.bind(m_bind_group, "\\e[$*;*L", bind_id_suggestionlist_leftclick, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*;*D", bind_id_suggestionlist_doubleclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*A", bind_id_suggestionlist_wheelup, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*B", bind_id_suggestionlist_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_suggestionlist_drag, true/*has_params*/);
@@ -426,9 +424,7 @@ navigated:
         }
         break;
 
-#if 0
     case bind_id_suggestionlist_leftclick:
-    case bind_id_suggestionlist_doubleclick:
     case bind_id_suggestionlist_drag:
         {
             const uint32 now = m_scroll_helper.on_input();
@@ -440,21 +436,15 @@ navigated:
             const uint32 rows = m_displayed_rows;
 
 #ifdef SHOW_VERT_SCROLLBARS
-            if (m_vert_scroll_car &&
-                (input.id == bind_id_suggestionlist_leftclick ||
-                 input.id == bind_id_suggestionlist_doubleclick))
-            {
+            if (m_vert_scroll_car && input.id == bind_id_suggestionlist_leftclick)
                 m_scroll_bar_clicked = (p0 == m_vert_scroll_column && p1 >= 0 && p1 < rows);
-            }
 
             if (m_scroll_bar_clicked)
             {
                 const int32 row = min<int32>(max<int32>(p1, 0), rows - 1);
-                const int32 index = hittest_scroll_car(row, rows, m_match_rows);
-                const int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                m_index = index * stride;
-                set_top(min<int32>(max<int32>(m_index - (rows / 2), 0), m_match_rows - rows));
-                insert_match();
+                m_index = hittest_scroll_car(row, rows, m_count);
+                set_top(min<int32>(max<int32>(m_index - (rows / 2), 0), m_count - rows));
+                apply_suggestion(m_index);
                 update_display();
                 break;
             }
@@ -466,37 +456,24 @@ navigated:
             if (p1 < rows)
             {
 do_mouse_position:
-                const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                const int32 minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
-                int32 index = major_stride * row;
-                uint32 x1 = 0;
-                for (int32 i = 0; i < m_widths.num_columns(); ++i)
+                int32 index = row;
+                const uint32 x1 = 0;
+                const uint32 col_width = m_max_width;
+                if (p0 >= x1 && p0 < x1 + col_width)
                 {
-                    width_t col_width = m_widths.column_width(i);
-                    if (i + 1 >= m_widths.num_columns())
-                        col_width += m_screen_cols;
-                    else if (scrolling)
-                        col_width += m_widths.m_col_padding;
-                    if (p0 >= x1 && p0 < x1 + col_width)
+                    m_index = index;
+                    m_ignore_scroll_offset = true;
+                    if (scrolling)
+                        m_scroll_helper.on_scroll(now);
+                    if (m_index >= m_count)
                     {
-                        m_index = index;
-                        m_ignore_scroll_offset = true;
-                        if (scrolling)
-                            m_scroll_helper.on_scroll(now);
-                        if (m_index >= m_matches.get_match_count())
-                        {
-                            set_top(max<int32>(revert_top, get_match_row(m_matches.get_match_count()) - (rows - 1)));
-                            m_index = m_matches.get_match_count() - 1;
-                        }
-                        insert_match();
-                        update_display();
-                        if (input.id == bind_id_suggestionlist_doubleclick)
-                            goto enter;
-                        scrolling = false; // Don't revert top.
-                        break;
+                        set_top(max<int32>(revert_top, m_count - (rows - 1)));
+                        m_index = m_count - 1;
                     }
-                    x1 += m_widths.column_width(i) + m_widths.m_col_padding;
-                    index += minor_stride;
+                    apply_suggestion(m_index);
+                    update_display();
+                    scrolling = false; // Don't revert top.
+                    break;
                 }
             }
             else if (int32(p1) < 0)
@@ -513,68 +490,56 @@ do_mouse_position:
                 }
                 else
                 {
-                    cancel(result, true/*can_reactivate*/);
-                    result.pass();
+                    // Ignore the click.
                     return;
                 }
             }
-            else
+            else if (input.id == bind_id_suggestionlist_drag)
             {
-                if (!m_expanded)
+                if (m_scroll_helper.can_scroll() && m_top + rows < m_count)
                 {
-                    m_expanded = true;
-                    m_comment_row_displayed = false;
-                    m_prev_displayed = -1;
-                    update_display();
-                }
-                else if (input.id == bind_id_suggestionlist_drag)
-                {
-                    if (m_scroll_helper.can_scroll() && m_top + rows < m_match_rows)
-                    {
-                        row = m_top + rows;
-                        set_top(min<int32>(m_match_rows - rows, m_top + m_scroll_helper.scroll_speed()));
-                        scrolling = true;
-                        goto do_mouse_position;
-                    }
+                    row = m_top + rows;
+                    set_top(min<int32>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
+                    scrolling = true;
+                    goto do_mouse_position;
                 }
             }
         }
         break;
-#endif
 
-#if 0
     case bind_id_suggestionlist_wheelup:
     case bind_id_suggestionlist_wheeldown:
         {
             uint32 p0;
             input.params.get(0, p0);
-            const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-            const int32 match_row = get_match_row(m_index);
+            const int32 y = m_index;
             const int32 prev_index = m_index;
             const int32 prev_top = m_top;
             if (input.id == bind_id_suggestionlist_wheelup)
-                m_index -= min<uint32>(match_row, p0) * major_stride;
+                m_index -= min<uint32>(y, p0);
             else
-                m_index += min<uint32>(m_match_rows - 1 - match_row, p0) * major_stride;
+                m_index += min<uint32>(m_count - 1 - y, p0);
 
-            const int32 count = m_matches.get_match_count();
+            const int32 count = m_count;
             if (m_index >= count)
             {
                 m_index = count - 1;
-                const int32 rows = min<int32>(m_match_rows, m_visible_rows);
-                if (m_top + rows - 1 == get_match_row(m_index))
+                const int32 rows = min<int32>(count, m_visible_rows);
+                if (m_top + rows - 1 == m_index)
                 {
-                    const int32 max_top = max<int32>(0, m_match_rows - rows);
+                    const int32 max_top = max<int32>(0, m_count - rows);
                     set_top(min<int32>(max_top, m_top + 1));
                 }
             }
             assert(!m_ignore_scroll_offset);
 
             if (m_index != prev_index || m_top != prev_top)
+                apply_suggestion(m_index);
+
+            if (m_index != prev_index || m_top != prev_top)
                 update_display();
         }
         break;
-#endif
 
     case bind_id_suggestionlist_escape:
         // Hide suggestion list until the input line is changed by something
@@ -678,7 +643,7 @@ void suggestionlist_impl::init_suggestions()
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::update_layout()
+void suggestionlist_impl::update_layout(bool refreshing_display)
 {
     // TODO: this kind of has to hide the comment row, but then that disables
     // features like input hints...
@@ -695,12 +660,15 @@ void suggestionlist_impl::update_layout()
         m_visible_rows = 0;
     m_visible_rows = min<>(m_visible_rows, available_rows);
 
-    m_ignore_scroll_offset = false;
+    if (!refreshing_display)
+    {
+        m_ignore_scroll_offset = false;
 
 #ifdef SHOW_VERT_SCROLLBARS
-    m_vert_scroll_car = 0;
-    m_vert_scroll_column = 0;
+        m_vert_scroll_car = 0;
+        m_vert_scroll_column = 0;
 #endif
+    }
 
 #ifdef SHOW_VERT_SCROLLBARS
     const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
@@ -755,11 +723,6 @@ void suggestionlist_impl::update_top()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_display()
 {
-#ifdef SHOW_VERT_SCROLLBARS
-    m_vert_scroll_car = 0;
-    m_vert_scroll_column = 0;
-#endif
-
     // No-op if there are no visible rows and nothing needs to be erased.
     if (m_visible_rows <= 0 && m_any_displayed.empty())
         return;
@@ -776,6 +739,11 @@ void suggestionlist_impl::update_display()
 #endif
             return;
     }
+
+#ifdef SHOW_VERT_SCROLLBARS
+    m_vert_scroll_car = 0;
+    m_vert_scroll_column = 0;
+#endif
 
     // Hide cursor.
     const bool was_visible = show_cursor(false);
@@ -845,7 +813,7 @@ void suggestionlist_impl::update_display()
 #ifdef SHOW_VERT_SCROLLBARS
         m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_count) : 0;
         if (m_vert_scroll_car)
-            m_vert_scroll_column = m_screen_cols - 2;
+            m_vert_scroll_column = m_max_width + 2 - 1;
         const int32 car_top = calc_scroll_car_offset(m_top, rows, m_count, m_vert_scroll_car);
 #endif
 
@@ -975,7 +943,7 @@ void suggestionlist_impl::update_display()
         m_printer->print(s.c_str(), s.length());
     }
     GetConsoleScreenBufferInfo(h, &csbi);
-    m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
+    m_mouse_offset = csbi.dwCursorPosition.Y + 2/*to top item*/;
     _rl_move_vert(vpos);
     _rl_last_c_pos = cpos;
     GetConsoleScreenBufferInfo(h, &csbi);
@@ -1401,7 +1369,7 @@ void suggestionlist_impl::refresh_display(bool clear)
     // details so callers don't have to know anything.
     init_suggestions();
 
-    update_layout();
+    update_layout(true/*refreshing_display*/);
     update_display();
 }
 
@@ -1411,11 +1379,9 @@ bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
     switch (type)
     {
     case mouse_input_type::left_click:
-    case mouse_input_type::double_click:
     case mouse_input_type::wheel:
-    case mouse_input_type::hwheel:
     case mouse_input_type::drag:
-        return true;
+        return is_active() && m_count > 0;
     default:
         return false;
     }
@@ -1508,14 +1474,4 @@ void update_suggestion_list_display(bool clear)
 
     s_suggestionlist->refresh_display(clear);
 }
-
-#if 0
-//------------------------------------------------------------------------------
-bool point_in_suggestion_list(int32 in)
-{
-    if (!s_selectcomplete)
-        return false;
-    return s_selectcomplete->point_within(in);
-}
-#endif
 
