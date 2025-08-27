@@ -71,9 +71,16 @@ else
         err = err .. "https://ohmyposh.dev/docs/installation/windows\n\n"
         err = err .. string.format('Unable to get oh-my-posh script from "%s".', get_omp_exe())
         return err
-    else
-        load(script)()
     end
+
+    local func, msg = load(script)
+    if not func then
+        local err = "Error trying to load oh-my-posh Lua script:\n"
+        err = err .. msg
+        return err
+    end
+
+    func()
 end
 
 clink.onbeginedit(function()

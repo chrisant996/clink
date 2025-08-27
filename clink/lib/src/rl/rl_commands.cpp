@@ -271,14 +271,28 @@ bool toggle_slashes_in_rl_buffer(int32 offset, int32 length)
 
 
 //------------------------------------------------------------------------------
-int32 host_add_history(int32, const char* line)
+int32 host_add_history(int32, const char* line, const char** out_timestamp)
 {
     // NOTE:  This intentionally does not send the "onhistory" Lua event.
     // Since this command explicitly manipulates the history it's reasonable
     // for it to override scripts.
 
+    time_t timestamp;
     history_database* h = history_database::get();
-    return h && h->add(line);
+    if (!h || !h->add(line, &timestamp))
+    {
+        if (out_timestamp)
+            *out_timestamp = nullptr;
+        return false;
+    }
+
+    if (out_timestamp)
+    {
+        static char s_timestamp_buffer[32];
+        sprintf_s(s_timestamp_buffer, "%u", uint32(timestamp));
+        *out_timestamp = s_timestamp_buffer;
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------------
