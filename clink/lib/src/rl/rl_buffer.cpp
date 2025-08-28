@@ -38,7 +38,8 @@ void rl_buffer::reset()
     clear_override();
     rl_maybe_replace_line();
     using_history();
-    rl_maybe_unsave_line();
+    if (_rl_saved_line_for_history)
+        rl_maybe_unsave_line();
     remove(0, ~0u);
     assert(!rl_point);
     assert(!rl_end);
