@@ -725,7 +725,10 @@ void suggestionlist_impl::update_display()
 {
     // No-op if there are no visible rows and nothing needs to be erased.
     if (m_visible_rows <= 0 && m_any_displayed.empty())
+    {
+        m_clear_display = false;
         return;
+    }
 
     // No-op if the selected item hasn't changed, unless the list is not
     // active and m_any_displayed is not empty.  All other no-op cases set
