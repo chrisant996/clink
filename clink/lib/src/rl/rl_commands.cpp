@@ -678,7 +678,8 @@ int32 clink_reset_line(int32 count, int32 invoking_key)
 {
     rl_maybe_replace_line();
     using_history();
-    rl_maybe_unsave_line();
+    if (_rl_saved_line_for_history)
+        rl_maybe_unsave_line();
     g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
     clear_suggestion();
