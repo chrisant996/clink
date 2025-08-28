@@ -1751,7 +1751,7 @@ void textlist_impl::update_display()
                         const int32 history_index = m_infos ? get_item_info(i).index : get_original_index(i);
                         const char ismark = (m_infos && get_item_info(i).marked);
                         const char mark = ismark ? '*' : ' ';
-                        const char* color = !ismark ? "" : (i == m_index) ? m_color.selectmark.c_str() : m_color.mark.c_str();
+                        const char* color = !ismark ? "" : (i == m_index) ? m_color.selectdesc.c_str() : m_color.desc.c_str();
                         const char* uncolor = !ismark ? "" : (i == m_index) ? m_color.select.c_str() : m_color.items.c_str();
                         tmp.clear();
                         tmp.format("%*u:%s%c%s", max<>(0, m_max_num_cells - 2), history_index + 1, color, mark, uncolor);
@@ -1949,7 +1949,6 @@ void textlist_impl::init_colors(const popup_config* config)
     init_color(config ? &config->colors.footer : nullptr, get_popup_footer_colors(config && (!config->colors.items.empty() || !config->colors.border.empty()) ? m_color.border.c_str() : nullptr), m_color.footer);
     init_color(config ? &config->colors.select : nullptr, get_popup_select_colors(config && !config->colors.items.empty() ? m_color.items.c_str() : nullptr), m_color.select);
     init_color(config ? &config->colors.selectdesc : nullptr, get_popup_selectdesc_colors(config && (!config->colors.items.empty() || !config->colors.select.empty()) ? m_color.select.c_str() : nullptr), m_color.selectdesc);
-    init_color(config ? &config->colors.mark : nullptr, m_color.desc.c_str(), m_color.mark);
 
     wrap_color(m_color.items);
     wrap_color(m_color.desc);
@@ -1958,10 +1957,6 @@ void textlist_impl::init_colors(const popup_config* config)
     wrap_color(m_color.footer);
     wrap_color(m_color.select);
     wrap_color(m_color.selectdesc);
-    wrap_color(m_color.mark);
-
-    // Not supported yet; the mark is only used internally.
-    m_color.selectmark.clear();
 }
 
 //------------------------------------------------------------------------------

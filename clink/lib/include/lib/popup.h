@@ -39,8 +39,6 @@ struct popup_colors
     str<48>         footer;
     str<48>         select;
     str<48>         selectdesc;
-    str<48>         mark;
-    str<48>         selectmark;
 };
 
 //------------------------------------------------------------------------------
