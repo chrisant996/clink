@@ -100,6 +100,8 @@ _rl_scxt_alloc (int type, int flags)
     {
       rl_maybe_replace_line ();
       using_history ();
+      if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+	_rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
       _rl_free_saved_history_line ();
     }
 /* end_clink_change */

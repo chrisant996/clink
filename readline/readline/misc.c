@@ -877,6 +877,8 @@ rl_add_history (int count, int key)
   rl_maybe_replace_line ();
   using_history ();
   /* It would be too confusing to unsave, so just discard. */
+  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+    _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
   _rl_free_saved_history_line ();
 
   ++_rl_doing_an_undo; /* Block creating undo history for clearing the line. */
@@ -988,6 +990,8 @@ rl_remove_history (int count, int key)
       rl_replace_line ("", 1);
       using_history ();
       /* It would be too confusing to unsave, so just discard. */
+      if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+	_rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
       _rl_free_saved_history_line ();
     }
   else if (hist)
