@@ -2319,11 +2319,13 @@ static int32 is_break_on_error(lua_State* state)
 
 //------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
+#if defined(USE_MEMORY_TRACKING)
 static int32 last_allocation_number(lua_State* state)
 {
     lua_pushinteger(state, dbggetallocnumber());
     return 1;
 }
+#endif
 #endif
 
 //------------------------------------------------------------------------------
@@ -2501,7 +2503,9 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_get_scripts_path",      &get_scripts_path },
         { 1,    "_is_break_on_error",     &is_break_on_error },
 #if defined(DEBUG) && defined(_MSC_VER)
+#if defined(USE_MEMORY_TRACKING)
         { 0,    "last_allocation_number", &last_allocation_number },
+#endif
         { 0,    "get_c_callstack",        &get_c_callstack },
 #endif
     };
