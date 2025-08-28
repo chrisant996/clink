@@ -66,6 +66,7 @@ local function clink_project(name)
 
     filter "action:vs*"
         buildoptions("-FI\""..path.getabsolute("clink/core/warning.h").."\"")
+
     filter {}
 end
 
@@ -227,11 +228,19 @@ workspace("clink")
     setup_cfg("release")
     setup_cfg("debug")
 
+    filter "action:vs*"
+        editAndContinue("off")
+
     filter "debug"
         rtti("on")
         optimize("off")
         defines("DEBUG")
         defines("_DEBUG")
+
+    -- filter {"debug", "action:vs*"}
+    --     defines("USE_ASAN")
+    --     buildoptions("/fsanitize=address")
+    --     flags("NoIncrementalLink")
 
     filter "final"
         --rtti("off")
