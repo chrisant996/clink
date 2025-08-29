@@ -871,11 +871,23 @@ rl_add_history (int count, int key)
       rl_ding ();
       return 0;
     }
-  add_history (rl_line_buffer);
-  add_history_time(timestamp);
 
+  /* Replace undo list in history entry if changed. */
   rl_maybe_replace_line ();
+
+  /* Start a new undo list if cross-linked with history entry. */
+  if (current_history() && rl_undo_list)
+    rl_undo_list = 0;
+  assert (!rl_undo_list);
+
+  /* Add new history entry. */
+  /* NOTE:  If the host app removes duplicates, then this might result in a
+     different history list state in memory than what the host app has in its
+     data structures (such as in a persisted history list file). */
+  add_history (rl_line_buffer);
+  add_history_time (timestamp);
   using_history ();
+
   /* It would be too confusing to unsave, so just discard. */
   if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
     _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
