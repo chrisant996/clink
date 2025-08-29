@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- [ ] BUG: `ESC` `UP` `ENTER` --> leaks an undo list entry.
 
 ## Normal Priority
 - Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
