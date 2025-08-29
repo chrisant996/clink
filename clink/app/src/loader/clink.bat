@@ -27,7 +27,7 @@ if /i "%~1"=="--quiet" (
 )
 
 rem -- If the .bat is run without any arguments, then start a cmd.exe instance.
-if _%1==_ (
+if "_%~1"=="_" (
     call :launch
     goto :end
 )
