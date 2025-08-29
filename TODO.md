@@ -18,68 +18,34 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
-  - [x] It can't be truly modal: it has to integrate with the core input loop so that all normal key bindings still work, which implies that Clink/Readline need to automatically erase/cancel (or display/enable) the ListView as appropriate when key bindings need to do something for which the ListView shouldn't be visible.
-  - [x] F2 = toggle ListView (is there a persistent way to enable it?).
-  - [x] ESC = dismiss ListView mode until further text is input (ESC enables using other keys like UP/DOWN to use their normal key bindings instead of the ListView behaviors).
-  - [x] UP/DOWN = navigate through available ListView items.
-  - [x] PGUP/PGDN = handled by Readline when index is not in the suggestion list.
-  - [x] PGUP/PGDN = page up/down when index is in the suggestion list.
-  - [x] Ctrl-Z = revert to original line, but don't dismiss the ListView.
-  - [x] Allow suggesters to return a table.
-    - [x] Limit the number of accepted entries, to encourage writing efficient suggesters?  Powershell appears to limit the total number of predictions to 30 items.
-    - Allow suggesters to provide a friendly name to show up in the `[Source]` column at the right side.
-  - [x] BUG: `F2``g``DOWN` clears the list of matches.
-  - [x] BUG: `F2``blah` and then Backspace until the line is empty doesn't clear the list of suggestions.
-  - [x] BUG: `F1` showed suggestion list with one suggestion; should show no suggestions.
-  - [x] BUG: `F2``Enter` disables suggestion list until `F2` is pressed again.
-  - [x] BUG: delayinit argmatcher while UP/DOWN in suggestion list glitches and re-generates new suggestions based on the selected suggestion.
-  - [x] BUG: delayinit argmatcher while UP/DOWN through history (with suggestion list OFF) glitches and suggestions get re-generated based on the input line (**pre-existing issue** i.e. it also affects inline suggestions).
-    - [x] Regression: the current attempted fix for that seems to work ... but also makes UP/DOWN in the suggestion list re-generate suggestions when going to index -1.
-  - [x] Remove duplicates from suggestions.
-  - [x] Truncate each suggestion entry to fit in one line.
-  - [x] Some way for suggesters to indicate what substring to highlight in the suggestion list.
-    - [x] Use the highlight info to apply highlight in the suggestion list.
-  - [x] Suggestions from completion strategy are missing trailing space when appropriate?
-  - [x] Why doesn't `completion` suggester show any suggestions for `echo %user`?  _[Pre-existing bug that didn't take into account `setsuppressquoting`.]_
-  - [x] Show list of suggestion sources in top right:
-    - `<-/30>                      <History(3) Completion(27)>`
-    - `<2/30>                    <History(2/3) Completion(27)>`
-    - `<5/30>                    <History(3) Completion(2/27)>`
-  - [x] When can `history` suggester show substring matches?
-  - [x] BUG: `\repos\clink\``ENTER` then `F2` then `j` produces no suggestions from history.
-  - [x] Maybe show a "tooltip" below the suggestion?  E.g. the `completion` suggester could send the description field as the tooltip.
-  - [x] BUG: why does `ugrep --l` not list `--label=`?  Are matches with linked argmatchers broken?
-  - [x] `operate-and-get-next` should initially suppress the suggestion list (and suggestions in general) just like `history-search-backward` and etc do.
-  - [x] `git mer` is annoying because the list shows 10 completions before the history entries (because of my custom strategy order).
-    - PSReadline `AggregateSuggestions()` works like this:
-      - Always lists History first, followed by other predictor results.
-      - If any custom predictors have results, then History is limited to only 3 results, and the rest of the 30 slots are divided evenly among the other predictors.
-      - History always wins while removing duplicates.
-    - [x] Maybe Clink should always put the "history" results first, and then aggregate the rest in the order they were provided?
-    - [x] Maybe Clink should always tell suggesters that their limit is 30, and then discard surplus when aggregating?
-    - ~~Maybe Clink should perform aggregation and duplicate removal in suggestionlist_impl?~~  _[No, do it in Lua where it's easier to do, at least until/unless any performance issues are encountered.]_
-  - [x] What happens if inserting the selected entry into the input line means there isn't enough space anymore for the suggestion list?  Maybe it should automatically engage horizontal scroll mode if needed?
-  - [x] Configurable colors for suggestion list.
-  - [x] BUG?  How did the default values of color.suggestionlist* settings get saved into clink_settings?  It shouldn't have written default values, right?
-  - [x] Update color themes per suggestion list colors.
-  - [x] Make `operate-and-get-next` work when a suggestion is selected!
-    - [x] Make `history_suggester` report the history index for each entry.
-    - [x] Make `operate-and-get-next` able to ask the suggestion list what is the current selected history index.
-    - [x] Make sure that editing the input line after selecting a history index reports `-1` for the history index.
-  - [x] BUG: using and canceling/finishing `clink-select-complete` while the suggestion list is enabled accidentally allowed the comment row to show over top of the suggestion list.
-  - [x] Make `remove-history` get the history index from the selected suggestion list entry.  And if an entry is selected but doesn't have a history index, then `remove-history` should do nothing.
-  - [x] REVIEW: is there a bug if UP to a history entry, make edits, then make more edits to return the line to its original content, then invoke `remove-history`?  Does it mess up the undo list(s)?  _[Seems to work fine.]_
-  - [x] REVIEW: is there a bug if UP to a history entry, make edits, then DOWN in suggestion list to a history entry, then invoke `remove-history`?  What should happen?  What does happen?  _[Seems to work fine.]_
-  - ~~Make ESC or cancelling from the suggestion list set the actual history index?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
-  - ~~Should enabling the suggestion list always reset the history index back to the end of the history?~~  _[Let history and undo lists work as usual, even though it's confusing how they work in Readline and bash.]_
-  - [x] Look for other commands that might not yet interact well with suggestion list.  _[I didn't see any more commands that seem like they would need special treatment in the suggestion list.]_
-  - [x] BUG: type `ii` and `make_suggestion_list_string()` formats the first entry wrongly -- the matching `ii` part is way off the screen to the right, but it should have been roughly centered and highlighted, with the left and right ends truncated with an ellipsis.
-  - [x] BUG: `add-history` is leaving the current line with a modmark (e.g. in history popup list). _[Oh that's actually correct.]_
-  - [x] BUG: `add-history` shows the wrong input line at the end of the history popup list.
   - [ ] BUG: some combination of `add-history` followed by navigating to the just-added history line and then undoing, then navigating to the same history line, then undoing some more --> fired assert about freeing already-freed undo list memory.
-  - [x] Command description for `clink-toggle-suggestion-list`.
-  - [x] Documentation for `clink-toggle-suggestion-list`.
-  - [x] Documentation for `suggestionlist.default` setting.
+    - **Consistent Repro:**
+      - `e`
+      - `Down`
+      - `Down`
+      - `Bkspc`
+      - `Bkspc`
+      - `Bkspc`
+      - `Bkspc`
+      - `C-k`
+      - `PgUp`
+      - `C-Enter`
+      - `C-Bkspc`
+      - `Bkspc`
+      - `Space`
+      - `Home`
+      - `PgUp`
+      - `C-Enter`
+      - `Esc`
+      - `Esc`
+      - `PgUp`
+      - `C-Enter`
+      - `Bkspc`
+      - `Space`
+      - `C-z`
+      - `C-z`
+      - `C-z`
+      - ==> **c:\repos\clink\clink\lib\src\rl\rl_commands.cpp @li378:  !t->m_freed**
   - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
