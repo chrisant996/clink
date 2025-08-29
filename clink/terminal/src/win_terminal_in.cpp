@@ -631,6 +631,11 @@ int32 win_terminal_in::begin(bool can_hide_cursor)
     if (!m_began)
         debug_show_console_mode(nullptr, "termbegin");
 
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_LOG_KEY_INPUTS", 0))
+        dbg_printf_row(-1, "---- WIN_TERMINAL_IN::BEGIN --------------------\r\n");
+#endif
+
     ++m_began;
     return m_began;
 }
@@ -941,6 +946,29 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
     default:
         return false;
     }
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_LOG_KEY_INPUTS", 0))
+    {
+        const uint32 keyseqlen = m_buffer_count - buffer_count;
+        if (keyseqlen > 0)
+        {
+            str<32> keyseq;
+            for (uint32 len = 0; len < keyseqlen; ++len)
+                keyseq.concat(reinterpret_cast<char*>(m_buffer) + ((m_buffer_head + buffer_count + len) % sizeof_array(m_buffer)), 1);
+
+            char* key_name = nullptr;
+            int32 sort = 0;
+            extern bool translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort);
+            translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true/*friendly*/, sort);
+            if (key_name)
+            {
+                dbg_printf_row(-1, "INPUT:  [ %s ]\r\n", key_name);
+                free(key_name);
+            }
+        }
+    }
+#endif
 
     if (s_sending_terminal_request)
         m_processed_records.push_back(record);
