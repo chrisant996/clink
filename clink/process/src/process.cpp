@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "process.h"
+//#include "thunk.h"
 #include "vm.h"
 #include "pe.h"
 
@@ -360,11 +361,35 @@ struct thunk_data
 #endif
 
 //------------------------------------------------------------------------------
+#if !defined(USE_ASAN) && !defined(__SANITIZE_ADDRESS__)
 static DWORD WINAPI stdcall_thunk(thunk_data& data)
 {
     data.out = data.func(data.in);
     return 0;
 }
+#elif defined(_M_X64)
+static BYTE stdcall_thunk[] =
+{
+        0x48, 0x89, 0x4C, 0x24, 0x08,   // mov         qword ptr [rsp+8],rcx
+        0x57,                           // push        rdi
+        0x48, 0x83, 0xEC, 0x20,         // sub         rsp,20h
+    // data.out = data.func(data.in);
+        0x48, 0x8B, 0x44, 0x24, 0x30,   // mov         rax,qword ptr [data]
+        0x48, 0x83, 0xC0, 0x10,         // add         rax,10h
+        0x48, 0x8B, 0xC8,               // mov         rcx,rax
+        0x48, 0x8B, 0x44, 0x24, 0x30,   // mov         rax,qword ptr [data]
+        0xFF, 0x10,                     // call        qword ptr [rax]
+        0x48, 0x8B, 0x4C, 0x24, 0x30,   // mov         rcx,qword ptr [data]
+        0x48, 0x89, 0x41, 0x08,         // mov         qword ptr [rcx+8],rax
+    // return 0;
+        0x33, 0xC0,                     // xor         eax,eax
+        0x48, 0x83, 0xC4, 0x20,         // add         rsp,20h
+        0x5F,                           // pop         rdi
+        0xC3,                           // ret
+};
+#else
+#error Clink does not support ASAN for this build configuration.
+#endif
 
 //------------------------------------------------------------------------------
 remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const remote_call_flags flags, const void* param, int32 param_size)
@@ -382,7 +407,24 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
     static int32 thunk_size = 0;
     if (!thunk_size)
-        for (const auto* c = (uint8*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
+    {
+        const int32 c_max_thunk_size = 64;
+#if defined(USE_ASAN) || defined(__SANITIZE_ADDRESS__)
+        thunk_size = sizeof(stdcall_thunk);
+#elif defined(_WIN64) && defined(_M_X64)
+        bool found_ret = false;
+        int32 offset = 0;
+        for (const uint8* c = (uint8*)stdcall_thunk; offset < c_max_thunk_size; ++offset)
+        {
+            if (c[offset] == 0xc3)
+                found_ret = true;
+        }
+        assert(found_ret);
+        thunk_size = c_max_thunk_size;
+#else
+        thunk_size = c_max_thunk_size;
+#endif
+    }
 
     vm vm(m_pid);
     vm::region region = vm.alloc_region(1, vm::access_write);
@@ -399,6 +441,19 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
         write_offset = (write_offset + size + 7) & ~7;
         return addr;
     };
+
+    // FUTURE:  thunk.cpp contains zzz_stdcall_thunk, which is intended to
+    // compile the function without ASAN additives.  But even without ASAN,
+    // moving the thunk function to a separate directory creates an effect I
+    // don't understand:  Visual Studio, WinDbg, and the runtime Clink code
+    // all experience some kind of address remapping.  When they try to read
+    // from zzz_stdcall_thunk it actually reads from different memory roughly
+    // 0xC00000-ish bytes away.  Even typing the correct address into the
+    // debugger's Memory window jumps to the different address.  Since it also
+    // affects the code at runtime, there's no way to access the code bytes
+    // from the zzz_stdcall_thunk function.  I can watch the assembly code
+    // load the address into a register, and although it said to load the
+    // right address, the register receives a different address.
 
     vm_write((void*)stdcall_thunk, thunk_size);
     void* thunk_ptrs[2] = { (void*)function };

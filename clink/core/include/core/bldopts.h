@@ -10,9 +10,14 @@
 #endif
 
 #if defined(DEBUG) && defined(_MSC_VER)
-#define USE_MEMORY_TRACKING
 #define INCLUDE_CALLSTACKS
 #define USE_RTTI
+#endif
+
+#if defined(DEBUG) && defined(_MSC_VER)
+#if !defined(__SANITIZE_ADDRESS__) && !defined(USE_ASAN)
+#define USE_MEMORY_TRACKING
+#endif
 #endif
 
 //------------------------------------------------------------------------------

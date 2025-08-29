@@ -3,6 +3,7 @@
 -- License: http://opensource.org/licenses/MIT
 
 local to = ".build/"..(_ACTION or "nullaction")
+local asan = _OPTIONS["asan"] or nil
 
 if _ACTION == "gmake2" then
     error("Use `premake5 gmake` instead; gmake2 neglects to link resources.")
@@ -222,6 +223,10 @@ workspace("clink")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
 
+    if asan then
+        defines("USE_ASAN")
+    end
+
     includedirs(".build")               -- for clink_commit.h
 
     setup_cfg("final")
@@ -236,11 +241,6 @@ workspace("clink")
         optimize("off")
         defines("DEBUG")
         defines("_DEBUG")
-
-    -- filter {"debug", "action:vs*"}
-    --     defines("USE_ASAN")
-    --     buildoptions("/fsanitize=address")
-    --     flags("NoIncrementalLink")
 
     filter "final"
         --rtti("off")
@@ -299,6 +299,11 @@ project("readline")
         buildoptions("-Wno-implicit-function-declaration")
         buildoptions("-Wno-endif-labels")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
 --------------------------------------------------------------------------------
 project("getopt")
     language("c")
@@ -340,6 +345,11 @@ project("lua52")
     links("lua")
     files("lua/src/lua.c")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            flags("NoIncrementalLink")
+    end
+
 --------------------------------------------------------------------------------
 project("detours")
     kind("staticlib")
@@ -375,6 +385,11 @@ clink_lib("clink_lib")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
 --------------------------------------------------------------------------------
 clink_lib("clink_lua")
     includedirs("clink/lua/include/lua")
@@ -400,6 +415,11 @@ clink_lib("clink_lua")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
 --------------------------------------------------------------------------------
 clink_lib("clink_core")
     includedirs("clink/core/include/core")
@@ -414,6 +434,11 @@ clink_lib("clink_core")
     filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
 
 --------------------------------------------------------------------------------
 clink_lib("clink_terminal")
@@ -435,27 +460,50 @@ clink_lib("clink_terminal")
         buildoptions("-Wno-multichar")
         buildoptions("-std=c++17")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
 --------------------------------------------------------------------------------
 clink_lib("clink_process")
     includedirs("clink/core/include")
     includedirs("clink/process/include/process")
+    -- includedirs("clink/process/include/thunk")
     files("clink/process/src/**")
     files("clink/process/include/**")
 
     includedirs("clink/process/src")
     filter "action:vs*"
-        flags { "NoRuntimeChecks" } -- required for 32 bit by the inject lambda in process::remote_call
         pchheader("pch.h")
         pchsource("clink/process/src/pch.cpp")
-        inlining("auto") -- required by the inject lambda in process::remote_call
-        editAndContinue("off") -- required by the inject lambda in process::remote_call
-        omitframepointer("off") -- required by the inject lambda in process::remote_call
-        exceptionhandling("off") -- required by the inject lambda in process::remote_call
-        -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
 
     filter "action:gmake"
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
+--------------------------------------------------------------------------------
+-- clink_lib("clink_thunk")
+--     includedirs("clink/process/include/thunk")
+--     files("clink/process/thunk/**")
+
+--     filter "action:vs*"
+--         flags { "NoRuntimeChecks" } -- required for 32 bit by the inject thunk in process::remote_call
+--         inlining("auto") -- required by the inject thunk in process::remote_call
+--         editAndContinue("off") -- required by the inject thunk in process::remote_call
+--         omitframepointer("off") -- required by the inject thunk in process::remote_call
+--         exceptionhandling("off") -- required by the inject thunk in process::remote_call
+--         -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject thunk in process::remote_call
+--         -- Don't enable ASAN; it's incompatible with the inject thunk in process::remote_call
+
+--     filter "action:gmake"
+--         buildoptions("-fpermissive")
+--         buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_app_common")
@@ -483,6 +531,11 @@ clink_lib("clink_app_common")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+    end
+
 --------------------------------------------------------------------------------
 clink_dll("clink_app_dll")
     targetname("clink_dll")
@@ -491,6 +544,7 @@ clink_dll("clink_app_dll")
     links("clink_core") -- Link after clink_lib to solve order issue with linear_allocator.*.
     links("clink_lua")
     links("clink_process")
+    -- links("clink_thunk")
     links("clink_terminal")
     links("detours")
     links("getopt")
@@ -513,10 +567,18 @@ clink_dll("clink_app_dll")
         links("gdi32")
         links("ole32")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+            flags("NoIncrementalLink")
+    end
+
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
     targetname("clink")
-    flags("OmitDefaultLibrary")
+    if not asan then
+        flags("OmitDefaultLibrary")
+    end
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
     files("clink/app/src/version.rc")
@@ -540,6 +602,12 @@ clink_exe("clink_app_exe")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+            flags("NoIncrementalLink")
+    end
+
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
     links("clink_app_common")
@@ -547,6 +615,7 @@ clink_exe("clink_test")
     links("clink_lib")
     links("clink_lua")
     links("clink_process")
+    -- links("clink_thunk")
     links("clink_terminal")
     links("detours")
     links("wildmatch")
@@ -589,6 +658,12 @@ clink_exe("clink_test")
         links("ole32")
         linkgroups("on")
 
+    if asan then
+        filter {"debug", "action:vs*"}
+            buildoptions("/fsanitize=address")
+            flags("NoIncrementalLink")
+    end
+
 --------------------------------------------------------------------------------
 require "vstudio"
 local function add_tag(tag, value, project_name)
@@ -605,8 +680,15 @@ local function add_tag(tag, value, project_name)
 end
 
 add_tag("SupportJustMyCode", "false", "clink_process")
+-- add_tag("SupportJustMyCode", "false", "clink_thunk")
 
 --------------------------------------------------------------------------------
 dofile("docs/premake5.lua")
 dofile("installer/premake5.lua")
 dofile("embed.lua")
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "asan",
+   description = "Clink: enable Address Sanitizer in DEBUG builds"
+}
