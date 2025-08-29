@@ -20,9 +20,9 @@
 extern "C" {
 #include <readline/readline.h>  // Needed by rlprivate.h.
 #include <readline/rldefs.h>    // Needed by rlmbutil.h in rlprivate.h.
-#include <readline/rlprivate.h> // Needed for _rl_free_undo_list().
 #include <readline/history.h>
 #include <readline/histlib.h>   // Depends on config.h.
+#include <readline/rlprivate.h> // Needed for _rl_free_undo_list().
 }
 
 #include <algorithm>
@@ -1454,6 +1454,10 @@ static void __clear_history()
 {
     rl_clear_history();
     assert(!rl_undo_list);
+
+    if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+        _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
+    _rl_free_saved_history_line ();
 
     history_prev_use_curr = 0;
 
