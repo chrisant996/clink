@@ -2996,6 +2996,26 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         --len;
         rl_callback_read_char();
 
+#if 0
+        // Readline allows rl_undo_list to be identical to a HISTENTRY's data.
+        // In certain places Readline has some special case logic to
+        // compensate and avoid falling into cross-linking.  I don't
+        // understand quite how/why the state doesn't cause more widespread
+        // problems.  But in any case, this assertion fails in many general
+        // case scenarios, so it can't be enabled.
+#ifdef DEBUG
+        if (rl_undo_list)
+        {
+            for (int32 i = 0; i <= history_length; ++i)
+            {
+                HIST_ENTRY* const h = history_get(i);
+                if (i)
+                    assert(rl_undo_list != h->data);
+            }
+        }
+#endif
+#endif
+
         // Using `rl.invokecommand()` inside a "luafunc:" key binding should
         // set rl_last_func to reflect the last function that was invoked.
         // However, since Readline doesn't set rl_last_func until AFTER the

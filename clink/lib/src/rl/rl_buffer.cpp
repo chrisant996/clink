@@ -37,6 +37,19 @@ void rl_buffer::reset()
     assert(m_attached);
     clear_override();
     rl_maybe_replace_line();
+
+    // If there's an undo list and it's the same as the current history entry,
+    // then fork the undo list.  The current line undo list gets a full copy,
+    // and the current history entry retains its undo list as-is.  This allows
+    // undo to continue to work in the current line, without affecting the
+    // history entry's undo list, and without cross-linking the undo lists
+    // (which had been creating heap corruption due to double frees).
+    if (current_history() && rl_undo_list)
+    {
+        assert(current_history()->data == rl_undo_list);
+        rl_undo_list = _rl_copy_undo_list(rl_undo_list);
+    }
+
     using_history();
     if (_rl_saved_line_for_history)
         rl_maybe_unsave_line();

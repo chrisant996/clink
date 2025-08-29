@@ -7,19 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- BUG: cross-linked undo list could lead to heap corruption.
-  - **Consistent Repro:**
-    - `Up`
-    - `Bkspc`
-    - `Home`
-    - `Down`
-    - `PgUp`
-    - `C-Enter`
-    - `Esc`
-    - `PgUp`
-    - `C-Enter`
-    - `C-z`
-  - ==> **c:\repos\clink\clink\lib\src\rl\rl_commands.cpp @li378:**  `!t->m_freed`
 
 ## Normal Priority
 - Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
