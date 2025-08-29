@@ -19,33 +19,28 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
   - [ ] BUG: some combination of `add-history` followed by navigating to the just-added history line and then undoing, then navigating to the same history line, then undoing some more --> fired assert about freeing already-freed undo list memory.
-    - **Consistent Repro:**
+    - **Consistent Repro 1:**
       - `e`
       - `Down`
-      - `Down`
-      - `Bkspc`
-      - `Bkspc`
-      - `Bkspc`
-      - `Bkspc`
       - `C-k`
       - `PgUp`
       - `C-Enter`
-      - `C-Bkspc`
+      - `Esc`
+      - `PgUp`
+      - `C-Enter`
+      - `C-z`
+    - **Consistent Repro 2:**
+      - `Up`
       - `Bkspc`
-      - `Space`
       - `Home`
+      - `Down`
       - `PgUp`
       - `C-Enter`
       - `Esc`
-      - `Esc`
       - `PgUp`
       - `C-Enter`
-      - `Bkspc`
-      - `Space`
       - `C-z`
-      - `C-z`
-      - `C-z`
-      - ==> **c:\repos\clink\clink\lib\src\rl\rl_commands.cpp @li378:  !t->m_freed**
+    - ==> **c:\repos\clink\clink\lib\src\rl\rl_commands.cpp @li378:  !t->m_freed**
   - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 
