@@ -7,9 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
+- [ ] BUG: `ESC` `UP` `ENTER` --> leaks an undo list entry.
 
 ## Normal Priority
+- Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
 - Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
   - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).
   - Maybe `onbeforereload` and `onafterreload`?
