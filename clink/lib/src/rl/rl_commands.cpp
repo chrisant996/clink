@@ -2820,15 +2820,9 @@ static void do_clink_diagnostics(bool include_settings=false)
     // Check for known potential ambiguous character width issues.
 
     {
-        const char* prompt = strrchr(rl_display_prompt, '\n');
-        if (!prompt)
-            prompt = rl_display_prompt;
-        else
-            prompt++;
-
         std::vector<alert_char> cjk;
 
-        analyze_char_widths(prompt, cjk);
+        analyze_char_widths(rl_display_prompt, cjk);
         analyze_char_widths(rl_rprompt, cjk);
 
         if (cjk.size())
