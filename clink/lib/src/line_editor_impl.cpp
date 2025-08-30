@@ -1042,6 +1042,9 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 //------------------------------------------------------------------------------
 void line_editor_impl::before_display_readline()
 {
+    if (rl_done)
+        return;
+
     // Temporarily strip off suggestions.
     rollback<int32> rb_end(rl_end);
     if (g_suggestion_offset >= 0)
