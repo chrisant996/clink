@@ -7,6 +7,16 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- [ ] **BUG:** ==> **word_collector.cpp** @li **489**: asserts in DEBUG builds and can crash in SHIP builds.  Readline's teardown can leave rl_point, rl_end, and rl_line_buffer in disagreement, which creates problems if anything tries to use them after that point.  `line_editor_impl::before_display_readline` we getting invoked even after `rl_done` was true, but at that point Readline is uninitialized and may not be in an internally consistent state.
+  - `Up`
+  - `Bkspc`
+  - `Home`
+  - `Down`
+  - `PgUp`
+  - `C-Enter`
+  - `S-Home`
+  - `Del`
+  - `Enter`
 
 ## Normal Priority
 - Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
