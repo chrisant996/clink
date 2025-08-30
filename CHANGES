@@ -8,7 +8,13 @@
   - Added a `clink-toggle-suggestion-list` command (<kbd>F2</kbd> by default) which toggles the suggestion list mode on/off.
   - Added a `suggestionlist.default` setting which can make a Clink session start with the suggestion list mode on.
   - Added new `color.suggestionlist*` color settings for the suggestion list colors.
+- Fixed <kbd>Esc</kbd> to not ding every time (it was never meant to ding).
+- Fixed temporarily-missing timestamp in history popup after using the `add-history` command.
+- Fixed `clink /?`.
+- Fixed two memory management issues in undo handling, which in certain edge cases could potentially cause heap corruption.
+- Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
+- Minor improvement to error handling for certain failures in oh-my-posh.
 
 #### v1.7.22
 
@@ -23,7 +29,7 @@
 
 #### v1.7.21
 
-- Fixed TAB expansion of `foo ~` when there is no argmatcher for `foo`.
+- Fixed <kbd>Tab</kbd> expansion of `foo ~` when there is no argmatcher for `foo`.
 - Fixed [#772](https://github.com/chrisant996/clink/issues/772); uninstall fails to uninstall autorun if the logged on user is not an administrator.
 - Fixed [#773](https://github.com/chrisant996/clink/issues/773); unexpected completion behavior after a doskey alias command.
 
