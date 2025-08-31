@@ -609,6 +609,19 @@ rl_reset_after_signal (void)
   rl_set_signals ();
 }
 
+/* Similar to rl_callback_sigcleanup, but cleans up operations that allocate
+   state even when not in callback mode. */
+void
+_rl_state_sigcleanup (void)
+{
+  if (RL_ISSTATE (RL_STATE_ISEARCH))		/* incremental search */
+    _rl_isearch_cleanup (_rl_iscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_NSEARCH))	/* non-incremental search */
+    _rl_nsearch_sigcleanup (_rl_nscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_READSTR))	/* reading a string */
+    _rl_readstr_sigcleanup (_rl_rscxt, 0);
+}
+
 /* Free up the readline variable line state for the current line (undo list,
    any partial history entry, any keyboard macros in progress, and any
    numeric arguments in process) after catching a signal, before calling
@@ -617,6 +630,9 @@ void
 rl_free_line_state (void)
 {
   register HIST_ENTRY *entry;
+
+  if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
+    _rl_state_sigcleanup ();
 
   rl_free_undo_list ();
 

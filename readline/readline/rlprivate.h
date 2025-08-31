@@ -67,6 +67,7 @@
 #define SF_CHGKMAP		0x08
 #define SF_PATTERN		0x10
 #define SF_NOCASE		0x20		/* unused so far */
+#define SF_FREEPMT		0x40		/* saved prompt separately, need to free it */
 
 typedef struct  __rl_search_context
 {
@@ -111,7 +112,8 @@ typedef struct  __rl_search_context
 } _rl_search_cxt;
 
 /* readstr flags */
-#define RL_READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
+#define READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
+#define READSTR_FREEPMT	0x02	/* called rl_save_prompt, need to free it ourselves */
 
 typedef struct  __rl_readstr_context
 {
@@ -458,6 +460,7 @@ extern int _rl_restore_tty_signals (void);
 /* search.c */
 extern int _rl_nsearch_callback (_rl_search_cxt *);
 extern int _rl_nsearch_cleanup (_rl_search_cxt *, int);
+extern int _rl_nsearch_sigcleanup (_rl_search_cxt *, int);
 /* begin_clink_change */
 extern void adjust_history_search_pos (int);
 extern int rl_get_history_search_pos (void);
@@ -473,6 +476,8 @@ extern void _rl_block_sigint (void);
 extern void _rl_release_sigint (void);
 extern void _rl_block_sigwinch (void);
 extern void _rl_release_sigwinch (void);
+
+extern void _rl_state_sigcleanup (void);
 
 /* terminal.c */
 extern void _rl_get_screen_size (int, int);
@@ -519,6 +524,7 @@ extern void _rl_free_saved_readstr_line (void);
 extern void _rl_unsave_saved_readstr_line (void);
 extern _rl_readstr_cxt *_rl_readstr_init (int, int);
 extern int _rl_readstr_cleanup (_rl_readstr_cxt *, int);
+extern int _rl_readstr_sigcleanup (_rl_readstr_cxt *, int);
 extern void _rl_readstr_restore (_rl_readstr_cxt *);
 extern int _rl_readstr_getchar (_rl_readstr_cxt *);
 extern int _rl_readstr_dispatch (_rl_readstr_cxt *, int);

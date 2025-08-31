@@ -2133,6 +2133,7 @@ _rl_readstr_init (int pchar, int flags)
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : '@');
+  cxt->flags |= READSTR_FREEPMT;
   rl_message ("%s", p);
   xfree (p);
 
@@ -2164,11 +2165,22 @@ _rl_readstr_restore (_rl_readstr_cxt *cxt)
   _rl_unsave_saved_readstr_line ();	/* restores rl_undo_list */
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  if (cxt->flags & READSTR_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->flags &= ~READSTR_FREEPMT;
   rl_clear_message ();
   _rl_fix_point (1);
 }
 
+int
+_rl_readstr_sigcleanup (_rl_readstr_cxt *cxt, int r)
+{
+  if (cxt->flags & READSTR_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->flags &= ~READSTR_FREEPMT;
+  return (_rl_readstr_cleanup (cxt, r));
+}
+  
 int   
 _rl_readstr_getchar (_rl_readstr_cxt *cxt)
 {
@@ -2277,7 +2289,7 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
       break;
 
     case ' ':
-      if ((cxt->flags & RL_READSTR_NOSPACE) == 0)
+      if ((cxt->flags & READSTR_NOSPACE) == 0)
 	{
 	  _rl_insert_char (1, c);
 	  break;
@@ -2426,7 +2438,7 @@ _rl_read_command_name ()
   char *ret;
   int c, r;
 
-  cxt = _rl_readstr_init ('!', RL_READSTR_NOSPACE);
+  cxt = _rl_readstr_init ('!', READSTR_NOSPACE);
   cxt->compfunc = _rl_readcmd_complete;
 
   /* skip callback stuff for now */
