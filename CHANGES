@@ -13,6 +13,8 @@
 - Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
 - Minor improvement to error handling for certain failures in oh-my-posh.
+- Picked up fixes and changes from the Readline repo:
+  - **Breaking Change:** The name for `readline-colored-completion-prefix` no longer has a leading `.`; the original report was based on a misunderstanding.
 
 #### v1.7.22
 

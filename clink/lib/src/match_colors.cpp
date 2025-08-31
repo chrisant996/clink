@@ -101,7 +101,7 @@ static const char c_match_colors_help[] =
 "                \"fi\" type when no type is given.\n"
 "\n"
 "For backward compatibility with LS_COLORS, either \"so\" or\n"
-"\"*.readline-colored-completion-prefix\" may be used to override the\n"
+"\"readline-colored-completion-prefix\" may be used to override the\n"
 "color.common_match_prefix setting.\n"
 "\n"
 "If an environment variable %CLINK_MATCH_COLORS% exists then its value\n"
@@ -650,7 +650,7 @@ void parse_match_colors()
         {
             // If C_SOCK was overridden, then that supersedes the
             // g_common_match_prefix setting.  But override it early so that
-            // *.readline-colored-completion-prefix can supersede C_SOCK.
+            // readline-colored-completion-prefix can supersede C_SOCK.
             const auto sock = LS_COLORS_indicator[C_SOCK];
             if (sock.string != c_default_completion_prefix_color)
             {
@@ -665,7 +665,7 @@ void parse_match_colors()
             ext.clear();
             ext.concat(e->ext.string, e->ext.len);
             if (_rl_colored_completion_prefix &&
-                ext.equals(".readline-colored-completion-prefix"))
+                ext.equals("readline-colored-completion-prefix"))
             {
                 s_completion_prefix.clear();
                 s_completion_prefix.concat(e->seq.string, e->seq.len);
@@ -721,7 +721,7 @@ void parse_match_colors()
             }
             if (r > 0)
             {
-                if (token.equals("*.readline-colored-completion-prefix"))
+                if (token.equals("readline-colored-completion-prefix"))
                 {
                     s_colored_stats = true;
                     override = true;
