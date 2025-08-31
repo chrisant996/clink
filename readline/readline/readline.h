@@ -1,6 +1,6 @@
 /* Readline.h -- the names of functions callable from within readline. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -183,6 +183,11 @@ extern int rl_backward_old_menu_complete (int, int);
 extern int rl_menu_complete (int, int);
 extern int rl_backward_menu_complete (int, int);
 /* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+extern int rl_export_completions (int, int);
+/* begin_clink_change */
+#endif
 extern char** rl_get_completions (int, int*, char**, int*, int*, int*, char*);
 extern void rl_insert_match (const char*, char*, int, int, char);
 /* end_clink_change */

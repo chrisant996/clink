@@ -1,6 +1,6 @@
 /* complete.c -- filename completion for readline. */
 
-/* Copyright (C) 1987-2022,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -199,6 +199,14 @@ static int compare_match (char *, const char *);
 static int complete_get_screenwidth (void);
 
 static char *make_quoted_replacement (char *, int, char *);
+
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+static void _rl_export_completions (char **, char *, int, int);
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* **************************************************************** */
 /*								    */
@@ -2949,7 +2957,9 @@ __compare_match (char *text, const char *match)
    `!' means to do standard completion, and list all possible completions if
    there is more than one.
    `@' means to do standard completion, and list all possible completions if
-   there is more than one and partial completion is not possible. */
+   there is more than one and partial completion is not possible.
+   `$' implements a protocol for exporting completions and information about
+   what is being completed to another process via rl_outstream. */
 int
 rl_complete_internal (int what_to_do)
 {
@@ -3014,9 +3024,25 @@ rl_complete_internal (int what_to_do)
     nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
   if (what_to_do == '!' || what_to_do == '@')
     tlen = strlen (text);
-  xfree (text);
 
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+  if (what_to_do != '$')
+/* begin_clink_change */
+#endif
+/* end_clink_change */
+    xfree (text);
+
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+  if (matches == 0 && what_to_do != '$')	/* we can export no completions */
+/* begin_clink_change */
+#else
   if (matches == 0)
+#endif
+/* end_clink_change */
     {
       rl_ding ();
       FREE (saved_line_buffer);
@@ -3032,7 +3058,15 @@ rl_complete_internal (int what_to_do)
      rl_filename_completion_function does this. */
   i = rl_filename_completion_desired;
 
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+  if (postprocess_matches (&matches, i) == 0 && what_to_do != '$')	/* we can export no completions */
+/* begin_clink_change */
+#else
   if (postprocess_matches (&matches, i) == 0)
+#endif
+/* end_clink_change */
     {
       rl_ding ();
       FREE (saved_line_buffer);
@@ -3157,6 +3191,17 @@ rl_complete_internal (int what_to_do)
     case '|':			/* add this for unconditional display */
       do_display = 1;
       break;
+
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+    case '$':
+      _rl_export_completions (matches, text, start, end);
+      xfree (text);
+      break;
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
     default:
       _rl_ttymsg ("bad value %d for what_to_do in rl_complete", what_to_do);
@@ -4295,4 +4340,65 @@ int __stat_char (const char *filename, char match_type)
 {
   return stat_char (filename, match_type);
 }
+/* end_clink_change */
+
+/* This implements a protocol to export completions to another process or
+   calling application via rl_outstream.
+
+   MATCHES are the possible completions for TEXT, which is the text between
+   START and END in rl_line_buffer.
+
+   We print:
+   	N - the number of matches
+   	T - the word being completed
+   	S:E - the start and end offsets of T in rl_line_buffer
+   	then each match, one per line
+
+  If there are no matches, MATCHES is NULL, N will be 0, and there will be
+  no output after S:E.
+
+  Since MATCHES[0] can be empty if there is no common prefix of the elements
+  of MATCHES, applications should be prepared to deal with an empty line
+  preceding the matches.
+*/
+
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+static void
+_rl_export_completions (char **matches, char *text, int start, int end)
+{
+  size_t len, i;
+
+  len = vector_len (matches);
+
+  if (RL_ISSTATE (RL_STATE_TERMPREPPED))
+    fprintf (rl_outstream, "\r\n");
+  fprintf (rl_outstream, "%zd\n", len);
+  fprintf (rl_outstream, "%s\n", text);
+  fprintf (rl_outstream, "%d:%d\n", start, end);	/* : because it's not a radix character */
+  for (i = 0; i < len; i++)
+    {
+      print_filename (matches[i], matches[i], 0);
+      fprintf (rl_outstream, "\n");
+    }
+  fflush (rl_outstream);
+}
+
+int
+rl_export_completions (int count, int key)
+{
+  rl_complete_internal ('$');
+
+  /* Clear the line buffer, currently requires a count argument. */
+  if (count > 1)
+    {
+      rl_delete_text (0, rl_end);		/* undoable */
+      rl_point = rl_mark = 0;
+    }
+
+  return 0;
+}
+/* begin_clink_change */
+#endif
 /* end_clink_change */
