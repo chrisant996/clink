@@ -1,3 +1,21 @@
+/* config.h.in for the GNU readline library. */
+
+/* Copyright (C) 1994-2024 Free Software Foundation, Inc.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 /* config.h.in.  Maintained by hand. */
 
 /* Template definitions for autoconf */
@@ -26,6 +44,8 @@
 #undef size_t
 
 #undef ssize_t
+
+#undef mode_t
 
 #undef const
 
@@ -87,6 +107,9 @@
 /* Define if you have the mbrtowc function. */
 #undef HAVE_MBRTOWC
 
+/* Define if you have the mbscasecmp function. */
+#undef HAVE_MBSCASECMP
+
 /* Define if you have the mbscmp function. */
 #undef HAVE_MBSCMP
 
@@ -137,6 +160,12 @@
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR
 
+/* Define if you have the tcgetwinsize function.  */
+#undef HAVE_TCGETWINSIZE
+
+/* Define if you have the tcsetwinsize function.  */
+#undef HAVE_TCSETWINSIZE
+
 /* Define if you have the towlower function.  */
 #undef HAVE_TOWLOWER
 
@@ -151,6 +180,12 @@
 
 /* Define if you have the wcscoll function.  */
 #undef HAVE_WCSCOLL
+
+#undef HAVE_WCSLEN
+#undef HAVE_WCSNLEN
+
+/* Define if you have the wcsnrtombs function.  */
+#undef HAVE_WCSNRTOMBS
 
 /* Define if you have the wctype function.  */
 #undef HAVE_WCTYPE

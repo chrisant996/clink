@@ -1460,3 +1460,35 @@ Makefile.in
 	  HAVE_GETTIMEOFDAY is defined. This is for systems like _WIN32 that
 	  don't have gettimeofday()
 
+				 3/6/2024
+				 --------
+config.h.in
+	- added more defines that bash aclocal.m4 BASH_CHECK_MULTIBYTE checks
+	  for
+
+				   5/10
+				   ----
+examples/rlfe
+	- lots of updates to configure.ac to make it build on modern systems
+	  and more-or-less work with autoconf-2.72 (still warnings about
+	  obsolete macros)
+	- add prototypes and declarations to pty.c
+
+				   5/11
+				   ----
+configure.ac
+	- AC_PROG_GCC_TRADITIONAL: remove
+	- need to note in CHANGES that configure now supports --enable-year2038.
+	  THIS IS AN ABI CHANGE IF YOU ENABLE IT
+
+				    7/7
+				    ---
+configure.ac
+	- add ncursesw as a possible value for TERMCAP_PKG_CONFIG_LIB, with
+	  corresponding changes to aclocal.m4, which is shared with bash
+
+				   7/24
+				   ----
+configure.ac,Makefile.in
+	- STYLE_CFLAGS: set like bash if we're using gcc or clang; add to
+	  CCFLAGS so we can compile -Wno-parentheses by default

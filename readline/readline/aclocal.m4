@@ -3,7 +3,7 @@ dnl Bash specific tests
 dnl
 dnl Some derived from PDKSH 5.1.3 autoconf tests
 dnl
-dnl Copyright (C) 1987-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 1987-2025 Free Software Foundation, Inc.
 dnl
 
 dnl
@@ -934,10 +934,11 @@ AC_CACHE_VAL(bash_cv_termcap_lib,
 [AC_CHECK_FUNC(tgetent, bash_cv_termcap_lib=libc,
   [AC_CHECK_LIB(termcap, tgetent, bash_cv_termcap_lib=libtermcap,
     [AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo,
+      [AC_CHECK_LIB(tinfow, tgetent, bash_cv_termcap_lib=libtinfow,
         [AC_CHECK_LIB(curses, tgetent, bash_cv_termcap_lib=libcurses,
-	    [AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses,
-                [AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw,
-	            bash_cv_termcap_lib=gnutermcap)])])])])])])
+	  [AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw,
+            [AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses,
+	      bash_cv_termcap_lib=gnutermcap)])])])])])])])
 if test "X$_bash_needmsg" = "Xyes"; then
 AC_MSG_CHECKING(which library has the termcap functions)
 fi
@@ -951,6 +952,12 @@ TERMCAP_LIB=-ltermcap
 TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libtinfo; then
 TERMCAP_LIB=-ltinfo
+TERMCAP_DEP=
+elif test $bash_cv_termcap_lib = libtinfow; then
+TERMCAP_LIB=-ltinfow
+TERMCAP_DEP=
+elif test $bash_cv_termcap_lib = libncursesw; then
+TERMCAP_LIB=-lncursesw
 TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libncurses; then
 TERMCAP_LIB=-lncurses
@@ -1022,7 +1029,7 @@ dnl like _AC_STRUCT_DIRENT(MEMBER) but public
 AC_DEFUN(BASH_STRUCT_DIRENT,
 [
 AC_REQUIRE([AC_HEADER_DIRENT])
-AC_CHECK_MEMBERS(struct dirent.$1, bash_cv_dirent_has_$1=yes, bash_cv_dirent_has_$1=no,
+AC_CHECK_MEMBERS(struct dirent.$1, [], [],
 [[
 #include <stdio.h>
 #include <sys/types.h>
@@ -1046,35 +1053,9 @@ AC_CHECK_MEMBERS(struct dirent.$1, bash_cv_dirent_has_$1=yes, bash_cv_dirent_has
 ]])
 ])
 
-AC_DEFUN(BASH_STRUCT_DIRENT_D_INO,
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(for struct dirent.d_ino)
-AC_CACHE_VAL(bash_cv_dirent_has_d_ino, [BASH_STRUCT_DIRENT([d_ino])])
-AC_MSG_RESULT($bash_cv_dirent_has_d_ino)
-if test $bash_cv_dirent_has_d_ino = yes; then
-AC_DEFINE(HAVE_STRUCT_DIRENT_D_INO)
-fi
-])
-
-AC_DEFUN(BASH_STRUCT_DIRENT_D_FILENO,
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(for struct dirent.d_fileno)
-AC_CACHE_VAL(bash_cv_dirent_has_d_fileno, [BASH_STRUCT_DIRENT([d_fileno])])
-AC_MSG_RESULT($bash_cv_dirent_has_d_fileno)
-if test $bash_cv_dirent_has_d_fileno = yes; then
-AC_DEFINE(HAVE_STRUCT_DIRENT_D_FILENO)
-fi
-])
-
-AC_DEFUN(BASH_STRUCT_DIRENT_D_NAMLEN,
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(for struct dirent.d_namlen)
-AC_CACHE_VAL(bash_cv_dirent_has_d_namlen, [BASH_STRUCT_DIRENT([d_namlen])])
-AC_MSG_RESULT($bash_cv_dirent_has_d_namlen)
-if test $bash_cv_dirent_has_d_namlen = yes; then
-AC_DEFINE(HAVE_STRUCT_DIRENT_D_NAMLEN)
-fi
-])
+AC_DEFUN([BASH_STRUCT_DIRENT_D_INO], [BASH_STRUCT_DIRENT([d_ino])])
+AC_DEFUN([BASH_STRUCT_DIRENT_D_FILENO], [BASH_STRUCT_DIRENT([d_fileno])])
+AC_DEFUN([BASH_STRUCT_DIRENT_D_NAMLEN], [BASH_STRUCT_DIRENT([d_namlen])])
 
 AC_DEFUN(BASH_STRUCT_TIMEVAL,
 [AC_MSG_CHECKING(for struct timeval in sys/time.h and time.h)
@@ -1816,6 +1797,9 @@ main(int c, char **v)
 
         setlocale(LC_ALL, "en_US.UTF-8");
         w = wcwidth (0x0301);
+	if (w != 0)
+	  exit (0);
+	w = wcwidth (0x200b);
         exit (w == 0);  /* exit 0 if wcwidth broken */
 }
 ]])], [bash_cv_wcwidth_broken=yes], [bash_cv_wcwidth_broken=no],
@@ -2260,3 +2244,68 @@ else
 fi
 AC_DEFINE_UNQUOTED([FNMATCH_EQUIV_FALLBACK], [$bash_cv_fnmatch_equiv_value], [Whether fnmatch can be used for bracket equivalence classes])
 ])
+
+AC_DEFUN([BASH_FUNC_STRCHRNUL],
+[
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+  AC_CACHE_CHECK([whether strchrnul works],
+      [bash_cv_func_strchrnul_works],
+      [AC_RUN_IFELSE([AC_LANG_PROGRAM(
+[[
+#include <string.h>
+]],
+[[const char *buf = "abc";
+      return strchrnul (buf, 'd') != buf + 3;
+]]
+)],
+[bash_cv_func_strchrnul_works=yes], [bash_cv_func_strchrnul_works=no],
+[bash_cv_func_strchrnul_works=no]
+)])
+
+if test "$bash_cv_func_strchrnul_works" = "no"; then
+AC_LIBOBJ([strchrnul])
+fi
+])
+
+# AM_PROG_INSTALL_STRIP
+# ---------------------
+# One issue with vendor 'install' (even GNU) is that you can't
+# specify the program used to strip binaries.  This is especially
+# annoying in cross-compiling environments, where the build's strip
+# is unlikely to handle the host's binaries.
+# Fortunately install-sh will honor a STRIPPROG variable, so we
+# always use install-sh in "make install-strip", and initialize
+# STRIPPROG with the value of the STRIP variable (set by the user).
+AC_DEFUN([AM_PROG_INSTALL_STRIP],
+[AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
+# Installed binaries are usually stripped using 'strip' when the user
+# run "make install-strip".  However 'strip' might not be the right
+# tool to use in cross-compilation environments, therefore Automake
+# will honor the 'STRIP' environment variable to overrule this program.
+dnl Don't test for $cross_compiling = yes, because it might be 'maybe'.
+#if test "$cross_compiling" != no; then
+  AC_CHECK_TOOL([STRIP], [strip], :)
+#fi
+INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
+AC_SUBST([INSTALL_STRIP_PROGRAM])])
+
+AC_DEFUN([AM_AUX_DIR_EXPAND],
+[AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
+])
+
+# AM_PROG_INSTALL_SH
+# ------------------
+# Define $install_sh.
+AC_DEFUN([AM_PROG_INSTALL_SH],
+[AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+if test x"${install_sh+set}" != xset; then
+  case $am_aux_dir in
+  *\ * | *\	*)
+    install_sh="\${SHELL} '$am_aux_dir/install-sh'" ;;
+  *)
+    install_sh="\${SHELL} $am_aux_dir/install-sh"
+  esac
+fi
+AC_SUBST([install_sh])])

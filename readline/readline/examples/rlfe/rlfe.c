@@ -107,16 +107,14 @@
 #  else
 #    define memmove(d, s, n)	memcpy(d, s, n)
 #  endif
-#else
-#  define memmove(d, s, n)	memcpy(d, s, n)
 #endif
 
 #define APPLICATION_NAME "rlfe"
 
 static int in_from_inferior_fd;
 static int out_to_inferior_fd;
-static void set_edit_mode ();
-static void usage_exit ();
+static void set_edit_mode (void);
+static void usage_exit (void);
 static char *hist_file = 0;
 static int  hist_size = 0;
 
@@ -267,7 +265,7 @@ static void maybe_emphasize_input (int on)
   if (on == current_emphasize_input
       || (on && ! do_emphasize_input))
     return;
-  fprintf (rl_outstream, on ? start_input_mode : end_input_mode);
+  fprintf (rl_outstream, "%s", on ? start_input_mode : end_input_mode);
   fflush (rl_outstream);
   current_emphasize_input = on;
 }
@@ -278,7 +276,7 @@ null_prep_terminal (int meta)
 }
 
 static void
-null_deprep_terminal ()
+null_deprep_terminal (void)
 {
   maybe_emphasize_input (0);
 }
@@ -756,7 +754,7 @@ main(int argc, char** argv)
     }
 }
 
-static void set_edit_mode ()
+static void set_edit_mode (void)
 {
   int vi = 0;
   char *shellopts;
@@ -785,7 +783,7 @@ static void set_edit_mode ()
 }
 
 
-static void usage_exit ()
+static void usage_exit (void)
 {
   fprintf (stderr, "Usage: rlfe [-h histfile] [-s size] cmd [arg1] [arg2] ...\n\n");
   exit (1);

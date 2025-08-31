@@ -144,7 +144,8 @@ extern int errno;
 #endif
 
 #ifndef USEBCOPY
-# ifdef USEMEMMOVE
+# undef bcopy
+# ifdef HAVE_MEMMOVE
 #  define bcopy(s,d,len) memmove(d,s,len)
 # else
 #  ifdef USEMEMCPY
@@ -428,7 +429,7 @@ extern int errno;
 #define SIGCHLD SIGCLD
 #endif
 
-#if defined(POSIX) || defined(hpux)
+#if defined(hpux)
 # define signal xsignal
 #else
 # ifdef USESIGSET

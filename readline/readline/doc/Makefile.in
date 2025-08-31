@@ -1,7 +1,7 @@
 # This makefile for Readline library documentation is in -*- text -*- mode.
 # Emacs likes it that way.
 
-# Copyright (C) 1996-2009 Free Software Foundation, Inc.
+# Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ man3ext = .3
 man3dir = $(mandir)/$(manpfx)3
 
 # set this to a value to have the HTML documentation installed
-htmldir =
+htmldir = @htmldir@
 
 # Support an alternate destination root directory for package building
 DESTDIR =
@@ -73,7 +73,7 @@ HISTSRC = $(srcdir)/history.texi $(srcdir)/hsuser.texi \
 	  $(srcdir)/hstech.texi $(srcdir)/version.texi $(srcdir)/fdl.texi
 
 # This should be a program that converts troff to an ascii-readable format
-NROFF       = groff -Tascii
+NROFF       = groff -Tascii -P -c
 
 # This should be a program that converts troff to postscript
 GROFF       = groff
@@ -83,7 +83,7 @@ INFOOBJ = readline.info history.info rluserman.info
 PSOBJ = readline.ps history.ps rluserman.ps readline_3.ps history_3.ps
 HTMLOBJ = readline.html history.html rluserman.html
 TEXTOBJ = readline.0 history.0
-PDFOBJ = readline.pdf history.pdf rluserman.pdf
+PDFOBJ = readline.pdf history.pdf rluserman.pdf readline_3.pdf history_3.pdf
 
 INTERMEDIATE_OBJ = rlman.dvi
 
@@ -95,9 +95,17 @@ DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ) $(PDFOBJ)
 	$(RM) $@
 	-${NROFF} -man $< > $@
 
-.ps.pdf:
+.3.pdf:
 	$(RM) $@
-	-${PSPDF} $<
+	-${GROFF} -man -T pdf $< > $@
+
+.3.ps:
+	$(RM) $@
+	-${GROFF} -man $< > $@
+
+#.ps.pdf:
+#	$(RM) $@
+#	-${PSPDF} $<
 
 .dvi.pdf:
 	$(RM) $@
@@ -107,8 +115,9 @@ DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ) $(PDFOBJ)
 #	$(RM) $@
 #	-${TEXI2PDF} $<
 
-all: info dvi html ps text pdf
+all: info html text pdf dvi
 nodvi: info html text
+everything: all ps
 
 xdist: $(DIST_DOCS)
 
@@ -120,23 +129,37 @@ text:	$(TEXTOBJ)
 pdf:	$(PDFOBJ)
 
 readline.dvi: $(RLSRC)
-	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2DVI) $(srcdir)/rlman.texi
-	mv rlman.dvi readline.dvi
+	$(RM) $@
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2DVI) -o $@ $(srcdir)/rlman.texi
 
 readline.info: $(RLSRC)
+	$(RM) $@
 	$(MAKEINFO) --no-split -I $(TEXINPUTDIR) -o $@ $(srcdir)/rlman.texi
 
+readline.pdf:	$(RLSRC)
+	$(RM) $@
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) -o $@ $(srcdir)/rlman.texi
+
 rluserman.dvi: $(RLSRC)
+	$(RM) $@
 	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2DVI) $(srcdir)/rluserman.texi
 
 rluserman.info: $(RLSRC)
+	$(RM) $@
 	$(MAKEINFO) --no-split -I $(TEXINPUTDIR) -o $@ $(srcdir)/rluserman.texi
+
+rluserman.pdf:	$(RLSRC)
+	$(RM) $@
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) -o $@ $(srcdir)/rlman.texi
 
 history.dvi: ${HISTSRC}
 	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2DVI) $(srcdir)/history.texi
 
 history.info: ${HISTSRC}
 	$(MAKEINFO) --no-split -I $(TEXINPUTDIR) -o $@ $(srcdir)/history.texi
+
+history.pdf:	$(HISTSRC)
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/history.texi
 
 readline.ps:	readline.dvi
 	$(RM) $@
@@ -154,7 +177,7 @@ history.ps:	history.dvi
 # This leaves readline.html and rlman.html -- rlman.html is for www.gnu.org
 #
 readline.html:	${RLSRC}
-	$(MAKEINFO) -o $@ --html --no-split -I$(TEXINPUTDIR) $(srcdir)/rlman.texi
+	$(MAKEINFO) -o $@ --html --no-split -I$(TEXINPUTDIR) -o $@ $(srcdir)/rlman.texi
 
 rlman.html:	${RLSRC}
 	$(MAKEINFO) -o $@ --html --no-split -I$(TEXINPUTDIR) $(srcdir)/rlman.texi
@@ -166,47 +189,47 @@ history.html:	${HISTSRC}
 	$(MAKEINFO) --html --no-split -I$(TEXINPUTDIR) $(srcdir)/history.texi
 
 readline.0: readline.3
-
-readline_3.ps: $(srcdir)/readline.3
-	${RM} $@
-	${GROFF} -man < $(srcdir)/readline.3 > $@ 
-
 history.0: history.3
 
+readline_3.ps: $(srcdir)/readline.3
+	$(RM) $@
+	-${GROFF} -man $< > $@
+
+readline_3.pdf: $(srcdir)/readline.3
+	$(RM) $@
+	-${GROFF} -man -T pdf $< > $@
+
 history_3.ps: $(srcdir)/history.3
-	${RM} $@
-	${GROFF} -man < $(srcdir)/history.3 > $@ 
+	$(RM) $@
+	-${GROFF} -man $< > $@
 
-readline.pdf:	$(RLSRC)
-	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/rlman.texi
-	mv rlman.pdf $@
+history_3.pdf: $(srcdir)/history.3
+	$(RM) $@
+	-${GROFF} -man -T pdf $< > $@
 
-history.pdf:	$(HISTSRC)
-	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/history.texi
+.PHONY: clean maintainer-clean distclean mostlyclean maybe-clean
 
-rluserman.pdf:	$(RLSRC)
-	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/rluserman.texi
-
-clean:
+mostlyclean:
 	$(RM) *.aux *.bak *.cp *.fn *.ky *.log *.pg *.toc *.tp *.vr *.cps \
 	      *.pgs *.bt *.bts *.rw *.rws *.fns *.kys *.tps *.vrs *.o \
 	      core *.core
 
-mostlyclean: clean
+clean: mostlyclean
 
 distclean: clean maybe-clean
 	$(RM) $(INTERMEDIATE_OBJ)
 	$(RM) Makefile
 
 maybe-clean:
-	-if test "X$(topdir)" != "X.." && test "X$(topdir)" != "X$(BUILD_DIR)"; then \
+	-TD=$$(cd $(topdir) && pwd -P) ; \
+	BD=$$(cd $(BUILD_DIR) && pwd -P) ; \
+	if test "X$$TD" != "X$$BD"; then \
 		$(RM) $(DIST_DOCS); \
 	fi
 
 maintainer-clean: clean
 	$(RM) $(DIST_DOCS)
 	$(RM) $(INTERMEDIATE_OBJ)
-	$(RM) $(PDFOBJ)
 	$(RM) Makefile
 
 installdirs:	$(topdir)/support/mkdirs
@@ -259,12 +282,42 @@ install:	installdirs
 		fi ; \
 	fi
 
+install-html:	html
+	-if test -n "${htmldir}" ; then \
+		if test -f readline.html; then \
+			${INSTALL_DATA} readline.html $(DESTDIR)$(htmldir)/readline.html; \
+		else \
+			${INSTALL_DATA} $(srcdir)/readline.html $(DESTDIR)$(htmldir)/readline.html; \
+		fi ; \
+		if test -f history.html; then \
+			${INSTALL_DATA} history.html $(DESTDIR)$(htmldir)/history.html; \
+		else \
+			${INSTALL_DATA} $(srcdir)/history.html $(DESTDIR)$(htmldir)/history.html; \
+		fi ; \
+		if test -f rluserman.html; then \
+			${INSTALL_DATA} rluserman.html $(DESTDIR)$(htmldir)/rluserman.html; \
+		else \
+			${INSTALL_DATA} $(srcdir)/rluserman.html $(DESTDIR)$(htmldir)/rluserman.html; \
+		fi ; \
+	fi
+
+install-dvi:
+install-pdf:
+install-ps:
+
 uninstall:
 	$(RM) $(DESTDIR)$(infodir)/readline.info
 	$(RM) $(DESTDIR)$(infodir)/rluserman.info
 	$(RM) $(DESTDIR)$(infodir)/history.info
 	$(RM) $(DESTDIR)$(man3dir)/readline$(man3ext)
 	$(RM) $(DESTDIR)$(man3dir)/history$(man3ext)
+	-if test -n "${htmldir}" ; then \
+		$(RM) $(DESTDIR)$(htmldir)/readline.html ; \
+		$(RM) $(DESTDIR)$(htmldir)/rluserman.html ; \
+		$(RM) $(DESTDIR)$(htmldir)/history.html ; \
+	fi
+
+uninstall-html:
 	-if test -n "${htmldir}" ; then \
 		$(RM) $(DESTDIR)$(htmldir)/readline.html ; \
 		$(RM) $(DESTDIR)$(htmldir)/rluserman.html ; \

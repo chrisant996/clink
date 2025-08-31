@@ -1,23 +1,28 @@
-HISTORY(3)                 Library Functions Manual                 HISTORY(3)
+_H_I_S_T_O_R_Y(3)                 Library Functions Manual                 _H_I_S_T_O_R_Y(3)
 
-
-
-[1mNAME[0m
+NNAAMMEE
        history - GNU History Library
 
-[1mCOPYRIGHT[0m
-       The GNU History Library is Copyright (C) 1989-2020 by the Free Software
+CCOOPPYYRRIIGGHHTT
+       The GNU History Library is Copyright (C) 1989-2025 by the Free Software
        Foundation, Inc.
 
-[1mDESCRIPTION[0m
-       Many programs read input from the user a line at a time.  The GNU  His-
-       tory  library is able to keep track of those lines, associate arbitrary
-       data with each line, and utilize information  from  previous  lines  in
+DDEESSCCRRIIPPTTIIOONN
+       Many  programs read input from the user a line at a time.  The GNU His-
+       tory library is able to keep track of those lines, associate  arbitrary
+       data  with  each line, and utilize information from previous lines when
        composing new ones.
 
-[1mHISTORY EXPANSION[0m
-       The  history library supports a history expansion feature that is iden-
-       tical to the history expansion in [1mbash.  [22mThis  section  describes  what
+       The History library provides functions that allow applications to their
+       _h_i_s_t_o_r_y, the set of previously-typed lines, which it keeps in  a  list.
+       Applications  can  choose  which lines to save into a history list, how
+       many commands to save, save a history list to a file,  read  a  history
+       list  from  a  file, and display lines from the history in various for-
+       mats.
+
+HHIISSTTOORRYY EEXXPPAANNSSIIOONN
+       The history library supports a history expansion feature that is  iden-
+       tical  to  the  history expansion in bbaasshh.  This section describes what
        syntax features are available.
 
        History expansions introduce words from the history list into the input
@@ -25,116 +30,139 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        previous command into the current input line, or fix errors in previous
        commands quickly.
 
-       History expansion is usually performed  immediately  after  a  complete
-       line  is read.  It takes place in two parts.  The first is to determine
-       which line from the history list to use during substitution.  The  sec-
-       ond  is  to select portions of that line for inclusion into the current
-       one.  The line selected from the history is the [4mevent[24m, and the portions
-       of  that  line  that  are  acted upon are [4mwords[24m.  Various [4mmodifiers[24m are
-       available to manipulate the selected words.  The line  is  broken  into
-       words in the same fashion as [1mbash [22mdoes when reading input, so that sev-
-       eral words that would otherwise be separated are  considered  one  word
-       when  surrounded  by  quotes (see the description of [1mhistory_tokenize()[0m
-       below).  History expansions are introduced by  the  appearance  of  the
-       history expansion character, which is [1m! [22mby default.  Only backslash ([1m\[22m)
-       and single quotes can quote the history expansion character.
+       History  expansion  is  usually  performed immediately after a complete
+       line is read.  It takes place in two parts.  The first is to  determine
+       which  history list entry to use during substitution.  The second is to
+       select portions of that entry to include into the current one.
 
-   [1mEvent Designators[0m
-       An event designator is a reference to a command line entry in the  his-
-       tory  list.   Unless  the reference is absolute, events are relative to
-       the current position in the history list.
+       The entry selected from the history is the _e_v_e_n_t, and the  portions  of
+       that entry that are acted upon are _w_o_r_d_s.  Various _m_o_d_i_f_i_e_r_s are avail-
+       able  to  manipulate the selected words.  The entry is split into words
+       in the same fashion as bbaasshh does when reading input,  so  that  several
+       words  that  would  otherwise be separated are considered one word when
+       surrounded by quotes (see the description of hhiissttoorryy__ttookkeenniizzee(()) below).
+       The _e_v_e_n_t _d_e_s_i_g_n_a_t_o_r selects the event, the  optional  _w_o_r_d  _d_e_s_i_g_n_a_t_o_r
+       selects words from the event, and various optional _m_o_d_i_f_i_e_r_s are avail-
+       able to manipulate the selected words.
 
-       [1m!      [22mStart a history substitution, except when followed by  a  [1mblank[22m,
-              newline, = or (.
-       [1m![4m[22mn[24m     Refer to command line [4mn[24m.
-       [1m!-[4m[22mn[24m    Refer to the current command minus [4mn[24m.
-       [1m!!     [22mRefer to the previous command.  This is a synonym for `!-1'.
-       [1m![4m[22mstring[0m
-              Refer  to the most recent command preceding the current position
-              in the history list starting with [4mstring[24m.
-       [1m!?[4m[22mstring[24m[1m[?][0m
+       History  expansions are introduced by the appearance of the history ex-
+       pansion character, which is !! by default.  History expansions  may  ap-
+       pear anywhere in the input, but do not nest.
+
+       Only  backslash  (\\)  and single quotes can quote the history expansion
+       character.
+
+       There is a special abbreviation for substitution, active when the _q_u_i_c_k
+       _s_u_b_s_t_i_t_u_t_i_o_n character (default ^^) is the first character on the  line.
+       It  selects  the previous history list entry, using an event designator
+       equivalent to !!!!, and substitutes one string for another in that entry.
+       It is described below under EEvveenntt DDeessiiggnnaattoorrss.  This is the  only  his-
+       tory  expansion  that does not begin with the history expansion charac-
+       ter.
+
+   EEvveenntt DDeessiiggnnaattoorrss
+       An event designator is a reference to an entry  in  the  history  list.
+       The event designator consists of the portion of the word beginning with
+       the  history expansion character and ending with the word designator if
+       present, or the end of the word.  Unless  the  reference  is  absolute,
+       events are relative to the current position in the history list.
+
+       !!      Start  a  history substitution, except when followed by a bbllaannkk,
+              newline, carriage return, =, or (.
+       !!_n     Refer to history list entry _n.
+       !!--_n    Refer to the current entry minus _n.
+       !!!!     Refer to the previous entry.  This is a synonym for "!-1".
+       !!_s_t_r_i_n_g
               Refer to the most recent command preceding the current  position
-              in  the  history  list containing [4mstring[24m.  The trailing [1m? [22mmay be
-              omitted if [4mstring[24m is followed  immediately  by  a  newline.   If
-              [4mstring[24m  is  missing,  the  string from the most recent search is
-              used; it is an error if there is no previous search string.
-       [1m^[4m[22mstring1[24m[1m^[4m[22mstring2[24m[1m^[0m
-              Quick substitution.  Repeat the last command, replacing  [4mstring1[0m
-              with [4mstring2[24m.  Equivalent to ``!!:s^[4mstring1[24m^[4mstring2[24m^'' (see [1mMod-[0m
-              [1mifiers [22mbelow).
-       [1m!#     [22mThe entire command line typed so far.
+              in the history list starting with _s_t_r_i_n_g.
+       !!??_s_t_r_i_n_g[[??]]
+              Refer  to the most recent command preceding the current position
+              in the history list containing _s_t_r_i_n_g.  The trailing  ??  may  be
+              omitted  if  _s_t_r_i_n_g  is  followed  immediately by a newline.  If
+              _s_t_r_i_n_g is missing, this uses the string  from  the  most  recent
+              search; it is an error if there is no previous search string.
+       ^^_s_t_r_i_n_g_1^^_s_t_r_i_n_g_2^^
+              Quick  substitution.   Repeat  the  previous  command, replacing
+              _s_t_r_i_n_g_1 with  _s_t_r_i_n_g_2.   Equivalent  to  "!!:s^_s_t_r_i_n_g_1^_s_t_r_i_n_g_2^"
+              (see MMooddiiffiieerrss below).
+       !!##     The entire command line typed so far.
 
-   [1mWord Designators[0m
-       Word designators are used to select desired words from the event.  A  [1m:[0m
-       separates  the event specification from the word designator.  It may be
-       omitted if the word designator begins with a [1m^[22m, [1m$[22m, [1m*[22m, [1m-[22m, or  [1m%[22m.   Words
-       are  numbered from the beginning of the line, with the first word being
-       denoted by 0 (zero).  Words are inserted into the  current  line  sepa-
-       rated by single spaces.
+   WWoorrdd DDeessiiggnnaattoorrss
+       Word designators are used to select desired words from the event.  They
+       are optional; if the word designator isn't supplied, the history expan-
+       sion uses the entire event.  A :: separates the event specification from
+       the  word  designator.  It may be omitted if the word designator begins
+       with a ^^, $$, **, --, or %%.  Words are numbered from the beginning of  the
+       line,  with  the  first  word being denoted by 0 (zero).  Words are in-
+       serted into the current line separated by single spaces.
 
-       [1m0 (zero)[0m
-              The zeroth word.  For the shell, this is the command word.
-       [4mn[24m      The [4mn[24mth word.
-       [1m^      [22mThe first argument.  That is, word 1.
-       [1m$      [22mThe  last word.  This is usually the last argument, but will ex-
-              pand to the zeroth word if there is only one word in the line.
-       [1m%      [22mThe first word matched by the most recent `?[4mstring[24m?' search,  if
-              the  search  string  begins  with  a character that is part of a
-              word.
-       [4mx[24m[1m-[4m[22my[24m    A range of words; `-[4my[24m' abbreviates `0-[4my[24m'.
-       [1m*      [22mAll of the words but the zeroth.  This is a synonym  for  `[4m1-$[24m'.
-              It  is  not  an  error to use [1m* [22mif there is just one word in the
-              event; the empty string is returned in that case.
-       [1mx*     [22mAbbreviates [4mx-$[24m.
-       [1mx-     [22mAbbreviates [4mx-$[24m like [1mx*[22m, but omits the last word.  If [1mx [22mis miss-
+       00 ((zzeerroo))
+              The zeroth word.  For the shell, and  many  other  applications,
+              this is the command word.
+       _n      The _nth word.
+       ^^      The first argument: word 1.
+       $$      The  last  word.  This is usually the last argument, but expands
+              to the zeroth word if there is only one word in the line.
+       %%      The first word matched by the most recent "?_s_t_r_i_n_g?"  search, if
+              the search string begins with a character  that  is  part  of  a
+              word.   By  default,  searches begin at the end of each line and
+              proceed to the beginning, so the first word matched is  the  one
+              closest to the end of the line.
+       _x--_y    A range of words; "-_y" abbreviates "0-_y".
+       **      All  of  the words but the zeroth.  This is a synonym for "_1_-_$".
+              It is not an error to use ** if there is just  one  word  in  the
+              event; it expands to the empty string in that case.
+       xx**     Abbreviates _x_-_$.
+       xx--     Abbreviates _x_-_$ like xx**, but omits the last word.  If xx is miss-
               ing, it defaults to 0.
 
        If  a  word  designator is supplied without an event specification, the
-       previous command is used as the event.
+       previous command is used as the event, equivalent to !!!!.
 
-   [1mModifiers[0m
-       After the optional word designator, there may appear a sequence of  one
-       or more of the following modifiers, each preceded by a `:'.  These mod-
-       ify, or edit, the word or words selected from the history event.
+   MMooddiiffiieerrss
+       After the optional word designator, the expansion  may  include  a  se-
+       quence  of  one  or more of the following modifiers, each preceded by a
+       ":".  These modify, or edit, the word or words selected from  the  his-
+       tory event.
 
-       [1mh      [22mRemove a trailing file name component, leaving only the head.
-       [1mt      [22mRemove all leading file name components, leaving the tail.
-       [1mr      [22mRemove a trailing suffix of the form [4m.xxx[24m, leaving the basename.
-       [1me      [22mRemove all but the trailing suffix.
-       [1mp      [22mPrint the new command but do not execute it.
-       [1mq      [22mQuote the substituted words, escaping further substitutions.
-       [1mx      [22mQuote the substituted words as with [1mq[22m, but break into  words  at
-              [1mblanks  [22mand newlines.  The [1mq [22mand [1mx [22mmodifiers are mutually exclu-
-              sive; the last one supplied is used.
-       [1ms/[4m[22mold[24m[1m/[4m[22mnew[24m[1m/[0m
-              Substitute [4mnew[24m for the first occurrence  of  [4mold[24m  in  the  event
+       hh      Remove a trailing filename component, leaving only the head.
+       tt      Remove all leading filename components, leaving the tail.
+       rr      Remove a trailing suffix of the form _._x_x_x, leaving the basename.
+       ee      Remove all but the trailing suffix.
+       pp      Print the new command but do not execute it.
+       qq      Quote the substituted words, escaping further substitutions.
+       xx      Quote  the  substituted words as with qq, but break into words at
+              bbllaannkkss and newlines.  The qq and xx modifiers are mutually  exclu-
+              sive; expansion uses the last one supplied.
+       ss//_o_l_d//_n_e_w//
+              Substitute  _n_e_w  for  the  first  occurrence of _o_l_d in the event
               line.  Any character may be used as the delimiter in place of /.
               The final delimiter is optional if it is the last  character  of
-              the event line.  The delimiter may be quoted in [4mold[24m and [4mnew[24m with
-              a single backslash.  If & appears in [4mnew[24m, it is replaced by [4mold[24m.
-              A  single backslash will quote the &.  If [4mold[24m is null, it is set
-              to the last [4mold[24m substituted, or, if no previous history  substi-
-              tutions  took  place,  the last [4mstring[24m in a [1m!?[4m[22mstring[24m[1m[?]  [22msearch.
-              If [4mnew[24m is null, each matching [4mold[24m is deleted.
-       [1m&      [22mRepeat the previous substitution.
-       [1mg      [22mCause changes to be applied over the entire event line.  This is
-              used  in  conjunction  with `[1m:s[22m' (e.g., `[1m:gs/[4m[22mold[24m[1m/[4m[22mnew[24m[1m/[22m') or `[1m:&[22m'.
-              If used with `[1m:s[22m', any delimiter can be used in place of /,  and
+              the  event line.  A single backslash quotes the delimiter in _o_l_d
+              and _n_e_w.  If & appears in _n_e_w, it is replaced with _o_l_d.  A  sin-
+              gle  backslash  quotes  the &.  If _o_l_d is null, it is set to the
+              last _o_l_d substituted, or, if no previous  history  substitutions
+              took place, the last _s_t_r_i_n_g in a !!??_s_t_r_i_n_g[[??]]  search.  If _n_e_w is
+              null, each matching _o_l_d is deleted.
+       &&      Repeat the previous substitution.
+       gg      Cause changes to be applied over the entire event line.  This is
+              used  in  conjunction  with "::ss" (e.g., "::ggss//_o_l_d//_n_e_w//") or "::&&".
+              If used with "::ss", any delimiter can be used in place of /,  and
               the  final  delimiter is optional if it is the last character of
-              the event line.  An [1ma [22mmay be used as a synonym for [1mg[22m.
-       [1mG      [22mApply the following `[1ms[22m' or `[1m&[22m' modifier once to each word in the
+              the event line.  An aa may be used as a synonym for gg.
+       GG      Apply the following "ss" or "&&" modifier once to each word in the
               event line.
 
-[1mPROGRAMMING WITH HISTORY FUNCTIONS[0m
-       This  section  describes  how  to use the History library in other pro-
+PPRROOGGRRAAMMMMIINNGG WWIITTHH HHIISSTTOORRYY FFUUNNCCTTIIOONNSS
+       This section describes how to use the History  library  in  other  pro-
        grams.
 
-   [1mIntroduction to History[0m
-       A programmer using the History library has available functions for  re-
-       membering  lines  on  a history list, associating arbitrary data with a
-       line, removing lines from the list, searching through the  list  for  a
-       line  containing  an arbitrary text string, and referencing any line in
-       the list directly.  In addition, a history [4mexpansion[24m function is avail-
+   IInnttrroodduuccttiioonn ttoo HHiissttoorryy
+       A  programmer using the History library has available functions for re-
+       membering lines on a history list, associating arbitrary  data  with  a
+       line,  removing  lines  from the list, searching through the list for a
+       line containing an arbitrary text string, and referencing any  line  in
+       the list directly.  In addition, a history _e_x_p_a_n_s_i_o_n function is avail-
        able  which  provides  for a consistent user interface across different
        programs.
 
@@ -142,24 +170,24 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        fit  of  a  consistent user interface with a set of well-known commands
        for manipulating the text of previous lines and using that text in  new
        commands.  The basic history manipulation commands are identical to the
-       history substitution provided by [1mbash[22m.
+       history substitution provided by bbaasshh.
 
-       The programmer can also use the readline library, which  includes  some
+       The  programmer  can also use the readline library, which includes some
        history manipulation by default, and has the added advantage of command
        line editing.
 
        Before declaring any functions using any functionality the History  li-
        brary  provides in other code, an application writer should include the
-       file [4m<readline/history.h>[24m in any file that uses the  History  library's
+       file _<_r_e_a_d_l_i_n_e_/_h_i_s_t_o_r_y_._h_> in any file that uses the  History  library's
        features.   It  supplies  extern  declarations for all of the library's
        public functions and variables, and declares all  of  the  public  data
        structures.
 
-   [1mHistory Storage[0m
+   HHiissttoorryy SSttoorraaggee
        The  history  list  is an array of history entries.  A history entry is
        declared as follows:
 
-       [4mtypedef[24m [4mvoid[24m [4m*[24m [1mhistdata_t;[0m
+       _t_y_p_e_d_e_f _v_o_i_d _* hhiissttddaattaa__tt;;
 
        typedef struct _hist_entry {
          char *line;
@@ -169,7 +197,7 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
 
        The history list itself might therefore be declared as
 
-       [4mHIST_ENTRY[24m [4m**[24m [1mthe_history_list;[0m
+       _H_I_S_T___E_N_T_R_Y _*_* tthhee__hhiissttoorryy__lliisstt;;
 
        The state of the History library is encapsulated into a  single  struc-
        ture:
@@ -178,328 +206,330 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
         * A structure used to pass around the current state of the history.
         */
        typedef struct _hist_state {
-         HIST_ENTRY **entries; /* Pointer to the entries themselves. */
-         int offset;           /* The location pointer within this array. */
-         int length;           /* Number of elements within this array. */
-         int size;             /* Number of slots allocated to this array. */
+         HIST_ENTRY **entries; /* Pointer to entry records. */
+         int offset;           /* The current record. */
+         int length;           /* Number of records in list. */
+         int size;             /* Number of records allocated. */
          int flags;
        } HISTORY_STATE;
 
-       If the flags member includes [1mHS_STIFLED[22m, the history has been stifled.
+       If the flags member includes HHSS__SSTTIIFFLLEEDD, the history has been stifled.
 
-[1mHistory Functions[0m
+HHiissttoorryy FFuunnccttiioonnss
        This  section  describes the calling sequence for the various functions
        exported by the GNU History library.
 
-   [1mInitializing History and State Management[0m
+   IInniittiiaalliizziinngg HHiissttoorryy aanndd SSttaattee MMaannaaggeemmeenntt
        This section describes functions used  to  initialize  and  manage  the
        state of the History library when you want to use the history functions
        in your program.
 
-       [4mvoid[24m [1musing_history [22m([4mvoid[24m)
-       Begin a session in which the history functions  might  be  used.   This
+       _v_o_i_d uussiinngg__hhiissttoorryy (_v_o_i_d)
+       Begin  a  session  in  which the history functions might be used.  This
        initializes the interactive variables.
 
-       [4mHISTORY_STATE[24m [4m*[24m [1mhistory_get_history_state [22m([4mvoid[24m)
+       _H_I_S_T_O_R_Y___S_T_A_T_E _* hhiissttoorryy__ggeett__hhiissttoorryy__ssttaattee (_v_o_i_d)
        Return a structure describing the current state of the input history.
 
-       [4mvoid[24m [1mhistory_set_history_state [22m([4mHISTORY_STATE[24m [4m*state[24m)
-       Set the state of the history list according to [4mstate[24m.
+       _v_o_i_d hhiissttoorryy__sseett__hhiissttoorryy__ssttaattee (_H_I_S_T_O_R_Y___S_T_A_T_E _*_s_t_a_t_e)
+       Set the state of the history list according to _s_t_a_t_e.
 
-
-   [1mHistory List Management[0m
-       These  functions  manage individual entries on the history list, or set
+   HHiissttoorryy LLiisstt MMaannaaggeemmeenntt
+       These functions manage individual entries on the history list,  or  set
        parameters managing the list itself.
 
-       [4mvoid[24m [1madd_history [22m([4mconst[24m [4mchar[24m [4m*string[24m)
-       Place [4mstring[24m at the end of the history list.  The associated data field
-       (if  any) is set to [1mNULL[22m.  If the maximum number of history entries has
-       been set using [1mstifle_history()[22m, and the new number of history  entries
+       _v_o_i_d aadddd__hhiissttoorryy (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g)
+       Place _s_t_r_i_n_g at the end of the history list.  The associated data field
+       (if  any) is set to NNUULLLL.  If the maximum number of history entries has
+       been set using ssttiiffllee__hhiissttoorryy(()), and the new number of history  entries
        would exceed that maximum, the oldest history entry is removed.
 
-       [4mvoid[24m [1madd_history_time [22m([4mconst[24m [4mchar[24m [4m*string[24m)
+       _v_o_i_d aadddd__hhiissttoorryy__ttiimmee (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g)
        Change  the time stamp associated with the most recent history entry to
-       [4mstring[24m.
+       _s_t_r_i_n_g.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mremove_history [22m([4mint[24m [4mwhich[24m)
-       Remove history entry at offset [4mwhich[24m from the history.  The removed el-
+       _H_I_S_T___E_N_T_R_Y _* rreemmoovvee__hhiissttoorryy (_i_n_t _w_h_i_c_h)
+       Remove history entry at offset _w_h_i_c_h from the history.  The removed el-
        ement is returned so you can free the line, data, and containing struc-
        ture.
 
-       [4mhistdata_t[24m [1mfree_history_entry [22m([4mHIST_ENTRY[24m [4m*histent[24m)
-       Free the history entry [4mhistent[24m and any history library private data as-
-       sociated  with it.  Returns the application-specific data so the caller
+       _h_i_s_t_d_a_t_a___t ffrreeee__hhiissttoorryy__eennttrryy (_H_I_S_T___E_N_T_R_Y _*_h_i_s_t_e_n_t)
+       Free the history entry _h_i_s_t_e_n_t and any history library private data as-
+       sociated with it.  Returns the application-specific data so the  caller
        can dispose of it.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mreplace_history_entry [22m([4mint[24m [4mwhich,[24m [4mconst[24m [4mchar[24m [4m*line,[24m  [4mhist-[0m
-       [4mdata_t[24m [4mdata[24m)
-       Make  the  history  entry at offset [4mwhich[24m have [4mline[24m and [4mdata[24m.  This re-
-       turns the old entry so the caller can dispose of  any  application-spe-
-       cific  data.   In  the  case of an invalid [4mwhich[24m, a [1mNULL [22mpointer is re-
+       _H_I_S_T___E_N_T_R_Y  _* rreeppllaaccee__hhiissttoorryy__eennttrryy (_i_n_t _w_h_i_c_h_, _c_o_n_s_t _c_h_a_r _*_l_i_n_e_, _h_i_s_t_-
+       _d_a_t_a___t _d_a_t_a)
+       Make the history entry at offset _w_h_i_c_h have _l_i_n_e and  _d_a_t_a.   This  re-
+       turns  the  old entry so the caller can dispose of any application-spe-
+       cific data.  In the case of an invalid _w_h_i_c_h, a  NNUULLLL  pointer  is  re-
        turned.
 
-       [4mvoid[24m [1mclear_history [22m([4mvoid[24m)
+       _v_o_i_d cclleeaarr__hhiissttoorryy (_v_o_i_d)
        Clear the history list by deleting all the entries.
 
-       [4mvoid[24m [1mstifle_history [22m([4mint[24m [4mmax[24m)
-       Stifle the history list, remembering only the last  [4mmax[24m  entries.   The
-       history list will contain only [4mmax[24m entries at a time.
+       _v_o_i_d ssttiiffllee__hhiissttoorryy (_i_n_t _m_a_x)
+       Stifle  the  history  list, remembering only the last _m_a_x entries.  The
+       history list will contain only _m_a_x entries at a time.
 
-       [4mint[24m [1munstifle_history [22m([4mvoid[24m)
-       Stop  stifling  the  history.   This returns the previously-set maximum
-       number of history entries (as set by  [1mstifle_history()[22m).   history  was
+       _i_n_t uunnssttiiffllee__hhiissttoorryy (_v_o_i_d)
+       Stop stifling the history.  This  returns  the  previously-set  maximum
+       number  of  history  entries (as set by ssttiiffllee__hhiissttoorryy(())).  history was
        stifled.  The value is positive if the history was stifled, negative if
        it wasn't.
 
-       [4mint[24m [1mhistory_is_stifled [22m([4mvoid[24m)
+       _i_n_t hhiissttoorryy__iiss__ssttiifflleedd (_v_o_i_d)
        Returns non-zero if the history is stifled, zero if it is not.
 
-
-   [1mInformation About the History List[0m
+   IInnffoorrmmaattiioonn AAbboouutt tthhee HHiissttoorryy LLiisstt
        These functions return information about the entire history list or in-
        dividual list entries.
 
-       [4mHIST_ENTRY[24m [4m**[24m [1mhistory_list [22m([4mvoid[24m)
-       Return a [1mNULL [22mterminated array of [4mHIST_ENTRY[24m [4m*[24m which is the current in-
+       _H_I_S_T___E_N_T_R_Y _*_* hhiissttoorryy__lliisstt (_v_o_i_d)
+       Return a NNUULLLL terminated array of _H_I_S_T___E_N_T_R_Y _* which is the current in-
        put history.  Element 0 of this list is  the  beginning  of  time.   If
-       there is no history, return [1mNULL[22m.
+       there is no history, return NNUULLLL.
 
-       [4mint[24m [1mwhere_history [22m([4mvoid[24m)
+       _i_n_t wwhheerree__hhiissttoorryy (_v_o_i_d)
        Returns the offset of the current history element.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mcurrent_history [22m([4mvoid[24m)
+       _H_I_S_T___E_N_T_R_Y _* ccuurrrreenntt__hhiissttoorryy (_v_o_i_d)
        Return  the  history  entry  at  the current position, as determined by
-       [1mwhere_history()[22m.  If there is no entry there, return a [1mNULL [22mpointer.
+       wwhheerree__hhiissttoorryy(()).  If there is no entry there, return a NNUULLLL pointer.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mhistory_get [22m([4mint[24m [4moffset[24m)
-       Return the history entry at position [4moffset[24m.  The range of valid values
-       of  [4moffset[24m  starts  at [1mhistory_base [22mand ends at [1mhistory_length [22m- 1.  If
-       there is no entry there, or if [4moffset[24m is outside the valid  range,  re-
-       turn a [1mNULL [22mpointer.
+       _H_I_S_T___E_N_T_R_Y _* hhiissttoorryy__ggeett (_i_n_t _o_f_f_s_e_t)
+       Return the history entry at position _o_f_f_s_e_t.  The range of valid values
+       of _o_f_f_s_e_t starts at hhiissttoorryy__bbaassee and ends at hhiissttoorryy__lleennggtthh  -  1.   If
+       there  is  no entry there, or if _o_f_f_s_e_t is outside the valid range, re-
+       turn a NNUULLLL pointer.
 
-       [4mtime_t[24m [1mhistory_get_time [22m([4mHIST_ENTRY[24m [4m*[24m)
-       Return  the  time stamp associated with the history entry passed as the
+       _t_i_m_e___t hhiissttoorryy__ggeett__ttiimmee (_H_I_S_T___E_N_T_R_Y _*)
+       Return the time stamp associated with the history entry passed  as  the
        argument.
 
-       [4mint[24m [1mhistory_total_bytes [22m([4mvoid[24m)
-       Return the number of bytes that the primary history entries are  using.
-       This  function  returns  the sum of the lengths of all the lines in the
+       _i_n_t hhiissttoorryy__ttoottaall__bbyytteess (_v_o_i_d)
+       Return  the number of bytes that the primary history entries are using.
+       This function returns the sum of the lengths of all the  lines  in  the
        history.
 
-
-   [1mMoving Around the History List[0m
+   MMoovviinngg AArroouunndd tthhee HHiissttoorryy LLiisstt
        These functions allow the current index into the history list to be set
        or changed.
 
-       [4mint[24m [1mhistory_set_pos [22m([4mint[24m [4mpos[24m)
-       Set the current history offset to [4mpos[24m, an absolute index into the list.
-       Returns 1 on success, 0 if [4mpos[24m is less than zero or  greater  than  the
+       _i_n_t hhiissttoorryy__sseett__ppooss (_i_n_t _p_o_s)
+       Set the current history offset to _p_o_s, an absolute index into the list.
+       Returns  1  on  success, 0 if _p_o_s is less than zero or greater than the
        number of history entries.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mprevious_history [22m([4mvoid[24m)
-       Back  up  the current history offset to the previous history entry, and
-       return a pointer to that entry.  If there is no previous entry,  return
-       a [1mNULL [22mpointer.
+       _H_I_S_T___E_N_T_R_Y _* pprreevviioouuss__hhiissttoorryy (_v_o_i_d)
+       Back up the current history offset to the previous history  entry,  and
+       return  a pointer to that entry.  If there is no previous entry, return
+       a NNUULLLL pointer.
 
-       [4mHIST_ENTRY[24m [4m*[24m [1mnext_history [22m([4mvoid[24m)
-       If  the  current history offset refers to a valid history entry, incre-
-       ment the current history offset.  If the  possibly-incremented  history
+       _H_I_S_T___E_N_T_R_Y _* nneexxtt__hhiissttoorryy (_v_o_i_d)
+       If the current history offset refers to a valid history  entry,  incre-
+       ment  the  current history offset.  If the possibly-incremented history
        offset refers to a valid history entry, return a pointer to that entry;
-       otherwise, return a [1mNULL [22mpointer.
+       otherwise, return a NNUULLLL pointer.
 
-
-   [1mSearching the History List[0m
+   SSeeaarrcchhiinngg tthhee HHiissttoorryy LLiisstt
        These functions allow searching of the history list  for  entries  con-
        taining a specific string.  Searching may be performed both forward and
-       backward from the current history position.   The  search  may  be  [4man-[0m
-       [4mchored[24m, meaning that the string must match at the beginning of the his-
+       backward  from  the  current  history  position.  The search may be _a_n_-
+       _c_h_o_r_e_d, meaning that the string must match at the beginning of the his-
        tory entry.
 
-       [4mint[24m [1mhistory_search [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection[24m)
-       Search the history for [4mstring[24m, starting at the current history  offset.
-       If  [4mdirection[24m  is  less than 0, then the search is through previous en-
-       tries, otherwise through subsequent entries.  If [4mstring[24m is found,  then
+       _i_n_t hhiissttoorryy__sseeaarrcchh (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g_, _i_n_t _d_i_r_e_c_t_i_o_n)
+       Search the history for _s_t_r_i_n_g, starting at the current history  offset.
+       If  _d_i_r_e_c_t_i_o_n  is  less than 0, then the search is through previous en-
+       tries, otherwise through subsequent entries.  If _s_t_r_i_n_g is found,  then
        the  current  history index is set to that history entry, and the value
-       returned is the offset in the line of the entry where [4mstring[24m was found.
-       Otherwise, nothing is changed, and a -1 is returned.
+       returned is the offset in the line of the entry where _s_t_r_i_n_g was found.
+       Otherwise, nothing is changed, and the function returns -1.
 
-       [4mint[24m [1mhistory_search_prefix [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection[24m)
-       Search  the history for [4mstring[24m, starting at the current history offset.
-       The search is anchored: matching lines must begin with [4mstring[24m.  If  [4mdi-[0m
-       [4mrection[24m  is  less  than 0, then the search is through previous entries,
-       otherwise through subsequent entries.  If [4mstring[24m  is  found,  then  the
-       current  history index is set to that entry, and the return value is 0.
-       Otherwise, nothing is changed, and a -1 is returned.
+       _i_n_t hhiissttoorryy__sseeaarrcchh__pprreeffiixx (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g_, _i_n_t _d_i_r_e_c_t_i_o_n)
+       Search the history for _s_t_r_i_n_g, starting at the current history  offset.
+       The  search is anchored: matching lines must begin with _s_t_r_i_n_g.  If _d_i_-
+       _r_e_c_t_i_o_n is less than 0, then the search is  through  previous  entries,
+       otherwise  through  subsequent  entries.   If _s_t_r_i_n_g is found, then the
+       current history index is set to that entry, and the return value is  0.
+       Otherwise, nothing is changed, and the function returns -1.
 
-       [4mint[24m [1mhistory_search_pos [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection,[24m [4mint[24m [4mpos[24m)
-       Search for [4mstring[24m in the history list, starting at [4mpos[24m, an absolute in-
-       dex into the list.  If [4mdirection[24m is negative, the search proceeds back-
-       ward from [4mpos[24m, otherwise forward.  Returns the absolute  index  of  the
-       history element where [4mstring[24m was found, or -1 otherwise.
+       _i_n_t hhiissttoorryy__sseeaarrcchh__ppooss (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g_, _i_n_t _d_i_r_e_c_t_i_o_n_, _i_n_t _p_o_s)
+       Search for _s_t_r_i_n_g in the history list, starting at _p_o_s, an absolute in-
+       dex into the list.  If _d_i_r_e_c_t_i_o_n is negative, the search proceeds back-
+       ward  from  _p_o_s,  otherwise forward.  Returns the absolute index of the
+       history element where _s_t_r_i_n_g was found, or -1 otherwise.
 
-
-   [1mManaging the History File[0m
-       The  History  library can read the history from and write it to a file.
+   MMaannaaggiinngg tthhee HHiissttoorryy FFiillee
+       The History library can read the history from and write it to  a  file.
        This section documents the functions for managing a history file.
 
-       [4mint[24m [1mread_history [22m([4mconst[24m [4mchar[24m [4m*filename[24m)
-       Add the contents of [4mfilename[24m to the history list, a line at a time.  If
-       [4mfilename[24m  is [1mNULL[22m, then read from [4m~/.history[24m.  Returns 0 if successful,
-       or [1merrno [22mif not.
+       _i_n_t rreeaadd__hhiissttoorryy (_c_o_n_s_t _c_h_a_r _*_f_i_l_e_n_a_m_e)
+       Add the contents of _f_i_l_e_n_a_m_e to the history list, a line at a time.  If
+       _f_i_l_e_n_a_m_e  is NNUULLLL, then read from _~_/_._h_i_s_t_o_r_y.  Returns 0 if successful,
+       or eerrrrnnoo if not.
 
-       [4mint[24m [1mread_history_range [22m([4mconst[24m [4mchar[24m [4m*filename,[24m [4mint[24m [4mfrom,[24m [4mint[24m [4mto[24m)
-       Read a range of lines from [4mfilename[24m, adding them to the  history  list.
-       Start  reading  at  line [4mfrom[24m and end at [4mto[24m.  If [4mfrom[24m is zero, start at
-       the beginning.  If [4mto[24m is less than [4mfrom[24m, then read until the end of the
-       file.   If  [4mfilename[24m  is [1mNULL[22m, then read from [4m~/.history[24m.  Returns 0 if
-       successful, or [1merrno [22mif not.
+       _i_n_t rreeaadd__hhiissttoorryy__rraannggee (_c_o_n_s_t _c_h_a_r _*_f_i_l_e_n_a_m_e_, _i_n_t _f_r_o_m_, _i_n_t _t_o)
+       Read a range of lines from _f_i_l_e_n_a_m_e, adding them to the  history  list.
+       Start  reading  at  line _f_r_o_m and end at _t_o.  If _f_r_o_m is zero, start at
+       the beginning.  If _t_o is less than _f_r_o_m, then read until the end of the
+       file.  If _f_i_l_e_n_a_m_e is NNUULLLL, then read from _~_/_._h_i_s_t_o_r_y.   Returns  0  if
+       successful, or eerrrrnnoo if not.
 
-       [4mint[24m [1mwrite_history [22m([4mconst[24m [4mchar[24m [4m*filename[24m)
-       Write the current history to [4mfilename[24m, overwriting [4mfilename[24m  if  neces-
-       sary.   If [4mfilename[24m is [1mNULL[22m, then write the history list to [4m~/.history[24m.
-       Returns 0 on success, or [1merrno [22mon a read or write error.
+       _i_n_t wwrriittee__hhiissttoorryy (_c_o_n_s_t _c_h_a_r _*_f_i_l_e_n_a_m_e)
+       Write  the  current history to _f_i_l_e_n_a_m_e, overwriting _f_i_l_e_n_a_m_e if neces-
+       sary.  If _f_i_l_e_n_a_m_e is NNUULLLL, then write the history list to  _~_/_._h_i_s_t_o_r_y.
+       Returns 0 on success, or eerrrrnnoo on a read or write error.
 
-
-       [4mint[24m [1mappend_history [22m([4mint[24m [4mnelements,[24m [4mconst[24m [4mchar[24m [4m*filename[24m)
-       Append the last [4mnelements[24m of the history list to [4mfilename[24m.  If [4mfilename[0m
-       is  [1mNULL[22m, then append to [4m~/.history[24m.  Returns 0 on success, or [1merrno [22mon
+       _i_n_t aappppeenndd__hhiissttoorryy (_i_n_t _n_e_l_e_m_e_n_t_s_, _c_o_n_s_t _c_h_a_r _*_f_i_l_e_n_a_m_e)
+       Append the last _n_e_l_e_m_e_n_t_s of the history list to _f_i_l_e_n_a_m_e.  If _f_i_l_e_n_a_m_e
+       is  NNUULLLL, then append to _~_/_._h_i_s_t_o_r_y.  Returns 0 on success, or eerrrrnnoo on
        a read or write error.
 
-       [4mint[24m [1mhistory_truncate_file [22m([4mconst[24m [4mchar[24m [4m*filename,[24m [4mint[24m [4mnlines[24m)
-       Truncate the history file [4mfilename[24m, leaving only the last [4mnlines[24m lines.
-       If  [4mfilename[24m  is [1mNULL[22m, then [4m~/.history[24m is truncated.  Returns 0 on suc-
-       cess, or [1merrno [22mon failure.
+       _i_n_t hhiissttoorryy__ttrruunnccaattee__ffiillee (_c_o_n_s_t _c_h_a_r _*_f_i_l_e_n_a_m_e_, _i_n_t _n_l_i_n_e_s)
+       Truncate the history file _f_i_l_e_n_a_m_e, leaving only the last _n_l_i_n_e_s lines.
+       If _f_i_l_e_n_a_m_e is NNUULLLL, then _~_/_._h_i_s_t_o_r_y is truncated.  Returns 0  on  suc-
+       cess, or eerrrrnnoo on failure.
 
-
-   [1mHistory Expansion[0m
+   HHiissttoorryy EExxppaannssiioonn
        These functions implement history expansion.
 
-       [4mint[24m [1mhistory_expand [22m([4mchar[24m [4m*string,[24m [4mchar[24m [4m**output[24m)
-       Expand [4mstring[24m, placing the result into [4moutput[24m, a pointer to  a  string.
+       _i_n_t hhiissttoorryy__eexxppaanndd (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g_, _c_h_a_r _*_*_o_u_t_p_u_t)
+       Expand  _s_t_r_i_n_g,  placing the result into _o_u_t_p_u_t, a pointer to a string.
        Returns:
-              0      If  no  expansions  took place (or, if the only change in
-                     the text was the removal of escape  characters  preceding
+              0      If no expansions took place (or, if the  only  change  in
+                     the  text  was the removal of escape characters preceding
                      the history expansion character);
               1      if expansions did take place;
               -1     if there was an error in expansion;
-              2      if  the  returned  line should be displayed, but not exe-
-                     cuted, as with the [1m:p [22mmodifier.
-       If an error occurred in expansion, then [4moutput[24m contains  a  descriptive
+              2      if the returned line should be displayed,  but  not  exe-
+                     cuted, as with the ::pp modifier.
+       If  an  error occurred in expansion, then _o_u_t_p_u_t contains a descriptive
        error message.
 
-       [4mchar[24m [4m*[24m [1mget_history_event [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4m*cindex,[24m [4mint[24m [4mqchar[24m)
-       Returns  the  text  of the history event beginning at [4mstring[24m + [4m*cindex[24m.
-       [4m*cindex[24m is modified to point to after the event specifier.  At function
-       entry,  [4mcindex[24m  points to the index into [4mstring[24m where the history event
-       specification begins.  [4mqchar[24m is a character that is allowed to end  the
-       event  specification  in addition to the ``normal'' terminating charac-
-       ters.
+       _c_h_a_r _* ggeett__hhiissttoorryy__eevveenntt (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g_, _i_n_t _*_c_i_n_d_e_x_, _i_n_t _q_c_h_a_r)
+       Returns the text of the history event beginning at  _s_t_r_i_n_g  +  _*_c_i_n_d_e_x.
+       _*_c_i_n_d_e_x is modified to point to after the event specifier.  At function
+       entry,  _c_i_n_d_e_x  points to the index into _s_t_r_i_n_g where the history event
+       specification begins.  _q_c_h_a_r is a character that is allowed to end  the
+       event specification in addition to the "normal" terminating characters.
 
-       [4mchar[24m [4m**[24m [1mhistory_tokenize [22m([4mconst[24m [4mchar[24m [4m*string[24m)
-       Return an array of tokens parsed out  of  [4mstring[24m,  much  as  the  shell
-       might.   The tokens are split on the characters in the [1mhistory_word_de-[0m
-       [1mlimiters [22mvariable, and shell quoting conventions are obeyed.
+       _c_h_a_r _*_* hhiissttoorryy__ttookkeenniizzee (_c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g)
+       Return  an  array  of  tokens  parsed  out of _s_t_r_i_n_g, much as the shell
+       might.  The tokens are split on the characters in the  hhiissttoorryy__wwoorrdd__ddee--
+       lliimmiitteerrss variable, and shell quoting conventions are obeyed.
 
-       [4mchar[24m [4m*[24m [1mhistory_arg_extract [22m([4mint[24m [4mfirst,[24m [4mint[24m [4mlast,[24m [4mconst[24m [4mchar[24m [4m*string[24m)
-       Extract a string segment consisting of the [4mfirst[24m through [4mlast[24m arguments
-       present in [4mstring[24m.  Arguments are split using [1mhistory_tokenize()[22m.
+       _c_h_a_r _* hhiissttoorryy__aarrgg__eexxttrraacctt (_i_n_t _f_i_r_s_t_, _i_n_t _l_a_s_t_, _c_o_n_s_t _c_h_a_r _*_s_t_r_i_n_g)
+       Extract a string segment consisting of the _f_i_r_s_t through _l_a_s_t arguments
+       present in _s_t_r_i_n_g.  Arguments are split using hhiissttoorryy__ttookkeenniizzee(()).
 
-
-   [1mHistory Variables[0m
+   HHiissttoorryy VVaarriiaabblleess
        This section describes the externally-visible variables exported by the
        GNU History Library.
 
-       [4mint[24m [1mhistory_base[0m
+       _i_n_t hhiissttoorryy__bbaassee
        The logical offset of the first entry in the history list.
 
-       [4mint[24m [1mhistory_length[0m
+       _i_n_t hhiissttoorryy__lleennggtthh
        The number of entries currently stored in the history list.
 
-       [4mint[24m [1mhistory_max_entries[0m
-       The maximum number of history entries.  This must be changed using [1msti-[0m
-       [1mfle_history()[22m.
+       _i_n_t hhiissttoorryy__mmaaxx__eennttrriieess
+       The maximum number of history entries.  This must be changed using ssttii--
+       ffllee__hhiissttoorryy(()).
 
-       [4mint[24m [1mhistory_write_timestamps[0m
+       _i_n_t hhiissttoorryy__wwrriittee__ttiimmeessttaammppss
        If non-zero, timestamps are written to the history file, so they can be
        preserved between sessions.  The default value is 0, meaning that time-
        stamps  are  not saved.  The current timestamp format uses the value of
-       [4mhistory_comment_char[24m to delimit timestamp entries in the history  file.
-       If  that  variable does not have a value (the default), timestamps will
-       not be written.
+       _h_i_s_t_o_r_y___c_o_m_m_e_n_t___c_h_a_r to delimit timestamp entries in the history  file.
+       If  that  variable does not have a value (the default), the history li-
+       brary will not write timestamps.
 
-       [4mchar[24m [1mhistory_expansion_char[0m
-       The character that introduces a history event.  The default is [1m![22m.  Set-
+       _c_h_a_r hhiissttoorryy__eexxppaannssiioonn__cchhaarr
+       The character that introduces a history event.  The default is !!.  Set-
        ting this to 0 inhibits history expansion.
 
-       [4mchar[24m [1mhistory_subst_char[0m
+       _c_h_a_r hhiissttoorryy__ssuubbsstt__cchhaarr
        The character that invokes word substitution if found at the start of a
-       line.  The default is [1m^[22m.
+       line.  The default is ^^.
 
-       [4mchar[24m [1mhistory_comment_char[0m
+       _c_h_a_r hhiissttoorryy__ccoommmmeenntt__cchhaarr
        During tokenization, if this character is seen as the  first  character
        of  a  word,  then it and all subsequent characters up to a newline are
        ignored, suppressing history expansion for the remainder of  the  line.
        This is disabled by default.
 
-       [4mchar[24m [4m*[24m [1mhistory_word_delimiters[0m
-       The  characters  that  separate tokens for [1mhistory_tokenize()[22m.  The de-
-       fault value is [1m" \t\n()<>;&|"[22m.
+       _c_h_a_r _* hhiissttoorryy__wwoorrdd__ddeelliimmiitteerrss
+       The  characters  that  separate tokens for hhiissttoorryy__ttookkeenniizzee(()).  The de-
+       fault value is "" \\tt\\nn(())<<>>;;&&||"".
 
-       [4mchar[24m [4m*[24m [1mhistory_no_expand_chars[0m
+       _c_h_a_r _* hhiissttoorryy__nnoo__eexxppaanndd__cchhaarrss
        The list of characters which inhibit history expansion if found immedi-
-       ately  following  [1mhistory_expansion_char[22m.   The  default is space, tab,
-       newline, [1m\r[22m, and [1m=[22m.
+       ately following hhiissttoorryy__eexxppaannssiioonn__cchhaarr.  The  default  is  space,  tab,
+       newline, \\rr, and ==.
 
-       [4mchar[24m [4m*[24m [1mhistory_search_delimiter_chars[0m
-       The list of additional characters which can delimit  a  history  search
-       string,  in  addition to space, tab, [4m:[24m and [4m?[24m in the case of a substring
+       _c_h_a_r _* hhiissttoorryy__sseeaarrcchh__ddeelliimmiitteerr__cchhaarrss
+       The  list  of  additional characters which can delimit a history search
+       string, in addition to space, tab, _: and _? in the case of  a  substring
        search.  The default is empty.
 
-       [4mint[24m [1mhistory_quotes_inhibit_expansion[0m
-       If non-zero, double-quoted words are not scanned for the history expan-
-       sion  character or the history comment character.  The default value is
-       0.
+       _i_n_t hhiissttoorryy__qquuootteess__iinnhhiibbiitt__eexxppaannssiioonn
+       If  non-zero, the history expansion code implements shell-like quoting:
+       single-quoted words are not scanned for the history expansion character
+       or the history comment character, and double-quoted words may have his-
+       tory expansion performed, since single quotes are  not  special  within
+       double quotes.  The default value is 0.
 
-       [4mrl_linebuf_func_t[24m [4m*[24m [1mhistory_inhibit_expansion_function[0m
-       This should be set to the address of a function that  takes  two  argu-
-       ments:  a  [1mchar  *  [22m([4mstring[24m) and an [1mint [22mindex into that string ([4mi[24m).  It
-       should return a non-zero value if the  history  expansion  starting  at
-       [4mstring[i][24m  should  not  be  performed;  zero if the expansion should be
-       done.  It is intended for use by applications like [1mbash  [22mthat  use  the
-       history  expansion character for additional purposes.  By default, this
-       variable is set to [1mNULL[22m.
+       _i_n_t hhiissttoorryy__qquuoottiinngg__ssttaattee
+       An  application may set this variable to indicate that the current line
+       being expanded is subject to existing quoting.  If set  to  _',  history
+       expansion  assumes that the line is single-quoted and inhibit expansion
+       until it reads an unquoted closing single quote; if set to  _",  history
+       expansion  assumes the line is double quoted until it reads an unquoted
+       closing double quote.  If set to zero, the default,  history  expansion
+       assumes  the  line is not quoted and treats quote characters within the
+       line as described above.  This is only effective if  hhiissttoorryy__qquuootteess__iinn--
+       hhiibbiitt__eexxppaannssiioonn is set.
 
-[1mFILES[0m
-       [4m~/.history[0m
+       _r_l___l_i_n_e_b_u_f___f_u_n_c___t _* hhiissttoorryy__iinnhhiibbiitt__eexxppaannssiioonn__ffuunnccttiioonn
+       This  should  be  set to the address of a function that takes two argu-
+       ments: a cchhaarr ** (_s_t_r_i_n_g) and an iinntt index into  that  string  (_i).   It
+       should  return  a  non-zero  value if the history expansion starting at
+       _s_t_r_i_n_g_[_i_] should not be performed; zero  if  the  expansion  should  be
+       done.   It  is  intended for use by applications like bbaasshh that use the
+       history expansion character for additional purposes.  By default,  this
+       variable is set to NNUULLLL.
+
+FFIILLEESS
+       _~_/_._h_i_s_t_o_r_y
               Default filename for reading and writing saved history
 
-[1mSEE ALSO[0m
-       [4mThe[24m [4mGnu[24m [4mReadline[24m [4mLibrary[24m, Brian Fox and Chet Ramey
-       [4mThe[24m [4mGnu[24m [4mHistory[24m [4mLibrary[24m, Brian Fox and Chet Ramey
-       [4mbash[24m(1)
-       [4mreadline[24m(3)
+SSEEEE AALLSSOO
+       _T_h_e _G_n_u _R_e_a_d_l_i_n_e _L_i_b_r_a_r_y, Brian Fox and Chet Ramey
+       _T_h_e _G_n_u _H_i_s_t_o_r_y _L_i_b_r_a_r_y, Brian Fox and Chet Ramey
+       _b_a_s_h(1)
+       _r_e_a_d_l_i_n_e(3)
 
-[1mAUTHORS[0m
+AAUUTTHHOORRSS
        Brian Fox, Free Software Foundation
        bfox@gnu.org
 
        Chet Ramey, Case Western Reserve University
        chet.ramey@case.edu
 
-[1mBUG REPORTS[0m
-       If you find a bug in the [1mhistory [22mlibrary, you should  report  it.   But
-       first,  you  should  make sure that it really is a bug, and that it ap-
-       pears in the latest version of the [1mhistory [22mlibrary that you have.
+BBUUGG RREEPPOORRTTSS
+       If  you  find  a bug in the hhiissttoorryy library, you should report it.  But
+       first, you should make sure that it really is a bug, and  that  it  ap-
+       pears in the latest version of the hhiissttoorryy library that you have.
 
-       Once you have determined that a bug actually exists, mail a bug  report
-       to  [4mbug-readline[24m@[4mgnu.org[24m.   If  you have a fix, you are welcome to mail
-       that as well!  Suggestions  and  `philosophical'  bug  reports  may  be
-       mailed  to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet newsgroup
-       [1mgnu.bash.bug[22m.
+       Once  you have determined that a bug actually exists, mail a bug report
+       to _b_u_g_-_r_e_a_d_l_i_n_e@_g_n_u_._o_r_g.  If you have a fix, you are  welcome  to  mail
+       that  as  well!   Suggestions  and  "philosophical"  bug reports may be
+       mailed to  _b_u_g_-_r_e_a_d_l_i_n_e@_g_n_u_._o_r_g  or  posted  to  the  Usenet  newsgroup
+       ggnnuu..bbaasshh..bbuugg.
 
        Comments and bug reports concerning this manual page should be directed
-       to [4mchet.ramey@case.edu[24m.
+       to _c_h_e_t_._r_a_m_e_y_@_c_a_s_e_._e_d_u.
 
-
-
-GNU History 8.1                  2020 July 17                       HISTORY(3)
+GNU History 8.3                2024 December 31                     _H_I_S_T_O_R_Y(3)

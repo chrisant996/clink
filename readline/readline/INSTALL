@@ -1,7 +1,7 @@
 Basic Installation
 ==================
 
-These are installation instructions for Readline-8.2.
+These are installation instructions for Readline.
 
 The simplest way to compile readline is:
 
@@ -14,12 +14,17 @@ The simplest way to compile readline is:
      Running `configure' takes some time.  While running, it prints some
      messages telling which features it is checking for.
 
+     If you want to build readline in a directory other than the source
+     directory, just run `configure' using a full pathname, for instance:
+
+		bash /usr/local/src/readline/readline-8.3/configure
+
   2. Type `make' to compile readline and build the static readline
-     and history libraries.  If supported, the shared readline and history
-     libraries will be built also.  See below for instructions on compiling
-     the other parts of the distribution.  Typing `make everything' will
-     cause the static and shared libraries (if supported) and the example
-     programs to be built.
+     and history libraries. If supported, this will build the shared
+     readline and history libraries also. See below for instructions on
+     compiling the other parts of the distribution. Typing `make everything'
+     will build the static and shared libraries (if supported) and the
+     example programs.
 
   3. Type `make install' to install the static readline and history
      libraries, the readline include files, the documentation, and, if
@@ -43,6 +48,27 @@ current configuration, a file `config.cache' that saves the
 results of its tests to speed up reconfiguring, and a file
 `config.log' containing compiler output (useful mainly for
 debugging `configure'). 
+
+To find out more about the options and arguments that the `configure'
+script understands, type
+
+     bash-4.2$ ./configure --help
+
+at a shell prompt in your readline source directory.
+
+If you want to build readline in a directory separate from the source
+directory - to build for multiple architectures, for example - just use
+the full path to the configure script.  The following commands will
+build readline in a directory under `/usr/local/build' from the source code
+in `/usr/local/src/readline/readline-8.3':
+
+     mkdir /usr/local/build/readline-8.3
+     cd /usr/local/build/readline-8.3
+     bash /usr/local/src/readline/readline-8.3/configure
+     make
+
+See `Compiling For Multiple Architectures' below for more information
+about building in a directory separate from the source.
 
 If you need to do unusual things to compile readline, please try
 to figure out how `configure' could check whether to do them, and
@@ -93,12 +119,11 @@ Installation Names
 ==================
 
 By default, `make install' will install the readline libraries in
-`/usr/local/lib', the include files in
-`/usr/local/include/readline', the man pages in `/usr/local/man',
-and the info files in `/usr/local/info'.  You can specify an
-installation prefix other than `/usr/local' by giving `configure'
-the option `--prefix=PATH' or by supplying a value for the
-DESTDIR variable when running `make install'. 
+`/usr/local/lib', the include files in `/usr/local/include/readline',
+the man pages in `/usr/local/man', and the info files in `/usr/local/info'.
+You can specify an installation prefix other than `/usr/local' by
+giving `configure' the option `--prefix=PATH' or by supplying a value for
+the DESTDIR variable when running `make install'. 
 
 You can specify separate installation prefixes for
 architecture-specific files and architecture-independent files. 

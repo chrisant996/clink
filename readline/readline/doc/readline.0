@@ -1,76 +1,100 @@
-READLINE(3)                Library Functions Manual                READLINE(3)
+_R_E_A_D_L_I_N_E(3)                Library Functions Manual                _R_E_A_D_L_I_N_E(3)
 
-
-
-[1mNAME[0m
+NNAAMMEE
        readline - get a line from a user with editing
 
-[1mSYNOPSIS[0m
-       [1m#include <stdio.h>[0m
-       [1m#include <readline/readline.h>[0m
-       [1m#include <readline/history.h>[0m
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<ssttddiioo..hh>>
+       ##iinncclluuddee <<rreeaaddlliinnee//rreeaaddlliinnee..hh>>
+       ##iinncclluuddee <<rreeaaddlliinnee//hhiissttoorryy..hh>>
 
-       [4mchar[24m [4m*[0m
-       [1mreadline [22m([4mconst[24m [4mchar[24m [4m*prompt[24m);
+       _c_h_a_r _*
+       rreeaaddlliinnee (_c_o_n_s_t _c_h_a_r _*_p_r_o_m_p_t);
 
-[1mCOPYRIGHT[0m
-       Readline is Copyright (C) 1989-2020 Free Software Foundation,  Inc.
+CCOOPPYYRRIIGGHHTT
+       Readline is Copyright (C) 1989-2025 Free Software Foundation,  Inc.
 
-[1mDESCRIPTION[0m
-       [1mreadline [22mwill read a line from the terminal and return it, using [1mprompt[0m
-       as a prompt.  If [1mprompt [22mis [1mNULL [22mor the empty string, no prompt  is  is-
-       sued.   The  line returned is allocated with [4mmalloc[24m(3); the caller must
-       free it when finished.  The line returned has  the  final  newline  re-
-       moved, so only the text of the line remains.
+DDEESSCCRRIIPPTTIIOONN
+       rreeaaddlliinnee  reads a line from the terminal and return it, using pprroommpptt as
+       a prompt.  If pprroommpptt is NNUULLLL or the empty string, rreeaaddlliinnee does not is-
+       sue a prompt.  The line  returned  is  allocated  with  _m_a_l_l_o_c(3);  the
+       caller  must  free  it  when finished.  The line returned has the final
+       newline removed, so only the text of the line remains.  Since it's pos-
+       sible to enter characters into the line while quoting them  to  disable
+       any  rreeaaddlliinnee  editing function they might normally have, this line may
+       include embedded newlines and other special characters.
 
-       [1mreadline  [22moffers  editing  capabilities  while the user is entering the
-       line.  By default, the line editing commands are similar  to  those  of
+       rreeaaddlliinnee offers editing capabilities while the  user  is  entering  the
+       line.   By  default,  the line editing commands are similar to those of
        emacs.  A vi-style line editing interface is also available.
 
-       This  manual  page describes only the most basic use of [1mreadline[22m.  Much
-       more functionality is available; see [4mThe[24m [4mGNU[24m [4mReadline[24m [4mLibrary[24m  and  [4mThe[0m
-       [4mGNU[24m [4mHistory[24m [4mLibrary[24m for additional information.
+       This manual page describes only the most basic use of  rreeaaddlliinnee.   Much
+       more  functionality  is available; see _T_h_e _G_N_U _R_e_a_d_l_i_n_e _L_i_b_r_a_r_y and _T_h_e
+       _G_N_U _H_i_s_t_o_r_y _L_i_b_r_a_r_y for additional information.
 
-[1mRETURN VALUE[0m
-       [1mreadline  [22mreturns  the text of the line read.  A blank line returns the
-       empty string.  If [1mEOF [22mis encountered while reading a line, and the line
-       is  empty,  [1mNULL [22mis returned.  If an [1mEOF [22mis read with a non-empty line,
-       it is treated as a newline.
+RREETTUURRNN VVAALLUUEE
+       rreeaaddlliinnee returns the text of the line read.  A blank line  returns  the
+       empty string.  If EEOOFF is encountered while reading a line, and the line
+       is  empty,  rreeaaddlliinnee  returns NNUULLLL.  If an EEOOFF is read with a non-empty
+       line, it is treated as a newline.
 
-[1mNOTATION[0m
-       An Emacs-style notation is used to denote keystrokes.  Control keys are
-       denoted  by C-[4mkey[24m, e.g., C-n means Control-N.  Similarly, [4mmeta[24m keys are
-       denoted by M-[4mkey[24m, so M-x means Meta-X.  (On keyboards  without  a  [4mmeta[0m
-       key,  M-[4mx[24m means ESC [4mx[24m, i.e., press the Escape key then the [4mx[24m key.  This
-       makes ESC the [4mmeta[24m [4mprefix[24m.  The combination M-C-[4mx[24m means  ESC-Control-[4mx[24m,
-       or  press the Escape key then hold the Control key while pressing the [4mx[0m
-       key.)
+NNOOTTAATTIIOONN
+       This section uses Emacs-style editing concepts and  uses  its  notation
+       for  keystrokes.   Control  keys  are denoted by C-_k_e_y, e.g., C-n means
+       Control-N.  Similarly, _m_e_t_a keys are denoted by  M-_k_e_y,  so  M-x  means
+       Meta-X.  The Meta key is often labeled "Alt" or "Option".
 
-       Readline commands may be given numeric [4marguments[24m, which normally act as
-       a  repeat  count.   Sometimes,  however, it is the sign of the argument
-       that is significant.  Passing a negative argument  to  a  command  that
-       acts  in the forward direction (e.g., [1mkill-line[22m) causes that command to
-       act in a backward direction.  Commands whose  behavior  with  arguments
-       deviates from this are noted below.
+       On  keyboards  without a _M_e_t_a key, M-_x means ESC _x, i.e., press and re-
+       lease the Escape key, then press and release the _x  key,  in  sequence.
+       This  makes  ESC the _m_e_t_a _p_r_e_f_i_x.  The combination M-C-_x means ESC Con-
+       trol-_x: press and release the Escape key, then press and hold the  Con-
+       trol key while pressing the _x key, then release both.
 
-       When  a command is described as [4mkilling[24m text, the text deleted is saved
-       for possible future retrieval ([4myanking[24m).  The killed text is saved in a
-       [4mkill[24m [4mring[24m.  Consecutive kills cause the text to be accumulated into one
+       On  some  keyboards, the Meta key modifier produces characters with the
+       eighth bit (0200) set.  You can use  the  eennaabbllee--mmeettaa--kkeeyy  variable  to
+       control  whether  or  not  it does this, if the keyboard allows it.  On
+       many others, the terminal or terminal emulator  converts  the  metafied
+       key  to a key sequence beginning with ESC as described in the preceding
+       paragraph.
+
+       If your _M_e_t_a key produces a key sequence with the ESC meta prefix,  you
+       can  make M-_k_e_y key bindings you specify (see RReeaaddlliinnee KKeeyy BBiinnddiinnggss be-
+       low) do the same thing by setting the ffoorrccee--mmeettaa--pprreeffiixx variable.
+
+       RReeaaddlliinnee commands may be given numeric _a_r_g_u_m_e_n_t_s, which normally act as
+       a repeat count.  Sometimes, however, it is the  sign  of  the  argument
+       that  is  significant.   Passing  a negative argument to a command that
+       acts in the forward direction (e.g., kkiillll--lliinnee) makes that command  act
+       in  a backward direction.  Commands whose behavior with arguments devi-
+       ates from this are noted below.
+
+       The _p_o_i_n_t is the current cursor position, and _m_a_r_k refers  to  a  saved
+       cursor position.  The text between the point and mark is referred to as
+       the _r_e_g_i_o_n.
+
+       When  a command is described as _k_i_l_l_i_n_g text, the text deleted is saved
+       for possible future retrieval (_y_a_n_k_i_n_g).  The killed text is saved in a
+       _k_i_l_l _r_i_n_g.  Consecutive kills accumulate  the  deleted  text  into  one
        unit, which can be yanked all at once.  Commands which do not kill text
        separate the chunks of text on the kill ring.
 
-[1mINITIALIZATION FILE[0m
-       Readline  is  customized  by putting commands in an initialization file
-       (the [4minputrc[24m file).  The name of this file is taken from the  value  of
-       the  [1mINPUTRC  [22menvironment variable.  If that variable is unset, the de-
-       fault is [4m~/.inputrc[24m.  If that file  does not exist or cannot  be  read,
-       the  ultimate  default  is [4m/etc/inputrc[24m.  When a program which uses the
-       readline library starts up, the init file is read, and the key bindings
-       and  variables  are set.  There are only a few basic constructs allowed
-       in the readline init file.  Blank lines are ignored.   Lines  beginning
-       with  a  [1m# [22mare comments.  Lines beginning with a [1m$ [22mindicate conditional
-       constructs.  Other lines denote key  bindings  and  variable  settings.
-       Each program using this library may add its own commands and bindings.
+IINNIITTIIAALLIIZZAATTIIOONN FFIILLEE
+       RReeaaddlliinnee  is  customized  by putting commands in an initialization file
+       (the _i_n_p_u_t_r_c file).  The name of this file is taken from the  value  of
+       the  IINNPPUUTTRRCC  environment variable.  If that variable is unset, the de-
+       fault is _~_/_._i_n_p_u_t_r_c.  If that file  does not exist or cannot  be  read,
+       rreeaaddlliinnee looks for _/_e_t_c_/_i_n_p_u_t_r_c.  When a program that uses the rreeaaddlliinnee
+       library  starts up, rreeaaddlliinnee reads the initialization file and sets the
+       key bindings and variables found there, before reading any user input.
+
+       There are only a few basic constructs  allowed  in  the  inputrc  file.
+       Blank lines are ignored.  Lines beginning with a ## are comments.  Lines
+       beginning with a $$ indicate conditional constructs.  Other lines denote
+       key bindings and variable settings.
+
+       The  default  key-bindings  in  this  document may be changed using key
+       binding commands in the _i_n_p_u_t_r_c file.  Programs that use  this  library
+       may add their own commands and bindings.
 
        For example, placing
 
@@ -78,105 +102,112 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        or
               C-Meta-u: universal-argument
 
-       into  the [4minputrc[24m would make M-C-u execute the readline command [4muniver-[0m
-       [4msal-argument[24m.
+       into  the _i_n_p_u_t_r_c would make M-C-u execute the rreeaaddlliinnee command _u_n_i_v_e_r_-
+       _s_a_l_-_a_r_g_u_m_e_n_t.
 
-       The following symbolic character names are recognized while  processing
-       key  bindings:  [4mDEL[24m,  [4mESC[24m,  [4mESCAPE[24m,  [4mLFD[24m, [4mNEWLINE[24m, [4mRET[24m, [4mRETURN[24m, [4mRUBOUT[24m,
-       [4mSPACE[24m, [4mSPC[24m, and [4mTAB[24m.
+       Key bindings may contain the following symbolic character  names:  _D_E_L,
+       _E_S_C,  _E_S_C_A_P_E,  _L_F_D,  _N_E_W_L_I_N_E,  _R_E_T, _R_E_T_U_R_N, _R_U_B_O_U_T (a destructive back-
+       space), _S_P_A_C_E, _S_P_C, and _T_A_B.
 
-       In addition to command names, readline allows keys to  be  bound  to  a
-       string that is inserted when the key is pressed (a [4mmacro[24m).
+       In addition to command names, rreeaaddlliinnee allows keys to  be  bound  to  a
+       string that is inserted when the key is pressed (a _m_a_c_r_o).  The differ-
+       ence  between a macro and a command is that a macro is enclosed in sin-
+       gle or double quotes.
 
-   [1mKey Bindings[0m
-       The  syntax for controlling key bindings in the [4minputrc[24m file is simple.
-       All that is required is the name of the command or the text of a  macro
-       and a key sequence to which it should be bound.  The name may be speci-
-       fied in one of two ways: as a symbolic key name, possibly with [4mMeta-[24m or
-       [4mControl-[24m prefixes, or as a key sequence.  The name and key sequence are
-       separated by a colon.  There can be no whitespace between the name  and
-       the colon.
+   KKeeyy BBiinnddiinnggss
+       The syntax for controlling key bindings in the _i_n_p_u_t_r_c file is  simple.
+       All  that is required is the name of the command or the text of a macro
+       and a key sequence to which it should be bound.  The key  sequence  may
+       be  specified in one of two ways: as a symbolic key name, possibly with
+       _M_e_t_a_- or _C_o_n_t_r_o_l_- prefixes, or as a key sequence  composed  of  one  or
+       more  characters  enclosed in double quotes.  The key sequence and name
+       are separated by a colon.  There can be no whitespace between the  name
+       and the colon.
 
-       When using the form [1mkeyname[22m:[4mfunction-name[24m or [4mmacro[24m, [4mkeyname[24m is the name
+       When using the form kkeeyynnaammee:_f_u_n_c_t_i_o_n_-_n_a_m_e or _m_a_c_r_o, _k_e_y_n_a_m_e is the name
        of a key spelled out in English.  For example:
 
               Control-u: universal-argument
               Meta-Rubout: backward-kill-word
               Control-o: "> output"
 
-       In the above example, [4mC-u[24m is bound to the function  [1muniversal-argument[22m,
-       [4mM-DEL[24m  is bound to the function [1mbackward-kill-word[22m, and [4mC-o[24m is bound to
-       run the macro expressed on the right hand side (that is, to insert  the
-       text ``> output'' into the line).
+       In  the above example, _C_-_u is bound to the function uunniivveerrssaall--aarrgguummeenntt,
+       _M_-_D_E_L is bound to the function bbaacckkwwaarrdd--kkiillll--wwoorrdd, and _C_-_o is bound  to
+       run  the macro expressed on the right hand side (that is, to insert the
+       text "> output" into the line).
 
-       In  the  second  form,  [1m"keyseq"[22m:[4mfunction-name[24m or [4mmacro[24m, [1mkeyseq [22mdiffers
-       from [1mkeyname [22mabove in that strings denoting an entire key sequence  may
-       be  specified  by  placing the sequence within double quotes.  Some GNU
-       Emacs style key escapes can be used, as in the following  example,  but
-       the symbolic character names are not recognized.
+       In the second form, ""kkeeyysseeqq"":_f_u_n_c_t_i_o_n_-_n_a_m_e  or  _m_a_c_r_o,  kkeeyysseeqq  differs
+       from  kkeeyynnaammee above in that strings denoting an entire key sequence may
+       be specified by placing the sequence within double  quotes.   Some  GNU
+       Emacs  style  key escapes can be used, as in the following example, but
+       none of the symbolic character names are recognized.
 
               "\C-u": universal-argument
               "\C-x\C-r": re-read-init-file
               "\e[11~": "Function Key 1"
 
-       In this example, [4mC-u[24m is again bound to the function [1muniversal-argument[22m.
-       [4mC-x[24m [4mC-r[24m is bound to the function [1mre-read-init-file[22m, and [4mESC[24m [4m[[24m [4m1[24m [4m1[24m [4m~[24m  is
-       bound to insert the text ``Function Key 1''.
+       In this example, _C_-_u is again bound to the function uunniivveerrssaall--aarrgguummeenntt.
+       _C_-_x _C_-_r is bound to the function rree--rreeaadd--iinniitt--ffiillee, and _E_S_C _[ _1 _1 _~  is
+       bound to insert the text "Function Key 1".
 
        The  full set of GNU Emacs style escape sequences available when speci-
        fying key sequences is
-              [1m\C-    [22mcontrol prefix
-              [1m\M-    [22mmeta prefix
-              [1m\e     [22man escape character
-              [1m\\     [22mbackslash
-              [1m\"     [22mliteral ", a double quote
-              [1m\'     [22mliteral ', a single quote
+              \\CC--    A control prefix.
+              \\MM--    Adding the meta prefix or converting the following  char-
+                     acter  to  a  meta  character,  as  described below under
+                     ffoorrccee--mmeettaa--pprreeffiixx.
+              \\ee     An escape character.
+              \\\\     Backslash.
+              \\""     Literal ", a double quote.
+              \\''     Literal ', a single quote.
 
        In addition to the GNU Emacs style escape sequences, a  second  set  of
        backslash escapes is available:
-              [1m\a     [22malert (bell)
-              [1m\b     [22mbackspace
-              [1m\d     [22mdelete
-              [1m\f     [22mform feed
-              [1m\n     [22mnewline
-              [1m\r     [22mcarriage return
-              [1m\t     [22mhorizontal tab
-              [1m\v     [22mvertical tab
-              [1m\[4m[22mnnn[24m   the  eight-bit  character  whose value is the octal value
-                     [4mnnn[24m (one to three digits)
-              [1m\x[4m[22mHH[24m   the eight-bit character whose value  is  the  hexadecimal
-                     value [4mHH[24m (one or two hex digits)
+              \\aa     alert (bell)
+              \\bb     backspace
+              \\dd     delete
+              \\ff     form feed
+              \\nn     newline
+              \\rr     carriage return
+              \\tt     horizontal tab
+              \\vv     vertical tab
+              \\_n_n_n   The  eight-bit  character  whose value is the octal value
+                     _n_n_n (one to three digits).
+              \\xx_H_H   The eight-bit character whose value  is  the  hexadecimal
+                     value _H_H (one or two hex digits).
 
-       When  entering  the  text of a macro, single or double quotes should be
-       used to indicate a macro definition.  Unquoted text is assumed to be  a
-       function  name.   In  the  macro  body, the backslash escapes described
-       above are expanded.  Backslash will quote any other  character  in  the
-       macro text, including " and '.
+       When entering the text of a macro, single or double quotes must be used
+       to indicate a macro definition.  Unquoted text is assumed to be a func-
+       tion  name.   The backslash escapes described above are expanded in the
+       macro body.  Backslash quotes any other character in  the  macro  text,
+       including " and '.
 
-       [1mBash  [22mallows the current readline key bindings to be displayed or modi-
-       fied with the [1mbind [22mbuiltin command.  The editing mode may  be  switched
-       during  interactive  use by using the [1m-o [22moption to the [1mset [22mbuiltin com-
-       mand.  Other programs using this library  provide  similar  mechanisms.
-       The  [4minputrc[24m  file may be edited and re-read if a program does not pro-
-       vide any other means to incorporate new bindings.
+       BBaasshh  will display or modify the current rreeaaddlliinnee key bindings with the
+       bbiinndd builtin command.  The --oo eemmaaccss or --oo vvii options to the sseett builtin
+       change the editing mode during interactive use.  Other  programs  using
+       this  library  provide  similar mechanisms.  A user may always edit the
+       _i_n_p_u_t_r_c file and have rreeaaddlliinnee re-read it if a program does not provide
+       any other means to incorporate new bindings.
 
-   [1mVariables[0m
-       Readline has variables that can be used to further customize its behav-
-       ior.  A variable may be set in the [4minputrc[24m file with a statement of the
+   VVaarriiaabblleess
+       RReeaaddlliinnee has variables that can be used to further customize its behav-
+       ior.  A variable may be set in the _i_n_p_u_t_r_c file with a statement of the
        form
 
-              [1mset [4m[22mvariable-name[24m [4mvalue[0m
+              sseett _v_a_r_i_a_b_l_e_-_n_a_m_e _v_a_l_u_e
 
-       Except where noted, readline variables can take the values  [1mOn  [22mor  [1mOff[0m
+       Except where noted, rreeaaddlliinnee variables can take the values  OOnn  or  OOffff
        (without  regard  to  case).   Unrecognized variable names are ignored.
-       When a variable value is read, empty or null values, "on"  (case-insen-
-       sitive), and "1" are equivalent to [1mOn[22m.  All other values are equivalent
-       to [1mOff[22m.  The variables and their default values are:
+       When rreeaaddlliinnee reads a variable value, empty or null values, "on" (case-
+       insensitive), and "1" are equivalent  to  OOnn.   All  other  values  are
+       equivalent to OOffff.
 
-       [1mactive-region-start-color[0m
-              A string variable that controls the text  color  and  background
-              when  displaying the text in the active region (see the descrip-
-              tion of [1menable-active-region [22mbelow).  This string must not  take
+       The variables and their default values are:
+
+       aaccttiivvee--rreeggiioonn--ssttaarrtt--ccoolloorr
+              A  string  variable  that controls the text color and background
+              when displaying the text in the active region (see the  descrip-
+              tion  of eennaabbllee--aaccttiivvee--rreeggiioonn below).  This string must not take
               up any physical character positions on the display, so it should
               consist only of terminal escape sequences.  It is output to  the
               terminal  before displaying the text in the active region.  This
@@ -184,9 +215,9 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               type  changes.   The  default  value is the string that puts the
               terminal in standout mode, as obtained from the terminal's  ter-
               minfo description.  A sample value might be "\e[01;33m".
-       [1mactive-region-end-color[0m
-              A  string  variable  that  "undoes"  the  effects  of [1mactive-re-[0m
-              [1mgion-start-color [22mand restores "normal" terminal display  appear-
+       aaccttiivvee--rreeggiioonn--eenndd--ccoolloorr
+              A  string  variable  that  "undoes"  the  effects  of aaccttiivvee--rree--
+              ggiioonn--ssttaarrtt--ccoolloorr and restores "normal" terminal display  appear-
               ance  after  displaying  text in the active region.  This string
               must not take up any physical character positions  on  the  dis-
               play,  so  it  should consist only of terminal escape sequences.
@@ -196,753 +227,844 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               string  that  restores  the  terminal from standout mode, as ob-
               tained from the terminal's terminfo description.  A sample value
               might be "\e[0m".
-       [1mbell-style (audible)[0m
-              Controls  what  happens when readline wants to ring the terminal
-              bell.  If set to [1mnone[22m, readline never rings the bell.  If set to
-              [1mvisible[22m,  readline  uses a visible bell if one is available.  If
-              set to [1maudible[22m, readline attempts to ring the terminal's bell.
-       [1mbind-tty-special-chars (On)[0m
-              If set to [1mOn [22m(the default), readline attempts to bind  the  con-
-              trol  characters    treated  specially  by the kernel's terminal
-              driver to their readline equivalents.
-       [1mblink-matching-paren (Off)[0m
-              If set to [1mOn[22m, readline attempts to briefly move the cursor to an
+       bbeellll--ssttyyllee ((aauuddiibbllee))
+              Controls what happens when rreeaaddlliinnee wants to ring  the  terminal
+              bell.  If set to nnoonnee, rreeaaddlliinnee never rings the bell.  If set to
+              vviissiibbllee,  rreeaaddlliinnee  uses a visible bell if one is available.  If
+              set to aauuddiibbllee, rreeaaddlliinnee attempts to ring the terminal's bell.
+       bbiinndd--ttttyy--ssppeecciiaall--cchhaarrss ((OOnn))
+              If set to OOnn, rreeaaddlliinnee attempts to bind the  control  characters
+              that  are  treated  specially by the kernel's terminal driver to
+              their rreeaaddlliinnee equivalents.  These override the default rreeaaddlliinnee
+              bindings described here.  Type "stty -a" at a bbaasshh prompt to see
+              your current terminal settings, including  the  special  control
+              characters (usually cccchhaarrss).
+       bblliinnkk--mmaattcchhiinngg--ppaarreenn ((OOffff))
+              If set to OOnn, rreeaaddlliinnee attempts to briefly move the cursor to an
               opening parenthesis when a closing parenthesis is inserted.
-       [1mcolored-completion-prefix (Off)[0m
-              If  set  to  [1mOn[22m, when listing completions, readline displays the
+       ccoolloorreedd--ccoommpplleettiioonn--pprreeffiixx ((OOffff))
+              If  set  to  OOnn, when listing completions, rreeaaddlliinnee displays the
               common prefix of the set of possible completions using a differ-
-              ent  color.   The  color definitions are taken from the value of
-              the [1mLS_COLORS [22menvironment variable.  If there is a color defini-
-              tion  in [1m$LS_COLORS [22mfor the custom suffix "readline-colored-com-
-              pletion-prefix", readline uses this color for the common  prefix
+              ent color.  The color definitions are taken from  the  value  of
+              the LLSS__CCOOLLOORRSS environment variable.  If there is a color defini-
+              tion  in $$LLSS__CCOOLLOORRSS for the custom suffix "readline-colored-com-
+              pletion-prefix", rreeaaddlliinnee uses this color for the common  prefix
               instead of its default.
-       [1mcolored-stats (Off)[0m
-              If  set to [1mOn[22m, readline displays possible completions using dif-
+       ccoolloorreedd--ssttaattss ((OOffff))
+              If  set to OOnn, rreeaaddlliinnee displays possible completions using dif-
               ferent colors to indicate their file type.   The  color  defini-
-              tions  are  taken  from  the  value of the [1mLS_COLORS [22menvironment
+              tions  are  taken  from  the  value of the LLSS__CCOOLLOORRSS environment
               variable.
-       [1mcomment-begin (``#'')[0m
-              The string that is inserted in [1mvi [22mmode when  the  [1minsert-comment[0m
-              command is executed.  This command is bound to [1mM-# [22min emacs mode
-              and to [1m# [22min vi command mode.
-       [1mcompletion-display-width (-1)[0m
+       ccoommmmeenntt--bbeeggiinn (("##"))
+              The string that the  rreeaaddlliinnee  iinnsseerrtt--ccoommmmeenntt  command  inserts.
+              This  command  is bound to MM--## in emacs mode and to ## in vi com-
+              mand mode.
+       ccoommpplleettiioonn--ddiissppllaayy--wwiiddtthh ((--11))
               The number of screen columns used to  display  possible  matches
               when  performing completion.  The value is ignored if it is less
               than 0 or greater than the terminal screen width.  A value of  0
-              will  cause  matches  to be displayed one per line.  The default
-              value is -1.
-       [1mcompletion-ignore-case (Off)[0m
-              If set to [1mOn[22m, readline performs filename matching and completion
+              causes  matches to be displayed one per line.  The default value
+              is -1.
+       ccoommpplleettiioonn--iiggnnoorree--ccaassee ((OOffff))
+              If set to OOnn, rreeaaddlliinnee performs filename matching and completion
               in a case-insensitive fashion.
-       [1mcompletion-map-case (Off)[0m
-              If  set  to  [1mOn[22m, and [1mcompletion-ignore-case [22mis enabled, readline
-              treats hyphens ([4m-[24m) and underscores ([4m_[24m) as equivalent  when  per-
+       ccoommpplleettiioonn--mmaapp--ccaassee ((OOffff))
+              If set to OOnn, and ccoommpplleettiioonn--iiggnnoorree--ccaassee  is  enabled,  rreeaaddlliinnee
+              treats  hyphens  (_-) and underscores (__) as equivalent when per-
               forming case-insensitive filename matching and completion.
-       [1mcompletion-prefix-display-length (0)[0m
-              The  length in characters of the common prefix of a list of pos-
-              sible completions that is displayed without modification.   When
-              set  to  a  value greater than zero, common prefixes longer than
-              this value are replaced with an ellipsis when displaying  possi-
-              ble completions.
-       [1mcompletion-query-items (100)[0m
-              This  determines when the user is queried about viewing the num-
-              ber of possible completions generated  by  the  [1mpossible-comple-[0m
-              [1mtions  [22mcommand.  It may be set to any integer value greater than
-              or equal to zero.  If the  number  of  possible  completions  is
-              greater  than  or  equal to the value of this variable, readline
-              will ask whether or not the user wishes to view them;  otherwise
-              they are simply listed on the terminal.  A negative value causes
-              readline to never ask.
-       [1mconvert-meta (On)[0m
-              If set to [1mOn[22m, readline will convert characters with  the  eighth
-              bit set to an ASCII key sequence by stripping the eighth bit and
-              prefixing it with an escape character (in effect,  using  escape
-              as  the  [4mmeta[24m [4mprefix[24m).  The default is [4mOn[24m, but readline will set
-              it to [4mOff[24m if the locale  contains  eight-bit  characters.   This
-              variable  is  dependent on the [1mLC_CTYPE [22mlocale category, and may
-              change if the locale is changed.
-       [1mdisable-completion (Off)[0m
-              If set to [1mOn[22m, readline will inhibit word completion.  Completion
-              characters  will  be  inserted into the line as if they had been
-              mapped to [1mself-insert[22m.
-       [1mecho-control-characters (On)[0m
-              When set to [1mOn[22m, on operating systems that indicate they  support
-              it, readline echoes a character corresponding to a signal gener-
+       ccoommpplleettiioonn--pprreeffiixx--ddiissppllaayy--lleennggtthh ((00))
+              The maximum length in characters of the common prefix of a  list
+              of  possible completions that is displayed without modification.
+              When set to a value greater than zero, rreeaaddlliinnee replaces  common
+              prefixes longer than this value with an ellipsis when displaying
+              possible completions.  If a completion begins with a period, and
+              eeaaddlliinnee  is  completing filenames, it uses three underscores in-
+              stead of an ellipsis.
+       ccoommpplleettiioonn--qquueerryy--iitteemmss ((110000))
+              This determines when the user is queried about viewing the  num-
+              ber  of  possible  completions generated by the ppoossssiibbllee--ccoommppllee--
+              ttiioonnss command.  It may be set to any integer value greater  than
+              or  equal  to  zero.   If  the number of possible completions is
+              greater than or equal to the value of  this  variable,  rreeaaddlliinnee
+              asks  whether  or  not  the  user wishes to view them; otherwise
+              rreeaaddlliinnee simply lists them on the terminal.  A zero value  means
+              rreeaaddlliinnee should never ask; negative values are treated as zero.
+       ccoonnvveerrtt--mmeettaa ((OOnn))
+              If  set  to  OOnn, rreeaaddlliinnee converts characters it reads that have
+              the eighth bit set to an ASCII  key  sequence  by  clearing  the
+              eighth bit and prefixing it with an escape character (converting
+              the  character to have the meta prefix).  The default is _O_n, but
+              rreeaaddlliinnee sets it to _O_f_f if the locale contains characters  whose
+              encodings may include bytes with the eighth bit set.  This vari-
+              able  is  dependent  on  the  LLCC__CCTTYYPPEE  locale category, and may
+              change if the locale changes.  This variable  also  affects  key
+              bindings; see the description of ffoorrccee--mmeettaa--pprreeffiixx below.
+       ddiissaabbllee--ccoommpplleettiioonn ((OOffff))
+              If  set  to  OOnn,  rreeaaddlliinnee inhibits word completion.  Completion
+              characters are inserted into the line as if they had been mapped
+              to sseellff--iinnsseerrtt.
+       eecchhoo--ccoonnttrrooll--cchhaarraacctteerrss ((OOnn))
+              When set to OOnn, on operating systems that indicate they  support
+              it, rreeaaddlliinnee echoes a character corresponding to a signal gener-
               ated from the keyboard.
-       [1mediting-mode (emacs)[0m
-              Controls whether readline begins with a set of key bindings sim-
-              ilar to [4mEmacs[24m or [4mvi[24m.  [1mediting-mode [22mcan be set to either [1memacs [22mor
-              [1mvi[22m.
-       [1memacs-mode-string (@)[0m
-              If the [4mshow-mode-in-prompt[24m variable is enabled, this  string  is
+       eeddiittiinngg--mmooddee ((eemmaaccss))
+              Controls  whether rreeaaddlliinnee uses a set of key bindings similar to
+              _E_m_a_c_s or _v_i.  eeddiittiinngg--mmooddee can be set to either eemmaaccss or vvii.
+       eemmaaccss--mmooddee--ssttrriinngg ((@@))
+              If the _s_h_o_w_-_m_o_d_e_-_i_n_-_p_r_o_m_p_t variable is enabled, this  string  is
               displayed immediately before the last line of the primary prompt
               when emacs editing mode is active.  The value is expanded like a
-              key  binding,  so the standard set of meta- and control prefixes
-              and backslash escape sequences is available.  Use the \1 and  \2
-              escapes  to  begin and end sequences of non-printing characters,
-              which can be used to embed a terminal control sequence into  the
-              mode string.
-       [1menable-active-region (On)[0m
-              The  [4mpoint[24m  is the current cursor position, and [4mmark[24m refers to a
-              saved cursor position.  The text between the point and  mark  is
-              referred  to  as  the  [4mregion[24m.  When this variable is set to [4mOn[24m,
-              readline allows certain commands to designate the region as  [4mac-[0m
-              [4mtive[24m.   When  the region is active, readline highlights the text
-              in the region using the value of the  [1mactive-region-start-color[22m,
-              which  defaults to the string that enables the terminal's stand-
-              out mode.  The active region shows the text inserted  by  brack-
-              eted-paste  and  any matching text found by incremental and non-
-              incremental history searches.
-       [1menable-bracketed-paste (On)[0m
-              When set to [1mOn[22m, readline configures the terminal to insert  each
+              key  binding, so the standard set of meta- and control- prefixes
+              and backslash escape sequences is available.  The \1 and \2  es-
+              capes  begin and end sequences of non-printing characters, which
+              can be used to embed a terminal control sequence into  the  mode
+              string.
+       eennaabbllee--aaccttiivvee--rreeggiioonn ((OOnn))
+              When  this  variable  is set to _O_n, rreeaaddlliinnee allows certain com-
+              mands to designate the region as _a_c_t_i_v_e.  When the region is ac-
+              tive, rreeaaddlliinnee highlights the text in the region using the value
+              of the aaccttiivvee--rreeggiioonn--ssttaarrtt--ccoolloorr variable, which defaults to the
+              string that enables the terminal's standout  mode.   The  active
+              region shows the text inserted by bracketed-paste and any match-
+              ing  text  found  by  incremental  and  non-incremental  history
+              searches.
+       eennaabbllee--bbrraacckkeetteedd--ppaassttee ((OOnn))
+              When set to OOnn, rreeaaddlliinnee configures the terminal to insert  each
               paste  into the editing buffer as a single string of characters,
               instead of treating each character as if it had been  read  from
-              the keyboard.  This prevents readline from executing any editing
-              commands bound to key sequences appearing in the pasted text.
-       [1menable-keypad (Off)[0m
-              When set to [1mOn[22m, readline will try to enable the application key-
-              pad when it is called.  Some systems need this to enable the ar-
-              row keys.
-       [1menable-meta-key (On)[0m
-              When set to [1mOn[22m, readline will try to enable  any  meta  modifier
-              key  the  terminal claims to support when it is called.  On many
-              terminals, the meta key is used to send eight-bit characters.
-       [1mexpand-tilde (Off)[0m
-              If set to [1mOn[22m, tilde expansion is  performed  when  readline  at-
-              tempts word completion.
-       [1mhistory-preserve-point (Off)[0m
-              If  set  to  [1mOn[22m, the history code attempts to place point at the
-              same location on each history line retrieved with  [1mprevious-his-[0m
-              [1mtory [22mor [1mnext-history[22m.
-       [1mhistory-size (unset)[0m
-              Set  the  maximum number of history entries saved in the history
-              list.  If set to zero, any existing history entries are  deleted
+              the  keyboard.  This is called _b_r_a_c_k_e_t_e_d_-_p_a_s_t_e _m_o_d_e; it prevents
+              rreeaaddlliinnee from executing any editing commands bound  to  key  se-
+              quences appearing in the pasted text.
+       eennaabbllee--kkeeyyppaadd ((OOffff))
+              When  set to OOnn, rreeaaddlliinnee tries to enable the application keypad
+              when it is called.  Some systems need this to enable  the  arrow
+              keys.
+       eennaabbllee--mmeettaa--kkeeyy ((OOnn))
+              When  set  to OOnn, rreeaaddlliinnee tries to enable any meta modifier key
+              the terminal claims to support.  On many terminals, the Meta key
+              is used to send eight-bit characters; this variable  checks  for
+              the  terminal  capability that indicates the terminal can enable
+              and disable a mode that sets  the  eighth  bit  of  a  character
+              (0200)  if the Meta key is held down when the character is typed
+              (a meta character).
+       eexxppaanndd--ttiillddee ((OOffff))
+              If set to OOnn, rreeaaddlliinnee performs tilde expansion when it attempts
+              word completion.
+       ffoorrccee--mmeettaa--pprreeffiixx ((OOffff))
+              If set to OOnn, rreeaaddlliinnee modifies its behavior  when  binding  key
+              sequences  containing  \M-  or Meta- (see KKeeyy BBiinnddiinnggss above) by
+              converting a key sequence of the form \M-_C or Meta-_C to the two-
+              character  sequence  EESSCC  _C  (adding  the  meta   prefix).    If
+              ffoorrccee--mmeettaa--pprreeffiixx is set to OOffff (the default), rreeaaddlliinnee uses the
+              value  of the ccoonnvveerrtt--mmeettaa variable to determine whether to per-
+              form this conversion: if ccoonnvveerrtt--mmeettaa is OOnn,  rreeaaddlliinnee  performs
+              the  conversion described above; if it is OOffff, rreeaaddlliinnee converts
+              _C to a meta character by setting the eighth bit (0200).
+       hhiissttoorryy--pprreesseerrvvee--ppooiinntt ((OOffff))
+              If set to OOnn, the history code attempts to place  point  at  the
+              same  location on each history line retrieved with pprreevviioouuss--hhiiss--
+              ttoorryy or nneexxtt--hhiissttoorryy.
+       hhiissttoorryy--ssiizzee ((uunnsseett))
+              Set the maximum number of history entries saved in  the  history
+              list.   If set to zero, any existing history entries are deleted
               and no new entries are saved.  If set to a value less than zero,
               the number of history entries is not limited.  By  default,  the
-              number of history entries is not limited.  If an attempt is made
-              to set [4mhistory-size[24m to a non-numeric value, the  maximum  number
-              of history entries will be set to 500.
-       [1mhorizontal-scroll-mode (Off)[0m
-              When  set  to  [1mOn[22m, makes readline use a single line for display,
-              scrolling the input horizontally on a single screen line when it
-              becomes  longer  than the screen width rather than wrapping to a
-              new line.  This setting is automatically enabled  for  terminals
-              of height 1.
-       [1minput-meta (Off)[0m
-              If  set to [1mOn[22m, readline will enable eight-bit input (that is, it
-              will not clear the eighth bit in the characters it  reads),  re-
-              gardless  of  what the terminal claims it can support.  The name
-              [1mmeta-flag [22mis a synonym for this variable.  The default  is  [4mOff[24m,
-              but  readline will set it to [4mOn[24m if the locale contains eight-bit
-              characters.  This variable is dependent on the  [1mLC_CTYPE  [22mlocale
-              category, and may change if the locale is changed.
-       [1misearch-terminators (``C-[ C-J'')[0m
-              The  string  of  characters that should terminate an incremental
-              search without subsequently executing the character  as  a  com-
-              mand.   If this variable has not been given a value, the charac-
-              ters [4mESC[24m and [4mC-J[24m will terminate an incremental search.
-       [1mkeymap (emacs)[0m
-              Set the current readline keymap.  The set of legal keymap  names
-              is  [4memacs,[24m  [4memacs-standard,[24m [4memacs-meta,[24m [4memacs-ctlx,[24m [4mvi,[24m [4mvi-move,[0m
-              [4mvi-command[24m, and [4mvi-insert[24m.   [4mvi[24m  is  equivalent  to  [4mvi-command[24m;
-              [4memacs[24m  is  equivalent  to  [4memacs-standard[24m.  The default value is
-              [4memacs[24m.  The value  of  [1mediting-mode  [22malso  affects  the  default
-              keymap.
-       [1mkeyseq-timeout (500)[0m
-              Specifies  the  duration [4mreadline[24m will wait for a character when
+              number  of history entries is not limited.  Setting _h_i_s_t_o_r_y_-_s_i_z_e
+              to a non-numeric value will set the maximum  number  of  history
+              entries to 500.
+       hhoorriizzoonnttaall--ssccrroollll--mmooddee ((OOffff))
+              Setting this variable to OOnn makes rreeaaddlliinnee use a single line for
+              display,  scrolling  the  input  horizontally on a single screen
+              line when it becomes longer than the screen  width  rather  than
+              wrapping  to  a new line.  This setting is automatically enabled
+              for terminals of height 1.
+       iinnppuutt--mmeettaa ((OOffff))
+              If set to OOnn, rreeaaddlliinnee enables eight-bit input (that is, it does
+              not clear the eighth bit in the characters it reads), regardless
+              of what the terminal claims it can support.  The default is _O_f_f,
+              but rreeaaddlliinnee sets it to _O_n if  the  locale  contains  characters
+              whose encodings may include bytes with the eighth bit set.  This
+              variable  is  dependent on the LLCC__CCTTYYPPEE locale category, and its
+              value may change if the locale changes.  The name mmeettaa--ffllaagg is a
+              synonym for iinnppuutt--mmeettaa.
+       iisseeaarrcchh--tteerrmmiinnaattoorrss (("CC--[[CC--jj"))
+              The string of characters that should  terminate  an  incremental
+              search  without  subsequently  executing the character as a com-
+              mand.  If this variable has not been given a value, the  charac-
+              ters _E_S_C and CC--jj terminate an incremental search.
+       kkeeyymmaapp ((eemmaaccss))
+              Set  the current rreeaaddlliinnee keymap.  The set of valid keymap names
+              is _e_m_a_c_s_, _e_m_a_c_s_-_s_t_a_n_d_a_r_d_, _e_m_a_c_s_-_m_e_t_a_,  _e_m_a_c_s_-_c_t_l_x_,  _v_i_,  _v_i_-_c_o_m_-
+              _m_a_n_d,  and  _v_i_-_i_n_s_e_r_t.  _v_i is equivalent to _v_i_-_c_o_m_m_a_n_d; _e_m_a_c_s is
+              equivalent to _e_m_a_c_s_-_s_t_a_n_d_a_r_d.  The default value is  _e_m_a_c_s;  the
+              value of eeddiittiinngg--mmooddee also affects the default keymap.
+       kkeeyysseeqq--ttiimmeeoouutt ((550000))
+              Specifies  the  duration rreeaaddlliinnee will wait for a character when
               reading an ambiguous key sequence (one that can form a  complete
               key sequence using the input read so far, or can take additional
-              input to complete a longer key sequence).  If no  input  is  re-
-              ceived  within  the  timeout,  [4mreadline[24m will use the shorter but
-              complete key sequence.  The value is specified in  milliseconds,
-              so  a value of 1000 means that [4mreadline[24m will wait one second for
-              additional input.  If this variable is set to a value less  than
-              or  equal to zero, or to a non-numeric value, [4mreadline[24m will wait
-              until another key is pressed to decide  which  key  sequence  to
-              complete.
-       [1mmark-directories (On)[0m
-              If set to [1mOn[22m, completed directory names have a slash appended.
-       [1mmark-modified-lines (Off)[0m
-              If  set  to  [1mOn[22m,  history lines that have been modified are dis-
-              played with a preceding asterisk ([1m*[22m).
-       [1mmark-symlinked-directories (Off)[0m
-              If set to [1mOn[22m, completed names which are symbolic links to direc-
-              tories  have  a slash appended (subject to the value of [1mmark-di-[0m
-              [1mrectories[22m).
-       [1mmatch-hidden-files (On)[0m
-              This variable, when set to [1mOn[22m, causes readline  to  match  files
-              whose  names  begin  with  a  `.' (hidden files) when performing
-              filename completion.  If set to [1mOff[22m, the  leading  `.'  must  be
-              supplied by the user in the filename to be completed.
-       [1mmenu-complete-display-prefix (Off)[0m
-              If  set to [1mOn[22m, menu completion displays the common prefix of the
+              input  to complete a longer key sequence).  If rreeaaddlliinnee does not
+              receive any input within the timeout, it uses  the  shorter  but
+              complete  key sequence.  The value is specified in milliseconds,
+              so a value of 1000 means that rreeaaddlliinnee will wait one second  for
+              additional  input.  If this variable is set to a value less than
+              or equal to zero, or to a non-numeric value, rreeaaddlliinnee waits  un-
+              til  another key is pressed to decide which key sequence to com-
+              plete.
+       mmaarrkk--ddiirreeccttoorriieess ((OOnn))
+              If set to OOnn, completed directory names have a slash appended.
+       mmaarrkk--mmooddiiffiieedd--lliinneess ((OOffff))
+              If set to OOnn, rreeaaddlliinnee displays history  lines  that  have  been
+              modified with a preceding asterisk (**).
+       mmaarrkk--ssyymmlliinnkkeedd--ddiirreeccttoorriieess ((OOffff))
+              If set to OOnn, completed names which are symbolic links to direc-
+              tories  have  a slash appended, subject to the value of mmaarrkk--ddii--
+              rreeccttoorriieess.
+       mmaattcchh--hhiiddddeenn--ffiilleess ((OOnn))
+              This variable, when set to OOnn, forces rreeaaddlliinnee  to  match  files
+              whose  names  begin  with  a "."  (hidden files) when performing
+              filename completion.  If set to OOffff, the user must  include  the
+              leading "."  in the filename to be completed.
+       mmeennuu--ccoommpplleettee--ddiissppllaayy--pprreeffiixx ((OOffff))
+              If  set to OOnn, menu completion displays the common prefix of the
               list of possible completions (which may be empty) before cycling
               through the list.
-       [1moutput-meta (Off)[0m
-              If  set  to [1mOn[22m, readline will display characters with the eighth
-              bit set directly rather than as a meta-prefixed escape sequence.
-              The default is [4mOff[24m, but readline will set it to [4mOn[24m if the locale
-              contains eight-bit characters.  This variable  is  dependent  on
-              the  [1mLC_CTYPE  [22mlocale  category, and may change if the locale is
-              changed.
-       [1mpage-completions (On)[0m
-              If set to [1mOn[22m, readline uses an internal [4mmore[24m-like pager to  dis-
-              play a screenful of possible completions at a time.
-       [1mprint-completions-horizontally (Off)[0m
-              If  set  to  [1mOn[22m,  readline will display completions with matches
-              sorted horizontally in alphabetical order, rather than down  the
-              screen.
-       [1mrevert-all-at-newline (Off)[0m
-              If  set  to  [1mOn[22m, readline will undo all changes to history lines
-              before returning when [1maccept-line [22mis executed.  By default, his-
-              tory  lines  may  be  modified  and retain individual undo lists
-              across calls to [1mreadline[22m.
-       [1mshow-all-if-ambiguous (Off)[0m
+       oouuttppuutt--mmeettaa ((OOffff))
+              If set to OOnn, rreeaaddlliinnee displays characters with the  eighth  bit
+              set  directly  rather  than  as a meta-prefixed escape sequence.
+              The default is _O_f_f, but rreeaaddlliinnee sets it to  _O_n  if  the  locale
+              contains  characters  whose encodings may include bytes with the
+              eighth bit set.  This variable is dependent on the LLCC__CCTTYYPPEE  lo-
+              cale category, and its value may change if the locale changes.
+       ppaaggee--ccoommpplleettiioonnss ((OOnn))
+              If set to OOnn, rreeaaddlliinnee uses an internal pager resembling _m_o_r_e(1)
+              to display a screenful of possible completions at a time.
+       pprreeffeerr--vviissiibbllee--bbeellll
+              See bbeellll--ssttyyllee.
+       pprriinntt--ccoommpplleettiioonnss--hhoorriizzoonnttaallllyy ((OOffff))
+              If  set to OOnn, rreeaaddlliinnee displays completions with matches sorted
+              horizontally in alphabetical order, rather than down the screen.
+       rreevveerrtt--aallll--aatt--nneewwlliinnee ((OOffff))
+              If set to OOnn, rreeaaddlliinnee will undo all changes  to  history  lines
+              before  returning  when executing aacccceepptt--lliinnee.  By default, his-
+              tory lines may be modified  and  retain  individual  undo  lists
+              across calls to rreeaaddlliinnee(()).
+       sseeaarrcchh--iiggnnoorree--ccaassee ((OOffff))
+              If  set to OOnn, rreeaaddlliinnee performs incremental and non-incremental
+              history list searches in a case-insensitive fashion.
+       sshhooww--aallll--iiff--aammbbiigguuoouuss ((OOffff))
               This alters the default behavior of  the  completion  functions.
-              If set to [1mOn[22m, words which have more than one possible completion
-              cause the matches to be listed immediately  instead  of  ringing
+              If set to OOnn, words which have more than one possible completion
+              cause  the  matches  to be listed immediately instead of ringing
               the bell.
-       [1mshow-all-if-unmodified (Off)[0m
-              This  alters the default behavior of the completion functions in
-              a fashion similar to [1mshow-all-if-ambiguous[22m.  If set to [1mOn[22m, words
+       sshhooww--aallll--iiff--uunnmmooddiiffiieedd ((OOffff))
+              This alters the default behavior of the completion functions  in
+              a fashion similar to sshhooww--aallll--iiff--aammbbiigguuoouuss.  If set to OOnn, words
               which  have more than one possible completion without any possi-
               ble partial completion (the possible completions don't  share  a
               common  prefix)  cause  the matches to be listed immediately in-
               stead of ringing the bell.
-       [1mshow-mode-in-prompt (Off)[0m
-              If set to [1mOn[22m, add a string to the beginning of the prompt  indi-
+       sshhooww--mmooddee--iinn--pprroommpptt ((OOffff))
+              If set to OOnn, add a string to the beginning of the prompt  indi-
               cating  the  editing  mode:  emacs, vi command, or vi insertion.
-              The mode strings are user-settable (e.g., [4memacs-mode-string[24m).
-       [1mskip-completed-text (Off)[0m
-              If set to [1mOn[22m, this alters the default completion  behavior  when
+              The mode strings are user-settable (e.g., _e_m_a_c_s_-_m_o_d_e_-_s_t_r_i_n_g).
+       sskkiipp--ccoommpplleetteedd--tteexxtt ((OOffff))
+              If set to OOnn, this alters the default completion  behavior  when
               inserting  a  single match into the line.  It's only active when
               performing completion in the middle  of  a  word.   If  enabled,
-              readline  does  not  insert  characters from the completion that
+              rreeaaddlliinnee  does  not  insert  characters from the completion that
               match characters after point in the  word  being  completed,  so
               portions of the word following the cursor are not duplicated.
-       [1mvi-cmd-mode-string ((cmd))[0m
-              If  the  [4mshow-mode-in-prompt[24m variable is enabled, this string is
+       vvii--ccmmdd--mmooddee--ssttrriinngg ((((ccmmdd))))
+              If  the  _s_h_o_w_-_m_o_d_e_-_i_n_-_p_r_o_m_p_t variable is enabled, this string is
               displayed immediately before the last line of the primary prompt
-              when  vi  editing mode is active and in command mode.  The value
+              when vi editing mode is active and in command mode.   The  value
               is expanded like a key binding, so the standard set of meta- and
-              control  prefixes  and  backslash escape sequences is available.
-              Use the \1 and \2 escapes to begin and  end  sequences  of  non-
-              printing  characters, which can be used to embed a terminal con-
-              trol sequence into the mode string.
-       [1mvi-ins-mode-string ((ins))[0m
-              If the [4mshow-mode-in-prompt[24m variable is enabled, this  string  is
+              control-  prefixes  and backslash escape sequences is available.
+              The \1 and \2 escapes begin and end  sequences  of  non-printing
+              characters,  which  can  be used to embed a terminal control se-
+              quence into the mode string.
+       vvii--iinnss--mmooddee--ssttrriinngg ((((iinnss))))
+              If the _s_h_o_w_-_m_o_d_e_-_i_n_-_p_r_o_m_p_t variable is enabled, this  string  is
               displayed immediately before the last line of the primary prompt
               when vi editing mode is active and in insertion mode.  The value
               is expanded like a key binding, so the standard set of meta- and
-              control prefixes and backslash escape  sequences  is  available.
-              Use  the  \1  and  \2 escapes to begin and end sequences of non-
-              printing characters, which can be used to embed a terminal  con-
-              trol sequence into the mode string.
-       [1mvisible-stats (Off)[0m
-              If  set to [1mOn[22m, a character denoting a file's type as reported by
-              [4mstat[24m(2) is appended to the filename when listing  possible  com-
+              control-  prefixes  and backslash escape sequences is available.
+              The \1 and \2 escapes begin and end  sequences  of  non-printing
+              characters,  which  can  be used to embed a terminal control se-
+              quence into the mode string.
+       vviissiibbllee--ssttaattss ((OOffff))
+              If set to OOnn, a character denoting a file's type as reported  by
+              _s_t_a_t(2)  is  appended to the filename when listing possible com-
               pletions.
 
-   [1mConditional Constructs[0m
-       Readline  implements  a  facility  similar in spirit to the conditional
-       compilation features of the C preprocessor which  allows  key  bindings
-       and  variable  settings  to be performed as the result of tests.  There
-       are four parser directives used.
+   CCoonnddiittiioonnaall CCoonnssttrruuccttss
+       RReeaaddlliinnee implements a facility similar in  spirit  to  the  conditional
+       compilation  features  of  the C preprocessor which allows key bindings
+       and variable settings to be performed as the result  of  tests.   There
+       are four parser directives available.
 
-       [1m$if    [22mThe [1m$if [22mconstruct allows bindings to be made based on the  edit-
-              ing  mode,  the  terminal  being  used, or the application using
-              readline.  The text of the test, after any comparison  operator,
+       $$iiff    The  $$iiff construct allows bindings to be made based on the edit-
+              ing mode, the terminal being  used,  or  the  application  using
+              rreeaaddlliinnee.   The text of the test, after any comparison operator,
               extends to the end of the line; unless otherwise noted, no char-
               acters are required to isolate it.
 
-              [1mmode   [22mThe [1mmode= [22mform of the  [1m$if  [22mdirective  is  used  to  test
-                     whether  readline  is  in  emacs or vi mode.  This may be
-                     used in conjunction with the [1mset keymap [22mcommand, for  in-
-                     stance,  to set bindings in the [4memacs-standard[24m and [4memacs-[0m
-                     [4mctlx[24m keymaps only if readline is starting  out  in  emacs
-                     mode.
+              mmooddee   The mmooddee== form of the  $$iiff  directive  is  used  to  test
+                     whether  rreeaaddlliinnee  is  in  emacs or vi mode.  This may be
+                     used in conjunction with the sseett kkeeyymmaapp command, for  in-
+                     stance,   to  set  bindings  in  the  _e_m_a_c_s_-_s_t_a_n_d_a_r_d  and
+                     _e_m_a_c_s_-_c_t_l_x keymaps only if rreeaaddlliinnee is  starting  out  in
+                     emacs mode.
 
-              [1mterm   [22mThe  [1mterm=  [22mform may be used to include terminal-specific
+              tteerrmm   The  tteerrmm==  form may be used to include terminal-specific
                      key bindings, perhaps to bind the key sequences output by
                      the terminal's function keys.  The word on the right side
-                     of the [1m= [22mis tested against the full name of the  terminal
-                     and  the portion of the terminal name before the first [1m-[22m.
-                     This allows [4msun[24m to match both [4msun[24m and  [4msun-cmd[24m,  for  in-
-                     stance.
+                     of the == is tested against both the full name of the ter-
+                     minal and the portion of the  terminal  name  before  the
+                     first  --.   This  allows  _x_t_e_r_m  to  match both _x_t_e_r_m and
+                     _x_t_e_r_m_-_2_5_6_c_o_l_o_r, for instance.
 
-              [1mversion[0m
-                     The  [1mversion  [22mtest  may  be  used  to perform comparisons
-                     against specific readline versions.  The [1mversion  [22mexpands
-                     to  the  current readline version.  The set of comparison
-                     operators includes [1m=[22m, (and [1m==[22m), [1m!=[22m, [1m<=[22m,  [1m>=[22m,  [1m<[22m,  and  [1m>[22m.
-                     The  version number supplied on the right side of the op-
-                     erator consists of a major version  number,  an  optional
-                     decimal point, and an optional minor version (e.g., [1m7.1[22m).
-                     If the minor version is omitted, it is assumed to  be  [1m0[22m.
-                     The operator may be separated from the string [1mversion [22mand
+              vveerrssiioonn
+                     The vveerrssiioonn test  may  be  used  to  perform  comparisons
+                     against  specific rreeaaddlliinnee versions.  The vveerrssiioonn expands
+                     to the current rreeaaddlliinnee version.  The set  of  comparison
+                     operators  includes  ==,  (and  ====), !!==, <<==, >>==, <<, and >>.
+                     The version number supplied on the right side of the  op-
+                     erator  consists  of  a major version number, an optional
+                     decimal point, and an optional minor version (e.g., 77..11).
+                     If the minor version is omitted, it defaults to  00.   The
+                     operator  may  be  separated  from the string vveerrssiioonn and
                      from the version number argument by whitespace.
 
-              [1mapplication[0m
-                     The [1mapplication [22mconstruct is used to include application-
-                     specific  settings.   Each program using the readline li-
-                     brary sets the [4mapplication[24m [4mname[24m,  and  an  initialization
+              _a_p_p_l_i_c_a_t_i_o_n
+                     The _a_p_p_l_i_c_a_t_i_o_n construct is used to include application-
+                     specific settings.  Each program using the  rreeaaddlliinnee  li-
+                     brary  sets  the  _a_p_p_l_i_c_a_t_i_o_n _n_a_m_e, and an initialization
                      file can test for a particular value.  This could be used
                      to bind key sequences to functions useful for a  specific
                      program.   For instance, the following command adds a key
                      sequence that quotes the  current  or  previous  word  in
-                     [1mbash[22m:
+                     bbaasshh:
 
-                     [1m$if [22mBash
+                     $$iiff Bash
                      # Quote the current or previous word
                      "\C-xq": "\eb\"\ef\""
-                     [1m$endif[0m
+                     $$eennddiiff
 
-              [4mvariable[0m
-                     The [4mvariable[24m construct provides simple equality tests for
-                     readline variables and values.  The permitted  comparison
-                     operators  are  [4m=[24m, [4m==[24m, and [4m!=[24m.  The variable name must be
+              _v_a_r_i_a_b_l_e
+                     The _v_a_r_i_a_b_l_e construct provides simple equality tests for
+                     rreeaaddlliinnee  variables and values.  The permitted comparison
+                     operators are _=, _=_=, and _!_=.  The variable name  must  be
                      separated from the comparison operator by whitespace; the
                      operator  may  be  separated  from the value on the right
-                     hand side by whitespace.  Both string and  boolean  vari-
-                     ables  may  be  tested.  Boolean variables must be tested
-                     against the values [4mon[24m and [4moff[24m.
+                     hand side by whitespace.  String  and  boolean  variables
+                     may  be tested.  Boolean variables must be tested against
+                     the values _o_n and _o_f_f.
 
-       [1m$endif [22mThis command, as seen in the previous example, terminates an [1m$if[0m
-              command.
-
-       [1m$else  [22mCommands in this branch of the [1m$if [22mdirective are executed if the
+       $$eellssee  Commands in this branch of the $$iiff directive are executed if the
               test fails.
 
-       [1m$include[0m
+       $$eennddiiff This command, as seen in the previous example, terminates an $$iiff
+              command.
+
+       $$iinncclluuddee
               This directive takes a single filename as an argument and  reads
-              commands  and bindings from that file.  For example, the follow-
-              ing directive would read [4m/etc/inputrc[24m:
+              commands and key bindings from that file.  For example, the fol-
+              lowing directive would read _/_e_t_c_/_i_n_p_u_t_r_c:
 
-              [1m$include  [4m[22m/etc/inputrc[0m
+              $$iinncclluuddee  _/_e_t_c_/_i_n_p_u_t_r_c
 
-[1mSEARCHING[0m
-       Readline provides commands for searching through  the  command  history
-       for  lines  containing a specified string.  There are two search modes:
-       [4mincremental[24m and [4mnon-incremental[24m.
+SSEEAARRCCHHIINNGG
+       RReeaaddlliinnee  provides  commands  for searching through the command history
+       for lines containing a specified string.  There are two  search  modes:
+       _i_n_c_r_e_m_e_n_t_a_l and _n_o_n_-_i_n_c_r_e_m_e_n_t_a_l.
 
-       Incremental searches begin before the  user  has  finished  typing  the
-       search  string.  As each character of the search string is typed, read-
-       line displays the next entry from the history matching the string typed
+       Incremental  searches  begin  before  the  user has finished typing the
+       search string.  As each character of the search string is typed,  rreeaadd--
+       lliinnee displays the next entry from the history matching the string typed
        so  far.   An  incremental  search  requires only as many characters as
-       needed to find the desired history entry.  To search  backward  in  the
-       history for a particular string, type [1mC-r[22m.  Typing [1mC-s [22msearches forward
-       through the history.  The  characters  present  in  the  value  of  the
-       [1misearch-terminators  [22mvariable  are  used  to  terminate  an incremental
-       search.  If that variable has not been assigned a value the [4mEscape[24m  and
-       [1mC-J [22mcharacters will terminate an incremental search.  [1mC-G [22mwill abort an
-       incremental search and restore the original line.  When the  search  is
-       terminated,  the history entry containing the search string becomes the
-       current line.
+       needed to find the desired history entry.   When  using  emacs  editing
+       mode,  type  CC--rr  to  search  backward  in the history for a particular
+       string.  Typing CC--ss searches forward through the history.  The  charac-
+       ters  present in the value of the iisseeaarrcchh--tteerrmmiinnaattoorrss variable are used
+       to terminate an incremental search.  If that variable has not been  as-
+       signed  a  value,  _E_S_C  and  CC--jj  terminate an incremental search.  CC--gg
+       aborts an incremental search and restores the original line.  When  the
+       search  is  terminated,  the history entry containing the search string
+       becomes the current line.
 
-       To find other matching entries in the history list, type [1mC-s [22mor [1mC-r  [22mas
-       appropriate.   This  will search backward or forward in the history for
-       the next line matching the search string typed so far.  Any  other  key
-       sequence bound to a readline command will terminate the search and exe-
-       cute that command.  For instance, a newline will terminate  the  search
-       and  accept  the  line,  thereby executing the command from the history
-       list.  A movement command will terminate the search, make the last line
-       found the current line, and begin editing.
+       To find other matching entries in the history list, type CC--rr or CC--ss  as
+       appropriate.   This searches backward or forward in the history for the
+       next entry matching the search string typed so far.  Any other key  se-
+       quence  bound  to a rreeaaddlliinnee command terminates the search and executes
+       that command.  For instance, a newline terminates the  search  and  ac-
+       cepts the line, thereby executing the command from the history list.  A
+       movement  command  will  terminate the search, make the last line found
+       the current line, and begin editing.
+
+       RReeaaddlliinnee remembers the last incremental search string.  If two CC--rrs are
+       typed without any intervening characters defining a new search  string,
+       rreeaaddlliinnee uses any remembered search string.
 
        Non-incremental  searches read the entire search string before starting
-       to search for matching history lines.  The search string may  be  typed
+       to search for matching history entries.  The search string may be typed
        by the user or be part of the contents of the current line.
 
-[1mEDITING COMMANDS[0m
-       The  following  is  a list of the names of the commands and the default
+EEDDIITTIINNGG CCOOMMMMAANNDDSS
+       The following is a list of the names of the commands  and  the  default
        key sequences to which they are bound.  Command names without an accom-
        panying key sequence are unbound by default.
 
-       In the following descriptions, [4mpoint[24m refers to the current cursor posi-
-       tion, and [4mmark[24m refers to a cursor position saved by the  [1mset-mark  [22mcom-
-       mand.   The  text  between the point and mark is referred to as the [4mre-[0m
-       [4mgion[24m.
+       In the following descriptions, _p_o_i_n_t refers to the current cursor posi-
+       tion,  and  _m_a_r_k refers to a cursor position saved by the sseett--mmaarrkk com-
+       mand.  The text between the point and mark is referred to  as  the  _r_e_-
+       _g_i_o_n.  RReeaaddlliinnee has the concept of an _a_c_t_i_v_e _r_e_g_i_o_n: when the region is
+       active, rreeaaddlliinnee redisplay highlights the region using the value of the
+       aaccttiivvee--rreeggiioonn--ssttaarrtt--ccoolloorr  variable.  The eennaabbllee--aaccttiivvee--rreeggiioonn variable
+       turns this on and off.  Several commands  set  the  region  to  active;
+       those are noted below.
 
-   [1mCommands for Moving[0m
-       [1mbeginning-of-line (C-a)[0m
-              Move to the start of the current line.
-       [1mend-of-line (C-e)[0m
-              Move to the end of the line.
-       [1mforward-char (C-f)[0m
-              Move forward a character.
-       [1mbackward-char (C-b)[0m
+   CCoommmmaannddss ffoorr MMoovviinngg
+       bbeeggiinnnniinngg--ooff--lliinnee ((CC--aa))
+              Move  to  the start of the current line.  This may also be bound
+              to the Home key on some keyboards.
+       eenndd--ooff--lliinnee ((CC--ee))
+              Move to the end of the line.  This may also be bound to the  End
+              key on some keyboards.
+       ffoorrwwaarrdd--cchhaarr ((CC--ff))
+              Move  forward  a character.  This may also be bound to the right
+              arrow key on some keyboards.
+       bbaacckkwwaarrdd--cchhaarr ((CC--bb))
               Move back a character.
-       [1mforward-word (M-f)[0m
+       ffoorrwwaarrdd--wwoorrdd ((MM--ff))
               Move forward to the end of the next word.  Words are composed of
               alphanumeric characters (letters and digits).
-       [1mbackward-word (M-b)[0m
-              Move  back  to the start of the current or previous word.  Words
+       bbaacckkwwaarrdd--wwoorrdd ((MM--bb))
+              Move back to the start of the current or previous  word.   Words
               are composed of alphanumeric characters (letters and digits).
-       [1mprevious-screen-line[0m
-              Attempt to move point to the same physical screen column on  the
-              previous  physical  screen  line. This will not have the desired
-              effect if the current readline line does not take up  more  than
-              one  physical line or if point is not greater than the length of
+       pprreevviioouuss--ssccrreeeenn--lliinnee
+              Attempt  to move point to the same physical screen column on the
+              previous physical screen line.  This will not have  the  desired
+              effect  if  the current rreeaaddlliinnee line does not take up more than
+              one physical line or if point is not greater than the length  of
               the prompt plus the screen width.
-       [1mnext-screen-line[0m
-              Attempt to move point to the same physical screen column on  the
-              next physical screen line. This will not have the desired effect
-              if the current readline line does not  take  up  more  than  one
-              physical  line  or if the length of the current readline line is
+       nneexxtt--ssccrreeeenn--lliinnee
+              Attempt  to move point to the same physical screen column on the
+              next physical screen line.  This will not have the  desired  ef-
+              fect if the current rreeaaddlliinnee line does not take up more than one
+              physical  line  or if the length of the current rreeaaddlliinnee line is
               not greater than the length of the prompt plus the screen width.
-       [1mclear-display (M-C-l)[0m
+       cclleeaarr--ddiissppllaayy ((MM--CC--ll))
               Clear the screen and, if  possible,  the  terminal's  scrollback
               buffer,  then  redraw the current line, leaving the current line
               at the top of the screen.
-       [1mclear-screen (C-l)[0m
+       cclleeaarr--ssccrreeeenn ((CC--ll))
               Clear the screen, then redraw the current line, leaving the cur-
-              rent  line  at the top of the screen.  With an argument, refresh
-              the current line without clearing the screen.
-       [1mredraw-current-line[0m
+              rent line at the top of the screen.  With  a  numeric  argument,
+              refresh the current line without clearing the screen.
+       rreeddrraaww--ccuurrrreenntt--lliinnee
               Refresh the current line.
 
-   [1mCommands for Manipulating the History[0m
-       [1maccept-line (Newline, Return)[0m
+   CCoommmmaannddss ffoorr MMaanniippuullaattiinngg tthhee HHiissttoorryy
+       aacccceepptt--lliinnee ((NNeewwlliinnee,, RReettuurrnn))
               Accept the line regardless of where the cursor is.  If this line
               is non-empty, it may be added to the history list for future re-
-              call with [1madd_history()[22m.  If the  line  is  a  modified  history
-              line, the history line is restored to its original state.
-       [1mprevious-history (C-p)[0m
+              call  with  aadddd__hhiissttoorryy(()).   If  the  line is a modified history
+              line, restore the history line to its original state.
+       pprreevviioouuss--hhiissttoorryy ((CC--pp))
               Fetch the previous command from the history list, moving back in
-              the list.
-       [1mnext-history (C-n)[0m
-              Fetch the next command from the history list, moving forward  in
-              the list.
-       [1mbeginning-of-history (M-<)[0m
+              the list.  This may also be bound to the up arrow  key  on  some
+              keyboards.
+       nneexxtt--hhiissttoorryy ((CC--nn))
+              Fetch  the next command from the history list, moving forward in
+              the list.  This may also be bound to the down arrow key on  some
+              keyboards.
+       bbeeggiinnnniinngg--ooff--hhiissttoorryy ((MM--<<))
               Move to the first line in the history.
-       [1mend-of-history (M->)[0m
+       eenndd--ooff--hhiissttoorryy ((MM-->>))
               Move  to  the end of the input history, i.e., the line currently
               being entered.
-       [1moperate-and-get-next (C-o)[0m
+       ooppeerraattee--aanndd--ggeett--nneexxtt ((CC--oo))
               Accept the current line for return to the calling application as
-              if  a newline had been entered, and fetch the next line relative
+              if a newline had been entered, and fetch the next line  relative
               to the current line from the history for editing.  A numeric ar-
               gument,  if supplied, specifies the history entry to use instead
               of the current line.
-       [1mfetch-history[0m
+       ffeettcchh--hhiissttoorryy
               With a numeric argument, fetch that entry from the history  list
               and make it the current line.  Without an argument, move back to
               the first entry in the history list.
-       [1mreverse-search-history (C-r)[0m
-              Search backward starting at the current  line  and  moving  `up'
+       rreevveerrssee--sseeaarrcchh--hhiissttoorryy ((CC--rr))
+              Search  backward  starting  at  the current line and moving "up"
+              through the  history  as  necessary.   This  is  an  incremental
+              search.   This  command  sets the region to the matched text and
+              activates the region.
+       ffoorrwwaarrdd--sseeaarrcchh--hhiissttoorryy ((CC--ss))
+              Search forward starting at the current line  and  moving  "down"
               through  the  history  as  necessary.   This  is  an incremental
-              search.
-       [1mforward-search-history (C-s)[0m
-              Search forward starting at the current line  and  moving  `down'
-              through  the  history  as  necessary.   This  is  an incremental
-              search.
-       [1mnon-incremental-reverse-search-history (M-p)[0m
+              search.  This command sets the region to the  matched  text  and
+              activates the region.
+       nnoonn--iinnccrreemmeennttaall--rreevveerrssee--sseeaarrcchh--hhiissttoorryy ((MM--pp))
               Search backward through the history starting at the current line
               using  a  non-incremental  search  for  a string supplied by the
-              user.
-       [1mnon-incremental-forward-search-history (M-n)[0m
+              user.  The search string may match anywhere in a history line.
+       nnoonn--iinnccrreemmeennttaall--ffoorrwwaarrdd--sseeaarrcchh--hhiissttoorryy ((MM--nn))
               Search forward  through  the  history  using  a  non-incremental
-              search for a string supplied by the user.
-       [1mhistory-search-backward[0m
+              search for a string supplied by the user.  The search string may
+              match anywhere in a history line.
+       hhiissttoorryy--sseeaarrcchh--bbaacckkwwaarrdd
               Search backward through the history for the string of characters
-              between the start of the current line and the current cursor po-
-              sition  (the [4mpoint[24m).  The search string must match at the begin-
-              ning of a history line.  This is a non-incremental search.
-       [1mhistory-search-forward[0m
-              Search forward through the history for the string of  characters
               between the start of the current line and the point.  The search
               string must match at the beginning of a history line.  This is a
-              non-incremental search.
-       [1mhistory-substring-search-backward[0m
+              non-incremental search.  This may be bound to the Page Up key on
+              some keyboards.
+       hhiissttoorryy--sseeaarrcchh--ffoorrwwaarrdd
+              Search  forward through the history for the string of characters
+              between the start of the current line and the point.  The search
+              string must match at the beginning of a history line.  This is a
+              non-incremental search.  This may be bound to the Page Down  key
+              on some keyboards.
+       hhiissttoorryy--ssuubbssttrriinngg--sseeaarrcchh--bbaacckkwwaarrdd
               Search backward through the history for the string of characters
-              between the start of the current line and the current cursor po-
-              sition  (the  [4mpoint[24m).  The search string may match anywhere in a
-              history line.  This is a non-incremental search.
-       [1mhistory-substring-search-forward[0m
+              between the start of the current line and the point.  The search
+              string  may match anywhere in a history line.  This is a non-in-
+              cremental search.
+       hhiissttoorryy--ssuubbssttrriinngg--sseeaarrcchh--ffoorrwwaarrdd
               Search forward through the history for the string of  characters
               between the start of the current line and the point.  The search
-              string may match anywhere in a history line.  This is a  non-in-
+              string  may match anywhere in a history line.  This is a non-in-
               cremental search.
-       [1myank-nth-arg (M-C-y)[0m
-              Insert  the  first argument to the previous command (usually the
-              second word on the previous line) at point.  With an argument [4mn[24m,
-              insert  the [4mn[24mth word from the previous command (the words in the
+       yyaannkk--nntthh--aarrgg ((MM--CC--yy))
+              Insert the first argument to the previous command  (usually  the
+              second word on the previous line) at point.  With an argument _n,
+              insert  the _nth word from the previous command (the words in the
               previous command begin with word 0).  A  negative  argument  in-
-              serts  the  [4mn[24mth word from the end of the previous command.  Once
-              the argument [4mn[24m is computed, the argument is extracted as if  the
-              "![4mn[24m" history expansion had been specified.
-       [1myank-last-arg (M-., M-_)[0m
-              Insert  the last argument to the previous command (the last word
+              serts  the  _nth word from the end of the previous command.  Once
+              the argument _n is computed, this uses the history expansion  fa-
+              cilities  to extract the _nth word, as if the "!_n" history expan-
+              sion had been specified.
+       yyaannkk--llaasstt--aarrgg ((MM--..,, MM--__))
+              Insert the last argument to the previous command (the last  word
               of the previous history entry).  With a numeric argument, behave
-              exactly  like  [1myank-nth-arg[22m.   Successive calls to [1myank-last-arg[0m
+              exactly  like  yyaannkk--nntthh--aarrgg.   Successive calls to yyaannkk--llaasstt--aarrgg
               move back through the history list, inserting the last word  (or
               the  word  specified  by the argument to the first call) of each
               line in turn.  Any numeric argument supplied to these successive
-              calls  determines  the direction to move through the history.  A
-              negative argument switches the  direction  through  the  history
-              (back or forward).  The history expansion facilities are used to
-              extract the last argument, as if the "!$" history expansion  had
+              calls determines the direction to move through the  history.   A
+              negative  argument  switches  the  direction through the history
+              (back or forward).  This uses the history  expansion  facilities
+              to  extract  the last word, as if the "!$" history expansion had
               been specified.
 
-   [1mCommands for Changing Text[0m
-       [4mend-of-file[24m [1m(usually C-d)[0m
-              The  character  indicating  end-of-file  as set, for example, by
-              ``stty''.  If this character is read when there are  no  charac-
-              ters  on  the  line,  and point is at the beginning of the line,
-              readline interprets it as the end of input and returns [1mEOF[22m.
-       [1mdelete-char (C-d)[0m
+   CCoommmmaannddss ffoorr CChhaannggiinngg TTeexxtt
+       _e_n_d_-_o_f_-_f_i_l_e ((uussuuaallllyy CC--dd))
+              The character indicating end-of-file as  set,  for  example,  by
+              _s_t_t_y(1).  If this character is read when there are no characters
+              on the line, and point is at the beginning of the line, rreeaaddlliinnee
+              interprets it as the end of input and returns EEOOFF.
+       ddeelleettee--cchhaarr ((CC--dd))
               Delete the character at point.  If this function is bound to the
-              same character as the tty [1mEOF [22mcharacter, as [1mC-d [22mcommonly is, see
-              above for the effects.
-       [1mbackward-delete-char (Rubout)[0m
-              Delete the character behind the cursor.  When  given  a  numeric
+              same character as the tty EEOOFF character, as CC--dd commonly is, see
+              above for the effects.  This may also be bound to the Delete key
+              on some keyboards.
+       bbaacckkwwaarrdd--ddeelleettee--cchhaarr ((RRuubboouutt))
+              Delete  the  character  behind the cursor.  When given a numeric
               argument, save the deleted text on the kill ring.
-       [1mforward-backward-delete-char[0m
-              Delete  the  character under the cursor, unless the cursor is at
+       ffoorrwwaarrdd--bbaacckkwwaarrdd--ddeelleettee--cchhaarr
+              Delete the character under the cursor, unless the cursor  is  at
               the end of the line, in which case the character behind the cur-
               sor is deleted.
-       [1mquoted-insert (C-q, C-v)[0m
-              Add the next character that you type to the line verbatim.  This
-              is how to insert characters like [1mC-q[22m, for example.
-       [1mtab-insert (M-TAB)[0m
+       qquuootteedd--iinnsseerrtt ((CC--qq,, CC--vv))
+              Add  the next character typed to the line verbatim.  This is how
+              to insert characters like CC--qq, for example.
+       ttaabb--iinnsseerrtt ((MM--TTAABB))
               Insert a tab character.
-       [1mself-insert (a, b, A, 1, !, ...)[0m
+       sseellff--iinnsseerrtt ((aa,, bb,, AA,, 11,, !!,, ...))
               Insert the character typed.
-       [1mtranspose-chars (C-t)[0m
-              Drag the character before point forward over  the  character  at
-              point,  moving point forward as well.  If point is at the end of
-              the line, then this transposes the two characters before  point.
+       bbrraacckkeetteedd--ppaassttee--bbeeggiinn
+              This function is intended to be bound to the  "bracketed  paste"
+              escape  sequence  sent  by some terminals, and such a binding is
+              assigned by default.  It allows rreeaaddlliinnee to  insert  the  pasted
+              text  as  a single unit without treating each character as if it
+              had been read from the keyboard.  The pasted characters are  in-
+              serted  as  if each one was bound to sseellff--iinnsseerrtt instead of exe-
+              cuting any editing commands.
+              Bracketed paste sets the region to the inserted text  and  acti-
+              vates the region.
+       ttrraannssppoossee--cchhaarrss ((CC--tt))
+              Drag  the  character  before point forward over the character at
+              point, moving point forward as well.  If point is at the end  of
+              the  line, then this transposes the two characters before point.
               Negative arguments have no effect.
-       [1mtranspose-words (M-t)[0m
-              Drag  the  word  before  point past the word after point, moving
-              point over that word as well.  If point is at  the  end  of  the
+       ttrraannssppoossee--wwoorrddss ((MM--tt))
+              Drag the word before point past the  word  after  point,  moving
+              point  past  that  word  as well.  If point is at the end of the
               line, this transposes the last two words on the line.
-       [1mupcase-word (M-u)[0m
-              Uppercase  the current (or following) word.  With a negative ar-
+       uuppccaassee--wwoorrdd ((MM--uu))
+              Uppercase the current (or following) word.  With a negative  ar-
               gument, uppercase the previous word, but do not move point.
-       [1mdowncase-word (M-l)[0m
-              Lowercase the current (or following) word.  With a negative  ar-
+       ddoowwnnccaassee--wwoorrdd ((MM--ll))
+              Lowercase  the current (or following) word.  With a negative ar-
               gument, lowercase the previous word, but do not move point.
-       [1mcapitalize-word (M-c)[0m
+       ccaappiittaalliizzee--wwoorrdd ((MM--cc))
               Capitalize the current (or following) word.  With a negative ar-
               gument, capitalize the previous word, but do not move point.
-       [1moverwrite-mode[0m
+       oovveerrwwrriittee--mmooddee
               Toggle overwrite mode.  With an explicit positive numeric  argu-
               ment, switches to overwrite mode.  With an explicit non-positive
               numeric argument, switches to insert mode.  This command affects
-              only  [1memacs [22mmode; [1mvi [22mmode does overwrite differently.  Each call
-              to [4mreadline()[24m starts in insert mode.  In overwrite mode, charac-
-              ters  bound to [1mself-insert [22mreplace the text at point rather than
-              pushing the text  to  the  right.   Characters  bound  to  [1mback-[0m
-              [1mward-delete-char  [22mreplace  the  character  before  point  with a
-              space.  By default, this command is unbound.
+              only  eemmaaccss mode; vvii mode does overwrite differently.  Each call
+              to _r_e_a_d_l_i_n_e_(_) starts in insert mode.
+              In overwrite mode, characters bound to sseellff--iinnsseerrtt  replace  the
+              text  at point rather than pushing the text to the right.  Char-
+              acters bound to bbaacckkwwaarrdd--ddeelleettee--cchhaarr replace the  character  be-
+              fore  point  with a space.  By default, this command is unbound,
+              but may be bound to the Insert key on some keyboards.
 
-   [1mKilling and Yanking[0m
-       [1mkill-line (C-k)[0m
-              Kill the text from point to the end of the line.
-       [1mbackward-kill-line (C-x Rubout)[0m
-              Kill backward to the beginning of the line.
-       [1munix-line-discard (C-u)[0m
-              Kill backward from point to the  beginning  of  the  line.   The
-              killed text is saved on the kill-ring.
-       [1mkill-whole-line[0m
+   KKiilllliinngg aanndd YYaannkkiinngg
+       kkiillll--lliinnee ((CC--kk))
+              Kill the text from point to the end of the current line.  With a
+              negative numeric argument, kill backward from the cursor to  the
+              beginning of the line.
+       bbaacckkwwaarrdd--kkiillll--lliinnee ((CC--xx RRuubboouutt))
+              Kill backward to the beginning of the current line.  With a neg-
+              ative  numeric argument, kill forward from the cursor to the end
+              of the line.
+       uunniixx--lliinnee--ddiissccaarrdd ((CC--uu))
+              Kill backward from point to the beginning of  the  line,  saving
+              the killed text on the kill-ring.
+       kkiillll--wwhhoollee--lliinnee
               Kill  all  characters on the current line, no matter where point
               is.
-       [1mkill-word (M-d)[0m
-              Kill from point the end of  the  current  word,  or  if  between
+       kkiillll--wwoorrdd ((MM--dd))
+              Kill from point to the end of the current word,  or  if  between
               words,  to  the  end  of the next word.  Word boundaries are the
-              same as those used by [1mforward-word[22m.
-       [1mbackward-kill-word (M-Rubout)[0m
+              same as those used by ffoorrwwaarrdd--wwoorrdd.
+       bbaacckkwwaarrdd--kkiillll--wwoorrdd ((MM--RRuubboouutt))
               Kill the word behind point.  Word boundaries  are  the  same  as
-              those used by [1mbackward-word[22m.
-       [1munix-word-rubout (C-w)[0m
+              those used by bbaacckkwwaarrdd--wwoorrdd.
+       uunniixx--wwoorrdd--rruubboouutt ((CC--ww))
               Kill  the  word behind point, using white space as a word bound-
-              ary.  The killed text is saved on the kill-ring.
-       [1munix-filename-rubout[0m
+              ary, saving the killed text on the kill-ring.
+       uunniixx--ffiilleennaammee--rruubboouutt
               Kill the word behind point, using  white  space  and  the  slash
-              character  as  the word boundaries.  The killed text is saved on
-              the kill-ring.
-       [1mdelete-horizontal-space (M-\)[0m
+              character  as the word boundaries, saving the killed text on the
+              kill-ring.
+       ddeelleettee--hhoorriizzoonnttaall--ssppaaccee ((MM--\\))
               Delete all spaces and tabs around point.
-       [1mkill-region[0m
-              Kill the text between the point and  [4mmark[24m  (saved  cursor  posi-
-              tion).  This text is referred to as the [4mregion[24m.
-       [1mcopy-region-as-kill[0m
-              Copy the text in the region to the kill buffer.
-       [1mcopy-backward-word[0m
+       kkiillll--rreeggiioonn
+              Kill the text in the current region.
+       ccooppyy--rreeggiioonn--aass--kkiillll
+              Copy the text in the region to the kill buffer,  so  it  can  be
+              yanked immediately.
+       ccooppyy--bbaacckkwwaarrdd--wwoorrdd
               Copy  the word before point to the kill buffer.  The word bound-
-              aries are the same as [1mbackward-word[22m.
-       [1mcopy-forward-word[0m
+              aries are the same as bbaacckkwwaarrdd--wwoorrdd.
+       ccooppyy--ffoorrwwaarrdd--wwoorrdd
               Copy the word following point to  the  kill  buffer.   The  word
-              boundaries are the same as [1mforward-word[22m.
-       [1myank (C-y)[0m
+              boundaries are the same as ffoorrwwaarrdd--wwoorrdd.
+       yyaannkk ((CC--yy))
               Yank the top of the kill ring into the buffer at point.
-       [1myank-pop (M-y)[0m
+       yyaannkk--ppoopp ((MM--yy))
               Rotate  the kill ring, and yank the new top.  Only works follow-
-              ing [1myank [22mor [1myank-pop[22m.
+              ing yyaannkk or yyaannkk--ppoopp.
 
-   [1mNumeric Arguments[0m
-       [1mdigit-argument (M-0, M-1, ..., M--)[0m
+   NNuummeerriicc AArrgguummeennttss
+       ddiiggiitt--aarrgguummeenntt ((MM--00,, MM--11,, ...,, MM----))
               Add this digit to the argument already accumulating, or start  a
               new argument.  M-- starts a negative argument.
-       [1muniversal-argument[0m
+       uunniivveerrssaall--aarrgguummeenntt
               This  is another way to specify an argument.  If this command is
               followed by one or more digits, optionally with a leading  minus
               sign,  those digits define the argument.  If the command is fol-
-              lowed by digits, executing [1muniversal-argument [22magain ends the nu-
+              lowed by digits, executing uunniivveerrssaall--aarrgguummeenntt again ends the nu-
               meric argument, but is otherwise ignored.  As a special case, if
               this command is immediately followed by a character that is nei-
-              ther a digit or minus sign, the argument count for the next com-
-              mand is multiplied by four.  The  argument  count  is  initially
-              one,  so  executing this function the first time makes the argu-
+              ther a digit nor minus sign, the argument  count  for  the  next
+              command  is multiplied by four.  The argument count is initially
+              one, so executing this function the first time makes  the  argu-
               ment count four, a second time makes the argument count sixteen,
               and so on.
 
-   [1mCompleting[0m
-       [1mcomplete (TAB)[0m
+   CCoommpplleettiinngg
+       ccoommpplleettee ((TTAABB))
               Attempt to perform completion on the text before point.  The ac-
-              tual completion performed is  application-specific.   [1mBash[22m,  for
-              instance,  attempts  completion  treating the text as a variable
-              (if the text begins with [1m$[22m), username (if the text  begins  with
-              [1m~[22m),  hostname (if the text begins with [1m@[22m), or command (including
-              aliases and functions) in turn.  If none  of  these  produces  a
-              match,  filename  completion  is  attempted.   [1mGdb[22m, on the other
-              hand, allows completion of program functions and variables,  and
-              only attempts filename completion under certain circumstances.
-       [1mpossible-completions (M-?)[0m
+              tual  completion  performed  is application-specific.  BBaasshh, for
+              instance,  attempts  programmable  completion  first,  otherwise
+              treating  the  text  as  a variable (if the text begins with $$),
+              username (if the text begins with ~~), hostname (if the text  be-
+              gins  with  @@),  or  command  (including aliases, functions, and
+              builtins) in turn.  If none of these produces a match, it  falls
+              back  to  filename  completion.   GGddbb, on the other hand, allows
+              completion of program functions and variables, and only attempts
+              filename completion under certain  circumstances.   The  default
+              rreeaaddlliinnee completion is filename completion.
+       ppoossssiibbllee--ccoommpplleettiioonnss ((MM--??))
               List  the  possible  completions of the text before point.  When
-              displaying completions, readline sets the number of columns used
-              for  display to the value of [1mcompletion-display-width[22m, the value
-              of the environment variable [1mCOLUMNS[22m, or  the  screen  width,  in
+              displaying completions, rreeaaddlliinnee sets the number of columns used
+              for display to the value of ccoommpplleettiioonn--ddiissppllaayy--wwiiddtthh, the  value
+              of  the  environment  variable  CCOOLLUUMMNNSS, or the screen width, in
               that order.
-       [1minsert-completions (M-*)[0m
-              Insert  all completions of the text before point that would have
-              been generated by [1mpossible-completions[22m.
-       [1mmenu-complete[0m
-              Similar to [1mcomplete[22m, but replaces the word to be completed  with
-              a  single match from the list of possible completions.  Repeated
-              execution of [1mmenu-complete [22msteps through the  list  of  possible
-              completions,  inserting  each  match in turn.  At the end of the
-              list of completions, the bell is rung (subject to the setting of
-              [1mbell-style[22m) and the original text is restored.  An argument of [4mn[0m
-              moves [4mn[24m positions forward in the list of matches; a negative ar-
-              gument may be used to move backward through the list.  This com-
-              mand is intended to be bound to [1mTAB[22m, but is unbound by default.
-       [1mmenu-complete-backward[0m
-              Identical to [1mmenu-complete[22m, but moves backward through the  list
-              of  possible  completions,  as if [1mmenu-complete [22mhad been given a
+       iinnsseerrtt--ccoommpplleettiioonnss ((MM--**))
+              Insert all completions of the text before point that would  have
+              been generated by ppoossssiibbllee--ccoommpplleettiioonnss, separated by a space.
+       mmeennuu--ccoommpplleettee
+              Similar  to ccoommpplleettee, but replaces the word to be completed with
+              a single match from the list of possible  completions.   Repeat-
+              edly  executing mmeennuu--ccoommpplleettee steps through the list of possible
+              completions, inserting each match in turn.  At the  end  of  the
+              list  of  completions,  mmeennuu--ccoommpplleettee rings the bell (subject to
+              the setting of bbeellll--ssttyyllee) and restores the original  text.   An
+              argument  of _n moves _n positions forward in the list of matches;
+              a negative argument moves backward through the list.  This  com-
+              mand is intended to be bound to TTAABB, but is unbound by default.
+       mmeennuu--ccoommpplleettee--bbaacckkwwaarrdd
+              Identical  to mmeennuu--ccoommpplleettee, but moves backward through the list
+              of possible completions, as if mmeennuu--ccoommpplleettee had  been  given  a
               negative argument.  This command is unbound by default.
-       [1mdelete-char-or-list[0m
-              Deletes the character under the cursor if not at  the  beginning
-              or  end  of  the  line (like [1mdelete-char[22m).  If at the end of the
-              line, behaves identically to [1mpossible-completions[22m.
+       eexxppoorrtt--ccoommpplleettiioonnss
+              Perform  completion  on the word before point as described above
+              and write the list of possible completions to rreeaaddlliinnee's  output
+              stream  using the following format, writing information on sepa-
+              rate lines:
 
-   [1mKeyboard Macros[0m
-       [1mstart-kbd-macro (C-x ()[0m
-              Begin saving the characters  typed  into  the  current  keyboard
+              +o      the number of matches _N;
+              +o      the word being completed;
+              +o      _S:_E, where _S and _E are the start and end offsets  of  the
+                     word in the rreeaaddlliinnee line buffer; then
+              +o      each match, one per line
+
+              If  there  are  no matches, the first line will be "0", and this
+              command does not print any output after the _S:_E.   If  there  is
+              only  a  single  match, this prints a single line containing it.
+              If there is more than one match, this prints the  common  prefix
+              of  the matches, which may be empty, on the first line after the
+              _S:_E, then the matches on subsequent lines.  In this case, _N will
+              include the first line with the common prefix.
+
+              The user or application should be able to accommodate the possi-
+              bility of a blank line.  The intent is that the user or applica-
+              tion reads _N lines after the line containing _S:_E to  obtain  the
+              match list.  This command is unbound by default.
+
+       ddeelleettee--cchhaarr--oorr--lliisstt
+              Deletes  the  character under the cursor if not at the beginning
+              or end of the line (like ddeelleettee--cchhaarr).  At the end of the  line,
+              it behaves identically to ppoossssiibbllee--ccoommpplleettiioonnss.  This command is
+              unbound by default.
+
+   KKeeyybbooaarrdd MMaaccrrooss
+       ssttaarrtt--kkbbdd--mmaaccrroo ((CC--xx (())
+              Begin  saving  the  characters  typed  into the current keyboard
               macro.
-       [1mend-kbd-macro (C-x ))[0m
+       eenndd--kkbbdd--mmaaccrroo ((CC--xx ))))
               Stop saving the characters typed into the current keyboard macro
               and store the definition.
-       [1mcall-last-kbd-macro (C-x e)[0m
+       ccaallll--llaasstt--kkbbdd--mmaaccrroo ((CC--xx ee))
               Re-execute the last keyboard macro defined, by making the  char-
               acters in the macro appear as if typed at the keyboard.
-       [1mprint-last-kbd-macro ()[0m
+       pprriinntt--llaasstt--kkbbdd--mmaaccrroo (())
               Print  the  last keyboard macro defined in a format suitable for
-              the [4minputrc[24m file.
+              the _i_n_p_u_t_r_c file.
 
-   [1mMiscellaneous[0m
-       [1mre-read-init-file (C-x C-r)[0m
-              Read in the contents of the [4minputrc[24m file,  and  incorporate  any
+   MMiisscceellllaanneeoouuss
+       rree--rreeaadd--iinniitt--ffiillee ((CC--xx CC--rr))
+              Read in the contents of the _i_n_p_u_t_r_c file,  and  incorporate  any
               bindings or variable assignments found there.
-       [1mabort (C-g)[0m
+       aabboorrtt ((CC--gg))
               Abort  the  current editing command and ring the terminal's bell
-              (subject to the setting of [1mbell-style[22m).
-       [1mdo-lowercase-version (M-A, M-B, M-[4m[22mx[24m[1m, ...)[0m
-              If the metafied character [4mx[24m is uppercase, run the  command  that
+              (subject to the setting of bbeellll--ssttyyllee).
+       ddoo--lloowweerrccaassee--vveerrssiioonn ((MM--AA,, MM--BB,, MM--_x,, ...))
+              If the metafied character _x is uppercase, run the  command  that
               is bound to the corresponding metafied lowercase character.  The
-              behavior is undefined if [4mx[24m is already lowercase.
-       [1mprefix-meta (ESC)[0m
-              Metafy the next character typed.  [1mESC f [22mis equivalent to [1mMeta-f[22m.
-       [1mundo (C-_, C-x C-u)[0m
+              behavior is undefined if _x is already lowercase.
+       pprreeffiixx--mmeettaa ((EESSCC))
+              Metafy the next character typed.  EESSCC ff is equivalent to MMeettaa--ff.
+       uunnddoo ((CC--__,, CC--xx CC--uu))
               Incremental undo, separately remembered for each line.
-       [1mrevert-line (M-r)[0m
-              Undo all changes made to this line.  This is like executing  the
-              [1mundo  [22mcommand  enough  times  to  return the line to its initial
+       rreevveerrtt--lliinnee ((MM--rr))
+              Undo  all changes made to this line.  This is like executing the
+              uunnddoo command enough times to return  the  line  to  its  initial
               state.
-       [1mtilde-expand (M-&)[0m
+       ttiillddee--eexxppaanndd ((MM--~~))
               Perform tilde expansion on the current word.
-       [1mset-mark (C-@, M-<space>)[0m
-              Set the mark to the point.  If a numeric argument  is  supplied,
-              the mark is set to that position.
-       [1mexchange-point-and-mark (C-x C-x)[0m
-              Swap  the  point  with the mark.  The current cursor position is
-              set to the saved position, and the old cursor position is  saved
-              as the mark.
-       [1mcharacter-search (C-])[0m
-              A character is read and point is moved to the next occurrence of
-              that character.  A negative argument searches for  previous  oc-
+       sseett--mmaarrkk ((CC--@@,, MM--<<ssppaaccee>>))
+              Set  the  mark to the point.  If a numeric argument is supplied,
+              set the mark to that position.
+       eexxcchhaannggee--ppooiinntt--aanndd--mmaarrkk ((CC--xx CC--xx))
+              Swap the point with the mark.  Set the current  cursor  position
+              to the saved position, then set the mark to the old cursor posi-
+              tion.
+       cchhaarraacctteerr--sseeaarrcchh ((CC--]]))
+              Read  a  character and move point to the next occurrence of that
+              character.  A negative argument  searches  for  previous  occur-
+              rences.
+       cchhaarraacctteerr--sseeaarrcchh--bbaacckkwwaarrdd ((MM--CC--]]))
+              Read  a  character  and move point to the previous occurrence of
+              that character.  A negative argument searches for subsequent oc-
               currences.
-       [1mcharacter-search-backward (M-C-])[0m
-              A  character  is  read and point is moved to the previous occur-
-              rence of that character.  A negative argument searches for  sub-
-              sequent occurrences.
-       [1mskip-csi-sequence[0m
-              Read  enough  characters to consume a multi-key sequence such as
-              those defined for keys like Home and End.  Such sequences  begin
-              with a Control Sequence Indicator (CSI), usually ESC-[.  If this
-              sequence is bound to "\[", keys producing  such  sequences  will
-              have  no  effect  unless explicitly bound to a readline command,
-              instead of inserting stray characters into the  editing  buffer.
-              This is unbound by default, but usually bound to ESC-[.
-       [1minsert-comment (M-#)[0m
-              Without  a  numeric  argument,  the  value  of the readline [1mcom-[0m
-              [1mment-begin [22mvariable is inserted at the beginning of the  current
-              line.  If a numeric argument is supplied, this command acts as a
-              toggle: if the characters at the beginning of the  line  do  not
-              match  the value of [1mcomment-begin[22m, the value is inserted, other-
-              wise the characters in [1mcomment-begin [22mare deleted from the begin-
-              ning  of the line.  In either case, the line is accepted as if a
-              newline had been typed.   The  default  value  of  [1mcomment-begin[0m
-              makes  the  current line a shell comment.  If a numeric argument
+       sskkiipp--ccssii--sseeqquueennccee
+              Read enough characters to consume a multi-key sequence  such  as
+              those  defined  for keys like Home and End.  CSI sequences begin
+              with a Control Sequence Indicator (CSI), usually _E_S_C _[.  If this
+              sequence is bound to "\e[", keys producing CSI sequences have no
+              effect unless explicitly bound to a rreeaaddlliinnee command, instead of
+              inserting stray characters into the editing buffer.  This is un-
+              bound by default, but usually bound to _E_S_C _[.
+       iinnsseerrtt--ccoommmmeenntt ((MM--##))
+              Without a numeric argument, insert the  value  of  the  rreeaaddlliinnee
+              ccoommmmeenntt--bbeeggiinn variable at the beginning of the current line.  If
+              a  numeric  argument is supplied, this command acts as a toggle:
+              if the characters at the beginning of the line do not match  the
+              value  of  ccoommmmeenntt--bbeeggiinn, insert the value; otherwise delete the
+              characters in ccoommmmeenntt--bbeeggiinn from the beginning of the line.   In
+              either  case,  the  line  is  accepted  as if a newline had been
+              typed.  The default value of ccoommmmeenntt--bbeeggiinn causes  this  command
+              to make the current line a shell comment.  If a numeric argument
               causes the comment character to be removed, the line will be ex-
               ecuted by the shell.
-       [1mdump-functions[0m
-              Print  all  of the functions and their key bindings to the read-
-              line output stream.  If a numeric argument is supplied, the out-
-              put  is  formatted  in such a way that it can be made part of an
-              [4minputrc[24m file.
-       [1mdump-variables[0m
-              Print all of the settable variables  and  their  values  to  the
-              readline  output stream.  If a numeric argument is supplied, the
+       dduummpp--ffuunnccttiioonnss
+              Print  all  of the functions and their key bindings to the rreeaadd--
+              lliinnee output stream.  If a numeric argument is supplied, the out-
+              put is formatted in such a way that it can be made  part  of  an
+              _i_n_p_u_t_r_c file.
+       dduummpp--vvaarriiaabblleess
+              Print  all  of  the  settable  variables and their values to the
+              rreeaaddlliinnee output stream.  If a numeric argument is supplied,  the
               output is formatted in such a way that it can be made part of an
-              [4minputrc[24m file.
-       [1mdump-macros[0m
-              Print  all of the readline key sequences bound to macros and the
-              strings they output.  If a numeric  argument  is  supplied,  the
-              output is formatted in such a way that it can be made part of an
-              [4minputrc[24m file.
-       [1memacs-editing-mode (C-e)[0m
-              When in [1mvi [22mcommand mode, this causes a switch to  [1memacs  [22mediting
+              _i_n_p_u_t_r_c file.
+       dduummpp--mmaaccrrooss
+              Print  all of the rreeaaddlliinnee key sequences bound to macros and the
+              strings they output to the rreeaaddlliinnee output stream.  If a numeric
+              argument is supplied, the output is formatted in such a way that
+              it can be made part of an _i_n_p_u_t_r_c file.
+       eexxeeccuuttee--nnaammeedd--ccoommmmaanndd ((MM--xx))
+              Read a bindable rreeaaddlliinnee command name from the input and execute
+              the function to which it's bound, as  if  the  key  sequence  to
+              which  it  was bound appeared in the input.  If this function is
+              supplied with a numeric argument, it passes that argument to the
+              function it executes.
+       eemmaaccss--eeddiittiinngg--mmooddee ((CC--ee))
+              When in vvii command mode, this switches rreeaaddlliinnee to eemmaaccss editing
               mode.
-       [1mvi-editing-mode (M-C-j)[0m
-              When  in  [1memacs [22mediting mode, this causes a switch to [1mvi [22mediting
-              mode.
+       vvii--eeddiittiinngg--mmooddee ((MM--CC--jj))
+              When in eemmaaccss editing mode, this switches to vvii editing mode.
 
-[1mDEFAULT KEY BINDINGS[0m
+DDEEFFAAUULLTT KKEEYY BBIINNDDIINNGGSS
        The following is a list of the default emacs and vi bindings.   Charac-
        ters  with the eighth bit set are written as M-<character>, and are re-
-       ferred to as [4mmetafied[24m characters.  The printable ASCII  characters  not
+       ferred to as _m_e_t_a_f_i_e_d characters.  The printable ASCII  characters  not
        mentioned  in  the  list  of  emacs  standard bindings are bound to the
-       [1mself-insert [22mfunction, which just inserts the given character  into  the
+       sseellff--iinnsseerrtt function, which just inserts the given character  into  the
        input line.  In vi insertion mode, all characters not specifically men-
-       tioned are bound to [1mself-insert[22m.  Characters assigned to signal genera-
-       tion by [4mstty[24m(1) or the terminal driver, such as C-Z or C-C, retain that
-       function.  Upper and lower case metafied characters are  bound  to  the
-       same  function in the emacs mode meta keymap.  The remaining characters
-       are unbound, which causes readline to ring the  bell  (subject  to  the
-       setting of the [1mbell-style [22mvariable).
+       tioned are bound to sseellff--iinnsseerrtt.  Characters assigned to signal genera-
+       tion by _s_t_t_y(1) or the terminal driver, such as C-Z or C-C, retain that
+       function.   Upper  and  lower case metafied characters are bound to the
+       same function in the emacs mode meta keymap.  The remaining  characters
+       are  unbound,  which  causes  rreeaaddlliinnee to ring the bell (subject to the
+       setting of the bbeellll--ssttyyllee variable).
 
-   [1mEmacs Mode[0m
+   EEmmaaccss MMooddee
              Emacs Standard bindings
 
              "C-@"  set-mark
@@ -1017,6 +1139,7 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "M-R"  revert-line
              "M-T"  transpose-words
              "M-U"  upcase-word
+             "M-X"  execute-named-command
              "M-Y"  yank-pop
              "M-\"  delete-horizontal-space
              "M-~"  tilde-expand
@@ -1034,8 +1157,7 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "C-XE"  call-last-kbd-macro
              "C-XC-?"  backward-kill-line
 
-
-   [1mVI Mode bindings[0m
+   VVII MMooddee bbiinnddiinnggss
              VI Insert Mode functions
 
              "C-D"  vi-eof-maybe
@@ -1043,15 +1165,17 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "C-I"  complete
              "C-J"  accept-line
              "C-M"  accept-line
+             "C-N"  menu-complete
+             "C-P"  menu-complete-backward
              "C-R"  reverse-search-history
              "C-S"  forward-search-history
              "C-T"  transpose-chars
              "C-U"  unix-line-discard
              "C-V"  quoted-insert
-             "C-W"  unix-word-rubout
+             "C-W"  vi-unix-word-rubout
              "C-Y"  yank
              "C-["  vi-movement-mode
-             "C-_"  undo
+             "C-_"  vi-undo
              " " to "~"  self-insert
              "C-?"  backward-delete-char
 
@@ -1073,7 +1197,7 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "C-T"  transpose-chars
              "C-U"  unix-line-discard
              "C-V"  quoted-insert
-             "C-W"  unix-word-rubout
+             "C-W"  vi-unix-word-rubout
              "C-Y"  yank
              "C-_"  vi-undo
              " "  forward-char
@@ -1107,7 +1231,7 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "T"  vi-char-search
              "U"  revert-line
              "W"  vi-next-word
-             "X"  backward-delete-char
+             "X"  vi-rubout
              "Y"  vi-yank-to
              "\"  vi-complete
              "^"  vi-first-print
@@ -1122,7 +1246,7 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "h"  backward-char
              "i"  vi-insertion-mode
              "j"  next-history
-             "k"  prev-history
+             "k"  previous-history
              "l"  forward-char
              "m"  vi-set-mark
              "n"  vi-search-again
@@ -1137,39 +1261,37 @@ READLINE(3)                Library Functions Manual                READLINE(3)
              "|"  vi-column
              "~"  vi-change-case
 
-[1mSEE ALSO[0m
-       [4mThe[24m [4mGnu[24m [4mReadline[24m [4mLibrary[24m, Brian Fox and Chet Ramey
-       [4mThe[24m [4mGnu[24m [4mHistory[24m [4mLibrary[24m, Brian Fox and Chet Ramey
-       [4mbash[24m(1)
+SSEEEE AALLSSOO
+       _T_h_e _G_n_u _R_e_a_d_l_i_n_e _L_i_b_r_a_r_y, Brian Fox and Chet Ramey
+       _T_h_e _G_n_u _H_i_s_t_o_r_y _L_i_b_r_a_r_y, Brian Fox and Chet Ramey
+       _b_a_s_h(1)
 
-[1mFILES[0m
-       [4m~/.inputrc[0m
-              Individual [1mreadline [22minitialization file
+FFIILLEESS
+       _~_/_._i_n_p_u_t_r_c
+              Individual rreeaaddlliinnee initialization file
 
-[1mAUTHORS[0m
+AAUUTTHHOORRSS
        Brian Fox, Free Software Foundation
        bfox@gnu.org
 
        Chet Ramey, Case Western Reserve University
        chet.ramey@case.edu
 
-[1mBUG REPORTS[0m
-       If  you  find  a bug in [1mreadline, [22myou should report it.  But first, you
-       should make sure that it really is a bug, and that it  appears  in  the
-       latest version of the [1mreadline [22mlibrary that you have.
+BBUUGG RREEPPOORRTTSS
+       If you find a bug in rreeaaddlliinnee, you should report it.   But  first,  you
+       should  make  sure  that it really is a bug, and that it appears in the
+       latest version of the rreeaaddlliinnee library that you have.
 
-       Once  you have determined that a bug actually exists, mail a bug report
-       to [4mbug-readline[24m@[4mgnu.org[24m.  If you have a fix, you are  welcome  to  mail
-       that  as  well!   Suggestions  and  `philosophical'  bug reports may be
-       mailed to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet  newsgroup
-       [1mgnu.bash.bug[22m.
+       Once you have determined that a bug actually exists, mail a bug  report
+       to  _b_u_g_-_r_e_a_d_l_i_n_e@_g_n_u_._o_r_g.   If  you have a fix, you are welcome to mail
+       that as well!  Suggestions  and  "philosophical"  bug  reports  may  be
+       mailed  to  _b_u_g_-_r_e_a_d_l_i_n_e@_g_n_u_._o_r_g  or  posted  to  the  Usenet newsgroup
+       ggnnuu..bbaasshh..bbuugg.
 
        Comments and bug reports concerning this manual page should be directed
-       to [4mchet.ramey@case.edu[24m.
+       to _c_h_e_t_._r_a_m_e_y_@_c_a_s_e_._e_d_u.
 
-[1mBUGS[0m
+BBUUGGSS
        It's too big and too slow.
 
-
-
-GNU Readline 8.2               2022 September 19                   READLINE(3)
+GNU Readline 8.3               2024 December 30                    _R_E_A_D_L_I_N_E(3)

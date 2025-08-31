@@ -82,10 +82,11 @@ main (int argc, char **argv)
   char *temp;
   int opt, Vflag, Nflag;
 
-/* begin_clink_change */
-  //progname = strrchr(argv[0], '/');
-  progname = rl_last_path_separator (argv[0]);
-/* end_clink_change */
+#ifdef HAVE_SETLOCALE
+  setlocale (LC_ALL, "");
+#endif
+
+  progname = strrchr(argv[0], '/');
   if (progname == 0)
     progname = argv[0];
   else

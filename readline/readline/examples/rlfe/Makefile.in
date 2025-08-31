@@ -7,6 +7,8 @@
 srcdir = @srcdir@
 VPATH = @srcdir@
 
+INCDIR = @INCDIR@
+
 DESTDIR = 
 
 # Where to install screen.
@@ -43,7 +45,7 @@ SHELL=/bin/sh
 
 CFILES=	rlfe.c pty.c
 HFILES= extern.h os.h screen.h
-EXTRA_DIST=configure.in configure Makefile.in config.h.in ChangeLog README
+EXTRA_DIST=configure.ac configure Makefile.in config.h.in ChangeLog README
 OFILES=	rlfe.o pty.o
 
 all:	rlfe
@@ -100,11 +102,9 @@ clean celan: mostlyclean
 # Delete all files from the current directory that are created by 
 # configuring or building the program.
 # building of term.h/comm.h requires awk. Keep it in the distribution
-# we keep config.h, as this file knows where 'make dist' finds the ETCSCREENRC.
-#distclean:	mostlyclean
-#	rm -f $(SCREEN).tar $(SCREEN).tar.gz
-#	rm -f config.status Makefile
-#	rm -f osdef.h doc/Makefile
+
+distclean:	mostlyclean
+	rm -f config.status config.cache config.log config.h Makefile
 
 maintainer-clean:
 	@echo "This command is not even intended for maintainers to use;"
@@ -175,10 +175,16 @@ Makefile makefile:	config.status $(srcdir)/Makefile.in
 config.status:	$(srcdir)/configure
 	$(SHELL) ./config.status --recheck
 
-$(srcdir)/configure:	$(srcdir)/configure.in
+$(srcdir)/configure:	$(srcdir)/configure.ac
 	cd $(srcdir) && autoconf
 
 ###############################################################################
 
 ### Dependencies:
-pty.o: pty.c config.h
+rlfe.o: rlfe.c
+pty.o: pty.c
+
+pty.o: config.h os.h extern.h
+rlfe.o: config.h os.h extern.h
+
+ 
