@@ -2051,7 +2051,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
 /* end_clink_change PRIVATE */
 
-      si = MIN (si1, si2);	/* use shorter of matches of different length */
+/* begin_clink_change */
+      if (!rl_compare_lcd_func)
+/* end_clink_change */
+        si = MIN (si1, si2);	/* use shorter of matches of different length */
       if (low > si)
 	low = si;
     }
