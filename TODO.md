@@ -7,8 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- BUG:  `UP` `C-BKSPC` `UP` `ENTER`  ==>  asserts about leaked undo list entries.
 
 ## Normal Priority
+- Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 - Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
 - Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
   - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).

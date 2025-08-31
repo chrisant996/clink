@@ -883,6 +883,7 @@ rl_add_history (int count, int key)
   using_history ();
 
   /* It would be too confusing to unsave, so just discard. */
+// REVIEW: does this always/sometimes/never leak an undo list?
   _rl_free_saved_history_line ();
 
   rl_delete_text (0, rl_end);
@@ -974,6 +975,7 @@ rl_remove_history (int count, int key)
       rl_replace_line ("", 1);
       using_history ();
       /* It would be too confusing to unsave, so just discard. */
+// REVIEW: does this always/sometimes/never leak an undo list?
       _rl_free_saved_history_line ();
     }
   else if (hist)

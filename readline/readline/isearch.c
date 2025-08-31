@@ -100,6 +100,7 @@ _rl_scxt_alloc (int type, int flags)
     {
       rl_maybe_replace_line ();
       using_history ();
+// REVIEW: does this always/sometimes/never leak an undo list?
       _rl_free_saved_history_line ();
     }
 /* end_clink_change */
