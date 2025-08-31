@@ -271,7 +271,7 @@ rl_unbind_function_in_map (rl_command_func_t *func, Keymap map)
 	  map[i].function = (rl_command_func_t *)NULL;
 	  rval = 1;
 	}
-      else if (map[i].type == ISKMAP)		/* TAG:readline-8.1 */
+      else if (map[i].type == ISKMAP)
 	{
 	  int r;
 	  r = rl_unbind_function_in_map (func, FUNCTION_TO_KEYMAP (map, i));
@@ -432,19 +432,8 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	  return -1;
         }
 
-      /* We now rely on rl_translate_keyseq to do this conversion, so this
-	 check is superfluous. */
-#if 0
-      if (META_CHAR (ic) && _rl_convert_meta_chars_to_ascii)
-	{
-	  ic = UNMETA (ic);
-	  if (map[ESC].type == ISKMAP)
-	    {
-	      prevmap = map;
-	      map = FUNCTION_TO_KEYMAP (map, ESC);
-	    }
-	}
-#endif
+      /* We rely on rl_translate_keyseq to do convert meta-chars to key
+	 sequences with the meta prefix (ESC). */
 
       if ((i + 1) < keys_len)
 	{
@@ -641,7 +630,6 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	  array[l++] = ESC;	/* ESC is meta-prefix */
 	  c = UNMETA (c);
 /* end_clink_change */
-	  has_meta = 0;
 	}
 
       /* If convert-meta is turned on, convert a meta char to a key sequence */
@@ -658,6 +646,8 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	}
       else
 	array[l++] = (c);
+
+      has_meta = 0;
 
       /* Null characters may be processed for incomplete prefixes at the end of
 	 sequence */
@@ -3177,7 +3167,7 @@ rl_dump_macros (int count, int key)
 static char *
 _rl_get_string_variable_value (const char *name)
 {
-  static char numbuf[64];
+  static char numbuf[64];	/* more than enough for INTMAX_MAX */
   char *ret;
 
   if (_rl_stricmp (name, "active-region-start-color") == 0)
@@ -3227,24 +3217,40 @@ _rl_get_string_variable_value (const char *name)
     return (_rl_comment_begin ? _rl_comment_begin : RL_COMMENT_BEGIN_DEFAULT);
   else if (_rl_stricmp (name, "completion-display-width") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_completion_columns);
+#else
       sprintf (numbuf, "%d", _rl_completion_columns);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "completion-prefix-display-length") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_completion_prefix_display_length);
+#else
       sprintf (numbuf, "%d", _rl_completion_prefix_display_length);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "completion-query-items") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", rl_completion_query_items);
+#else
       sprintf (numbuf, "%d", rl_completion_query_items);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "editing-mode") == 0)
     return (rl_get_keymap_name_from_edit_mode ());
   else if (_rl_stricmp (name, "history-size") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", history_is_stifled() ? history_max_entries : -1);
+#else
       sprintf (numbuf, "%d", history_is_stifled() ? history_max_entries : -1);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "isearch-terminators") == 0)
@@ -3271,7 +3277,11 @@ _rl_get_string_variable_value (const char *name)
     }
   else if (_rl_stricmp (name, "keyseq-timeout") == 0)
     {
-      sprintf (numbuf, "%d", _rl_keyseq_timeout);    
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_keyseq_timeout);
+#else
+      sprintf (numbuf, "%d", _rl_keyseq_timeout);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "emacs-mode-string") == 0)

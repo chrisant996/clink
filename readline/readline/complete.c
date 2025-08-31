@@ -77,6 +77,10 @@ extern int errno;
 #  include "colors.h"
 #endif
 
+#ifndef MIN
+#define MIN(x,y) (((x) < (y)) ? (x): (y))
+#endif
+
 typedef int QSFUNC (const void *, const void *);
 
 #ifdef HAVE_LSTAT
@@ -372,7 +376,9 @@ int _rl_page_completions = 1;
    completer routine.  The contents of this variable is what breaks words
    in the shell, i.e. " \t\n\"\\'`@$><=" */
 const char *rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{("; /* }) */
+/* begin_clink_change */
 const char *rl_basic_word_break_characters_without_backslash = " \t\n\"'`@$><=;|&{("; /* }) */
+/* end_clink_change */
 
 /* List of basic quoting characters. */
 const char *rl_basic_quote_characters = "\"'";
@@ -1644,6 +1650,7 @@ _rl_find_completion_word (int *fp, int *dp)
  * c:\>foobar.bat "c:\Program Files\"
  */
 #if 0
+/* end_clink_change */
 	  if (pass_next)
 	    {
 	      pass_next = 0;
@@ -1660,6 +1667,7 @@ _rl_find_completion_word (int *fp, int *dp)
 	      found_quote |= RL_QF_BACKSLASH;
 	      continue;
 	    }
+/* begin_clink_change */
 #endif
 /* end_clink_change */
 
@@ -1908,8 +1916,9 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
   int low;		/* Count of max-matched characters. */
   int lx;
   char *dtext;		/* dequoted TEXT, if needed */
+  size_t si1, si2;
+  size_t len1, len2;
 #if defined (HANDLE_MULTIBYTE)
-  int v;
   size_t v1, v2;
   mbstate_t ps1, ps2;
   WCHAR_T wc1, wc2;
@@ -1948,8 +1957,8 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
     {
 #if defined (HANDLE_MULTIBYTE)
 /* begin_clink_change */
-      int mi0_len = strlen (match_list[i]);
-      int mi1_len = strlen (match_list[i + 1]);
+      len1 = strlen (match_list[i]);
+      len2 = strlen (match_list[i + 1]);
 /* end_clink_change */
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	{
@@ -1958,11 +1967,16 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
 #endif
 /* begin_clink_change */
+      //len1 = strlen (match_list[i]);
+      //len2 = strlen (match_list[i + 1]);
+/* end_clink_change */
+
+/* begin_clink_change */
       if (rl_compare_lcd_func)
 	si = rl_compare_lcd_func (match_list[i], match_list[i + 1]);
       else
 /* end_clink_change */
-	for (si = 0; (c1 = match_list[i][si]) && (c2 = match_list[i + 1][si]); si++)
+	for (si1 = si2 = 0; (c1 = match_list[i][si1]) && (c2 = match_list[i + 1][si2]); si1++,si2++)
 	  {
 	    if (_rl_completion_case_fold)
 	      {
@@ -1972,12 +1986,8 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #if defined (HANDLE_MULTIBYTE)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
-/* begin_clink_change */
-		//v1 = MBRTOWC (&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
-		//v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
-		v1 = MBRTOWC (&wc1, match_list[i]+si, mi0_len-si, &ps1);
-		v2 = MBRTOWC (&wc2, match_list[i+1]+si, mi1_len-si, &ps2);
-/* end_clink_change */
+		v1 = MBRTOWC (&wc1, match_list[i]+si1, len1 - si1, &ps1);
+		v2 = MBRTOWC (&wc2, match_list[i+1]+si2, len2 - si2, &ps2);
 		if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
 		  {
 		    if (c1 != c2)	/* do byte comparison */
@@ -1994,8 +2004,11 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 		if (pathfold (wc1) != pathfold (wc2))
 /* end_clink_change */
 		  break;
-		else if (v1 > 1)
-		  si += v1 - 1;
+
+		if (v1 > 1)
+		  si1 += v1 - 1;
+		if (v2 > 1)
+		  si2 += v2 - 1;
 	      }
 	    else
 #endif
@@ -2015,6 +2028,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
 /* end_clink_change PRIVATE */
 
+      si = MIN (si1, si2);	/* use shorter of matches of different length */
       if (low > si)
 	low = si;
     }
@@ -2166,13 +2180,13 @@ postprocess_matches (char ***matchesp, int matching_filenames)
 /* begin_clink_change */
 	  if (!no_compute_lcd)
 /* end_clink_change */
-	  if (i > 1 && i < nmatch)
-	    {
-	      t = matches[0];
-	      compute_lcd_of_matches (matches, i - 1, t);
-	      FREE (t);
-	    }
-	}
+	    if (i > 1 && i < nmatch)
+	      {
+		t = matches[0];
+		compute_lcd_of_matches (matches, i - 1, t);
+		FREE (t);
+	      }
+	  }
     }
 
   *matchesp = matches;
@@ -2207,9 +2221,7 @@ __complete_get_screenwidth (void)
 /* A convenience function for displaying a list of strings in
    columnar format on readline's output stream.  MATCHES is the list
    of strings, in argv format, LEN is the number of strings in MATCHES,
-   and MAX is the length of the longest string in MATCHES.
-   ONLY_MEASURE measures the number of lines that would be printed,
-   without printing them. */
+   and MAX is the length of the longest string in MATCHES. */
 /* begin_clink_change */
 #if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 /* end_clink_change */
@@ -2232,7 +2244,7 @@ rl_display_match_list (char **matches, int len, int max)
       temp = rl_filename_display_desired ? rl_last_path_separator (t) : 0;
 /* end_clink_change */
       common_length = temp ? fnwidth (temp) : fnwidth (t);
-      sind = temp ? strlen (temp) : strlen (t);
+      sind = temp ? RL_STRLEN (temp) : RL_STRLEN (t);
       if (common_length > max || sind > max)
 	common_length = sind = 0;
 

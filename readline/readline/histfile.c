@@ -168,9 +168,8 @@ history_filename (const char *filename)
 
   if (home == 0)
     return (NULL);
-  else
-    home_len = strlen (home);
 
+  home_len = strlen (home);
   return_val = (char *)xmalloc (2 + home_len + 8); /* strlen(".history") == 8 */
   strcpy (return_val, home);
   return_val[home_len] = '/';
@@ -183,6 +182,7 @@ history_filename (const char *filename)
   return (return_val);
 }
 
+#if defined (DEBUG)
 static char *
 history_backupfile (const char *filename)
 {
@@ -209,6 +209,7 @@ history_backupfile (const char *filename)
   ret[len+1] = '\0';
   return ret;
 }
+#endif
   
 static char *
 history_tempfile (const char *filename)
@@ -700,13 +701,13 @@ static int
 history_write_slow (int fd, HIST_ENTRY **the_history, int nelements, int overwrite)
 {
   FILE *fp;
-  int i, j, e;
+  int i, e;
 
   fp = fdopen (fd, overwrite ? "w" : "a");
   if (fp == 0)
     return -1;
 
-  for (j = 0, i = history_length - nelements; i < history_length; i++)
+  for (i = history_length - nelements; i < history_length; i++)
     {
       if (history_write_timestamps && the_history[i]->timestamp && the_history[i]->timestamp[0])
 	fprintf (fp, "%s\n", the_history[i]->timestamp);

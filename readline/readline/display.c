@@ -1248,13 +1248,17 @@ rl_redisplay (void)
 	  /* isprint(c) handles bytes up to UCHAR_MAX */
 	  if (_rl_output_meta_chars == 0 || isprint (c) == 0)
 #else
- 	  if (_rl_output_meta_chars == 0)
+	  if (_rl_output_meta_chars == 0)
 #endif
 	    {
 	      char obuf[5];
 	      int olen;
 
+#if defined (HAVE_VSNPRINTF)
+	      olen = snprintf (obuf, sizeof (obuf), "\\%o", c);
+#else
 	      olen = sprintf (obuf, "\\%o", c);
+#endif
 	  
 	      for (temp = 0; temp < olen; temp++)
 		{
@@ -1895,7 +1899,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 {
   char *ofd, *ols, *oe, *nfd, *nls, *ne;
   char *ofdf, *nfdf, *olsf, *nlsf;
-  int temp, lendiff, wsatend, od, nd, twidth, o_cpos;
+  int temp, lendiff, wsatend, od, nd, o_cpos;
   int current_invis_chars;
   int col_lendiff, col_temp;
   int bytes_to_insert;
@@ -2026,8 +2030,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 	     _rl_output_some_chars below. */
 	  if (newwidth > 0)
 	    {
-	      int count, i, j;
-	      char *optr;
+	      int i, j;
 
 	      puts_face (new, new_face, newbytes);
 	      _rl_last_c_pos = newwidth;
@@ -3281,17 +3284,14 @@ rl_message (const char *format, ...)
 
 #if defined (HAVE_VSNPRINTF)
   bneed = vsnprintf (msg_buf, msg_bufsiz, format, args);
-/* begin_clink_change */
-  bneed++; /* Modern vsnprintf truncates with a null terminator. */
-/* end_clink_change */
-  if (bneed >= msg_bufsiz - 1)
+  if (bneed > msg_bufsiz - 1)
     {
       msg_bufsiz = bneed + 1;
       msg_buf = xrealloc (msg_buf, msg_bufsiz);
       va_end (args);
 
       va_start (args, format);
-      vsnprintf (msg_buf, msg_bufsiz - 1, format, args);
+      vsnprintf (msg_buf, msg_bufsiz, format, args);
     }
 #else
   vsprintf (msg_buf, format, args);

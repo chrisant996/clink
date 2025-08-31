@@ -287,6 +287,7 @@ rl_funmap_names (void)
       result[result_index + 1] = (char *)NULL;
     }
 
-  qsort (result, result_index, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+  if (result)
+    qsort (result, result_index, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
   return (result);
 }

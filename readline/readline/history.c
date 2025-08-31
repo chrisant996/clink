@@ -152,7 +152,7 @@ using_history (void)
 int
 history_total_bytes (void)
 {
-  register int i, result;
+  int i, result;
 
   for (i = result = 0; the_history && the_history[i]; i++)
     result += HISTENT_BYTES (the_history[i]);
@@ -468,7 +468,7 @@ void
 _hs_replace_history_data (int which, histdata_t *old, histdata_t *new)
 {
   HIST_ENTRY *entry;
-  register int i, last;
+  int i, last;
 
   if (which < -2 || which >= history_length || history_length == 0 || the_history == 0)
     return;
@@ -504,7 +504,7 @@ _hs_replace_history_data (int which, histdata_t *old, histdata_t *new)
 int
 _hs_search_history_data (histdata_t *needle)
 {
-  register int i;
+  int i;
   HIST_ENTRY *entry;
 
   if (history_length == 0 || the_history == 0)
@@ -520,7 +520,7 @@ _hs_search_history_data (histdata_t *needle)
     }
   return -1;
 }
-
+  
 /* Remove history element WHICH from the history.  The removed
    element is returned to you so you can free the line, data,
    and containing structure. */
@@ -528,10 +528,11 @@ HIST_ENTRY *
 remove_history (int which)
 {
   HIST_ENTRY *return_value;
-  register int i;
 #if 1
   int nentries;
   HIST_ENTRY **start, **end;
+#else
+  int i;
 #endif
 
   if (which < 0 || which >= history_length || history_length ==  0 || the_history == 0)

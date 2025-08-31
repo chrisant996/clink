@@ -528,6 +528,7 @@ _rl_find_prev_mbchar (const char *string, int seed, int flags)
 #endif
 }
 
+#if defined (HANDLE_MULTIBYTE)
 /* Compare the first N characters of S1 and S2 without regard to case. If
    FLAGS&1, apply the mapping specified by completion-map-case and make
    `-' and `_' equivalent. Returns 1 if the strings are equal. */
@@ -569,7 +570,7 @@ _rl_mb_strcaseeqn (const char *s1, size_t l1, const char *s2, size_t l2, size_t 
       s2 += v1;
       n -= v1;
       if ((flags & 1) && (wc1 == L'-' || wc1 == L'_') && (wc2 == L'-' || wc2 == L'_'))
-        continue;
+	continue;
       if (wc1 != wc2)
 	return 0;
     }
@@ -608,3 +609,4 @@ _rl_mb_charcasecmp (const char *s1, mbstate_t *ps1, const char *s2, mbstate_t *p
     return 1;
   return (wc1 == wc2);
 }
+#endif

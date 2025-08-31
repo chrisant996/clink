@@ -2110,13 +2110,19 @@ _rl_readstr_init (int pchar, int flags)
   rl_end = rl_point = 0;
 
 /* begin_clink_change */
-  RL_SETSTATE(RL_STATE_READSTR);
+  RL_SETSTATE (RL_STATE_READSTR);
   _rl_readstr_pchar = pchar ? pchar : '@';
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : '@');
   rl_message ("%s", p);
   xfree (p);
+
+/* begin_clink_change
+ * This is too late to set the state -- the host app's display routine may
+ * need it inside the call to rl_message. */
+  //RL_SETSTATE (RL_STATE_READSTR);
+/* end_clink_change */
 
   _rl_rscxt = cxt;  
 
@@ -2129,9 +2135,7 @@ _rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)
   _rl_rscxt_dispose (cxt, 0);
   _rl_rscxt = 0;
 
-/* begin_clink_change */
-  RL_UNSETSTATE(RL_STATE_READSTR);
-/* end_clink_change */
+  RL_UNSETSTATE (RL_STATE_READSTR);
 
   return (r != 1);
 }
@@ -2186,6 +2190,9 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
   if (c < 0)
     c = CTRL ('C');  
 
+  /* could consider looking up the function bound to they key and dispatching
+     off that, but you want most characters inserted by default without having
+     to quote. */
   switch (c)
     {
     case CTRL('W'):
@@ -2267,6 +2274,12 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
 	  return -1;
 	}
       break;
+
+#if 0
+    case CTRL('_'):
+      rl_do_undo ();
+      break;
+#endif
 
     default:
 #if defined (HANDLE_MULTIBYTE)

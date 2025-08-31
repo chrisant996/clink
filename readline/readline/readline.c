@@ -624,12 +624,12 @@ readline_internal_charloop (void)
 /* begin_clink_change */
 #if defined (READLINE_CALLBACKS)
       /* Preserve and restore _rl_top_level, because in
-         rl_callback_read_char() the `eof = readline_internal_char ();` line
-         can end up making a reentrant call into readline_internal_char(), and
-         overwrites the _rl_top_level.  After returning, _rl_top_level can
-         still be used.  Repro: Ctrl-R (reverse-search-history), Ctrl-X (first
-         key in multikey binding), Esc (or any key that isn't a bound second
-         key in any multikey binding starting with Ctrl-X). */
+	 rl_callback_read_char() the `eof = readline_internal_char ();` line
+	 can end up making a reentrant call into readline_internal_char(), and
+	 overwrites the _rl_top_level.  After returning, _rl_top_level can
+	 still be used.  Repro: Ctrl-R (reverse-search-history), Ctrl-X (first
+	 key in multikey binding), Esc (or any key that isn't a bound second
+	 key in any multikey binding starting with Ctrl-X). */
 #endif
 /* end_clink_change */
       /* Save and restore _rl_top_level even though most of the time it
@@ -1315,6 +1315,7 @@ rl_initialize (void)
 
   /* We aren't done yet.  We haven't even gotten started yet! */
   rl_done = 0;
+  rl_eof_found = 0;
   RL_UNSETSTATE(RL_STATE_DONE|RL_STATE_TIMEOUT|RL_STATE_EOF);
 
   /* Tell the history routines what is going on. */
@@ -1468,6 +1469,7 @@ readline_default_bindings (void)
     rl_tty_set_default_bindings (_rl_keymap);
 }
 
+#if defined (DEBUG)
 /* Reset the default bindings for the terminal special characters we're
    interested in back to rl_insert and read the new ones. */
 static void
@@ -1479,6 +1481,7 @@ reset_default_bindings (void)
       rl_tty_set_default_bindings (_rl_keymap);
     }
 }
+#endif
 
 /* Bind some common arrow key sequences in MAP. */
 static void

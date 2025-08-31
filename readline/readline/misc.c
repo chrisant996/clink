@@ -97,7 +97,7 @@ _rl_arg_overflow (void)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
       return 1;
@@ -111,7 +111,7 @@ _rl_arg_init (void)
 /* begin_clink_change */
   if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-  rl_save_prompt ();
+    rl_save_prompt ();
   _rl_argcxt = 0;
   RL_SETSTATE(RL_STATE_NUMERICARG);
 }
@@ -156,10 +156,11 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
       else
 	{
 	  key = _rl_bracketed_read_key ();
+	  /* XXX - add to macro def? */
 /* begin_clink_change */
 	  if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-	  rl_restore_prompt ();
+	    rl_restore_prompt ();
 	  rl_clear_message ();
 	  RL_UNSETSTATE(RL_STATE_NUMERICARG);
 	  if (key < 0)
@@ -193,7 +194,7 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
 
@@ -261,7 +262,7 @@ rl_digit_argument (int ignore, int key)
         return 0;
       if (RL_ISSTATE (RL_STATE_NUMERICARG))
 /* end_clink_change */
-      rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
+        rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
       return 0;
     }
   else
@@ -299,7 +300,7 @@ _rl_arg_callback (_rl_arg_cxt cxt)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
       rl_execute_next (c);
