@@ -625,19 +625,21 @@ rl_noninc_reverse_search (int count, int key)
 int
 rl_noninc_forward_search_again (int count, int key)
 {
-  int r;
+  int r, flags;
 
   if (!noninc_search_string)
     {
       rl_ding ();
       return (1);
     }
+
+  flags = 0;
 #if defined (VI_MODE)
   if (VI_COMMAND_MODE() && key == 'N')
-    r = noninc_dosearch (noninc_search_string, 1, SF_PATTERN);
-  else
+    flags = SF_PATTERN;
 #endif
-    r = noninc_dosearch (noninc_search_string, 1, 0);
+
+  r = noninc_dosearch (noninc_search_string, 1, flags);
   return (r != 1);
 }
 
@@ -647,19 +649,21 @@ rl_noninc_forward_search_again (int count, int key)
 int
 rl_noninc_reverse_search_again (int count, int key)
 {
-  int r;
+  int r, flags;
 
   if (!noninc_search_string)
     {
       rl_ding ();
       return (1);
     }
+
+  flags = 0;
 #if defined (VI_MODE)
   if (VI_COMMAND_MODE() && key == 'n')
-    r = noninc_dosearch (noninc_search_string, -1, SF_PATTERN);
-  else
+    flags = SF_PATTERN;
 #endif
-    r = noninc_dosearch (noninc_search_string, -1, 0);
+
+  r = noninc_dosearch (noninc_search_string, -1, flags);
   return (r != 1);
 }
 
@@ -684,7 +688,7 @@ _rl_nsearch_callback (_rl_search_cxt *cxt)
   return ((r >= 0) ? _rl_nsearch_cleanup (cxt, r) : (r != 1));
 }
 #endif
-  
+
 /* begin_clink_change */
 static void
 rl_maybe_swap_point_and_mark (void)
@@ -704,7 +708,6 @@ rl_history_search_internal (int count, int dir)
 {
   HIST_ENTRY *temp;
   int ret, oldpos, newcol;
-  char *t;
 
   /* If the current line has changed, put it back into the history if necessary. */
   rl_maybe_replace_line ();
@@ -781,6 +784,7 @@ rl_history_search_internal (int count, int dir)
   else
     {
 #if 0
+      char *t;
       t = strstr (rl_line_buffer, history_search_string);	/* XXX */
       rl_point = t ? (int)(t - rl_line_buffer) + _rl_history_search_len : rl_end;
 #else
