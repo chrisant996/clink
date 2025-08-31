@@ -1,6 +1,6 @@
 /* histexpand.c -- history expansion. */
 
-/* Copyright (C) 1989-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2021,2023-2025 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -224,7 +224,7 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
   register char c;
   HIST_ENTRY *entry;
   int which, sign, local_index, substring_okay;
-  int search_flags;
+  int search_flags, old_offset;
   char *temp;
 
   /* The event can be specified in a number of ways.
@@ -334,12 +334,13 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
 
   *caller_index = i;
 
+  old_offset = history_offset;		/* XXX */
 #define FAIL_SEARCH() \
   do { \
 /* begin_clink_change */ \
     history_prev_use_curr = 0; \
 /* end_clink_change */ \
-    history_offset = history_length; xfree (temp) ; return (char *)NULL; \
+    history_offset = old_offset; xfree (temp) ; return (char *)NULL; \
   } while (0)
 
   /* If there is no search string, try to use the previous search string,
@@ -400,7 +401,7 @@ return_found_event:
 	  history_event_lookup_cache.successful = 1;
 	  history_prev_use_curr = 0;
 /* end_clink_change */
-	  history_offset = history_length;
+	  history_offset = old_offset;	/* XXX - was history_length */
 	
 	  /* If this was a substring search, then remember the
 	     string that we matched for word substitution. */
