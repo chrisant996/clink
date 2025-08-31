@@ -806,6 +806,7 @@ rl_history_search_reinit (int flags)
       int pos = where_history ();
       rl_maybe_replace_line ();
       using_history ();
+// REVIEW: does this always/sometimes/never leak an undo list?
       if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
 	_rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
       _rl_free_saved_history_line ();

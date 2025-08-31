@@ -202,6 +202,19 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         rret = nil
     end
 
+    if settings.get("debug.log_prompt") then
+        local plog = prompt or ""
+        local rplog = rprompt or ""
+        local pnul = plog:find("\0") and ", CONTAINS <NUL> BYTE" or ""
+        local rpnul = rplog:find("\0") and ", CONTAINS <NUL> BYTE" or ""
+        plog = plog:gsub("\0", "<NUL>")
+        rplog = rplog:gsub("\0", "<NUL>")
+        log.info(string.format("PROMPT \"%s\", %d%s", plog, #plog, pnul))
+        if #rplog > 0 then
+            log.info(string.format("RPROMPT \"%s\", %d%s", rplog, #rplog, rpnul))
+        end
+    end
+
     -- Windows Terminal built-in shell integration (WT v1.18).
     local _, native_host = clink.getansihost()
     if native_host == "winterminal" then
