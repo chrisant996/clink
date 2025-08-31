@@ -6,7 +6,7 @@
 /*								    */
 /* **************************************************************** */
 
-/* Copyright (C) 1987-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021,2023,2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -98,7 +98,7 @@ _rl_scxt_alloc (int type, int flags)
 /* begin_clink_change */
   if (history_prev_use_curr)
     {
-      rl_maybe_replace_line ();
+      _rl_maybe_replace_line (1);
       using_history ();
 // REVIEW: does this always/sometimes/never leak an undo list?
       _rl_free_saved_history_line ();
@@ -247,7 +247,7 @@ _rl_isearch_init (int direction)
 
   /* Create an array of pointers to the lines that we want to search. */
   hlist = history_list ();
-  rl_maybe_replace_line ();
+  _rl_maybe_replace_line (1);
   i = 0;
   if (hlist)
     for (i = 0; hlist[i]; i++);

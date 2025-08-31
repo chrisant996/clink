@@ -335,8 +335,9 @@ _rl_nsearch_init (int dir, int pchar)
   cxt->direction = dir;
   cxt->history_pos = cxt->save_line;
 
-  /* If the current line has changed, put it back into the history if necessary. */
-  rl_maybe_replace_line ();
+  /* If the current line has changed, put it back into the history if necessary
+     and clear the undo list. */
+  _rl_maybe_replace_line (1);
 
   _rl_saved_line_for_search = _rl_alloc_saved_line ();
 
@@ -709,8 +710,9 @@ rl_history_search_internal (int count, int dir)
   HIST_ENTRY *temp;
   int ret, oldpos, newcol;
 
-  /* If the current line has changed, put it back into the history if necessary. */
-  rl_maybe_replace_line ();
+  /* If the current line has changed, put it back into the history if necessary
+     and clear the undo list. */
+  _rl_maybe_replace_line (1);
 
 /* begin_clink_change */
   if (history_prev_use_curr)
@@ -821,7 +823,7 @@ rl_history_search_reinit (int flags)
   if (history_prev_use_curr)
     {
       int pos = where_history ();
-      rl_maybe_replace_line ();
+      _rl_maybe_replace_line (1);
       using_history ();
 // REVIEW: does this always/sometimes/never leak an undo list?
       _rl_free_saved_history_line ();

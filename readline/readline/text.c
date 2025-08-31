@@ -1,6 +1,6 @@
 /* text.c -- text handling commands for readline. */
 
-/* Copyright (C) 1987-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021,2023-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -2119,9 +2119,7 @@ _rl_readstr_init (int pchar, int flags)
 
   cxt = _rl_rscxt_alloc (flags);
 
-  rl_maybe_replace_line ();
   _rl_saved_line_for_readstr = _rl_alloc_saved_line ();
-
   rl_undo_list = 0;
 
   rl_line_buffer[0] = 0;

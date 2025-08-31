@@ -1,6 +1,6 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -375,7 +375,7 @@ _rl_free_history_entry (HIST_ENTRY *entry)
 
 /* Perhaps put back the current line if it has changed. */
 int
-rl_maybe_replace_line (void)
+_rl_maybe_replace_line (int clear_undo)
 {
   HIST_ENTRY *temp;
 
@@ -393,10 +393,17 @@ rl_maybe_replace_line (void)
       if (_rl_saved_line_for_history && (UNDO_LIST *)_rl_saved_line_for_history->data == rl_undo_list)
 	_rl_saved_line_for_history->data = 0;
       /* Do we want to set rl_undo_list = 0 here since we just saved it into
-	 a history entry? */
-      rl_undo_list = 0;
+	 a history entry? We let the caller decide. */
+      if (clear_undo)
+	rl_undo_list = 0;
     }
   return 0;
+}
+
+int
+rl_maybe_replace_line (void)
+{
+  return (_rl_maybe_replace_line (0));
 }
 
 void
@@ -620,6 +627,7 @@ rl_beginning_of_history (int count, int key)
 int
 rl_end_of_history (int count, int key)
 {
+// REVIEW: does this leak or cross-link the undo list now?
   rl_maybe_replace_line ();
   using_history ();
   rl_maybe_unsave_line ();
@@ -670,7 +678,12 @@ rl_get_next_history (int count, int key)
   if (count == 0)
     return 0;
 
+  /* If the current line has changed, save the changes. */
+#if 0	/* XXX old code can leak or corrupt rl_undo_list */
   rl_maybe_replace_line ();
+#else
+  _rl_maybe_replace_line (1);
+#endif
 
   r = _rl_next_history_internal (count);
 
@@ -746,10 +759,19 @@ rl_get_previous_history (int count, int key)
 
   /* If we don't have a line saved, then save this one. */
   had_saved_line = _rl_saved_line_for_history != 0;
+
+  /* XXX - if we are not editing a history line and we already had a saved
+     line, we're going to lose this undo list. Not sure what the right thing
+     is here - replace the saved line? */
+
   rl_maybe_save_line ();
 
   /* If the current line has changed, save the changes. */
+#if 0	/* XXX old code can leak or corrupt rl_undo_list */
   rl_maybe_replace_line ();
+#else
+  _rl_maybe_replace_line (1);
+#endif
 
   r = _rl_previous_history_internal (count);
 
@@ -868,7 +890,7 @@ rl_add_history (int count, int key)
     }
 
   /* Replace undo list in history entry if changed. */
-  rl_maybe_replace_line ();
+  _rl_maybe_replace_line (1);
 
   /* Start a new undo list if cross-linked with history entry. */
   if (current_history() && rl_undo_list)
