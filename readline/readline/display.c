@@ -2229,7 +2229,11 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 	 assume it's a combining character and back one up so the two base
 	 characters no longer compare equivalently. */
       t = MBRTOWC (&wc, ofd, mb_cur_max, &ps);
+#if 0
       if (t > 0 && UNICODE_COMBINING_CHAR (wc) && WCWIDTH (wc) == 0)
+#else
+      if (t > 0 && IS_COMBINING_CHAR (wc))
+#endif
 	{
 	  old_offset = _rl_find_prev_mbchar (old, ofd - old, MB_FIND_ANY);
 	  new_offset = _rl_find_prev_mbchar (new, nfd - new, MB_FIND_ANY);
