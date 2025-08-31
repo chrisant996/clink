@@ -23,6 +23,8 @@
   - Fixed off-by-one error when tokenizing words like `$((expr))` while performing history expansion.
   - Fixed attempting to change case of invalid multibyte characters.
   - Fixed `completion-prefix-display-length` and `colored-completion-prefix` to be mutually exclusive.
+  - Fixed to not check for signals when handling a received signal.
+  - Fixed signal checking to handle signals that arrive before Readline restore's the application's signal handlers.
 
 #### v1.7.22
 

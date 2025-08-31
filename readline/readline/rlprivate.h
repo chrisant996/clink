@@ -680,6 +680,7 @@ extern int _rl_history_point_at_end_of_anchored_search;
 
 /* signals.c */
 extern int volatile _rl_caught_signal;
+extern int volatile _rl_handling_signal;
 
 extern _rl_sigcleanup_func_t *_rl_sigcleanup;
 extern void *_rl_sigcleanarg;
