@@ -1753,8 +1753,8 @@ get_word:
       /* Command and process substitution; shell extended globbing patterns */
       if (nestdelim == 0 && delimiter == 0 && member (string[i], "<>$!@?+*") && string[i+1] == '(') /*)*/
 	{
-	  i += 2;
-	  if (string[i] == 0)
+	  i++;			/* string[i] == '(' */ /*)*/
+	  if (string[i+1] == 0)
 	    break;		/* could just return i here */
 	  delimopen = '(';
 	  delimiter = ')';

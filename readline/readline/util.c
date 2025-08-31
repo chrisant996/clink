@@ -1,6 +1,6 @@
 /* util.c -- readline utility functions */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -152,6 +152,7 @@ _rl_abort_internal (void)
   RL_UNSETSTATE (RL_STATE_MULTIKEY);	/* XXX */
 
   rl_last_func = (rl_command_func_t *)NULL;
+  _rl_command_to_execute = 0;
 /* begin_clink_change */
   if (rl_last_func_hook_func)
     rl_last_func_hook_func (0);

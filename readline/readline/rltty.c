@@ -1,7 +1,7 @@
 /* rltty.c -- functions to prepare and restore the terminal for readline's
    use. */
 
-/* Copyright (C) 1992-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -80,15 +80,25 @@ static int ksrflow;
 #endif
 
 /* Dummy call to force a backgrounded readline to stop before it tries
-   to get the tty settings. */
+   to get the tty settings. But we use the information to set our idea
+   of the screen size if we're in a signal handling context, since it
+   doesn't make sense to waste it. */
 static void
 set_winsize (int tty)
 {
-#if defined (TIOCGWINSZ)
+#if defined (TIOCGWINSZ) || defined (HAVE_TCGETWINSIZE)
   struct winsize w;
-
-  if (ioctl (tty, TIOCGWINSZ, &w) == 0)
-      (void) ioctl (tty, TIOCSWINSZ, &w);
+  
+  if (_rl_tcgetwinsize (tty, &w) == 0)
+    {
+      (void) _rl_tcsetwinsize (tty, &w);
+      /* We restrict this to the case where we're running a signal handler
+	 and executing after a SIGTSTP. We can relax it later. */
+#if defined (SIGTSTP)
+      if (RL_ISSTATE (RL_STATE_SIGHANDLER) && _rl_handling_signal == SIGTSTP && rl_prefer_env_winsize == 0)
+	_rl_set_screen_size (w.ws_row, w.ws_col);	/* don't waste the info */
+#endif
+    }
 #endif /* TIOCGWINSZ */
 }
 

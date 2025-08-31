@@ -274,10 +274,11 @@ extern char *_rl_savestring (const char *);
  * Undocumented private functions					 *
  *************************************************************************/
 
-#if defined(READLINE_CALLBACKS)
+#if defined (READLINE_CALLBACKS)
 
 /* readline.c */
 extern void readline_internal_setup (void);
+extern void readline_common_teardown (void);
 extern char *readline_internal_teardown (int);
 extern int readline_internal_char (void);
 
@@ -353,6 +354,7 @@ extern int _rl_timeout_handle_sigalrm (void);
 /* use as a sentinel for fd_set, struct timeval,  and sigset_t definitions */
 
 #if defined (__MINGW32__)
+/* still doesn't work; no alarm() so we provide a non-working stub. */
 #  define RL_TIMEOUT_USE_SIGALRM
 #elif defined (HAVE_SELECT) || defined (HAVE_PSELECT)
 #  define RL_TIMEOUT_USE_SELECT
@@ -596,7 +598,6 @@ extern int _rl_menu_complete_prefix_first;
 /* begin_clink_change */
 extern int _rl_menu_complete_wraparound;
 /* end_clink_change */
-
 
 /* display.c */
 extern int _rl_vis_botlin;

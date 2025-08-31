@@ -15,6 +15,11 @@
 - Minor improvement to error handling for certain failures in oh-my-posh.
 - Picked up fixes and changes from the Readline repo:
   - **Breaking Change:** The name for `readline-colored-completion-prefix` no longer has a leading `.`; the original report was based on a misunderstanding.
+  - Sync with how the Readline repo picked up some fixes and changes contributed from the Clink repo.
+  - Fixed a bug that allowed ^G to retain a saved command to execute.
+  - Fixed macro recording during searches.
+  - Fixed some small leaks in edge cases.
+  - Fix off-by-one error when tokenizing words like `$((expr))` while performing history expansion.
 
 #### v1.7.22
 

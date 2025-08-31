@@ -865,7 +865,9 @@ extern rl_completion_func_t *rl_attempted_completion_function;
    completer routine.  The initial contents of this variable is what
    breaks words in the shell, i.e. "n\"\\'`@$>". */
 extern const char *rl_basic_word_break_characters;
+/* begin_clink_change */
 extern const char *rl_basic_word_break_characters_without_backslash;
+/* end_clink_change */
 
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
@@ -1134,41 +1136,40 @@ extern int rl_persistent_signal_handlers;
 #define MULT_MATCH      2
 
 /* Possible state values for rl_readline_state */
-#define RL_STATE_NONE		0x000000		/* no state; before first call */
+#define RL_STATE_NONE		0x0000000	/* no state; before first call */
 
-#define RL_STATE_INITIALIZING	0x0000001	/* initializing */
-#define RL_STATE_INITIALIZED	0x0000002	/* initialization done */
-#define RL_STATE_TERMPREPPED	0x0000004	/* terminal is prepped */
-#define RL_STATE_READCMD	0x0000008	/* reading a command key */
-#define RL_STATE_METANEXT	0x0000010	/* reading input after ESC */
-#define RL_STATE_DISPATCHING	0x0000020	/* dispatching to a command */
-#define RL_STATE_MOREINPUT	0x0000040	/* reading more input in a command function */
-#define RL_STATE_ISEARCH	0x0000080	/* doing incremental search */
-#define RL_STATE_NSEARCH	0x0000100	/* doing non-inc search */
-#define RL_STATE_SEARCH		0x0000200	/* doing a history search */
-#define RL_STATE_NUMERICARG	0x0000400	/* reading numeric argument */
-#define RL_STATE_MACROINPUT	0x0000800	/* getting input from a macro */
-#define RL_STATE_MACRODEF	0x0001000	/* defining keyboard macro */
-#define RL_STATE_OVERWRITE	0x0002000	/* overwrite mode */
-#define RL_STATE_COMPLETING	0x0004000	/* doing completion */
-#define RL_STATE_SIGHANDLER	0x0008000	/* in readline sighandler */
-#define RL_STATE_UNDOING	0x0010000	/* doing an undo */
-#define RL_STATE_INPUTPENDING	0x0020000	/* rl_execute_next called */
-#define RL_STATE_TTYCSAVED	0x0040000	/* tty special chars saved */
-#define RL_STATE_CALLBACK	0x0080000	/* using the callback interface */
-#define RL_STATE_VIMOTION	0x0100000	/* reading vi motion arg */
-#define RL_STATE_MULTIKEY	0x0200000	/* reading multiple-key command */
-#define RL_STATE_VICMDONCE	0x0400000	/* entered vi command mode at least once */
-#define RL_STATE_CHARSEARCH	0x0800000	/* vi mode char search */
-#define RL_STATE_REDISPLAYING	0x1000000	/* updating terminal display */
+#define RL_STATE_INITIALIZING	0x00000001	/* initializing */
+#define RL_STATE_INITIALIZED	0x00000002	/* initialization done */
+#define RL_STATE_TERMPREPPED	0x00000004	/* terminal is prepped */
+#define RL_STATE_READCMD	0x00000008	/* reading a command key */
+#define RL_STATE_METANEXT	0x00000010	/* reading input after ESC */
+#define RL_STATE_DISPATCHING	0x00000020	/* dispatching to a command */
+#define RL_STATE_MOREINPUT	0x00000040	/* reading more input in a command function */
+#define RL_STATE_ISEARCH	0x00000080	/* doing incremental search */
+#define RL_STATE_NSEARCH	0x00000100	/* doing non-inc search */
+#define RL_STATE_SEARCH		0x00000200	/* doing a history search */
+#define RL_STATE_NUMERICARG	0x00000400	/* reading numeric argument */
+#define RL_STATE_MACROINPUT	0x00000800	/* getting input from a macro */
+#define RL_STATE_MACRODEF	0x00001000	/* defining keyboard macro */
+#define RL_STATE_OVERWRITE	0x00002000	/* overwrite mode */
+#define RL_STATE_COMPLETING	0x00004000	/* doing completion */
+#define RL_STATE_SIGHANDLER	0x00008000	/* in readline sighandler */
+#define RL_STATE_UNDOING	0x00010000	/* doing an undo */
+#define RL_STATE_INPUTPENDING	0x00020000	/* rl_execute_next called */
+#define RL_STATE_TTYCSAVED	0x00040000	/* tty special chars saved */
+#define RL_STATE_CALLBACK	0x00080000	/* using the callback interface */
+#define RL_STATE_VIMOTION	0x00100000	/* reading vi motion arg */
+#define RL_STATE_MULTIKEY	0x00200000	/* reading multiple-key command */
+#define RL_STATE_VICMDONCE	0x00400000	/* entered vi command mode at least once */
+#define RL_STATE_CHARSEARCH	0x00800000	/* vi mode char search */
+#define RL_STATE_REDISPLAYING	0x01000000	/* updating terminal display */
 
-#define RL_STATE_DONE		0x2000000	/* done; accepted line */
-#define RL_STATE_TIMEOUT	0x4000000	/* done; timed out */
-#define RL_STATE_EOF		0x8000000	/* done; got eof on read */
+#define RL_STATE_DONE		0x02000000	/* done; accepted line */
+#define RL_STATE_TIMEOUT	0x04000000	/* done; timed out */
+#define RL_STATE_EOF		0x08000000	/* done; got eof on read */
 
-/* begin_clink_change */
-#define RL_STATE_READSTR	0x10000000	/* reading a string */
-/* end_clink_change */
+/* Rearrange these for next major version */
+#define RL_STATE_READSTR	0x10000000	/* reading a string for M-x */
 
 #define RL_SETSTATE(x)		(rl_readline_state |= (x))
 #define RL_UNSETSTATE(x)	(rl_readline_state &= ~(x))

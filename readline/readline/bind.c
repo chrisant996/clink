@@ -1,6 +1,6 @@
 /* bind.c -- key binding and startup file support for the readline library. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -979,11 +979,20 @@ _rl_read_file (char *filename, size_t *sizep)
   char *buffer;
   int i, file;
 
-  file = -1;
-  if (((file = open (filename, O_RDONLY, 0666)) < 0) || (fstat (file, &finfo) < 0))
+  file = open (filename, O_RDONLY, 0666);
+  /* If the open is interrupted, retry once */
+  if (file < 0 && errno == EINTR)
     {
+      RL_CHECK_SIGNALS ();
+      file = open (filename, O_RDONLY, 0666);
+    }
+  
+  if ((file < 0) || (fstat (file, &finfo) < 0))
+    {
+      i = errno;
       if (file >= 0)
 	close (file);
+      errno = i;
       return ((char *)NULL);
     }
 
@@ -992,10 +1001,13 @@ _rl_read_file (char *filename, size_t *sizep)
   /* check for overflow on very large files */
   if (file_size != finfo.st_size || file_size + 1 < file_size)
     {
+      i = errno;
       if (file >= 0)
 	close (file);
 #if defined (EFBIG)
       errno = EFBIG;
+#else
+      errno = i;
 #endif
       return ((char *)NULL);
     }
@@ -2083,6 +2095,7 @@ rl_translate_old_keyseq (const char* string, char** out)
    false. */
 
 #define V_SPECIAL	0x1
+#define V_DEPRECATED	0x02
 
 static const struct {
   const char * const name;
@@ -2991,7 +3004,7 @@ rl_print_keybinding (const char *name, Keymap kmap, int print_readably)
   char **invokers;
 
   function = rl_named_function (name);
-  invokers = rl_invoking_keyseqs_in_map (function, kmap ? kmap : _rl_keymap);
+  invokers = function ? rl_invoking_keyseqs_in_map (function, kmap ? kmap : _rl_keymap) : (char **)NULL;
 
   if (print_readably)
     {
@@ -3095,6 +3108,10 @@ _rl_macro_dumper_internal (int print_readably, Keymap map, char *prefix)
 	  if (rl_macro_display_hook)
 	    {
 	      (*rl_macro_display_hook) (keyname, out, print_readably, prefix);
+/* begin_clink_change */
+	      xfree (keyname);
+	      xfree (out);
+/* env_clink_change */
 	      break;
 	    }
 

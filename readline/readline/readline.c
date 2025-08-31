@@ -488,16 +488,11 @@ readline_internal_setup (void)
   RL_CHECK_SIGNALS ();
 }
 
-STATIC_CALLBACK char *
-readline_internal_teardown (int eof)
+STATIC_CALLBACK void
+readline_common_teardown (void)
 {
   char *temp;
   HIST_ENTRY *entry;
-
-  RL_CHECK_SIGNALS ();
-
-  if (eof)
-    RL_SETSTATE (RL_STATE_EOF);		/* XXX */
 
   /* Restore the original of this history line, iff the line that we
      are editing was originally in the history, AND the line has changed. */
@@ -524,6 +519,17 @@ readline_internal_teardown (int eof)
      rid of it now. */
   if (rl_undo_list)
     rl_free_undo_list ();
+}
+	
+STATIC_CALLBACK char *
+readline_internal_teardown (int eof)
+{
+  RL_CHECK_SIGNALS ();
+
+  if (eof)
+    RL_SETSTATE (RL_STATE_EOF);		/* XXX */
+
+  readline_common_teardown ();
 
   /* Disable the meta key, if this terminal has one and we were told to use it.
      The check whether or not we sent the enable string is in

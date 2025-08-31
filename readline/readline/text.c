@@ -1876,12 +1876,16 @@ static int
 _rl_char_search (int count, int fdir, int bdir)
 {
   char mbchar[MB_LEN_MAX];
-  int mb_len;
+  int mb_len, i;
 
   mb_len = _rl_read_mbchar (mbchar, MB_LEN_MAX);
 
   if (mb_len <= 0)
     return 1;
+
+  if (RL_ISSTATE (RL_STATE_MACRODEF))
+    for (i = 0; i < mb_len; i++)
+      _rl_add_macro_char (mbchar[i]);
 
   if (count < 0)
     return (_rl_char_search_internal (-count, bdir, mbchar, mb_len));
@@ -1895,8 +1899,12 @@ _rl_char_search (int count, int fdir, int bdir)
   int c;
 
   c = _rl_bracketed_read_key ();
+
   if (c < 0)
     return 1;
+
+  if (RL_ISSTATE (RL_STATE_MACRODEF))
+    _rl_add_macro_char (c);
 
   if (count < 0)
     return (_rl_char_search_internal (-count, bdir, c));
@@ -2071,10 +2079,13 @@ _rl_rscxt_dispose (_rl_readstr_cxt *cxt, int flags)
   xfree (cxt);
 }
 
+/* This isn't used yet */
 void
 _rl_free_saved_readstr_line ()
 {
   if (_rl_saved_line_for_readstr)
+    /* This doesn't free any saved undo list, if it needs to,
+       rl_clear_history shows how to do it. */
     _rl_free_saved_line (_rl_saved_line_for_readstr);
   _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
 }
@@ -2083,13 +2094,10 @@ void
 _rl_unsave_saved_readstr_line ()
 {
   if (_rl_saved_line_for_readstr)
-/* begin_clink_change */
-    //_rl_unsave_line (_rl_saved_line_for_readstr);
     {
       _rl_free_undo_list (rl_undo_list);
-      _rl_unsave_line (_rl_saved_line_for_readstr);
+      _rl_unsave_line (_rl_saved_line_for_readstr);	/* restores rl_undo_list */
     }
-/* end_clink_change */
   _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
 }
 
@@ -2459,8 +2467,13 @@ rl_execute_named_command (int count, int key)
 
   command = _rl_read_command_name ();
   if (command == 0 || *command == '\0')
-    return 1;
-  if (func = rl_named_function (command))
+    {
+      free (command);
+      return 1;
+    }
+  func = rl_named_function (command);
+  free (command);
+  if (func)
     {
       int prev, ostate;
 

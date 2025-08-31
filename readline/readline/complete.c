@@ -662,6 +662,18 @@ _rl_complete_sigcleanup (int sig, void *ptr)
 /*				    */
 /************************************/
 
+static inline size_t
+vector_len (char **vector)
+{
+  size_t ret;
+
+  if (vector == 0 || vector[0] == 0)
+    return (size_t)0;
+  for (ret = 0; vector[ret]; ret++)
+    ;
+  return ret;
+}
+
 /* Reset public readline state on a signal or other event. */
 void
 _rl_reset_completion_state (void)
@@ -1842,8 +1854,7 @@ remove_duplicate_matches (char **matches)
   char **temp_array;
 
   /* Sort the items. */
-  for (i = 0; matches[i]; i++)
-    ;
+  i = vector_len (matches);
 
   /* Sort the array without matches[0], since we need it to
      stay in place no matter what. */
@@ -3822,8 +3833,8 @@ rl_old_menu_complete (int count, int invoking_key)
 
       RL_UNSETSTATE(RL_STATE_COMPLETING);
 
-      for (match_list_size = 0; matches[match_list_size]; match_list_size++)
-        ;
+      match_list_size = vector_len (matches);
+
       /* matches[0] is lcd if match_list_size > 1, but the circular buffer
 	 code below should take care of it. */
 
@@ -4014,8 +4025,7 @@ rl_menu_complete (int count, int ignore)
 
       RL_UNSETSTATE(RL_STATE_COMPLETING);
 
-      for (match_list_size = 0; matches[match_list_size]; match_list_size++)
-        ;
+      match_list_size = vector_len (matches);
 
       if (match_list_size == 0) 
 	{

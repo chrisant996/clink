@@ -9,12 +9,6 @@
 // Define this to omit Readline's match display routines.
 #define OMIT_DEFAULT_DISPLAY_MATCHES
 
-#if defined(__MINGW32__) || defined(__MINGW64__)
-#define HAVE_TIMEVAL 1
-#include <_timeval.h>
-#include <time.h>
-#endif
-
 #if !defined(S_IFLNK)
 static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
 static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
@@ -57,9 +51,6 @@ struct hooked_stat
 void reset_display_readline(void);
 void end_prompt(int crlf);
 void wait_for_input(unsigned long timeout);
-
-#define HAVE_GETTIMEOFDAY 1
-int gettimeofday(struct timeval *, struct timezone *);
 
 // These are implemented in rl_commands.cpp.
 extern const int c_clink_version;
