@@ -232,12 +232,12 @@ noninc_search_from_pos (char *string, int pos, int dir, int flags, int *ncp)
     }
 
   if (flags & SF_PATTERN)
-    ret = _hs_history_patsearch (s, dir, sflags);
+    ret = _hs_history_patsearch (s, dir, dir, sflags);
   else
     {
       if (_rl_search_case_fold)
 	sflags |= CASEFOLD_SEARCH;
-      ret = _hs_history_search (s, dir, sflags);
+      ret = _hs_history_search (s, dir, dir, sflags);
     }
   RL_UNSETSTATE(RL_STATE_SEARCH);
 

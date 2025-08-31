@@ -1,6 +1,6 @@
 /* histsearch.c -- searching the history list. */
 
-/* Copyright (C) 1989, 1992-2009,2017,2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1992-2009,2017,2021-2024 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -53,23 +53,25 @@
    string. */
 char *history_search_delimiter_chars = (char *)NULL;
 
-static int history_search_internal (const char *, int, int);
+static int history_search_internal (const char *, int, int, int);
 
 /* Search the history for STRING, starting at history_offset.
-   If DIRECTION < 0, then the search is through previous entries, else
-   through subsequent.  If ANCHORED is non-zero, the string must
+   If LISTDIR < 0, then the search is through previous entries, else
+   through subsequent. If ANCHORED is non-zero, the string must
    appear at the beginning of a history line, otherwise, the string
-   may appear anywhere in the line.  If PATSEARCH is non-zero, and fnmatch(3)
-   is available, fnmatch is used to match the string instead of a simple
-   string comparison. If IGNORECASE is set, the string comparison is
-   performed case-insensitively. If the string is found, then
+   may appear anywhere in the line. If the search is not anchored, LINEDIR
+   determines how the line is searched: if it is < 0, the search proceeds
+   from the end of the line to the beginning, otherwise the substring search
+   starts at the beginning of each history entry. If PATSEARCH is non-zero,
+   and fnmatch(3) is available, fnmatch is used to match the string instead
+   of a simple string comparison. If IGNORECASE is set, the string comparison
+   is performed case-insensitively. If the string is found, then
    current_history () is the history entry, and the value of this
-   function is the offset in the line of that history entry that the
-   string was found in.  Otherwise, nothing is changed, and a -1 is
-   returned. */
+   function is the offset in the line of that history entry in which the
+   string was found. Otherwise, nothing is changed, and a -1 is returned. */
 
 static int
-history_search_internal (const char *string, int direction, int flags)
+history_search_internal (const char *string, int listdir, int linedir, int flags)
 {
   int i, reverse;
   char *line;
@@ -80,7 +82,7 @@ history_search_internal (const char *string, int direction, int flags)
   HIST_ENTRY **the_history; 	/* local */
 
   i = history_offset;
-  reverse = (direction < 0);
+  reverse = (listdir < 0);
   anchored = (flags & ANCHORED_SEARCH);
 #if defined (HAVE_FNMATCH)
   patsearch = (flags & PATTERN_SEARCH);
@@ -157,7 +159,7 @@ history_search_internal (const char *string, int direction, int flags)
 	}
 
       /* Do substring search. */
-      if (reverse)
+      if (linedir < 0)		/* search backwards from end */
 	{
 	  size_t ll;
 
@@ -240,7 +242,7 @@ history_search_internal (const char *string, int direction, int flags)
 }
 
 int
-_hs_history_patsearch (const char *string, int direction, int flags)
+_hs_history_patsearch (const char *string, int listdir, int linedir, int flags)
 {
   char *pat;
   size_t len, start;
@@ -292,45 +294,48 @@ _hs_history_patsearch (const char *string, int direction, int flags)
 /* end_clink_change */
 #endif
 
-  ret = history_search_internal (pat, direction, flags|PATTERN_SEARCH);
+  ret = history_search_internal (pat, listdir, linedir, flags|PATTERN_SEARCH);
 
   if (pat != string)
     xfree (pat);
   return ret;
 }
 	
-/* Do a non-anchored search for STRING through the history in DIRECTION. */
+/* Do a non-anchored search for STRING through the history list in direction
+   LISTDIR. */
 int
-history_search (const char *string, int direction)
+history_search (const char *string, int listdir)
 {
-  return (history_search_internal (string, direction, NON_ANCHORED_SEARCH));
+  return (history_search_internal (string, listdir, listdir, NON_ANCHORED_SEARCH));
 }
 
-/* Do an anchored search for string through the history in DIRECTION. */
+/* Do an anchored search for string through the history list in direction
+   LISTDIR. */
 int
-history_search_prefix (const char *string, int direction)
+history_search_prefix (const char *string, int listdir)
 {
-  return (history_search_internal (string, direction, ANCHORED_SEARCH));
+  return (history_search_internal (string, listdir, listdir, ANCHORED_SEARCH));
 }
 
-/* At some point, make this public for users of the history library. */
+/* Perform a history search for STRING, letting the caller specify the flags.
+   At some point, make this public for users of the history library. */
 int
-_hs_history_search (const char *string, int direction, int flags)
+_hs_history_search (const char *string, int listdir, int linedir, int flags)
 {
-  return (history_search_internal (string, direction, flags));
+  return (history_search_internal (string, listdir, linedir, flags));
 }
 
-/* Search for STRING in the history list.  DIR is < 0 for searching
-   backwards.  POS is an absolute index into the history list at
-   which point to begin searching. */
+/* Search for STRING in the history list.  LISTDIR is < 0 for searching
+   backwards through the list.  POS is an absolute index into the history
+   list where the search should begin. */
 int
-history_search_pos (const char *string, int dir, int pos)
+history_search_pos (const char *string, int listdir, int pos)
 {
   int ret, old;
 
   old = where_history ();
   history_set_pos (pos);
-  if (history_search (string, dir) == -1)
+  if (history_search (string, listdir) == -1)
     {
       history_set_pos (old);
       return (-1);
