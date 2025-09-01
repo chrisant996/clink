@@ -861,6 +861,7 @@ rl_operate_and_get_next (int count, int c)
     if (where < 0)
       where = where_history ();
     saved_history_logical_offset = rl_explicit_arg ? count : where + history_base + 1;
+    suppress_sticky_search_position ();
   }
 /* end_clink_change */
 

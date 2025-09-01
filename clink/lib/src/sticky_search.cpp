@@ -26,6 +26,7 @@ static setting_bool g_sticky_search(
     false);
 
 //------------------------------------------------------------------------------
+static bool s_suppress_sticky_history_pos = false; // Temporarily disables sticky history position for operate-and-get-next command.
 static int32 s_init_history_pos = -1;   // Sticky history position from previous edit line.
 static int32 s_history_search_pos = -1; // Most recent history search position during current edit line.
 
@@ -34,7 +35,7 @@ void save_sticky_search_position()
 {
     // When 'sticky' mode is enabled, remember the history position for the next
     // input line prompt.
-    if (g_sticky_search.get())
+    if (g_sticky_search.get() && !s_suppress_sticky_history_pos)
     {
         // Favor current history position unless at the end, else favor history
         // search position.  If the search position is invalid or the input line
@@ -48,7 +49,10 @@ void save_sticky_search_position()
         history_prev_use_curr = 1;
     }
     else
+    {
+        s_suppress_sticky_history_pos = false;
         clear_sticky_search_position();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -86,6 +90,12 @@ void clear_sticky_search_position()
 {
     s_init_history_pos = -1;
     history_prev_use_curr = 0;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void suppress_sticky_search_position()
+{
+    s_suppress_sticky_history_pos = true;
 }
 
 //------------------------------------------------------------------------------
