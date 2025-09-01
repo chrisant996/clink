@@ -900,7 +900,6 @@ rl_add_history (int count, int key)
   /* Start a new undo list if cross-linked with history entry. */
   if (current_history() && rl_undo_list)
     rl_undo_list = 0;
-  assert (!rl_undo_list);
 
   /* Add new history entry. */
   /* NOTE:  If the host app removes duplicates, then this might result in a
