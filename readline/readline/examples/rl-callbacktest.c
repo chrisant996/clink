@@ -1,9 +1,7 @@
 /* Standard include files. stdio.h is required. */
-#include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <locale.h>
+#include <string.h>
 
 /* Used for select(2) */
 #include <sys/types.h>
@@ -11,35 +9,37 @@
 
 #include <signal.h>
 
+#include <errno.h>
 #include <stdio.h>
 
+#include <locale.h>
+
 /* Standard readline include files. */
-#include "readline.h"
-#include "history.h"
+#if defined (READLINE_LIBRARY)
+#  include "readline.h"
+#  include "history.h"
+#else
+#  include <readline/readline.h>
+#  include <readline/history.h>
+#endif
+
+#if !defined (errno)
+extern int errno;
+#endif
 
 static void cb_linehandler (char *);
-static void sigwinch_handler (int);
-static void sigint_handler (int);
+static void signandler (int);
 
 int running;
 int sigwinch_received;
-int sigint_received;
 const char *prompt = "rltest$ ";
 
 /* Handle SIGWINCH and window size changes when readline is not active and
    reading a character. */
 static void
-sigwinch_handler (int sig)
+sighandler (int sig)
 {
   sigwinch_received = 1;
-}
-
-/* Handle SIGWINCH and window size changes when readline is not active and
-   reading a character. */
-static void
-sigint_handler (int sig)
-{
-  sigint_received = 1;
 }
 
 /* Callback function called for each line when accept-line executed, EOF
@@ -55,8 +55,8 @@ cb_linehandler (char *line)
         printf ("\n");
       printf ("exit\n");
       /* This function needs to be called to reset the terminal settings,
-         and calling it from the line handler keeps one extra prompt from
-         being displayed. */
+	 and calling it from the line handler keeps one extra prompt from
+	 being displayed. */
       rl_callback_handler_remove ();
 
       running = 0;
@@ -64,27 +64,11 @@ cb_linehandler (char *line)
   else
     {
       if (*line)
-        add_history (line);
+	add_history (line);
       printf ("input line: %s\n", line);
       free (line);
     }
 }
-
-int count = 2;
-
-static int
-my_getc (FILE *stream)
-{
-  if (--count == 0)
-    {
-      kill (getpid (), SIGINT);
-    }
-
-  int ch = rl_getc (stream);
-
-  return ch;
-}
-
 
 int
 main (int c, char **v)
@@ -95,14 +79,12 @@ main (int c, char **v)
   /* Set the default locale values according to environment variables. */
   setlocale (LC_ALL, "");
 
+#if defined (SIGWINCH)
   /* Handle window size changes when readline is not active and reading
      characters. */
-  signal (SIGWINCH, sigwinch_handler);
-
-  signal (SIGINT, sigint_handler);
-
-  rl_getc_function = my_getc;
-
+  signal (SIGWINCH, sighandler);
+#endif
+  
   /* Install the line handler. */
   rl_callback_handler_install (prompt, cb_linehandler);
 
@@ -114,35 +96,25 @@ main (int c, char **v)
   while (running)
     {
       FD_ZERO (&fds);
-      FD_SET (fileno (rl_instream), &fds);
+      FD_SET (fileno (rl_instream), &fds);    
 
       r = select (FD_SETSIZE, &fds, NULL, NULL, NULL);
       if (r < 0 && errno != EINTR)
-        {
-          perror ("rltest: select");
-          rl_callback_handler_remove ();
-          break;
-        }
+	{
+	  perror ("rltest: select");
+	  rl_callback_handler_remove ();
+	  break;
+	}
       if (sigwinch_received)
-        {
-          rl_resize_terminal ();
-          sigwinch_received = 0;
-        }
-      if (sigint_received)
-        {
-          printf ("Quit\n");
-
-          rl_callback_handler_remove ();
-          rl_callback_handler_install (prompt, cb_linehandler);
-
-          sigint_received = 0;
-          continue;
-        }
+	{
+	  rl_resize_terminal ();
+	  sigwinch_received = 0;
+	}
       if (r < 0)
-        continue;
+	continue;
 
       if (FD_ISSET (fileno (rl_instream), &fds))
-        rl_callback_read_char ();
+	rl_callback_read_char ();
     }
 
   printf ("rltest: Event loop has exited\n");

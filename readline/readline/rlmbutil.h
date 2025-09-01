@@ -1,6 +1,6 @@
 /* rlmbutil.h -- utility functions for multibyte characters. */
 
-/* Copyright (C) 2001-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -115,6 +115,8 @@ extern int _rl_find_next_mbchar (const char *, int, int, int);
 
 #ifdef HANDLE_MULTIBYTE
 
+extern size_t _rl_mbstrlen (const char *);
+
 extern int _rl_compare_chars (const char *, int, mbstate_t *, const char *, int, mbstate_t *);
 extern int _rl_get_char_len (const char *, mbstate_t *);
 extern int _rl_adjust_point (const char *, int, mbstate_t *);
@@ -155,26 +157,26 @@ _rl_wcwidth (WCHAR_T wc)
 {
   switch (wc)
     {
-    case ' ': case '!': case '"': case '#': case '%':
-    case '&': case '\'': case '(': case ')': case '*':
-    case '+': case ',': case '-': case '.': case '/':
-    case '0': case '1': case '2': case '3': case '4':
-    case '5': case '6': case '7': case '8': case '9':
-    case ':': case ';': case '<': case '=': case '>':
-    case '?':
-    case 'A': case 'B': case 'C': case 'D': case 'E':
-    case 'F': case 'G': case 'H': case 'I': case 'J':
-    case 'K': case 'L': case 'M': case 'N': case 'O':
-    case 'P': case 'Q': case 'R': case 'S': case 'T':
-    case 'U': case 'V': case 'W': case 'X': case 'Y':
-    case 'Z':
-    case '[': case '\\': case ']': case '^': case '_':
-    case 'a': case 'b': case 'c': case 'd': case 'e':
-    case 'f': case 'g': case 'h': case 'i': case 'j':
-    case 'k': case 'l': case 'm': case 'n': case 'o':
-    case 'p': case 'q': case 'r': case 's': case 't':
-    case 'u': case 'v': case 'w': case 'x': case 'y':
-    case 'z': case '{': case '|': case '}': case '~':
+    case L' ': case L'!': case L'"': case L'#': case L'%':
+    case L'&': case L'\'': case L'(': case L')': case L'*':
+    case L'+': case L',': case L'-': case L'.': case L'/':
+    case L'0': case L'1': case L'2': case L'3': case L'4':
+    case L'5': case L'6': case L'7': case L'8': case L'9':
+    case L':': case L';': case L'<': case L'=': case L'>':
+    case L'?':
+    case L'A': case L'B': case L'C': case L'D': case L'E':
+    case L'F': case L'G': case L'H': case L'I': case L'J':
+    case L'K': case L'L': case L'M': case L'N': case L'O':
+    case L'P': case L'Q': case L'R': case L'S': case L'T':
+    case L'U': case L'V': case L'W': case L'X': case L'Y':
+    case L'Z':
+    case L'[': case L'\\': case L']': case L'^': case L'_':
+    case L'a': case L'b': case L'c': case L'd': case L'e':
+    case L'f': case L'g': case L'h': case L'i': case L'j':
+    case L'k': case L'l': case L'm': case L'n': case L'o':
+    case L'p': case L'q': case L'r': case L's': case L't':
+    case L'u': case L'v': case L'w': case L'x': case L'y':
+    case L'z': case L'{': case L'|': case L'}': case L'~':
       return 1;
     default:
       return wcwidth (wc);
@@ -186,11 +188,16 @@ _rl_wcwidth (WCHAR_T wc)
 #endif
 /* end_clink_change */
 
-/* Unicode combining characters range from U+0300 to U+036F */
-#define UNICODE_COMBINING_CHAR(x) ((x) >= 768 && (x) <= 879)
+/* Unicode combining characters as of version 15.1 */
+#define UNICODE_COMBINING_CHAR(x) \
+	(((x) >= 0x0300 && (x) <= 0x036F) || \
+	 ((x) >= 0x1AB0 && (x) <= 0x1AFF) || \
+	 ((x) >= 0x1DC0 && (x) <= 0x1DFF) || \
+	 ((x) >= 0x20D0 && (x) <= 0x20FF) || \
+	 ((x) >= 0xFE20 && (x) <= 0xFE2F))
 
 #if defined (WCWIDTH_BROKEN)
-#  define WCWIDTH(wc)	((_rl_utf8locale && UNICODE_COMBINING_CHAR(wc)) ? 0 : _rl_wcwidth(wc))
+#  define WCWIDTH(wc)	((_rl_utf8locale && UNICODE_COMBINING_CHAR((int)wc)) ? 0 : _rl_wcwidth(wc))
 #else
 #  define WCWIDTH(wc)	_rl_wcwidth(wc)
 #endif
@@ -200,6 +207,8 @@ _rl_wcwidth (WCHAR_T wc)
 #else
 #  define IS_COMBINING_CHAR(x)	(WCWIDTH(x) == 0)
 #endif
+
+#define IS_BASE_CHAR(x)		(iswgraph(x) && WCWIDTH(x) > 0)
 
 #define UTF8_SINGLEBYTE(c)	(((c) & 0x80) == 0)
 #define UTF8_MBFIRSTCHAR(c)	(((c) & 0xc0) == 0xc0)
@@ -244,5 +253,103 @@ extern int rl_byte_oriented;
 /* begin_clink_change */
 #endif
 /* end_clink_change */
+
+/* Snagged from gnulib */
+#ifdef HANDLE_MULTIBYTE
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* is_basic(c) tests whether the single-byte character c is
+   - in the ISO C "basic character set" or is one of '@', '$', and '`'
+     which ISO C 23 § 5.2.1.1.(1) guarantees to be single-byte and in
+     practice are safe to treat as basic in the execution character set,
+     or
+   - in the POSIX "portable character set", which
+     <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html>
+     equally guarantees to be single-byte. */
+
+#if (' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
+    && ('$' == 36) && ('%' == 37) && ('&' == 38) && ('\'' == 39) \
+    && ('(' == 40) && (')' == 41) && ('*' == 42) && ('+' == 43) \
+    && (',' == 44) && ('-' == 45) && ('.' == 46) && ('/' == 47) \
+    && ('0' == 48) && ('1' == 49) && ('2' == 50) && ('3' == 51) \
+    && ('4' == 52) && ('5' == 53) && ('6' == 54) && ('7' == 55) \
+    && ('8' == 56) && ('9' == 57) && (':' == 58) && (';' == 59) \
+    && ('<' == 60) && ('=' == 61) && ('>' == 62) && ('?' == 63) \
+    && ('@' == 64) && ('A' == 65) && ('B' == 66) && ('C' == 67) \
+    && ('D' == 68) && ('E' == 69) && ('F' == 70) && ('G' == 71) \
+    && ('H' == 72) && ('I' == 73) && ('J' == 74) && ('K' == 75) \
+    && ('L' == 76) && ('M' == 77) && ('N' == 78) && ('O' == 79) \
+    && ('P' == 80) && ('Q' == 81) && ('R' == 82) && ('S' == 83) \
+    && ('T' == 84) && ('U' == 85) && ('V' == 86) && ('W' == 87) \
+    && ('X' == 88) && ('Y' == 89) && ('Z' == 90) && ('[' == 91) \
+    && ('\\' == 92) && (']' == 93) && ('^' == 94) && ('_' == 95) \
+    && ('`' == 96) && ('a' == 97) && ('b' == 98) && ('c' == 99) \
+    && ('d' == 100) && ('e' == 101) && ('f' == 102) && ('g' == 103) \
+    && ('h' == 104) && ('i' == 105) && ('j' == 106) && ('k' == 107) \
+    && ('l' == 108) && ('m' == 109) && ('n' == 110) && ('o' == 111) \
+    && ('p' == 112) && ('q' == 113) && ('r' == 114) && ('s' == 115) \
+    && ('t' == 116) && ('u' == 117) && ('v' == 118) && ('w' == 119) \
+    && ('x' == 120) && ('y' == 121) && ('z' == 122) && ('{' == 123) \
+    && ('|' == 124) && ('}' == 125) && ('~' == 126)
+/* The character set is ISO-646, not EBCDIC. */
+# define IS_BASIC_ASCII 1
+
+/* All locale encodings (see localcharset.h) map the characters 0x00..0x7F
+   to U+0000..U+007F, like ASCII, except for
+     CP864      different mapping of '%'
+     SHIFT_JIS  different mappings of 0x5C, 0x7E
+     JOHAB      different mapping of 0x5C
+   However, these characters in the range 0x20..0x7E are in the ISO C
+   "basic character set" and in the POSIX "portable character set", which
+   ISO C and POSIX guarantee to be single-byte.  Thus, locales with these
+   encodings are not POSIX compliant.  And they are most likely not in use
+   any more (as of 2023).  */
+# define _rl_is_basic(c) ((unsigned char) (c) < 0x80)
+
+#else
+
+static inline int
+_rl_is_basic (char c)
+{
+  switch (c)
+    {
+    case '\0':
+    case '\007': case '\010':
+    case '\t': case '\n': case '\v': case '\f': case '\r':
+    case ' ': case '!': case '"': case '#': case '$': case '%':
+    case '&': case '\'': case '(': case ')': case '*':
+    case '+': case ',': case '-': case '.': case '/':
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+    case ':': case ';': case '<': case '=': case '>':
+    case '?': case '@':
+    case 'A': case 'B': case 'C': case 'D': case 'E':
+    case 'F': case 'G': case 'H': case 'I': case 'J':
+    case 'K': case 'L': case 'M': case 'N': case 'O':
+    case 'P': case 'Q': case 'R': case 'S': case 'T':
+    case 'U': case 'V': case 'W': case 'X': case 'Y':
+    case 'Z':
+    case '[': case '\\': case ']': case '^': case '_': case '`':
+    case 'a': case 'b': case 'c': case 'd': case 'e':
+    case 'f': case 'g': case 'h': case 'i': case 'j':
+    case 'k': case 'l': case 'm': case 'n': case 'o':
+    case 'p': case 'q': case 'r': case 's': case 't':
+    case 'u': case 'v': case 'w': case 'x': case 'y':
+    case 'z': case '{': case '|': case '}': case '~':
+      return 1;
+    default:
+      return 0;
+    }
+}
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HANDLE_MULTIBYTE */
 
 #endif /* _RL_MBUTIL_H_ */

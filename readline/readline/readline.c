@@ -1,7 +1,7 @@
 /* readline.c -- a general facility for reading lines of input
    with emacs style editing and completion. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -488,16 +488,11 @@ readline_internal_setup (void)
   RL_CHECK_SIGNALS ();
 }
 
-STATIC_CALLBACK char *
-readline_internal_teardown (int eof)
+STATIC_CALLBACK void
+readline_common_teardown (void)
 {
   char *temp;
   HIST_ENTRY *entry;
-
-  RL_CHECK_SIGNALS ();
-
-  if (eof)
-    RL_SETSTATE (RL_STATE_EOF);		/* XXX */
 
   /* Restore the original of this history line, iff the line that we
      are editing was originally in the history, AND the line has changed. */
@@ -524,6 +519,17 @@ readline_internal_teardown (int eof)
      rid of it now. */
   if (rl_undo_list)
     rl_free_undo_list ();
+}
+	
+STATIC_CALLBACK char *
+readline_internal_teardown (int eof)
+{
+  RL_CHECK_SIGNALS ();
+
+  if (eof)
+    RL_SETSTATE (RL_STATE_EOF);		/* XXX */
+
+  readline_common_teardown ();
 
   /* Disable the meta key, if this terminal has one and we were told to use it.
      The check whether or not we sent the enable string is in
@@ -556,7 +562,11 @@ _rl_internal_char_cleanup (void)
     rl_vi_check ();
 #endif /* VI_MODE */
 
+#if defined (HANDLE_MULTIBYTE)
+  if (rl_num_chars_to_read && _rl_mbstrlen (rl_line_buffer) >= rl_num_chars_to_read)
+#else
   if (rl_num_chars_to_read && rl_end >= rl_num_chars_to_read)
+#endif
     {
       (*rl_redisplay_function) ();
 /* begin_clink_change */
@@ -624,12 +634,12 @@ readline_internal_charloop (void)
 /* begin_clink_change */
 #if defined (READLINE_CALLBACKS)
       /* Preserve and restore _rl_top_level, because in
-         rl_callback_read_char() the `eof = readline_internal_char ();` line
-         can end up making a reentrant call into readline_internal_char(), and
-         overwrites the _rl_top_level.  After returning, _rl_top_level can
-         still be used.  Repro: Ctrl-R (reverse-search-history), Ctrl-X (first
-         key in multikey binding), Esc (or any key that isn't a bound second
-         key in any multikey binding starting with Ctrl-X). */
+	 rl_callback_read_char() the `eof = readline_internal_char ();` line
+	 can end up making a reentrant call into readline_internal_char(), and
+	 overwrites the _rl_top_level.  After returning, _rl_top_level can
+	 still be used.  Repro: Ctrl-R (reverse-search-history), Ctrl-X (first
+	 key in multikey binding), Esc (or any key that isn't a bound second
+	 key in any multikey binding starting with Ctrl-X). */
 #endif
 /* end_clink_change */
       /* Save and restore _rl_top_level even though most of the time it
@@ -1315,6 +1325,7 @@ rl_initialize (void)
 
   /* We aren't done yet.  We haven't even gotten started yet! */
   rl_done = 0;
+  rl_eof_found = 0;
   RL_UNSETSTATE(RL_STATE_DONE|RL_STATE_TIMEOUT|RL_STATE_EOF);
 
   /* Tell the history routines what is going on. */
@@ -1468,6 +1479,7 @@ readline_default_bindings (void)
     rl_tty_set_default_bindings (_rl_keymap);
 }
 
+#if defined (DEBUG)
 /* Reset the default bindings for the terminal special characters we're
    interested in back to rl_insert and read the new ones. */
 static void
@@ -1479,6 +1491,7 @@ reset_default_bindings (void)
       rl_tty_set_default_bindings (_rl_keymap);
     }
 }
+#endif
 
 /* Bind some common arrow key sequences in MAP. */
 static void

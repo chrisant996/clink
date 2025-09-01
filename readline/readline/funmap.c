@@ -1,6 +1,6 @@
 /* funmap.c -- attach names to functions. */
 
-/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -93,6 +93,13 @@ static const FUNMAP default_funmap[] = {
   { "end-of-line", rl_end_of_line },
   { "exchange-point-and-mark", rl_exchange_point_and_mark },
   { "execute-named-command", rl_execute_named_command },
+/* begin_clink_change */
+#ifdef INCLUDE_EXPORT_COMPLETIONS
+/* end_clink_change */
+  { "export-completions", rl_export_completions },
+/* begin_clink_change */
+#endif
+/* end_clink_change */
   { "fetch-history", rl_fetch_history },
   { "forward-backward-delete-char", rl_rubout_or_delete },
   { "forward-byte", rl_forward_byte },
@@ -287,6 +294,7 @@ rl_funmap_names (void)
       result[result_index + 1] = (char *)NULL;
     }
 
-  qsort (result, result_index, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+  if (result)
+    qsort (result, result_index, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
   return (result);
 }

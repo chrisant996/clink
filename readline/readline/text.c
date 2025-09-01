@@ -1,6 +1,6 @@
 /* text.c -- text handling commands for readline. */
 
-/* Copyright (C) 1987-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021,2023-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -1549,11 +1549,11 @@ rl_change_case (int count, int op)
   int start, next, end;
   int inword, nc, nop;
   WCHAR_T c;
+  unsigned char uc;
 #if defined (HANDLE_MULTIBYTE)
   WCHAR_T wc, nwc;
   char mb[MB_LEN_MAX+1];
-  int mlen;
-  size_t m;
+  size_t m, mlen;
   mbstate_t mps;
 #endif
 
@@ -1603,7 +1603,9 @@ rl_change_case (int count, int op)
 	 characters */
       if (MB_CUR_MAX == 1 || rl_byte_oriented)
 	{
-	  nc = (nop == UpCase) ? _rl_to_upper (c) : _rl_to_lower (c);
+change_singlebyte:
+	  uc = c;
+	  nc = (nop == UpCase) ? _rl_to_upper (uc) : _rl_to_lower (uc);
 	  rl_line_buffer[start] = nc;
 	}
 #if defined (HANDLE_MULTIBYTE)
@@ -1611,9 +1613,16 @@ rl_change_case (int count, int op)
 	{
 	  m = MBRTOWC (&wc, rl_line_buffer + start, end - start, &mps);
 	  if (MB_INVALIDCH (m))
-	    wc = (WCHAR_T)rl_line_buffer[start];
+	    {
+	      c = rl_line_buffer[start];
+	      next = start + 1;		/* potentially redundant */
+	      goto change_singlebyte;
+	    }
 	  else if (MB_NULLWCH (m))
-	    wc = L'\0';
+	    {
+	      start = next;	/* don't bother with null wide characters */
+	      continue;
+	    }
 	  nwc = (nop == UpCase) ? _rl_to_wupper (wc) : _rl_to_wlower (wc);
 	  if  (nwc != wc)	/*  just skip unchanged characters */
 	    {
@@ -1622,12 +1631,13 @@ rl_change_case (int count, int op)
 
 	      memset (&ts, 0, sizeof (mbstate_t));
 	      mlen = WCRTOMB (mb, nwc, &ts);
-	      if (mlen < 0)
+	      
+	      if (MB_INVALIDCH (mlen))
 		{
 		  nwc = wc;
 		  memset (&ts, 0, sizeof (mbstate_t));
 		  mlen = WCRTOMB (mb, nwc, &ts);
-		  if (mlen < 0)		/* should not happen */
+		  if (MB_INVALIDCH (mlen))		/* should not happen */
 		    strncpy (mb, rl_line_buffer + start, mlen = m);
 		}
 	      if (mlen > 0)
@@ -1876,12 +1886,16 @@ static int
 _rl_char_search (int count, int fdir, int bdir)
 {
   char mbchar[MB_LEN_MAX];
-  int mb_len;
+  int mb_len, i;
 
   mb_len = _rl_read_mbchar (mbchar, MB_LEN_MAX);
 
   if (mb_len <= 0)
     return 1;
+
+  if (RL_ISSTATE (RL_STATE_MACRODEF))
+    for (i = 0; i < mb_len; i++)
+      _rl_add_macro_char (mbchar[i]);
 
   if (count < 0)
     return (_rl_char_search_internal (-count, bdir, mbchar, mb_len));
@@ -1895,8 +1909,12 @@ _rl_char_search (int count, int fdir, int bdir)
   int c;
 
   c = _rl_bracketed_read_key ();
+
   if (c < 0)
     return 1;
+
+  if (RL_ISSTATE (RL_STATE_MACRODEF))
+    _rl_add_macro_char (c);
 
   if (count < 0)
     return (_rl_char_search_internal (-count, bdir, c));
@@ -2071,10 +2089,13 @@ _rl_rscxt_dispose (_rl_readstr_cxt *cxt, int flags)
   xfree (cxt);
 }
 
+/* This isn't used yet */
 void
 _rl_free_saved_readstr_line ()
 {
   if (_rl_saved_line_for_readstr)
+    /* This doesn't free any saved undo list, if it needs to,
+       rl_clear_history shows how to do it. */
     _rl_free_saved_line (_rl_saved_line_for_readstr);
   _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
 }
@@ -2083,13 +2104,10 @@ void
 _rl_unsave_saved_readstr_line ()
 {
   if (_rl_saved_line_for_readstr)
-/* begin_clink_change */
-    //_rl_unsave_line (_rl_saved_line_for_readstr);
     {
       _rl_free_undo_list (rl_undo_list);
-      _rl_unsave_line (_rl_saved_line_for_readstr);
+      _rl_unsave_line (_rl_saved_line_for_readstr);	/* restores rl_undo_list */
     }
-/* end_clink_change */
   _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
 }
 
@@ -2101,22 +2119,27 @@ _rl_readstr_init (int pchar, int flags)
 
   cxt = _rl_rscxt_alloc (flags);
 
-  rl_maybe_replace_line ();
   _rl_saved_line_for_readstr = _rl_alloc_saved_line ();
-
   rl_undo_list = 0;
 
   rl_line_buffer[0] = 0;
   rl_end = rl_point = 0;
 
 /* begin_clink_change */
-  RL_SETSTATE(RL_STATE_READSTR);
+  RL_SETSTATE (RL_STATE_READSTR);
   _rl_readstr_pchar = pchar ? pchar : '@';
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : '@');
+  cxt->flags |= READSTR_FREEPMT;
   rl_message ("%s", p);
   xfree (p);
+
+/* begin_clink_change
+ * This is too late to set the state -- the host app's display routine may
+ * need it inside the call to rl_message. */
+  //RL_SETSTATE (RL_STATE_READSTR);
+/* end_clink_change */
 
   _rl_rscxt = cxt;  
 
@@ -2129,9 +2152,7 @@ _rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)
   _rl_rscxt_dispose (cxt, 0);
   _rl_rscxt = 0;
 
-/* begin_clink_change */
-  RL_UNSETSTATE(RL_STATE_READSTR);
-/* end_clink_change */
+  RL_UNSETSTATE (RL_STATE_READSTR);
 
   return (r != 1);
 }
@@ -2142,11 +2163,22 @@ _rl_readstr_restore (_rl_readstr_cxt *cxt)
   _rl_unsave_saved_readstr_line ();	/* restores rl_undo_list */
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  if (cxt->flags & READSTR_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->flags &= ~READSTR_FREEPMT;
   rl_clear_message ();
   _rl_fix_point (1);
 }
 
+int
+_rl_readstr_sigcleanup (_rl_readstr_cxt *cxt, int r)
+{
+  if (cxt->flags & READSTR_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->flags &= ~READSTR_FREEPMT;
+  return (_rl_readstr_cleanup (cxt, r));
+}
+  
 int   
 _rl_readstr_getchar (_rl_readstr_cxt *cxt)
 {
@@ -2186,6 +2218,9 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
   if (c < 0)
     c = CTRL ('C');  
 
+  /* could consider looking up the function bound to they key and dispatching
+     off that, but you want most characters inserted by default without having
+     to quote. */
   switch (c)
     {
     case CTRL('W'):
@@ -2252,7 +2287,7 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
       break;
 
     case ' ':
-      if ((cxt->flags & RL_READSTR_NOSPACE) == 0)
+      if ((cxt->flags & READSTR_NOSPACE) == 0)
 	{
 	  _rl_insert_char (1, c);
 	  break;
@@ -2267,6 +2302,12 @@ _rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
 	  return -1;
 	}
       break;
+
+#if 0
+    case CTRL('_'):
+      rl_do_undo ();
+      break;
+#endif
 
     default:
 #if defined (HANDLE_MULTIBYTE)
@@ -2395,7 +2436,7 @@ _rl_read_command_name ()
   char *ret;
   int c, r;
 
-  cxt = _rl_readstr_init ('!', RL_READSTR_NOSPACE);
+  cxt = _rl_readstr_init ('!', READSTR_NOSPACE);
   cxt->compfunc = _rl_readcmd_complete;
 
   /* skip callback stuff for now */
@@ -2446,8 +2487,13 @@ rl_execute_named_command (int count, int key)
 
   command = _rl_read_command_name ();
   if (command == 0 || *command == '\0')
-    return 1;
-  if (func = rl_named_function (command))
+    {
+      free (command);
+      return 1;
+    }
+  func = rl_named_function (command);
+  free (command);
+  if (func)
     {
       int prev, ostate;
 

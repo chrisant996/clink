@@ -71,7 +71,8 @@ TERMCAP_LIB = @TERMCAP_LIB@
 
 SOURCES = excallback.c fileman.c histexamp.c manexamp.c rl-fgets.c rl.c \
 		rlbasic.c rlcat.c rlevent.c rlptytest.c rltest.c rlversion.c \
-		rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
+		rl-callbacktest.c rl-callbacktest2.c rl-callbacktest3.c \
+		hist_erasedups.c hist_purgecmd.c \
 		rlkeymaps.c rl-timeout.c
 
 EXECUTABLES = fileman$(EXEEXT) rltest$(EXEEXT) rl$(EXEEXT) rlcat$(EXEEXT) \
@@ -138,6 +139,12 @@ rltest2$(EXEEXT): rltest2.o $(READLINE_LIB)
 rl-callbacktest$(EXEEXT): rl-callbacktest.o $(READLINE_LIB)
 	$(CC) $(LDFLAGS) -o $@ rl-callbacktest.o $(READLINE_LIB) $(TERMCAP_LIB)
 
+rl-callbacktest2$(EXEEXT): rl-callbacktest2.o $(READLINE_LIB)
+	$(CC) $(LDFLAGS) -o $@ rl-callbacktest2.o $(READLINE_LIB) $(TERMCAP_LIB)
+
+rl-callbacktest3$(EXEEXT): rl-callbacktest3.o $(READLINE_LIB)
+	$(CC) $(LDFLAGS) -o $@ rl-callbacktest3.o $(READLINE_LIB) $(TERMCAP_LIB)
+
 rlptytest$(EXEEXT): rlptytest.o $(READLINE_LIB)
 	$(CC) $(LDFLAGS) -o $@ rlptytest.o $(READLINE_LIB) $(TERMCAP_LIB) $(LIBUTIL)
 
@@ -156,12 +163,26 @@ hist_erasedups$(EXEEXT): hist_erasedups.o $(HISTORY_LIB)
 hist_purgecmd$(EXEEXT): hist_purgecmd.o $(HISTORY_LIB)
 	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.o -lhistory $(TERMCAP_LIB)
 
-clean mostlyclean:
+rlfe:	force
+	( rlfe_srcdir=${srcdir}/rlfe ; \
+	  if test -d rlfe; then :; else mkdir rlfe; fi; \
+	  cd rlfe && $(SHELL) $$rlfe_srcdir/configure -C && ${MAKE}  )
+
+force:
+
+.PHONY: clean maintainer-clean distclean mostlyclean
+
+mostlyclean:
 	$(RM) $(OBJECTS) $(OTHEROBJ)
 	$(RM) $(EXECUTABLES) $(OTHEREXE) *.exe
+	-( cd rlfe && ${MAKE} $@ )
+
+clean: mostlyclean
+	-( cd rlfe && ${MAKE} $@ )
 
 distclean maintainer-clean: clean
 	$(RM) Makefile
+	-( cd rlfe && ${MAKE} $@ )
 
 fileman.o: fileman.c
 manexamp.o: manexamp.c

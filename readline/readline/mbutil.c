@@ -1,6 +1,6 @@
 /* mbutil.c -- readline multibyte character utility functions */
 
-/* Copyright (C) 2001-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -127,7 +127,7 @@ _rl_utf8_mblen (const char *s, size_t n)
 		return 3;
 	    }
 	}
-      else if (c < 0xf4)
+      else if (c <= 0xf4)
 	{
 	  if (n == 1)
 	    return -2;
@@ -151,6 +151,61 @@ _rl_utf8_mblen (const char *s, size_t n)
     }
   /* invalid or incomplete multibyte character */
   return -1;
+}
+
+static size_t
+_rl_utf8_mbstrlen (const char *s)
+{
+  size_t clen, nc;
+  int mb_cur_max;
+
+  nc = 0;
+  mb_cur_max = MB_CUR_MAX;
+  while (*s && (clen = (size_t)_rl_utf8_mblen(s, mb_cur_max)) != 0)
+    {
+      if (MB_INVALIDCH (clen))
+	clen = 1;
+      s += clen;
+      nc++;
+    }
+  return nc;
+}
+
+static size_t
+_rl_gen_mbstrlen (const char *s)
+{
+  size_t clen, nc;
+  mbstate_t mbs = { 0 }, mbsbak = { 0 };
+  int f, mb_cur_max;
+
+  nc = 0;
+  mb_cur_max = MB_CUR_MAX;
+  while (*s && (clen = (f = _rl_is_basic (*s)) ? 1 : mbrlen(s, mb_cur_max, &mbs)) != 0)
+    {
+      if (MB_INVALIDCH(clen))
+	{
+	  clen = 1;     /* assume single byte */
+	  mbs = mbsbak;
+	}
+
+      if (f == 0)
+	mbsbak = mbs;
+
+      s += clen;
+      nc++;
+    }
+  return nc;
+}
+
+size_t
+_rl_mbstrlen (const char *s)
+{
+  if (MB_CUR_MAX == 1)
+    return (strlen (s));
+  else if (_rl_utf8locale)
+    return (_rl_utf8_mbstrlen (s));
+  else
+    return (_rl_gen_mbstrlen (s));
 }
 
 static int
@@ -222,11 +277,13 @@ _rl_find_next_mbchar_internal (const char *string, int seed, int count, int find
 
   if (find_non_zero)
     {
-      tmp = MBRTOWC (&wc, string + point, strlen (string + point), &ps);
+      len = strlen (string + point);
+      tmp = MBRTOWC (&wc, string + point, len, &ps);
       while (MB_NULLWCH (tmp) == 0 && MB_INVALIDCH (tmp) == 0 && WCWIDTH (wc) == 0)
 	{
 	  point += tmp;
-	  tmp = MBRTOWC (&wc, string + point, strlen (string + point), &ps);
+	  len -= tmp;
+	  tmp = MBRTOWC (&wc, string + point, len, &ps);
 	}
     }
 
@@ -267,11 +324,16 @@ _rl_find_prev_utf8char (const char *string, int seed, int find_non_zero)
       save = prev;
 
       /* Move back until we're not in the middle of a multibyte char */
+#if 0
       if (UTF8_MBCHAR (b))
 	{
 	  while (prev > 0 && (b = (unsigned char)string[--prev]) && UTF8_MBCHAR (b))
 	    ;
 	}
+#else
+      while (prev > 0 && (b = (unsigned char)string[--prev]) && UTF8_MBFIRSTCHAR (b) == 0)
+	;
+#endif
 
       if (UTF8_MBFIRSTCHAR (b))
 	{
@@ -528,6 +590,7 @@ _rl_find_prev_mbchar (const char *string, int seed, int flags)
 #endif
 }
 
+#if defined (HANDLE_MULTIBYTE)
 /* Compare the first N characters of S1 and S2 without regard to case. If
    FLAGS&1, apply the mapping specified by completion-map-case and make
    `-' and `_' equivalent. Returns 1 if the strings are equal. */
@@ -569,7 +632,7 @@ _rl_mb_strcaseeqn (const char *s1, size_t l1, const char *s2, size_t l2, size_t 
       s2 += v1;
       n -= v1;
       if ((flags & 1) && (wc1 == L'-' || wc1 == L'_') && (wc2 == L'-' || wc2 == L'_'))
-        continue;
+	continue;
       if (wc1 != wc2)
 	return 0;
     }
@@ -608,3 +671,4 @@ _rl_mb_charcasecmp (const char *s1, mbstate_t *ps1, const char *s2, mbstate_t *p
     return 1;
   return (wc1 == wc2);
 }
+#endif

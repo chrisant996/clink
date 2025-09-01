@@ -1,3 +1,174 @@
+This document details the changes between this version, readline-8.3, and
+the previous version, readline-8.2.
+
+1. Changes to Readline
+
+a. Fixed a bug in clearing the visible line structure before redisplay.
+
+b. Fix a bug where setlocale(3) returning NULL caused a crash.
+
+c. Fixed signal checking in callback mode to handle signals that arrive before
+   readline restore's the application's signal handlers.
+
+d. Fixed a bug with word completion where the directory name needs to be
+   dequoted and tilde-expanded.
+
+e. Fixed a bug that caused compilation to fail on systems with select but not
+   pselect.
+
+f. System-specific changes for: WIN32, z/OS, Cygwin, MSYS
+
+g. Fixed a bug that caused word completion mismatches if the quoted text the
+   user typed was longer than the unquoted match.
+
+h. Fixes for freeing undo lists that might appear in history list entries
+   after non-incremental searches.
+
+i. Fixes for some errors revealed by address sanitizer.
+
+j. In vi mode, if an `f' or `F' move command associated with a `c' or `C'
+   command fails, don't enter insert mode.
+
+k. Fixed bug with truncating a history file containing timestamps that caused
+   the timestamp associated with the first history entry not to be written.
+
+l. Fix vi-mode so that a motion command attached to d/D, y/Y, or t/T must
+   consume or delete at least one character.
+
+m. Fix a redisplay error when displaying meta characters as octal sequences
+   and other C locale issues.
+
+n. Fix error that caused characters composing an incomplete multibyte
+   character not to be inserted into the line.
+
+o. In callback mode, let the application echo the signal characters (e.g., ^C)
+   when the application's signal handlers are installed.
+
+p. Added some support for lines that consume more than the physical number of
+   screen lines.
+
+q. Make sure dump-variables returns the string values for active-region-start-color
+   and active-region-end-color if they're set.
+
+r. Fixes to how characters between 128 and 159 are printed when displaying
+   macro values (use symbolic notation instead of directly printing the
+   character).
+
+s. Don't convert meta characters that contain NULL (\M-\C-@) to actual NULs,
+   which prematurely terminates the macro value.
+
+t. Fix typo in the readline color prefix extension that it uses for coloring
+   filename prefixes when displaying possible completions.
+
+u. Call the filename rewrite hook on the word being completed before comparing
+   it against possible completions from the file system to get consistent
+   strings.
+
+v. Fix infinite recursion that can happen if someone binds a key that doesn't
+   have a different upper and lower case represenation to do-lowercase-version.
+
+w. Check for non-ANSI (dumb) terminals a little more thoroughly.
+
+x. Don't attempt to history-expand the `quick substitution' character at the
+   beginning of a line if the application has set the quoting state to single
+   quotes.
+
+y. Fix small memory leak if non-incremental or incremental search is
+   interrupted by a signal.
+
+z. Loading very large history files should be much faster.
+
+aa. Retry opening startup files if the open is interrupted by a signal
+    and is not automatically restarted.
+
+bb. Make sure the bracketed-paste input buffer is null-terminated when read
+    returns an error.
+
+cc. Fixed a small memory leak in execute-named-command if the command doesn't
+    exist or the function doesn't return.
+    
+dd. Fix for attempting to change case of invalid multibyte characters.
+
+ee. Fix for possible completions that compare identically when using case-
+    insensitive completion but have different byte lengths.
+    
+ff. Fix to make non-incremental searches use undo lists and set the history
+    position the same way as incremental searches.
+    
+gg. Don't check for signals when handling a received signal.
+   
+hh. Fix off-by-one error when tokenizing words like $((expr)) while performing
+    history expansion.
+   
+ii. Fixes for incremental searches and redisplay in the C locale.
+
+jj. Fixes for some use-after-free of the undo list errors when stacking multiple
+    commands that use rl_maybe_replace_line to save changes to a history entry.
+   
+kk. Fixes to ensure that completion-prefix-display-length and
+    colored-completion-prefix are mutually exclusive.
+
+ll. Fixed a bug that allowed a history search to change the current history
+    list position.
+
+mm. Fixed a bug that allowed ^G to retain a saved command to execute.
+   
+nn. Updates to new export-completions command to allow filename suffixes.
+
+oo. Fixed a redisplay bug with prompts containing multiple sequences of
+    invisible characters that are longer than the screen width.
+
+pp. The history library no longer skips blank lines while it is reading a
+    multiline history entry from a history file.
+
+2. New Features in Readline
+
+a. Output a newline if there is no prompt and readline reads an empty line.
+
+b. The history library falls back to stdio when writing the history list if
+   mmap fails.
+
+c. New bindable variable `search-ignore-case', causes readline to perform
+   case-insensitive incremental and non-incremental history searches.
+
+d. rl_full_quoting_desired: new application-settable variable, causes all
+   completions to be quoted as if they were filenames.
+
+e. rl_macro_display_hook: new application-settable function pointer, used if
+   the application wants to print macro values itself instead of letting
+   readline do it
+
+f. rl_reparse_colors: new application-callable function, reparses $LS_COLORS
+   (presumably after the user changes it)
+
+g. rl_completion_rewrite_hook: new application-settable function pointer,
+   called to modify the word being completed before comparing it against
+   pathnames from the file system.
+
+h. execute-named-command: a new bindable command that reads the name of a
+   readline command from the standard input and executes it. Bound to M-x
+   in emacs mode by default.
+
+i. Incremental and non-incremental searches now allow ^V/^Q (or, in the former
+   case, anything bound to quoted-insert) to quote characters in the search
+   string.
+
+j. Documentation has been significantly updated.
+
+k. New `force-meta-prefix' bindable variable, which forces the use of ESC as
+   the meta prefix when using "\M-" in key bindings instead of overloading
+   convert-meta.
+
+l. The default value for `readline-colored-completion-prefix' no longer has a
+   leading `.'; the original report was based on a misunderstanding.
+
+m. There is a new bindable command, `export-completions', which writes the
+   possible completions for a word to the standard output in a defined format.
+
+n. Readline can reset its idea of the screen dimensions when executing after
+   a SIGCONT.
+
+-------------------------------------------------------------------------------
 This document details the changes between this version, readline-8.2, and
 the previous version, readline-8.1.
 

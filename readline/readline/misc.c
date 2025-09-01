@@ -1,6 +1,6 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -97,7 +97,7 @@ _rl_arg_overflow (void)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
       return 1;
@@ -111,7 +111,7 @@ _rl_arg_init (void)
 /* begin_clink_change */
   if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-  rl_save_prompt ();
+    rl_save_prompt ();
   _rl_argcxt = 0;
   RL_SETSTATE(RL_STATE_NUMERICARG);
 }
@@ -156,10 +156,11 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
       else
 	{
 	  key = _rl_bracketed_read_key ();
+	  /* XXX - add to macro def? */
 /* begin_clink_change */
 	  if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-	  rl_restore_prompt ();
+	    rl_restore_prompt ();
 	  rl_clear_message ();
 	  RL_UNSETSTATE(RL_STATE_NUMERICARG);
 	  if (key < 0)
@@ -193,7 +194,7 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
 
@@ -261,7 +262,7 @@ rl_digit_argument (int ignore, int key)
         return 0;
       if (RL_ISSTATE (RL_STATE_NUMERICARG))
 /* end_clink_change */
-      rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
+        rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
       return 0;
     }
   else
@@ -299,7 +300,7 @@ _rl_arg_callback (_rl_arg_cxt cxt)
 /* begin_clink_change */
       if (!RL_ISSTATE (RL_STATE_CALLBACK))
 /* end_clink_change */
-      rl_restore_prompt ();
+        rl_restore_prompt ();
       rl_clear_message ();
       RL_UNSETSTATE(RL_STATE_NUMERICARG);
       rl_execute_next (c);
@@ -374,7 +375,7 @@ _rl_free_history_entry (HIST_ENTRY *entry)
 
 /* Perhaps put back the current line if it has changed. */
 int
-rl_maybe_replace_line (void)
+_rl_maybe_replace_line (int clear_undo)
 {
   HIST_ENTRY *temp;
 
@@ -392,10 +393,17 @@ rl_maybe_replace_line (void)
       if (_rl_saved_line_for_history && (UNDO_LIST *)_rl_saved_line_for_history->data == rl_undo_list)
 	_rl_saved_line_for_history->data = 0;
       /* Do we want to set rl_undo_list = 0 here since we just saved it into
-	 a history entry? */
-      rl_undo_list = 0;
+	 a history entry? We let the caller decide. */
+      if (clear_undo)
+	rl_undo_list = 0;
     }
   return 0;
+}
+
+int
+rl_maybe_replace_line (void)
+{
+  return (_rl_maybe_replace_line (0));
 }
 
 void
@@ -669,7 +677,12 @@ rl_get_next_history (int count, int key)
   if (count == 0)
     return 0;
 
+  /* If the current line has changed, save the changes. */
+#if 0	/* XXX old code can leak or corrupt rl_undo_list */
   rl_maybe_replace_line ();
+#else
+  _rl_maybe_replace_line (1);
+#endif
 
   r = _rl_next_history_internal (count);
 
@@ -745,10 +758,19 @@ rl_get_previous_history (int count, int key)
 
   /* If we don't have a line saved, then save this one. */
   had_saved_line = _rl_saved_line_for_history != 0;
+
+  /* XXX - if we are not editing a history line and we already had a saved
+     line, we're going to lose this undo list. Not sure what the right thing
+     is here - replace the saved line? */
+
   rl_maybe_save_line ();
 
   /* If the current line has changed, save the changes. */
+#if 0	/* XXX old code can leak or corrupt rl_undo_list */
   rl_maybe_replace_line ();
+#else
+  _rl_maybe_replace_line (1);
+#endif
 
   r = _rl_previous_history_internal (count);
 
@@ -873,7 +895,7 @@ rl_add_history (int count, int key)
     }
 
   /* Replace undo list in history entry if changed. */
-  rl_maybe_replace_line ();
+  _rl_maybe_replace_line (1);
 
   /* Start a new undo list if cross-linked with history entry. */
   if (current_history() && rl_undo_list)
@@ -889,9 +911,6 @@ rl_add_history (int count, int key)
   using_history ();
 
   /* It would be too confusing to unsave, so just discard. */
-// REVIEW: does this always/sometimes/never leak an undo list?
-  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
-    _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
   _rl_free_saved_history_line ();
 
   ++_rl_doing_an_undo; /* Block creating undo history for clearing the line. */

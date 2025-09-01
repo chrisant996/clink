@@ -1,3 +1,54 @@
+This is a terse description of the new features added to readline-8.3 since
+the release of readline-8.2.
+
+New Features in Readline
+
+a. Output a newline if there is no prompt and readline reads an empty line.
+
+b. The history library falls back to stdio when writing the history list if
+   mmap fails.
+
+c. New bindable variable `search-ignore-case', causes readline to perform
+   case-insensitive incremental and non-incremental history searches.
+
+d. rl_full_quoting_desired: new application-settable variable, causes all
+   completions to be quoted as if they were filenames.
+
+e. rl_macro_display_hook: new application-settable function pointer, used if
+   the application wants to print macro values itself instead of letting
+   readline do it
+
+f. rl_reparse_colors: new application-callable function, reparses $LS_COLORS
+   (presumably after the user changes it)
+
+g. rl_completion_rewrite_hook: new application-settable function pointer,
+   called to modify the word being completed before comparing it against
+   pathnames from the file system.
+
+h. execute-named-command: a new bindable command that reads the name of a
+   readline command from the standard input and executes it. Bound to M-x
+   in emacs mode by default.
+
+i. Incremental and non-incremental searches now allow ^V/^Q (or, in the former
+   case, anything bound to quoted-insert) to quote characters in the search
+   string.
+
+j. Documentation has been significantly updated.
+
+k. New `force-meta-prefix' bindable variable, which forces the use of ESC as
+   the meta prefix when using "\M-" in key bindings instead of overloading
+   convert-meta.
+
+l. The default value for `readline-colored-completion-prefix' no longer has a
+   leading `.'; the original report was based on a misunderstanding.
+
+m. There is a new bindable command, `export-completions', which writes the
+   possible completions for a word to the standard output in a defined format.
+
+n. Readline can reset its idea of the screen dimensions when executing after
+   a SIGCONT.
+
+-------------------------------------------------------------------------------
 This is a terse description of the new features added to readline-8.2 since
 the release of readline-8.1.
 

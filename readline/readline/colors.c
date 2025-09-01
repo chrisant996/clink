@@ -82,7 +82,7 @@ static void restore_default_color (void);
 #endif // !EXTERNAL_COLOR_SUPPORT
 /* end_clink_change */
 
-#define RL_COLOR_PREFIX_EXTENSION	".readline-colored-completion-prefix"
+#define RL_COLOR_PREFIX_EXTENSION	"readline-colored-completion-prefix"
 
 COLOR_EXT_TYPE *_rl_color_ext_list = 0;
 

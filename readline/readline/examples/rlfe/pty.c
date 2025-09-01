@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
-
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "screen.h"
@@ -112,8 +112,7 @@ int pty_preopen = 0;
 /***************************************************************/
 
 static void
-initmaster(f)
-int f;
+initmaster(int f)
 {
 #ifdef POSIX
   tcflush(f, TCIOFLUSH);
@@ -128,8 +127,7 @@ int f;
 }
 
 void
-InitPTY(f)
-int f;
+InitPTY(int f)
 {
   if (f < 0)
     return;
@@ -150,8 +148,7 @@ int f;
 #if defined(OSX) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   register int f;
   if ((f = open_controlling_pty(TtyName)) < 0)
@@ -167,8 +164,7 @@ char **ttyn;
 #if (defined(sequent) || defined(_SEQUENT_)) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   char *m, *s;
   register int f;
@@ -191,8 +187,7 @@ char **ttyn;
 #if defined(__sgi) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   int f;
   char *name, *_getpty(); 
@@ -219,8 +214,7 @@ char **ttyn;
 #if defined(MIPS) && defined(HAVE_DEV_PTC) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   register int f;
   struct stat buf;
@@ -245,11 +239,11 @@ char **ttyn;
 #if defined(HAVE_SVR4_PTYS) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   register int f;
-  char *m, *ptsname();
+  char *m;
+  char *ptsname __P((int));
   int unlockpt __P((int)), grantpt __P((int));
 #if defined(HAVE_GETPT) && defined(linux)
   int getpt __P((void));
@@ -289,8 +283,7 @@ char **ttyn;
 #define PTY_DONE
 
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   register int f;
 
@@ -318,8 +311,7 @@ char **ttyn;
 #if defined(HAVE_OPENPTY) && !defined(PTY_DONE)
 #define PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   int f, s;
   if (openpty(&f, &s, TtyName, NULL, NULL) != 0)
@@ -336,8 +328,7 @@ char **ttyn;
 
 #ifndef PTY_DONE
 int
-OpenPTY(ttyn)
-char **ttyn;
+OpenPTY(char **ttyn)
 {
   register char *p, *q, *l, *d;
   register int f;

@@ -1,6 +1,6 @@
 /* callback.c -- functions to use readline as an X `callback' mechanism. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -339,50 +339,18 @@ rl_callback_read_char (void)
 void
 rl_callback_handler_remove (void)
 {
-/* begin_clink_change
- * This restores rl_undo_list so that after SIGINT and rl_callback_handler_remove()
- * rl_undo_list isn't left as a dangling pointer into a linked list that's been
- * freed already.
- * Excerpted from readline_internal_teardown(), replacing 'the_line' with
- * 'rl_line_buffer'. */
-  char *temp;
-  HIST_ENTRY *entry;
-
-  RL_CHECK_SIGNALS ();
-
-  if (eof)
-    RL_SETSTATE (RL_STATE_EOF);		/* XXX */
-
-  /* Restore the original of this history line, iff the line that we
-     are editing was originally in the history, AND the line has changed. */
-  entry = current_history ();
-
-  /* We don't want to do this if we executed functions that call
-     history_set_pos to set the history offset to the line containing the
-     non-incremental search string. */
-  if (entry && rl_undo_list)
-   {
-      temp = savestring (rl_line_buffer);
-      rl_revert_line (1, 0);
-      entry = replace_history_entry (where_history (), rl_line_buffer, (histdata_t)NULL);
-      _rl_free_history_entry (entry);
-
-      strcpy (rl_line_buffer, temp);
-      xfree (temp);
-    }
-
-  if (_rl_revert_all_at_newline)
-    _rl_revert_all_lines ();
-
-  /* At any rate, it is highly likely that this line has an undo list.  Get
-     rid of it now. */
-  if (rl_undo_list)
-    rl_free_undo_list ();
-/* end_clink_change */
-
   rl_linefunc = NULL;
   RL_UNSETSTATE (RL_STATE_CALLBACK);
   RL_CHECK_SIGNALS ();
+
+  /* Do what we need to do to manage the undo list if we haven't already done
+     it in rl_callback_read_char(). If there's no undo list, we don't need to
+     do anything. It doesn't matter if we try to revert all previous lines a
+     second time; none of the history entries will have an undo list. */
+  if (rl_undo_list)
+    readline_common_teardown ();
+  /* At this point, rl_undo_list == NULL. */
+
   if (in_handler)
     {
       in_handler = 0;
@@ -423,7 +391,7 @@ rl_callback_sigcleanup (void)
   if (RL_ISSTATE (RL_STATE_ISEARCH))
     _rl_isearch_cleanup (_rl_iscxt, 0);
   else if (RL_ISSTATE (RL_STATE_NSEARCH))
-    _rl_nsearch_cleanup (_rl_nscxt, 0);
+    _rl_nsearch_sigcleanup (_rl_nscxt, 0);
   else if (RL_ISSTATE (RL_STATE_VIMOTION))
     RL_UNSETSTATE (RL_STATE_VIMOTION);
   else if (RL_ISSTATE (RL_STATE_NUMERICARG))
@@ -433,6 +401,9 @@ rl_callback_sigcleanup (void)
     }
   else if (RL_ISSTATE (RL_STATE_MULTIKEY))
     RL_UNSETSTATE (RL_STATE_MULTIKEY);
+  else if (RL_ISSTATE (RL_STATE_READSTR))
+    _rl_readstr_sigcleanup (_rl_rscxt, 0);
+
   if (RL_ISSTATE (RL_STATE_CHARSEARCH))
     RL_UNSETSTATE (RL_STATE_CHARSEARCH);
 

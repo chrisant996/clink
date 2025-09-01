@@ -4855,9 +4855,9 @@ sub update_sec_num {
     my $ret;
 
     $level--; # here we start at 0
-    if ($name =~ /^appendix/ || defined(@appendix_sec_num)) {
+    if ($name =~ /^appendix/ || @appendix_sec_num) {
 	# appendix style
-	if (defined(@appendix_sec_num)) {
+	if (@appendix_sec_num) {
 	    &incr_sec_num($level, @appendix_sec_num);
 	} else {
 	    @appendix_sec_num = ('A', 0, 0, 0);
@@ -4865,7 +4865,7 @@ sub update_sec_num {
 	$ret = join('.', @appendix_sec_num[0..$level]);
     } else {
 	# normal style
-	if (defined(@normal_sec_num)) 
+	if (@normal_sec_num)
 	{
 	  &incr_sec_num($level, @normal_sec_num);
 	} 

@@ -92,7 +92,7 @@ shlib/Makefile.in	f
 support/config.guess	f
 support/config.rpath	f	755
 support/config.sub	f
-support/install.sh	f	755
+support/install-sh	f	755
 support/mkdirs		f	755
 support/mkdist		f
 support/mkinstalldirs	f	755
@@ -112,8 +112,8 @@ doc/hstech.texi		f
 doc/hsuser.texi		f
 doc/readline.3		f
 doc/history.3		f
-doc/texi2dvi		f
-doc/texi2html		f
+doc/texi2dvi		f	755
+doc/texi2html		f	755
 examples/Makefile.in	f
 examples/excallback.c	f
 examples/fileman.c	f
@@ -126,6 +126,8 @@ examples/rlevent.c	f
 examples/rlkeymaps.c	f
 examples/rltest.c	f
 examples/rl-callbacktest.c	f
+examples/rl-callbacktest2.c	f
+examples/rl-callbacktest3.c	f
 examples/rl-timeout.c	f
 examples/rl-test-timeout	f
 examples/rl.c		f
@@ -143,17 +145,19 @@ examples/rlfe/Makefile.in	f
 examples/rlfe/README		f
 examples/rlfe/config.h.in	f
 examples/rlfe/configure		f	755
-examples/rlfe/configure.in	f
+examples/rlfe/configure.ac	f
 examples/rlfe/extern.h		f
 examples/rlfe/os.h		f
 examples/rlfe/pty.c		f
 examples/rlfe/rlfe.c		f
 examples/rlfe/screen.h		f
-examples/rlwrap-0.30.tar.gz	f
+examples/rlwrap-0.46.1.tar.gz	f
 # formatted documentation, from MANIFEST.doc
 doc/readline.ps		f
 doc/history.ps		f
 doc/rluserman.ps	f
+doc/readline_3.ps	f
+doc/history_3.ps	f
 doc/readline.dvi	f
 doc/history.dvi		f
 doc/rluserman.dvi	f
@@ -165,8 +169,8 @@ doc/history.html	f
 doc/rluserman.html	f
 doc/readline.0		f
 doc/history.0		f
-doc/readline_3.ps	f
-doc/history_3.ps	f
+doc/readline_3.pdf	f
+doc/history_3.pdf	f
 doc/history.pdf		f
 doc/readline.pdf	f
 doc/rluserman.pdf	f

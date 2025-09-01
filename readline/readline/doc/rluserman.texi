@@ -2,8 +2,8 @@
 @comment %**start of header (This is for running Texinfo on a region.)
 @setfilename rluserman.info
 @settitle GNU Readline Library
-@include version.texi
 
+@include version.texi
 @comment %**end of header (This is for running Texinfo on a region.)
 
 @copying
@@ -12,7 +12,7 @@ This manual describes the end user interface of the GNU Readline Library
 consistency of user interface across discrete programs which provide
 a command line interface.
 
-Copyright @copyright{} 1988--2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1988--2025 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document

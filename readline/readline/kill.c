@@ -1,6 +1,6 @@
 /* kill.c -- kill ring management. */
 
-/* Copyright (C) 1994-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -762,12 +762,9 @@ _rl_bracketed_text (size_t *lenp)
     }
   RL_UNSETSTATE (RL_STATE_MOREINPUT);
 
-  if (c >= 0)
-    {
-      if (len == cap)
-	buf = xrealloc (buf, cap + 1);
-      buf[len] = '\0';
-    }
+  if (len == cap)
+    buf = xrealloc (buf, cap + 1);
+  buf[len] = '\0';
 
   if (lenp)
     *lenp = len;

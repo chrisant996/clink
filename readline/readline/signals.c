@@ -1,6 +1,6 @@
 /* signals.c -- signal handling support for readline. */
 
-/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -88,6 +88,7 @@ int rl_catch_sigwinch = 0;	/* for the readline state struct in readline.c */
 
 /* Private variables. */
 int volatile _rl_caught_signal = 0;	/* should be sig_atomic_t, but that requires including <signal.h> everywhere */
+int volatile _rl_handling_signal = 0;
 
 /* If non-zero, print characters corresponding to received signals as long as
    the user has indicated his desire to do so (_rl_echo_control_chars). */
@@ -138,6 +139,7 @@ _rl_signal_handler (int sig)
   if (sig == SIGWINCH)
     {
       RL_SETSTATE(RL_STATE_SIGHANDLER);
+      _rl_handling_signal = SIGWINCH;
 
       rl_resize_terminal ();
       /* XXX - experimental for now */
@@ -147,6 +149,7 @@ _rl_signal_handler (int sig)
       if (rl_signal_event_hook)
 	(*rl_signal_event_hook) ();
 
+      _rl_handling_signal = 0;
       RL_UNSETSTATE(RL_STATE_SIGHANDLER);
     }
   else
@@ -182,6 +185,7 @@ _rl_handle_signal (int sig)
 #endif /* !HAVE_POSIX_SIGNALS */
 
   RL_SETSTATE(RL_STATE_SIGHANDLER);
+  _rl_handling_signal = sig;
 
 #if !defined (HAVE_BSD_SIGNALS) && !defined (HAVE_POSIX_SIGNALS)
   /* Since the signal will not be blocked while we are in the signal
@@ -293,7 +297,7 @@ _rl_handle_signal (int sig)
 #if defined (HAVE_POSIX_SIGNALS)
       /* Unblock any signal(s) blocked above */
       if (block_sig)
-	sigprocmask (SIG_UNBLOCK, &oset, (sigset_t *)NULL);
+	sigprocmask (SIG_UNBLOCK, &set, &oset);
 #endif
 
       /* We don't have to bother unblocking the signal because we are not
@@ -315,6 +319,7 @@ _rl_handle_signal (int sig)
       rl_reset_after_signal ();      
     }
 
+  _rl_handling_signal = 0;
   RL_UNSETSTATE(RL_STATE_SIGHANDLER);
   SIGHANDLER_RETURN;
 }
@@ -609,6 +614,19 @@ rl_reset_after_signal (void)
   rl_set_signals ();
 }
 
+/* Similar to rl_callback_sigcleanup, but cleans up operations that allocate
+   state even when not in callback mode. */
+void
+_rl_state_sigcleanup (void)
+{
+  if (RL_ISSTATE (RL_STATE_ISEARCH))		/* incremental search */
+    _rl_isearch_cleanup (_rl_iscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_NSEARCH))	/* non-incremental search */
+    _rl_nsearch_sigcleanup (_rl_nscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_READSTR))	/* reading a string */
+    _rl_readstr_sigcleanup (_rl_rscxt, 0);
+}
+
 /* Free up the readline variable line state for the current line (undo list,
    any partial history entry, any keyboard macros in progress, and any
    numeric arguments in process) after catching a signal, before calling
@@ -617,6 +635,9 @@ void
 rl_free_line_state (void)
 {
   register HIST_ENTRY *entry;
+
+  if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
+    _rl_state_sigcleanup ();
 
   rl_free_undo_list ();
 
@@ -679,7 +700,8 @@ _rl_release_sigint (void)
     return;
 
   sigint_blocked = 0;
-  RL_CHECK_SIGNALS ();
+  if (RL_ISSTATE (RL_STATE_SIGHANDLER) == 0)
+    RL_CHECK_SIGNALS ();
 }
 
 /* Cause SIGWINCH to not be delivered until the corresponding call to

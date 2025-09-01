@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- BUG:  `UP` `C-BKSPC` `UP` `ENTER`  ==>  asserts about leaked undo list entries.
 
 ## Normal Priority
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.

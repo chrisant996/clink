@@ -6,7 +6,7 @@
 /*								    */
 /* **************************************************************** */
 
-/* Copyright (C) 1987-2021,2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021,2023,2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -98,7 +98,7 @@ _rl_scxt_alloc (int type, int flags)
 /* begin_clink_change */
   if (history_prev_use_curr)
     {
-      rl_maybe_replace_line ();
+      _rl_maybe_replace_line (1);
       using_history ();
 // REVIEW: does this always/sometimes/never leak an undo list?
       if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
@@ -249,7 +249,7 @@ _rl_isearch_init (int direction)
 
   /* Create an array of pointers to the lines that we want to search. */
   hlist = history_list ();
-  rl_maybe_replace_line ();
+  _rl_maybe_replace_line (1);
   i = 0;
   if (hlist)
     for (i = 0; hlist[i]; i++);
@@ -773,10 +773,11 @@ opcode_dispatch:
     /* Add character to search string and continue search. */
     default:
 #if defined (HANDLE_MULTIBYTE)
-      wlen = (cxt->mb[0] == 0 || cxt->mb[1] == 0) ? 1 : RL_STRLEN (cxt->mb);
-#else
-      wlen = 1;
+      if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+	wlen = (cxt->mb[0] == 0 || cxt->mb[1] == 0) ? 1 : RL_STRLEN (cxt->mb);
+      else
 #endif
+      wlen = 1;
       if (cxt->search_string_index + wlen + 1 >= cxt->search_string_size)
 	{
 	  cxt->search_string_size += 128;	/* 128 much greater than MB_CUR_MAX */

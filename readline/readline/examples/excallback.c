@@ -19,7 +19,7 @@ My example shows how, using the alternate interface, you can
 interactively change the prompt (which is very nice imo). Also, I
 point out that you must roll your own terminal setting when using the
 alternate interface because readline depreps (using your parlance) the
-terminal while in the user callback. I try to demostrate what I mean
+terminal while in the user callback. I try to demonstrate what I mean
 with an example. I've included the program below.
 
 To compile, I just put the program in the examples directory and made
@@ -54,8 +54,10 @@ Copyright (C) 1999 Jeff Solomon
 
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
+#  include "history.h"
 #else
 #  include <readline/readline.h>
+#  include <readline/history.h>
 #endif
 
 #ifndef STDIN_FILENO
@@ -72,7 +74,7 @@ Copyright (C) 1999 Jeff Solomon
  * alternate interface. The first is the ability to interactively change the
  * prompt, which can't be done using the regular interface since rl_prompt is
  * read-only.
- * 
+ *
  * The second feature really highlights a subtle point when using the alternate
  * interface. That is, readline will not alter the terminal when inside your
  * callback handler. So let's so, your callback executes a user command that
@@ -92,7 +94,7 @@ Copyright (C) 1999 Jeff Solomon
  */
 
 void process_line(char *line);
-int  change_prompt(void);
+int  change_prompt(int, int);
 char *get_prompt(void);
 
 int prompt = 1;
@@ -101,7 +103,7 @@ tcflag_t old_lflag;
 cc_t     old_vtime;
 struct termios term;
 
-int 
+int
 main(int c, char **v)
 {
     fd_set fds;
@@ -170,31 +172,20 @@ process_line(char *line)
 }
 
 int
-change_prompt(void)
+change_prompt(int count, int key)
 {
   /* toggle the prompt variable */
   prompt = !prompt;
 
-  /* save away the current contents of the line */
-  strcpy(line_buf, rl_line_buffer);
-
-  /* install a new handler which will change the prompt and erase the current line */
-  rl_callback_handler_install(get_prompt(), process_line);
-
-  /* insert the old text on the new line */
-  rl_insert_text(line_buf);
-
-  /* redraw the current line - this is an undocumented function. It invokes the
-   * redraw-current-line command.
-   */
-  rl_refresh_line(0, 0);
+  rl_set_prompt (get_prompt ());
+  return 0;
 }
 
 char *
 get_prompt(void)
 {
   /* The prompts can even be different lengths! */
-  sprintf(prompt_buf, "%s", 
+  sprintf(prompt_buf, "%s",
     prompt ? "Hit ctrl-t to toggle prompt> " : "Pretty cool huh?> ");
   return prompt_buf;
 }

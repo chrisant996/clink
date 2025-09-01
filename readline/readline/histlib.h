@@ -83,13 +83,12 @@
 /* internal extern function declarations used by other parts of the library */
 
 /* histsearch.c */
-extern int _hs_history_patsearch (const char *, int, int);
-extern int _hs_history_search (const char *, int, int);
+extern int _hs_history_patsearch (const char *, int, int, int);
+extern int _hs_history_search (const char *, int, int, int);
 
 /* begin_clink_change */
-typedef int _hist_search_func_t (const char *, int);
 typedef struct {
-  _hist_search_func_t *func;
+  int search_flags;
   int start_index;
   int result_index;
   int local_index;

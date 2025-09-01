@@ -110,7 +110,7 @@ main (int argc, char **argv)
 	  int which;
 	  if ((sscanf (line + 6, "%d", &which)) == 1)
 	    {
-	      HIST_ENTRY *entry = remove_history (which);
+	      HIST_ENTRY *entry = remove_history (which - history_base);
 	      if (!entry)
 		fprintf (stderr, "No such entry %d\n", which);
 	      else

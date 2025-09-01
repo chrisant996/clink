@@ -46,7 +46,9 @@
 #define SYS_INPUTRC "/etc/inputrc"
 
 /* If defined, expand tabs to spaces. */
+/* begin_clink_change */
 //#define DISPLAY_TABS  // CMD.EXE can't accept tabs as inupt, so don't make them look nice.
+/* end_clink_change */
 
 /* If defined, use the terminal escape sequence to move the cursor forward
    over a character when updating the line rather than rewriting it. */
@@ -60,7 +62,9 @@
 #define READLINE_CALLBACKS
 
 /* Define this if you want the cursor to indicate insert or overwrite mode. */
+/* begin_clink_change */
 #define CURSOR_MODE
+/* end_clink_change */
 
 /* Define this if you want to enable code that talks to the Linux kernel
    tty auditing system. */

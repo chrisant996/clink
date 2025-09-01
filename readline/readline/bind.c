@@ -1,6 +1,6 @@
 /* bind.c -- key binding and startup file support for the readline library. */
 
-/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -271,7 +271,7 @@ rl_unbind_function_in_map (rl_command_func_t *func, Keymap map)
 	  map[i].function = (rl_command_func_t *)NULL;
 	  rval = 1;
 	}
-      else if (map[i].type == ISKMAP)		/* TAG:readline-8.1 */
+      else if (map[i].type == ISKMAP)
 	{
 	  int r;
 	  r = rl_unbind_function_in_map (func, FUNCTION_TO_KEYMAP (map, i));
@@ -432,19 +432,8 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	  return -1;
         }
 
-      /* We now rely on rl_translate_keyseq to do this conversion, so this
-	 check is superfluous. */
-#if 0
-      if (META_CHAR (ic) && _rl_convert_meta_chars_to_ascii)
-	{
-	  ic = UNMETA (ic);
-	  if (map[ESC].type == ISKMAP)
-	    {
-	      prevmap = map;
-	      map = FUNCTION_TO_KEYMAP (map, ESC);
-	    }
-	}
-#endif
+      /* We rely on rl_translate_keyseq to do convert meta-chars to key
+	 sequences with the meta prefix (ESC). */
 
       if ((i + 1) < keys_len)
 	{
@@ -641,7 +630,6 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	  array[l++] = ESC;	/* ESC is meta-prefix */
 	  c = UNMETA (c);
 /* end_clink_change */
-	  has_meta = 0;
 	}
 
       /* If convert-meta is turned on, convert a meta char to a key sequence */
@@ -658,6 +646,8 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	}
       else
 	array[l++] = (c);
+
+      has_meta = 0;
 
       /* Null characters may be processed for incomplete prefixes at the end of
 	 sequence */
@@ -989,11 +979,20 @@ _rl_read_file (char *filename, size_t *sizep)
   char *buffer;
   int i, file;
 
-  file = -1;
-  if (((file = open (filename, O_RDONLY, 0666)) < 0) || (fstat (file, &finfo) < 0))
+  file = open (filename, O_RDONLY, 0666);
+  /* If the open is interrupted, retry once */
+  if (file < 0 && errno == EINTR)
     {
+      RL_CHECK_SIGNALS ();
+      file = open (filename, O_RDONLY, 0666);
+    }
+  
+  if ((file < 0) || (fstat (file, &finfo) < 0))
+    {
+      i = errno;
       if (file >= 0)
 	close (file);
+      errno = i;
       return ((char *)NULL);
     }
 
@@ -1002,10 +1001,13 @@ _rl_read_file (char *filename, size_t *sizep)
   /* check for overflow on very large files */
   if (file_size != finfo.st_size || file_size + 1 < file_size)
     {
+      i = errno;
       if (file >= 0)
 	close (file);
 #if defined (EFBIG)
       errno = EFBIG;
+#else
+      errno = i;
 #endif
       return ((char *)NULL);
     }
@@ -2093,6 +2095,7 @@ rl_translate_old_keyseq (const char* string, char** out)
    false. */
 
 #define V_SPECIAL	0x1
+#define V_DEPRECATED	0x02
 
 static const struct {
   const char * const name;
@@ -3001,7 +3004,7 @@ rl_print_keybinding (const char *name, Keymap kmap, int print_readably)
   char **invokers;
 
   function = rl_named_function (name);
-  invokers = rl_invoking_keyseqs_in_map (function, kmap ? kmap : _rl_keymap);
+  invokers = function ? rl_invoking_keyseqs_in_map (function, kmap ? kmap : _rl_keymap) : (char **)NULL;
 
   if (print_readably)
     {
@@ -3105,6 +3108,10 @@ _rl_macro_dumper_internal (int print_readably, Keymap map, char *prefix)
 	  if (rl_macro_display_hook)
 	    {
 	      (*rl_macro_display_hook) (keyname, out, print_readably, prefix);
+/* begin_clink_change */
+	      xfree (keyname);
+	      xfree (out);
+/* env_clink_change */
 	      break;
 	    }
 
@@ -3177,7 +3184,7 @@ rl_dump_macros (int count, int key)
 static char *
 _rl_get_string_variable_value (const char *name)
 {
-  static char numbuf[64];
+  static char numbuf[64];	/* more than enough for INTMAX_MAX */
   char *ret;
 
   if (_rl_stricmp (name, "active-region-start-color") == 0)
@@ -3227,24 +3234,40 @@ _rl_get_string_variable_value (const char *name)
     return (_rl_comment_begin ? _rl_comment_begin : RL_COMMENT_BEGIN_DEFAULT);
   else if (_rl_stricmp (name, "completion-display-width") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_completion_columns);
+#else
       sprintf (numbuf, "%d", _rl_completion_columns);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "completion-prefix-display-length") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_completion_prefix_display_length);
+#else
       sprintf (numbuf, "%d", _rl_completion_prefix_display_length);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "completion-query-items") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", rl_completion_query_items);
+#else
       sprintf (numbuf, "%d", rl_completion_query_items);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "editing-mode") == 0)
     return (rl_get_keymap_name_from_edit_mode ());
   else if (_rl_stricmp (name, "history-size") == 0)
     {
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", history_is_stifled() ? history_max_entries : -1);
+#else
       sprintf (numbuf, "%d", history_is_stifled() ? history_max_entries : -1);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "isearch-terminators") == 0)
@@ -3271,7 +3294,11 @@ _rl_get_string_variable_value (const char *name)
     }
   else if (_rl_stricmp (name, "keyseq-timeout") == 0)
     {
-      sprintf (numbuf, "%d", _rl_keyseq_timeout);    
+#if defined (HAVE_VSNPRINTF)
+      snprintf (numbuf, sizeof (numbuf), "%d", _rl_keyseq_timeout);
+#else
+      sprintf (numbuf, "%d", _rl_keyseq_timeout);
+#endif
       return (numbuf);
     }
   else if (_rl_stricmp (name, "emacs-mode-string") == 0)

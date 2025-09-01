@@ -1,6 +1,6 @@
 /* input.c -- character input functions for readline. */
 
-/* Copyright (C) 1994-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -25,6 +25,13 @@
 #  define _XOPEN_SOURCE_EXTENDED 1
 #  define _TANDEM_SOURCE 1
 #  include <floss.h>
+#endif
+
+/* These are needed to get the declaration of 'alarm' when including
+   <unistd.h>. I'm not sure it's needed, but the compiler might require it. */
+#if defined (__MINGW32__)
+#  define __USE_MINGW_ALARM
+#  define _POSIX
 #endif
 
 #if defined (HAVE_CONFIG_H)
@@ -259,13 +266,16 @@ rl_gather_tyi (void)
   input = 0;
   tty = fileno (rl_instream);
 
-  /* Move this up here to give it first shot, but it can't set chars_avail */
+  /* Move this up here to give it first shot, but it can't set chars_avail,
+     so we assume a single character is available. */
   /* XXX - need rl_chars_available_hook? */
   if (rl_input_available_hook)
     {
       result = (*rl_input_available_hook) ();
       if (result == 0)
         result = -1;
+      else
+        chars_avail = 1;
     }
 
 #if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
@@ -283,6 +293,7 @@ rl_gather_tyi (void)
 #endif
       if (result <= 0)
 	return 0;	/* Nothing to read. */
+      result = -1;	/* there is something, so check how many chars below */
     }
 #endif
 
@@ -552,7 +563,16 @@ reset_alarm ()
   timerclear (&it.it_value);
   setitimer (ITIMER_REAL, &it, NULL);
 }
-#  else
+#  else /* !HAVE_SETITIMER */
+#    if defined (__MINGW32_MAJOR_VERSION)
+/* mingw.org's MinGW doesn't have alarm(3).  */
+unsigned int
+alarm (unsigned int seconds)
+{
+  return 0;
+}
+#    endif /* __MINGW32_MAJOR_VERSION */
+
 static int
 set_alarm (unsigned int *secs, unsigned int *usecs)
 {
@@ -567,8 +587,8 @@ reset_alarm ()
 {
   alarm (0);
 }
-#  endif
-#endif
+#  endif /* !HAVE_SETITIMER */
+#endif /* RL_TIMEOUT_USE_SIGALRM */
 
 /* Set a timeout which will be used for the next call of `readline
    ()'.  When (0, 0) are specified the timeout is cleared.  */
@@ -938,9 +958,7 @@ rl_getc (FILE *stream)
 
 /* fprintf(stderr, "rl_getc: result = %d errno = %d\n", result, errno); */
 
-/* begin_clink_change */
-//handle_error:
-/* end_clink_change */
+      /* Handle errors here. */
       osig = _rl_caught_signal;
       ostate = rl_readline_state;
 

@@ -1,6 +1,6 @@
 /* search.c - code for non-incremental searching in emacs and vi modes. */
 
-/* Copyright (C) 1992-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -73,7 +73,7 @@ int _rl_history_point_at_end_of_anchored_search = 0;
 static char *history_search_string;
 static size_t history_string_size;
 
-static void make_history_line_current (HIST_ENTRY *);
+static void make_history_line_current (int, int);
 static int noninc_search_from_pos (char *, int, int, int, int *);
 static int noninc_dosearch (char *, int, int);
 static int noninc_search (int, int);
@@ -100,43 +100,21 @@ _rl_unsave_saved_search_line (void)
   _rl_saved_line_for_search = (HIST_ENTRY *)NULL;
 }
 
-/* We're going to replace the undo list with the one created by inserting
-   the matching line we found, so we want to free rl_undo_list if it's not
-   from a history entry. We assume the undo list does not come from a
-   history entry if we are at the end of the history, entering a new line.
-
-   The call to rl_maybe_replace_line() has already ensured that any undo
-   list pointing to a history entry has already been saved back to the
-   history and set rl_undo_list to NULL. */
-
+/* Make the data from the history entry at offset NEWPOS be the contents of
+   the current line, which is at offset CURPOS. We use the same strategy
+   as incremental search.
+   This doesn't do anything with rl_point beyond bounds checking; the caller
+   must set it to any desired value. */
 static void
-dispose_saved_search_line (void)
+make_history_line_current (int curpos, int newpos)
 {
-  UNDO_LIST *xlist;
+  if (newpos < curpos)
+    rl_get_previous_history (curpos - newpos, 0);
+  else
+    rl_get_next_history (newpos - curpos, 0);
 
-  if (_hs_at_end_of_history () == 0)
-    _rl_unsave_saved_search_line ();
-  else if (_rl_saved_line_for_search)
-    {
-      xlist = _rl_saved_line_for_search ? (UNDO_LIST *)_rl_saved_line_for_search->data : 0;
-      if (xlist)
-	_rl_free_undo_list (xlist);
-      _rl_saved_line_for_search->data = 0;
-      _rl_free_saved_search_line ();
-    }
-}
-
-/* Make the data from the history entry ENTRY be the contents of the
-   current line.  This doesn't do anything with rl_point; the caller
-   must set it. */
-static void
-make_history_line_current (HIST_ENTRY *entry)
-{
-  /* Now we create a new undo list with a single insert for this text.
-     WE DON'T CHANGE THE ORIGINAL HISTORY ENTRY UNDO LIST */
-  rl_undo_list = 0;	/* XXX */
-  _rl_replace_text (entry->line, 0, rl_end);
   _rl_fix_point (1);
+
 #if defined (VI_MODE)
   if (rl_editing_mode == vi_mode)
     /* POSIX.2 says that the `U' command doesn't affect the copy of any
@@ -235,12 +213,12 @@ noninc_search_from_pos (char *string, int pos, int dir, int flags, int *ncp)
     }
 
   if (flags & SF_PATTERN)
-    ret = _hs_history_patsearch (s, dir, sflags);
+    ret = _hs_history_patsearch (s, dir, dir, sflags);
   else
     {
       if (_rl_search_case_fold)
 	sflags |= CASEFOLD_SEARCH;
-      ret = _hs_history_search (s, dir, sflags);
+      ret = _hs_history_search (s, dir, dir, sflags);
     }
   RL_UNSETSTATE(RL_STATE_SEARCH);
 
@@ -256,12 +234,12 @@ noninc_search_from_pos (char *string, int pos, int dir, int flags, int *ncp)
 
 /* Search for a line in the history containing STRING.  If DIR is < 0, the
    search is backwards through previous entries, else through subsequent
-   entries.  Returns 1 if the search was successful, 0 otherwise. */
+   entries. Leaves noninc_history_pos set to the offset of the found history
+   entry, if successful. Returns 1 if the search was successful, 0 otherwise. */
 static int
 noninc_dosearch (char *string, int dir, int flags)
 {
   int oldpos, pos, ind;
-  HIST_ENTRY *entry;
 
   if (string == 0 || *string == '\0' || noninc_history_pos < 0)
     {
@@ -273,29 +251,20 @@ noninc_dosearch (char *string, int dir, int flags)
   if (pos == -1)
     {
       /* Search failed, current history position unchanged. */
-      _rl_unsave_saved_search_line ();
       rl_clear_message ();
-      rl_point = 0;
+      rl_point = 0;		/* caller will fix it up if needed */
       rl_ding ();
       return 0;
     }
 
-  noninc_history_pos = pos;
-
-  /* We're committed to making the line we found the current contents of
-     rl_line_buffer. We can dispose of _rl_saved_line_for_search. */
-  dispose_saved_search_line ();
-
   oldpos = where_history ();
-  history_set_pos (noninc_history_pos);
-  entry = current_history ();		/* will never be NULL after successful search */
-  
-#if defined (VI_MODE)
-  if (rl_editing_mode != vi_mode)
-#endif
-    history_set_pos (oldpos);
+  noninc_history_pos = pos;
+  make_history_line_current (oldpos, noninc_history_pos);
 
-  make_history_line_current (entry);
+#if defined (VI_MODE)
+  if (rl_editing_mode == vi_mode)
+    history_set_pos (noninc_history_pos);	/* XXX */
+#endif
 
   if (_rl_enable_active_region && ((flags & SF_PATTERN) == 0) && ind >= 0 && ind < rl_end)
     {
@@ -338,9 +307,6 @@ _rl_nsearch_init (int dir, int pchar)
   cxt->direction = dir;
   cxt->history_pos = cxt->save_line;
 
-  /* If the current line has changed, put it back into the history if necessary. */
-  rl_maybe_replace_line ();
-
   _rl_saved_line_for_search = _rl_alloc_saved_line ();
 
   /* Clear the undo list, since reading the search string should create its
@@ -356,10 +322,11 @@ _rl_nsearch_init (int dir, int pchar)
  * So that display_manager::display() knows the mode, since rl_message()
  * forces a redisplay and the message presentation is different in the
  * search prompt (and readstr prompt) versus other rl_message() usage.*/
-  RL_SETSTATE(RL_STATE_NSEARCH);
+  RL_SETSTATE (RL_STATE_NSEARCH);
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : ':');
+  cxt->sflags |= SF_FREEPMT;
   rl_message ("%s", p);
   xfree (p);
 
@@ -394,7 +361,9 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 /* end_clink_change */
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  rl_restore_prompt ();
+  if (cxt->sflags & SF_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->sflags &= ~SF_FREEPMT;
   rl_clear_message ();
   _rl_fix_point (1);
 
@@ -404,6 +373,15 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
  * accurately. */
   //RL_UNSETSTATE (RL_STATE_NSEARCH);
 /* end_clink_change */
+}
+
+int
+_rl_nsearch_sigcleanup (_rl_search_cxt *cxt, int r)
+{
+  if (cxt->sflags & SF_FREEPMT)
+    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  cxt->sflags &= ~SF_FREEPMT;
+  return (_rl_nsearch_cleanup (cxt, r));
 }
 
 /* Process just-read character C according to search context CXT.  Return -1
@@ -501,14 +479,25 @@ _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
   return 1;
 }
 
-/* Perform one search according to CXT, using NONINC_SEARCH_STRING.  Return
-   -1 if the search should be aborted, any other value means to clean up
-   using _rl_nsearch_cleanup ().  Returns 1 if the search was successful,
-   0 otherwise. */
+/* Perform one search according to CXT, using NONINC_SEARCH_STRING, which
+   we determine, via a call to noninc_dosearch().
+   Return -1 if the search should be aborted, any other value means to clean
+   up using _rl_nsearch_cleanup ().
+   If the search is not successful, we will restore the original line, so
+   make sure we restore rl_point.
+   Returns 1 if the search was successful, 0 otherwise. */
 static int
 _rl_nsearch_dosearch (_rl_search_cxt *cxt)
 {
+  int r;
+
   rl_mark = cxt->save_mark;
+
+  /* We're committed to using the contents of rl_line_buffer as the search
+     string, whatever they are. We no longer need the undo list generated
+     by reading the search string. The old undo list will be restored
+     by _rl_unsave_saved_search_line(). */
+  rl_free_undo_list ();
 
   /* If rl_point == 0, we want to re-use the previous search string and
      start from the saved history position.  If there's no previous search
@@ -517,9 +506,11 @@ _rl_nsearch_dosearch (_rl_search_cxt *cxt)
     {
       if (noninc_search_string == 0)
 	{
-	  _rl_free_saved_search_line ();
+	  _rl_unsave_saved_search_line ();	/* XXX */
 	  rl_ding ();
-	  rl_restore_prompt ();
+	  if (cxt->sflags & SF_FREEPMT)
+	    rl_restore_prompt ();
+	  cxt->sflags &= ~SF_FREEPMT;
 	  RL_UNSETSTATE (RL_STATE_NSEARCH);
 	  return -1;
 	}
@@ -534,18 +525,24 @@ _rl_nsearch_dosearch (_rl_search_cxt *cxt)
       /* We don't want the subsequent undo list generated by the search
 	 matching a history line to include the contents of the search string,
 	 so we need to clear rl_line_buffer here. If we don't want that,
-	 change the #if 1 to an #if 0 below. We clear the undo list
-	 generated by reading the search string.  (If the search fails, the
-	 old undo list will be restored by _rl_unsave_line.) */
-
-      rl_free_undo_list ();
+	 change the #if 1 to an #if 0 below. */
 #if 1
       rl_line_buffer[rl_point = rl_end = 0] = '\0';
 #endif
     }
 
-  rl_restore_prompt ();
-  return (noninc_dosearch (noninc_search_string, cxt->direction, cxt->sflags&SF_PATTERN));
+  if (cxt->sflags & SF_FREEPMT)
+    rl_restore_prompt ();
+  cxt->sflags &= ~SF_FREEPMT;
+
+  /* We are finished using the line buffer to read the search string, restore
+     the original contents without doing a redisplay. */
+  _rl_unsave_saved_search_line ();		/* XXX */
+
+  r = noninc_dosearch (noninc_search_string, cxt->direction, cxt->sflags&SF_PATTERN);
+  if (r == 0)	/* search failed, we will restore the original line */
+    rl_point = cxt->save_point;
+  return r;
 }
 
 /* Search non-interactively through the history list.  DIR < 0 means to
@@ -612,19 +609,21 @@ rl_noninc_reverse_search (int count, int key)
 int
 rl_noninc_forward_search_again (int count, int key)
 {
-  int r;
+  int r, flags;
 
   if (!noninc_search_string)
     {
       rl_ding ();
       return (1);
     }
+
+  flags = 0;
 #if defined (VI_MODE)
   if (VI_COMMAND_MODE() && key == 'N')
-    r = noninc_dosearch (noninc_search_string, 1, SF_PATTERN);
-  else
+    flags = SF_PATTERN;
 #endif
-    r = noninc_dosearch (noninc_search_string, 1, 0);
+
+  r = noninc_dosearch (noninc_search_string, 1, flags);
   return (r != 1);
 }
 
@@ -634,19 +633,21 @@ rl_noninc_forward_search_again (int count, int key)
 int
 rl_noninc_reverse_search_again (int count, int key)
 {
-  int r;
+  int r, flags;
 
   if (!noninc_search_string)
     {
       rl_ding ();
       return (1);
     }
+
+  flags = 0;
 #if defined (VI_MODE)
   if (VI_COMMAND_MODE() && key == 'n')
-    r = noninc_dosearch (noninc_search_string, -1, SF_PATTERN);
-  else
+    flags = SF_PATTERN;
 #endif
-    r = noninc_dosearch (noninc_search_string, -1, 0);
+
+  r = noninc_dosearch (noninc_search_string, -1, flags);
   return (r != 1);
 }
 
@@ -671,7 +672,7 @@ _rl_nsearch_callback (_rl_search_cxt *cxt)
   return ((r >= 0) ? _rl_nsearch_cleanup (cxt, r) : (r != 1));
 }
 #endif
-  
+
 /* begin_clink_change */
 static void
 rl_maybe_swap_point_and_mark (void)
@@ -686,22 +687,22 @@ rl_maybe_swap_point_and_mark (void)
 }
 /* end_clink_change */
 
+/* The strategy is to find the line to move to (COUNT occurrences of
+   HISTORY_SEARCH_STRING in direction DIR), then use the same mechanism that
+   incremental search uses to move to it. That's wrapped up in
+   make_history_line_current(). */    
 static int
 rl_history_search_internal (int count, int dir)
 {
   HIST_ENTRY *temp;
   int ret, oldpos, newcol;
-  char *t;
-
-  /* If the current line has changed, put it back into the history if necessary. */
-  rl_maybe_replace_line ();
 
 /* begin_clink_change */
   if (history_prev_use_curr)
     using_history ();
 /* end_clink_change */
 
-  _rl_saved_line_for_search = _rl_alloc_saved_line ();
+  oldpos = where_history ();	/* where are we now? */
   temp = (HIST_ENTRY *)NULL;
 
   /* Search COUNT times through the history for a line matching
@@ -718,7 +719,6 @@ rl_history_search_internal (int count, int dir)
 
       /* Get the history entry we found. */
       _rl_history_search_pos = ret;
-      oldpos = where_history ();
       history_set_pos (_rl_history_search_pos);
       temp = current_history ();	/* will never be NULL after successful search */
       history_set_pos (oldpos);
@@ -730,10 +730,9 @@ rl_history_search_internal (int count, int dir)
       count--;
     }
 
-  /* If we didn't find anything at all, return. */
+  /* If we didn't find anything at all, return without changing history offset */
   if (temp == 0)
     {
-      _rl_unsave_saved_search_line ();
       rl_ding ();
       /* If you don't want the saved history line (last match) to show up
          in the line buffer after the search fails, change the #if 0 to
@@ -747,7 +746,7 @@ rl_history_search_internal (int count, int dir)
         }
 #else
       rl_point = _rl_history_search_len;	/* _rl_unsave_line changes it */
-      rl_mark = rl_end;
+      rl_mark = rl_end;				/* XXX */
 /* begin_clink_change */
       rl_maybe_swap_point_and_mark ();
 /* end_clink_change */
@@ -755,12 +754,8 @@ rl_history_search_internal (int count, int dir)
       return 1;
     }
 
-  /* We're committed to making the line we found the current contents of
-     rl_line_buffer. We can dispose of _rl_saved_line_for_search. */
-  dispose_saved_search_line ();
-
   /* Copy the line we found into the current line buffer. */
-  make_history_line_current (temp);
+  make_history_line_current (oldpos, _rl_history_search_pos);
 
   /* decide where to put rl_point -- need to change this for pattern search */
   if (_rl_history_search_flags & ANCHORED_SEARCH)
@@ -768,6 +763,7 @@ rl_history_search_internal (int count, int dir)
   else
     {
 #if 0
+      char *t;
       t = strstr (rl_line_buffer, history_search_string);	/* XXX */
       rl_point = t ? (int)(t - rl_line_buffer) + _rl_history_search_len : rl_end;
 #else
@@ -804,7 +800,7 @@ rl_history_search_reinit (int flags)
   if (history_prev_use_curr)
     {
       int pos = where_history ();
-      rl_maybe_replace_line ();
+      _rl_maybe_replace_line (1);
       using_history ();
 // REVIEW: does this always/sometimes/never leak an undo list?
       if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)

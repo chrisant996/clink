@@ -107,12 +107,13 @@ static int
 utf8locale (char *lspec)
 {
   char *cp;
-  size_t len;
 
 #if HAVE_LANGINFO_CODESET
   cp = nl_langinfo (CODESET);
   return (STREQ (cp, "UTF-8") || STREQ (cp, "utf8"));
 #else
+  size_t len;
+
   cp = find_codeset (lspec, &len);
 
   if (cp == 0 || len < 4 || len > 5)

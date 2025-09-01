@@ -214,9 +214,13 @@
  * Boing, never say "works everywhere" unless you checked SCO UNIX.
  * Their memove fails the test in the configure script. Sigh. (Juergen)
  */
+
 #undef USEBCOPY
 #undef USEMEMCPY
 #undef USEMEMMOVE
+
+#undef HAVE_SETEUID
+#undef HAVE_SETREUID
 
 /*
  * If your system has vsprintf() and requires the use of the macros in
@@ -276,6 +280,12 @@
  */
 #undef NAME_MAX		/* KEEP_UNDEF_HERE override system value */
 #undef NAME_MAX
+
+#undef HAVE_BCOPY
+#undef HAVE_MEMCPY
+#undef HAVE_MEMMOVE
+
+#undef HAVE_MKFIFO
 
 /*
  * define HAVE_RENAME if your system has a rename() function

@@ -1647,7 +1647,7 @@ Type | Description | Default
 `no` | Normal color; covers anything not covered by any other types. |
 `any` | This clears all types in the rule so far, including the implicit default `fi` type when no type is given.  For example, `any history*` applies to directories as well as to files (any directory or file whose name begins with "history"). |
 
-For backward compatibility with [`%LS_COLORS%`](#LS_COLORS), either `so` or `*.readline-colored-completion-prefix` may be used to override the[`color.common_match_prefix`](#color_common_match_prefix) setting.
+For backward compatibility with [`%LS_COLORS%`](#LS_COLORS), either `so` or `readline-colored-completion-prefix` may be used to override the[`color.common_match_prefix`](#color_common_match_prefix) setting.
 
 Here is an example that defines colors for various types.
 
@@ -1688,7 +1688,7 @@ Types|Description|Default
 
 Special extensions|Description|Default
 -|-|-
-`.readline-colored-completion-prefix`|If there is a color definition in `%LS_COLORS%` for the custom suffix `.readline-colored-completion-prefix`, it is used for the common prefix, superseding the `so` type.|
+`readline-colored-completion-prefix`|If there is a color definition in `%LS_COLORS%` for `readline-colored-completion-prefix`, it is used for the common prefix, superseding the `so` type.|
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 

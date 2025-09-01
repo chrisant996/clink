@@ -107,10 +107,7 @@ main (int argc, char **argv)
   setlocale (LC_ALL, "");
 #endif
 
-/* begin_clink_change */
-  //progname = strrchr(argv[0], '/');
-  progname = rl_last_path_separator (argv[0]);
-/* end_clink_change */
+  progname = strrchr(argv[0], '/');
   if (progname == 0)
     progname = argv[0];
   else

@@ -17,6 +17,21 @@
 - Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
 - Minor improvement to error handling for certain failures in oh-my-posh.
+- Picked up fixes and changes from the Readline repo:
+  - **Breaking Change:** The name for `readline-colored-completion-prefix` no longer has a leading `.`.
+  - Sync with how the Readline repo picked up some fixes and changes contributed from the Clink repo.
+  - Changes for Unicode combining characters.
+  - Fixed some undo list memory management bugs; leaks and double-frees (i.e. heap corruption).
+  - Fixed some use-after-free of the undo list errors when stacking multiple commands that use `rl_maybe_replace_line()` to save changes to a history entry.
+  - Fixed the non-incremental history search implementation to make it more consistent with incremental search.
+  - Fixed `completion-prefix-display-length` and `colored-completion-prefix` to be mutually exclusive.
+  - Fixed a bug that allowed <kbd>^G</kbd> to retain a saved command to execute.
+  - Fixed macro recording during searches.
+  - Fixed off-by-one error when tokenizing words like `$((expr))` while performing history expansion.
+  - Fixed to not check for signals when handling a received signal.
+  - Fixed signal checking to handle signals that arrive before Readline restore's the application's signal handlers.
+  - Fixed attempting to change case of invalid multibyte characters.
+  - Fixed some small leaks in edge cases.
 
 #### v1.7.22
 

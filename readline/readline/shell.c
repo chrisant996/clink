@@ -1,7 +1,7 @@
 /* shell.c -- readline utility functions that are normally provided by
 	      bash when readline is linked as part of the shell. */
 
-/* Copyright (C) 1997-2009,2017,2021 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -71,10 +71,6 @@ extern const char* host_get_env(const char* name);
 extern struct passwd *getpwuid (uid_t);
 #endif /* HAVE_GETPWUID && !HAVE_GETPW_DECLS */
 
-#ifndef NULL
-#  define NULL 0
-#endif
-
 #ifndef CHAR_BIT
 #  define CHAR_BIT 8
 #endif
@@ -126,8 +122,10 @@ sh_single_quote (char *string)
 /* Set the environment variables LINES and COLUMNS to lines and cols,
    respectively. */
 static char setenv_buf[INT_STRLEN_BOUND (int) + 1];
+#if defined (HAVE_PUTENV) && !defined (HAVE_SETENV)
 static char putenv_buf1[INT_STRLEN_BOUND (int) + 6 + 1];	/* sizeof("LINES=") == 6 */
 static char putenv_buf2[INT_STRLEN_BOUND (int) + 8 + 1];	/* sizeof("COLUMNS=") == 8 */
+#endif
 
 void
 sh_set_lines_and_columns (int lines, int cols)

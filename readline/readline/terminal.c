@@ -1,6 +1,6 @@
 /* terminal.c -- controlling the terminal with termcap. */
 
-/* Copyright (C) 1996-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -122,12 +122,15 @@ static char *term_string_buffer = (char *)NULL;
 
 static int tcap_initialized;
 
-#if !defined (__linux__) && !defined (NCURSES_VERSION)
+/* Systems for which PC/BC/UP are defined in the curses library and need an
+   extern definition here. */
+#if !defined (__linux__) && !defined (__gnu_hurd__) && !defined (NCURSES_VERSION)
 #  if defined (__EMX__) || defined (NEED_EXTERN_PC)
-extern 
+extern
 #  endif /* __EMX__ || NEED_EXTERN_PC */
 char PC, *BC, *UP;
 #endif /* !__linux__ && !NCURSES_VERSION */
+
 
 /* Some strings to control terminal actions.  These are output by tputs (). */
 char *_rl_term_clreol;
@@ -284,6 +287,30 @@ _win_get_screensize (int *swp, int *shp)
 }
 #endif
 
+int
+_rl_tcgetwinsize (int tty, struct winsize *wp)
+{
+#if defined (HAVE_TCGETWINSIZE)
+  return (tcgetwinsize (tty, wp));
+#elif defined (TIOCGWINSZ)
+  return (ioctl (tty, TIOCGWINSZ, wp));
+#else
+  return -1;
+#endif
+}
+
+void
+_rl_tcsetwinsize (int tty, struct winsize *wp)
+{
+#if defined (HAVE_TCGETWINSIZE)
+  tcsetwinsize (tty, wp);
+#elif defined (TIOCGWINSZ)
+  ioctl (tty, TIOCSWINSZ, wp);
+#else
+  ;
+#endif
+}
+
 /* Get readline's idea of the screen size.  TTY is a file descriptor open
    to the terminal.  If IGNORE_ENV is true, we do not pay attention to the
    values of $LINES and $COLUMNS.  The tests for TERM_STRING_BUFFER being
@@ -292,19 +319,19 @@ void
 _rl_get_screen_size (int tty, int ignore_env)
 {
   char *ss;
-#if defined (TIOCGWINSZ)
+#if defined (TIOCGWINSZ) || defined (HAVE_TCGETWINSIZE)
   struct winsize window_size;
-#endif /* TIOCGWINSZ */
+#endif /* TIOCGWINSZ || HAVE_TCGETWINSIZE */
   int wr, wc;
 
   wr = wc = -1;
-#if defined (TIOCGWINSZ)
-  if (ioctl (tty, TIOCGWINSZ, &window_size) == 0)
+#if defined (TIOCGWINSZ) || defined (HAVE_TCGETWINSIZE)
+  if (_rl_tcgetwinsize (tty, &window_size) == 0)
     {
       wc = (int) window_size.ws_col;
       wr = (int) window_size.ws_row;
     }
-#endif /* TIOCGWINSZ */
+#endif /* TIOCGWINSZ || HAVE_TCGETWINSIZE */
 
 #if defined (__EMX__)
   _emx_get_screensize (&wc, &wr);

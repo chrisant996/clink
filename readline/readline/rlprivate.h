@@ -1,7 +1,7 @@
 /* rlprivate.h -- functions and variables global to the readline library,
 		  but not intended for use by applications. */
 
-/* Copyright (C) 1999-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -67,6 +67,7 @@
 #define SF_CHGKMAP		0x08
 #define SF_PATTERN		0x10
 #define SF_NOCASE		0x20		/* unused so far */
+#define SF_FREEPMT		0x40		/* saved prompt separately, need to free it */
 
 typedef struct  __rl_search_context
 {
@@ -111,7 +112,8 @@ typedef struct  __rl_search_context
 } _rl_search_cxt;
 
 /* readstr flags */
-#define RL_READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
+#define READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
+#define READSTR_FREEPMT	0x02	/* called rl_save_prompt, need to free it ourselves */
 
 typedef struct  __rl_readstr_context
 {
@@ -274,10 +276,11 @@ extern char *_rl_savestring (const char *);
  * Undocumented private functions					 *
  *************************************************************************/
 
-#if defined(READLINE_CALLBACKS)
+#if defined (READLINE_CALLBACKS)
 
 /* readline.c */
 extern void readline_internal_setup (void);
+extern void readline_common_teardown (void);
 extern char *readline_internal_teardown (int);
 extern int readline_internal_char (void);
 
@@ -353,6 +356,7 @@ extern int _rl_timeout_handle_sigalrm (void);
 /* use as a sentinel for fd_set, struct timeval,  and sigset_t definitions */
 
 #if defined (__MINGW32__)
+/* still doesn't work; no alarm() so we provide a non-working stub. */
 #  define RL_TIMEOUT_USE_SIGALRM
 #elif defined (HAVE_SELECT) || defined (HAVE_PSELECT)
 #  define RL_TIMEOUT_USE_SELECT
@@ -420,6 +424,7 @@ extern void _rl_free_saved_line (HIST_ENTRY *);
 extern void _rl_unsave_line (HIST_ENTRY *);
 #endif
 extern int _rl_free_saved_history_line (void);
+extern int _rl_maybe_replace_line (int);
 
 extern void _rl_set_insert_mode (int, int);
 
@@ -456,6 +461,7 @@ extern int _rl_restore_tty_signals (void);
 /* search.c */
 extern int _rl_nsearch_callback (_rl_search_cxt *);
 extern int _rl_nsearch_cleanup (_rl_search_cxt *, int);
+extern int _rl_nsearch_sigcleanup (_rl_search_cxt *, int);
 /* begin_clink_change */
 extern void adjust_history_search_pos (int);
 extern int rl_get_history_search_pos (void);
@@ -471,6 +477,8 @@ extern void _rl_block_sigint (void);
 extern void _rl_release_sigint (void);
 extern void _rl_block_sigwinch (void);
 extern void _rl_release_sigwinch (void);
+
+extern void _rl_state_sigcleanup (void);
 
 /* terminal.c */
 extern void _rl_get_screen_size (int, int);
@@ -517,6 +525,7 @@ extern void _rl_free_saved_readstr_line (void);
 extern void _rl_unsave_saved_readstr_line (void);
 extern _rl_readstr_cxt *_rl_readstr_init (int, int);
 extern int _rl_readstr_cleanup (_rl_readstr_cxt *, int);
+extern int _rl_readstr_sigcleanup (_rl_readstr_cxt *, int);
 extern void _rl_readstr_restore (_rl_readstr_cxt *);
 extern int _rl_readstr_getchar (_rl_readstr_cxt *);
 extern int _rl_readstr_dispatch (_rl_readstr_cxt *, int);
@@ -597,7 +606,6 @@ extern int _rl_menu_complete_prefix_first;
 extern int _rl_menu_complete_wraparound;
 /* end_clink_change */
 
-
 /* display.c */
 extern int _rl_vis_botlin;
 extern int _rl_last_c_pos;
@@ -673,6 +681,7 @@ extern int _rl_history_point_at_end_of_anchored_search;
 
 /* signals.c */
 extern int volatile _rl_caught_signal;
+extern int volatile _rl_handling_signal;
 
 extern _rl_sigcleanup_func_t *_rl_sigcleanup;
 extern void *_rl_sigcleanarg;

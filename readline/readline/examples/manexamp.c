@@ -94,16 +94,8 @@ invert_case_line (int count, int key)
 
   start = rl_point;
 
-  if (count < 0)
-    {
-      direction = -1;
-      count = -count;
-    }
-  else
-    direction = 1;
-      
   /* Find the end of the range to modify. */
-  end = start + (count * direction);
+  end = start + count;
 
   /* Force it to be within range. */
   if (end > rl_end)
@@ -111,6 +103,14 @@ invert_case_line (int count, int key)
   else if (end < 0)
     end = -1;
 
+  if (start == end)
+    return 0;
+
+  /* For positive arguments, put point after the last changed character. For
+     negative arguments, put point before the last changed character. */
+  rl_point = end;
+
+  /* Swap start and end if we are moving backwards */
   if (start > end)
     {
       int temp = start;
@@ -118,14 +118,11 @@ invert_case_line (int count, int key)
       end = temp;
     }
 
-  if (start == end)
-    return 0;
-
   /* Tell readline that we are modifying the line, so save the undo
      information. */
   rl_modifying (start, end);
 
-  for (; start != end; start += direction)
+  for (; start != end; start++)
     {
       if (_rl_uppercase_p (rl_line_buffer[start]))
 	rl_line_buffer[start] = _rl_to_lower (rl_line_buffer[start]);
@@ -133,7 +130,5 @@ invert_case_line (int count, int key)
 	rl_line_buffer[start] = _rl_to_upper (rl_line_buffer[start]);
     }
 
-  /* Move point to on top of the last character changed. */
-  rl_point = end - direction;
   return 0;
 }

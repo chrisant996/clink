@@ -1549,7 +1549,7 @@ rl_vi_change_to (int count, int key)
       /* are we being called recursively or by `y' or `d'? */
       savecxt = _rl_vimvcxt;
       _rl_vimvcxt = _rl_mvcxt_alloc (VIM_CHANGE, key);
-    }
+    }      
   else
     _rl_vimvcxt = _rl_mvcxt_alloc (VIM_CHANGE, key);
   _rl_vimvcxt->start = rl_point;
@@ -1632,7 +1632,7 @@ rl_vi_yank_to (int count, int key)
       /* are we being called recursively or by `c' or `d'? */
       savecxt = _rl_vimvcxt;
       _rl_vimvcxt = _rl_mvcxt_alloc (VIM_YANK, key);
-    }
+    }      
   else
     _rl_vimvcxt = _rl_mvcxt_alloc (VIM_YANK, key);
   _rl_vimvcxt->start = rl_point;
@@ -1851,6 +1851,7 @@ _rl_vi_callback_char_search (_rl_callback_generic_arg *data)
 
   if (c <= 0)
     {
+      /* XXX - unset _rl_callback_func here? */
       RL_UNSETSTATE (RL_STATE_CHARSEARCH);
       return -1;
     }
