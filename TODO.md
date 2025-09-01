@@ -7,10 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-
-## Normal Priority
+- With `history.sticky_search` enabled, using `operate-and-get-next` twice in a row gets stuck on the same history index.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 - Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
+
+## Normal Priority
 - Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
   - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).
   - Maybe `onbeforereload` and `onafterreload`?
