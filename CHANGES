@@ -13,8 +13,9 @@
 - Fixed <kbd>Esc</kbd> to not ding every time (it was never meant to ding).
 - Fixed temporarily-missing timestamp in history popup after using the `add-history` command.
 - Fixed `clink /?`.
-- Fixed two memory management issues in undo handling, which in certain edge cases could potentially cause heap corruption.
+- Fixed the `operate-and-get-next` command when the `history.sticky_search` setting is enabled (it fetched the same history entry each time).
 - Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
+- Fixed two memory management issues in Readline undo handling, which in certain edge cases could potentially cause heap corruption.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
 - Minor improvement to error handling for certain failures in oh-my-posh.
 - Picked up fixes and changes from the Readline repo:
