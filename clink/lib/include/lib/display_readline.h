@@ -45,14 +45,7 @@ extern bool g_display_manager_no_comment_row;
 //------------------------------------------------------------------------------
 #ifdef USE_SUGGESTION_HINT_INLINE
 #define DOC_HYPERLINK_AUTOSUGGEST "https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest"
-#endif
-
-//------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_INLINE
-#define STR_SUGGESTION_HINT_INLINE      "    Right=Insert Suggestion"
-#define IDX_SUGGESTION_KEY_BEGIN        (-23)
-#define IDX_SUGGESTION_KEY_END          (-18)
-#define IDX_SUGGESTION_LINK_TEXT        (-17)
+#define DOC_HYPERLINK_AUTOSUGGEST2 "https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest"
 #endif
 
 //------------------------------------------------------------------------------
@@ -85,6 +78,7 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #ifdef USE_SUGGESTION_HINT_INLINE
 #define FACE_SUGGESTIONKEY  char(0x1a)  // In OEM 437 codepage, 0x1a is a right-arrow character.
 #define FACE_SUGGESTIONLINK char(0x15)  // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
+#define FACE_SUGGESTIONLINK2 char(0x16) // 0x15 plus one.
 #endif
 
 #define FACE_OTHER          'o'

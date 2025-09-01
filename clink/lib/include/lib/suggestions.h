@@ -97,10 +97,13 @@ bool has_suggestion();
 bool is_locked_against_suggestions();
 extern "C" void lock_against_suggestions(int lock);
 extern "C" void clear_suggestion();
-bool can_show_suggestion_hint();
 void suppress_suggestions();
 void set_suggestion_started(const char* line);
 void set_suggestions(const char* line, uint32 endword_offset, suggestions* suggestions);
 bool get_suggestions(suggestions& out);
 bool insert_suggestion(suggestion_action action);
 bool pause_suggestions(bool pause);
+
+#ifdef USE_SUGGESTION_HINT_INLINE
+bool can_show_suggestion_hint();
+#endif

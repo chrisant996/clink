@@ -37,6 +37,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/printer.h>
+#include <terminal/terminal.h>          // for find_key_name()
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/key_tester.h>
@@ -45,6 +46,7 @@
 
 #include <signal.h>
 #include <unordered_set>
+#include <vector>
 
 extern "C" {
 #include <compat/config.h>
@@ -108,6 +110,8 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
+extern bool get_command_bindings(const char* command, bool friendly, str_base& desc, str_base& category, std::vector<str_moveable>& keys);
+
 extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
 extern int32 g_prompt_redisplay;
@@ -123,6 +127,9 @@ editor_module::result* g_result = nullptr;
 static str<>        s_last_prompt;
 static str_moveable s_needle;
 
+static bool s_build_suggestion_hint = false;
+static str<32, false> s_suggestion_hint_text;
+static str<32, false> s_suggestion_hint_faces;
 static suggestion_manager s_suggestion;
 
 //------------------------------------------------------------------------------
@@ -861,10 +868,10 @@ static char get_face_func(int32 in, int32 active_begin, int32 active_end)
 #ifdef USE_SUGGESTION_HINT_INLINE
         if (g_suggestion_includes_hint)
         {
-            if (in >= rl_end + IDX_SUGGESTION_LINK_TEXT)
-                return FACE_SUGGESTIONLINK;
-            else if (in >= rl_end + IDX_SUGGESTION_KEY_BEGIN && in < rl_end + IDX_SUGGESTION_KEY_END)
-                return FACE_SUGGESTIONKEY;
+            assert(s_suggestion_hint_text.length() == s_suggestion_hint_faces.length());
+            const int32 index = in - (rl_end - s_suggestion_hint_text.length());
+            if (0 <= index && index < s_suggestion_hint_text.length())
+                return s_suggestion_hint_faces[index];
         }
 #endif
         return FACE_SUGGESTION;
@@ -901,6 +908,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
     static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
 #ifdef USE_SUGGESTION_HINT_INLINE
     static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
+    static const char c_doc_autosuggest2[] = DOC_HYPERLINK_AUTOSUGGEST2;
 #endif
 
     str<280> out;
@@ -954,6 +962,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
 #ifdef USE_SUGGESTION_HINT_INLINE
             case FACE_SUGGESTIONKEY:
             case FACE_SUGGESTIONLINK:
+            case FACE_SUGGESTIONLINK2:
 #endif
                 assert(g_autosuggest_enable.get());
                 if (s_suggestion_color)
@@ -985,6 +994,11 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                 else if (cur_face == FACE_SUGGESTIONLINK)
                 {
                     out << c_hyperlink << c_doc_autosuggest << c_BEL;
+                    hyperlink = true;
+                }
+                else if (cur_face == FACE_SUGGESTIONLINK2)
+                {
+                    out << c_hyperlink << c_doc_autosuggest2 << c_BEL;
                     hyperlink = true;
                 }
 #endif
@@ -1169,21 +1183,97 @@ extern "C" void clear_suggestion()
 }
 
 //------------------------------------------------------------------------------
+#ifdef USE_SUGGESTION_HINT_INLINE
+static void append_face(str_base& s, char face, uint32 count)
+{
+    while (count--)
+        s.concat(&face, 1);
+}
+#endif
+
+//------------------------------------------------------------------------------
+#ifdef USE_SUGGESTION_HINT_INLINE
+const char* get_suggestion_hint_text()
+{
+    return s_suggestion_hint_text.c_str();
+}
+#endif
+
+//------------------------------------------------------------------------------
+#ifdef USE_SUGGESTION_HINT_INLINE
 bool can_show_suggestion_hint()
 {
-    if (g_autosuggest_hint.get())
+    if (s_build_suggestion_hint)
     {
-        int32 type;
-        rl_command_func_t* func = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
-        if (type == ISFUNC &&
-            (func == win_f1 ||
-             func == clink_forward_char ||
-             func == clink_forward_byte ||
-             func == clink_end_of_line))
-            return true;
+        s_suggestion_hint_text.clear();
+        s_suggestion_hint_faces.clear();
+        if (g_autosuggest_hint.get())
+        {
+            int32 type;
+            str_moveable tmp;
+            rl_command_func_t* func_right = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
+            const bool has_right = (type == ISFUNC &&
+                                    (func_right == win_f1 ||
+                                    func_right == clink_forward_char ||
+                                    func_right == clink_forward_byte ||
+                                    func_right == clink_end_of_line));
+            rl_command_func_t* func_f2 = rl_function_of_keyseq_len("\x1bOQ", 3, nullptr, &type);
+            const bool has_f2 = (type == ISFUNC && func_f2 == clink_toggle_suggestion_list);
+            const char* toggle_key_name = nullptr;
+            if (!has_f2)
+            {
+                str<> desc;
+                str<> cat;
+                std::vector<str_moveable> keys;
+                if (get_command_bindings("clink-toggle-suggestion-list", true/*friendly*/, desc, cat, keys))
+                {
+                    tmp = std::move(keys[0]);
+                    toggle_key_name = tmp.c_str();
+                }
+            }
+            if (has_right || has_f2 || toggle_key_name)
+            {
+                s_suggestion_hint_text.concat("    ");
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 4);
+            }
+            if (has_right)
+            {
+                s_suggestion_hint_text.concat("Right=");
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, 5);
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
+                if (has_f2 || toggle_key_name)
+                {
+                    s_suggestion_hint_text.concat("Insert ");
+                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 6);
+                    append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
+                }
+                else
+                {
+                    s_suggestion_hint_text.concat("Insert Suggestion");
+                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 17);
+                }
+            }
+            if (has_f2)
+            {
+                s_suggestion_hint_text.concat("F2=List");
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, 2);
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 4);
+            }
+            else if (toggle_key_name)
+            {
+                s_suggestion_hint_text.concat(toggle_key_name);
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, str_len(toggle_key_name));
+                s_suggestion_hint_text.concat("=List");
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
+                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 4);
+            }
+        }
+        s_build_suggestion_hint = false;
     }
-    return false;
+    return !s_suggestion_hint_text.empty();
 }
+#endif
 
 
 
@@ -2722,6 +2812,8 @@ void rl_module::bind_input(binder& binder)
 void rl_module::on_begin_line(const context& context)
 {
     const bool log_terminal = g_debug_log_terminal.get();
+
+    s_build_suggestion_hint = true;
 
     m_old_int = signal(SIGINT, clink_sighandler);
 #ifdef SIGBREAK
