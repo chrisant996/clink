@@ -1496,7 +1496,6 @@ static void buffer_changing(int32 event)
         clear_sticky_search_position();
         if (!rl_end)
         {
-            assert(!rl_undo_list);
             assert(!_rl_saved_line_for_history);
             using_history();
         }
