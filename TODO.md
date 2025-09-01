@@ -7,9 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- [x] BUG:  `UP` `C-BKSPC` `UP` `ENTER`  ==>  asserts about leaked undo list entries.
-  - [ ] Picking up RL83 changes indeed seems to fix that, but testing is needed because of the complexity of the changes and collisions with other changes in Clink.
-- Does `end-of-history` leak after the RL83 changes?  Does it cross-link undo lists and lead to double-free?
 
 ## Normal Priority
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.

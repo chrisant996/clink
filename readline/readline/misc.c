@@ -627,7 +627,6 @@ rl_beginning_of_history (int count, int key)
 int
 rl_end_of_history (int count, int key)
 {
-// REVIEW: does this leak or cross-link the undo list now?
   rl_maybe_replace_line ();
   using_history ();
   rl_maybe_unsave_line ();
