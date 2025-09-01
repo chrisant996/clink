@@ -696,12 +696,7 @@ rl_history_search_internal (int count, int dir)
 
 /* begin_clink_change */
   if (history_prev_use_curr)
-    {
-// BUGBUG: this may be wrong now that _rl_maybe_replace_line (1) is not called
-// immediately before that.
-      assert (0);
-      using_history ();
-    }
+    using_history ();
 /* end_clink_change */
 
   oldpos = where_history ();	/* where are we now? */
