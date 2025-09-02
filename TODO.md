@@ -10,7 +10,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
   - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
-- Ctrl-Break signal during `clink-select-complete` glitches on redisplaying the prompt (multiple redraw calls happen and they print on separate lines until signal handling is finished).
 
 ## Normal Priority
 - Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
