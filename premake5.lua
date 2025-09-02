@@ -475,6 +475,7 @@ clink_lib("clink_process")
 
     includedirs("clink/process/src")
     filter "action:vs*"
+        flags { "NoRuntimeChecks" } -- required for 32 bit by the inject lambda in process::remote_call
         pchheader("pch.h")
         pchsource("clink/process/src/pch.cpp")
 
