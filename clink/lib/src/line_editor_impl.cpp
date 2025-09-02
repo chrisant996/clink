@@ -1374,6 +1374,9 @@ bool line_editor_impl::maybe_handle_signal()
         m_signaled = true;
 #endif
 
+        if (m_desc.input->peek() == terminal_in::input_abort)
+            m_desc.input->read();
+
         for (auto* module : m_modules)
             module->on_signal(sig);
         m_buffer.reset();

@@ -560,6 +560,18 @@ enum : uint8
     input_exit_byte     = 0xfd,
 };
 
+//------------------------------------------------------------------------------
+static int32 translate_special_input_bytes(uint8 c)
+{
+    switch (c)
+    {
+    case input_none_byte:       return terminal_in::input_none;
+    case input_abort_byte:      return terminal_in::input_abort;
+    case input_exit_byte:       return terminal_in::input_exit;
+    default:                    return c;
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -722,21 +734,18 @@ int32 win_terminal_in::read()
             return terminal_in::input_none;
     }
 
-    uint8 c = pop();
-    switch (c)
-    {
-    case input_none_byte:       return terminal_in::input_none;
-    case input_abort_byte:      return terminal_in::input_abort;
-    case input_exit_byte:       return terminal_in::input_exit;
-    default:                    return c;
-    }
+    const uint8 c = pop();
+    return translate_special_input_bytes(c);
 }
 
 //------------------------------------------------------------------------------
 int32 win_terminal_in::peek()
 {
     if (m_buffer_count)
-        return m_buffer[m_buffer_head];
+    {
+        const uint8 c = m_buffer[m_buffer_head];
+        return translate_special_input_bytes(c);
+    }
 
     if (!m_pending_records.empty())
     {
@@ -894,7 +903,10 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
         process_input(record.Event.KeyEvent, true/*peek*/);
         ret = (m_buffer_count > buffer_count);
         if (peeked)
-            *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
+        {
+            const uint8 c = ret ? m_buffer[m_buffer_head] : input_none_byte;
+            *peeked = translate_special_input_bytes(c);
+        }
         m_buffer_count = buffer_count; // Revert.
         if (lead_surrogate)
             m_lead_surrogate = lead_surrogate; // Revert.
@@ -904,7 +916,10 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
         process_input(record.Event.MouseEvent, true/*peek*/);
         ret = (m_buffer_count > buffer_count);
         if (peeked)
-            *peeked = ret ? m_buffer[m_buffer_head] : terminal_in::input_none;
+        {
+            const uint8 c = ret ? m_buffer[m_buffer_head] : input_none_byte;
+            *peeked = translate_special_input_bytes(c);
+        }
         m_buffer_count = buffer_count; // Revert.
         if (lead_surrogate)
             m_lead_surrogate = lead_surrogate; // Revert.
