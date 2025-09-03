@@ -12,11 +12,48 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Normal Priority
-- Add an `onreload` event so Lua scripts can hook when the Lua engine is destroyed before reloading the engine?
-  - For example, `direnv` wants to unload its environment changes (restore the old values of environment variables).
-  - Maybe `onbeforereload` and `onafterreload`?
-  - Maybe `onbeginreload` and `onendreload`?
-  - Or come up with some kind of session-specific temporary file that survives Lua reload but is automatically deleted upon session end?
+- Upon `clink-reload`, `direnv` loses track of what environment variables it changed.  It could use a temporary file, but that requires extra work to deal with unique tempfile names and purging leaked tempfiles.  A more elegant solution could be to add some kind of in-memory storage object that survives outside the Lua VM but with automatic lifetime management scoped to the Clink session.
+  - I had also considered events like `onreload` or `onbeforereload`+`onafterreload` or `onbeginreload`+`onendreload`.
+  - ChatGPT helped me land on:  `clink.opensessionstream(name [, mode])`
+    Opens or creates a named in-memory stream that behaves like a Lua file handle.
+    Unlike `io.open`, the stream is not stored in the file system.  Instead it lives entirely in memory and exists for the duration of the current Clink session.
+    ```lua
+    -- Open (or create) a session stream identified by "history"
+    local s = clink.opensessionstream("history", "w")
+
+    -- Write data
+    s:write("first command\n")
+    s:write("second command\n")
+
+    -- Close is optional; the stream survives for the session
+    s:close()
+
+    -- Later in the same Lua session (or even after reloading the VM),
+    -- open the same stream again by name.
+    local s2 = clink.opensessionstream("history", "r")
+
+    -- Read data back
+    for line in s2:lines() do
+        print("history:", line)
+    end
+
+    s2:close()
+    ```
+    ```lua
+    -- Create or open a session stream named "history"
+    local s = clink.opensessionstream("history", "w")
+    s:write("first command\n")
+    s:write("second command\n")
+    s:close()
+
+    -- Reopen the same stream later in the session
+    local r = clink.opensessionstream("history", "r")
+    for line in r:lines() do
+        print(line)
+    end
+    r:close()
+    ```
+
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
