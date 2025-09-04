@@ -973,7 +973,7 @@ void display_lines::set_top(uint32 top)
 //------------------------------------------------------------------------------
 void display_lines::set_comment_row(str_moveable&& s, bool force)
 {
-#if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
+#ifdef USE_MEMORY_TRACKING
     if (!s.empty())
         dbgsetignore(s.c_str());
 #endif
