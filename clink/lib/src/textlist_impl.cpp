@@ -1602,6 +1602,12 @@ void textlist_impl::update_display()
                     footer.concat("  ");
                 footer.concat("F4=Mode");
             }
+            if (!get_bindable_esc())
+            {
+                if (!footer.empty())
+                    footer.concat("  ");
+                footer.concat("^G=Cancel");
+            }
 
             int32 longest;
             if (m_pref_width)
