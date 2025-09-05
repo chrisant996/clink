@@ -671,7 +671,7 @@ void suggestionlist_impl::update_layout(bool refreshing_display)
     }
 
 #ifdef SHOW_VERT_SCROLLBARS
-    const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
+    const int32 reserve_cols = 3;
 #else
     const int32 reserve_cols = 1;
 #endif
