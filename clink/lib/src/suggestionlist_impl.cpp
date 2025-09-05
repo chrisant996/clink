@@ -1092,6 +1092,27 @@ void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
 }
 
 //------------------------------------------------------------------------------
+static void concat_expandctrl_adjust_highlight(str_base& out, const char* text, int32 len, int32& hs, int32& he)
+{
+    for (const char* walk = text; len && *walk; ++walk, --len)
+    {
+        if (CTRL_CHAR(*walk))
+        {
+            char ctrl[3] = { '^', char(UNCTRL(*walk)), 0 };
+            if (hs > out.length())
+                ++hs;
+            if (he > out.length())
+                ++he;
+            out.concat(ctrl, 2);
+        }
+        else
+        {
+            out.concat(walk, 1);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
     const auto& s = m_suggestions[index];
@@ -1103,16 +1124,19 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
     str<128> whole;
     str<128> tmp2;
 
+    int32 hs = s.m_highlight_offset;
+    int32 he = s.m_highlight_offset + s.m_highlight_length;
+
     // Build the whole line.
-    whole.concat(m_suggestions.get_line().c_str(), match_offset);
-    const uint32 pre_cells = clink_wcswidth_expandctrl(whole.c_str(), match_offset);
-    whole.concat(s.m_suggestion.c_str(), s.m_suggestion.length());
-    const uint32 suggestion_cells = clink_wcswidth_expandctrl(whole.c_str() + match_offset, whole.length() - match_offset);
-    assert(s.m_suggestion.length() == whole.length() - match_offset);
+    concat_expandctrl_adjust_highlight(whole, m_suggestions.get_line().c_str(), match_offset, hs, he);
+    match_offset = whole.length();
+    const uint32 pre_cells = clink_wcswidth(whole.c_str(), match_offset);
+    concat_expandctrl_adjust_highlight(whole, s.m_suggestion.c_str(), s.m_suggestion.length(), hs, he);
+    const uint32 suggestion_cells = clink_wcswidth(whole.c_str() + match_offset, whole.length() - match_offset);
+    hs = min<int32>(hs, whole.length());
+    he = min<int32>(he, whole.length());
 
     // Find the highlight inside it.
-    const int32 hs = min<int32>(s.m_highlight_offset, whole.length());
-    const int32 he = min<int32>(s.m_highlight_offset + s.m_highlight_length, whole.length());
     uint32 pre_highlight = hs >= 0 ? clink_wcswidth_expandctrl(whole.c_str(), hs) : 0;
     uint32 post_highlight = hs >= 0 ? clink_wcswidth_expandctrl(whole.c_str() + hs, whole.length() - hs) : 0;
 
@@ -1158,7 +1182,7 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
     // for expanding control characters.
     str<128> tmp3;
     str<128> tmp4;
-    const char* unexpanded_out = after_highlight;
+    const char* result = after_highlight;
     int32 cells = pre_cells + suggestion_cells;
     if (cells >= width && hs >= 0)
     {
@@ -1172,39 +1196,11 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
         cells = ellipsify_ex(tmp3.c_str(), width - 1, ellipsify_mode::RIGHT, tmp4, nullptr, true/*expand_ctrl*/);
         assert(cells <= width);
         assert(cells == cell_count(tmp4.c_str()));
-        unexpanded_out = tmp4.c_str();
+        result = tmp4.c_str();
     }
 
-    // Copy into out buffer, expanding ctrl characters along the way.
-    out.clear();
-    out.reserve(whole.length());
-    ecma48_state state;
-    ecma48_iter iter(unexpanded_out, state);
-    while (const ecma48_code& code = iter.next())
-    {
-        if (code.get_type() == ecma48_code::type_chars)
-        {
-            char ctrl[3] = { '^' };
-            assert(!ctrl[2]);
-            const char* ptr = code.get_pointer();
-            for (uint32 num = code.get_length(); num--; ++ptr)
-            {
-                if (*ptr >= 0 && *ptr < ' ')
-                {
-                    ctrl[1] = char(*ptr + 'A' - 1);
-                    out.concat(ctrl, 2);
-                }
-                else
-                {
-                    out.concat(ptr, 1);
-                }
-            }
-        }
-        else
-        {
-            out.concat(code.get_pointer(), code.get_length());
-        }
-    }
+    // Copy into out buffer.
+    out = result;
 
     // Pad with spaces to the specified width.
     if (cells < width)
