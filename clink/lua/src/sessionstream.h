@@ -12,6 +12,9 @@ struct lua_State;
 #define LUA_SESSIONSTREAM "clink_session_stream"
 
 //------------------------------------------------------------------------------
+typedef uint32 stream_position_t;
+
+//------------------------------------------------------------------------------
 class session_stream : public std::enable_shared_from_this<session_stream>
 {
 public:
@@ -19,19 +22,19 @@ public:
     ~session_stream();
 
     const char* name() const { return m_name.c_str(); }
-    size_t size() const { return m_size; }
-    size_t write(size_t& offset, const char* buffer, size_t count);
-    size_t read(size_t& offset, char* buffer, size_t max);
-    size_t gets(size_t& offset, char* buffer, size_t max);
-    int32 scan_number(size_t& offset, double* d);
-    bool truncate(size_t offset);
+    stream_position_t size() const { return m_size; }
+    stream_position_t write(stream_position_t& offset, const char* buffer, stream_position_t count);
+    stream_position_t read(stream_position_t& offset, char* buffer, stream_position_t max);
+    stream_position_t gets(stream_position_t& offset, char* buffer, stream_position_t max);
+    int32 scan_number(stream_position_t& offset, double* d);
+    bool truncate(stream_position_t offset);
     void clear();
 
 private:
     const str_moveable m_name;
     uint8* m_data = nullptr;
-    size_t m_size = 0;
-    size_t m_capacity = 0;
+    stream_position_t m_size = 0;
+    stream_position_t m_capacity = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -52,10 +55,10 @@ struct luaL_SessionStream
     bool is_closed() const;
     bool is_writable() const;
     bool is_readable() const;
-    size_t size() const;
-    size_t write(const char* buffer, size_t count);
-    size_t read(char* buffer, size_t max);
-    size_t gets(char* buffer, size_t max);
+    stream_position_t size() const;
+    stream_position_t write(const char* buffer, stream_position_t count);
+    stream_position_t read(char* buffer, stream_position_t max);
+    stream_position_t gets(char* buffer, stream_position_t max);
     int32 scan_number(double* d);
     bool truncate();
     bool close();
@@ -83,7 +86,7 @@ private:
     const OpenFlags m_flags;
     const str_moveable m_name;
     std::shared_ptr<session_stream> m_stream;
-    size_t m_offset = 0;
+    stream_position_t m_offset = 0;
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(luaL_SessionStream::OpenFlags);

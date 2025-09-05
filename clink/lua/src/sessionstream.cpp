@@ -12,6 +12,7 @@
 
 //------------------------------------------------------------------------------
 static str_unordered_map<std::shared_ptr<session_stream>>* s_streams;
+constexpr stream_position_t MAX_SESSION_STREAM_SIZE = 4 * 1024 * 1024;  // limit session streams to 4MB
 
 //------------------------------------------------------------------------------
 session_stream::session_stream(const char* name)
@@ -33,41 +34,56 @@ session_stream::~session_stream()
 }
 
 //------------------------------------------------------------------------------
-size_t session_stream::write(size_t& offset, const char* buffer, size_t _count)
+stream_position_t session_stream::write(stream_position_t& offset, const char* buffer, stream_position_t _count)
 {
-    const size_t actual_count = _count;
-    const size_t count_plus_nul = _count + 1;
-    if (offset + count_plus_nul > m_capacity)
+    stream_position_t actual_count = _count;
+
     {
-        size_t capacity = max<size_t>(LUAL_BUFFERSIZE, m_capacity * 3 / 2);
-        if (capacity < offset + count_plus_nul)
-            capacity = (offset + count_plus_nul) * 3 / 2;
-        uint8* data = (uint8*)realloc(m_data, capacity);
-        if (!data)
-            return 0;
+        const stream_position_t count_plus_nul = _count + 1;
+        if (offset + count_plus_nul > m_capacity)
+        {
+            stream_position_t capacity = max<stream_position_t>(LUAL_BUFFERSIZE, m_capacity * 3 / 2);
+            if (capacity < offset + count_plus_nul)
+                capacity = (offset + count_plus_nul) * 3 / 2;
+            capacity = min<>(capacity, MAX_SESSION_STREAM_SIZE);
+            uint8* data = (uint8*)realloc(m_data, capacity);
+            if (!data)
+                return 0;
 #ifdef USE_MEMORY_TRACKING
-        dbgsetignore(data, true);
-        dbgsetlabel(data, "session_stream::m_data", false);
+            dbgsetignore(data, true);
+            dbgsetlabel(data, "session_stream::m_data", false);
 #endif
-        m_data = data;
-        m_capacity = capacity;
+            m_data = data;
+            m_capacity = capacity;
+        }
     }
-    memcpy(m_data + offset, buffer, actual_count);
-    offset += actual_count;
-    assert(offset < m_capacity);
-    if (m_size < offset)
+
+    const stream_position_t usable_capacity = m_capacity - 1;  // -1 for NUL terminator.
+    if (offset >= usable_capacity)
     {
-        m_size = offset;
-        m_data[m_size] = 0;  // NUL terminate to simplify scan_number() and for general safety.
+        actual_count = 0;
     }
+    else
+    {
+        actual_count = min<>(actual_count, usable_capacity - offset);
+        memcpy(m_data + offset, buffer, actual_count);
+        offset += actual_count;
+        assert(offset < m_capacity);
+        if (m_size < offset)
+        {
+            m_size = offset;
+            m_data[m_size] = 0;  // NUL terminate to simplify scan_number() and for general safety.
+        }
+    }
+
     assert(m_size < m_capacity);
     return actual_count;
 }
 
 //------------------------------------------------------------------------------
-size_t session_stream::read(size_t& offset, char* buffer, size_t max)
+stream_position_t session_stream::read(stream_position_t& offset, char* buffer, stream_position_t max)
 {
-    size_t num = 0;
+    stream_position_t num = 0;
     if (max > 0)
     {
         if (m_size > offset)
@@ -82,9 +98,9 @@ size_t session_stream::read(size_t& offset, char* buffer, size_t max)
 }
 
 //------------------------------------------------------------------------------
-size_t session_stream::gets(size_t& offset, char* buffer, size_t max)
+stream_position_t session_stream::gets(stream_position_t& offset, char* buffer, stream_position_t max)
 {
-    size_t num = 0;
+    stream_position_t num = 0;
     if (max > 0)
     {
         --max;
@@ -102,7 +118,7 @@ size_t session_stream::gets(size_t& offset, char* buffer, size_t max)
 }
 
 //------------------------------------------------------------------------------
-int32 session_stream::scan_number(size_t& offset, double* d)
+int32 session_stream::scan_number(stream_position_t& offset, double* d)
 {
     if (m_size <= offset)
         return 0;
@@ -116,7 +132,7 @@ int32 session_stream::scan_number(size_t& offset, double* d)
 }
 
 //------------------------------------------------------------------------------
-bool session_stream::truncate(size_t offset)
+bool session_stream::truncate(stream_position_t offset)
 {
     if (m_size > offset)
         m_size = offset;
@@ -263,7 +279,7 @@ bool luaL_SessionStream::is_readable() const
 }
 
 //------------------------------------------------------------------------------
-size_t luaL_SessionStream::size() const
+stream_position_t luaL_SessionStream::size() const
 {
     if (!m_stream)
         return 0;
@@ -271,7 +287,7 @@ size_t luaL_SessionStream::size() const
 }
 
 //------------------------------------------------------------------------------
-size_t luaL_SessionStream::write(const char* buffer, size_t count)
+stream_position_t luaL_SessionStream::write(const char* buffer, stream_position_t count)
 {
     if (!m_stream || !is_writable())
         return 0;
@@ -279,7 +295,7 @@ size_t luaL_SessionStream::write(const char* buffer, size_t count)
 }
 
 //------------------------------------------------------------------------------
-size_t luaL_SessionStream::read(char* buffer, size_t max)
+stream_position_t luaL_SessionStream::read(char* buffer, stream_position_t max)
 {
     if (!m_stream || !is_readable())
         return 0;
@@ -287,7 +303,7 @@ size_t luaL_SessionStream::read(char* buffer, size_t max)
 }
 
 //------------------------------------------------------------------------------
-size_t luaL_SessionStream::gets(char* buffer, size_t max)
+stream_position_t luaL_SessionStream::gets(char* buffer, stream_position_t max)
 {
     if (!m_stream || !is_readable())
         return 0;
@@ -439,24 +455,23 @@ static int32 ss_read_line(lua_State* state, luaL_SessionStream* ss, bool chop)
 }
 static void ss_read_all(lua_State* state, luaL_SessionStream* ss)
 {
-    const size_t MAX_SIZE_T = (~(size_t)0);
-    size_t rlen = LUAL_BUFFERSIZE;  // how much to read in each cycle
+    stream_position_t rlen = LUAL_BUFFERSIZE;  // how much to read in each cycle
     luaL_Buffer b;
     luaL_buffinit(state, &b);
     for (;;)
     {
         char* p = luaL_prepbuffsize(&b, rlen);
-        size_t nr = ss->read(p, rlen);
+        stream_position_t nr = ss->read(p, rlen);
         luaL_addsize(&b, nr);
         if (nr < rlen) break;  // eof?
-        else if (rlen <= (MAX_SIZE_T / 4))  // avoid buffers too large
-            rlen *= 2;  // double buffer size at each iteration
+        else rlen *= 2;  // double buffer size at each iteration
+        rlen = min<stream_position_t>(rlen, MAX_SESSION_STREAM_SIZE);
     }
     luaL_pushresult(&b);  // close buffer
 }
-static int32 ss_read_chars(lua_State* state, luaL_SessionStream* ss, size_t n)
+static int32 ss_read_chars(lua_State* state, luaL_SessionStream* ss, stream_position_t n)
 {
-    size_t nr;  // number of chars actually read
+    stream_position_t nr;  // number of chars actually read
     char* p;
     luaL_Buffer b;
     luaL_buffinit(state, &b);
@@ -493,7 +508,8 @@ static int32 ss_read(lua_State* state, luaL_SessionStream* ss, int32 first)
             if (lua_type(state, n) == LUA_TNUMBER)
             {
                 size_t l = (size_t)lua_tointeger(state, n);
-                success = (l == 0) ? ss_test_eof(state, ss) : ss_read_chars(state, ss, l);
+                stream_position_t limited = stream_position_t(min<size_t>(l, MAX_SESSION_STREAM_SIZE));
+                success = (l == 0) ? ss_test_eof(state, ss) : ss_read_chars(state, ss, limited);
             }
             else
             {
@@ -545,7 +561,7 @@ int32 luaL_SessionStream::seek(lua_State* state)
     __int64 offset = (__int64)p3;
     luaL_argcheck(state, (lua_Number)offset == p3, LUA_SELF + 2, "not an integer in proper range");
 
-    size_t base;
+    unsigned __int64 base;
     switch (op)
     {
     default:
@@ -554,7 +570,9 @@ int32 luaL_SessionStream::seek(lua_State* state)
     case 2: base = ss->size(); break;
     }
 
-    ss->m_offset = base + offset;
+    stream_position_t limited = stream_position_t(min<unsigned __int64>(base + offset, MAX_SESSION_STREAM_SIZE));
+
+    ss->m_offset = limited;
     lua_pushinteger(state, ss->m_offset);
     return 1;
 }
@@ -596,7 +614,8 @@ int32 luaL_SessionStream::write(lua_State* state)
             }
             if ((ss->m_flags & OpenFlags::APPEND) == OpenFlags::APPEND)
                 ss->m_offset = ss->size();
-            const size_t wrote = ss->write(s, l);
+            const stream_position_t limited = stream_position_t(min<size_t>(l, MAX_SESSION_STREAM_SIZE));
+            const stream_position_t wrote = ss->write(s, limited);
             status = (wrote == l);
         }
     }
