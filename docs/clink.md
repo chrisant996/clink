@@ -1574,7 +1574,7 @@ Command | Key | Description
 <a name="rlcmd-clink-show-help"></a>`clink-show-help` | <kbd>Alt</kbd>-<kbd>h</kbd> | Show all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.
 <a name="rlcmd-clink-show-help-raw"></a>`clink-show-help-raw` | | Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.
 <a name="rlcmd-clink-toggle-slashes"></a>`clink-toggle-slashes` | <kbd>Ctrl</kbd>-<kbd>/</kbd> | Toggle between forward and backslashes in the word at the cursor point, or toggle in the <em>n</em>-th word if a numeric argument is provided via the [`digit-argument`](#rlcmd-digit-argument) keys.
-<a name="rlcmd-clink-toggle-suggestion-list"></a>`clink-toggle-suggestion-list` | <kbd>F2</kbd> | Toggle the suggestion list mode on/off.  When the suggestion list mode is enabled and [`autosuggest.enable`](#autosuggest-enable) is enabled, then suggestions are shown in a list.  When the suggestion list is displayed, it responds to some keys:  use <kbd>Up</kbd> and <kbd>Down</kbd> to select a suggestion and apply it to the current input line, or use <kbd>Esc</kbd> to temporarily hide the suggestion list and allow using the normal key bindings for <kbd>Up</kbd> and <kbd>Down</kbd>.
+<a name="rlcmd-clink-toggle-suggestion-list"></a>`clink-toggle-suggestion-list` | <kbd>F2</kbd> | Toggle the suggestion list mode on/off.  When the suggestion list mode is enabled and [`autosuggest.enable`](#autosuggest-enable) is enabled, then suggestions are shown in a list.  When the suggestion list is displayed, it responds to some keys:  use <kbd>Up</kbd> and <kbd>Down</kbd> to select a suggestion and apply it to the current input line, or use <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd> to temporarily hide the suggestion list and allow using the normal key bindings for <kbd>Up</kbd> and <kbd>Down</kbd>.
 <a name="rlcmd-clink-up-directory"></a>`clink-up-directory` | <kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Execute `cd ..` to move up one directory.
 <a name="rlcmd-clink-what-is"></a>`clink-what-is` | <kbd>Alt</kbd>-<kbd>?</kbd> | Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.
 <a name="rlcmd-cua-backward-bigword"></a>`cua-backward-bigword` | | Extend the selection backward one space delimited word.
@@ -1715,7 +1715,7 @@ Here's how the popup windows work:
 
 Key | Description
 :-:|---
-<kbd>Escape</kbd>|Cancels the popup.
+<kbd>Escape</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd>|Cancels the popup.
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
@@ -3779,6 +3779,7 @@ That means:
 - Don't try to bind anything directly to the <kbd>Esc</kbd> key by itself, since that creates ambiguity because `ESC` is the first character in VT input sequences for most special keystrokes.
 - Pressing <kbd>Esc</kbd> by itself can no longer clear the input line.
 - Pressing <kbd>Esc</kbd> by itself can lead to confusing input states, exactly the same as happens in Unix/Linux.
+- Pressing <kbd>Ctrl</kbd>-<kbd>g</kbd> is often an alternative for canceling operations.
 
 ### Cursor Style
 
