@@ -466,7 +466,7 @@ malformed:
 
     suggestions->m_generation_id = new_generation();
     m_suggestions = std::move(*suggestions);
-    if (m_suggestions.size() != 1)
+    if (is_suggestion_list_enabled())
     {
         new (&m_iter) str_iter(nullptr, 0);
     }
