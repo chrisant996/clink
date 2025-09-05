@@ -1236,6 +1236,8 @@ static int32 api_slash_translation(lua_State* state)
 /// Session streams are always opened in binary mode (no line ending
 /// translations are performed).
 ///
+/// Session streams are limited to 4 MB in size.
+///
 /// Scripts can use this function when data needs to survive across Lua VM
 /// reboots, but not across different Clink sessions.  The `clink-reload`
 /// command reboots the Lua VM inside the current Clink session, causing all
