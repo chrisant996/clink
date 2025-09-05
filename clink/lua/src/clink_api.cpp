@@ -9,6 +9,7 @@
 #include "prompt.h"
 #include "async_lua_task.h"
 #include "command_link_dialog.h"
+#include "sessionstream.h"
 #include "../../app/src/version.h" // Ugh.
 
 #ifdef CLINK_USE_LUA_EDITOR_TESTER
@@ -1206,6 +1207,76 @@ static int32 api_slash_translation(lua_State* state)
     extern void set_slash_translation(int32 mode);
     set_slash_translation(mode);
     return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  clink.opensessionstream
+/// -ver:   1.7.23
+/// -arg:   name:string
+/// -arg:   [mode:string]
+/// -ret:   stream
+/// Opens or creates a named in-memory stream that behaves like a Lua file
+/// handle.  Unlike <code>io.open</code>, the stream is not stored in the file
+/// system.  Instead it lives entirely in memory and exists for the duration
+/// of the current Clink session.
+///
+/// The <span class="arg">name</span> string identifies the stream.  Any calls
+/// with the same <span class="arg">name</span> string access the same stream.
+///
+/// The <span class="arg">mode</span> string can be any of the following:
+/// <ul>
+/// <li><code>"r"</code>: read mode (the default);</li>
+/// <li><code>"w"</code>: write mode;</li>
+/// <li><code>"a"</code>: append mode;</li>
+/// <li><code>"r+"</code>: update mode, all previous data is preserved;</li>
+/// <li><code>"w+"</code>: update mode, all previous data is erased;</li>
+/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of stream.</li>
+/// </ul>
+///
+/// Session streams are always opened in binary mode (no line ending
+/// translations are performed).
+///
+/// Scripts can use this function when data needs to survive across Lua VM
+/// reboots, but not across different Clink sessions.  The `clink-reload`
+/// command reboots the Lua VM inside the current Clink session, causing all
+/// variables to be lost.  However, session streams created by
+/// `clink.opensessionstream` are not lost.
+/// -show:  -- Create or open a session stream named "history"
+/// -show:  local s = clink.opensessionstream("my_history_stream", "w")
+/// -show:  s:write("first command\n")
+/// -show:  s:write("second command\n")
+/// -show:  s:close()
+/// -show:
+/// -show:  -- Reopen the same stream later in the session
+/// -show:  local r = clink.opensessionstream("my_history_stream", "r")
+/// -show:  for line in r:lines() do
+/// -show:  &nbsp;   print(line)
+/// -show:  end
+/// -show:  r:close()
+static int32 open_session_stream(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    const char* mode = optstring(state, 2, "r");
+    if (!name || !*name || !mode)
+        return 0;
+    if (!mode[0])
+        mode = "r";
+    if ((mode[0] != 'r' && mode[0] != 'w' && mode[0] != 'a') ||
+        (mode[1] && mode[1] != '+' && mode[2]))
+        return luaL_error(state, "invalid mode " LUA_QS, mode);
+
+    luaL_SessionStream::OpenFlags flags = luaL_SessionStream::OpenFlags::NONE;
+    if (mode[0] != 'r')
+        flags |= luaL_SessionStream::OpenFlags::CREATE;
+    if (mode[0] == 'w' || mode[0] == 'a' || mode[1] == '+')
+        flags |= luaL_SessionStream::OpenFlags::WRITE;
+    if (mode[0] == 'r' || mode[1] == '+')
+        flags |= luaL_SessionStream::OpenFlags::READ;
+    if (mode[0] == 'a')
+        flags |= luaL_SessionStream::OpenFlags::APPEND;
+    const bool clear = (mode[0] == 'w');
+    auto* ss = luaL_SessionStream::make_new(state, name, flags, clear);
+    return ss ? 1 : luaL_fileresult(state, 0, name);
 }
 
 //------------------------------------------------------------------------------
@@ -2451,6 +2522,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "refilterafterterminalresize", &refilter_after_terminal_resize },
         { 1,    "parseline",              &parse_line },
         { 0,    "recognizecommand",       &api_recognize_command },
+        { 1,    "opensessionstream",      &open_session_stream },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.

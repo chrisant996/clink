@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "yield.h"
+#include "sessionstream.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -669,8 +670,19 @@ static int32 io_sopen(lua_State* state)
 ///
 /// If successful, the return value is true. If an error occurs, the return value 
 /// is false, an error message, and an error code.
+///
+/// Starting in Clink v1.7.23, this also works on stream handles returned by
+/// <a href="#clink.opensessionstream">clink.opensessionstream()</a>.
 static int32 io_truncate(lua_State* state)
 {
+    luaL_SessionStream* ss = tostream(state, false/*require*/);
+    if (ss)
+    {
+        ss->truncate();
+        lua_pushboolean(state, true);
+        return 1;
+    }
+
     luaL_Stream* file = ((luaL_Stream *)luaL_checkudata(state, 1, LUA_FILEHANDLE));
     assert(file);
     if (!file)
