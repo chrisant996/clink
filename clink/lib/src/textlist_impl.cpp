@@ -1246,7 +1246,12 @@ do_insert:
                 while (iter.more())
                 {
                     uint32 c = iter.next();
-                    if (!m_win_history)
+                    if (CTRL_CHAR(c))
+                    {
+                        // Discard ctrl characters (especially ESC when the
+                        // terminal.raw_esc setting is enabled).
+                    }
+                    else if (!m_win_history)
                     {
                         m_override_title.clear();
                         m_needle.concat(seq, int32(iter.get_pointer() - seq));
