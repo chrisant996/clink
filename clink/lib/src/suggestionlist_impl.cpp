@@ -490,8 +490,8 @@ do_mouse_position:
                 }
                 else
                 {
-                    // Ignore the click.
-                    return;
+                    // Let something else process the click.
+                    goto catchall;
                 }
             }
             else if (input.id == bind_id_suggestionlist_drag)
