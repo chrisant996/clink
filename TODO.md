@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- [ ] Suggestion list redisplays itself too aggressively -- for example, a mouse click at the top of the terminal screen should not cause the suggestion list to print anything, but currently it does.
 - [ ] Unit tests for `clink.opensessionstream()`.
 - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
