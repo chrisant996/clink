@@ -73,6 +73,19 @@ else
         return err
     end
 
+    -- If the script emitted by oh-my-posh match doesn't have error handling,
+    -- then add some error handling to help troubleshoot invocation errors.
+    local themefile = script:match("^%s*load%(io%.open%('(.*)',%s*\"r\"%):read%(\"%*a\"%)%)%(%)[\r\n%s]*$")
+    if themefile then
+        script = string.format("local file, msg = io.open('%s', \"r\")\n"..
+                               "if file then\n"..
+                               "    load(file:read(\"*a\"))()\n"..
+                               "    file:close()\n"..
+                               "else\n"..
+                               "    error(msg)\n"..
+                               "end", themefile)
+    end
+
     local func, msg = load(script)
     if not func then
         local err = "Error trying to load oh-my-posh Lua script:\n"
