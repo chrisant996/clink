@@ -1225,16 +1225,18 @@ static int32 api_slash_translation(lua_State* state)
 ///
 /// The <span class="arg">mode</span> string can be any of the following:
 /// <ul>
-/// <li><code>"r"</code>: read mode (the default);</li>
-/// <li><code>"w"</code>: write mode;</li>
-/// <li><code>"a"</code>: append mode;</li>
-/// <li><code>"r+"</code>: update mode, all previous data is preserved;</li>
-/// <li><code>"w+"</code>: update mode, all previous data is erased;</li>
-/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of stream.</li>
+/// <li><code>"r"</code>: opens for read (the default);
+/// <li><code>"w"</code>: opens for write, all previous data is erased, creates the stream if it doesn't exist;
+/// <li><code>"wx"</code>: opens for write, but fail if the stream already exists;
+/// <li><code>"a"</code>: opens for writing at the end of the stream (append), creates the stream if it doesn't exist;
+/// <li><code>"r+"</code>: opens for read and write, all previous data is preserved;
+/// <li><code>"w+"</code>: opens for read and write, all previous data is erased;
+/// <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the stream already exists;
+/// <li><code>"a+"</code>: opens for reading and writing at the end of the stream (append), writing is only allowed at the end of steram, creates the stream if it doesn't exist.
 /// </ul>
 ///
-/// Session streams are always opened in binary mode (no line ending
-/// translations are performed).
+/// The <span class="arg">mode</span> string can also have a <code>'b'</code> at
+/// the end to open the stream in binary mode.
 ///
 /// Session streams are limited to 4 MB in size.
 ///
@@ -1261,23 +1263,39 @@ static int32 open_session_stream(lua_State* state)
     const char* mode = optstring(state, 2, "r");
     if (!name || !*name || !mode)
         return 0;
-    if (!mode[0])
-        mode = "r";
-    if ((mode[0] != 'r' && mode[0] != 'w' && mode[0] != 'a') ||
-        (mode[1] && mode[1] != '+' && mode[2]))
-        return luaL_error(state, "invalid mode " LUA_QS, mode);
 
     luaL_SessionStream::OpenFlags flags = luaL_SessionStream::OpenFlags::NONE;
-    if (mode[0] != 'r')
-        flags |= luaL_SessionStream::OpenFlags::CREATE;
-    if (mode[0] == 'w' || mode[0] == 'a' || mode[1] == '+')
-        flags |= luaL_SessionStream::OpenFlags::WRITE;
-    if (mode[0] == 'r' || mode[1] == '+')
+    const bool wr = (*mode == 'w');
+    if (*mode == 'r')
         flags |= luaL_SessionStream::OpenFlags::READ;
-    if (mode[0] == 'a')
-        flags |= luaL_SessionStream::OpenFlags::APPEND;
-    const bool clear = (mode[0] == 'w');
-    auto* ss = luaL_SessionStream::make_new(state, name, flags, clear);
+    else if (*mode == 'w')
+        flags |= luaL_SessionStream::OpenFlags::CREATE | luaL_SessionStream::OpenFlags::WRITE;
+    else if (*mode == 'a')
+        flags |= luaL_SessionStream::OpenFlags::CREATE | luaL_SessionStream::OpenFlags::WRITE | luaL_SessionStream::OpenFlags::APPEND;
+    else
+    {
+bad_mode:
+        luaL_argcheck(state, false, 2, "invalid mode");
+    }
+    ++mode;
+    if (*mode == '+')
+    {
+        flags |= luaL_SessionStream::OpenFlags::READ | luaL_SessionStream::OpenFlags::WRITE;
+        ++mode;
+    }
+    if (wr && *mode == 'x')
+    {
+        flags |= luaL_SessionStream::OpenFlags::ONLYCREATE;
+        ++mode;
+    }
+    if (*mode == 'b')
+    {
+        flags |= luaL_SessionStream::OpenFlags::BINARY;
+        ++mode;
+    }
+    if (*mode)
+        goto bad_mode;
+    auto* ss = luaL_SessionStream::make_new(state, name, flags, wr/*clear*/);
     return ss ? 1 : luaL_fileresult(state, 0, name);
 }
 

@@ -81,16 +81,36 @@ stream_position_t session_stream::write(stream_position_t& offset, const char* b
 }
 
 //------------------------------------------------------------------------------
-stream_position_t session_stream::read(stream_position_t& offset, char* buffer, stream_position_t max)
+stream_position_t session_stream::read(stream_position_t& offset, char* buffer, stream_position_t max, bool text_mode)
 {
     stream_position_t num = 0;
     if (max > 0)
     {
-        if (m_size > offset)
+        if (text_mode)
         {
-            num = min<>(max, m_size - offset);
-            memcpy(buffer, m_data + offset, num);
-            offset += num;
+            stream_position_t remaining = max;
+            while (remaining && offset < m_size)
+            {
+                const char c = m_data[offset++];
+                *buffer = c;
+                if (c == '\r' && offset < m_size && m_data[offset] == '\n')
+                {
+                    ++offset;
+                    *buffer = '\n';
+                }
+                ++num;
+                ++buffer;
+                --remaining;
+            }
+        }
+        else
+        {
+            if (m_size > offset)
+            {
+                num = min<>(max, m_size - offset);
+                memcpy(buffer, m_data + offset, num);
+                offset += num;
+            }
         }
         assert(num <= max);
     }
@@ -98,7 +118,7 @@ stream_position_t session_stream::read(stream_position_t& offset, char* buffer, 
 }
 
 //------------------------------------------------------------------------------
-stream_position_t session_stream::gets(stream_position_t& offset, char* buffer, stream_position_t max)
+stream_position_t session_stream::gets(stream_position_t& offset, char* buffer, stream_position_t max, bool text_mode)
 {
     stream_position_t num = 0;
     if (max > 0)
@@ -109,7 +129,14 @@ stream_position_t session_stream::gets(stream_position_t& offset, char* buffer, 
             const uint8 c = m_data[offset++];
             buffer[num++] = c;
             if (c == '\n')
+            {
+                if (text_mode && num >= 2 && buffer[num - 2] == '\r')
+                {
+                    --num;
+                    buffer[num - 1] = c;
+                }
                 break;
+            }
         }
         assert(num <= max);
         buffer[num] = 0;
@@ -175,9 +202,18 @@ luaL_SessionStream* luaL_SessionStream::make_new(lua_State* state, const char* n
     if (it != s_streams->end())
         stream = it->second;
 
-    // Maybe create a new named stream.
-    if (!stream)
+    if (stream)
     {
+        // Maybe fail if exists.
+        if ((flags & OpenFlags::ONLYCREATE) == OpenFlags::ONLYCREATE)
+        {
+            errno = EEXIST;
+            return nullptr;
+        }
+    }
+    else
+    {
+        // Maybe create a new named stream.
         if ((flags & OpenFlags::CREATE) != OpenFlags::CREATE)
         {
             errno = ENOENT;
@@ -237,6 +273,7 @@ luaL_SessionStream* luaL_SessionStream::make_new(lua_State* state, const char* n
 //------------------------------------------------------------------------------
 luaL_SessionStream::luaL_SessionStream(std::shared_ptr<session_stream> stream, OpenFlags flags)
 : m_flags(flags)
+, m_text_mode((flags & OpenFlags::BINARY) != OpenFlags::BINARY)
 , m_name(stream->name())
 , m_stream(stream)
 {
@@ -291,7 +328,25 @@ stream_position_t luaL_SessionStream::write(const char* buffer, stream_position_
 {
     if (!m_stream || !is_writable())
         return 0;
-    return m_stream->write(m_offset, buffer, count);
+    if (!m_text_mode)
+        return m_stream->write(m_offset, buffer, count);
+    stream_position_t total = 0;
+    stream_position_t len = 0;
+    for (const char* p = buffer; count; ++p, ++len, --count)
+    {
+        if (*p == '\n' || len == 4096)
+        {
+            if (len)
+                total += m_stream->write(m_offset, buffer, len);
+            if (*p == '\n')
+                m_stream->write(m_offset, "\r", 1);
+            buffer = p;
+            len = 0;
+        }
+    }
+    if (len)
+        total += m_stream->write(m_offset, buffer, len);
+    return total;
 }
 
 //------------------------------------------------------------------------------
@@ -299,7 +354,7 @@ stream_position_t luaL_SessionStream::read(char* buffer, stream_position_t max)
 {
     if (!m_stream || !is_readable())
         return 0;
-    return m_stream->read(m_offset, buffer, max);
+    return m_stream->read(m_offset, buffer, max, m_text_mode);
 }
 
 //------------------------------------------------------------------------------
@@ -307,7 +362,7 @@ stream_position_t luaL_SessionStream::gets(char* buffer, stream_position_t max)
 {
     if (!m_stream || !is_readable())
         return 0;
-    return m_stream->gets(m_offset, buffer, max);
+    return m_stream->gets(m_offset, buffer, max, m_text_mode);
 }
 
 //------------------------------------------------------------------------------
@@ -443,10 +498,7 @@ static int32 ss_read_line(lua_State* state, luaL_SessionStream* ss, bool chop)
         else
         {
             if (chop)  // chop 'eol' if needed
-            {
-                l -= 1;
-                l -= (l > 0 && p[l-1] == '\r');
-            }
+                --l;
             luaL_addsize(&b, l);
             luaL_pushresult(&b);  // close buffer
             return 1;  // read at least an `eol'

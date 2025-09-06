@@ -24,8 +24,8 @@ public:
     const char* name() const { return m_name.c_str(); }
     stream_position_t size() const { return m_size; }
     stream_position_t write(stream_position_t& offset, const char* buffer, stream_position_t count);
-    stream_position_t read(stream_position_t& offset, char* buffer, stream_position_t max);
-    stream_position_t gets(stream_position_t& offset, char* buffer, stream_position_t max);
+    stream_position_t read(stream_position_t& offset, char* buffer, stream_position_t max, bool text_mode);
+    stream_position_t gets(stream_position_t& offset, char* buffer, stream_position_t max, bool text_mode);
     int32 scan_number(stream_position_t& offset, double* d);
     bool truncate(stream_position_t offset);
     void clear();
@@ -47,6 +47,8 @@ struct luaL_SessionStream
         WRITE       = 0x02,
         READ        = 0x04,
         APPEND      = 0x08,
+        ONLYCREATE  = 0x10,
+        BINARY      = 0x20,
     };
 
     static luaL_SessionStream* make_new(lua_State* state, const char* name, OpenFlags flags, bool clear);
@@ -84,6 +86,7 @@ private:
     static int32 __tostring(lua_State* state);
 
     const OpenFlags m_flags;
+    const bool m_text_mode;
     const str_moveable m_name;
     std::shared_ptr<session_stream> m_stream;
     stream_position_t m_offset = 0;
