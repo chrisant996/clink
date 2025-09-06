@@ -7,6 +7,8 @@
 void set_scrolled_screen_buffer();
 bool is_scroll_mode();
 void reset_scroll_mode();
+void init_deduce_scroll_mode();
+void deduce_scroll_mode(HANDLE hout);
 
 //------------------------------------------------------------------------------
 enum SCRMODE

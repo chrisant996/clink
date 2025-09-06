@@ -37,6 +37,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/scroll.h>
 
 #include <memory>
 
@@ -2298,6 +2299,8 @@ void display_manager::display()
         }
     }
 #endif
+
+    init_deduce_scroll_mode();
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();

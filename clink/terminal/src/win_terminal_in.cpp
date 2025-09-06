@@ -1021,10 +1021,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
     // Conhost restarts the cursor blink when writing to the console. It restarts
     // hidden which means that if you type faster than the blink the cursor turns
     // invisible. Fortunately, moving the cursor restarts the blink on visible.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
     if (cursor_visibility && !is_scroll_mode())
-        SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+        if (GetConsoleScreenBufferInfo(m_stdout, &csbi))
+            SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
+    }
 
     // Reset interrupt detection (allow Ctrl+Break to cancel input).
     if (s_interrupt)
@@ -1069,6 +1071,9 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
             }
 
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
+
+            deduce_scroll_mode(m_stdout);
+
             if (waited != WAIT_TIMEOUT)
             {
                 if (waited <= WAIT_OBJECT_0 || waited >= WAIT_OBJECT_0 + count)
