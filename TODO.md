@@ -7,11 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Implement `clink.opensessionstream(name [, mode])`.
-  - [x] Test it.
-  - [ ] Implement unit test.
-- ListView mode from Powershell:  https://devblogs.microsoft.com/powershell/announcing-psreadline-2-1-with-predictive-intellisense.
-  - [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
+- [ ] Unit tests for `clink.opensessionstream()`.
+- [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Normal Priority
@@ -21,6 +18,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Issue [#791](https://github.com/chrisant996/clink/issues/791); In a legacy console window with Quick Edit mode off, clicking in the scrollbar and then clicking on the window resets the scroll position.  See the `is_scroll_mode()` call inside `win_terminal_in::read_console()`.  Clink doesn't receive notifications when the scrollbar is clicked, so Clink doesn't have a chance to enter its "scroll mode".  It's tempting to "deduce" whether the scrollbar was used by comparing the scroll position (the `srWindow` field, really) before and after waiting for input, and then _**assuming**_ that if the scroll position changed then it must have been via the scrollbar.  But it isn't necessarily a safe assumption, because any output (e.g. from background processes sharing the same console) can also change the scroll position.
+  - Any new output will scroll DOWN.  Could it be reasonable to assume that if the scroll position has moved UP then it must have been done by the user?
 - On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
 - Randomly hit `assert(group == m_prev_group || group == m_catch_group);` upon `Ctrl-Space`.  It left input in a weird state with `clink-select-complete` still active but not handling input.  Could not repro again after I got out of the state.  It seems likely to be a long-standing issue in some obscure edge case.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
