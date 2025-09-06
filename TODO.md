@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- [ ] the `terminal.raw_esc` setting seems to make `ESC` not work in popup lists?
 - Implement `clink.opensessionstream(name [, mode])`.
   - [x] Test it.
   - [ ] Implement unit test.
