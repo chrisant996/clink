@@ -160,6 +160,7 @@ void suggestionlist_impl::enable(editor_module::result& result)
     assert(!m_clear_display);
     m_any_displayed.clear();
     m_tooltip_displayed = -1;
+    m_force_display = true;
     m_clear_display = false;
 
     // Make sure there's room.
@@ -198,6 +199,12 @@ bool suggestionlist_impl::point_within(int32 in) const
 {
     // return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
     return false;
+}
+
+//------------------------------------------------------------------------------
+uint32 suggestionlist_impl::get_height() const
+{
+    return m_any_displayed.empty() ? 0 : 1 + m_any_displayed.size();
 }
 
 //------------------------------------------------------------------------------
@@ -268,6 +275,7 @@ void suggestionlist_impl::on_begin_line(const context& context)
     s_suggestionlist = this;
     m_buffer = &context.buffer;
     m_printer = &context.printer;
+    m_force_display = false;
     m_clear_display = false;
     m_applied = false;
     m_scroll_helper.clear();
@@ -294,6 +302,7 @@ void suggestionlist_impl::on_end_line()
     s_suggestionlist = nullptr;
     m_buffer = nullptr;
     m_printer = nullptr;
+    m_force_display = false;
     m_clear_display = false;
     m_applied = false;
     m_ignore_scroll_offset = false;
@@ -636,6 +645,7 @@ void suggestionlist_impl::init_suggestions()
         m_index = -1;
         m_prev_displayed = -1;
         m_count = m_suggestions.size();
+        m_force_display = true;
         m_clear_display = !m_any_displayed.empty();
         m_ignore_scroll_offset = false;
         m_max_rows = 0;
@@ -726,14 +736,14 @@ void suggestionlist_impl::update_display()
     // No-op if there are no visible rows and nothing needs to be erased.
     if (m_visible_rows <= 0 && m_any_displayed.empty())
     {
+        m_force_display = false;
         m_clear_display = false;
         return;
     }
 
     // No-op if the selected item hasn't changed, unless the list is not
-    // active and m_any_displayed is not empty.  All other no-op cases set
-    // m_prev_displayed to -1 to force updating the display.
-    if (m_prev_displayed >= 0 && m_prev_displayed == m_index &&
+    // active and m_any_displayed is not empty.
+    if (!m_force_display && m_prev_displayed == m_index &&
         !(!is_active() && !m_any_displayed.empty()) && !m_clear_display)
     {
 #ifdef DEBUG
@@ -742,6 +752,8 @@ void suggestionlist_impl::update_display()
 #endif
             return;
     }
+
+    m_force_display = false;
 
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
@@ -1463,6 +1475,15 @@ bool test_suggestion_list_frozen()
         return false;
 
     return s_suggestionlist->test_frozen();
+}
+
+//------------------------------------------------------------------------------
+uint32 get_suggestion_list_height()
+{
+    if (!s_suggestionlist)
+        return 0;
+
+    return s_suggestionlist->get_height();
 }
 
 //------------------------------------------------------------------------------

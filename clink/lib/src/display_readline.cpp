@@ -3261,5 +3261,5 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
 //------------------------------------------------------------------------------
 SHORT calc_max_y_scroll_pos(SHORT y)
 {
-    return y + (_rl_vis_botlin - _rl_last_v_pos) + s_ever_input_hint;
+    return y + (_rl_vis_botlin - _rl_last_v_pos) + max<uint32>(s_ever_input_hint, get_suggestion_list_height());
 }

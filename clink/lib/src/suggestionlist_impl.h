@@ -27,6 +27,7 @@ public:
     void            allow(bool allow);
     bool            toggle(editor_module::result& result);
     bool            point_within(int32 in) const;
+    uint32          get_height() const;
     void            clear_index(bool force=false);
     bool            get_selected_history_index(int32& index) const;
     bool            remove_history_index(int32 history_index);
@@ -96,6 +97,7 @@ private:
     int32           m_vert_scroll_car = 0;
     int32           m_vert_scroll_column = 0;
 #endif
+    bool            m_force_display = false;
     bool            m_clear_display = false;
     std::vector<int32> m_any_displayed;
     int32           m_tooltip_displayed = -1;
