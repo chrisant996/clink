@@ -1225,14 +1225,14 @@ static int32 api_slash_translation(lua_State* state)
 ///
 /// The <span class="arg">mode</span> string can be any of the following:
 /// <ul>
-/// <li><code>"r"</code>: opens for read (the default);
+/// <li><code>"r"</code>: opens for read (the default), fails if the stream doesn't exist;
 /// <li><code>"w"</code>: opens for write, all previous data is erased, creates the stream if it doesn't exist;
 /// <li><code>"wx"</code>: opens for write, but fail if the stream already exists;
-/// <li><code>"a"</code>: opens for writing at the end of the stream (append), creates the stream if it doesn't exist;
-/// <li><code>"r+"</code>: opens for read and write, all previous data is preserved;
-/// <li><code>"w+"</code>: opens for read and write, all previous data is erased;
+/// <li><code>"a"</code>: opens for writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist;
+/// <li><code>"r+"</code>: opens for read and write, all previous data is preserved, fails if the stream doesn't exist;
+/// <li><code>"w+"</code>: opens for read and write, all previous data is erased, creates the stream if it doesn't exist;
 /// <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the stream already exists;
-/// <li><code>"a+"</code>: opens for reading and writing at the end of the stream (append), writing is only allowed at the end of steram, creates the stream if it doesn't exist.
+/// <li><code>"a+"</code>: opens for reading and writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist.
 /// </ul>
 ///
 /// The <span class="arg">mode</span> string can also have a <code>'b'</code> at

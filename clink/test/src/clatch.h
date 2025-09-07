@@ -1,6 +1,8 @@
 // Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>

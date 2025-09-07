@@ -11,8 +11,16 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static str_unordered_map<std::shared_ptr<session_stream>>* s_streams;
+static str_unordered_map<std::shared_ptr<session_stream>>* s_streams = nullptr;
 constexpr stream_position_t MAX_SESSION_STREAM_SIZE = 4 * 1024 * 1024;  // limit session streams to 4MB
+
+//------------------------------------------------------------------------------
+void discard_all_session_streams()
+{
+    auto* streams = s_streams;
+    s_streams = nullptr; // Before delete, otherwise ~session_stream uses it and crashes.
+    delete streams;
+}
 
 //------------------------------------------------------------------------------
 session_stream::session_stream(const char* name)
