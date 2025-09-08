@@ -1612,6 +1612,10 @@ bind_bracketed_paste_prefix (void)
 /*								    */
 /* **************************************************************** */
 
+/* begin_clink_change
+ * Don't use these; they don't save/restore everything. */
+#if 0
+/* end_clink_change */
 int
 rl_save_state (struct readline_state *sp)
 {
@@ -1697,6 +1701,9 @@ rl_restore_state (struct readline_state *sp)
 
   return (0);
 }
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* Functions to manage the string that is the current key sequence. */
 
