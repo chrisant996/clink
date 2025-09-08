@@ -7,13 +7,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- [ ] Update documentation about suggestions and completion (and add a link from the `clink-toggle-suggestion-list` documentation).
-- Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Normal Priority
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
+- Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Low Priority
 - On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
