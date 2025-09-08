@@ -553,6 +553,7 @@ do_mouse_position:
     case bind_id_suggestionlist_escape:
         // Hide suggestion list until the input line is changed by something
         // other than the suggestion list.
+        apply_suggestion(-1);
         allow_suggestion_list(0);
         result.set_bind_group(m_prev_bind_group);
         suppress_suggestions();
@@ -1232,7 +1233,7 @@ void suggestionlist_impl::apply_suggestion(int32 index)
     if (m_applied && is_locked_against_suggestions())
     {
         m_buffer->undo();
-        assert(m_applied);
+        m_applied = false;
         assert(!is_locked_against_suggestions());
     }
 
