@@ -227,11 +227,21 @@ kbd {
 .color_unexpected { color: #c0c0c0 }
 .color_unrecognized { color: #ff5f5f }
 .color_comment_row { color: #00ffff; background-color: #000080; }
+.color_sugg_dim { color: #6c6c6c; }
+.color_sugg_markup { color: #fdae1f; }
+.color_sugg_highlight { color: #5fffff; }
+.color_sugg_selected { background-color: #444444; }
+
+.color_callout { color: #cc99ff; }
 
 .right_gray {
     color: #d7d7d7;
     text-align:right;
     font-style:italic;
+}
+
+.right_align {
+    text-align:right;
 }
 
 .cursor {

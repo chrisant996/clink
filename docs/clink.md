@@ -17,7 +17,7 @@ Clink offers suggestions as you type based on history, files, and completions.
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color).
+Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color), or press <kbd>F2</kbd> to toggle showing an interactive list of suggestions.
 
 See [Auto-Suggest](#gettingstarted_autosuggest) to learn more.
 
@@ -127,7 +127,7 @@ Once Clink is installed, there are several ways to start it.
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions.
-- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.
+- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestionm or press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the `/` and `?` symbols are on the same physical key).
@@ -140,7 +140,7 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 
 "Completion" is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.
 
-"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.
+"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  Press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
 
 Some examples of what completions can offer:
 - File names,
@@ -287,11 +287,55 @@ Later, you start to type a new command, and it matches the earlier command from 
 
 The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
-If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers a suggestion for a whole input line, and the suggestion can come from the saved command history or from the list of possible completions.  There can be many possible completions available, but there is never more than one auto-suggestion available.
+If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.
+
+You can press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
 
 The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show a right-aligned usage hint when a suggestion is available (`Right=Insert Suggestion` or `Right=Insert F2=List` etc).
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
+
+<a name="suggestion-list"></a>
+
+#### Suggestion list
+
+Clink can show an interactive list of multiple suggestions to choose from.
+
+Press <kbd>F2</kbd> to toggle showing the suggestion list.
+
+The suggestion list looks like this:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User input</span></td></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌──┴──┐</span></td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;└───────────────────────┬───────────────────────┘ └────┬─────┘</span></td></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sources</span></td></tr>
+</table></code></pre>
+
+When the suggestion list is visible, then the following keys control it:
+
+Key | Description
+:-:|---
+<kbd>F2</kbd>|Toggles the suggestion list on or off.
+<kbd>Esc</kbd>|Reverts to the original input line and clears the suggestion list.
+<kbd>Up</kbd>/<kbd>Down</kbd>|When one or more suggestions are listed, the arrow keys move the selection highlight and replace the input line.  To make <kbd>Up</kbd> and <kbd>Down</kbd> navigate the history list instead of navigating in the suggestion list, press <kbd>Esc</kbd> to clear the suggestion list, and then use <kbd>Up</kbd> and <kbd>Down</kbd>.
+
+Using <kbd>Up</kbd> and <kbd>Down</kbd> to move the selection highlight looks like this:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span> <span class="color_callout">&nbsp;├── Selected suggestion</span></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+</table></code></pre>
+
+The colors for the suggestion list can be customized by changing the [color.suggestionlist_*](#color_suggestionlist) settings.
 
 <a name="gettingstarted_colors"></a>
 
@@ -513,7 +557,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_selected_completion"></a>`color.selected_completion` | [*](#alternatedefault) | The color for the selected completion with the [`clink-select-complete`](#rlcmd-clink-select-complete) command.  If no color is set, then reverse video is used.
 <a name="color_selection"></a>`color.selection` | [*](#alternatedefault) | The color for selected text in the input line (for example, when using <kbd>Shift</kbd>-Arrow keys).  If no color is set, then reverse video is used.
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` [*](#alternatedefault) | The color for automatic suggestions when [`autosuggest.enable`](#autosuggest_enable) is enabled.
-<a name="color_suggestionlist"></a>`color.suggestionlist` | | The color for automatic suggestions when [`autosuggest.enable`](#autosuggest_enable) is enabled.
+<a name="color_suggestionlist"></a>`color.suggestionlist` | | The color for suggestions in the [suggestion list](#suggestion-list).
 <a name="color_suggestionlist_dim"></a>`color.suggestionlist_dim` | `bright black` [*](#alternatedefault) | The color for dim text in the suggestion list's header.
 <a name="color_suggestionlist_highlight"></a>`color.suggestionlist_highlight` | `bright cyan` [*](#alternatedefault) | The color for highlighting the matching part of the suggestions.  For the selected suggestion, this is combined with `color.suggestionlist_selected`.
 <a name="color_suggestionlist_markup"></a>`color.suggestionlist_markup` | `yellow` [*](#alternatedefault) | The color for markup in the suggestion list, in the header and at the beginning and end of each suggestion item.  For the selected suggestion, this is combined with `color.suggestionlist_selected`.
@@ -595,7 +639,7 @@ Name                         | Default [*](#alternatedefault) | Description
 > Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
 
 > **Compatibility Notes:**
-> - The `esc_clears_line` setting has been replaced by a [`clink-reset-line`](#rlcmd-clink-reset-line) command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) for more information.
+> - The `esc_clears_line` setting has been replaced by a [`clink-reset-line`](#rlcmd-clink-reset-line) command that is by default bound to the <kbd>Esc</kbd> key.  See [Customizing Key Bindings](#keybindings) for more information.
 > - The `match_colour` setting has been removed, and Clink now supports Readline's completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
 <a name="colorsettings"></a>
@@ -1715,7 +1759,7 @@ Here's how the popup windows work:
 
 Key | Description
 :-:|---
-<kbd>Escape</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd>|Cancels the popup.
+<kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd>|Cancels the popup.
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
@@ -3027,12 +3071,48 @@ The function takes a [line_state](#line_state) argument that contains the input 
 
 If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.  The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole inserted suggestion (even the part that's already been typed).
 
-In Clink v1.7.23 or higher, the function takes a third `limit` argument which indicates the maximum number of suggestions the function may return, and the function may optionally return multiple pairs of suggestion string and offset in table.  Each entry in the table can have a `suggestion` field and an `offset` field.
-
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
 ```lua
 #INCLUDE [docs\examples\ex_suggest.lua]
+```
+
+In Clink v1.7.23 or higher, the function takes a third `limit` argument which indicates the maximum number of suggestions the function may return, and the function may optionally return a table of suggestions.  Each item in the table is another table with the following  scheme:
+
+```lua
+local suggestor = clink.suggester("name_goes_here")
+
+function suggestor:suggest(line_state, matches, limit)
+    if not limit then
+
+        -- The script is running in a version of Clink that only supports one
+        -- suggestion, not a list.
+        return "suggestion text", 5
+
+    else
+
+        -- The script is running in a version of Clink that only supports the
+        -- suggestion list feature.
+
+        local suggestions = {}
+
+        -- YOUR CODE GOES HERE FOR GENERATING SUGGESTIONS...
+
+        -- Example of adding one suggestion:
+        table.insert(suggestions, {
+            "suggestion text",          -- The suggestion string.
+            5,                          -- The offset to where the suggestion begins in the input line.
+            highlight = { 5, 8 },       -- Optional:  offsets to the beginning and end of the matching
+                                        -- text to highlight in the suggestion.
+            tooltip = "description",    -- Optional:  a description for the suggestion, which will be
+                                        -- shown below it when the suggestion is selected.
+        })
+
+        -- YOUR CODE GOES HERE FOR ADDING MORE SUGGESTIONS...
+
+        return suggestions
+    end
+end
 ```
 
 <a name="showinginputhints"></a>
