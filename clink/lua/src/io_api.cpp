@@ -671,7 +671,7 @@ static int32 io_sopen(lua_State* state)
 /// If successful, the return value is true. If an error occurs, the return value 
 /// is false, an error message, and an error code.
 ///
-/// Starting in Clink v1.7.23, this also works on stream handles returned by
+/// Starting in Clink v1.8.0, this also works on stream handles returned by
 /// <a href="#clink.opensessionstream">clink.opensessionstream()</a>.
 static int32 io_truncate(lua_State* state)
 {

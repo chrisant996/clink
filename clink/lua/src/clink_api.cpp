@@ -1211,7 +1211,7 @@ static int32 api_slash_translation(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.opensessionstream
-/// -ver:   1.7.23
+/// -ver:   1.8.0
 /// -arg:   name:string
 /// -arg:   [mode:string]
 /// -ret:   stream

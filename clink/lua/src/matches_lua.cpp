@@ -113,7 +113,7 @@ int32 matches_lua::get_type(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  matches:getdescription
-/// -ver:   1.7.23
+/// -ver:   1.8.0
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns the match description for the <span class="arg">index</span> match.
@@ -134,7 +134,7 @@ int32 matches_lua::get_description(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  matches:getappendchar
-/// -ver:   1.7.23
+/// -ver:   1.8.0
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns what the completion generator suggested should be appended after
@@ -168,7 +168,7 @@ int32 matches_lua::get_append_char(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  matches:getsuppressquoting
-/// -ver:   1.7.23
+/// -ver:   1.8.0
 /// -ret:   boolean
 /// Returns whether automatic quoting should be suppressed for the matches.
 int32 matches_lua::get_suppress_quoting(lua_State* state)
@@ -182,7 +182,7 @@ int32 matches_lua::get_suppress_quoting(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  matches:getforcequoting
-/// -ver:   1.7.23
+/// -ver:   1.8.0
 /// -ret:   boolean
 /// Returns whether automatic quoting should be forced for the matches.
 int32 matches_lua::get_force_quoting(lua_State* state)

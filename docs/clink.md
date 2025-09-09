@@ -3077,7 +3077,7 @@ This example illustrates how to make a suggestion generator that returns the lon
 #INCLUDE [docs\examples\ex_suggest.lua]
 ```
 
-In Clink v1.7.23 or higher, the function takes a third `limit` argument which indicates the maximum number of suggestions the function may return, and the function may optionally return a table of suggestions.  Each item in the table is another table with the following  scheme:
+In Clink v1.8.0 or higher, the function takes a third `limit` argument which indicates the maximum number of suggestions the function may return, and the function may optionally return a table of suggestions.  Each item in the table is another table with the following  scheme:
 
 ```lua
 local suggestor = clink.suggester("name_goes_here")
