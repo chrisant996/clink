@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.8.1
+
+- Fixed [#796](https://github.com/chrisant996/clink/issues/796); unable to load Clink on Win7 and earlier (regression introduced in v1.8.0 by Readline changes).
+
 #### v1.8.0
 
 - Added an interactive list mode for choosing from available suggestions.  This is similar to PowerShell's "listview" mode.
