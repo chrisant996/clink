@@ -167,12 +167,21 @@ static int set_alarm (unsigned int *, unsigned int *);
 static void reset_alarm (void);
 #endif
 
+/* begin_clink_change
+ * This isn't used, so get rid of it. */
+#if 0
+/* end_clink_change */
+
 /* We implement timeouts as a future time using a supplied interval
    (timeout_duration) from when the timeout is set (timeout_point).
    That allows us to easily determine whether the timeout has occurred
    and compute the time remaining until it does. */
 static struct timeval timeout_point;
 static struct timeval timeout_duration;
+
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* **************************************************************** */
 /*								    */
@@ -590,6 +599,11 @@ reset_alarm ()
 #  endif /* !HAVE_SETITIMER */
 #endif /* RL_TIMEOUT_USE_SIGALRM */
 
+/* begin_clink_change
+ * This isn't used, so get rid of it. */
+#if 0
+/* end_clink_change */
+
 /* Set a timeout which will be used for the next call of `readline
    ()'.  When (0, 0) are specified the timeout is cleared.  */
 int
@@ -686,6 +700,18 @@ rl_timeout_remaining (unsigned int *secs, unsigned int *usecs)
   return 1;
 }
 
+/* begin_clink_change */
+#else
+int
+_rl_timeout_init (void)
+{
+  /* Clear the timeout state of the previous edit */
+  RL_UNSETSTATE(RL_STATE_TIMEOUT);
+  return 0;
+}
+#endif
+/* end_clink_change */
+
 /* This should only be called if RL_TIMEOUT_USE_SELECT is defined. */
 
 #if defined (RL_TIMEOUT_USE_SELECT)
@@ -752,6 +778,9 @@ _rl_timeout_select (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptf
 }
 #endif
 
+/* begin_clink_change */
+#if defined (RL_TIMEOUT_USE_SELECT) || defined (RL_TIMEOUT_USE_SIGALRM) || defined (SIGALARM) || defined (HAVE_PSELECT) || defined (HAVE_SELECT)
+/* end_clink_change */
 static void
 _rl_timeout_handle ()
 {
@@ -761,7 +790,13 @@ _rl_timeout_handle ()
   RL_SETSTATE(RL_STATE_TIMEOUT);
   _rl_abort_internal ();
 }
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
+/* begin_clink_change */
+#if defined (SIGALARM)
+/* end_clink_change */
 int
 _rl_timeout_handle_sigalrm ()
 {
@@ -780,6 +815,9 @@ _rl_timeout_handle_sigalrm ()
 #endif
   return -1;
 }
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 /* **************************************************************** */
 /*								    */
 /*			     Character Input			    */

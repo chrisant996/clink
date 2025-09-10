@@ -36,6 +36,12 @@
 
 #ifdef WINDOWS_NATIVE
 
+/* begin_clink_change
+ * Make Readline load the API manually; don't dynamically link with it. */
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0
+/* end_clink_change */
+
 # if !(_WIN32_WINNT >= _WIN32_WINNT_WIN8)
 
 /* Avoid warnings from gcc -Wcast-function-type.  */
