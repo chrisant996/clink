@@ -5,6 +5,7 @@
 #### v1.8.2
 
 - Improved highlight position and length detection in the suggestion list for some completions.
+- Added an optimization when re-drawing the suggestion list.
 
 #### v1.8.1
 
