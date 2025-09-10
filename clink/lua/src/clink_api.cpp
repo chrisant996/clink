@@ -61,6 +61,7 @@ void set_test_harness() { s_test_harness = true; }
 //------------------------------------------------------------------------------
 extern setting_enum g_dupe_mode;
 extern setting_bool g_lua_breakonerror;
+extern setting_bool g_match_wild;
 
 #ifdef _WIN64
 static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
@@ -2093,12 +2094,16 @@ static int32 is_cmd_wordbreak(lua_State* state)
 static int32 find_match_highlight(lua_State* state)
 {
     const char* match = checkstring(state, 1);
-    const char* typed = checkstring(state, 2);
-    if (!match || !typed)
+    const char* _typed = checkstring(state, 2);
+    if (!match || !_typed)
         return 0;
-    if (!*match || !*typed)
+    if (!*match || !*_typed)
         return 0;
 
+    str<> tmp;
+    const char* typed = _typed;
+
+again:
     int32 best_offset = -1;
     int32 best_length = -1;
     for (const char* walk = match; *walk; ++walk)
@@ -2118,7 +2123,36 @@ static int32 find_match_highlight(lua_State* state)
     }
 
     if (best_offset < 0 || best_length <= 0)
+    {
+        // If no match found and match.wild is enabled and typed has * or ?
+        // then assume they are wildcards:  find the first non-wildcard
+        // segment in the typed string and try searching for that.
+        //
+        // Why a post-processing approximation of the actual filename matching
+        // that the match pipeline performs?  Because it's not worth the cost
+        // of implementing something more pedantically precise.  And anyway,
+        // technically wildcard matches always actually match the _entire_
+        // string, so running a wildcard comparison would simply highlight the
+        // entire match.  This is simpler and faster and yields more desirable
+        // results except maybe in obscure edge cases.
+        if (g_match_wild.get() && !tmp.length() && strpbrk(typed, "*?"))
+        {
+            const char* walk = _typed;
+            while (*walk == '*' || *walk == '?')
+                ++walk;
+            while (*walk && *walk != '*' && *walk != '?')
+            {
+                tmp.concat(walk, 1);
+                ++walk;
+            }
+            if (tmp.length())
+            {
+                typed = tmp.c_str();
+                goto again;
+            }
+        }
         return 0;
+    }
 
     lua_pushinteger(state, best_offset);
     lua_pushinteger(state, best_length);
