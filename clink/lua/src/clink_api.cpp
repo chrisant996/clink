@@ -1652,7 +1652,7 @@ static int32 set_suggestion_result(lua_State* state)
                     lua_rawgeti(state, -1, 2);
                     hl = optinteger(state, -1, 0);
                     lua_pop(state, 1);
-                    if (hs < 0 || hl <= 0)
+                    if (hs < 0 || hl < 0)
                         hs = hl = -1;
                 }
                 lua_pop(state, 1);

@@ -464,37 +464,38 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                 if not m then
                     break
                 elseif m ~= typed and (limit or info.quoted or no_quotes or not rl.needquotes(m)) then
+                    local append_quote = info.quoted
                     local hofs, matchlen = clink._find_match_highlight(m, typed)
-                    if hofs then
-                        local append_quote = info.quoted
-                        hofs = hofs + info.offset
-                        if limit and not info.quoted and not no_quotes and rl.needquotes(m) then
-                            m = '"'..m
-                            hofs = hofs + 1
-                            append_quote = true
+                    hofs = hofs or 0
+                    matchlen = matchlen or 0
+                    hofs = hofs + info.offset
+                    if limit and not info.quoted and not no_quotes and rl.needquotes(m) then
+                        m = '"'..m
+                        hofs = hofs + 1
+                        append_quote = true
+                    end
+                    local append = matches:getappendchar(i)
+                    if append and append ~= "" then
+                        -- If append char and quoted, add closing quote.
+                        if append_quote  then
+                            m = m..'"'
                         end
-                        local append = matches:getappendchar(i)
-                        if append and append ~= "" then
-                            -- If append char and quoted, add closing quote.
-                            if append_quote  then
-                                m = m..'"'
-                            end
-                            -- Add append char.  This makes suggestions more
-                            -- consistent with completion.  It also helps make
-                            -- completion suggestions more likely to match
-                            -- history suggestions so that the suggestion
-                            -- list's duplicate removal works better.
-                            m = m..append
-                        end
-                        table.insert(results, { m, info.offset, highlight={hofs, matchlen}, tooltip=matches:getdescription(i) }) -- luacheck: no max line length
-                        if limit then
-                            limit = limit - 1
-                            if limit <= 0 then
-                                break
-                            end
-                        else
+                        -- Add append char.  This makes suggestions more
+                        -- consistent with completion.  It also helps make
+                        -- completion suggestions more likely to match history
+                        -- suggestions so that the suggestion list's duplicate
+                        -- removal works better.
+                        m = m..append
+                    end
+                    local t = { m, info.offset, highlight={hofs, matchlen}, tooltip=matches:getdescription(i) }
+                    table.insert(results, t)
+                    if limit then
+                        limit = limit - 1
+                        if limit <= 0 then
                             break
                         end
+                    else
+                        break
                     end
                 end
             end
