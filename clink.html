@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.7.22</title>
+<title>Clink v1.8.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -238,11 +238,21 @@ kbd {
 .color_unexpected { color: #c0c0c0 }
 .color_unrecognized { color: #ff5f5f }
 .color_comment_row { color: #00ffff; background-color: #000080; }
+.color_sugg_dim { color: #6c6c6c; }
+.color_sugg_markup { color: #fdae1f; }
+.color_sugg_highlight { color: #5fffff; }
+.color_sugg_selected { background-color: #444444; }
+
+.color_callout { color: #cc99ff; }
 
 .right_gray {
     color: #d7d7d7;
     text-align:right;
     font-style:italic;
+}
+
+.right_align {
+    text-align:right;
 }
 
 .cursor {
@@ -958,7 +968,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.7.22</div>
+                <div id="title">Clink v1.8.0</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -989,7 +999,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-<p>Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color).</p>
+<p>Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color), or press <kbd>F2</kbd> to toggle showing an interactive list of suggestions.</p>
 <p>See <a href="#gettingstarted_autosuggest">Auto-Suggest</a> to learn more.</p>
 </div>
 <div class="promo_block">
@@ -1075,7 +1085,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>You can use Clink right away without configuring anything:</p>
 <ul>
 <li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions.</li>
-<li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion.</li>
+<li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestionm or press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</li>
 <li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match <a href="#how-completion-works">completion</a> two different ways.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the <code>/</code> and <code>?</code> symbols are on the same physical key).</li>
@@ -1084,7 +1094,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p><a name="how-completion-works"></a></p>
 <h2 id="how-completion-works"><a class="wlink" href="#how-completion-works"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>How Completion Works <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
 <p>&quot;Completion&quot; is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.</p>
-<p>&quot;Suggestions&quot; are for the whole command line; Clink offers an <a href="#gettingstarted_autosuggest">automatic suggestion</a> for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  There is never more than one automatic suggestion at a time.</p>
+<p>&quot;Suggestions&quot; are for the whole command line; Clink offers an <a href="#gettingstarted_autosuggest">automatic suggestion</a> for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  Press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</p>
 <p>Some examples of what completions can offer:</p>
 <ul>
 <li>File names,</li>
@@ -1234,9 +1244,61 @@ $endif
 </code></pre>
 
 <p>The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.</p>
-<p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers a suggestion for a whole input line, and the suggestion can come from the saved command history or from the list of possible completions.  There can be many possible completions available, but there is never more than one auto-suggestion available.</p>
-<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show the <code>[Right]=Insert Suggestion</code> usage hint when a suggestion is available.</p>
+<p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.</p>
+<p>You can press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</p>
+<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show a right-aligned usage hint when a suggestion is available (<code>Right=Insert Suggestion</code> or <code>Right=Insert F2=List</code> etc).</p>
 <p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
+<p><a name="suggestion-list"></a></p>
+<h4 id="suggestion-list"><a class="wlink" href="#suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Suggestion list <span class="uplinks"><a href="#gettingstarted_autosuggest">up</a> <a href="#toc">top</a></span></h4>
+<p>Clink can show an interactive list of multiple suggestions to choose from.</p>
+<p>Press <kbd>F2</kbd> to toggle showing the suggestion list.</p>
+<p>The suggestion list looks like this:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User input</span></td></tr>
+<tr height="8px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌──┴──┐</span></td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;└───────────────────────┬───────────────────────┘ └────┬─────┘</span></td></tr>
+<tr height="8px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sources</span></td></tr>
+</table></code></pre>
+
+<p>When the suggestion list is visible, then the following keys control it:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><kbd>F2</kbd></td>
+<td>Toggles the suggestion list on or off.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Esc</kbd></td>
+<td>Reverts to the original input line and clears the suggestion list.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Up</kbd>/<kbd>Down</kbd></td>
+<td>When one or more suggestions are listed, the arrow keys move the selection highlight and replace the input line.  To make <kbd>Up</kbd> and <kbd>Down</kbd> navigate the history list instead of navigating in the suggestion list, press <kbd>Esc</kbd> to clear the suggestion list, and then use <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
+</tr>
+</tbody></table>
+<p>Using <kbd>Up</kbd> and <kbd>Down</kbd> to move the selection highlight looks like this:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span> <span class="color_callout">&nbsp;├── Selected suggestion</span></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+</table></code></pre>
+
+<p>The <a href="#suggestionglist_default">suggestionlist.default</a> setting controls whether each session starts with the suggestion list on or off.</p>
+<p>The colors for the suggestion list can be customized by changing the <a href="#color_suggestionlist">color.suggestionlist_*</a> settings.</p>
 <p><a name="gettingstarted_colors"></a></p>
 <h3 id="colors"><a class="wlink" href="#gettingstarted_colors"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Colors <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
@@ -1390,7 +1452,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#autosuggest_hint"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_hint"></a><code>autosuggest.hint</code></td>
 <td align="center">True</td>
-<td>The default is <code>true</code>.  When this and <a href="#autosuggest_enable"><code>autosuggest.enable</code></a> are both <code>true</code> and a suggestion is available, show a usage hint <code>[Right]=Insert Suggestion</code> to help make the feature more discoverable and easy to use.  Set this to <code>false</code> to hide the usage hint.</td>
+<td>The default is <code>true</code>.  When this and <a href="#autosuggest_enable"><code>autosuggest.enable</code></a> are both <code>true</code> and a suggestion is available, show a right-aligned usage hint to help make the feature more discoverable and easy to use (<code>Right=Insert Suggestion</code> or <code>Right=Insert F2=List</code> etc).  Set this to <code>false</code> to hide the usage hint.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#autosuggest_original_case"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_original_case"></a><code>autosuggest.original_case</code></td>
@@ -1653,6 +1715,31 @@ $endif
 <td>The color for automatic suggestions when <a href="#autosuggest_enable"><code>autosuggest.enable</code></a> is enabled.</td>
 </tr>
 <tr>
+<td align="center"><a class="wlink" href="#color_suggestionlist"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestionlist"></a><code>color.suggestionlist</code></td>
+<td align="center"></td>
+<td>The color for suggestions in the <a href="#suggestion-list">suggestion list</a>.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#color_suggestionlist_dim"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestionlist_dim"></a><code>color.suggestionlist_dim</code></td>
+<td align="center"><code>bright black</code> <a href="#alternatedefault">*</a></td>
+<td>The color for dim text in the suggestion list&#39;s header.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#color_suggestionlist_highlight"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestionlist_highlight"></a><code>color.suggestionlist_highlight</code></td>
+<td align="center"><code>bright cyan</code> <a href="#alternatedefault">*</a></td>
+<td>The color for highlighting the matching part of the suggestions.  For the selected suggestion, this is combined with <code>color.suggestionlist_selected</code>.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#color_suggestionlist_markup"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestionlist_markup"></a><code>color.suggestionlist_markup</code></td>
+<td align="center"><code>yellow</code> <a href="#alternatedefault">*</a></td>
+<td>The color for markup in the suggestion list, in the header and at the beginning and end of each suggestion item.  For the selected suggestion, this is combined with <code>color.suggestionlist_selected</code>.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#color_suggestionlist_selected"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestionlist_selected"></a><code>color.suggestionlist_selected</code></td>
+<td align="center"><code>default on bright black</code> <a href="#alternatedefault">*</a></td>
+<td>The color for the selected suggestion.  This is combined with other suggestion list colors, so typically this should specify at least a background color.</td>
+</tr>
+<tr>
 <td align="center"><a class="wlink" href="#color_unexpected"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_unexpected"></a><code>color.unexpected</code></td>
 <td align="center"><code>default</code></td>
 <td>The color for unexpected arguments in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
@@ -1676,6 +1763,11 @@ $endif
 <td align="center"><a class="wlink" href="#debug_log_output_callstacks"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="debug_log_output_callstacks"></a><code>debug.log_output_callstacks</code></td>
 <td align="center">False</td>
 <td>Include callstack when logging output.  This has no effect unless <code>debug.log_terminal</code> is enabled.  This is intended for diagnostic purposes only, and can make the log file grow significantly.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#debug_log_prompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="debug_log_prompt"></a><code>debug.log_prompt</code></td>
+<td align="center">False</td>
+<td>Logs the raw prompt string generated by prompt filters to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#debug_log_terminal"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="debug_log_terminal"></a><code>debug.log_terminal</code></td>
@@ -1928,6 +2020,11 @@ $endif
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
 </tr>
 <tr>
+<td align="center"><a class="wlink" href="#suggestionglist_default"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionglist_default"></a><code>suggestionlist.default</code></td>
+<td align="center">False</td>
+<td>When this is true, a Clink session starts with the suggestion list enabled.  The suggestion list can be toggled on/off with <kbd>F2</kbd> or whatever key is bound to the <a href="#rlcmd-clink-toggle-suggestion-list"><code>clink-toggle-suggestion-list</code></a> command.</td>
+</tr>
+<tr>
 <td align="center"><a class="wlink" href="#terminal_adjust_cursor_style"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_adjust_cursor_style"></a><code>terminal.adjust_cursor_style</code></td>
 <td align="center">True</td>
 <td>When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).</td>
@@ -1988,7 +2085,7 @@ $endif
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
-<li>The <code>esc_clears_line</code> setting has been replaced by a <a href="#rlcmd-clink-reset-line"><code>clink-reset-line</code></a> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</li>
+<li>The <code>esc_clears_line</code> setting has been replaced by a <a href="#rlcmd-clink-reset-line"><code>clink-reset-line</code></a> command that is by default bound to the <kbd>Esc</kbd> key.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</li>
 <li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
@@ -3786,6 +3883,11 @@ $endif              # end clink-only section
 <td>Toggle between forward and backslashes in the word at the cursor point, or toggle in the <em>n</em>-th word if a numeric argument is provided via the <a href="#rlcmd-digit-argument"><code>digit-argument</code></a> keys.</td>
 </tr>
 <tr>
+<td><a class="wlink" href="#rlcmd-clink-toggle-suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-toggle-suggestion-list"></a><code>clink-toggle-suggestion-list</code></td>
+<td align="center"><kbd>F2</kbd></td>
+<td>Toggle the suggestion list mode on/off.  When the suggestion list mode is enabled and <a href="#autosuggest-enable"><code>autosuggest.enable</code></a> is enabled, then suggestions are shown in a list.  When the suggestion list is displayed, it responds to some keys:  use <kbd>Up</kbd> and <kbd>Down</kbd> to select a suggestion and apply it to the current input line, or use <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd> to temporarily hide the suggestion list and allow using the normal key bindings for <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
+</tr>
+<tr>
 <td><a class="wlink" href="#rlcmd-clink-up-directory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-up-directory"></a><code>clink-up-directory</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>PgUp</kbd></td>
 <td>Execute <code>cd ..</code> to move up one directory.</td>
@@ -3927,7 +4029,7 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-win-copy-up-to-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-copy-up-to-char"></a><code>win-copy-up-to-char</code></td>
-<td align="center"><kbd>F2</kbd></td>
+<td align="center"></td>
 <td>Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).</td>
 </tr>
 <tr>
@@ -4032,7 +4134,7 @@ $endif              # end clink-only section
 <td></td>
 </tr>
 </tbody></table>
-<p>For backward compatibility with <a href="#LS_COLORS"><code>%LS_COLORS%</code></a>, either <code>so</code> or <code>*.readline-colored-completion-prefix</code> may be used to override the<a href="#color_common_match_prefix"><code>color.common_match_prefix</code></a> setting.</p>
+<p>For backward compatibility with <a href="#LS_COLORS"><code>%LS_COLORS%</code></a>, either <code>so</code> or <code>readline-colored-completion-prefix</code> may be used to override the<a href="#color_common_match_prefix"><code>color.common_match_prefix</code></a> setting.</p>
 <p>Here is an example that defines colors for various types.</p>
 <pre><code class="language-plaintext">clink set match.coloring_rules  di=93:ro ex=1;32:ex=1:ro=32:di *.tmp=90
 </code></pre>
@@ -4110,8 +4212,8 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><code>.readline-colored-completion-prefix</code></td>
-<td>If there is a color definition in <code>%LS_COLORS%</code> for the custom suffix <code>.readline-colored-completion-prefix</code>, it is used for the common prefix, superseding the <code>so</code> type.</td>
+<td><code>readline-colored-completion-prefix</code></td>
+<td>If there is a color definition in <code>%LS_COLORS%</code> for <code>readline-colored-completion-prefix</code>, it is used for the common prefix, superseding the <code>so</code> type.</td>
 <td></td>
 </tr>
 </tbody></table>
@@ -4139,7 +4241,7 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td align="center"><kbd>Escape</kbd></td>
+<td align="center"><kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd></td>
 <td>Cancels the popup.</td>
 </tr>
 <tr>
@@ -5772,6 +5874,41 @@ function prefix_suggestor:suggest(line_state, matches)
     return prefix, info.offset
 end
 </code></pre>
+<p>In Clink v1.8.0 or higher, the function takes a third <code>limit</code> argument which indicates the maximum number of suggestions the function may return, and the function may optionally return a table of suggestions.  Each item in the table is another table with the following  scheme:</p>
+<pre><code class="language-lua">local suggestor = clink.suggester(&quot;name_goes_here&quot;)
+
+function suggestor:suggest(line_state, matches, limit)
+    if not limit then
+
+        -- The script is running in a version of Clink that only supports one
+        -- suggestion, not a list.
+        return &quot;suggestion text&quot;, 5
+
+    else
+
+        -- The script is running in a version of Clink that only supports the
+        -- suggestion list feature.
+
+        local suggestions = {}
+
+        -- YOUR CODE GOES HERE FOR GENERATING SUGGESTIONS...
+
+        -- Example of adding one suggestion:
+        table.insert(suggestions, {
+            &quot;suggestion text&quot;,          -- The suggestion string.
+            5,                          -- The offset to where the suggestion begins in the input line.
+            highlight = { 5, 8 },       -- Optional:  offsets to the beginning and end of the matching
+                                        -- text to highlight in the suggestion.
+            tooltip = &quot;description&quot;,    -- Optional:  a description for the suggestion, which will be
+                                        -- shown below it when the suggestion is selected.
+        })
+
+        -- YOUR CODE GOES HERE FOR ADDING MORE SUGGESTIONS...
+
+        return suggestions
+    end
+end
+</code></pre>
 <p><a name="showinginputhints"></a></p>
 <h2 id="showing-input-hints"><a class="wlink" href="#showinginputhints"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Showing Input Hints <span class="uplinks"><a href="#extending-clink">up</a> <a href="#toc">top</a></span></h2>
 <p>Clink can show contextual input hints while you type.  Lua scripts can provide input hints.  When a hint is available, it&#39;s shown in the comment row (below the input line).  For example:</p>
@@ -7049,6 +7186,7 @@ load(io.popen(&#39;starship.exe init cmd&#39;):read(&quot;*a&quot;))()
 <li>Don&#39;t try to bind anything directly to the <kbd>Esc</kbd> key by itself, since that creates ambiguity because <code>ESC</code> is the first character in VT input sequences for most special keystrokes.</li>
 <li>Pressing <kbd>Esc</kbd> by itself can no longer clear the input line.</li>
 <li>Pressing <kbd>Esc</kbd> by itself can lead to confusing input states, exactly the same as happens in Unix/Linux.</li>
+<li>Pressing <kbd>Ctrl</kbd>-<kbd>g</kbd> is often an alternative for canceling operations.</li>
 </ul>
 <h3 id="cursor-style"><a class="wlink" href="#cursor-style"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Cursor Style <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
 <p>By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  <code>%CLINK_TERM_VE%</code> selects the style for the normal cursor (insert mode), <code>%CLINK_TERM_VS%</code> selects the style for the enhanced cursor (overwrite mode).</p>
@@ -7335,7 +7473,7 @@ builder:addmatches({
 
 </div><div class="group">
 <h5 id="clink" class="group_name"><a class="wlink" href="#clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr><tr><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.reload">reload</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.reload">reload</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.opensessionstream">opensessionstream</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr></table>
 <div class="function"><div class="header"> <div id="clink.applytheme" class="name"><a class="wlink" href="#clink.applytheme"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.applytheme</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">theme</span>:string, [<span class="arg_name">clearall</span>:boolean], [<span class="arg_name">no_save</span>:boolean] ) : table, message<br/><div class="version">v1.7.0 and newer</div></div></div><div class="body"><p class="desc">Finds the <span class="arg">theme</span> and tries to apply its setting (which are saved in the current profile settings, which affects all Clink sessions using that profile directory).</p><p class="desc"> If successful, it returns true.  If unsuccessful, it returns nil followed by a message describing the failure.</p><p class="desc"> Applying a color theme clears the built-in color settings to their default values before loading the theme.  If the optional <span class="arg">clearall</span> argument is true, then it also clears any color settings added by Lua scripts.</p><p class="desc"> If the optional <span class="arg">no_save</span> argument is true, then the color theme is loaded into memory but is not saved back to the Clink settings file.</p><p class="desc"> Refer to <a href="#color-themes">Color Themes</a> for more information.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.argmatcher" class="name"><a class="wlink" href="#clink.argmatcher"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.argmatcher</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a fully qualified path, then it is only used when the typed command expands to the same fully qualified path.  This makes it possible to create one argmatcher for <code>c:\general\program.exe</code> and another for <code>c:\special\program.exe</code>.  For example, aliases may be used to make both programs runnable, or the system PATH might be changed temporarily while working in a particular context.</p><p class="desc"> <strong>Note:</strong>  Merging <a href="#argmatcher_linking">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases.</p></div></div><hr/>
@@ -7491,6 +7629,19 @@ function clink.oninputlinechanged(func)
 end</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.onprovideline" class="name"><a class="wlink" href="#clink.onprovideline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onprovideline</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="clink.opensessionstream" class="name"><a class="wlink" href="#clink.opensessionstream"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.opensessionstream</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">name</span>:string, [<span class="arg_name">mode</span>:string] ) : stream<br/><div class="version">v1.8.0 and newer</div></div></div><div class="body"><p class="desc">Opens or creates a named in-memory stream that behaves like a Lua file handle.  Unlike <code>io.open</code>, the stream is not stored in the file system.  Instead it lives entirely in memory and exists for the duration of the current Clink session.</p><p class="desc"> The <span class="arg">name</span> string identifies the stream.  Any calls with the same <span class="arg">name</span> string access the same stream.</p><p class="desc"> The <span class="arg">mode</span> string can be any of the following: <ul> <li><code>"r"</code>: opens for read (the default), fails if the stream doesn't exist; <li><code>"w"</code>: opens for write, all previous data is erased, creates the stream if it doesn't exist; <li><code>"wx"</code>: opens for write, but fail if the stream already exists; <li><code>"a"</code>: opens for writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist; <li><code>"r+"</code>: opens for read and write, all previous data is preserved, fails if the stream doesn't exist; <li><code>"w+"</code>: opens for read and write, all previous data is erased, creates the stream if it doesn't exist; <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the stream already exists; <li><code>"a+"</code>: opens for reading and writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist. </ul></p><p class="desc"> The <span class="arg">mode</span> string can also have a <code>'b'</code> at the end to open the stream in binary mode.</p><p class="desc"> Session streams are limited to 4 MB in size.</p><p class="desc"> Scripts can use this function when data needs to survive across Lua VM reboots, but not across different Clink sessions.  The `clink-reload` command reboots the Lua VM inside the current Clink session, causing all variables to be lost.  However, session streams created by `clink.opensessionstream` are not lost.</p><pre class="language-lua"><code>-- Create or open a session stream named "history"
+local s = clink.opensessionstream("my_history_stream", "w")
+s:write("first command\n")
+s:write("second command\n")
+s:close()
+
+-- Reopen the same stream later in the session
+local r = clink.opensessionstream("my_history_stream", "r")
+for line in r:lines() do
+&nbsp;   print(line)
+end
+r:close()</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.parseline" class="name"><a class="wlink" href="#clink.parseline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.parseline</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">line</span>:string ) : table<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">This parses the <span class="arg">line</span> string into a table of commands, with one <a href="#line_state">line_state</a> for each command parsed from the line string.</p><p class="desc"> The returned table of tables has the following scheme:</p><pre class="language-lua"><code>local commands = clink.parseline("echo hello & echo world")
 -- commands[1].line_state corresponds to "echo hello".
@@ -7851,7 +8002,7 @@ end</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="io.sopen" class="name"><a class="wlink" href="#io.sopen"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>io.sopen</span> <span class="uplinks"><a href="#io">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">filename</span>:string, [<span class="arg_name">mode</span>:string], [<span class="arg_name">deny</span>:string] ) : file<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#io.open">io.open()</a>, but adds an optional <code>deny</code> argument that specifies the type of sharing allowed.</p><p class="desc"> This function opens a file named by <span class="arg">filename</span>, in the mode specified in the string <span class="arg">mode</span>.  It returns a new file handle, or, in case of errors, nil plus an error message and error number.</p><p class="desc"> The <span class="arg">mode</span> string can be any of the following: <ul> <li><code>"r"</code>: opens for read (the default); <li><code>"w"</code>: opens for write, all previous data is erased; <li><code>"wx"</code>: opens for write, but fail if the file already exists (requires v1.3.18 or higher); <li><code>"a"</code>: opens for writing at the end of the file (append), creates the file if it doesn't exist; <li><code>"r+"</code>: opens for read and write, all previous data is preserved; <li><code>"w+"</code>: opens for read and write, all previous data is erased; <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher); <li><code>"a+"</code>: opens for reading and writing at the end of the file (append), writing is only allowed at the end of file, creates the file if it doesn't exist. </ul></p><p class="desc"> The <span class="arg">mode</span> string can also have a <code>'b'</code> at the end to open the file in binary mode.</p><p class="desc"> The <span class="arg">deny</span> string can be any of the following: <ul> <li><code>"r"</code> denies read access; <li><code>"w"</code> denies write access; <li><code>"rw"</code> denies read and write access; <li><code>""</code> permits read and write access (the default). </ul></p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="io.truncate" class="name"><a class="wlink" href="#io.truncate"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>io.truncate</span> <span class="uplinks"><a href="#io">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">file</span>:file ) : boolean<br/><div class="version">v1.3.41 and newer</div></div></div><div class="body"><p class="desc">This function truncates the <span class="arg">file</span> previously opened by <a href="#io.open">io.open()</a> or <a href="#io.sopen">io.sopen()</a>. When used on a pipe or other file handle that doesn't refer to an actual file, the behavior is undefined.</p><p class="desc"> If successful, the return value is true. If an error occurs, the return value  is false, an error message, and an error code.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="io.truncate" class="name"><a class="wlink" href="#io.truncate"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>io.truncate</span> <span class="uplinks"><a href="#io">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">file</span>:file ) : boolean<br/><div class="version">v1.3.41 and newer</div></div></div><div class="body"><p class="desc">This function truncates the <span class="arg">file</span> previously opened by <a href="#io.open">io.open()</a> or <a href="#io.sopen">io.sopen()</a>. When used on a pipe or other file handle that doesn't refer to an actual file, the behavior is undefined.</p><p class="desc"> If successful, the return value is true. If an error occurs, the return value  is false, an error message, and an error code.</p><p class="desc"> Starting in Clink v1.8.0, this also works on stream handles returned by <a href="#clink.opensessionstream">clink.opensessionstream()</a>.</p></div></div><hr/>
 
 </div><div class="group">
 <h5 id="line_state" class="group_name"><a class="wlink" href="#line_state"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>line_state: <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
@@ -7918,12 +8069,20 @@ line_state:getrangelength() == 18          --          <----------------></code>
 
 </div><div class="group">
 <h5 id="matches" class="group_name"><a class="wlink" href="#matches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>matches: <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#matches:getcount">getcount</a></td></tr><tr><td><a href="#matches:getmatch">getmatch</a></td></tr><tr><td><a href="#matches:getprefix">getprefix</a></td></tr><tr><td><a href="#matches:gettype">gettype</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#matches:getappendchar">getappendchar</a></td><td><a href="#matches:getmatch">getmatch</a></td></tr><tr><td><a href="#matches:getcount">getcount</a></td><td><a href="#matches:getprefix">getprefix</a></td></tr><tr><td><a href="#matches:getdescription">getdescription</a></td><td><a href="#matches:getsuppressquoting">getsuppressquoting</a></td></tr><tr><td><a href="#matches:getforcequoting">getforcequoting</a></td><td><a href="#matches:gettype">gettype</a></td></tr></table>
+<div class="function"><div class="header"> <div id="matches:getappendchar" class="name"><a class="wlink" href="#matches:getappendchar"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getappendchar</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.8.0 and newer</div></div></div><div class="body"><p class="desc">Returns what the completion generator suggested should be appended after the match.</p></div></div><hr/>
+
 <div class="function"><div class="header"> <div id="matches:getcount" class="name"><a class="wlink" href="#matches:getcount"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getcount</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the number of available matches.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="matches:getdescription" class="name"><a class="wlink" href="#matches:getdescription"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getdescription</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.8.0 and newer</div></div></div><div class="body"><p class="desc">Returns the match description for the <span class="arg">index</span> match.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="matches:getforcequoting" class="name"><a class="wlink" href="#matches:getforcequoting"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getforcequoting</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : boolean<br/><div class="version">v1.8.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether automatic quoting should be forced for the matches.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="matches:getmatch" class="name"><a class="wlink" href="#matches:getmatch"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getmatch</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match text for the <span class="arg">index</span> match.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="matches:getprefix" class="name"><a class="wlink" href="#matches:getprefix"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getprefix</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the longest common prefix of the available matches.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="matches:getsuppressquoting" class="name"><a class="wlink" href="#matches:getsuppressquoting"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:getsuppressquoting</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : boolean<br/><div class="version">v1.8.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether automatic quoting should be suppressed for the matches.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="matches:gettype" class="name"><a class="wlink" href="#matches:gettype"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>matches:gettype</span> <span class="uplinks"><a href="#matches">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match type for the <span class="arg">index</span> match.</p></div></div><hr/>
 
@@ -8814,6 +8973,44 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v180"><a class="wlink" href="#v180"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.8.0 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added an interactive list mode for choosing from available suggestions.  This is similar to PowerShell&#39;s &quot;listview&quot; mode.<ul>
+<li>Added a <code>clink-toggle-suggestion-list</code> command (<kbd>F2</kbd> by default) which toggles the suggestion list mode on/off.</li>
+<li>Added a <code>suggestionlist.default</code> setting which can make a Clink session start with the suggestion list mode on.</li>
+<li>Added new <code>color.suggestionlist*</code> color settings for the suggestion list colors.</li>
+</ul>
+</li>
+<li>Added new Lua API <a href="#clink.opensessionstream">clink.opensessionstream()</a> which opens or creates a named in-memory stream that behaves like a Lua file handle and lasts for the duration of the Clink session, even when the Lua VM is restarted (such as by <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
+<li>Added <code>debug.log_prompt</code> setting which logs the raw prompt string generated by prompt filters.</li>
+<li>Changed the <code>clink-diagnostics</code> command to analyze the whole prompt for ambiguous width Chinese, Japanese, and Korean characters (not just the last line of the prompt).</li>
+<li>Fixed <kbd>Esc</kbd> to not ding every time (it was never meant to ding).</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>Break</kbd> during the <code>clink-select-complete</code> command to only display one new prompt.</li>
+<li>Fixed temporarily-missing timestamp in history popup after using the <code>add-history</code> command.</li>
+<li>Fixed <code>clink /?</code>.</li>
+<li>Fixed the <code>operate-and-get-next</code> command when the <code>history.sticky_search</code> setting is enabled (it fetched the same history entry each time).</li>
+<li>Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.</li>
+<li>Fixed two memory management issues in Readline undo handling, which in certain edge cases could potentially cause heap corruption.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/786">#786</a>; <code>clink autorun</code> claims the &quot;AutoRun&quot; reg key has a &quot;current user&quot; WOW64 key, but there&#39;s no such thing.</li>
+<li>Minor improvement to error handling for certain failures in oh-my-posh.</li>
+<li>Picked up fixes and changes from the Readline repo:<ul>
+<li><strong>Breaking Change:</strong> The name for <code>readline-colored-completion-prefix</code> no longer has a leading <code>.</code>.</li>
+<li>Sync with how the Readline repo picked up some fixes and changes contributed from the Clink repo.</li>
+<li>Changes for Unicode combining characters.</li>
+<li>Fixed some undo list memory management bugs; leaks and double-frees (i.e. heap corruption).</li>
+<li>Fixed some use-after-free of the undo list errors when stacking multiple commands that use <code>rl_maybe_replace_line()</code> to save changes to a history entry.</li>
+<li>Fixed the non-incremental history search implementation to make it more consistent with incremental search.</li>
+<li>Fixed <code>completion-prefix-display-length</code> and <code>colored-completion-prefix</code> to be mutually exclusive.</li>
+<li>Fixed a bug that allowed <kbd>^G</kbd> to retain a saved command to execute.</li>
+<li>Fixed macro recording during searches.</li>
+<li>Fixed off-by-one error when tokenizing words like <code>$((expr))</code> while performing history expansion.</li>
+<li>Fixed to not check for signals when handling a received signal.</li>
+<li>Fixed signal checking to handle signals that arrive before Readline restore&#39;s the application&#39;s signal handlers.</li>
+<li>Fixed attempting to change case of invalid multibyte characters.</li>
+<li>Fixed some small leaks in edge cases.</li>
+</ul>
+</li>
+</ul>
 <h4 id="v1722"><a class="wlink" href="#v1722"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.22 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Explicitly disable <code>loadlib</code> and related support in Lua; Clink uses a statically linked Lua engine and does not support dynamic C libraries.</li>
@@ -8827,7 +9024,7 @@ end</code></pre></div></div><hr/>
 </ul>
 <h4 id="v1721"><a class="wlink" href="#v1721"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.21 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Fixed TAB expansion of <code>foo ~</code> when there is no argmatcher for <code>foo</code>.</li>
+<li>Fixed <kbd>Tab</kbd> expansion of <code>foo ~</code> when there is no argmatcher for <code>foo</code>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/772">#772</a>; uninstall fails to uninstall autorun if the logged on user is not an administrator.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/773">#773</a>; unexpected completion behavior after a doskey alias command.</li>
 </ul>
