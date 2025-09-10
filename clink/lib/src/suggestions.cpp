@@ -70,6 +70,14 @@ static setting_str g_autosuggest_strategy(
     "the 'history.dupe_mode' setting is 'add'.",
     "match_prev_cmd history completion");
 
+static setting_int g_suggestionlist_num_history(
+    "suggestionlist.num_history",
+    "History items to show at the top",
+    "When the suggestion list shows suggestions from multiple sources, this\n"
+    "limits how many history suggestions can be shown before suggestions from\n"
+    "other sources.  This can be any integer from 1 to 8.",
+    3);
+
 //------------------------------------------------------------------------------
 extern line_buffer* g_rl_buffer;
 extern setting_enum g_ignore_case;

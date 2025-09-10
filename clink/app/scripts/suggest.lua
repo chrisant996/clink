@@ -28,6 +28,17 @@ local function test_dupe(seen, entry, line, add)
 end
 
 --------------------------------------------------------------------------------
+local function get_limit_history()
+    local num = settings.get("suggestionlist.num_history")
+    if num < 1 then
+        return 1
+    elseif num > 8 then
+        return 8
+    end
+    return num
+end
+
+--------------------------------------------------------------------------------
 local function aggregate(line, results, limit)
     local seen = {}
     local uniques = {}
@@ -40,6 +51,7 @@ local function aggregate(line, results, limit)
     if results[1] and results[1][1] and results[1][1].source == "history" then
         begin_agg_index = 2
         local index_analyzed_history
+        local limit_history = get_limit_history()
         uniques[1] = {}
         for j = 1, limit do
             local e = results[1][j]
@@ -50,7 +62,7 @@ local function aggregate(line, results, limit)
                 table.insert(uniques[1], e)
                 index_analyzed_history = j
                 count = count + 1
-                if count >= 3 then
+                if count >= limit_history then
                     break
                 end
             end
