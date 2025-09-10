@@ -2090,6 +2090,42 @@ static int32 is_cmd_wordbreak(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 find_match_highlight(lua_State* state)
+{
+    const char* match = checkstring(state, 1);
+    const char* typed = checkstring(state, 2);
+    if (!match || !typed)
+        return 0;
+    if (!*match || !*typed)
+        return 0;
+
+    int32 best_offset = -1;
+    int32 best_length = -1;
+    for (const char* walk = match; *walk; ++walk)
+    {
+        const int32 result = str_compare(walk, typed);
+        if (result < 0)
+        {
+            best_offset = uint32(walk - match);
+            best_length = str_len(typed);
+            break;
+        }
+        else if (result > best_length)
+        {
+            best_offset = uint32(walk - match);
+            best_length = result;
+        }
+    }
+
+    if (best_offset < 0 || best_length <= 0)
+        return 0;
+
+    lua_pushinteger(state, best_offset);
+    lua_pushinteger(state, best_length);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 static int32 save_global_modes(lua_State* state)
 {
     bool new_coroutine = lua_toboolean(state, 1);
@@ -2581,6 +2617,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_get_cmd_commands",      &get_cmd_commands },
         { 0,    "is_cmd_command",         &is_cmd_command },
         { 0,    "is_cmd_wordbreak",       &is_cmd_wordbreak },
+        { 0,    "_find_match_highlight",  &find_match_highlight },
         { 0,    "_save_global_modes",     &save_global_modes },
         { 0,    "_restore_global_modes",  &restore_global_modes },
         { 0,    "_get_installation_type", &get_installation_type },

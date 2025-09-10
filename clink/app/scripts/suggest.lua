@@ -464,13 +464,10 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                 if not m then
                     break
                 elseif m ~= typed and (limit or info.quoted or no_quotes or not rl.needquotes(m)) then
-                    local matchlen = string.matchlen(m, typed)
-                    if matchlen ~= 0 then
-                        local hofs = info.offset
+                    local hofs, matchlen = clink._find_match_highlight(m, typed)
+                    if hofs then
                         local append_quote = info.quoted
-                        if matchlen < 0 then
-                            matchlen = #m
-                        end
+                        hofs = hofs + info.offset
                         if limit and not info.quoted and not no_quotes and rl.needquotes(m) then
                             m = '"'..m
                             hofs = hofs + 1
