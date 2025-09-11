@@ -1225,7 +1225,7 @@ bool can_show_suggestion_hint()
                 str<> desc;
                 str<> cat;
                 std::vector<str_moveable> keys;
-                if (get_command_bindings("clink-toggle-suggestion-list", true/*friendly*/, desc, cat, keys))
+                if (get_command_bindings("clink-toggle-suggestion-list", true/*friendly*/, desc, cat, keys) && keys.size())
                 {
                     tmp = std::move(keys[0]);
                     toggle_key_name = tmp.c_str();
