@@ -242,7 +242,10 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
     {
         const char* hint_text = get_suggestion_hint_text();
 #ifdef RIGHT_ALIGN_SUGGESTION_HINT
-        COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
+        const char* local_prompt = rl_get_local_prompt();
+        COORD size = measure_readline_display(local_prompt, out.c_str(), out.length());
+        if (has_modmark())
+            size.X += 1;
         static const uint32 hint_cols = cell_count(hint_text) + 1;
         if (size.X + hint_cols >= _rl_screenwidth)
         {

@@ -16,6 +16,7 @@ typedef struct _history_expansion history_expansion;
 
 extern char* rl_rprompt;
 void rl_set_rprompt(const char* rprompt);
+bool has_modmark(bool* is_message=nullptr);
 
 extern "C" void init_display_readline(void);
 extern "C" void uninit_display_readline(void);

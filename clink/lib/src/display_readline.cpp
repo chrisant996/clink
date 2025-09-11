@@ -1864,9 +1864,8 @@ void display_manager::display()
         rl_before_display_function();
 
     // Modmark.
-    const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
-                             !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
-    const bool modmark = (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
+    bool is_message;
+    const bool modmark = has_modmark(&is_message);
 
     // If someone thought that the redisplay was handled, but the currently
     // visible line has a different modification state than the one about to
@@ -3030,6 +3029,18 @@ void rl_set_rprompt(const char* rprompt)
         rl_rprompt = nullptr;
 
     rl_visible_rprompt_length = rl_rprompt ? cell_count(rl_rprompt) : 0;
+}
+
+//------------------------------------------------------------------------------
+bool has_modmark(bool* out)
+{
+    const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
+                             !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
+    const bool modmark = (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
+
+    if (out)
+        *out = is_message;
+    return modmark;
 }
 
 //------------------------------------------------------------------------------
