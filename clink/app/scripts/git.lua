@@ -522,9 +522,10 @@ end
 --- -show:  &nbsp;   print("clean (no changes)")
 --- -show:  end
 ---
---- **Compatibility Note:** This requires a version of git that supports
---- <code>git status --porcelain=v2</code>.  Porcelain v2 format has existed
---- for a long time, so that isn't expected to be a limitation in practice.
+--- <strong>Compatibility Note:</strong> This requires a version of git that
+--- supports <code>git status --porcelain=v2</code>.  Porcelain v2 format has
+--- existed for a long time, so that isn't expected to be a limitation in
+--- practice.
 ---
 --- <fieldset><legend>Warning</legend>
 --- This runs slowly.  To keep a custom prompt responsive, run this in a
@@ -533,7 +534,6 @@ end
 --- <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for more
 --- information.
 --- </fieldset>
--- luacheck: pop
 function git.getstatus(no_untracked, include_submodules)
     if git._fake then return git._fake.status end
 
@@ -696,6 +696,7 @@ function git.getstatus(no_untracked, include_submodules)
     status.conflict = (w_con > 0) and w_con or nil
     return status
 end
+-- luacheck: pop
 
 --------------------------------------------------------------------------------
 --- -name:  git.getaction
