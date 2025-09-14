@@ -1676,6 +1676,9 @@ void display_manager::end_prompt_lf()
     _rl_vis_botlin = 0;
     rl_fflush_function(_rl_out_stream);
     rl_display_fixed++;
+
+    // Hide suggestion list until the input line is changed by something else.
+    hide_suggestion_list();
 }
 
 //------------------------------------------------------------------------------

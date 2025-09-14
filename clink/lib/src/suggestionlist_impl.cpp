@@ -315,7 +315,6 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
     if (is_select_complete_active())
         return;
 
-
     if (m_index >= 0 && !is_locked_against_suggestions())
         clear_index();
 
@@ -364,6 +363,8 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
 
     input input = _input;
 
+    if (m_fallback_prev_bind_group)
+        goto catchall;
     if (m_visible_rows <= 0)
         goto catchall;
 
@@ -555,18 +556,13 @@ do_mouse_position:
         // Hide suggestion list until the input line is changed by something
         // other than the suggestion list.
         apply_suggestion(-1);
-        allow_suggestion_list(0);
-        result.set_bind_group(m_prev_bind_group);
-        suppress_suggestions();
-        m_suggestions.clear();
-        m_count = 0;
-        assert(!is_active());
-        update_layout();
+        hide_suggestion_list();
         update_display();
         return;
 
     case bind_id_suggestionlist_catchall:
 catchall:
+        m_fallback_prev_bind_group = false;
         result.set_bind_group(m_prev_bind_group);
         result.pass();
         break;
@@ -1407,6 +1403,19 @@ bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
     }
 }
 
+//------------------------------------------------------------------------------
+void suggestionlist_impl::hide_suggestion_list()
+{
+    allow_suggestion_list(0);
+    m_fallback_prev_bind_group = true;
+    suppress_suggestions();
+    m_suggestions.clear();
+    m_count = 0;
+    m_index = -1;
+    assert(!is_active());
+    update_layout();
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1502,5 +1511,14 @@ void update_suggestion_list_display(bool clear)
         return;
 
     s_suggestionlist->refresh_display(clear);
+}
+
+//------------------------------------------------------------------------------
+void hide_suggestion_list()
+{
+    if (!s_suggestionlist)
+        return;
+
+    s_suggestionlist->hide_suggestion_list();
 }
 

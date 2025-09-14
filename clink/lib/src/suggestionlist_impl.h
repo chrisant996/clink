@@ -36,6 +36,7 @@ public:
     bool            test_frozen();
     void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
+    void            hide_suggestion_list();
 
 private:
     // editor_module.
@@ -73,6 +74,7 @@ private:
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
+    bool            m_fallback_prev_bind_group = false;
     bool            m_first_input = true;
     bool            m_hide = false;
 
@@ -125,3 +127,4 @@ private:
 //------------------------------------------------------------------------------
 bool is_suggestion_list_enabled();
 void update_suggestion_list_display(bool clear=false);
+void hide_suggestion_list();
