@@ -1170,44 +1170,6 @@ local function append_uniq_chars(chars, find, add)
 end
 
 --------------------------------------------------------------------------------
-local function apply_options_to_list(addee, list)
-    local t
-    if type(addee.delayinit) == "function" then
-        list.delayinit = addee.delayinit
-    end
-    if addee.fromhistory then
-        list.fromhistory = true
-    end
-    t = type(addee.hint)
-    if t == "string" or t == "function" then
-        list.hint = addee.hint
-    end
-    if type(addee.loopchars) == "string" then
-        -- Apply looping characters, but avoid duplicates.
-        list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
-    end
-    if addee.nosort then
-        list.nosort = true
-    end
-    if type(addee.nowordbreakchars) == "string" then
-        -- Apply non-wordbreak characters, but avoid duplicates.
-        list.nowordbreakchars = append_uniq_chars(list.nowordbreakchars, nil, addee.nowordbreakchars)
-    end
-    if type(addee.onadvance) == "function" then
-        list.onadvance = addee.onadvance
-    end
-    if type(addee.onalias) == "function" then
-        list.onalias = addee.onalias
-    end
-    if type(addee.onarg) == "function" then
-        list.onarg = addee.onarg
-    end
-    if type(addee.onlink) == "function" then
-        list.onlink = addee.onlink
-    end
-end
-
---------------------------------------------------------------------------------
 local function apply_options_to_builder(reader, arg, builder)
     -- Disable sorting, if requested.  This goes first because it is
     -- unconditional and should take effect immediately.
@@ -1287,6 +1249,48 @@ function _argmatcher:setcmdcommand()
 end
 
 --------------------------------------------------------------------------------
+function _argmatcher:apply_options_to_list(addee, list)
+    local t
+    if type(addee.delayinit) == "function" then
+        list.delayinit = addee.delayinit
+    end
+    if addee.fromhistory then
+        list.fromhistory = true
+    end
+    t = type(addee.hint)
+    if t == "string" or t == "function" then
+        list.hint = addee.hint
+    end
+    if type(addee.loopchars) == "string" then
+        -- Apply looping characters, but avoid duplicates.
+        list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
+    end
+    if addee.nosort then
+        list.nosort = true
+    end
+    if type(addee.nowordbreakchars) == "string" then
+        -- Apply non-wordbreak characters, but avoid duplicates.
+        list.nowordbreakchars = append_uniq_chars(list.nowordbreakchars, nil, addee.nowordbreakchars)
+    end
+    if type(addee.onadvance) == "function" then
+        list.onadvance = addee.onadvance
+    end
+    if type(addee.onalias) == "function" then
+        list.onalias = addee.onalias
+    end
+    if type(addee.onarg) == "function" then
+        list.onarg = addee.onarg
+    end
+    if type(addee.onlink) == "function" then
+        list.onlink = addee.onlink
+    end
+    if addee.hide then
+        list.hidden = list.hidden or {}
+        self:_hide(list.hidden, addee.hide)
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:reset
 --- -ver:   1.3.10
 --- -ret:   self
@@ -1306,7 +1310,6 @@ function _argmatcher:reset()
     self._nextargindex = 1
     self._loop = nil
     self._no_file_generation = nil
-    self._hidden = nil
     self._cmd_command = nil
     self._classify_func = nil
     self._init_coroutine = nil
@@ -1333,6 +1336,7 @@ end
 --- <tr><th>Entry</th><th>More Info</th><th>Version</th></tr>
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
+--- <tr><td><code>hide=<span class="arg">table_or_string</span></code></td><td>Hides the specified strings during completion commands.</td><td class="version">v1.8.3 and newer</td></tr>
 --- <tr><td><code>hint=<span class="arg">string_or_function</span></code></td><td>See <a href="#addarg_hint">Show a Usage Hint</a>.</td><td class="version">v1.7.0 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
@@ -1391,12 +1395,13 @@ end
 --- <tr><th>Entry</th><th>More Info</th><th>Version</th></tr>
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
+--- <tr><td><code>hide=<span class="arg">table_or_string</span></code></td><td>Hides the specified strings during completion commands.</td><td class="version">v1.8.3 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
 --- </table></p>
 --- <strong>Note:</strong>  Flags are not positional in an argmatcher.  Using
---- <code>:addarg()</code> multiple times with different flags is the same as
---- using <code>:addarg()</code> once with all of the flags.
+--- <code>:addflags()</code> multiple times with different flags is the same
+--- as using <code>:addflags()</code> once with all of the flags.
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
@@ -1446,13 +1451,21 @@ end
 --- -show:  &nbsp;         "-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
 --- -show:  :hideflags("--a", "--al", "--all",      -- Only "-a" is displayed.
 --- -show:  &nbsp;          "-d", "--d", "--di")         -- Only "--dir" is displayed.
+--- <strong>Compatibility Note:</strong> In v1.8.3 and newer, another way to
+--- accomplish the same thing is by including a <code>hide=</code> entry in
+--- the list of flags passed to
+--- <a href="#_argmatcher:addflags">_argmatcher:addflags()</a> (which also
+--- works in <a href="#_argmatcher:addarg">_argmatcher:addarg()</a> as well).
 function _argmatcher:hideflags(...)
     local flag_matcher = self._flags or _argmatcher()
-    local list = flag_matcher._hidden or {}
+    local args = flag_matcher._args[1] or {}
+    local list = args.hidden or {}
 
     flag_matcher:_hide(list, {...})
+
     flag_matcher._is_flag_matcher = true
-    flag_matcher._hidden = list
+    args.hidden = list
+    flag_matcher._args[1] = args
     self._flags = flag_matcher
     return self
 end
@@ -1950,7 +1963,7 @@ function _argmatcher:_add(list, addee, prefixes)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
-        apply_options_to_list(addee, list)
+        self:apply_options_to_list(addee, list)
         if getmetatable(addee) == _argmatcher then
             for _, i in ipairs(addee._args) do
                 for _, j in ipairs(i) do
@@ -1986,23 +1999,26 @@ end
 function _argmatcher:_hide(list, addee)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
-    if type(addee) == "table" and not is_link and not addee.match then
-        if getmetatable(addee) == _argmatcher then
-            for _, i in ipairs(addee._args) do
-                for _, j in ipairs(i) do
-                    list[j] = true
+    if not is_link then
+        local t = type(addee)
+        if t == "table" and not addee.match then
+            if getmetatable(addee) == _argmatcher then
+                for _, i in ipairs(addee._args) do
+                    for _, j in ipairs(i) do
+                        list[j] = true
+                    end
+                end
+            else
+                for _, i in ipairs(addee) do
+                    self:_hide(list, i)
                 end
             end
-        else
-            for _, i in ipairs(addee) do
-                self:_hide(list, i)
-            end
+            return
         end
-        return
-    end
 
-    if not is_link then
-        list[addee] = true
+        if t == "string" or t == "number" then
+            list[tostring(addee)] = true
+        end
     end
 end
 
@@ -2056,7 +2072,6 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     local matcher = reader._matcher
     local arg_index = reader._arg_index
     local match_type = ((not matcher._deprecated) and "arg") or nil
-    local hidden
 
     word_index = line_state:getwordcount()
     local info = line_state:getwordinfo(word_index)
@@ -2111,6 +2126,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         end
 
         apply_options_to_builder(reader, arg, match_builder)
+        local hidden = arg.hidden
         for _, i in ipairs(arg) do
             local t = type(i)
             if t == "function" then
@@ -2162,7 +2178,6 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
-        hidden = matcher._flags._hidden
         add_matches(matcher._flags._args[1], "arg")
         return true
     elseif reader._phantomposition then
