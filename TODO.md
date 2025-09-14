@@ -7,9 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- After `complete` or `list-possible-completions` two problems occur:
-  - [ ] The suggestion list doesn't redraw.
-  - [ ] `Down` works, but triggers re-generation of suggestions instead of navigating in the list.
 
 ## Normal Priority
 - Some way to set an input hint when using `:chaincommand()` in an argmatcher.
