@@ -4,6 +4,7 @@
 
 #### v1.8.3
 
+- Added an optional `hide=` field in `_argmatcher:addarg()` and `_argmatcher:addflags()`.  Any strings listed in the `hide` field are added to the argument slot or list of flags, but completion functions will not show them.  This gives argument slots the same ability that flags had with `_argmatcher:hideflags()`.
 - Fixed `clink --profile DIR inject` (regression introduced in v1.3.47).
 
 #### v1.8.2
