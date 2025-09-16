@@ -34,9 +34,9 @@ local orig_exepath = settings.get("ohmyposh.exepath")
 
 local orig_space_binding = rl.getbinding(' ')
 local norm = "\x1b[m"
-local reverse = "\x1b[7m"
+local bold = "\x1b[1m"
 
-local function get_omp_exe()
+local function get_exe()
     local exe = settings.get("ohmyposh.exepath")
     if not exe or exe == "" then
         exe ="oh-my-posh.exe"
@@ -44,20 +44,50 @@ local function get_omp_exe()
     return exe
 end
 
-local function make_omp_cmdline(command)
+local function make_cmdline(command)
     local theme = settings.get("ohmyposh.theme") or ""
     if theme ~= "" then
         theme = ' -c "' .. theme .. '"'
     end
-    return string.format('2>nul "%s" %s %s', get_omp_exe(), command, theme)
+    return string.format('2>nul "%s" %s %s', get_exe(), command, theme)
 end
+
+local function do_error_handler()
+    local p = clink.promptfilter()
+    function p:filter()
+        local text = ""
+        local url = "https://ohmyposh.dev/docs/installation/windows"
+        text = text .. string.format('Unable to get oh-my-posh script from "%s".\n', get_exe())
+        text = text .. bold .. "Need help installing oh-my-posh?  " .. url .. norm .. "\n\n"
+        text = text .. os.getcwd() .. ">"
+        return text
+    end
+end
+
+clink.onbeginedit(function()
+    local theme = settings.get("ohmyposh.theme")
+    local exepath = settings.get("ohmyposh.exepath")
+    local reload
+    if orig_theme ~= theme then
+        print("The 'ohmyposh.theme' setting changed; reloading Clink...")
+        reload = true
+    elseif  orig_exepath ~= exepath then
+        print("The 'ohmyposh.exepath' setting changed; reloading Clink...")
+        reload = true
+    end
+    if reload then
+        orig_theme = theme
+        orig_exepath = exepath
+        clink.reload()
+    end
+end)
 
 local init_script = os.getenv("CLINK_OHMYPOSH_INIT_SCRIPT")
 if init_script then
     loadfile(init_script)()
 else
     os.setenv("POSH_THEME", "")
-    local cmdline = make_omp_cmdline('init cmd')
+    local cmdline = make_cmdline('init cmd')
     log.info("oh-my-posh init command:  "..cmdline)
 
     local script
@@ -67,14 +97,12 @@ else
     end
 
     if not script or script == "" then
-        local err = reverse .. "Need help installing oh-my-posh?  Visit here:" .. norm .. "\n"
-        err = err .. "https://ohmyposh.dev/docs/installation/windows\n\n"
-        err = err .. string.format('Unable to get oh-my-posh script from "%s".', get_omp_exe())
-        return err
+        do_error_handler()
+        return
     end
 
-    -- If the script emitted by oh-my-posh match doesn't have error handling,
-    -- then add some error handling to help troubleshoot invocation errors.
+    -- If the script emitted by oh-my-posh doesn't have error handling, then
+    -- add some error handling to help troubleshoot invocation errors.
     local themefile = script:match("^%s*load%(io%.open%('(.*)',%s*\"r\"%):read%(\"%*a\"%)%)%(%)[\r\n%s]*$")
     if themefile then
         script = string.format("local file, msg = io.open('%s', \"r\")\n"..
@@ -96,24 +124,6 @@ else
     func()
 end
 
-clink.onbeginedit(function()
-    local theme = settings.get("ohmyposh.theme")
-    local exepath = settings.get("ohmyposh.exepath")
-    local reload
-    if orig_theme ~= theme then
-        print("The 'ohmyposh.theme' setting changed; reloading Clink...")
-        reload = true
-    elseif  orig_exepath ~= exepath then
-        print("The 'ohmyposh.exepath' setting changed; reloading Clink...")
-        reload = true
-    end
-    if reload then
-        orig_theme = theme
-        orig_exepath = exepath
-        clink.reload()
-    end
-end)
-
 --------------------------------------------------------------------------------
 -- Support for .clinkprompt module.
 
@@ -132,10 +142,10 @@ local function demo()
     local f_primary, f_right
     local primary, right
 
-    f_primary, msg = io.popen(make_omp_cmdline('print primary'))
+    f_primary, msg = io.popen(make_cmdline('print primary'))
 ::failed::
     if not f_primary then
-        clink.print(string.format('Error running oh-my-posh from "%s".', get_omp_exe()))
+        clink.print(string.format('Error running oh-my-posh from "%s".', get_exe()))
         if msg and msg ~= "" then
             clink.print(msg)
         end
@@ -144,7 +154,7 @@ local function demo()
     primary = f_primary:read("*a")
     f_primary:close()
 
-    f_right = io.popen(make_omp_cmdline('print right'))
+    f_right = io.popen(make_cmdline('print right'))
     if not f_right then
         f_primary = nil
         goto failed
