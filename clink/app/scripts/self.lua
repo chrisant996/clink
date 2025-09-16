@@ -431,6 +431,8 @@ local function value_handler(_, word_index, line_state, builder, user_data)
     elseif info.type == "string" then
         if name == "autosuggest.strategy" then
             return clink._list_suggesters()
+        elseif line_state:getword(value_word_index) == "clear" then
+            return {}
         else
             builder:setfullyqualify()
             return clink.filematches(line_state:getendword())
@@ -477,10 +479,15 @@ local function classify_handler(arg_index, _, word_index, line_state, classify)
             color_handler(idx, line_state, classify)
             return true
         elseif setting_info.type == "string" then
-            -- If there are no matches listed, then it's a string field.  In
-            -- that case classify the rest of the line as "other" words so they
-            -- show up in a uniform color.
-            classify_to_end(idx, line_state, classify, "o") --other
+            if line_state:getword(idx) == "clear" then
+                classify:classifyword(idx, "a") --arg
+                classify_to_end(idx + 1, line_state, classify, "n") --none
+            else
+                -- If there are no matches listed, then it's a string field.
+                -- In that case classify the rest of the line as "other" words
+                -- so they show up in a uniform color.
+                classify_to_end(idx, line_state, classify, "o") --other
+            end
             return true
         elseif setting_info.type == "int" then
             classify:classifyword(idx, "o") --other
