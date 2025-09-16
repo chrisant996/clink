@@ -3823,12 +3823,12 @@ Instead do the following:
 
 The [starship](https://github.com/starship/starship) program can also generate fancy prompts. Refer to its [documentation](https://starship.rs) for how to configure it.
 
-Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\\<span class="arg">username</span>\.config\starship.toml</code>.
+But in Clink v1.8.4 and newer, don't create a Lua script for starship.
 
-```lua
--- starship.lua
-load(io.popen('starship.exe init cmd'):read("*a"))()
-```
+Instead do the following:
+1. Run `clink config prompt use starship` to activate starship as the custom prompt.
+2. If the starship.exe file is not in the system PATH, then run <code>clink set starship.exepath "<span class="arg">full_path_to_starship.exe</span>"</code> to tell Clink where to find the starship program file.
+3. Refer to starship's documentation for [Configuring Starship](https://starship.rs/config/).
 
 ### z.lua
 
