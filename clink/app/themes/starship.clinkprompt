@@ -1,0 +1,142 @@
+-- This integrates the Starship prompt program with Clink.
+--
+-- Find Starship here:  https://starship.rs/
+
+-- DON'T EDIT THIS FILE DIRECTLY; IT GETS OVERWRITTEN WHEN CLINK IS UPDATED.
+-- IF YOU NEED TO MAKE CHANGES, INSTEAD MAKE A COPY OF THIS FILE AND EDIT THE
+-- COPY.  BUT YOU SHOULDN'T NEED TO MAKE CHANGES TO THIS FILE.
+
+-- To activate the Starship prompt, run:
+--      clink config prompt use starship
+--
+-- Once it's active, you can configure the starship prompt using the
+-- directions at https://starship.rs/config/.
+--
+-- If your starship .exe file is not in the system PATH, then you can tell
+-- Clink where to find it via:
+--      clink set starship.exepath c:\mystarship\starship.exe
+--
+-- To deactivate the starship prompt, run:
+--      clink config prompt clear
+
+
+--------------------------------------------------------------------------------
+-- Integration with starship.
+
+settings.add("starship.exepath", "", "Path to starship program.", "Specifies where to find the starship program.\nCan be used when it isn't on the system search PATH.") -- luacheck: no max line length
+
+local orig_exepath = settings.get("starship.exepath")
+
+local norm = "\x1b[m"
+local bold = "\x1b[1m"
+
+local function get_exe()
+    local exe = settings.get("starship.exepath")
+    if not exe or exe == "" then
+        exe ="starship.exe"
+    end
+    return exe
+end
+
+local function make_cmdline(command)
+    return string.format('2>nul "%s" %s', get_exe(), command)
+end
+
+local function do_error_handler()
+    local p = clink.promptfilter()
+    function p:filter()
+        local text = ""
+        local url = "https://starship.rs/guide/"
+        text = text .. string.format('Unable to get starship script from "%s".\n', get_exe())
+        text = text .. bold .. "Need help installing starship?  " .. url .. norm .. "\n\n"
+        text = text .. os.getcwd() .. ">"
+        return text
+    end
+end
+
+clink.onbeginedit(function()
+    local exepath = settings.get("starship.exepath")
+    local reload
+    if orig_exepath ~= exepath then
+        print("The 'starship.exepath' setting changed; reloading Clink...")
+        reload = true
+    end
+    if reload then
+        orig_exepath = exepath
+        clink.reload()
+    end
+end)
+
+local init_script = os.getenv("CLINK_STARSHIP_INIT_SCRIPT")
+if init_script then
+    loadfile(init_script)()
+else
+    local cmdline = make_cmdline('init cmd')
+    log.info("starship init command:  "..cmdline)
+
+    local script
+    local f = io.popen(cmdline)
+    if f then
+        script = f:read("*a")
+    end
+
+    if not script or script == "" then
+        do_error_handler()
+        return
+    end
+
+    local func, msg = load(script)
+    if not func then
+        local err = "Error trying to load starship Lua script:\n"
+        err = err .. msg
+        return err
+    end
+
+    func()
+end
+
+--------------------------------------------------------------------------------
+-- Support for .clinkprompt module.
+
+local function demo()
+    local msg
+    local f_primary, f_right
+    local primary, right
+
+    f_primary, msg = io.popen(make_cmdline('prompt'))
+::failed::
+    if not f_primary then
+        clink.print(string.format('Error running starship from "%s".', get_exe()))
+        if msg and msg ~= "" then
+            clink.print(msg)
+        end
+        return
+    end
+    primary = f_primary:read("*a")
+    f_primary:close()
+
+    f_right = io.popen(make_cmdline('prompt --right'))
+    if not f_right then
+        f_primary = nil
+        goto failed
+    end
+    right = f_right:read("*a")
+    f_right:close()
+
+    local primary_width = console.cellcount(primary:gsub("^.*\n", ""))
+    local right_width = console.cellcount(right)
+    if right_width <= 0 or primary_width + right_width + 4 >= console.getwidth() then
+        right = ""
+    else
+        right = string.rep(" ", console.getwidth() - primary_width - right_width) .. right
+    end
+
+    clink.print(primary .. right)
+end
+
+local exports =
+{
+    demo = demo,
+}
+
+return exports
