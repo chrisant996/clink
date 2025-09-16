@@ -54,7 +54,7 @@ end
 
 local function do_error_handler()
     local p = clink.promptfilter()
-    function p:filter()
+    function p:filter() -- luacheck: no unused
         local text = ""
         local url = "https://ohmyposh.dev/docs/installation/windows"
         text = text .. string.format('Unable to get oh-my-posh script from "%s".\n', get_exe())
