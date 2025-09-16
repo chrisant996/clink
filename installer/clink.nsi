@@ -164,6 +164,7 @@ Section "!Application files" app_files_id
     File "${CLINK_BUILD}\themes\jonathan.clinkprompt"
     File "${CLINK_BUILD}\themes\oh-my-posh.clinkprompt"
     File "${CLINK_BUILD}\themes\pure.clinkprompt"
+    File "${CLINK_BUILD}\themes\starship.clinkprompt"
     SetOutPath $INSTDIR
 
     ; Clean up previous uninstallers.
@@ -390,6 +391,7 @@ Section "!un.Application files" section_un_app_files
     Delete "$INSTDIR\themes\jonathan.clinkprompt"
     Delete "$INSTDIR\themes\oh-my-posh.clinkprompt"
     Delete "$INSTDIR\themes\pure.clinkprompt"
+    Delete "$INSTDIR\themes\starship.clinkprompt"
     RMDir /REBOOTOK $INSTDIR\themes
     RMDir /REBOOTOK $INSTDIR
 
