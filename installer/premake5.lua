@@ -42,6 +42,7 @@ local release_manifest = {
     "jonathan.clinkprompt",
     "oh-my-posh.clinkprompt",
     "pure.clinkprompt",
+    "starship.clinkprompt",
 }
 
 if include_arm64 then
