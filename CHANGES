@@ -5,6 +5,7 @@
 #### v1.8.3
 
 - Added an optional `hide=` field in `_argmatcher:addarg()` and `_argmatcher:addflags()`.  Any strings listed in the `hide` field are added to the argument slot or list of flags, but completion functions will not show them.  This gives argument slots the same ability that flags had with `_argmatcher:hideflags()`.
+- Added the `OSC9;9` escape sequence to the prompt in Windows Terminal and ConEmu, to let the terminal know the current directory.  For example, this enables Windows Terminal's "Duplicate Tab" command to apply the current directory to the new tab.
 - Fixed the suggestion list to hide and go temporarily inactive after commands like `complete` which print some output and then show another prompt line.  The suggestion list becomes active again after something changes the input line (or changes the cursor position away from the end of the input line and then back to the end of the input line).
 - Fixed `clink --profile DIR inject` (regression introduced in v1.3.47).
 
