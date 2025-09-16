@@ -215,9 +215,16 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         end
     end
 
-    -- Windows Terminal built-in shell integration (WT v1.18).
+    -- Shell integrations.
     local _, native_host = clink.getansihost()
+    if native_host == "winterminal" or native_host == "conemu" then
+        -- Let the terminal know what is the current directory.  Windows
+        -- Terminal uses this during Duplicate Tab to give the new tab the
+        -- same current directory as the original tab.
+        pre = "\x1b]9;9;" .. os.getcwd() .. "\a" .. pre
+    end
     if native_host == "winterminal" then
+        -- Windows Terminal codes for beginning and end of prompt.
         pre = "\x1b]133;A\a" .. pre
         suf = suf .. "\x1b]133;B\a"
     end
