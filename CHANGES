@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.8.4
+
+- Improved error reporting in the `oh-my-posh.clinkprompt` script.
+- Added a new `starship.clinkprompt` script.  Run `clink config prompt use starship` to use it.
+
 #### v1.8.3
 
 - Added an optional `hide=` field in `_argmatcher:addarg()` and `_argmatcher:addflags()`.  Any strings listed in the `hide` field are added to the argument slot or list of flags, but completion functions will not show them.  This gives argument slots the same ability that flags had with `_argmatcher:hideflags()`.
