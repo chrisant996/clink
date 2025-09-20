@@ -5,6 +5,7 @@
 #### v1.8.4
 
 - Improved error reporting in the `oh-my-posh.clinkprompt` script.
+- Added `--all` flag to show all themes or prompts:  `clink config theme show --all` or `clink config prompt show --all`.
 - Added a new `starship.clinkprompt` script.  Run `clink config prompt use starship` to use it.
 - Fixed input line coloring for <code>clink set <span class="arg">some_string_setting</span> clear</code>.
 
