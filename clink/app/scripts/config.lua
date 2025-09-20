@@ -330,26 +330,6 @@ end
 
 --------------------------------------------------------------------------------
 function clink._show_prompt_demo(module)
-    git._fake = {
-        status = {
-            branch = "main",
-            HEAD = "a1b2c3d",
-            upstream = "origin",
-            stashes = 27,
-            dirty = true,
-            behind = 19,
-            working = {
-                modify = 3,
-                untracked = 1,
-            },
-            total = {
-                modify = 3,
-            },
-            tracked = 3,
-            untracked = 1,
-        },
-    }
-
     clink.print("\x1b[m", NONL)
 
     local m = clink._activate_clinkprompt_module(module)
@@ -378,8 +358,6 @@ function clink._show_prompt_demo(module)
     clink._activate_clinkprompt_module(nil)
 
     clink.print("\x1b[m\x1b[K", NONL)
-
-    git._fake = nil
 end
 
 --------------------------------------------------------------------------------

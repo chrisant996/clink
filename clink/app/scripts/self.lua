@@ -753,12 +753,14 @@ local prompt_use = clink.argmatcher()
 local prompt_show = clink.argmatcher()
 :addarg(get_clink_prompts)
 :addflags({
+    "-a", "--all",
     "-n", "--only-named",
     "-h", "--help", "-?",
 })
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
+    ["-a"] = "Show all installed prompts",
     ["-n"] = "Show only the named prompt",
     ["-h"] = "Show help text",
 })
@@ -824,6 +826,7 @@ local theme_save = clink.argmatcher()
 local theme_show = clink.argmatcher()
 :addarg(get_clink_themes)
 :addflags({
+    "-a", "--all",
     "-n", "--only-named",
     "-p", "--preferred",
     "-h", "--help", "-?",
@@ -831,6 +834,7 @@ local theme_show = clink.argmatcher()
 :hideflags("-?")
 :nofiles()
 :adddescriptions({
+    ["-a"] = "Show all installed themes",
     ["-n"] = "Show only the named theme",
     ["-p"] = "Simulate the preferred terminal colors",
     ["-h"] = "Show help text",

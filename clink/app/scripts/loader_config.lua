@@ -203,6 +203,10 @@ local function show_demo(title, preferred, use_preferred)
             demo_print(s, base_color, zero)
         end
     end
+
+    if use_preferred then
+        clink.print(norm.."\x1b[K", NONL)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -512,11 +516,14 @@ end
 --------------------------------------------------------------------------------
 local function show_color_theme(args)
     local name
+    local showall
     local onlynamed
     local preferred
     for i = 1, #args do
         local arg = args[i]
-        if arg == "-n" or arg == "--only-named" then
+        if arg == "-a" or arg == "--all" then
+            showall = true
+        elseif arg == "-n" or arg == "--only-named" then
             onlynamed = true
         elseif arg == "-p" or arg == "--preferred" then
             preferred = true
@@ -527,6 +534,7 @@ local function show_color_theme(args)
             print("  provided, it shows a sample of what the current theme looks like.")
             print()
             print("Options:")
+            print("  -a, --all         Show all installed themes.")
             print("  -n, --only-named  Show only the named theme (don't compare with current).")
             print("  -p, --preferred   Simulate the preferred terminal colors.")
             print("  -h, --help        Show this help text.")
@@ -534,6 +542,11 @@ local function show_color_theme(args)
         elseif not name then
             name = arg
         end
+    end
+
+    if showall then
+        name = nil
+        onlynamed = true
     end
 
     local file
@@ -546,32 +559,64 @@ local function show_color_theme(args)
         end
     end
 
-    if file then
-        local ini, message = clink.readtheme(file)
+    local show = {}
+    if showall then
+        local names, indexed = clink.getthemes()
+        if names then
+            for _,n in ipairs(names) do
+                table.insert(show, { name=n, file=indexed[clink.lower(n)] or n })
+            end
+        end
+    elseif file then
+        table.insert(show, { name=name, file=file })
+    else
+        show_demo()
+        return true
+    end
+
+    local ret = show[1] and true or nil
+    local pad
+    for _,e in ipairs(show) do
+        local title = path.getbasename(e.file) or e.name
+
+        -- Add extra line between each shown prompt.
+        if pad then
+            clink.print()
+        end
+        pad = true
+
+        -- Read the theme file.
+        local ini, message = clink.readtheme(e.file)
         if not ini then
+            clink.print(norm..underline..title..norm)
             if message then
                 print(message)
             end
-            return
+            ret = nil
         end
 
+        -- Show current theme.
         if not onlynamed then
             show_demo("Current Theme")
             print()
         end
 
-        -- Must temporarily load the theme in order for rl.getmatchcolor() to
-        -- represent colors properly.
-        clink._load_colortheme_in_memory(ini)
-        show_demo(path.getbasename(file) or name, ini.preferred, preferred)
+        -- Show the named theme.
+        if ini then
+            -- Must temporarily load the theme in order for rl.getmatchcolor()
+            -- to represent colors properly.
+            clink._load_colortheme_in_memory(ini)
+            show_demo(title, ini.preferred, preferred)
+        end
 
-        -- Skip reloading for performance, since this is running in the
-        -- standalone exe.
-        --settings.load()
-    else
-        show_demo()
+        -- Reload settings.
+        if showall then
+            -- If showing only one theme, then skip reloading for performance,
+            -- since this is running in the standalone exe.
+            settings.load()
+        end
     end
-    return true
+    return ret
 end
 
 --------------------------------------------------------------------------------
@@ -802,10 +847,13 @@ end
 --------------------------------------------------------------------------------
 local function show_custom_prompt(args)
     local name
+    local showall
     local onlynamed
     for i = 1, #args do
         local arg = args[i]
-        if arg == "-n" or arg == "--only-named" then
+        if arg == "-a" or arg == "--all" then
+            showall = true
+        elseif arg == "-n" or arg == "--only-named" then
             onlynamed = true
         elseif arg == "" or arg == "--help" or arg == "-h" or arg == "-?" then
             print("Usage:  clink config prompt show [<name>]")
@@ -814,12 +862,18 @@ local function show_custom_prompt(args)
             print("  is provided, it shows a sample of what the current prompt looks like.")
             print()
             print("Options:")
+            print("  -a, --all         Show all installed prompts.")
             print("  -n, --only-named  Show only the named prompt (don't compare with current).")
             print("  -h, --help        Show this help text.")
             return true
         elseif not name then
             name = arg
         end
+    end
+
+    if showall then
+        name = nil
+        onlynamed = true
     end
 
     local file
@@ -844,7 +898,7 @@ local function show_custom_prompt(args)
         end
     end
 
-    if not file or not onlynamed then
+    if not showall and (not file or not onlynamed) then
         if file then
             clink.print(norm..underline.."Current Prompt"..norm)
         end
@@ -855,12 +909,70 @@ local function show_custom_prompt(args)
         end
     end
 
-    if file then
-        clink.print(norm..underline..name..norm)
-        clink._show_prompt_demo(file)
-        if name then
+    local show = {}
+    if showall then
+        local names, indexed = clink.getprompts()
+        if names then
+            for _,n in ipairs(names) do
+                table.insert(show, { name=n, file=indexed[clink.lower(n)] or n })
+            end
+        end
+    elseif file then
+        table.insert(show, { name=name, file=file })
+    end
+
+    local restore_git_fake, old_git_fake
+    local screenshot_friendly = showall and os.getenv("CLINK_CONFIG_PROMPT_SHOW_ALL_SCREENSHOTS")
+    if screenshot_friendly and type(git) == "table" then
+        restore_git_fake = true
+        old_git_fake = git and git._fake or nil
+        git._fake = {
+            branch = "main",
+            untracked = 1,
+            stashes = 27,
+            status = {
+                branch = "main",
+                HEAD = "a1b2c3d",
+                upstream = "origin",
+                dirty = true,
+                behind = 19,
+                working = {
+                    modify = 3,
+                    untracked = 1,
+                },
+                total = {
+                    modify = 3,
+                },
+                tracked = 3,
+                untracked = 1,
+            },
+        }
+    end
+
+    local pad
+    for _,e in ipairs(show) do
+        -- Add extra line between each shown prompt.
+        if pad then
             clink.print()
         end
+        pad = true
+
+        -- Show the name.
+        clink.print(norm..underline..e.name..norm)
+        if screenshot_friendly then
+            clink.print()
+        end
+
+        -- Show the prompt.
+        clink._show_prompt_demo(e.file)
+    end
+
+    if file and name then
+        clink.print()
+    end
+
+    if restore_git_fake then
+        git._fake = old_git_fake
     end
     return true
 end
