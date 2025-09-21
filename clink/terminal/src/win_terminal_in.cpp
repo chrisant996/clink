@@ -758,18 +758,20 @@ int32 win_terminal_in::peek()
 }
 
 //------------------------------------------------------------------------------
-// In the pattern string, use '0' as a wildcard meaning "one or more digits".
+// In the pattern string, use '0' by itself as a wildcard meaning "one or more
+// digits".  E.g. "2027" in the pattern matches "2027", but "0" in the pattern
+// matches any contiguous run of digits.
 bool win_terminal_in::send_terminal_request(const char* request, const char* pattern, str_base& out)
 {
     assert(request && *request);
     assert(pattern && *pattern);
 
     out.clear();
-    assert(false);
 
     if (get_native_ansi_handler() < ansi_handler::first_native)
         return false;
 
+#ifdef DISCARD_PENDING_INPUT_UPON_TERMINAL_REQUEST
     // The actual terminal discards all its pending input when it receives a
     // terminal request sequence, so this wrapper must as well.
     m_pending_records.clear();
@@ -777,6 +779,18 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     m_buffer_head = 0;
     m_buffer_count = 0;
     m_lead_surrogate = 0;
+#else
+    std::vector<INPUT_RECORD> pending_records;
+    std::vector<INPUT_RECORD> processed_records;
+    auto buffer_head = m_buffer_head;
+    auto buffer_count = m_buffer_count;
+    auto lead_surrogate = m_lead_surrogate;
+    m_pending_records.swap(pending_records);
+    m_processed_records.swap(processed_records);
+    m_buffer_head = 0;
+    m_buffer_count = 0;
+    m_lead_surrogate = 0;
+#endif
 
     assert(!s_sending_terminal_request);
     rollback<bool> str(s_sending_terminal_request, true);
@@ -787,9 +801,11 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     WriteConsoleW(m_stdout, tmp.c_str(), tmp.length(), &written, nullptr);
 
     // Read input and match against the pattern.
+    bool matched = false;
     if (available(0))
     {
         bool digits = false;
+        const char* const orig_pattern = pattern;
         std::vector<INPUT_RECORD> pending_records;
         while (available(0))
         {
@@ -801,7 +817,9 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
                 const uint8 c = pop();
                 out.concat(reinterpret_cast<const char*>(&c), 1);
 
-                if (digits || *pattern == '0')
+                if (digits || (*pattern == '0' &&
+                               ((orig_pattern == pattern || (orig_pattern < pattern && !isdigit(uint8(*(pattern - 1))))) &&
+                                (!isdigit(uint8(*(pattern + 1)))))))
                 {
                     if (c >= '0' && c <= '9')
                     {
@@ -809,7 +827,7 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
                         {
                             ++pattern;
                             if (!*pattern)
-                                goto nope;  // Report sequences cannot end in a digit.
+                                goto done;  // Report sequences cannot end in a digit.
                         }
                         digits = true;
                         continue;
@@ -819,12 +837,12 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
                         if (digits)
                             digits = false; // Done with digits.
                         else
-                            goto nope;      // Digit expected; something else found.
+                            goto done;      // Digit expected; something else found.
                     }
                 }
 
                 if (c != *pattern)
-                    goto nope;
+                    goto done;
 
                 ++pattern;
             }
@@ -832,20 +850,44 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
             if (!*pattern)
             {
                 assert(m_pending_records.empty());
+                matched = true;
                 m_pending_records.clear();
                 m_processed_records.clear();
-                return true;
+                goto done;
             }
         }
     }
 
-nope:
-    // The response did not match the pattern; push the input records back
-    // into the terminal input queue.
-    m_pending_records.clear();
-    m_pending_records.swap(m_processed_records);
-    out.clear();
-    return false;
+done:
+#ifdef DISCARD_PENDING_INPUT_UPON_TERMINAL_REQUEST
+    if (!matched)
+    {
+        // The response did not match the pattern; push the input records back
+        // into the terminal input queue.
+        m_pending_records.clear();
+        m_pending_records.swap(m_processed_records);
+        out.clear();
+    }
+#else
+    // Restore the original pending state.
+    m_pending_records.swap(pending_records);
+    m_processed_records.swap(processed_records);
+    m_buffer_head = buffer_head;
+    m_buffer_count = buffer_count;
+    m_lead_surrogate = lead_surrogate;
+    // Append any newly processed records.  Append at the end to keep them in
+    // proper relative order to any pre-existing pending records.  However, if
+    // the response was in fact valid and the pattern was just wrong, then the
+    // input could be in an incorrect order now.
+    for (const auto& record : processed_records)
+    {
+        assert(!matched);
+        m_processed_records.push_back(record);
+    }
+    if (!matched)
+        out.clear();
+#endif
+    return matched;
 }
 
 //------------------------------------------------------------------------------
