@@ -9,6 +9,7 @@
 #include "wcwidth.h"
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
+#include "ecma48_iter.h" // for send_terminal_request()
 
 #include <core/base.h>
 #include <core/str.h>
@@ -82,6 +83,7 @@ extern setting_enum g_default_bindings;
 //------------------------------------------------------------------------------
 static HANDLE s_interrupt = NULL;
 static bool s_sending_terminal_request = false;
+static bool s_force_raw_esc = false;
 
 //------------------------------------------------------------------------------
 static const int32 CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
@@ -618,13 +620,6 @@ int32 win_terminal_in::begin(bool can_hide_cursor)
 
     if (!m_began)
     {
-        // Clearing the input state shouldn't be needed, and clearing it
-        // discards any peeked input (console.checkinput()).  So, don't.
-#if 0
-        m_buffer_count = 0;
-        m_lead_surrogate = 0;
-#endif
-
         m_stdin = get_std_handle(STD_INPUT_HANDLE);
         m_stdout = get_std_handle(STD_OUTPUT_HANDLE);
         m_dimensions = get_dimensions();
@@ -761,6 +756,14 @@ int32 win_terminal_in::peek()
 // In the pattern string, use '0' by itself as a wildcard meaning "one or more
 // digits".  E.g. "2027" in the pattern matches "2027", but "0" in the pattern
 // matches any contiguous run of digits.
+//
+// Example usage:
+//
+//      puts("waiting 2 seconds ... type some stuff ...");
+//      Sleep(2000);
+//      str<> response;
+//      if (send_terminal_request("\x1b[?2027$p", "\x1b[?2027;0$y", response))
+//          printf("ESC%s\n", response.c_str() + 1);
 bool win_terminal_in::send_terminal_request(const char* request, const char* pattern, str_base& out)
 {
     assert(request && *request);
@@ -771,17 +774,8 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     if (get_native_ansi_handler() < ansi_handler::first_native)
         return false;
 
-#ifdef DISCARD_PENDING_INPUT_UPON_TERMINAL_REQUEST
-    // The actual terminal discards all its pending input when it receives a
-    // terminal request sequence, so this wrapper must as well.
-    m_pending_records.clear();
-    m_processed_records.clear();
-    m_buffer_head = 0;
-    m_buffer_count = 0;
-    m_lead_surrogate = 0;
-#else
-    std::vector<INPUT_RECORD> pending_records;
-    std::vector<INPUT_RECORD> processed_records;
+    std::vector<INPUT_RECORD> pending_records;      // (a stack)
+    std::vector<INPUT_RECORD> processed_records;    // (an array)
     auto buffer_head = m_buffer_head;
     auto buffer_count = m_buffer_count;
     auto lead_surrogate = m_lead_surrogate;
@@ -790,7 +784,6 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     m_buffer_head = 0;
     m_buffer_count = 0;
     m_lead_surrogate = 0;
-#endif
 
     assert(!s_sending_terminal_request);
     rollback<bool> str(s_sending_terminal_request, true);
@@ -800,94 +793,178 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     wstr<16> tmp(request);
     WriteConsoleW(m_stdout, tmp.c_str(), tmp.length(), &written, nullptr);
 
-    // Read input and match against the pattern.
-    bool matched = false;
+    // Read input and match against the pattern.  The DECRPM response is
+    // appended to any queued input.  So it's necessary to apply ECMA48
+    // compliant stateful parsing against the input.
+    bool ret = false;
     if (available(0))
     {
-        bool digits = false;
-        const char* const orig_pattern = pattern;
-        std::vector<INPUT_RECORD> pending_records;
-        while (available(0))
+        struct InputRecordCorrelation
         {
+            size_t record_index;
+            uint16 stream_index;
+            uint16 char_count;
+        };
+        std::vector<InputRecordCorrelation> correlations;
+
+        // First read all available input.  If there's more than 16KB of input
+        // then give up.
+        s_force_raw_esc = true;
+        str_moveable input;
+        constexpr uint16 c_max_input = 16*1024;
+        while (available(0) && input.length() < c_max_input)
+        {
+            correlations.emplace_back();
+            auto& correlation = correlations.back();
+            correlation.record_index = m_processed_records.size();
+            correlation.stream_index = input.length();
+
             const uint32 buffer_count = m_buffer_count;
             read_console(nullptr, 0, false);
 
-            while (m_buffer_count && (digits || *pattern))
+            while (m_buffer_count)
             {
                 const uint8 c = pop();
-                out.concat(reinterpret_cast<const char*>(&c), 1);
-
-                if (digits || (*pattern == '0' &&
-                               ((orig_pattern == pattern || (orig_pattern < pattern && !isdigit(uint8(*(pattern - 1))))) &&
-                                (!isdigit(uint8(*(pattern + 1)))))))
-                {
-                    if (c >= '0' && c <= '9')
-                    {
-                        if (!digits)
-                        {
-                            ++pattern;
-                            if (!*pattern)
-                                goto done;  // Report sequences cannot end in a digit.
-                        }
-                        digits = true;
-                        continue;
-                    }
-                    else
-                    {
-                        if (digits)
-                            digits = false; // Done with digits.
-                        else
-                            goto done;      // Digit expected; something else found.
-                    }
-                }
-
-                if (c != *pattern)
-                    goto done;
-
-                ++pattern;
+                input.concat_no_truncate(reinterpret_cast<const char*>(&c), 1);
             }
 
-            if (!*pattern)
+            correlation.char_count = input.length() - correlation.stream_index;
+        }
+        s_force_raw_esc = false;
+
+        // Next use stateful inspection to seek the pattern.
+        if (input.length() < c_max_input)
+        {
+            ecma48_state state;
+            ecma48_iter input_iter(input.c_str(), state, input.length());
+            while (true)
             {
-                assert(m_pending_records.empty());
-                matched = true;
-                m_pending_records.clear();
-                m_processed_records.clear();
-                goto done;
+                // Remember the input_iter pointer because code.get_pointer()
+                // points at a copy of the input data, not at the actual input
+                // string buffer.
+                const char* input_iter_ptr = input_iter.get_pointer();
+
+                // Get the next parsed code.
+                const ecma48_code& code = input_iter.next();
+                if (!code)
+                    break;
+                if (code.get_type() != ecma48_code::type_c1)
+                    continue;
+
+                // Compare the C1 code against the pattern.
+                const char* matched = input_iter_ptr;
+                bool digits = false;
+                str_iter code_iter(code.get_pointer(), code.get_length());
+                for (const char* walk = pattern; code_iter.more() && (digits || *walk);)
+                {
+                    const uint32 c = code_iter.next();
+                    if (c > 0x7f)
+                    {
+                        matched = nullptr;
+                        break;
+                    }
+
+                    // Parse wildcarded digits.
+                    if (digits || (*walk == '0' &&
+                                    ((pattern == walk || (pattern < walk && !isdigit(uint8(*(walk - 1))))) &&
+                                    (!isdigit(uint8(*(walk + 1)))))))
+                    {
+                        if (c >= '0' && c <= '9')
+                        {
+                            if (!digits)
+                            {
+                                assert(*walk);
+                                ++walk;
+                                // Report sequences cannot end in a wildcarded digit.
+                                if (!*walk)
+                                {
+                                    matched = nullptr;
+                                    break;
+                                }
+                            }
+                            digits = true;
+                            continue;
+                        }
+                        else
+                        {
+                            // Digit expected; stop if something else.
+                            if (!digits)
+                            {
+                                matched = nullptr;
+                                break;
+                            }
+                            // Done with digits.
+                            digits = false;
+                            assert(*walk);
+                        }
+                    }
+
+                    if (c != *walk)
+                    {
+                        matched = nullptr;
+                        break;
+                    }
+
+                    assert(*walk);
+                    ++walk;
+                }
+
+                assert(out.empty());
+                if (matched)
+                {
+                    // Fill the out parameter with the matched code.
+                    out.concat(code.get_pointer(), code.get_length());
+                    assert(!out.empty());
+
+                    // Remove the corresponding input records.
+                    assert(m_pending_records.empty());
+                    const size_t begin_offset = matched - input.c_str();
+                    const size_t end_offset = begin_offset + code.get_length();
+                    size_t begin_erasure = -1;
+                    for (size_t ii = 0; ii < correlations.size(); ++ii)
+                    {
+                        const auto& correlation = correlations[ii];
+                        if (correlation.stream_index + correlation.char_count > begin_offset)
+                        {
+                            assert(correlation.stream_index == begin_offset);
+                            begin_erasure = ii;
+                            break;
+                        }
+                    }
+                    assert(begin_erasure < correlations.size());
+                    if (begin_erasure < correlations.size())
+                    {
+                        assert(correlations.size() == m_processed_records.size());
+                        const size_t index_erase = correlations[begin_erasure].record_index;
+                        for (size_t ii = begin_erasure; ii < correlations.size(); ++ii)
+                        {
+                            if (correlations[ii].stream_index >= end_offset)
+                                break;
+                            m_processed_records.erase(m_processed_records.begin() + index_erase);
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
 
-done:
-#ifdef DISCARD_PENDING_INPUT_UPON_TERMINAL_REQUEST
-    if (!matched)
-    {
-        // The response did not match the pattern; push the input records back
-        // into the terminal input queue.
-        m_pending_records.clear();
-        m_pending_records.swap(m_processed_records);
-        out.clear();
-    }
-#else
     // Restore the original pending state.
-    m_pending_records.swap(pending_records);
+    assert(m_pending_records.empty());
     m_processed_records.swap(processed_records);
     m_buffer_head = buffer_head;
     m_buffer_count = buffer_count;
     m_lead_surrogate = lead_surrogate;
-    // Append any newly processed records.  Append at the end to keep them in
-    // proper relative order to any pre-existing pending records.  However, if
-    // the response was in fact valid and the pattern was just wrong, then the
-    // input could be in an incorrect order now.
-    for (const auto& record : processed_records)
-    {
-        assert(!matched);
-        m_processed_records.push_back(record);
-    }
-    if (!matched)
-        out.clear();
-#endif
-    return matched;
+
+    // Any processed records go at the beginning of the pending record stack.
+    // Then push the pre-existing pending records to keep them in proper
+    // relative order.
+    for (size_t ii = processed_records.size(); ii--;)
+        m_pending_records.push_back(processed_records[ii]);
+    for (const auto& record : pending_records)
+        m_pending_records.push_back(record);
+
+    return !out.empty();
 }
 
 //------------------------------------------------------------------------------
@@ -1369,9 +1446,12 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
     // Special treatment for escape.
     if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
     {
-        const char* bindableEsc = get_bindable_esc();
-        if (bindableEsc)
-            return push(bindableEsc);
+        if (!s_force_raw_esc)
+        {
+            const char* bindableEsc = get_bindable_esc();
+            if (bindableEsc)
+                return push(bindableEsc);
+        }
     }
 
     // Windows supports an AltGr substitute which we check for here. As it
