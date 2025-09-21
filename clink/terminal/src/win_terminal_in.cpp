@@ -1112,9 +1112,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         if (!ReadConsoleInputW(m_stdin, &record, 1, &count))
         {
             // Handle's probably invalid if ReadConsoleInput() failed.
-            m_buffer_head = 0;
-            m_buffer_count = 1;
-            m_buffer[0] = input_abort_byte;
+            if (!peek)
+            {
+                m_buffer_head = 0;
+                m_buffer_count = 1;
+                m_buffer[0] = input_abort_byte;
+            }
             return;
         }
 
