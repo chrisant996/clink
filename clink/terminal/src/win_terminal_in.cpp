@@ -924,7 +924,7 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
                     for (size_t ii = 0; ii < correlations.size(); ++ii)
                     {
                         const auto& correlation = correlations[ii];
-                        if (correlation.stream_index + correlation.char_count > begin_offset)
+                        if (size_t(correlation.stream_index) + size_t(correlation.char_count) > begin_offset)
                         {
                             assert(correlation.stream_index == begin_offset);
                             begin_erasure = ii;
