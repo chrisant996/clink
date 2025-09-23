@@ -27,7 +27,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Extra Low Priority
 - Option for the installer to add the Clink directory to the system PATH?  **WARNING:**  The main problem is about All Users...
 - I'd love to let the installer run without Admin privilege, but I don't see how to do that safely because of the need for updating All Users AutoRun.
-- Windows Terminal now has 3 ways of measuring character widths.  There's an escape code to ask which mode is being used, but the escape code clears all queued input, so using it can be disruptive.  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
+- Windows Terminal now has 3 ways of measuring character widths.  There's a DECRQM escape code `\x1b[?2027$p` to ask which mode is being used.  The wcwidth updates in Clink are consistent with the "Grapheme clusters" mode.  If the "wcswidth" and "Windows Console" modes turn out to be worth supporting, then that would require a bunch of extra work and configuration.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
