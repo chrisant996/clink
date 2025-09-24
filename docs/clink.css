@@ -1,4 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
+@font-face {
+    font-family: promptFont;
+    src: url(CaskaydiaCoveNerdFontMono-Regular.woff2);
+}
+
 html {
     font: 12pt Roboto,Calibri,Arial,Helvetica,sans-serif;
     -ms-text-size-adjust: 100%;

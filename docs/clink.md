@@ -729,15 +729,73 @@ Clink looks for custom prompt files in these directories:
 
 To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the `CLINK_CUSTOMPROMPT` environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile's settings file, and allows multiple concurrent Clink sessions to use different custom prompts.
 
-To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files, and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt), [clink-themes](https://github.com/chrisant996/clink-themes), and [oh-my-posh](https://ohmyposh.dev).  Check [here](#oh-my-posh) for quick info on using oh-my-posh prompt themes with Clink.
+To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files (see below for previews), and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt), [clink-themes](https://github.com/chrisant996/clink-themes), and [oh-my-posh](https://ohmyposh.dev).  Check [here](#oh-my-posh) for quick info on using oh-my-posh prompt themes with Clink.
 
-To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.
+To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.  Or to show demos of what all installed custom prompts each look like, run <code>clink config prompt show --all</code>.
 
 See [Customizing the Prompt](#customisingtheprompt) for information on writing your own custom prompts, and see [Sharing Custom Prompts](#sharing-custom-prompts) for information on optionally packaging them as "*.clinkprompt" files.
 
 <fieldset><legend>Warning</legend>
 If you want to change a .clinkprompt file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinkprompt theme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
 </fieldset>
+
+### Included Custom Prompts
+
+Each of the custom prompts listed below has many configuration options.  Some can be configured by setting environment variables, and some can be configured by writing a Lua script to set some Lua variables.  For information on how to configure a custom prompt, refer to its corresponding named *.clinkprompt file in the `themes\` directory under the Clink installation directory.
+
+To activate any of the prompts listed below, run <code>clink config prompt use <span class="arg">prompt_name</span></code>.
+
+##### agnoster
+
+#INCLUDE [docs\prompts\agnoster.html]
+
+##### Antares
+
+#INCLUDE [docs\prompts\Antares.html]
+
+(The line characters might not connect properly in a web browser, but they should connect properly in a terminal window.)
+
+##### bureau
+
+#INCLUDE [docs\prompts\bureau.html]
+
+##### darkblood
+
+#INCLUDE [docs\prompts\darkblood.html]
+
+##### Headline
+
+#INCLUDE [docs\prompts\Headline.html]
+
+##### jonathan
+
+#INCLUDE [docs\prompts\jonathan.html]
+
+(The line characters might not connect properly in a web browser, but they should connect properly in a terminal window.)
+
+##### oh-my-posh
+
+#INCLUDE [docs\prompts\oh-my-posh.html]
+
+To use this, the [oh-my-posh](https://ohmyposh.dev) program must be installed.  The preview above shows the default oh-my-posh theme.  There are many other [oh-my-posh themes](https://ohmyposh.dev/docs/themes) to choose from.
+
+To configure oh-my-posh to use a particular prompt theme, run <code>clink set ohmyposh.theme "<span class="arg">full_path_to_theme_file</span>.omp.json"</code> to select the theme file.
+
+If the oh-my-posh.exe file is not in the system PATH, then run <code>clink set ohmyposh.exepath "<span class="arg">full_path_to_oh-my-posh.exe</span>"</code> to tell Clink where to find the oh-my-posh program file.
+
+##### pure
+
+#INCLUDE [docs\prompts\pure.html]
+
+##### starship
+
+#INCLUDE [docs\prompts\starship.html]
+
+To use this, the [starship](https://github.com/starship/starship) program must be installed.  The preview above shows the default starship configuration.
+
+Refer to starship's documentation for [Configuring Starship](https://starship.rs/config/).
+
+If the starship.exe file is not in the system PATH, then run <code>clink set starship.exepath "<span class="arg">full_path_to_starship.exe</span>"</code> to tell Clink where to find the starship program file.
 
 ### Compatibility Between .clinkprompt Versus .lua Files
 
@@ -3807,28 +3865,6 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 ### clink-themes
 
 The [clink-themes](https://github.com/chrisant996/clink-themes) repository contains some [color themes](#color-themes) and [custom prompts](#custom-prompts) which can be used with Clink.  If you have one you want to share, this can be a good place to share it.
-
-### oh-my-posh
-
-The [oh-my-posh](https://ohmyposh.dev) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for installation instructions, sample themes, and more information.
-
-But in Clink v1.7.0 and newer, don't create a Lua script for oh-my-posh.
-
-Instead do the following:
-1. Run `clink config prompt use oh-my-posh` to activate oh-my-posh as the custom prompt.
-2. If the oh-my-posh.exe file is not in the system PATH, then run <code>clink set ohmyposh.exepath "<span class="arg">full_path_to_oh-my-posh.exe</span>"</code> to tell Clink where to find the oh-my-posh program file.
-3. To configure oh-my-posh to use a particular prompt theme, run <code>clink set ohmyposh.theme "<span class="arg">full_path_to_theme_file</span>.omp.json"</code> to select the theme file.
-
-### starship
-
-The [starship](https://github.com/starship/starship) program can also generate fancy prompts. Refer to its [documentation](https://starship.rs) for how to configure it.
-
-But in Clink v1.8.4 and newer, don't create a Lua script for starship.
-
-Instead do the following:
-1. Run `clink config prompt use starship` to activate starship as the custom prompt.
-2. If the starship.exe file is not in the system PATH, then run <code>clink set starship.exepath "<span class="arg">full_path_to_starship.exe</span>"</code> to tell Clink where to find the starship program file.
-3. Refer to starship's documentation for [Configuring Starship](https://starship.rs/config/).
 
 ### z.lua
 

@@ -138,6 +138,7 @@ Section "!Application files" app_files_id
     File ${CLINK_BUILD}\clink_x*.exe
     File ${CLINK_BUILD}\clink.bat
     File ${CLINK_BUILD}\clink.html
+    File ${CLINK_BUILD}\CaskaydiaCoveNerdFontMono-Regular.woff2
     ${If} ${IsNativeARM64}
         File ${CLINK_BUILD}\clink_dll_arm*.dll
         File ${CLINK_BUILD}\clink_arm*.exe

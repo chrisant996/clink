@@ -33,6 +33,8 @@ Licensed under the [MIT License](https://github.com/microsoft/Detours/blob/e5400
 Match completion display uses column width calculations from GNU coreutils [ls.c](https://github.com/coreutils/coreutils/blob/master/src/ls.c).<br/>
 Licensed under the terms of the [GNU General Public License, version 3](http://www.gnu.org/licenses/gpl.html).
 
+<h3 id="credits_other">Other</h3>
+
 The Dracula color theme (https://draculatheme.com).<br/>
 Copyright (c) 2018 Dracula Theme.<br/>
 Licensed under the [MIT License](https://github.com/dracula/fish/blob/master/LICENSE).
@@ -47,6 +49,9 @@ Licensed under the [MIT License](https://github.com/chriskempson/tomorrow-theme/
 
 [Custom prompts included with Clink](https://github.com/chrisant996/clink/tree/master/clink/app/themes) are based on some custom prompt themes for the zsh shell.<br/>
 For details about the original prompt implementation for each one, refer to information at the top of each .clinkprompt file.
+
+Clink documentation includes the [CaskaydiaCove Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/CascadiaCode) for the custom prompt previews.<br/>
+The font is derived from [Cascadia Code](https://learn.microsoft.com/en-us/windows/terminal/cascadia-code), which Microsoft released under the [SIL Open Font License](https://openfontlicense.org/).
 
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br/>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).

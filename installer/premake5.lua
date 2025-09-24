@@ -353,6 +353,7 @@ newaction {
         end
         exec(doc_cmd)
         copy(".build/docs/clink.html", dest)
+        copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest)
 
         -- Build the installer.
         local nsis_ok = false
@@ -586,6 +587,7 @@ newaction {
         end
         exec(doc_cmd)
         copy(".build/docs/clink.html", dest)
+        copy(".build/docs/CaskaydiaCoveNerdFontMono.woff2", dest)
 
         -- Build the installer.
         local nsis_ok = false

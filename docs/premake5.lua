@@ -295,6 +295,7 @@ end
 
 --------------------------------------------------------------------------------
 local function do_docs()
+    local promptFont = "CaskaydiaCoveNerdFontMono-Regular.woff2"
     local tmp_path = ".build/docs/clink_tmp"
     out_path = ".build/docs/clink.html"
 
@@ -477,6 +478,16 @@ local function do_docs()
     local out_file = io.open(out_path, "w")
     generate_file(tmp_path, out_file, true--[[weblinks]])
     out_file:close()
+
+    -- Copy font for prompt previews.
+    print("")
+    print(">> " .. promptFont)
+    local copy_cmd = string.format('copy /y "%s" "%s"', path.join('docs/prompts', promptFont):gsub('/', '\\'), path.join(path.getdirectory(out_path), promptFont):gsub('/', '\\'))
+    local ok, op, exit = os.execute('2>nul 1>nul ' .. copy_cmd)
+    if not ok then
+        error(string.format("Error %d copying prompt font file.\n%s", exit, copy_cmd))
+    end
+
     print("")
 end
 
