@@ -61,7 +61,7 @@ You can customize the prompt dynamically with Lua scripts -- like in other shell
 
 Your input is colored by context sensitive completion scripts.
 
-See [Popular Scripts](#popular-scripts) and [Colors](#gettingstarted_colors) and [Customizing the Prompt](#customizing-the-prompt) to learn more.
+See [Colors](#gettingstarted_colors) and [Custom Prompts](#custom-prompts) and [Popular Scripts](#popular-scripts) to learn more.
 
 </div>
 </div>
