@@ -341,7 +341,9 @@ newaction {
                 from = nil
             end
             if from then
-                copy(from .. mask, to)
+                if not copy(from .. mask, to) then
+                    failed(string.format("COPY %s FAILED", from .. mask))
+                end
             end
         end
 
@@ -352,8 +354,12 @@ newaction {
             doc_cmd = doc_cmd .. " --docbranch="..clink_git_name
         end
         exec(doc_cmd)
-        copy(".build/docs/clink.html", dest)
-        copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest)
+        if not copy(".build/docs/clink.html", dest) then
+            failed("COPY CLINK.HTML FAILED")
+        end
+        if not copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest) then
+            failed("COPY PROMPT PREVIEW FONT FAILED")
+        end
 
         -- Build the installer.
         local nsis_ok = false
@@ -366,7 +372,9 @@ newaction {
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
             if nsis_ok then
-                rename(dest.."_setup.exe", "clink_setup_" .. config .. ".exe")
+                if not rename(dest.."_setup.exe", "clink_setup_" .. config .. ".exe") then
+                    failed("COPY INSTALLER .EXE FILE FAILED")
+                end
             end
         end
 
@@ -576,7 +584,9 @@ newaction {
             elseif mask:match("clink.*%.ico") then
                 from = code_dir.."clink/app/resources/"
             end
-            copy(from .. mask, to)
+            if not copy(from .. mask, to) then
+                failed(string.format("COPY %s FAILED", from .. mask))
+            end
         end
 
         -- Generate documentation.
@@ -586,8 +596,12 @@ newaction {
             doc_cmd = doc_cmd .. " --docbranch="..clink_git_name
         end
         exec(doc_cmd)
-        copy(".build/docs/clink.html", dest)
-        copy(".build/docs/CaskaydiaCoveNerdFontMono.woff2", dest)
+        if not copy(".build/docs/clink.html", dest) then
+            failed("COPY CLINK.HTML FAILED")
+        end
+        if not copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest) then
+            failed("COPY PROMPT PREVIEW FONT FAILED")
+        end
 
         -- Build the installer.
         local nsis_ok = false
