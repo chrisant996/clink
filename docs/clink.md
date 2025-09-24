@@ -2990,9 +2990,9 @@ To make a custom prompt shareable, put it in a file whose name ends with ".clink
 
 For many custom prompts, it's as simple as that!  Some prompts may want additional capabilities, which are described further below.
 
-A .clinkprompt file can be shared and installed on other computers.  If it's in a "themes" subdirectory under any of the script directories, then Clink can find it automatically (run `clink info` and look for the "scripts" line in the output).  If the file in some other directory, then you can use it by telling Clink the full path to the file.
+A .clinkprompt file can be shared and installed on other computers.  If it's in a "themes" subdirectory under any of the script directories, then Clink can find it automatically (run `clink info` and look for the "scripts" line in the output).  If the file is in some other directory, then you can use it by telling Clink the full path to the file.
 
-Any [prompt filters](#clink.promptfilter) or registered event handlers (such as [clink.onbeginedit](#clink.onbeginedit)) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> select a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.
+Any [prompt filters](#clink.promptfilter) or registered event handlers (such as [clink.onbeginedit](#clink.onbeginedit)) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> selects a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.
 
 #### The "exports table" in a .clinkprompt file
 
