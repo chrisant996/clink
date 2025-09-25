@@ -76,10 +76,13 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
 ### Building Documentation
 
 1. Run `npm install -g marked@2.0.1` to install the [marked](https://marked.js.org) markdown library (version 2.0.1).
+2. Run `pip install fonttools brotli lxml` to install the [pyftsubset](https://fonttools.readthedocs.io/en/latest/subset/index.html) font optimizer tool and the [lxml](https://lxml.de/) parser.
 2. Run `premake5.exe docs`.
 
 > [!IMPORTANT]
 > Clink documentation uses marked@2.0.1.  Newer versions of marked have introduced breaking changes, and I haven't yet rewritten how Clink builds the documentation to accommodate the breaking changes.  The security fixes in newer versions aren't relevant since marked is only used at build time with known inputs (the marked library is no longer embedded in the documentation as of commit [d5b39ca](https://github.com/chrisant996/clink/commit/d5b39caf7a1a4353ab8e474e0a26c4f7981e9c3c) in Oct 2020).
+> 
+> The python dependencies are needed in order to make a subset of the Cascadia Code nerd font to display the prompts. This optimization reduces the size (in `woff2`) from ~1220 kB to ~12 kB allowing it to be bundled with the `clink.html` file.
 
 ### Debugging Clink
 
