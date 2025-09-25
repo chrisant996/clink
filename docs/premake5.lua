@@ -482,10 +482,10 @@ local function do_docs()
     -- Copy font for prompt previews.
     print("")
     print(">> " .. promptFont)
-    local copy_cmd = string.format('copy /y "%s" "%s"', path.join('docs/prompts', promptFont):gsub('/', '\\'), path.join(path.getdirectory(out_path), promptFont):gsub('/', '\\'))
-    local ok, op, exit = os.execute('2>nul 1>nul ' .. copy_cmd)
+    local susbet_cmd = string.format("python docs\\subset.py")
+    local ok, op, exit = os.execute(susbet_cmd)
     if not ok then
-        error(string.format("Error %d copying prompt font file.\n%s", exit, copy_cmd))
+        error(string.format("Error %d making subset of font for prompts.\n%s", exit, susbet_cmd))
     end
 
     print("")
