@@ -12,7 +12,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
     font-family: promptFont;
-    src: url(CaskaydiaCoveNerdFontMono-Regular.woff2);
+    src: url(CaskaydiaCoveNerdFontMono-Regular-Subset.woff2);
 }
 
 html {
@@ -5545,8 +5545,8 @@ end
 <p>Custom prompts can be shared in Clink v1.7.0 and newer.</p>
 <p>To make a custom prompt shareable, put it in a file whose name ends with &quot;.clinkprompt&quot; instead of &quot;.lua&quot;.</p>
 <p>For many custom prompts, it&#39;s as simple as that!  Some prompts may want additional capabilities, which are described further below.</p>
-<p>A .clinkprompt file can be shared and installed on other computers.  If it&#39;s in a &quot;themes&quot; subdirectory under any of the script directories, then Clink can find it automatically (run <code>clink info</code> and look for the &quot;scripts&quot; line in the output).  If the file in some other directory, then you can use it by telling Clink the full path to the file.</p>
-<p>Any <a href="#clink.promptfilter">prompt filters</a> or registered event handlers (such as <a href="#clink.onbeginedit">clink.onbeginedit</a>) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> select a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.</p>
+<p>A .clinkprompt file can be shared and installed on other computers.  If it&#39;s in a &quot;themes&quot; subdirectory under any of the script directories, then Clink can find it automatically (run <code>clink info</code> and look for the &quot;scripts&quot; line in the output).  If the file is in some other directory, then you can use it by telling Clink the full path to the file.</p>
+<p>Any <a href="#clink.promptfilter">prompt filters</a> or registered event handlers (such as <a href="#clink.onbeginedit">clink.onbeginedit</a>) in a .clinkprompt file are only called while the prompt is active.  Running <code>clink config prompt use <span class="arg">prompt_file</span></code> selects a custom prompt which gets activated in each Clink session using the current profile directory.  Only one .clinkprompt file at a time can be active.</p>
 <h4 id="the-exports-table-in-a-clinkprompt-file"><a class="wlink" href="#the-exports-table-in-a-clinkprompt-file"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The &quot;exports table&quot; in a .clinkprompt file <span class="uplinks"><a href="#sharing-custom-prompts">up</a> <a href="#toc">top</a></span></h4>
 <p>A .clinkprompt file can return a table with certain fields which gain additional capabilities.  Each field is optional, as is the table itself.</p>
 <table>
