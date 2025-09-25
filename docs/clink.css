@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
     font-family: promptFont;
-    src: url(CaskaydiaCoveNerdFontMono-Regular.woff2);
+    src: url(CaskaydiaCoveNerdFontMono-Regular-Subset.woff2);
 }
 
 html {

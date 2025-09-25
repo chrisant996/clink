@@ -9,6 +9,7 @@ local msbuild_locations = {
     "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin",
     "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin",
 }
+local dst_prompt_font = "CaskaydiaCoveNerdFontMono-Regular-Subset.woff2"
 
 --------------------------------------------------------------------------------
 local release_manifest = {
@@ -357,7 +358,7 @@ newaction {
         if not copy(".build/docs/clink.html", dest) then
             failed("COPY CLINK.HTML FAILED")
         end
-        if not copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest) then
+        if not copy(".build/docs/" .. dst_prompt_font, dest) then
             failed("COPY PROMPT PREVIEW FONT FAILED")
         end
 
@@ -599,7 +600,7 @@ newaction {
         if not copy(".build/docs/clink.html", dest) then
             failed("COPY CLINK.HTML FAILED")
         end
-        if not copy(".build/docs/CaskaydiaCoveNerdFontMono-Regular.woff2", dest) then
+        if not copy(".build/docs/" .. dst_prompt_font, dest) then
             failed("COPY PROMPT PREVIEW FONT FAILED")
         end
 

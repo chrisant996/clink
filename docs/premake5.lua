@@ -295,7 +295,8 @@ end
 
 --------------------------------------------------------------------------------
 local function do_docs()
-    local promptFont = "CaskaydiaCoveNerdFontMono-Regular.woff2"
+    local src_prompt_font = "CaskaydiaCoveNerdFontMono-Regular.woff2"
+    local dst_prompt_font = "CaskaydiaCoveNerdFontMono-Regular-Subset.woff2"
     local tmp_path = ".build/docs/clink_tmp"
     out_path = ".build/docs/clink.html"
 
@@ -481,11 +482,11 @@ local function do_docs()
 
     -- Copy font for prompt previews.
     print("")
-    print(">> " .. promptFont)
-    local susbet_cmd = string.format("python docs\\subset.py")
-    local ok, op, exit = os.execute(susbet_cmd)
+    print(">> " .. src_prompt_font)
+    local subset_cmd = string.format('python docs\\subset.py "%s" "%s"', src_prompt_font, dst_prompt_font)
+    local ok, op, exit = os.execute(subset_cmd)
     if not ok then
-        error(string.format("Error %d making subset of font for prompts.\n%s", exit, susbet_cmd))
+        error(string.format("Error %d making subset of font for prompts.\n%s", exit, subset_cmd))
     end
 
     print("")
