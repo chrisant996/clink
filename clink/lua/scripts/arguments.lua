@@ -3436,7 +3436,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 prev_info = info
             end
 
-            -- Clear any chained flag for subsequence words.
+            -- Clear any chained flag for subsequent words.
             if chained then
                 besthint = nil
                 bestpos = nil
