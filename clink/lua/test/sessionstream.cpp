@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "clatch.h"
+#include "clatch.h" // (so that VSCode can parse the macros, since it parses the wrong pch.h file)
 
 #include <lua/lua_state.h>
 

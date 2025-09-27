@@ -2,6 +2,8 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "clatch.h" // (so that VSCode can parse the macros, since it parses the wrong pch.h file)
+
 #include "line_editor_tester.h"
 #include "editor_module.h"
 #include "line_state.h"

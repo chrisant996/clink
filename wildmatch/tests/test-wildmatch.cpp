@@ -2,15 +2,16 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#include <clatch.h> // Because MINGW (or premake5 gmake?) gets the include directory order wrong.
+#else
+#include "clatch.h" // (so that VSCode can parse the macros, since it parses the wrong pch.h file)
+#endif
 
 #include <core/base.h>
 #include <core/str.h>
 
 #include "wildmatch.h"
-
-#if defined(__MINGW32__) || defined(__MINGW64__)
-#include <clatch.h> // Because MINGW (or premake5 gmake?) gets the include directory order wrong.
-#endif
 
 static void xxx_hack(int32 caseNum, const char* line, const char*& str)
 {
