@@ -26,7 +26,7 @@ public:
     virtual int32           end(bool can_show_cursor) override { return 0; }
     virtual bool            available(uint32 timeout) override { return has_input(); }
     virtual void            select(input_idle*, uint32) override {}
-    virtual int32           read() override { return *(uint8*)m_read++; }
+    virtual int32           read() override;
     virtual int32           peek() override { return *(uint8*)m_read; }
     virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }
 
@@ -34,6 +34,15 @@ private:
     const char*             m_input = nullptr;
     const char*             m_read = nullptr;
 };
+
+//------------------------------------------------------------------------------
+inline int32 test_terminal_in::read()
+{
+    const uint8 c = *(uint8*)m_read;
+    if (c)
+        ++m_read;
+    return c;
+}
 
 //------------------------------------------------------------------------------
 class test_terminal_out
