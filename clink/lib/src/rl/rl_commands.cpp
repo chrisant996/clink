@@ -1067,6 +1067,8 @@ int32 clink_find_conhost(int32 count, int32 invoking_key)
 
     // Invoke conhost's Find command via the system menu.
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_FIND, 0);
+
+    deduce_scroll_mode(GetStdHandle(STD_OUTPUT_HANDLE));
     return 0;
 }
 
@@ -1088,6 +1090,8 @@ int32 clink_mark_conhost(int32 count, int32 invoking_key)
 
     // Invoke conhost's Mark command via the system menu.
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_MARK, 0);
+
+    deduce_scroll_mode(GetStdHandle(STD_OUTPUT_HANDLE));
     return 0;
 }
 
@@ -1115,6 +1119,8 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
 
     // Invoke conhost's Select All command via the system menu.
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_SELECTALL, 0);
+
+    deduce_scroll_mode(GetStdHandle(STD_OUTPUT_HANDLE));
     return 0;
 }
 
