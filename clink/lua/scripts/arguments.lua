@@ -377,6 +377,7 @@ function _argreader:start_command(matcher)
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
     self._chain_command_mode = nil
+    self._chain_command_hint = nil
 
     --self._fromhistory_matcher = self._fromhistory_matcher
     --self._fromhistory_argindex = self._fromhistory_argindex
@@ -547,13 +548,14 @@ function _argreader:_detect_arg_cycle()
 end
 
 --------------------------------------------------------------------------------
-function _argreader:start_chained_command(word_index, mode, expand_aliases)
+function _argreader:start_chained_command(word_index, mode, expand_aliases, hint)
     local line_state = self._line_state
     mode = mode or "cmd"
     self._no_cmd = nil
     self._chain_command = true
     self._chain_command_expand_aliases = expand_aliases
     self._chain_command_mode = mode
+    self._chain_command_hint = hint
     for i = word_index, line_state:getwordcount() do
         local info = line_state:getwordinfo(i)
         if not info.redir then
@@ -617,12 +619,14 @@ end
 -- On return, the _argreader should be primed for generating matches for the
 -- NEXT word in the line.
 --
--- Returns TRUE when chaining due to chaincommand().
+-- Returns TRUE when chaining due to chaincommand(), and optionally a lookup
+-- string for an argmatcher.
 local default_flag_nowordbreakchars = "'`=+;,"
 function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unused
     self._chain_command = nil
     self._chain_command_expand_aliases = nil
     self._chain_command_mode = nil
+    self._chain_command_hint = nil
     self._cycle_detection = nil
     if self._disabled then
         return
@@ -724,7 +728,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                         not last_onadvance and
                         not (self._extra and self._extra.no_onalias) and
                         self:has_more_words(word_index) then
-                    local expanded, chain = arg.onalias(0, word, word_index, line_state, self._user_data)
+                    local expanded, chain, chainhint = arg.onalias(0, word, word_index, line_state, self._user_data)
                     if expanded then
                         local line_states = clink.parseline(expanded)
                         if line_states and line_states[1].line_state then
@@ -738,7 +742,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                             end
                             self:push_line_state(line_states[1], true--[[no_onalias]])
                             if chain then
-                                self:start_chained_command(1, "cmd")
+                                self:start_chained_command(1, "cmd", false, chainhint)
                                 return true -- chain
                             end
                             return -- next word
@@ -775,7 +779,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     local arg = matcher._args[arg_index]
 
     -- Determine next arg index.
-    local react, react_modes
+    local react, react_modes, reacthint
     if arg and not is_flag then
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
@@ -792,7 +796,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                 -- preceding flag depending on what the word is.
                 self._match_builder:setvolatile()
             end
-            react, react_modes = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
+            react, react_modes, reacthint = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
             if react then
                 -- 1 = Ignore; advance to next arg_index.
                 -- 0 = Repeat; stay on the arg_index.
@@ -809,7 +813,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                 not last_onadvance and
                 not (self._extra and self._extra.no_onalias) and
                 self:has_more_words(word_index) then
-            local expanded, chain = arg.onalias(arg_index, word, word_index, line_state, self._user_data)
+            local expanded, chain, chainhint = arg.onalias(arg_index, word, word_index, line_state, self._user_data)
             if expanded then
                 local line_states = clink.parseline(expanded)
                 if line_states and line_states[1].line_state then
@@ -823,7 +827,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     end
                     self:push_line_state(line_states[1], true--[[no_onalias]])
                     if chain then
-                        self:start_chained_command(1, "cmd")
+                        self:start_chained_command(1, "cmd", false, chainhint)
                         return true -- chain
                     end
                     return -- next word
@@ -895,7 +899,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     if react == -1 then
         -- Chain due to request by `onadvance` callback.
         local mode, expand_aliases = parse_chaincommand_modes(react_modes)
-        local lookup = self:start_chained_command(word_index, mode, expand_aliases)
+        local lookup = self:start_chained_command(word_index, mode, expand_aliases, reacthint)
         return true, lookup -- chaincommand.
     end
 
@@ -903,7 +907,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     if not arg then
         if matcher._chain_command then
             -- Chain due to :chaincommand() used in argmatcher.
-            local lookup = self:start_chained_command(word_index, matcher._chain_command_mode, matcher._chain_command_expand_aliases)
+            local lookup = self:start_chained_command(word_index, matcher._chain_command_mode, matcher._chain_command_expand_aliases, matcher._chain_command_hint)
             return true, lookup -- chaincommand.
         end
         if self._word_classifier and not self._extra then
@@ -1676,6 +1680,7 @@ end
 --- -name:  _argmatcher:chaincommand
 --- -ver:   1.3.13
 --- -arg:   [modes:string]
+--- -arg:   [hint:string]
 --- -ret:   self
 --- This makes the rest of the line be parsed as a separate command, after the
 --- argmatcher reaches the end of its defined argument positions.  You can use
@@ -1716,26 +1721,30 @@ end
 --- -show:  -- "program" is colored as an argmatcher.
 --- -show:  -- "-" generates completions "-x" and "-y".
 ---
---- In Clink v1.6.2 and higher, an optional <span class="arg">modes</span>
---- argument can let Clink know how the command will get interpreted.  The
---- string can contain any combination of the following words, separated by
---- spaces or commas.  If some words are mutually exclusive, the one that
---- comes last in the string is used.
+--- The optional <span class="arg">modes</span> argument (in v1.6.2 and newer)
+--- can let Clink know how the command will get interpreted.  It only affects
+--- completions and input line coloring, it does not affect how a command gets
+--- executed.  The string can contain any combination of the following words,
+--- separated by spaces or commas.  "Mode" type words are mutually exclusive;
+--- the one that comes last in the string is used.  "Modifier" type words can
+--- be mixed with any of the "mode" words.
 --- <table>
---- <tr><th>Mode</th><th>Description</th></tr>
---- <tr><td><code>cmd</code></td><td>Lets the argmatcher know that the command gets processed how CMD.exe would process it.  This is the default if <span class="arg">modes</span> is omitted.</td></tr>
---- <tr><td><code>start</code></td><td>Lets the argmatcher know the command gets processed how the START command would process it.</td></tr>
---- <tr><td><code>run</code></td><td>Lets the argmatcher know the command gets processed how the <kbd>Win</kbd>-<kbd>R</kbd> Windows Run dialog box would process it.</td></tr>
---- <tr><td><code>doskey</code></td><td>Lets the argmatcher know if the command starts with a doskey alias it will be expanded.  This is very unusual, but for example the <a href="https://github.com/chrisant996/clink-gizmos/blob/main/i.lua">i.lua</a> script in <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> does this.</td></tr>
+--- <tr><th>Word</th><th>Type</th><th>Description</th></tr>
+--- <tr><td><code>cmd</code></td><td>Mode</td><td>Lets the argmatcher know that the command gets processed how CMD.exe would process it.  This is the default if <span class="arg">modes</span> is omitted.</td></tr>
+--- <tr><td><code>start</code></td><td>Mode</td><td>Lets the argmatcher know the command gets processed how the START command would process it.</td></tr>
+--- <tr><td><code>run</code></td><td>Mode</td><td>Lets the argmatcher know the command gets processed how the <kbd>Win</kbd>-<kbd>R</kbd> Windows Run dialog box would process it.</td></tr>
+--- <tr><td><code>doskey</code></td><td>Modifier</td><td>Lets the argmatcher know if the command starts with a doskey alias it will be expanded.  This is very unusual, but for example the <a href="https://github.com/chrisant996/clink-gizmos/blob/main/i.lua">i.lua</a> script in <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> does this.</td></tr>
 --- </table>
 ---
---- The <span class="arg">modes</span> string does not affect how the command
+--- The optional <span class="arg">hint</span> argument (in v1.8.4 and newer)
+--- provides a hint string for string does not affect how the command
 --- gets executed.  It only affects how the argmatcher performs completions
 --- and input line coloring, to help the argmatcher be accurate.
-function _argmatcher:chaincommand(modes)
+function _argmatcher:chaincommand(modes, hint)
     modes = modes or ""
     self._chain_command = true
     self._chain_command_mode = "cmd"
+    self._chain_command_hint = hint
     self._no_file_generation = true -- So that pop() doesn't interfere.
     self._chain_command_mode, self._chain_command_expand_aliases = parse_chaincommand_modes(modes)
     return self
@@ -3253,15 +3262,20 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
-local function hint_from_prev_arginfo(line_state, prev_arginfo)
-    local h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+local function hint_from_prev_arginfo(line_state, prev_arginfo, chain_command_hint)
+    local h
+    if chain_command_hint then
+        h = chain_command_hint
+    else
+        h = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+    end
     if h then
         return h, line_state:getcursor()
     end
 end
 
 --------------------------------------------------------------------------------
-local function between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
+local function between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo, chain_command_hint, chained)
     local args = argmatcher._args[arg_index]
     if args then
         local hint = args.hint
@@ -3276,8 +3290,8 @@ local function between_words(argmatcher, arg_index, word_index, line_state, user
             return
         end
     end
-    if prev_arginfo then
-        return hint_from_prev_arginfo(line_state, prev_arginfo)
+    if prev_arginfo or chained then
+        return hint_from_prev_arginfo(line_state, prev_arginfo or "command [args]", chain_command_hint)
     end
 end
 
@@ -3364,11 +3378,14 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             end
 
             -- Advance the parser.
+            local info = line_state:getwordinfo(word_index) -- Must get before :update because word_index may not be accurate afterwards.
             local chain, chainlookup = reader:update(word, word_index, last_word)
             if chain then
                 line_state = reader._line_state -- reader:update() can swap to a different line_state.
                 lookup = chainlookup
                 no_cmd = reader._no_cmd
+                besthint = reader._chain_command_hint
+                bestpos = besthint and info.offset or nil
                 goto do_command
             end
 
@@ -3381,13 +3398,12 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                     arg_index = reader._arg_index
                 end
 
-                local info = line_state:getwordinfo(word_index)
                 if not info then
                     break
                 elseif cursorpos < info.offset then
                     if not prev_info or prev_info.offset + prev_info.length < cursorpos then
                         -- Cursor is between words.
-                        return between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo)
+                        return between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo, reader._chain_command_hint, chained)
                     end
                     break
                 elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
@@ -3421,11 +3437,15 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             end
 
             -- Clear any chained flag for subsequence words.
+            if chained then
+                besthint = nil
+                bestpos = nil
+            end
             chained = nil
         end
-    elseif line_state and reader and reader._arginfo then
+    elseif line_state and reader and (reader._arginfo or chained) then
         -- If there's a previous arginfo, use it.
-        return hint_from_prev_arginfo(line_state, reader._arginfo)
+        return hint_from_prev_arginfo(line_state, reader._arginfo or "command [args]", reader._chain_command_hint)
     end
 
     return besthint, bestpos
