@@ -2401,13 +2401,14 @@ The function receives five arguments:
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
-The function may return any of the following values:
+The function may return any of the following patterns:
+- Return nothing or nil to advance to the next argument position _after_ parsing the word (this is the default behavior).
 - Return `1` to advance to the next argument position _before_ parsing the word (normally the parser advances _after_ parsing a word).  Multiple advances are possible for the same word:  if the "on advance" functions for argument positions 2, 3, and 4 all return `1`, then argument position 5 will parse the word.
 - Return `0` to repeat using same argument position to parse both the current word and the next word.  Multiple repetitions are possible for the same argument position:  if the "on advance" function for argument position 3 returns `0` for three words in a row, then all three of the words are parsed using argument position 3.
 - Return `-1` to behave as though [:chaincommand()](#_argmatcher:chaincommand) were used, and start parsing a new command line beginning at `word_index`.  To start at the _next_ word index, see the "[chain next](#chainnextexample)" example below.
-- Return `nil` (either `return nil` or just `return`) to advance to the next argument position _after_ parsing the word (this is the default behavior).
+- Return `-1` and a string.  The string lets Clink know how the command will get interpreted.  The string is the same as the <span class="arg">modes</span> argument in [:chaincommand()](#_argmatcher:chaincommand).  This requires Clink v1.6.2 or newer.
+- Return `-1`, string, string to behave as above but use the third return value to override the input hint string (see [Showing Input Hints](#showinginputhints)).  This requires Clink v1.8.4 or newer.
 
-In Clink v1.6.2 and higher, when returning `-1` the function may also return a second value which is a string that lets Clink know how the command will get interpreted.  The string is the same as the <span class="arg">modes</span> argument in [:chaincommand()](#_argmatcher:chaincommand).
 
 This example demonstrates treating arg index 1 as an optional title string only if quoted:
 
@@ -2473,13 +2474,13 @@ The function receives five arguments:
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for details).
 
-If the function returns nothing, then parsing continues as usual.
+The return values from the function may follow any of these patterns:
+- Return nothing or nil to continue parsing as usual.
+- Return a string to parse the words in the string instead.  When those words are finished being parsed, then parsing continues with the rest of the remaining words from the input line.
+- Return a string and `true` to parse the words in the string as above, but they begin a new command (similar to [:chaincommand()](#_argmatcher:chaincommand)).
+- Return a string, `true`, string to behave as above but use the third return value to override the input hint string (see [Showing Input Hints](#showinginputhints])).  This requires Clink v1.8.4 or newer.
 
-If the function returns a string, then the words in the string are parsed instead.  When those words are finished being parsed, then parsing continues with the rest of the remaining words from the input line.
-
-If the function returns a string and `true`, then the words in the string are parsed, but they begin a new command (similar to [:chaincommand()](#_argmatcher:chaincommand)).  When those words are finished being parsed, then parsing continues with the rest of the remaining words from the input line.
-
-For example, the `init()` function in the [git.lua](https://github.com/vladimir-kotikov/clink-completions/blob/master/git.lua) script in [clink-completions](https://github.com/vladimir-kotikov/clink-completions) repo uses this to enable completion to work with [custom git aliases](https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases).
+For example, the `init()` function in the [git.lua](https://github.com/vladimir-kotikov/clink-completions/blob/master/git.lua) script in [clink-completions](https://github.com/vladimir-kotikov/clink-completions) repo uses an `onalias` function to enable completion to work with [custom git aliases](https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases).
 
 ##### The "on arg" function
 
