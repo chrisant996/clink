@@ -8,6 +8,7 @@
 - Added `--all` flag to show all themes or prompts:  `clink config theme show --all` or `clink config prompt show --all`.
 - Improved error reporting in the `oh-my-posh.clinkprompt` script.
 - Fixed input line coloring for <code>clink set <span class="arg">some_string_setting</span> clear</code>.
+- Fixed [#799](https://github.com/chrisant996/clink/issues/799); in legacy console, using the `clink-selectall-conhost` bindable command scrolls back to the last line after dismissing the Find dialog.
 
 #### v1.8.3
 
@@ -46,6 +47,7 @@
 - Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
 - Fixed two memory management issues in Readline undo handling, which in certain edge cases could potentially cause heap corruption.
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
+- Fixed [#791](https://github.com/chrisant996/clink/issues/791); in legacy console, clicking on the terminal after using mouse to move scrollbar accidentally scrolls to the last line.
 - Minor improvement to error handling for certain failures in oh-my-posh.
 - Picked up fixes and changes from the Readline repo:
   - **Breaking Change:** The name for `readline-colored-completion-prefix` no longer has a leading `.`.
