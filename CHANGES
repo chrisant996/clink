@@ -10,6 +10,7 @@
 - Improved error reporting in the `oh-my-posh.clinkprompt` script.
 - Fixed input line coloring for <code>clink set <span class="arg">some_string_setting</span> clear</code>.
 - Fixed [#799](https://github.com/chrisant996/clink/issues/799); in legacy console, using the `clink-selectall-conhost` bindable command scrolls back to the last line after dismissing the Find dialog.
+- Fixed a bug in the unit test harness which under rare circumstances could randomly make unit tests fail (regression introduced in v1.1.1-alpha by the Readline 8.0 update).
 
 #### v1.8.3
 
