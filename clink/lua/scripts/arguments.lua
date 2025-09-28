@@ -743,7 +743,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                             self:push_line_state(line_states[1], true--[[no_onalias]])
                             if chain then
                                 self:start_chained_command(1, "cmd", false, chainhint)
-                                return true -- chain
+                                return true, "" -- chain
                             end
                             return -- next word
                         end
@@ -828,7 +828,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                     self:push_line_state(line_states[1], true--[[no_onalias]])
                     if chain then
                         self:start_chained_command(1, "cmd", false, chainhint)
-                        return true -- chain
+                        return true, "" -- chain
                     end
                     return -- next word
                 end
@@ -2822,6 +2822,8 @@ end
 --  exists          = True if argmatcher exists (even if too few words to use it).
 --  extra           = Extra line_state to run through reader before continuing.
 local function _find_argmatcher(line_state, check_existence, lookup, no_cmd, has_extra, force, oncommand)
+    lookup = (lookup ~= "") and lookup or nil
+
     -- Running an argmatcher only makes sense if there's two or more words,
     -- but allow forcing it to be returned when getting input hints.
     local word_count = line_state:getwordcount()
