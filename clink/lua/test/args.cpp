@@ -1176,8 +1176,9 @@ TEST_CASE("Lua arg parsers")
     {
         const char* script = "\
             local debugexe = clink.argmatcher():chaincommand('run')\
+            local debughint = clink.argmatcher():chaincommand('run', 'explicit hint')\
             clink.argmatcher('devenv')\
-            :addflags('/debugexe'..debugexe)\
+            :addflags('/debugexe'..debugexe, '/debughint'..debughint)\
             :adddescriptions({['/debugexe']={' exe [args...]', ''}})\
             \
             local x = clink.argmatcher():addarg({'x'})\
@@ -1192,6 +1193,8 @@ TEST_CASE("Lua arg parsers")
                 ['-a']={'xx!', ''},\
                 ['-b']={'yy!', ''},\
             })\
+            \
+            clink.argmatcher('sudo'):chaincommand()\
         ";
 
         REQUIRE_LUA_DO_STRING(lua, script);
@@ -1208,6 +1211,15 @@ TEST_CASE("Lua arg parsers")
 
             tester.set_input("devenv /debugexe f");
             tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            tester.set_input("devenv /debughint ");
+            tester.set_expected_hint("explicit hint");
+            tester.run();
+
+            // Default input hint for chaincommand.
+            tester.set_input("sudo ");
+            tester.set_expected_hint("Argument expected:  command [args]");
             tester.run();
         }
 
@@ -1234,6 +1246,10 @@ TEST_CASE("Lua arg parsers")
 
             tester.set_input("devenv /debugexe f x y ");
             tester.set_expected_hint("Argument expected:  exe [args...]");
+            tester.run();
+
+            tester.set_input("devenv /debughint f x y ");
+            tester.set_expected_hint("explicit hint");
             tester.run();
         }
 

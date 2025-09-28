@@ -11,6 +11,7 @@
 #include <core/settings.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
+#include <lua/lua_hinter.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lib/cmd_tokenisers.h>
@@ -88,11 +89,13 @@ TEST_CASE("Lua advanced arg parsers")
 {
     fs_fixture fs;
 
-    setting* setting = settings::find("match.translate_slashes");
-    setting->set("system");
+    setting* const translate_slashes = settings::find("match.translate_slashes");
+    setting* const show_hints = settings::find("comment_row.show_hints");
+    translate_slashes->set("system");
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+    lua_hinter lua_hinter(lua);
 
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
@@ -102,6 +105,7 @@ TEST_CASE("Lua advanced arg parsers")
     desc.word_tokeniser = &word_tokeniser;
     line_editor_tester tester(desc, nullptr, nullptr);
     tester.get_editor()->set_generator(lua_generator);
+    tester.get_editor()->set_hinter(lua_hinter);
 
     SECTION("Adaptive")
     {
@@ -397,6 +401,9 @@ TEST_CASE("Lua advanced arg parsers")
         }
     }
 
+    show_hints->set("true");
+    lua.send_event("onbeginedit");  // So arguments.lua can detect the show_hints setting.
+
     SECTION("Callbacks")
     {
         const char* script = "\
@@ -412,9 +419,14 @@ TEST_CASE("Lua advanced arg parsers")
             \
             local function maybe_chain(ai, word, word_index, line_state, user_data)\
                 if user_data.do_chain then\
-                    return -1\
+                    return -1, nil, user_data.chain_hint\
                 elseif word == 'chain' then\
                     user_data.do_chain = true\
+                    user_data.chain_hint = nil\
+                    return 0\
+                elseif word == 'hint' then\
+                    user_data.do_chain = true\
+                    user_data.chain_hint = 'explicit hint'\
                     return 0\
                 elseif path.getextension(word) ~= '' then\
                     return -1\
@@ -483,6 +495,7 @@ TEST_CASE("Lua advanced arg parsers")
 
             tester.set_input("qqq chain cmd");
             tester.set_expected_classifications("moomo", true);
+            tester.set_expected_hint("Argument expected:  command [args]");
             tester.run();
 
             tester.set_input("qqq cmd");
@@ -491,6 +504,11 @@ TEST_CASE("Lua advanced arg parsers")
 
             tester.set_input("qqq cmd.exe");
             tester.set_expected_classifications("momo", true);
+            tester.run();
+
+            tester.set_input("qqq hint cmd");
+            tester.set_expected_classifications("moomo", true);
+            tester.set_expected_hint("explicit hint");
             tester.run();
         }
 
@@ -532,6 +550,8 @@ TEST_CASE("Lua advanced arg parsers")
             local function expand(arg_index, word, word_index, line_state, user_data)\
                 if word == 'c' then return 'start -x', true end\
                 if word == 'chain' then return 'start -x', true end\
+                if word == 'hintdefault' then return 'no_argmatcher_found', true end\
+                if word == 'hintexplicit' then return 'no_argmatcher_found', true, 'explicit hint' end\
                 if word == 'a' then return 'add' end\
                 if word == 'az' then return 'add -z' end\
                 if word == 'd' then return 'delete' end\
@@ -701,6 +721,18 @@ TEST_CASE("Lua advanced arg parsers")
         tester.set_expected_classifications("moo", true);
         tester.set_expected_matches("aaa", "bbb");
         tester.run();
+
+        // Chaining hint, with onalias expansion.
+
+        tester.set_input("qqq hintdefault ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_hint("Argument expected:  command [args]");
+        tester.run();
+
+        tester.set_input("qqq hintexplicit ");
+        tester.set_expected_classifications("moo", true);
+        tester.set_expected_hint("explicit hint");
+        tester.run();
     }
 
     SECTION("onarg")
@@ -858,5 +890,6 @@ TEST_CASE("Lua advanced arg parsers")
         }
     }
 
-    setting->set();
+    translate_slashes->set();
+    show_hints->set();
 }
