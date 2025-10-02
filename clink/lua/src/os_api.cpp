@@ -1802,6 +1802,36 @@ static int32 find_files(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getdiskfreespace
+/// -ver:   1.8.5
+/// -arg:   [directory:string]
+/// -ret:   integer, integer
+/// Returns the free space and the total space for the drive containing
+/// <span class="arg">directory</span>.  If no directory is given then the
+/// current working directory is assumed.
+///
+/// If an invalid directory is given or an error occurs, it returns nil.
+static int32 get_disk_free_space(lua_State* state)
+{
+    const char* drive = optstring(state, 1, "");
+    if (!drive)
+        return 0;
+
+    if (!*drive)
+        drive = ".";
+
+    ULARGE_INTEGER free_bytes;
+    ULARGE_INTEGER total_bytes;
+    wstr<16> wdrive(drive);
+    if (!GetDiskFreeSpaceExW(wdrive.c_str(), &free_bytes, &total_bytes, nullptr))
+        return 0;
+
+    lua_pushnumber(state, lua_Number(free_bytes.QuadPart));
+    lua_pushnumber(state, lua_Number(total_bytes.QuadPart));
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.touch
 /// -ver:   1.2.31
 /// -arg:   path:string
@@ -3140,6 +3170,7 @@ void os_lua_initialise(lua_state& lua)
         { "getfileversion", &get_file_version },
         { "enumshares",  &enum_shares },
         { "findfiles",   &find_files },
+        { "getdiskfreespace", &get_disk_free_space },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
