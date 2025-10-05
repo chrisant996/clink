@@ -107,64 +107,75 @@ static const char* is_dll_loaded(const char* const* dll_names)
 //------------------------------------------------------------------------------
 static const char* check_for_windows_terminal()
 {
-// FUTURE:  This doesn't detect WT inside `clink config prompt` run inside a
-// Clink-injected CMD process inside WT.  May need to get more sophisticated.
+    // Fast check first.
+    str<16> wt_session;
+    if (!os::get_env("WT_SESSION", wt_session))
+        return nullptr;
 
-    // Check if parent is WindowsTerminal.exe.
-    str<> full;
-    int32 parent = process().get_parent_pid();
-    if (parent)
+    // Two passes:
+    //  1.  Examine parent; catches when WT spawns CMD.
+    //  2.  Examine parent's parent; catches when CMD spawns clink_*.exe.
+    //
+    // Two passes is simpler than accurately walking the entire parent chain,
+    // and two passes should be enough to ensure consistent behavior between
+    // the active prompt and 'clink config prompt show CustomName'.
+    int32 pid = GetCurrentProcessId();
+    for (int32 pass = 1; pass <= 2; ++pass)
     {
-        process process(parent);
-        process.get_file_name(full);
-    }
-    const char* name = path::get_name(full.c_str());
-    if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
-        return "WindowsTerminal.exe";
-
-    // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded,
-    // or if a child process OpenConsole.exe exists.
-    std::vector<DWORD> processes;
-    if (__EnumProcesses(processes))
-    {
-        const DWORD me = GetCurrentProcessId();
-        for (const auto& pid : processes)
+        // Check if parent is WindowsTerminal.exe.
+        str<> full;
+        const int32 parent = process(pid).get_parent_pid();
+        if (parent)
         {
-            process process(pid);
-            if (process.get_parent_pid() != me)
-                continue;
-            if (!process.get_file_name(full))
-                continue;
+            process process(parent);
+            process.get_file_name(full);
+        }
+        const char* name = path::get_name(full.c_str());
+        if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
+            return "WindowsTerminal.exe";
 
-            name = path::get_name(full.c_str());
-            if (_stricmp(name, "conhost.exe") == 0)
+        // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded,
+        // or if a child process OpenConsole.exe exists.
+        std::vector<DWORD> processes;
+        if (__EnumProcesses(processes))
+        {
+            for (const auto& pid : processes)
             {
-                std::vector<HMODULE> modules;
-                if (process.get_modules(modules))
-                {
-                    for (const auto& module : modules)
-                    {
-                        if (!process.get_file_name(full, module))
-                            continue;
+                process process(pid);
+                if (process.get_parent_pid() != pid)
+                    continue;
+                if (!process.get_file_name(full))
+                    continue;
 
-                        name = path::get_name(full.c_str());
-                        if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
-                            return "OpenConsoleProxy.dll";
+                name = path::get_name(full.c_str());
+                if (_stricmp(name, "conhost.exe") == 0)
+                {
+                    std::vector<HMODULE> modules;
+                    if (process.get_modules(modules))
+                    {
+                        for (const auto& module : modules)
+                        {
+                            if (!process.get_file_name(full, module))
+                                continue;
+
+                            name = path::get_name(full.c_str());
+                            if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
+                                return "OpenConsoleProxy.dll";
+                        }
                     }
                 }
-            }
-            else if (_stricmp(name, "OpenConsole.exe") == 0)
-            {
-                return "OpenConsole.exe";
+                else if (_stricmp(name, "OpenConsole.exe") == 0)
+                {
+                    return "OpenConsole.exe";
+                }
             }
         }
-    }
 
-#if 0
-    str<16> wt_session;
-    if (os::get_env("WT_SESSION", wt_session))
-        return "WT_SESSION";
-#endif
+        // For the next pass, examine the parent.
+        if (!parent)
+            break;
+        pid = parent;
+    }
 
     return nullptr;
 }
