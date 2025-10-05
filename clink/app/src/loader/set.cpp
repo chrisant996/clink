@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "loader.h"
 #include "host/host_lua.h"
 #include "utils/app_context.h"
 #include "utils/usage.h"
@@ -20,8 +21,18 @@
 
 #include <getopt.h>
 
+extern "C" {
+#include <readline/rldefs.h>
+#include <readline/rlprivate.h>
+#include <readline/readline.h>
+extern int _rl_default_init_file_optional_set;
+};
+
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
+extern void rl_preinit(const char* default_inputrc);
+extern void rl_postinit();
+extern void load_user_inputrc(const char* state_dir, bool no_user);
 extern setting_str g_customprompt;
 
 //------------------------------------------------------------------------------
@@ -307,6 +318,33 @@ static bool save_settings(const char* settings_file)
 }
 
 //------------------------------------------------------------------------------
+static str_moveable s_default_inputrc;
+void load_settings_and_inputrc(str_base* out)
+{
+    const auto* const app = app_context::get();
+
+    // Load the settings.
+    str_moveable settings_file;
+    str_moveable default_settings_file;
+    app->get_settings_path(settings_file);
+    app->get_default_settings_file(default_settings_file);
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
+
+    // Get the default init file.
+    app->get_default_init_file(s_default_inputrc);
+    rl_preinit(s_default_inputrc.c_str());
+    rl_postinit();
+
+    // Load the inputrc file.
+    str_moveable state_dir;
+    app->get_state_dir(state_dir);
+    load_user_inputrc(state_dir.c_str(), false);
+
+    if (out)
+        (*out) = settings_file.c_str();
+}
+
+//------------------------------------------------------------------------------
 int32 set(int32 argc, char** argv)
 {
     // Parse command line arguments.
@@ -347,12 +385,9 @@ int32 set(int32 argc, char** argv)
 
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
-    // Load the settings from disk.
+    // Load the settings and inputrc file from disk.
     str_moveable settings_file;
-    str_moveable default_settings_file;
-    app_context::get()->get_settings_path(settings_file);
-    app_context::get()->get_default_settings_file(default_settings_file);
-    settings::load(settings_file.c_str(), default_settings_file.c_str());
+    load_settings_and_inputrc(&settings_file);
 
     // Load all lua state too as there is settings declared in scripts.  The
     // load function handles deferred load for settings declared in scripts.

@@ -1779,7 +1779,7 @@ static void postprocess_lcd(char* lcd, const char* text)
 }
 
 //------------------------------------------------------------------------------
-static void load_user_inputrc(const char* state_dir, bool no_user)
+void load_user_inputrc(const char* state_dir, bool no_user)
 {
 #if defined(PLATFORM_WINDOWS)
     // Remember to update clink_info() if anything changes in here.
@@ -2119,6 +2119,26 @@ static void save_restore_initial_state(const bool restore)
 }
 
 //------------------------------------------------------------------------------
+void rl_preinit(const char* default_inputrc)
+{
+    _rl_default_init_file = (default_inputrc && *default_inputrc) ? default_inputrc : nullptr;
+
+    // The "default_inputrc" file was introduced in v1.3.5, but up through
+    // v1.6.0 it wasn't actually loaded properly.  And the provided one
+    // had syntax errors (missing the "set" keyword), so to compensate now
+    // the "set" keyword is optional in the "default_inputrc" file.
+    _rl_default_init_file_optional_set = 1;
+}
+
+//------------------------------------------------------------------------------
+void rl_postinit()
+{
+    // Override some defaults.
+    _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
+    rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
+}
+
+//------------------------------------------------------------------------------
 void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user)
 {
     // Can't give a more specific scope like "Readline initialization", because
@@ -2150,13 +2170,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         s_rl_initialized = true;
 
         static str_moveable s_default_inputrc(default_inputrc);
-        _rl_default_init_file = s_default_inputrc.empty() ? nullptr : s_default_inputrc.c_str();
-
-        // The "default_inputrc" file was introduced in v1.3.5, but up through
-        // v1.6.0 it wasn't actually loaded properly.  And the provided one
-        // had syntax errors (missing the "set" keyword), so to compensate now
-        // the "set" keyword is optional in the "default_inputrc" file.
-        _rl_default_init_file_optional_set = 1;
+        rl_preinit(s_default_inputrc.c_str());
 
         init_readline_hooks();
         init_readline_funmap();
@@ -2179,9 +2193,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         rl_readline_name = shell_name;
         rl_initialize();
 
-        // Override some defaults.
-        _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
-        rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
+        rl_postinit();
     }
 
     // Save/restore the original keymap table definitions and original config

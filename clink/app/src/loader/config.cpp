@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "loader.h"
 #include "host/host_lua.h"
 #include "utils/app_context.h"
 #include "utils/usage.h"
@@ -101,12 +102,8 @@ do_help:
 
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
-    // Load the settings from disk.
-    str_moveable settings_file;
-    str_moveable default_settings_file;
-    app_context::get()->get_settings_path(settings_file);
-    app_context::get()->get_default_settings_file(default_settings_file);
-    settings::load(settings_file.c_str(), default_settings_file.c_str());
+    // Load the settings and inputrc file from disk.
+    load_settings_and_inputrc();
 
     // Load all lua state too as there is settings declared in scripts.  The
     // load function handles deferred load for settings declared in scripts.
