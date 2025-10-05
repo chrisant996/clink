@@ -83,6 +83,8 @@
 --  You can add your own custom prompt segments from a Lua script by defining
 --  a new function in the agnoster_clinkprompt table.  For example:
 --
+--      agnoster_clinkprompt = {}
+--
 --      function agnoster_clinkprompt.prompt_pushddepth()
 --          local ag = agnoster_clinkprompt
 --          -- Return BG_color, FG_color, text_string.
