@@ -5,6 +5,8 @@
 #### v1.8.5
 
 - Added new Lua API [os.getdiskfreespace()](#os.getdiskfreespace) which returns the free and total space.
+- Improved detection of Windows Terminal during `clink config prompt`.
+- Fixed `clink config prompt` and `clink set` to load the user's `.inputrc` file (some settings it in can affect prompt previews, for example).
 
 #### v1.8.4
 
