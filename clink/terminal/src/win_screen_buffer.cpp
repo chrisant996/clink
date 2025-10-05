@@ -107,6 +107,9 @@ static const char* is_dll_loaded(const char* const* dll_names)
 //------------------------------------------------------------------------------
 static const char* check_for_windows_terminal()
 {
+// FUTURE:  This doesn't detect WT inside `clink config prompt` run inside a
+// Clink-injected CMD process inside WT.  May need to get more sophisticated.
+
     // Check if parent is WindowsTerminal.exe.
     str<> full;
     int32 parent = process().get_parent_pid();
