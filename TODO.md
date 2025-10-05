@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- `clink.getansihost()` inside `clink config prompt` gets `"winconsolev2"` even inside Windows Terminal -- not a big deal, but it can lead prompt previews to look different than they should.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
