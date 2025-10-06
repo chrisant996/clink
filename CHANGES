@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.8.6
+
+- Added new Lua API [clink.argmatcherloader()](#clink.argmatcherloader) which registers a callback function that can intercept and extend on-demand loading for argmatchers.
+
 #### v1.8.5
 
 - Added new Lua API [os.getdiskfreespace()](#os.getdiskfreespace) which returns the free and total space.
