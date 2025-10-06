@@ -9,7 +9,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Explore:  Is there some feasible way to make `clink config prompt list` indicate which custom prompt is currently selected, without breaking other things?  Or to make `clink config prompt show` list the name of the current *.clinkprompt, if any?
+- Docs:
+  - `builder:setvolatile()` needs to explain the drawbacks and why to use it sparingly.
+  - `clink.argmatcher()` mentions an optional priority argument, but it's completely unused.
+- Explore:
+  - Where in the docs for writing custom prompts can it mention that iteratively modifying a *.clinkprompt file requires reloading for the changes to take effect.
+  - Is there some feasible way to make `clink config prompt list` indicate which custom prompt is currently selected, without breaking other things?  Or to make `clink config prompt show` list the name of the current *.clinkprompt, if any?
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
