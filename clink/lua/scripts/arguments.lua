@@ -31,6 +31,8 @@ local _enable_hints
 local _delayinit_generation = 0
 local _clear_onuse_coroutine = {}
 local _clear_delayinit_coroutine = {}
+local _argmatcher_loaders = {}
+local _argmatcher_loaders_unsorted = false
 
 --------------------------------------------------------------------------------
 clink.onbeginedit(function ()
@@ -2582,6 +2584,56 @@ function clink.filematchesexact(match_word)
     return file_matches_impl(match_word, true)
 end
 
+--------------------------------------------------------------------------------
+--- -name:  clink.argmatcherloader
+--- -ver:   1.8.6
+--- -arg:   [priority:integer]
+--- -arg:   loader:function
+--- This registers a <span class="arg">loader</span> function that is called
+--- whenever a command word is input but no argmatcher is loaded yet for the
+--- command word.
+---
+--- The loader function receives three arguments:
+--- <ul>
+--- <li>A string containing the command word.
+--- <li>A boolean value indicating whether the command word is quoted.
+--- <li>A boolean value indicating whether built-in CMD commands are allowed.
+--- </ul>
+---
+--- The function may create or register an argmatcher.  It doesn't need to
+--- return anything; Clink automatically detects whether an argmatcher was
+--- added.
+---
+--- Registered loader functions are called if Clink's built-in loader function
+--- doesn't find a corresponding script in the
+--- <a href="#completion-directories">Completion directories</a>.  The loader
+--- functions are called in increasing <span class="arg">priority</span> order
+--- (low values to high values) until one of them registers an argmatcher for
+--- the command word.
+--- -show:  local function custom_loader(command_word, quoted, no_cmd)
+--- -show:  &nbsp;   if command_word == "blah" then
+--- -show:  &nbsp;       clink.argmatcher("blah"):addarg("abc", "xyz")
+--- -show:  &nbsp;   end
+--- -show:  end
+--- -show:
+--- -show:  clink.argmatcherloader(custom_loader)
+function clink.argmatcherloader(priority, loader)
+    if not loader or type(priority) == "function" then
+        loader = priority
+        priority = 999
+    end
+    if type(loader) == "function" then
+        for _, l in ipairs(_argmatcher_loaders) do
+            if l and l._loader == loader then
+                error("The loader function is already registered.")
+                return
+            end
+        end
+        table.insert(_argmatcher_loaders, { _priority=priority, _loader=loader })
+        _argmatcher_loaders_unsorted = true
+    end
+end
+
 
 
 --------------------------------------------------------------------------------
@@ -2671,19 +2723,7 @@ local function get_completion_dirs()
 end
 
 --------------------------------------------------------------------------------
-local function attempt_load_argmatcher(command_word, quoted, no_cmd)
-    if not command_word or command_word == "" then
-        return
-    end
-
-    -- Make sure scripts aren't loaded multiple times.
-    loaded_argmatchers[command_word] = 1 -- Attempted.
-
-    -- Device names are not valid commands.
-    if path.isdevice(command_word) then
-        return
-    end
-
+local function load_from_completions_directory(command_word, quoted, no_cmd)
     -- Where to look.
     local dirs = get_completion_dirs()
 
@@ -2740,6 +2780,57 @@ local function attempt_load_argmatcher(command_word, quoted, no_cmd)
                 end
             end
         end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function attempt_load_argmatcher(command_word, quoted, no_cmd)
+    if not command_word or command_word == "" then
+        return
+    end
+
+    -- Make sure scripts aren't loaded multiple times.
+    loaded_argmatchers[command_word] = 1 -- Attempted.
+
+    -- Device names are not valid commands.
+    if path.isdevice(command_word) then
+        return
+    end
+
+    -- Try loading from completions directories.
+    local argmatcher = load_from_completions_directory(command_word, quoted, no_cmd)
+    if argmatcher then
+        return argmatcher
+    end
+
+    -- Sort loaders by priority if required.
+    if _argmatcher_loaders_unsorted then
+        local lambda = function(a, b) return a._priority < b._priority end
+        table.sort(_argmatcher_loaders, lambda)
+        _argmatcher_loaders_unsorted = false
+    end
+
+    -- Call loaders.
+    local impl = function ()
+        for _, loader in ipairs(_argmatcher_loaders) do
+            if type(loader._loader) == "function" then
+                loader._loader(command_word, quoted, no_cmd)
+                argmatcher = _is_argmatcher_loaded(command_word, quoted, no_cmd)
+                if argmatcher then
+                    break
+                end
+            end
+        end
+    end
+    local ok, ret = xpcall(impl, _error_handler_ret)
+    if not ok then
+        print("")
+        print("argmatcher loader failed:")
+        print(ret)
+        return
+    end
+    if argmatcher then
+        return argmatcher
     end
 end
 
