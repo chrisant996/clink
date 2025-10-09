@@ -448,7 +448,7 @@ static bool is_readline_input_pending()
     return (rl_pending_input ||
             _rl_pushed_input_available() ||
             RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) ||
-            rl_executing_macro);
+            _rl_peek_macro_key());
 }
 
 //------------------------------------------------------------------------------
