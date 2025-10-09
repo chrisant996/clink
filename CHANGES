@@ -5,6 +5,7 @@
 #### v1.8.6
 
 - Added new Lua API [clink.argmatcherloader()](#clink.argmatcherloader) which registers a callback function that can intercept and extend on-demand loading for argmatchers.
+- Fixed macro text playback in macros containing a newline (regression introduced by an incorrect change in v1.2.34 which was exacerbated by a change in v1.7.17).
 
 #### v1.8.5
 
