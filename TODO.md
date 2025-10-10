@@ -9,9 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Docs:
-  - `builder:setvolatile()` needs to explain the drawbacks and why to use it sparingly.
-  - `clink.argmatcher()` mentions an optional priority argument, but it's completely unused.
 - Explore:
   - Where in the docs for writing custom prompts can it mention that iteratively modifying a *.clinkprompt file requires reloading for the changes to take effect.
   - Is there some feasible way to make `clink config prompt list` indicate which custom prompt is currently selected, without breaking other things?  Or to make `clink config prompt show` list the name of the current *.clinkprompt, if any?
