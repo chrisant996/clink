@@ -2701,7 +2701,7 @@ static int32 os_executeyield_internal(lua_State *state) // gcc can't handle 'fri
 /// -name:  os.issignaled
 /// -ver:   1.3.14
 /// -ret:   boolean
-/// Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received.
+/// Returns whether a <kbb>Ctrl</kbd>-<kbd>Break</kbd> has been received.
 /// Scripts may use this to decide when to end work early.
 static int32 is_signaled(lua_State *state)
 {

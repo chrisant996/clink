@@ -1873,7 +1873,7 @@ Clink loads all Lua scripts it finds in these directories:
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 4. All directories registered by the `clink installscripts` command.
 
-Lua scripts are loaded once and are only reloaded if forced because the scripts locations change or the [`clink-reload`](#rlcmd-clink-reload) command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).
+Lua scripts are loaded once and are only reloaded if forced because the scripts locations change or the [`clink-reload`](#rlcmd-clink-reload) bindable command is invoked (which is by default bound to the sequence <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd>).
 
 Run `clink info` to see the script paths for the current session.
 
@@ -2954,6 +2954,10 @@ function p:filter(prompt)
 end
 ```
 
+<br/>
+
+> **Note:** While developing your custom prompt, you need to reload the prompt script for changes to take effect.  Either start new Clink session, or press <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> to reload scripts and configuration (or press whatever key sequence is bound to the [`clink-reload`](#rlcmd-clink-reload) bindable command).  This is necessary even when using a *.clinkprompt script.
+
 The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.
 
 ```lua
@@ -3253,7 +3257,7 @@ You can use `clink info` to find the directories and configuration files for the
 
 Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.
 
-A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Home</kbd>.
+A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd> followed by <kbd>Home</kbd>.
 
 When finished, press <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit from `clink echo`.
 
@@ -4015,7 +4019,7 @@ If something seems to malfunction, here are some things to try that often help t
   - The contents of the `clink.log` file often help in determining whether anti-malware software blocked Clink.
   - If it's indeed being blocked by anti-malware software, report the false positive to the publisher of the anti-malware software so they can confirm and update the detection signatures.  There's nothing Clink can do about it.
 - Interference can happen while injecting Clink.  Anything that hooks into CMD can potentially interfere with Clink (including tools like ConsoleZ and ConEmu).  Clink tries very hard to minimize opportunities for interference, but there's no way to eliminate the possibility for interference (except by not using the other tools or not using Clink).
-- If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the [`clink-diagnostics`](#rlcmd-clink-diagnostics) command.  Any problems it finds in the prompt string are reported at the end.
+- If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd> then <kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the [`clink-diagnostics`](#rlcmd-clink-diagnostics) command.  Any problems it finds in the prompt string are reported at the end.
 - Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
