@@ -2596,8 +2596,10 @@ end
 --- The loader function receives three arguments:
 --- <ul>
 --- <li>A string containing the command word.
---- <li>A boolean value indicating whether the command word is quoted.
---- <li>A boolean value indicating whether built-in CMD commands are allowed.
+--- <li>A boolean value indicating whether the command word is quoted (true
+--- means the command word is quoted in the input line).
+--- <li>A boolean value indicating whether built-in CMD commands are
+--- disallowed (true means built-in CMD commands are not allowed).
 --- </ul>
 ---
 --- The function may create or register an argmatcher.  It doesn't need to
