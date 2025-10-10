@@ -2360,8 +2360,7 @@ end
 --------------------------------------------------------------------------------
 --- -name:  clink.argmatcher
 --- -ver:   1.0.0
---- -arg:   [priority:integer]
---- -arg:   commands...:string
+--- -arg:   [commands...:string]
 --- -ret:   <a href="#_argmatcher">_argmatcher</a>
 --- Creates and returns a new argument matcher parser object.  Use
 --- <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags,
@@ -2373,6 +2372,13 @@ end
 --- creating a new parser.  Using :addarg() starts at arg position 1, making it
 --- possible to merge new args and etc into the existing parser.
 ---
+--- Passing more than one <span class="arg">command</span> registers the new
+--- argmatcher with all of the specified commands.
+---
+--- Passing no arguments creates a new argmatcher without registering it with
+--- any commands.  This is useful for creating
+--- <a href="#argmatcher_linking">linked argmatchers</a>.
+---
 --- In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a
 --- fully qualified path, then it is only used when the typed command expands to
 --- the same fully qualified path.  This makes it possible to create one
@@ -2381,9 +2387,14 @@ end
 --- make both programs runnable, or the system PATH might be changed temporarily
 --- while working in a particular context.
 ---
---- <strong>Note:</strong>  Merging <a href="#argmatcher_linking">linked
---- argmatchers</a> only merges the first argument position.  The merge is
---- simple, but should be sufficient for common simple cases.
+--- <strong>Notes:</strong>
+--- <ul>
+--- <li>Merging <a href="#argmatcher_linking">linked argmatchers</a> only merges
+--- the first argument position.  The merge is simple, but should be sufficient
+--- for common simple cases.
+--- <li>The documentation used to mention an optional
+--- <span class="arg">priority</span> argument, but it never did anything.
+--- </ul>
 function clink.argmatcher(...)
     -- Extract priority from the arguments.
     local priority = 999

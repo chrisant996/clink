@@ -304,6 +304,11 @@ int32 match_builder_lua::set_no_sort(lua_State* state)
 ///
 /// Making the generated matches volatile ensures matches are generated anew
 /// each time completion is invoked.
+///
+/// <strong>Warning:</strong>  Only use this when necessary, otherwise it can
+/// result in needlessly running external programs over and over in the
+/// background while typing, and it can slow down completion by needlessly
+/// waiting for matches to be regenerated.
 int32 match_builder_lua::set_volatile(lua_State* state)
 {
     m_builder->set_volatile();
