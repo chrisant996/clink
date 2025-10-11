@@ -520,6 +520,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="clink_max_input_rows"></a>`clink.max_input_rows` | `0` | Limits how many rows the input line can use, up to the terminal height.  When this is `0` (the default), the terminal height is the limit.
 <a name="clink_paste_crlf"></a>`clink.paste_crlf` | `crlf` | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 <a name="clink_dot_path"></a>`clink.path` | | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
+<a name="clink_popup_delete_direction"></a>`clink.popup_delete_direction` | `down` | When this is `down` (the default), deleting an entry in a popup list moves the selection down (repeated deletions delete downwards).  When this is `up`, deleting an entry in a popup list moves the selection up (repeated deletions delete upwards).
 <a name="clink_popup_search_mode"></a>`clink.popup_search_mode` | `find` | When this is `find`, typing in popup lists moves to the next matching item.  When this is `filter`, typing in popup lists filters the list.
 <a name="clink_promptfilter"></a>`clink.promptfilter` | True | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 <a name="clink_scroll_offset"></a>`clink.scroll_offset` | `3` | Number of screen lines to show above or below a selected item in popup lists or the [`clink-select-complete`](#rlcmd-clink-select-complete) command.  The list scrolls up or down as needed to maintain the scroll offset (except after a mouse click).
@@ -1825,7 +1826,7 @@ Key | Description
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
-<kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.
+<kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.  Use the [clink.popup_delete_direction](#clink_popup_delete_direction) setting to set whether repeated deletions delete upwards or downwards.
 <kbd>Left</kbd>/<kbd>Right</kbd>|Scroll horizontally if possible.
 <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd>|Scroll faster horizontally if possible.
 <kbd>Ctrl</kbd>-<kbd>Home</kbd>/<kbd>End</kbd>|Scroll horizontally to far left/right if possible.
