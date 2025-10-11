@@ -899,10 +899,17 @@ local function show_custom_prompt(args)
     end
 
     if not showall and (not file or not onlynamed) then
-        if file then
-            clink.print(norm..underline.."Current Prompt"..norm)
-        end
         local customprompt = os.getenv("CLINK_CUSTOMPROMPT") or settings.get("clink.customprompt")
+        local current_file = customprompt and clink.getprompts(customprompt)
+        local caption = norm..underline.."Current Prompt"..norm
+        if current_file then
+            local basename = path.getbasename(current_file)
+            if clink.lower(current_file) == clink.lower(clink.getprompts(basename)) then
+                current_file = basename
+            end
+            caption = string.format("%s  (%s)", caption, current_file)
+        end
+        clink.print(caption)
         clink._show_prompt_demo(customprompt)
         if file then
             clink.print()
