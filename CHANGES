@@ -4,6 +4,8 @@
 
 #### v1.8.6
 
+- Changed how repeated deletions work in popup lists (such as the history popup list):  pressing <kbd>Del</kbd> repeatedly now deletes downwards by default (previously it deleted upwards).
+- Added new `clink.popup_delete_direction` setting to control the direction of deletions when pressing <kbd>Del</kbd> repeatedly in popup lists (such as the history popup list).
 - Added new Lua API [clink.argmatcherloader()](#clink.argmatcherloader) which registers a callback function that can intercept and extend on-demand loading for argmatchers.
 - Running `clink config prompt show` now shows the name of the currently selected *.clinkprompt custom prompt (if any).
 - Fixed macro text playback in macros containing a newline (regression introduced by an incorrect change in v1.2.34 which was exacerbated by a change in v1.7.17).
