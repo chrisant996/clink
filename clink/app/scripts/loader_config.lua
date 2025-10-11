@@ -918,6 +918,10 @@ local function show_custom_prompt(args)
             end
         end
     elseif file then
+        local basename = path.getbasename(file)
+        if clink.lower(name) == clink.lower(basename) then
+            name = basename
+        end
         table.insert(show, { name=name, file=file })
     end
 
