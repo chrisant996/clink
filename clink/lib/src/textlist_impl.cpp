@@ -88,6 +88,16 @@ static setting_enum g_popup_search_mode(
     "find,filter",
     0);
 
+static setting_enum g_popup_delete_direction(
+    "clink.popup_delete_direction",
+    "Direction for repeated deletion in popup lists",
+    "When this is 'down' (the default), deleting an entry in a popup list moves\n"
+    "the selection down after deletion (repeated deletions delete downwards).\n"
+    "When this is 'up', deleting an entry in a popup list moves the selection up\n"
+    "after deletion (repeated deletions delete upwards).",
+    "down,up",
+    0);
+
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
@@ -1032,8 +1042,16 @@ find:
             }
 
             // Move index.
-            if (m_index > 0)
-                m_index--;
+            if (g_popup_delete_direction.get() == 0)    // 'down'
+            {
+                if (m_index >= m_count)
+                    m_index = m_count - 1;
+            }
+            else                                        // 'up'
+            {
+                if (m_index > 0)
+                    m_index--;
+            }
 
             // Redisplay.
             {
