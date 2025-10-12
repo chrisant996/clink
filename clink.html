@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.8.5</title>
+<title>Clink v1.8.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -973,7 +973,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.8.5</div>
+                <div id="title">Clink v1.8.6</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1513,6 +1513,11 @@ $endif
 <td align="center"><a class="wlink" href="#clink_dot_path"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_dot_path"></a><code>clink.path</code></td>
 <td align="center"></td>
 <td>A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#clink_popup_delete_direction"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_popup_delete_direction"></a><code>clink.popup_delete_direction</code></td>
+<td align="center"><code>down</code></td>
+<td>When this is <code>down</code> (the default), deleting an entry in a popup list moves the selection down (repeated deletions delete downwards).  When this is <code>up</code>, deleting an entry in a popup list moves the selection up (repeated deletions delete upwards).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#clink_popup_search_mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_popup_search_mode"></a><code>clink.popup_search_mode</code></td>
@@ -4308,7 +4313,7 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td align="center"><kbd>Del</kbd></td>
-<td>In a command history popup, <kbd>Del</kbd> deletes the selected history entry.</td>
+<td>In a command history popup, <kbd>Del</kbd> deletes the selected history entry.  Use the <a href="#clink_popup_delete_direction">clink.popup_delete_direction</a> setting to set whether repeated deletions delete upwards or downwards.</td>
 </tr>
 <tr>
 <td align="center"><kbd>Left</kbd>/<kbd>Right</kbd></td>
@@ -4385,7 +4390,7 @@ $endif              # end clink-only section
 <li>All directories listed in the <code>%CLINK_PATH%</code> environment variable, separated by semicolons.</li>
 <li>All directories registered by the <code>clink installscripts</code> command.</li>
 </ol>
-<p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change or the <a href="#rlcmd-clink-reload"><code>clink-reload</code></a> command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).</p>
+<p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change or the <a href="#rlcmd-clink-reload"><code>clink-reload</code></a> bindable command is invoked (which is by default bound to the sequence <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd>).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
 <blockquote>
 <p><strong>Notes:</strong></p>
@@ -5485,6 +5490,11 @@ function p:filter(prompt)
     return &quot;new prefix &quot;..prompt..&quot; new suffix&quot; -- Add ,false to stop filtering.
 end
 </code></pre>
+<br/>
+
+<blockquote>
+<p><strong>Note:</strong> While developing your custom prompt, you need to reload the prompt script for changes to take effect.  Either start new Clink session, or press <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> to reload scripts and configuration (or press whatever key sequence is bound to the <a href="#rlcmd-clink-reload"><code>clink-reload</code></a> bindable command).  This is necessary even when using a *.clinkprompt script.</p>
+</blockquote>
 <p>The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.</p>
 <pre><code class="language-lua">local green  = &quot;\x1b[92m&quot;
 local yellow = &quot;\x1b[93m&quot;
@@ -6034,7 +6044,7 @@ end
 <p><a name="discoverkeysequences"></a></p>
 <h3 id="discovering-clink-key-sequences"><a class="wlink" href="#discoverkeysequences"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Discovering Clink key sequences <span class="uplinks"><a href="#keybindings">up</a> <a href="#toc">top</a></span></h3>
 <p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.</p>
-<p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Home</kbd>.</p>
+<p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd> followed by <kbd>Home</kbd>.</p>
 <p>When finished, press <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit from <code>clink echo</code>.</p>
 <blockquote>
 <p><strong>Note:</strong> With non-US keyboard layouts, <code>clink echo</code> is not able to ignore dead key input (accent keys, for example).  It prints the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.</p>
@@ -7342,7 +7352,7 @@ set CLINK_TERM_VS=\e[?12l
 </ul>
 </li>
 <li>Interference can happen while injecting Clink.  Anything that hooks into CMD can potentially interfere with Clink (including tools like ConsoleZ and ConEmu).  Clink tries very hard to minimize opportunities for interference, but there&#39;s no way to eliminate the possibility for interference (except by not using the other tools or not using Clink).</li>
-<li>If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the <a href="#rlcmd-clink-diagnostics"><code>clink-diagnostics</code></a> command.  Any problems it finds in the prompt string are reported at the end.</li>
+<li>If something looks wrong with the prompt display or input line display, try pressing <kbd>Ctrl</kbd>-<kbd>x</kbd> then <kbd>Ctrl</kbd>-<kbd>z</kbd> to invoke the <a href="#rlcmd-clink-diagnostics"><code>clink-diagnostics</code></a> command.  Any problems it finds in the prompt string are reported at the end.</li>
 <li>Check <code>clink info</code>.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?</li>
 <li>Check <code>clink set</code>.  E.g. do the settings look right?</li>
 <li>Check the <code>clink.log</code> file for clues (its location is reported by <code>clink info</code>).</li>
@@ -7509,14 +7519,22 @@ builder:addmatches({
 
 <div class="function"><div class="header"> <div id="builder:setsuppressquoting" class="name"><a class="wlink" href="#builder:setsuppressquoting"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>builder:setsuppressquoting</span> <span class="uplinks"><a href="#builder">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">state</span>:integer] ) : nil<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="builder:setvolatile" class="name"><a class="wlink" href="#builder:setvolatile"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>builder:setvolatile</span> <span class="uplinks"><a href="#builder">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : nil<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">Forces the generated matches to be used only once.</p><p class="desc"> Normally Clink tries to reuse the most recently generated list of matches, if possible.  It is an optimization, to avoid doing potentally expensive work multiple times in a row to generate the same list of matches when nothing has changed.  Normally the optimization is beneficial, and typing more letters in a word can simply filter the existing list of matches.</p><p class="desc"> But sometimes an argument may have special syntax.  For example, an email address argument might want to generate matches for names until the word contains a <code>@</code>, and then it might want to generate matches for domain names.  The optimization interferes with situations where parsing the word produces a completely different list of possible matches.</p><p class="desc"> Making the generated matches volatile ensures matches are generated anew each time completion is invoked.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="builder:setvolatile" class="name"><a class="wlink" href="#builder:setvolatile"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>builder:setvolatile</span> <span class="uplinks"><a href="#builder">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : nil<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">Forces the generated matches to be used only once.</p><p class="desc"> Normally Clink tries to reuse the most recently generated list of matches, if possible.  It is an optimization, to avoid doing potentally expensive work multiple times in a row to generate the same list of matches when nothing has changed.  Normally the optimization is beneficial, and typing more letters in a word can simply filter the existing list of matches.</p><p class="desc"> But sometimes an argument may have special syntax.  For example, an email address argument might want to generate matches for names until the word contains a <code>@</code>, and then it might want to generate matches for domain names.  The optimization interferes with situations where parsing the word produces a completely different list of possible matches.</p><p class="desc"> Making the generated matches volatile ensures matches are generated anew each time completion is invoked.</p><p class="desc"> <strong>Warning:</strong>  Only use this when necessary, otherwise it can result in needlessly running external programs over and over in the background while typing, and it can slow down completion by needlessly waiting for matches to be regenerated.</p></div></div><hr/>
 
 </div><div class="group">
 <h5 id="clink" class="group_name"><a class="wlink" href="#clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.reload">reload</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.opensessionstream">opensessionstream</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.opensessionstream">opensessionstream</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.argmatcherloader">argmatcherloader</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.reload">reload</a></td></tr><tr><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr></table>
 <div class="function"><div class="header"> <div id="clink.applytheme" class="name"><a class="wlink" href="#clink.applytheme"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.applytheme</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">theme</span>:string, [<span class="arg_name">clearall</span>:boolean], [<span class="arg_name">no_save</span>:boolean] ) : table, message<br/><div class="version">v1.7.0 and newer</div></div></div><div class="body"><p class="desc">Finds the <span class="arg">theme</span> and tries to apply its setting (which are saved in the current profile settings, which affects all Clink sessions using that profile directory).</p><p class="desc"> If successful, it returns true.  If unsuccessful, it returns nil followed by a message describing the failure.</p><p class="desc"> Applying a color theme clears the built-in color settings to their default values before loading the theme.  If the optional <span class="arg">clearall</span> argument is true, then it also clears any color settings added by Lua scripts.</p><p class="desc"> If the optional <span class="arg">no_save</span> argument is true, then the color theme is loaded into memory but is not saved back to the Clink settings file.</p><p class="desc"> Refer to <a href="#color-themes">Color Themes</a> for more information.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.argmatcher" class="name"><a class="wlink" href="#clink.argmatcher"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.argmatcher</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a fully qualified path, then it is only used when the typed command expands to the same fully qualified path.  This makes it possible to create one argmatcher for <code>c:\general\program.exe</code> and another for <code>c:\special\program.exe</code>.  For example, aliases may be used to make both programs runnable, or the system PATH might be changed temporarily while working in a particular context.</p><p class="desc"> <strong>Note:</strong>  Merging <a href="#argmatcher_linking">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.argmatcher" class="name"><a class="wlink" href="#clink.argmatcher"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.argmatcher</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">commands...</span>:string] ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> Passing more than one <span class="arg">command</span> registers the new argmatcher with all of the specified commands.</p><p class="desc"> Passing no arguments creates a new argmatcher without registering it with any commands.  This is useful for creating <a href="#argmatcher_linking">linked argmatchers</a>.</p><p class="desc"> In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a fully qualified path, then it is only used when the typed command expands to the same fully qualified path.  This makes it possible to create one argmatcher for <code>c:\general\program.exe</code> and another for <code>c:\special\program.exe</code>.  For example, aliases may be used to make both programs runnable, or the system PATH might be changed temporarily while working in a particular context.</p><p class="desc"> <strong>Notes:</strong> <ul> <li>Merging <a href="#argmatcher_linking">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases. <li>The documentation used to mention an optional <span class="arg">priority</span> argument, but it never did anything. </ul></p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="clink.argmatcherloader" class="name"><a class="wlink" href="#clink.argmatcherloader"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.argmatcherloader</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">loader</span>:function ) : nil<br/><div class="version">v1.8.6 and newer</div></div></div><div class="body"><p class="desc">This registers a <span class="arg">loader</span> function that is called whenever a command word is input but no argmatcher is loaded yet for the command word.</p><p class="desc"> The loader function receives three arguments: <ul> <li>A string containing the command word. <li>A boolean value indicating whether the command word is quoted (true means the command word is quoted in the input line). <li>A boolean value indicating whether built-in CMD commands are disallowed (true means built-in CMD commands are not allowed). </ul></p><p class="desc"> The function may create or register an argmatcher.  It doesn't need to return anything; Clink automatically detects whether an argmatcher was added.</p><p class="desc"> Registered loader functions are called if Clink's built-in loader function doesn't find a corresponding script in the <a href="#completion-directories">Completion directories</a>.  The loader functions are called in increasing <span class="arg">priority</span> order (low values to high values) until one of them registers an argmatcher for the command word.</p><pre class="language-lua"><code>local function custom_loader(command_word, quoted, no_cmd)
+&nbsp;   if command_word == "blah" then
+&nbsp;       clink.argmatcher("blah"):addarg("abc", "xyz")
+&nbsp;   end
+end
+
+clink.argmatcherloader(custom_loader)</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.classifier" class="name"><a class="wlink" href="#clink.classifier"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.classifier</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table<br/><div class="version">v1.1.49 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>:classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
 
@@ -8392,7 +8410,7 @@ local t = os.globmatch("docs/**/*.md", true, flags)</code></pre><p class="desc">
 
 <div class="function"><div class="header"> <div id="os.isfile" class="name"><a class="wlink" href="#os.isfile"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.isfile</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="os.issignaled" class="name"><a class="wlink" href="#os.issignaled"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.issignaled</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : boolean<br/><div class="version">v1.3.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received. Scripts may use this to decide when to end work early.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="os.issignaled" class="name"><a class="wlink" href="#os.issignaled"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.issignaled</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : boolean<br/><div class="version">v1.3.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether a <kbb>Ctrl</kbd>-<kbd>Break</kbd> has been received. Scripts may use this to decide when to end work early.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="os.isuseradmin" class="name"><a class="wlink" href="#os.isuseradmin"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>os.isuseradmin</span> <span class="uplinks"><a href="#os">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : boolean<br/><div class="version">v1.4.17 and newer</div></div></div><div class="body"><p class="desc">Returns true if running as an elevated (administrator) account.</p></div></div><hr/>
 
@@ -9015,6 +9033,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v186"><a class="wlink" href="#v186"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.8.6 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Changed how repeated deletions work in popup lists (such as the history popup list):  pressing <kbd>Del</kbd> repeatedly now deletes downwards by default (previously it deleted upwards).</li>
+<li>Added new <code>clink.popup_delete_direction</code> setting to control the direction of deletions when pressing <kbd>Del</kbd> repeatedly in popup lists (such as the history popup list).</li>
+<li>Added new Lua API <a href="#clink.argmatcherloader">clink.argmatcherloader()</a> which registers a callback function that can intercept and extend on-demand loading for argmatchers.</li>
+<li>Running <code>clink config prompt show</code> now shows the name of the currently selected *.clinkprompt custom prompt (if any).</li>
+<li>Fixed macro text playback in macros containing a newline (regression introduced by an incorrect change in v1.2.34 which was exacerbated by a change in v1.7.17).</li>
+</ul>
 <h4 id="v185"><a class="wlink" href="#v185"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.8.5 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new Lua API <a href="#os.getdiskfreespace">os.getdiskfreespace()</a> which returns the free and total space.</li>
@@ -9059,7 +9085,7 @@ end</code></pre></div></div><hr/>
 <li>Added new <code>color.suggestionlist*</code> color settings for the suggestion list colors.</li>
 </ul>
 </li>
-<li>Added new Lua API <a href="#clink.opensessionstream">clink.opensessionstream()</a> which opens or creates a named in-memory stream that behaves like a Lua file handle and lasts for the duration of the Clink session, even when the Lua VM is restarted (such as by <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
+<li>Added new Lua API <a href="#clink.opensessionstream">clink.opensessionstream()</a> which opens or creates a named in-memory stream that behaves like a Lua file handle and lasts for the duration of the Clink session, even when the Lua VM is restarted (such as by <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
 <li>Added <code>debug.log_prompt</code> setting which logs the raw prompt string generated by prompt filters.</li>
 <li>Changed the <code>clink-diagnostics</code> command to analyze the whole prompt for ambiguous width Chinese, Japanese, and Korean characters (not just the last line of the prompt).</li>
 <li>Fixed <kbd>Esc</kbd> to not ding every time (it was never meant to ding).</li>
@@ -9204,7 +9230,7 @@ end</code></pre></div></div><hr/>
 <h4 id="v1710"><a class="wlink" href="#v1710"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.10 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new Lua API <a href="#unicode.char">unicode.char()</a>, similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.char">string.char()</a> but for Unicode codepoints instead of ASCII values.</li>
-<li>Added a <code>clink-diagnostics-output</code> bindable command, bound by default to <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.  This command also includes a list of all loaded Lua scripts.</li>
+<li>Added a <code>clink-diagnostics-output</code> bindable command, bound by default to the sequence <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>z</kbd>.  The command writes internal diagnostic information to a file which can be shared to simplify troubleshooting.  This command also includes a list of all loaded Lua scripts.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/721">#721</a>; potential crash if console window width is less than console screen buffer width (regression introduced in v1.7.5).</li>
 </ul>
 <h4 id="v179"><a class="wlink" href="#v179"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.7.9 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -9343,7 +9369,7 @@ end</code></pre></div></div><hr/>
 </ul>
 <h4 id="v1617"><a class="wlink" href="#v1617"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.6.17 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added warning in the log file and in <code>clink-diagnostics</code> (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd>) when ANSICON is detected on Windows 8.1 or greater (it&#39;s unnecessary, less functional, and greatly degrades performance).</li>
+<li>Added warning in the log file and in <code>clink-diagnostics</code> (<kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>) when ANSICON is detected on Windows 8.1 or greater (it&#39;s unnecessary, less functional, and greatly degrades performance).</li>
 <li>Added language info in <code>clink-diagnostics</code> when the code page is not 1252 (for easier troubleshooting).</li>
 <li>Fixed finding argmatchers registered with exact names (typing <code>foo</code> couldn&#39;t find an argmatcher registered as <code>c:\dir\foo.exe</code> because it accidentally looked for <code>c:\dir\foo.EXE</code>).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/631">#631</a>; script error after <code>cmd </code> when the current language is German.</li>
@@ -9775,7 +9801,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added code-signing.</li>
 <li>Added note after successful <code>clink update</code> to clarify that the update will take effect in new Clink windows.</li>
-<li>Fixed order of running the autostart script (from the <code>clink.autostart</code> setting) vs loading Lua; the autostart script should run before Lua so that Lua scripts can query environment variables set by it.  Otherwise Lua scripts may behave differently on initial load versus after invoking the <code>clink-reload</code> command (e.g. <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).</li>
+<li>Fixed order of running the autostart script (from the <code>clink.autostart</code> setting) vs loading Lua; the autostart script should run before Lua so that Lua scripts can query environment variables set by it.  Otherwise Lua scripts may behave differently on initial load versus after invoking the <code>clink-reload</code> command (e.g. <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
 <li>Fixed precedence of match colors; readonly should be lower precedence than executable.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/469">#469</a>; incorrect usage of <code>memset()</code>.</li>
 </ul>
@@ -9835,7 +9861,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1421"><a class="wlink" href="#v1421"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.21 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>The <code>clink-diagnostics</code> command can report merged argmatchers.  When a numeric arg of 2 or greater is given (e.g. <kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) then it includes a list of defined argmatchers.  The list now also reports any merging of argmatchers that occurred.</li>
+<li>The <code>clink-diagnostics</code> command can report merged argmatchers.  When a numeric arg of 2 or greater is given (e.g. <kbd>Alt</kbd>-<kbd>2</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>) then it includes a list of defined argmatchers.  The list now also reports any merging of argmatchers that occurred.</li>
 <li>Fixed <code>clink update</code> so <code>winget</code> doesn&#39;t get confused about whether an update is available for Clink.  Once <code>winget update clink</code> performs an update, or once a Clink v1.4.21 or greater .exe installer is run, then <code>winget</code> should stop getting confused.</li>
 </ul>
 <h4 id="v1420"><a class="wlink" href="#v1420"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.20 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -9856,12 +9882,12 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added <code>os.isuseradmin()</code> to get whether CMD is running as an admin account.</li>
 <li>Added <code>os.getfileversion()</code> to get a table with version information if the file contains a Windows version info resource.</li>
-<li>The <code>clink-diagnostics</code> command now reports costs for Lua event callback functions when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) or when the <code>lua.debug</code> setting is enabled.</li>
+<li>The <code>clink-diagnostics</code> command now reports costs for Lua event callback functions when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>) or when the <code>lua.debug</code> setting is enabled.</li>
 </ul>
 <h4 id="v1416"><a class="wlink" href="#v1416"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.16 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added <code>history.show_preview</code> setting that controls whether to show a preview of history expansions (previously it was inferred by whether <code>color.histexpand</code> was set).</li>
-<li>Added detection for problematic codes in the prompt string.  The <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> command reports problem codes in the prompt string.  When certain problem codes exist in the prompt string, then Clink compensates by reprinting the entire input line after printing the prompt string.  Ideally, the prompt string should be fixed by the user, but sometimes that&#39;s difficult if the prompt string was generated by a tool.</li>
+<li>Added detection for problematic codes in the prompt string.  The <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> command reports problem codes in the prompt string.  When certain problem codes exist in the prompt string, then Clink compensates by reprinting the entire input line after printing the prompt string.  Ideally, the prompt string should be fixed by the user, but sometimes that&#39;s difficult if the prompt string was generated by a tool.</li>
 <li><strong>Potential Breaking Change:</strong> Fixed how hidden and system files are handled by <code>os.globdirs()</code> and <code>os.globfiles()</code> (it had never worked properly).  It worked fine with the default modes of the <code>files.hidden</code> and <code>files.system</code> settings and <code>match-hidden-files</code> config variable.  But if any of those were changed from the default values then malfunctions could occur.  With the fix, in backward compatibility mode the <code>files.hidden</code> and <code>files.system</code> settings and <code>match-hidden-files</code> config variable control whether <code>os.globdirs()</code> and <code>os.globfiles()</code> find hidden or system files, as before, and things can potentially malfunction.  When the optional <code>extrainfo</code> argument is non-zero or when a new optional <code>flags</code> table is passed to them, they now default to including hidden files and omitting system files, but the <code>flags</code> table can override that.  This change was necessary because some scripts were unable to detect git repositories when the <code>files.hidden</code> setting was false.  Excluding hidden files never worked properly in the past.  Clink v1.4.16 does its best to be as backward-compatible and forward-compatible as possible, but in some cases scripts may need to be updated to work properly when the settings or config variable are changed from their default values.</li>
 <li>Fixed the <code>match-hidden-files</code> config variable to work again (regression introduced in v1.0.0).  Also, when off, now it hides files and directories whose names begin with <code>.</code>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/421">#421</a>; <code>clink.bat</code> errors with quoted arguments (regression introduced in v1.3.47).</li>
@@ -9881,7 +9907,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1413"><a class="wlink" href="#v1413"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.13 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added more status information in <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd>.</li>
+<li>Added more status information in <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>.</li>
 <li>Fixed quoting in the <code>insert-completions</code> <kbd>Alt</kbd>-<kbd>*</kbd> command.</li>
 <li>Fixed quoting for non-filename completions.</li>
 <li>Fixed a CPU busy-loop after <code>match_builder:setvolatile()</code> was called during an autosuggest strategy.</li>
@@ -9913,7 +9939,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added <code>rl.needquotes()</code> function to check whether text needs quotes in a command line.</li>
 <li>Changed the <code>terminal.color_emoji</code> setting <code>auto</code> mode to more broadly support accurate width measurements for color emojis (regardless whether the terminal program is capable of actually drawing the color emoji).</li>
-<li>Now <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.</li>
+<li>Now <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.</li>
 <li>Fixed the <code>completion</code> autosuggest strategy so it doesn&#39;t provide a suggestion that requires quoting if the command line input is not currently quoted.</li>
 <li>Fixed overly aggressive detection of color emojis (regression introduced in v1.4.7).</li>
 </ul>
@@ -9942,7 +9968,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Fixed the screen width in the Help commands and Completion commands (regression introduced in v1.3.43).</li>
 <li>Fixed to not load the same Lua script more than once from a completions directory when the Lua script doesn&#39;t define an argmatcher.</li>
-<li>Fixed architecture reported by <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> (regression introduced in v1.3.49).</li>
+<li>Fixed architecture reported by <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> (regression introduced in v1.3.49).</li>
 </ul>
 <h4 id="v143"><a class="wlink" href="#v143"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.4.3 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
@@ -10014,7 +10040,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added <code>color.histexpand</code> setting.  When this is configured with a color, then Clink highlights history expansions in the input line and shows a preview of the expansion that will be applied near the current cursor position.</li>
 <li>Added <code>history.auto_expand</code> setting.  When this is set to false, history expansions will not be performed automatically upon <kbd>Enter</kbd>, but they may still be performed by invoking expansion commands such as <code>clink-expand-history</code> <kbd>Alt</kbd>-<kbd>^</kbd>, or <code>clink-expand-line</code> <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>.</li>
 <li>When a coroutine error happens, write a Lua traceback to the log file.</li>
-<li>The <code>clink-diagnostics</code> command now reports costs for prompt filters and input line coloring classifiers when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
+<li>The <code>clink-diagnostics</code> command now reports costs for prompt filters and input line coloring classifiers when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
 <li>Fixed the input line color when the command word is an alias <em>and</em> a directory <em>and</em> has an argmatcher (regression introduced in v1.3.40).</li>
 <li>Fixed how the inserted completion is highlighted while using <code>clink-select-complete</code> with the <code>match.substring</code> setting enabled.</li>
 <li>Fixed Readline bugs in the numeric arg input state;<ul>
@@ -10066,7 +10092,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>&quot;Use enhanced defaults&quot; now includes history timestamps.</li>
 <li>Fixed delay while loading the history file when history timestamps are enabled (regression introduced in v1.3.18).</li>
 <li>Fixed suggestions to resume after fully accepting an input line suggestion and then changing the text (regression introduced in v1.3.29).</li>
-<li>Fixed reporting unbound commands in <code>clink-show-help</code> when arg is 4 (<kbd>Alt</kbd>-<kbd>4</kbd>,<kbd>Alt</kbd>-<kbd>H</kbd>) (regression introduced in v1.3.9).</li>
+<li>Fixed reporting unbound commands in <code>clink-show-help</code> when arg is 4 (<kbd>Alt</kbd>-<kbd>4</kbd> <kbd>Alt</kbd>-<kbd>h</kbd>) (regression introduced in v1.3.9).</li>
 <li>Fixed to normalize path separators in a fully qualified pathname when using <code>clink.argmatcher(full_path)</code>.</li>
 <li>The documentation now shows a link icon when hovering over any heading or API name, to make it easy to copy and share links.</li>
 </ul>
@@ -10088,7 +10114,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added <code>clink.parseline()</code> to parse a string into one or more <code>line_state</code> objects.</li>
 <li>Added <code>os.getdrivetype()</code> to get the drive type for a path; especially useful if your code needs to skip network paths.</li>
 <li>Added <code>match_builder:setvolatile()</code> to force the matches to be used only once.  This makes it possible for match generators to produce different kinds of matches based on what has been typed, e.g. an email address match generator could list user names until <code>@</code> is typed, and then list domain names.</li>
-<li>The <code>clink-diagnostics</code> command now lists registered argmatchers when the numeric arg &gt; 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
+<li>The <code>clink-diagnostics</code> command now lists registered argmatchers when the numeric arg &gt; 1 (<kbd>Alt</kbd>-<kbd>2</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
 <li>Rewrote the path parsing routines to properly respect UNC paths and <code>\\?\</code> syntax and <code>\\?\UNC\</code> syntax.</li>
 <li>Fixed <code>clink.print(NONL, etc)</code> to not print a TAB character after a <code>NONL</code> that is the first argument.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/329">#329</a>; file completions may be mistakenly marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).</li>
@@ -10111,7 +10137,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Fixed <code>clink.refilterprompt()</code> when the prompt wraps past the edge of the screen and a right-sided prompt string is present.</li>
 <li>Fixed <code>rl.getpromptinfo()</code> when the prompt wraps past the edge of the screen (the <code>promptline</code> and <code>inputline</code> fields were inaccurate).</li>
 <li>Fixed consistent sort order for completion matches that differ only by case.</li>
-<li>Fixed <code>undo</code> (<kbd>Ctrl</kbd>-<kbd>z</kbd>) after using <code>clink-reload</code> (<kbd>Ctrl</kbd>-</kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).  This also fixes <code>rl.ismodifiedline()</code> after <code>clink-reload</code>, which was causing clink-flex-prompt to show a modmark after <code>clink-reload</code>.</li>
+<li>Fixed <code>undo</code> (<kbd>Ctrl</kbd>-<kbd>z</kbd>) after using <code>clink-reload</code> (bound by default to the sequence <kbd>Ctrl</kbd>-</kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd>).  This also fixes <code>rl.ismodifiedline()</code> after <code>clink-reload</code>, which was causing clink-flex-prompt to show a modmark after <code>clink-reload</code>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/321">#321</a>; incremental search not working in the <code>clink-popup-history</code> command (regression introduced in v1.3.19).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/320">#320</a>; prompt becomes garbled when prompt is updated by async prompt filters and wraps past the edge of the screen and a right-sided prompt string is present.</li>
 </ul>
@@ -10256,7 +10282,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1314"><a class="wlink" href="#v1314"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.3.14 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li><kbd>Ctrl</kbd>+<kbd>Break</kbd> can now interrupt some operations, including match display and match generators and the <code>os.globfiles()</code> and <code>os.globdirs()</code> functions in Lua scripts.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Break</kbd> can now interrupt some operations, including match display and match generators and the <code>os.globfiles()</code> and <code>os.globdirs()</code> functions in Lua scripts.</li>
 <li>Added <code>os.issignaled()</code> so Lua scripts can cooperatively interrupt themselves.</li>
 <li>Improved responsiveness of completion commands when an async prompt filter is still running in the background (<code>io.popen()</code> and <code>os.execute()</code> are serialized in prompt filter coroutines, and are serialized separately in match generator coroutines, but are not serialized in other coroutines).</li>
 <li>Fixed displaying pasted lines.</li>
@@ -10337,13 +10363,13 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Incorporate Lua 5.2.4 (minor patches to the Lua language).</li>
 <li>Report a warning if the profile directory is configured to point at a file.</li>
 <li>AutoRun is selected by default again in the installer (reverted change from v1.3.5).</li>
-<li>The <code>terminal.raw_esc</code> setting now also address the same kind of problem with <kbd>Alt</kbd>+<kbd>[</kbd> and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> as with the <kbd>Esc</kbd> key.</li>
+<li>The <code>terminal.raw_esc</code> setting now also address the same kind of problem with <kbd>Alt</kbd>-<kbd>[</kbd> and <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> as with the <kbd>Esc</kbd> key.</li>
 <li>Fixed when an argmatcher adds nested tables of matches using the <code>{ match=&quot;abc&quot; }</code> syntax, so that the nested matches are added recursively and properly suppress adding a space after argument matches that end with <code>:</code> or <code>=</code>.</li>
 <li>Fixed when <code>match_builder:addmatch()</code> and <code>match_builder:addmatches()</code> add nested tables of matches using the <code>{ match=&quot;abc&quot; }</code> syntax, so that the nested matches are added recursively.</li>
 <li>Fixed when <code>match_builder:addmatch()</code> and <code>match_builder:addmatches()</code> add an <code>&quot;arg&quot;</code> match type, so that they automatically suppress appending a space after matches that end with <code>:</code> or <code>=</code> (the behavior was documented, but did not work correctly).</li>
 <li>Fixed <code>remove-history</code> so that it updates the history offset correctly and subsequent editing operations affect the correct undo list.</li>
 <li>Fixed obscure issues in how certain key binding patterns were reported by <code>clink-show-help</code> and <code>dump-functions</code>.</li>
-<li>Fixed how <code>clink echo</code> reports <kbd>Ctrl</kbd>+<kbd>Backspace</kbd> and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Backspace</kbd>.</li>
+<li>Fixed how <code>clink echo</code> reports <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> and <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Backspace</kbd>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/249">#249</a>; sending keystrokes from WScript does nothing for some keys.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/244">#244</a>; installer did not detect previous installation directory (regression introduced in v1.3.5; the fix takes effect on the next install <em>after</em> an install with the fix).</li>
 </ul>
@@ -10351,7 +10377,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added <code>terminal.mouse_modifier</code> setting and <code>%CLINK_MOUSE_MODIFIER%</code> environment variable; these can override the modifier keys that activate Clink mouse input.</li>
 <li>Added <code>%CLINK_SETTINGS%</code> environment variable; this can override the directory where the <code>clink_settings</code> file is located.  This can be used to put it in a directory that syncs between computers, for example.</li>
-<li>During <code>clink-select-complete</code> <kbd>Ctrl</kbd>+<kbd>Home</kbd> or <kbd>Ctrl</kbd>+<kbd>End</kbd> select the first or last match.</li>
+<li>During <code>clink-select-complete</code> <kbd>Ctrl</kbd>-<kbd>Home</kbd> or <kbd>Ctrl</kbd>-<kbd>End</kbd> select the first or last match.</li>
 <li>When <code>argmatcher:addarg()</code> is passed a table containing <code>nosort=true</code> then the matches are unsorted (displayed in the order listed in the table).</li>
 <li>The .zip file now contains <code>_default_settings</code> and <code>_default_inputrc</code> so that they do not take effect unless manually renamed to remove the <code>_</code> name prefix.  This avoids changing the defaults unexpectedly.</li>
 <li>Fixed mouse click+drag in the input line (it accidentally behaved like double click+drag).</li>
@@ -10370,7 +10396,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added <code>terminal.mouse_input</code> setting; the default is <code>auto</code>.  <code>auto</code> lets mouse input work in ConEmu, or in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  See the documentation for more information.</li>
 <li>Added <code>cua-select-word</code> command that selects the word at the cursor.</li>
-<li><kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd> with a numeric argument always includes registered Lua match generators, prompt filters, etc even when the <code>lua.debug</code> setting is off.</li>
+<li><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> with a numeric argument always includes registered Lua match generators, prompt filters, etc even when the <code>lua.debug</code> setting is off.</li>
 <li>Fixed potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.</li>
 <li>Fixed a potential busy loop when the command word is unrecognized.</li>
 <li>Fixed Quick Edit mode in plain Conhost windows; it had always been disabled (I never noticed because I always configure console windows to disable it anyway).</li>
@@ -10395,7 +10421,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v134"><a class="wlink" href="#v134"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.3.4 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.</li>
+<li>Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>-<kbd>D</kbd> in a command history popup deletes the selected history entry.</li>
 <li>Changed the default color for directory match completions to bright yellow (bright blue is hard to see).</li>
 <li>Added an argmatcher for <code>history</code>.</li>
 <li>Added an optional <code>default_settings</code> file:<ul>
@@ -10406,7 +10432,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </li>
 <li>Minor performance improvement when calculating columns widths when <code>match.fit_columns</code> is enabled.</li>
 <li>Fixed accidentally using only one column in <code>clink-select-complete</code> when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).</li>
-<li>Fixed <kbd>Shift</kbd>+<kbd>Right</kbd> to accept the next full word of the suggestion without clearing the rest of the suggestion (regression introduced in v1.3.3).</li>
+<li>Fixed <kbd>Shift</kbd>-<kbd>Right</kbd> to accept the next full word of the suggestion without clearing the rest of the suggestion (regression introduced in v1.3.3).</li>
 <li>Fixed terminal emulation for the reverse video escape codes (this also fixes the right border color of the selected item in popup lists).</li>
 <li>Fixed buffer overrun in Readline <code>yank-last-arg</code> when the previous command ends in a backslash.</li>
 <li>Fixed the Readline History library to not apply Unix style backslash escaping in CMD (e.g. in <code>program subdir\ text</code> there are 3 arguments; the <code>\ </code> is not an escaped space).</li>
@@ -10438,8 +10464,8 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v132"><a class="wlink" href="#v132"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.3.2 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added <kbd>Shift</kbd>+<kbd>Space</kbd> as a recognized key.  By default it is bound to <code>clink-shift-space</code>, which invokes whatever is bound to the normal <kbd>Space</kbd> key, so that it continues to behave as before unless you specifically bind something else to the <kbd>Shift</kbd>+<kbd>Space</kbd> key.</li>
-<li>Added <code>clink-magic-suggest-space</code> command which inserts the next full suggested word (if any) up to a space, and then inserts a space.  Binding this to <kbd>Shift</kbd>+<kbd>Space</kbd> can be very handy.</li>
+<li>Added <kbd>Shift</kbd>-<kbd>Space</kbd> as a recognized key.  By default it is bound to <code>clink-shift-space</code>, which invokes whatever is bound to the normal <kbd>Space</kbd> key, so that it continues to behave as before unless you specifically bind something else to the <kbd>Shift</kbd>-<kbd>Space</kbd> key.</li>
+<li>Added <code>clink-magic-suggest-space</code> command which inserts the next full suggested word (if any) up to a space, and then inserts a space.  Binding this to <kbd>Shift</kbd>-<kbd>Space</kbd> can be very handy.</li>
 <li>Added <code>cmd.admin_title_prefix</code> setting that can replace the &quot;Administrator: &quot; console title prefix.</li>
 <li>When loading settings, if there is no setting file yet then Clink looks for a <code>default_settings</code> file in the binaries directory and uses that to initalize the settings.</li>
 <li>Added <code>CLINK_TERM_VE</code> and <code>CLINK_TERM_VS</code> environment variables that can be set to override the normal (insert mode) and enhanced (overwrite mode) cursor styles, respectively.</li>
@@ -10458,7 +10484,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Changed arrow keys in <code>clink-select-complete</code> to wrap on both horizontal and vertical edges (similar to the fish shell).</li>
 <li>Changed arrow keys in <code>clink-select-complete</code> at the beginning and end of the list to wrap to the other end based on the <code>menu-complete-wraparound</code> config variable.</li>
 <li>Match generators can now specify an append character (or suppress appending) on a per-match basis.</li>
-<li>The <code>clink-diagnostics</code> command lists prompt filters, generators, classifiers, and suggesters when a numeric argument is given (e.g. <kbd>Alt</kbd>+<kbd>1</kbd> then <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
+<li>The <code>clink-diagnostics</code> command lists prompt filters, generators, classifiers, and suggesters when a numeric argument is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
 <li>The <code>os.globdirs()</code> and <code>os.globfiles()</code> functions now automatically yield periodically if used inside a coroutine.</li>
 <li>The <code>io.popen()</code> function now automatically yields periodically if used in read mode (the default) inside a coroutine.</li>
 <li>The <code>io.popenyield()</code> function now automatically falls back to <code>io.popen()</code> if used outside a coroutine.</li>
@@ -10494,20 +10520,20 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1249"><a class="wlink" href="#v1249"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.49 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added <code>cua-previous-screen-line</code> and <code>cua-next-screen-line</code>, bound to <kbd>Shift</kbd>+<kbd>Up</kbd> and <kbd>Shift</kbd>+<kbd>Down</kbd>, to extend the text selection up/down by one screen line.</li>
+<li>Added <code>cua-previous-screen-line</code> and <code>cua-next-screen-line</code>, bound to <kbd>Shift</kbd>-<kbd>Up</kbd> and <kbd>Shift</kbd>-<kbd>Down</kbd>, to extend the text selection up/down by one screen line.</li>
 <li>Updated match generator for <code>clink set autosuggest.strategy</code> to list the available suggestion generators.</li>
-<li>The <code>clink-show-help</code> and <code>clink-popup-show-help</code> commands can include commands that aren&#39;t bound to any key, when the numeric argument is 4 (e.g. <kbd>Alt</kbd>+<kbd>4</kbd> then <kbd>Alt</kbd>+<kbd>H</kbd>).</li>
+<li>The <code>clink-show-help</code> and <code>clink-popup-show-help</code> commands can include commands that aren&#39;t bound to any key, when the numeric argument is 4 (e.g. <kbd>Alt</kbd>-<kbd>4</kbd> then <kbd>Alt</kbd>-<kbd>H</kbd>).</li>
 <li>The <code>rl.getkeybindings()</code> function takes an optional <code>mode</code> argument to control sorting and whether to include commands that aren&#39;t bound to any key.</li>
 <li>Generating suggestions skips generating match completions when the current word looks like a UNC path.  This avoids pauses while typing that would otherwise occur when accessing networked drives.</li>
-<li>Fixed <kbd>Alt</kbd>+<kbd>Right</kbd> so it accepts the next word of the suggestion, just like <kbd>Ctrl</kbd>+<kbd>Right</kbd> does.</li>
+<li>Fixed <kbd>Alt</kbd>-<kbd>Right</kbd> so it accepts the next word of the suggestion, just like <kbd>Ctrl</kbd>-<kbd>Right</kbd> does.</li>
 <li>Fixed the <code>clink-paste</code> command so it sets the mark to the cursor point prior to pasting.</li>
 <li>Fixed when <code>history.dupe_mode</code> is &quot;erase_prev&quot; and <code>history.shared</code> starts true but changes to false; subsequent commands were not added to the history properly anymore in that session (regression introduced in v1.1.0).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/210">#210</a>; <code>clink-select-complete</code> drawing bug with RPROMPT.</li>
 </ul>
 <h4 id="v1248"><a class="wlink" href="#v1248"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.48 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li><kbd>Ctrl</kbd>+<kbd>Right</kbd> now inserts the next word of the suggestion the same way it would move to the next word, and <kbd>Shift</kbd>+<kbd>Right</kbd> inserts the next full word of the suggestion up to a space.</li>
-<li>Keys like <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>Shift</kbd>+<kbd>Left</kbd>/<kbd>Right</kbd>, and <kbd>Ctrl</kbd>+<kbd>Left</kbd>/<kbd>Right</kbd> work in VI mode.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Right</kbd> now inserts the next word of the suggestion the same way it would move to the next word, and <kbd>Shift</kbd>-<kbd>Right</kbd> inserts the next full word of the suggestion up to a space.</li>
+<li>Keys like <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>Shift</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd>, and <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd> work in VI mode.</li>
 <li>Fixed input line coloring glitch when color settings use the <code>sgr</code> syntax.</li>
 </ul>
 <h4 id="v1247"><a class="wlink" href="#v1247"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.47 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -10530,10 +10556,10 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added a <code>magic-space</code> command that performs history expansion on the text before the cursor point and then inserts a space.  Note: this is slightly different than one in bash, which performs history expansion on the whole line and can end up inserting the space in a wrong spot.</li>
 <li>Added <code>rl.getbinding()</code> and <code>rl.setbinding()</code> functions to query or override key bindings.</li>
 <li>Added a <code>clink.refilterprompt()</code> function to invoke prompt filtering on demand.</li>
-<li>The <code>clink-popup-directories</code> command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>.</li>
-<li>The <code>clink-select-complete</code> command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Space</kbd>.</li>
+<li>The <code>clink-popup-directories</code> command is now bound by default to <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>PgUp</kbd>.</li>
+<li>The <code>clink-select-complete</code> command is now bound by default to <kbd>Ctrl</kbd>-<kbd>Space</kbd>.</li>
 <li>Fixed the <code>clink-popup-history</code> command so incremental search works again (regression introduced in v1.2.36).</li>
-<li>Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).</li>
+<li>Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>-<kbd>digits</kbd> (regression introduced in v1.1.11).</li>
 <li>Fixed potential for prompt to redraw incorrectly after showing help when the <code>prompt.transient</code> setting is enabled.</li>
 <li>Fixed settings defined by Lua scripts so that the Lua scripts can reliably see the current values even while the Lua scripts are being loaded or reloaded.</li>
 </ul>
@@ -10664,7 +10690,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added <code>rl_buffer:setargument()</code> function for a &quot;luafunc:&quot; macro to be able to set Readline&#39;s numeric argument.</li>
 <li>Added <code>os.getclipboardtext()</code> and <code>os.setclipboardtext()</code> functions.</li>
 <li>Added extra defense against antivirus interference (if it interferes when Clink inspects the target process, but permits Clink to inject into the target process).</li>
-<li>Fixed cooperation between &quot;luafunc:&quot; macros and CUA selection commands (e.g. <kbd>Shift</kbd>+<kbd>End</kbd>).</li>
+<li>Fixed cooperation between &quot;luafunc:&quot; macros and CUA selection commands (e.g. <kbd>Shift</kbd>-<kbd>End</kbd>).</li>
 <li>Fixed <code>rl_buffer:getcursor()</code> and the return value from <code>rl_buffer:setcursor()</code>; both returned one less than the actual cursor position.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/162">#162</a>; clink completion shows script error (regression introduced in v1.2.31).</li>
 </ul>
@@ -10697,7 +10723,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added <code>console.readinput()</code> function which waits for one key input, and returns the key sequence string for the key.</li>
 <li>Added <code>clink.reload()</code> function which reloads Lua scripts and the Readline config file at the next prompt.</li>
 <li>Added logging for more possible failure points while injecting Clink into the host process.</li>
-<li>Added default key bindings for <kbd>Ctrl</kbd>+<kbd>Up</kbd> and <kbd>Ctrl</kbd>+<kbd>Down</kbd> to scroll the screen one line, like conhost normally does.</li>
+<li>Added default key bindings for <kbd>Ctrl</kbd>-<kbd>Up</kbd> and <kbd>Ctrl</kbd>-<kbd>Down</kbd> to scroll the screen one line, like conhost normally does.</li>
 <li>Now <code>clink set cl*</code> lists all settings that begin with <code>cl</code> (the star wildcard is only supported at the end of the string).</li>
 <li>Documentation includes a link to the new <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.</li>
 <li>Fixed the Lua debugger to support printing UTF8 text, and to escape string variable contents to avoid escape code side effects.</li>
@@ -10724,24 +10750,24 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Fixed input line coloring for doskey aliases that don&#39;t have an argmatcher (regression introduced in v1.2.16).</li>
 <li>Fixed <kbd>Space</kbd> during <code>clink-select-complete</code> when there were already opening and closing quotes present.</li>
-<li>Fixed redrawing multiple lines of input after certain commands such as <code>clink-show-help</code> <kbd>Alt</kbd>+<kbd>H</kbd> (regression introduced in v1.1.20).</li>
+<li>Fixed redrawing multiple lines of input after certain commands such as <code>clink-show-help</code> <kbd>Alt</kbd>-<kbd>H</kbd> (regression introduced in v1.1.20).</li>
 <li>Fixed the <code>completion-auto-query-items</code> config variable to account for multiple lines of input, if present.</li>
 <li>Fixed potential race condition if multiple Clink instances try to get the last errorlevel at the same time.</li>
 </ul>
 <h4 id="v1225"><a class="wlink" href="#v1225"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.25 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added <code>cua-select-all</code> command to select the entire input line.</li>
-<li>Added <code>edit-and-execute-command</code> command to invoke an editor on the current input line and then execute the results (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>E</kbd>).  This attempts to invoke <code>%VISUAL%</code>, <code>%EDITOR%</code>, or <code>notepad.exe</code> as the editor, in that order.</li>
+<li>Added <code>edit-and-execute-command</code> command to invoke an editor on the current input line and then execute the results (<kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>e</kbd>).  This attempts to invoke <code>%VISUAL%</code>, <code>%EDITOR%</code>, or <code>notepad.exe</code> as the editor, in that order.</li>
 <li>Added some new expansion commands:<ul>
-<li><code>clink-expand-history</code> performs history expansion on the current input line (<kbd>Alt</kbd>+<kbd>^</kbd>).</li>
+<li><code>clink-expand-history</code> performs history expansion on the current input line (<kbd>Alt</kbd>-<kbd>^</kbd>).</li>
 <li><code>clink-expand-history-and-alias</code> performs history and doskey alias expansion on the current input line.</li>
-<li><code>clink-expand-line</code> performs history, doskey alias, and environment variable expansion on the current input line (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
+<li><code>clink-expand-line</code> performs history, doskey alias, and environment variable expansion on the current input line (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).</li>
 </ul>
 </li>
 <li>Added some new completion commands:<ul>
-<li><code>glob-complete-word</code> performs wildcard completion on the text before the cursor point, with a <code>*</code> implicitly appended (<kbd>Alt</kbd>+<kbd>G</kbd>).</li>
-<li><code>glob-expand-word</code> inserts all the wildcard completions that <code>glob-list-expansions</code> would list (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>*</kbd>).</li>
-<li><code>glob-list-expansions</code> lists the possible wildcard completions of the text before the cursor point (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>g</kbd>).</li>
+<li><code>glob-complete-word</code> performs wildcard completion on the text before the cursor point, with a <code>*</code> implicitly appended (<kbd>Alt</kbd>-<kbd>G</kbd>).</li>
+<li><code>glob-expand-word</code> inserts all the wildcard completions that <code>glob-list-expansions</code> would list (<kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>*</kbd>).</li>
+<li><code>glob-list-expansions</code> lists the possible wildcard completions of the text before the cursor point (<kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>g</kbd>).</li>
 </ul>
 </li>
 <li>Added some command name synonyms for increased .inputrc file portability with bash:<ul>
@@ -10754,10 +10780,10 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </li>
 <li>Added a <code>match.expand_envvars</code> Clink setting to expand environment variables in a word before performing completion (for <a href="https://github.com/mridgers/clink/issues/476">mridgers #476</a>).</li>
 <li>Changed the <code>match.wild</code> Clink setting to apply to all completion commands.</li>
-<li>Changed default key binding <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd> to the <code>clink-expand-line</code> command (not the key binding expands everything, instead of only the env var at the cursor).</li>
-<li>Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the <code>clink-show-help-raw</code> command (it has only niche usefulness).</li>
-<li>Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.</li>
-<li>Fixed <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>2</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>6</kbd> (regression introduced in v1.1.39).</li>
+<li>Changed default key binding <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>e</kbd> to the <code>clink-expand-line</code> command (not the key binding expands everything, instead of only the env var at the cursor).</li>
+<li>Removed default key binding <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>h</kbd> for the <code>clink-show-help-raw</code> command (it has only niche usefulness).</li>
+<li>Removed unintended VI mode key binding <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>h</kbd>.</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>2</kbd> and <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>6</kbd> (regression introduced in v1.1.39).</li>
 <li>Fixed <code>More?</code> continuation prompt when pasting multiple lines.</li>
 <li>Fixed <code>/flag:</code> and <code>/flag=</code> handling quirks, especially when trying to complete an environment variable in <code>/flag:%env</code>.</li>
 <li>Fixed quirks about environment variable expansion in the <code>clink-expand-env-var</code> command and the <code>os.expandenv()</code> function.</li>
@@ -10770,15 +10796,15 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <h4 id="v1223"><a class="wlink" href="#v1223"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.23 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <kbd>PgUp</kbd> and <kbd>PgDn</kbd> in the <code>clink-select-complete</code> command, under certain conditions where they don&#39;t navigate in the intended manner.</li>
-<li>Cosmetic change: better key names for <kbd>Enter</kbd> vs <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Alt</kbd>+<kbd>Bkspc</kbd> vs <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>, depending on the <code>terminal.differentiate_keys</code> setting.</li>
+<li>Cosmetic change: better key names for <kbd>Enter</kbd> vs <kbd>Ctrl</kbd>-<kbd>m</kbd>, and <kbd>Alt</kbd>-<kbd>Bkspc</kbd> vs <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>h</kbd>, depending on the <code>terminal.differentiate_keys</code> setting.</li>
 </ul>
 <h4 id="v1222"><a class="wlink" href="#v1222"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.22 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added <code>clink-what-is</code> command bound by default to <kbd>Alt</kbd>+<kbd>?</kbd>, which shows the key binding for the next key sequence that is input.</li>
+<li>Added <code>clink-what-is</code> command bound by default to <kbd>Alt</kbd>-<kbd>?</kbd>, which shows the key binding for the next key sequence that is input.</li>
 <li>Added <code>rl.getargument()</code> function to get the accumulated Readline numeric argument, if any.  For use in &quot;luafunc:&quot; macros.</li>
 <li>The <code>clink-show-help</code> command now categorizes key bindings and shows a description for the commands.  Using a numeric argument can control whether categorization and descriptions are used.</li>
 <li>Fixed invoking <code>clink-select-complete</code> while it is already active, so that it doesn&#39;t lose quotes around the current match if it has quotes.</li>
-<li>Fixed <code>clink-show-help</code> to list &quot;Enter&quot; instead of &quot;C-m&quot; for the <kbd>Enter</kbd> key.  Otherwise there&#39;s no way to differentiate between <kbd>Enter</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> when the <code>terminal.differentiate_keys</code> setting is enabled.</li>
+<li>Fixed <code>clink-show-help</code> to list &quot;Enter&quot; instead of &quot;C-m&quot; for the <kbd>Enter</kbd> key.  Otherwise there&#39;s no way to differentiate between <kbd>Enter</kbd> and <kbd>Ctrl</kbd>-<kbd>M</kbd> when the <code>terminal.differentiate_keys</code> setting is enabled.</li>
 <li>Fixed the <code>insert-comment</code> command, which accidentally fell back to inserting <code>#</code> after the first prompt (that&#39;s what bash inserts, and shouldn&#39;t be used in Clink).</li>
 <li>Fixed the <code>dump-functions</code> command, which accidentally didn&#39;t list UTF8 key sequences correctly.</li>
 </ul>
@@ -10851,7 +10877,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1212"><a class="wlink" href="#v1212"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.12 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Improved diagnostic output for coroutines (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>), plus more diagnostic info when the <code>lua.debug</code> setting is enabled.</li>
+<li>Improved diagnostic output for coroutines (<kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd>), plus more diagnostic info when the <code>lua.debug</code> setting is enabled.</li>
 <li>Fixed potential for a script error when a coroutine gets skipped due to a new prompt starting.</li>
 </ul>
 <h4 id="v1211"><a class="wlink" href="#v1211"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.11 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -10922,14 +10948,14 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v124"><a class="wlink" href="#v124"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.2.4 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added support for <kbd>Shift</kbd>+<kbd>Arrows</kbd> to select text and typing to replace selected text.</li>
+<li>Added support for <kbd>Shift</kbd>-<kbd>Arrows</kbd> to select text and typing to replace selected text.</li>
 <li>Added optional argument to <code>word_classifications:classifyword()</code> and <code>word_classifications:applycolor()</code> to allow only applying color where another color hasn&#39;t yet been applied.</li>
 <li>Fixed first <kbd>Up</kbd> after reusing a history line so that it gets the reused history line, rather than getting the previous history line.</li>
 <li>Fixed <code>add-history</code> command to not add blank lines to history.</li>
 <li>Fixed <code>rl.setmatches()</code> (regression introduced in v1.1.26).</li>
 <li>Fixed input coloring for <code>clink set</code> and any color setting name (regression introduced in v1.2).</li>
 <li>Fixed potential crash with <code>clink history --session</code>.</li>
-<li>Fixed <kbd>Ctrl</kbd>+<kbd>D</kbd> when <code>cmd.ctrld_exits</code> is disabled; it didn&#39;t exit, but it did still discard the input line and start a new prompt.</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>D</kbd> when <code>cmd.ctrld_exits</code> is disabled; it didn&#39;t exit, but it did still discard the input line and start a new prompt.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/107">#107</a>; autorun reports inject failures (regression introduced in v1.2.3).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/106">#106</a>; history missing <code>--bare</code> option (regression introduced in v1.2.3).</li>
 </ul>
@@ -10939,7 +10965,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added failure reporting and logging when <code>clink inject</code> fails.</li>
 <li>Added <code>--unique</code> flag for use with <code>clink history compact --unique</code> to remove duplicate entries from the history list.</li>
 <li>The <code>clink-popup-complete</code> command now matches wildcards.</li>
-<li>Restored the <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).</li>
+<li>Restored the <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).</li>
 <li>Fixed searching for inputrc files to also search in the profile directory (regression introduced in v1.0.0).</li>
 <li>Fixed incremental search in the History popup list to search in reverse order (bottom to top).</li>
 <li>Fixed <code>clink-popup-history</code> to set the history search position like other history search commands do, so that it plays well with the <code>history.sticky_search</code> setting.</li>
@@ -10975,7 +11001,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1147"><a class="wlink" href="#v1147"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.47 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added default key binding for <kbd>Ctrl</kbd>+<kbd>Space</kbd> to invoke <code>old-menu-complete</code>, which is the most similar to CMD&#39;s standard <kbd>Tab</kbd> behavior.</li>
+<li>Added default key binding for <kbd>Ctrl</kbd>-<kbd>Space</kbd> to invoke <code>old-menu-complete</code>, which is the most similar to CMD&#39;s standard <kbd>Tab</kbd> behavior.</li>
 <li>Fixed <code>search-ignore-case</code> config variable to be on by default.</li>
 </ul>
 <h4 id="v1146"><a class="wlink" href="#v1146"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.46 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -11027,19 +11053,19 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 </ul>
 <h4 id="v1140"><a class="wlink" href="#v1140"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.40 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added a group of <code>clink-complete-numbers</code> commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> by default.</li>
+<li>Added a group of <code>clink-complete-numbers</code> commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>N</kbd> by default.</li>
 <li>Added <code>rl.getlastcommand()</code> function that returns the name of the last command invoked by key bindings.</li>
-<li>Fixed sort order in <kbd>Alt</kbd>+<kbd>H</kbd> for the newly supported key bindings (that were added in v1.1.39).</li>
-<li>Fixed <kbd>Ctrl</kbd>+<kbd>Space</kbd> (regression introduced in v1.1.39).</li>
-<li>Fixed various <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>whatever</kbd> combinations (regression introduced in v1.1.39).</li>
+<li>Fixed sort order in <kbd>Alt</kbd>-<kbd>H</kbd> for the newly supported key bindings (that were added in v1.1.39).</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>Space</kbd> (regression introduced in v1.1.39).</li>
+<li>Fixed various <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>whatever</kbd> combinations (regression introduced in v1.1.39).</li>
 <li>Fixed <code>rl.setmatches()</code> when the input line is not empty and <code>clink.colorize_input</code> is enabled.</li>
 </ul>
 <h4 id="v1139"><a class="wlink" href="#v1139"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.39 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Added support for many more key bindings, such as <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+Letter keys.</li>
+<li>Added support for many more key bindings, such as <kbd>Ctrl</kbd>-<kbd>Shift</kbd>+Letter keys.</li>
 <li>Added <code>terminal.differentiate_keys</code> setting that when enabled allows binding <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> separately from <kbd>Backspace</kbd>, <kbd>Tab</kbd>, <kbd>Return</kbd>, or <kbd>Escape</kbd>.</li>
 <li>Removed <code>terminal.modify_other_keys</code> setting and made it always enabled.</li>
-<li>Changed <code>terminal.use_altgr_substitute</code> to be disabled by default so that <kbd>Ctrl</kbd>+<kbd>Alt</kbd> key bindings can work by default on keyboards with <kbd>AltGr</kbd>.</li>
+<li>Changed <code>terminal.use_altgr_substitute</code> to be disabled by default so that <kbd>Ctrl</kbd>-<kbd>Alt</kbd> key bindings can work by default on keyboards with <kbd>AltGr</kbd>.</li>
 <li>Changed output from <code>clink echo</code> so it&#39;s directly usable in the inputrc files.</li>
 <li>Fixed <code>terminal.use_altgr_substitute</code> to only affect <kbd>AltGr</kbd> substitute key combinations (it had always broken the <kbd>RightAlt</kbd> key in general on other keyboard layouts).</li>
 <li>Fixed a benign issue with the console input mode in <code>clink echo</code>.</li>
@@ -11118,7 +11144,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <ul>
 <li>Added <code>rl.invokecommand()</code> which can invoke a Readline command from inside a &quot;luafunc:&quot; key binding.</li>
 <li>Added <code>rl.setmatches()</code> which can override match completions from inside a &quot;luafunc:&quot; key binding.</li>
-<li>Worked around UTF8 key binding problem with Readline which had been causing some meta key bindings (M-x, M-C-x, etc) to sometimes produce garbled key bindings and garbled entries in <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>).</li>
+<li>Worked around UTF8 key binding problem with Readline which had been causing some meta key bindings (M-x, M-C-x, etc) to sometimes produce garbled key bindings and garbled entries in <code>clink-show-help</code> (<kbd>Alt</kbd>-<kbd>H</kbd>).</li>
 <li>Fixed crash if &quot;luafunc:&quot; key binding macro refers to a symbol that doesn&#39;t exist.</li>
 </ul>
 <h4 id="v1125"><a class="wlink" href="#v1125"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.25 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -11128,7 +11154,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li><code>clink-copy-word</code> now copies the current word by default, but copies the nth word if a numeric argument is entered (see &quot;Readline Arguments&quot; in the Readline manual).</li>
 <li>Fixed match display filtering to not exceed the screen width (regression introduced in v1.1.12).</li>
 <li>Fixed multi-key sequences; in some cases it could get confused about whether an input key is part of a multi-key binding sequence (regression introduced in v1.1.1-alpha).</li>
-<li>Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd>+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>F</kbd> or etc could accidentally trigger conhost&#39;s shortcut keys).</li>
+<li>Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd>-<kbd>A</kbd> or <kbd>Ctrl</kbd>-<kbd>F</kbd> or etc could accidentally trigger conhost&#39;s shortcut keys).</li>
 <li>Fixed popup window location and size when using Windows Terminal.</li>
 <li>Fixed input coloring after <code>operate-and-get-next</code>; also fixes brief flicker of incorrect coloring whenever the input line is modified.</li>
 </ul>
@@ -11157,7 +11183,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Added <code>menu-complete-wraparound</code> (on by default) that controls whether completion commands wrap around when cycling past an end (affects popup windows as well).</li>
 <li>Fixed match completion getting stuck (regression introduced in v1.1.19).</li>
 <li>Fixed active mark region so it gets deactivated appropriately (it wasn&#39;t hooked up fully for Readline&#39;s callback mode, which is the mode Clink uses).</li>
-<li>Fixed <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>) so it&#39;s able to list <code>C-@</code> bindings.</li>
+<li>Fixed <code>clink-show-help</code> (<kbd>Alt</kbd>-<kbd>H</kbd>) so it&#39;s able to list <code>C-@</code> bindings.</li>
 <li>Fixed inconsistent mark color.</li>
 </ul>
 <h4 id="v1121"><a class="wlink" href="#v1121"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.21 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
@@ -11184,7 +11210,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <h4 id="v1119"><a class="wlink" href="#v1119"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.19 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a>; <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a>; <kbd>Alt</kbd>-<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
 </ul>
 <h4 id="v1118"><a class="wlink" href="#v1118"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.1.18 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
@@ -11192,7 +11218,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Updated the Readline library to 8.1.</li>
 <li>Terminal emulation now supports the audible bell character.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/48">#48</a>; <code>menu-complete</code> gets stuck.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/47">#47</a>; <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/47">#47</a>; <kbd>Alt</kbd>-<kbd>D</kbd> erases history instead of word.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/46">#46</a>; typing <code>..</code> in subdirectory of root doesn&#39;t work.</li>
 <li>Fixed restoring color after pager when showing help.</li>
 <li>Fixed <code>clink set</code> match completions for color settings.</li>
@@ -11324,7 +11350,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>Fixed some bugs in auto detection of flag prefix characters.</li>
 <li>Fixed backward compatibility for flags, and for args when merging two parsers by calling <code>clink.arg.register_parser(&#39;foo&#39;)</code> multiple times for the same command string.</li>
 <li>Fixed truncated message when the last line of a prompt exceeds 128 characters.</li>
-<li>Fixed abort (<kbd>Ctrl</kbd>+<kbd>G</kbd> or <kbd>Esc</kbd>) in non-incremental history search mode.</li>
+<li>Fixed abort (<kbd>Ctrl</kbd>-<kbd>G</kbd> or <kbd>Esc</kbd>) in non-incremental history search mode.</li>
 <li>Fixed saved values for settings added by Lua scripts; now the saved value is available to the script immediately on adding the setting, and saved values are retained even if the setting isn&#39;t always added by the script.</li>
 <li>Fixed (and documented) shorthand form for defining an argmatcher.</li>
 <li>Fixed length of colored match prefix after a path separator.</li>
@@ -11427,20 +11453,20 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li>All of the <code>*-menu-complete-*</code> commands support wildcards (<code>*</code> and <code>?</code>).</li>
 </ul>
 </li>
-<li>Added <code>clink-show-help</code> command (<kbd>Alt</kbd>+<kbd>H</kbd>).  The help now lists <em><strong>all</strong></em> key bindings, and it shows user-friendly key names (like <code>A-Up</code> or <code>C-x,C-r</code> or <code>C-S-PgUp</code> or <code>A-C-S-F3</code>).</li>
+<li>Added <code>clink-show-help</code> command (<kbd>Alt</kbd>-<kbd>H</kbd>).  The help now lists <em><strong>all</strong></em> key bindings, and it shows user-friendly key names (like <code>A-Up</code> or <code>C-x,C-r</code> or <code>C-S-PgUp</code> or <code>A-C-S-F3</code>).</li>
 <li>Added <code>clink-popup-completions</code> command that shows a popup window listing possible completions.  <kbd>Enter</kbd> inserts the highlighted completion.</li>
-<li>Added <code>clink-popup-directories</code> command that shows a popup window listing recent directories.  <kbd>Enter</kbd> changes to the highlighted directory, or <kbd>Shift</kbd>+<kbd>Enter</kbd> inserts the highlighted directory in the editing line (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</li>
-<li>Added <code>clink-popup-history</code> command that shows a popup window listing command history.  <kbd>Enter</kbd> executes the highlighted command, or <kbd>Shift</kbd>+<kbd>Enter</kbd> jumps to the highlighted command in the history (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</li>
+<li>Added <code>clink-popup-directories</code> command that shows a popup window listing recent directories.  <kbd>Enter</kbd> changes to the highlighted directory, or <kbd>Shift</kbd>-<kbd>Enter</kbd> inserts the highlighted directory in the editing line (or <kbd>Ctrl</kbd>-<kbd>Enter</kbd>).</li>
+<li>Added <code>clink-popup-history</code> command that shows a popup window listing command history.  <kbd>Enter</kbd> executes the highlighted command, or <kbd>Shift</kbd>-<kbd>Enter</kbd> jumps to the highlighted command in the history (or <kbd>Ctrl</kbd>-<kbd>Enter</kbd>).</li>
 <li>Added <code>clink-scroll-lineup</code>, <code>clink-scroll-linedown</code>, <code>clink-scroll-page-up</code>, <code>clink-scroll-page-down</code>, <code>clink-scroll-top</code>, and <code>clink-scroll-bottom</code> commands that do what it looks like they&#39;d do and are bound to the keys it looks like they&#39;d be.</li>
-<li>Added <code>clink-expand-doskey</code> command (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>f</kbd>) that expands the current line according to the current doskey aliases.</li>
-<li>Added <code>clink-expand-env-var</code> command (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>e</kbd>) that expands the environment variable at the cursor point.</li>
-<li>Added <code>clink-exit</code> command (<kbd>Alt</kbd>+<kbd>F4</kbd>) that exits CMD.</li>
+<li>Added <code>clink-expand-doskey</code> command (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>f</kbd>) that expands the current line according to the current doskey aliases.</li>
+<li>Added <code>clink-expand-env-var</code> command (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>e</kbd>) that expands the environment variable at the cursor point.</li>
+<li>Added <code>clink-exit</code> command (<kbd>Alt</kbd>-<kbd>F4</kbd>) that exits CMD.</li>
 </ul>
 </li>
 <li>Fixed keyboard input issues:<ul>
 <li><kbd>Esc</kbd> is a bindable key now (<code>\e[27;27~</code>).</li>
 <li>Added more bindable key combinations (run <code>clink echo</code> then press keys to see the key sequence to use in the inputrc file).</li>
-<li><kbd>Ctrl</kbd>+<kbd>@</kbd> (NUL) didn&#39;t work.</li>
+<li><kbd>Ctrl</kbd>-<kbd>@</kbd> (NUL) didn&#39;t work.</li>
 <li><kbd>Ins</kbd> toggles insert/overwrite mode.</li>
 <li>Unbound keys are ignored now, instead of inserting gibberish characters (part of the terminal internal key sequence).</li>
 <li>Fixed input handling so the <code>quoted-insert</code> command can work properly.</li>
@@ -11495,13 +11521,13 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <li><a href="https://github.com/mridgers/clink/issues/516">mridgers #516</a> Doskey $T not handled properly.</li>
 <li><a href="https://github.com/mridgers/clink/issues/512">mridgers #512</a> Command history missing in .history.</li>
 <li><a href="https://github.com/mridgers/clink/issues/503">mridgers #503</a> Keyboard shortcut for scrolling.</li>
-<li><a href="https://github.com/mridgers/clink/issues/501">mridgers #501</a> <kbd>Ctrl</kbd>+<kbd>Backspace</kbd> works now.</li>
+<li><a href="https://github.com/mridgers/clink/issues/501">mridgers #501</a> <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> works now.</li>
 <li><a href="https://github.com/mridgers/clink/issues/487">mridgers #487</a> Clink breaks ConEmu-specific Escape codes.</li>
 <li><a href="https://github.com/mridgers/clink/issues/480">mridgers #480</a> History never saved.</li>
 <li><a href="https://github.com/mridgers/clink/issues/465">mridgers #465</a> Using LuaJIT (FFI).</li>
 <li><a href="https://github.com/mridgers/clink/issues/456">mridgers #456</a> Clear-screen not working properly when PROMPT is two lines long.</li>
 <li><a href="https://github.com/mridgers/clink/issues/453">mridgers #453</a> Wrong cursor position when a line contains non-printable characters.</li>
-<li><a href="https://github.com/mridgers/clink/issues/442">mridgers #442</a> Unable to paste more than 1024 characters using <kbd>Ctrl</kbd>+<kbd>V</kbd>.</li>
+<li><a href="https://github.com/mridgers/clink/issues/442">mridgers #442</a> Unable to paste more than 1024 characters using <kbd>Ctrl</kbd>-<kbd>V</kbd>.</li>
 <li><a href="https://github.com/mridgers/clink/issues/422">mridgers #422</a> Problem with filename modifiers.</li>
 <li><a href="https://github.com/mridgers/clink/issues/420">mridgers #420</a> Use NtSuspendProcess instead of CreateToolhelp32Snapshot to freeze the threads.</li>
 <li><a href="https://github.com/mridgers/clink/issues/372">mridgers #372</a> Provide a way to select a previous directory.</li>
@@ -11671,7 +11697,7 @@ Readline 8.2 introduced a crash in the <code>undo</code> command after navigatin
 <h4 id="v044"><a class="wlink" href="#v044"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v0.4.4 <span class="uplinks"><a href="#releases-from-mridgersclink-original-repo">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Completing .. behaves more like Bash (#277).</li>
-<li>Escape from yes/no question when <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</li>
+<li>Escape from yes/no question when <kbd>Ctrl</kbd>-<kbd>C</kbd> is pressed.</li>
 <li>Valid XP executables (#278, #289).</li>
 <li>Fixed n-th argument yank not working as expected (#254).</li>
 <li>Fixed prompt colours sometimes not working (#279, #286).</li>
@@ -11835,7 +11861,7 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 </ul>
 <h4 id="v011"><a class="wlink" href="#v011"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v0.1.1 <span class="uplinks"><a href="#releases-from-mridgersclink-original-repo">up</a> <a href="#toc">top</a></span></h4>
 <ul>
-<li>Fixed <kbd>AltGr</kbd>+<kbd>&lt;key&gt;</kbd> on international keyboards.</li>
+<li>Fixed <kbd>AltGr</kbd>-<kbd>&lt;key&gt;</kbd> on international keyboards.</li>
 <li>Fixed broken completion when directories have a <code>-</code> in their name (Mark Hammond)</li>
 <li>The check for single match scenarios now correctly handles case-insensitivity.</li>
 </ul>
