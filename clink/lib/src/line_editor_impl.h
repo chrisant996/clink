@@ -196,6 +196,7 @@ private:
 
 #ifdef DEBUG
     bool                m_in_matches_ready = false;
+    bool                m_in_try_suggest = false;
     bool                m_signaled = false;
 #endif
 

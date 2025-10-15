@@ -301,6 +301,8 @@ void line_editor_impl::begin_line()
     set_flag(flag_editing);
 
 #ifdef DEBUG
+    m_in_matches_ready = false;
+    m_in_try_suggest = false;
     m_signaled = false;
 #endif
 
@@ -340,10 +342,6 @@ void line_editor_impl::begin_line()
     editor_module::context context = get_context();
     for (auto module : m_modules)
         module->on_begin_line(context);
-
-#ifdef DEBUG
-    m_in_matches_ready = false;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1570,6 +1568,11 @@ void line_editor_impl::update_internal(bool force)
 //------------------------------------------------------------------------------
 void line_editor_impl::try_suggest()
 {
+#ifdef DEBUG
+    assert(!m_in_try_suggest);
+    rollback<bool> guard(m_in_try_suggest, true);
+#endif
+
     if (!g_autosuggest_enable.get())
         return;
 
