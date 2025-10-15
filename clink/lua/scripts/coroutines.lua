@@ -44,6 +44,7 @@ local print = clink.print
 --      firstclock:     The os.clock() from the beginning of the first resume.
 --      throttleclock:  The os.clock() from the end of the most recent yieldguard or asyncyield.
 --      lastclock:      The os.clock() from the end of the last resume.
+--      runtime:        Sum of execution time used by the coroutine.
 --      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
 --      yieldguard:     Yielding due to io.popen, os.execute, etc.
 --      asyncyield:     Yielding due to an async_lua_task.
@@ -501,17 +502,22 @@ function clink._diag_coroutines()
     local show_gen = false
     local max_resumed_len = 0
     local max_freq_len = 0
+    local max_runtime_len = 0
 
     local function collect_diag(list, threads)
         for _,entry in pairs(list) do
             local resumed = tostring(entry.resumed)
             local status = entry.status or coroutine.status(entry.coroutine)
             local freq = tostring(entry.interval)
+            local runtime = string.format("%.4f", entry.runtime)
             if max_resumed_len < #resumed then
                 max_resumed_len = #resumed
             end
             if max_freq_len < #freq then
                 max_freq_len = #freq
+            end
+            if max_runtime_len < #runtime then
+                max_runtime_len = #runtime
             end
             if entry.generation ~= _coroutine_generation then
                 if list == _coroutines then
@@ -519,7 +525,7 @@ function clink._diag_coroutines()
                 end
                 show_gen = true
             end
-            table.insert(threads, { entry=entry, status=status, resumed=resumed, freq=freq })
+            table.insert(threads, { entry=entry, status=status, resumed=resumed, freq=freq, runtime=runtime })
         end
     end
 
@@ -547,9 +553,10 @@ function clink._diag_coroutines()
             end
             local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
             local freq = "freq "..str_rpad(t.freq, max_freq_len)
+            local runtime = "time "..str_rpad(t.runtime, max_runtime_len)
             -- TODO: Show next wakeup time.
             local src = tostring(t.entry.src)
-            print(plain.."  "..key.."  "..gen..status..res.."  "..freq.."  "..src..norm)
+            print(plain.."  "..key.."  "..gen..status..res.."  "..freq.."  "..runtime.."  "..src..norm)
             if t.entry.error then
                 print(plain.."  "..str_rpad("", #key + 2)..red..t.entry.error..norm)
             end
@@ -1074,6 +1081,7 @@ function coroutine.create(func) -- luacheck: ignore 122
     local entry = {
         interval=0,
         resumed=0,
+        runtime=0,
         func=func,
         context=_coroutine_context,
         generation=_coroutine_generation,
@@ -1105,7 +1113,9 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
     local old_co_state = clink.co_state
     clink.co_state = entry.co_state
 
+    local clock = os.clock()
     local tresumed = table.pack(orig_coroutine_resume(co, ...))
+    entry.runtime = entry.runtime + os.clock() - clock
 
     if tresumed and not tresumed[1] and tresumed[2] then
         local err = tostring(tresumed[2])
