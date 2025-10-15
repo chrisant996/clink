@@ -1155,6 +1155,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
     // input has been buffered.
     const DWORD started = GetTickCount();
     const uint32 buffer_count = m_buffer_count;
+    assert(!buffer_count);  // Should be impossible to reach here with > 0.
     while (buffer_count == m_buffer_count)
     {
         DWORD modeExpected;
@@ -1214,6 +1215,15 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                     callback->on_wait_event(waited - (WAIT_OBJECT_0 + index_callback_events));
                 else
                     callback->on_idle();
+
+                // Callbacks may internally end up calling read_console() to
+                // check whether any input is available, which will push the
+                // peeked input into the buffer.  If any input arrives in the
+                // buffer, then we're done, even if it happened within a
+                // nested reentrant call.  Otherwise, for example, reentrant
+                // input breaks filter_unbound_input().
+                if (buffer_count != m_buffer_count)
+                    return;
             }
 
             if (has_mode)
