@@ -5,6 +5,7 @@
 #### v1.8.7
 
 - Changed to only generate suggestions if there is no more input available.  For example, otherwise pasting input could repeatedly generate suggestions over and over and refresh the display, even though the suggestions will be discarded by the next input key.
+- Changed the `clink-diagnostics` command to show total time spent by each coroutine.
 
 #### v1.8.6
 
