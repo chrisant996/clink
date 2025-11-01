@@ -184,9 +184,9 @@ end
 --------------------------------------------------------------------------------
 local function collect_output(output, line)
     local num = #output
-    if num < 10 then
+    if num < 25 then
         table.insert(output, line)
-    elseif num == 10 then
+    elseif num == 25 then
         table.insert(output, "...")
     end
 end
@@ -252,8 +252,8 @@ local function unzip(zip, out)
     local failure_tag = "CLINK-UNZIP-FAILED"
     -- Including the module name avoids problems if something overrides the Expand-Archive cmdlet.
     -- For example, older versions of PowerShell Community Extensions did (https://github.com/pscx/pscx).
-    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Microsoft.PowerShell.Archive\Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\"]], zip, out) -- luacheck: no max line length
-    local powershell_command = string.format([[try { %s ; echo "%s" } catch { echo "%s" ; echo $_.Exception.Message ; echo "`nALL ERRORS:`n" ; echo $error }]], expand_archive, success_tag, failure_tag) -- luacheck: no max line length
+    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Microsoft.PowerShell.Archive\Expand-Archive -Force -LiteralPath '%s' -DestinationPath '%s']], zip, out) -- luacheck: no max line length
+    local powershell_command = string.format([[try { %s ; echo '%s' } catch { echo '%s' ; echo $_.Exception.Message ; echo '' 'ALL ERRORS:' '' ; echo $error }]], expand_archive, success_tag, failure_tag) -- luacheck: no max line length
     local cmd = string.format([[2>&1 %s -Command "%s"]], powershell_exe, powershell_command)
     local f, err = io.popen(cmd)
     if not f then
