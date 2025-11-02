@@ -4,6 +4,8 @@
 local github_repo = "chrisant996/clink"
 local tag_filename = "clink_updater_tag"
 
+-- luacheck: globals http
+
 --------------------------------------------------------------------------------
 local function log_info(message)
     log.info("Clink updater: " .. message, 2--[[stack level; our caller]])
@@ -200,6 +202,31 @@ local function log_output(command, output)
         end
     else
         log_info("no output from command.")
+    end
+end
+
+local function log_https_get(url, result, response_info)
+    log_info("HTTPS GET failed")
+    log_info(string.format("url: %s", url))
+    if response_info then
+        if response_info.win32_error then
+            log_info(string.format("win32_error: %u", response_info.win32_error))
+        end
+        if response_info.win32_error_text then
+            log_info(string.format("win32_error_text: %s", response_info.win32_error_text))
+        end
+        if response_info.status_code then
+            log_info(string.format("status_code: %u", response_info.status_code))
+        end
+        if response_info.status_text then
+            log_info(string.format("status_text: %s", response_info.status_text))
+        end
+        if response_info.content_length then
+            log_info(string.format("content_length: %u", response_info.content_length))
+        end
+    end
+    if result then
+        log_info(string.format("content: %.200s", result))
     end
 end
 
@@ -431,6 +458,7 @@ end
 local function internal_check_for_update(force)
     local local_tag = get_local_tag()
     local install_type = get_installation_type()
+    local user_agent = "Clink-Updater/1.0"
 
     -- Use github API to query latest release.
     --
@@ -442,47 +470,33 @@ local function internal_check_for_update(force)
         need_lf = true
         print("Checking latest version...")
     end
-    local api, cloud_tag, mock
+    local result, response_info, cloud_tag, mock, err
+    local api_url = string.format("https://api.github.com/repos/%s/releases/latest", github_repo)
     if clink.DEBUG and os.getenv("DEBUG_UPDATE_FILE") then
+        api_url = "DEBUG-MOCK"
         mock = os.getenv("DEBUG_UPDATE_FILE")
         local ver = mock:match("clink%.(%d+%.%d+%.?%d*)%.[0-9a-fA-F]+%.zip")
         if not ver then
             error("invalid DEBUG_UPDATE_FILE name '" .. mock .. "'.")
         end
-        api = string.format([[2>&1 echo "tag_name": "v%s"& echo "browser_download_url": "%s"]], ver, mock) -- luacheck: no max line length
+        result = string.format('"tag_name": "v%s", "browser_download_url": "%s"', ver, mock)
     else
-        api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo) -- luacheck: no max line length
+        local options = { user_agent=user_agent, no_cache=true }
+        result, response_info = http.get(api_url, options)
+        if not result then
+            log_https_get(api_url, result, response_info)
+            return nil, log_info("unable to query github api.")
+        end
     end
-    -- TODO:  use http.get() API:
-    -- local options = { user_agent="Clink-Updater/1.0", no_cache=true }
-    -- local data = http.get("https://api.github.com/repos/chrisant996/clink/releases/latest", options)
 
-    local f, err = io.popen(api)
-    if not f then
-        log_info(api)
-        return nil, concat_error(err, log_info("unable to query github api."))
-    end
     local latest_update_file
-    local output = {}
-    for line in f:lines() do
-        local utf8 = unicode.fromcodepage(line)
-        line = utf8 or line
-        local tag = line:match('"tag_name": *"([^"]-)"')
-        local match = line:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
-        if not cloud_tag and tag then
-            cloud_tag = tag
-        end
-        if not latest_update_file and match then
-            latest_update_file = match
-        end
-        collect_output(output, line)
-    end
-    f:close()
+    cloud_tag = result:match('"tag_name": *"([^"]-)"')
+    latest_update_file = result:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
     if not cloud_tag then
-        log_output(api, output)
+        log_https_get(api_url, result, response_info)
         return nil, log_info("unable to find latest release.")
     elseif not latest_update_file then
-        log_output(api, output)
+        log_https_get(api_url, result, response_info)
         return nil, log_info("unable to find latest release " .. install_type .. " file.")
     end
     latest_cloud_tag = cloud_tag
@@ -517,25 +531,32 @@ local function internal_check_for_update(force)
         return nil, err
     end
     log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
-    local cmd
+    local content
     if clink.DEBUG and mock then
-        cmd = string.format([[2>&1 copy "%s" "%s"]], latest_update_file, local_update_file)
+        local f = io.open(latest_update_file, "rb")
+        content = f:read("*a")
+        f:close()
     else
-        cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file) -- luacheck: no max line length
+        local options = { user_agent=user_agent }
+        content, response_info = http.get(latest_update_file, options)
+        if not content or (response_info and (response_info.win32_error or response_info.status_code ~= 200 or not response_info.completed_read)) then -- luacheck: no max line length
+            log_https_get(latest_update_file, nil, response_info)
+            return nil, log_info("failed to download " .. install_type .. " file.")
+        end
     end
-    f, err = io.popen(cmd)
-    if not f then
-        log_info(cmd)
+    local outfile, dummy
+    outfile, err = io.open(local_update_file, "wb")
+::failed_write::
+    if not outfile then
         os.remove(local_update_file)
         return nil, concat_error(err, log_info("failed to download " .. install_type .. " file."))
     end
-    output = {}
-    for line in f:lines() do
-        local utf8 = unicode.fromcodepage(line)
-        line = utf8 or line
-        collect_output(output, line)
+    dummy, err = outfile:write(content)
+    outfile:close()
+    outfile = nil -- Make sure any subsequent 'goto failed_write' works.
+    if not dummy then
+        goto failed_write
     end
-    f:close()
 
     local ok = os.isfile(local_update_file)
     if ok then
@@ -545,8 +566,8 @@ local function internal_check_for_update(force)
         end
     end
     if not ok then
-        log_output(cmd, output)
-        return nil, log_info("failed to download " .. install_type .. " file.")
+        err = "unknown problem while writing file."
+        goto failed_write
     end
 
     return local_update_file
