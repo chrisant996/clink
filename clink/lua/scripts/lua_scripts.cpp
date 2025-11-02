@@ -31159,4 +31159,5 @@ extern const char* const lib_error_lua_file = CLINK_BUILD_ROOT "/../../clink/lua
 extern const char* const lib_events_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/events.lua";
 extern const char* const lib_generator_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/generator.lua";
 extern const char* const lib_hinter_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/hinter.lua";
+extern const char* const lib_http_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/http.lua";
 #endif

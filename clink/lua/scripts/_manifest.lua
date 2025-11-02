@@ -10,6 +10,7 @@ return {
         "console.lua",
         "coroutines.lua",
         "generator.lua",
+        "http.lua",
         "arguments.lua",
         "classifier.lua",
         "hinter.lua",

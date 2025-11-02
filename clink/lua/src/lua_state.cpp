@@ -109,6 +109,7 @@ void rl_lua_initialise(lua_state&, bool lua_interpreter=false);
 void settings_lua_initialise(lua_state&);
 void string_lua_initialise(lua_state&);
 void unicode_lua_initialise(lua_state&);
+void http_lua_initialise(lua_state&);
 void log_lua_initialise(lua_state&);
 
 
@@ -273,6 +274,7 @@ void lua_state::initialise(lua_state_flags flags)
     settings_lua_initialise(self);
     string_lua_initialise(self);
     unicode_lua_initialise(self);
+    http_lua_initialise(self);
     log_lua_initialise(self);
 
     // Load the debugger.
@@ -283,6 +285,7 @@ void lua_state::initialise(lua_state_flags flags)
     lua_load_script(self, lib, error);
     lua_load_script(self, lib, core);
     lua_load_script(self, lib, console);
+    lua_load_script(self, lib, http);
     if (!interpreter)
     {
         lua_load_script(self, lib, events);

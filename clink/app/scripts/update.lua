@@ -453,6 +453,10 @@ local function internal_check_for_update(force)
     else
         api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo) -- luacheck: no max line length
     end
+    -- TODO:  use http.get() API:
+    -- local options = { user_agent="Clink-Updater/1.0", no_cache=true }
+    -- local data = http.get("https://api.github.com/repos/chrisant996/clink/releases/latest", options)
+
     local f, err = io.popen(api)
     if not f then
         log_info(api)
