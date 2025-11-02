@@ -920,7 +920,7 @@ function io.popenyield(command, mode)
         end
         -- Cancel if not from the current generation.
         if not check_generation(c) then
-            local message = (type(command) == string) and command..": " or ""
+            local message = (type(command) == "string") and command..": " or ""
             cancel_coroutine(message)
             return io.open("nul")
         end
@@ -1020,7 +1020,7 @@ os.execute = function (command)
     end
     -- Cancel if not from the current generation.
     if not check_generation(c) then
-        local message = (type(command) == string) and command..": " or ""
+        local message = (type(command) == "string") and command..": " or ""
         cancel_coroutine(message)
         return nil, "exit", -1, "canceled"
     end
