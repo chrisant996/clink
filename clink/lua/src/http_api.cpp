@@ -188,53 +188,6 @@ BOOL delay_load_winhttp::WinHttpReadData(HINTERNET hRequest, LPVOID lpBuffer, DW
 
 
 
-#if 0
-//------------------------------------------------------------------------------
-extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
-static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
-static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
-
-//------------------------------------------------------------------------------
-static int32 lua_osboolresult(lua_State *state, bool stat, const char *tag=nullptr)
-{
-    int32 en = errno;  /* calls to Lua API may change this value */
-
-    lua_pushboolean(state, stat);
-
-    if (stat)
-        return 1;
-
-    if (tag)
-        lua_pushfstring(state, "%s: %s", tag, strerror(en));
-    else
-        lua_pushfstring(state, "%s", strerror(en));
-    lua_pushinteger(state, en);
-    return 3;
-}
-
-//------------------------------------------------------------------------------
-static int32 lua_osstringresult(lua_State *state, const char* result, bool stat, const char *tag=nullptr)
-{
-    int32 en = errno;  /* calls to Lua API may change this value */
-
-    if (stat)
-    {
-        lua_pushstring(state, result);
-        return 1;
-    }
-
-    lua_pushnil(state);
-    if (tag)
-        lua_pushfstring(state, "%s: %s", tag, strerror(en));
-    else
-        lua_pushfstring(state, "%s", strerror(en));
-    lua_pushinteger(state, en);
-    return 3;
-}
-#endif
-
-
-
 //------------------------------------------------------------------------------
 struct response_info
 {
@@ -306,22 +259,55 @@ bool response_info::query(HINTERNET hRequest, DWORD dwInfoLevel, str_base& out)
 
 
 //------------------------------------------------------------------------------
-class httpget_async_lua_task : public async_lua_task
+struct key_value_pair
+{
+    wstr_moveable key;
+    wstr_moveable value;
+};
+
+//------------------------------------------------------------------------------
+class httprequest_async_lua_task : public async_lua_task
 {
 public:
-    httpget_async_lua_task(const char* key, const char* src, async_yield_lua* asyncyield, const char* url, const char* user_agent, bool no_cache)
+    httprequest_async_lua_task(const char* key, const char* src, async_yield_lua* asyncyield,
+                               const char* method, const char* url, const char* user_agent, bool no_cache,
+                               std::vector<key_value_pair>& headers,
+                               const char* body, size_t body_len)
     : async_lua_task(key, src)
+    , m_method(method)
     , m_url(url)
     , m_user_agent(user_agent)
+    , m_headers(std::move(headers))
     , m_nocache(no_cache)
     , m_ismain(!asyncyield)
     {
+        if (body && body_len)
+        {
+            if (body_len > 0x7fffffff)
+            {
+                m_body_len = -1;
+            }
+            else
+            {
+                m_body = static_cast<char*>(malloc(body_len));
+                if (m_body)
+                {
+                    memcpy(m_body, body, body_len);
+                    m_body_len = DWORD(body_len);
+                }
+                else
+                {
+                    m_body_len = -1;
+                }
+            }
+        }
         set_asyncyield(asyncyield);
     }
 
-    ~httpget_async_lua_task()
+    ~httprequest_async_lua_task()
     {
         free(m_result_buffer);
+        free(m_body);
     }
 
     bool result(char*& buffer, size_t& length)
@@ -349,8 +335,12 @@ protected:
     void do_work() override;
 
 private:
+    const str_moveable m_method;
     const str_moveable m_url;
     const str_moveable m_user_agent;
+    const std::vector<key_value_pair> m_headers;
+    char* m_body = nullptr;
+    DWORD m_body_len = 0;
     const bool m_nocache;
     const bool m_ismain;
 
@@ -360,7 +350,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-void httpget_async_lua_task::do_work()
+void httprequest_async_lua_task::do_work()
 {
 // TODO:  What if lua_state is recycled while this task thread is running?
 
@@ -410,7 +400,8 @@ close_session:
     if (m_nocache)
         flags |= WINHTTP_FLAG_REFRESH;
 
-    HINTERNET hRequest = s_winhttp.WinHttpOpenRequest(hConnect, L"GET", comp.lpszUrlPath, nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
+    wstr<> wmethod(m_method.c_str());
+    HINTERNET hRequest = s_winhttp.WinHttpOpenRequest(hConnect, wmethod.c_str(), comp.lpszUrlPath, nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
     if (!hRequest)
     {
         m_response_info.win32_error = GetLastError();
@@ -419,7 +410,30 @@ close_connect:
         goto close_session;
     }
 
-    BOOL bResults = s_winhttp.WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+    if (m_body_len == DWORD(-1))
+    {
+        m_response_info.win32_error = ERROR_INVALID_DATA;
+        goto close_connect;
+    }
+
+    wstr_moveable headers;
+    for (const auto& kv : m_headers)
+    {
+        bool ok = true;
+        if (!headers.empty())
+            headers.concat(L"\r\n");
+        ok = ok && headers.concat(kv.key.c_str());
+        headers.concat(L": ");
+        ok = ok && headers.concat(kv.value.c_str());
+        if (!ok || headers.length() > 0x7fff)
+        {
+            m_response_info.win32_error = ERROR_INVALID_PARAMETER;
+            goto close_connect;
+        }
+    }
+
+    const WCHAR* send_headers = headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str();
+    BOOL bResults = s_winhttp.WinHttpSendRequest(hRequest, send_headers, headers.length(), m_body, m_body_len, 0, 0);
     if (!bResults)
     {
         m_response_info.win32_error = GetLastError();
@@ -489,25 +503,25 @@ close_request:
 }
 
 //------------------------------------------------------------------------------
-class httpget_lua
-    : public lua_bindable<httpget_lua>
+class httprequest_lua
+    : public lua_bindable<httprequest_lua>
 {
 public:
-                        httpget_lua(const std::shared_ptr<httpget_async_lua_task>& task) : m_task(task) {}
-                        ~httpget_lua() {}
+                        httprequest_lua(const std::shared_ptr<httprequest_async_lua_task>& task) : m_task(task) {}
+                        ~httprequest_lua() {}
 
     int32               result(lua_State* state);
 
 private:
-    std::shared_ptr<httpget_async_lua_task> m_task;
+    std::shared_ptr<httprequest_async_lua_task> m_task;
 
-    friend class lua_bindable<httpget_lua>;
+    friend class lua_bindable<httprequest_lua>;
     static const char* const c_name;
-    static const httpget_lua::method c_methods[];
+    static const httprequest_lua::method c_methods[];
 };
 
 //------------------------------------------------------------------------------
-int32 httpget_lua::result(lua_State* state)
+int32 httprequest_lua::result(lua_State* state)
 {
     if (!m_task)
         return 0;
@@ -583,8 +597,8 @@ int32 httpget_lua::result(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-const char* const httpget_lua::c_name = "httpget_lua";
-const httpget_lua::method httpget_lua::c_methods[] = {
+const char* const httprequest_lua::c_name = "httprequest_lua";
+const httprequest_lua::method httprequest_lua::c_methods[] = {
     { "result",         &result },
     {}
 };
@@ -595,43 +609,88 @@ const httpget_lua::method httpget_lua::c_methods[] = {
 inline bool is_main_coroutine(lua_State* state) { return G(state)->mainthread == state; }
 
 //------------------------------------------------------------------------------
-static int32 http_get_internal(lua_State* state)
+static int32 http_request_internal(lua_State* state)
 {
     int32 iarg = 1;
     const bool ismain = is_main_coroutine(state);
+    const char* const method = checkstring(state, iarg++);
     const char* const url = checkstring(state, iarg++);
-    const char* const user_agent = optstring(state, iarg++, nullptr);
-    const bool no_cache = lua_toboolean(state, iarg++);
-    if (!url || !*url)
+    const int32 iarg_options_table = lua_istable(state, iarg) ? iarg++ : -1;
+    if (!method || !*method || !url || !*url)
         return 0;
+
+    const char* user_agent = nullptr;
+    bool no_cache = false;
+    std::vector<key_value_pair> headers;
+    const char* body = nullptr;
+    size_t body_len = 0;
+    if (iarg_options_table >= 0)
+    {
+        lua_pushvalue(state, iarg_options_table);
+
+        lua_pushliteral(state, "user_agent");
+        lua_rawget(state, -2);
+        user_agent = optstring(state, -1, nullptr);
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "no_cache");
+        lua_rawget(state, -2);
+        no_cache = lua_toboolean(state, -1);
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "headers");
+        lua_rawget(state, -2);
+        if (lua_istable(state, -1))
+        {
+            lua_pushnil(state);
+            while (lua_next(state, -2))
+            {
+                const char* key = nullptr;
+                const char* value = nullptr;
+                if (lua_isstring(state, -2))
+                    key = lua_tostring(state, -2);
+                if (lua_isstring(state, -1))
+                    value = lua_tostring(state, -1);
+                if (key && value)
+                {
+                    key_value_pair kv;
+                    kv.key = key;
+                    kv.value = value;
+                    headers.emplace_back(std::move(kv));
+                }
+                lua_pop(state, 1);
+            }
+        }
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "body");
+        lua_rawget(state, -2);
+        if (lua_isstring(state, -1))
+            body = lua_tolstring(state, -1, &body_len);
+        lua_pop(state, 1);
+    }
 
     static uint32 s_counter = 0;
     str_moveable key;
-    key.format("httpget||%08x", ++s_counter);
+    key.format("httprequest||%08x", ++s_counter);
 
     str<> src;
     get_lua_srcinfo(state, src);
 
-    dbg_ignore_scope(snapshot, "async http get");
+    dbg_ignore_scope(snapshot, "async http request");
 
     // Push an asyncyield object.
     async_yield_lua* asyncyield = nullptr;
     if (ismain)
-    {
         lua_pushnil(state);
-    }
-    else
-    {
-        asyncyield = async_yield_lua::make_new(state, "http.get");
-        if (!asyncyield)
-            return 0;
-    }
+    else if ((asyncyield = async_yield_lua::make_new(state, "http.request")) == nullptr)
+        return 0;
 
     // Push a task object.
-    auto task = std::make_shared<httpget_async_lua_task>(key.c_str(), src.c_str(), asyncyield, url, user_agent, no_cache);
+    auto task = std::make_shared<httprequest_async_lua_task>(key.c_str(), src.c_str(), asyncyield, method, url, user_agent, no_cache, headers, body, body_len);
     if (!task)
         return 0;
-    httpget_lua* request = httpget_lua::make_new(state, task);
+    httprequest_lua* request = httprequest_lua::make_new(state, task);
     if (!request)
         return 0;
     {
@@ -658,7 +717,7 @@ void http_lua_initialise(lua_state& lua)
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {
-        { "_get_internal",      &http_get_internal },
+        { "_request_internal",      &http_request_internal },
     };
 
     lua_State* state = lua.get_state();

@@ -5,19 +5,46 @@
 http = http or {}
 
 --------------------------------------------------------------------------------
---- -name:  http.get
---- -var:   1.9.0
-http.get = function (url, options)
-    local user_agent = options and options.user_agent or nil
-    local no_cache = options and options.no_cache or false
-    local ay, req = http._get_internal(url, user_agent, no_cache)
--- TODO:  Error reporting.
-    if req then
+--- -name:  http.request
+--- -ver:   1.9.0
+--- -arg:   method:string
+--- -arg:   url:string
+--- -arg:   [options:table]
+--- -ret:   string, table
+--- TBD: Purpose and usage.
+---
+--- <span class="arg">options</span> is optional.  It may contain any of the
+--- following fields:
+--- <ul>
+--- <li><code>user_agent</code> = The user agent string.
+--- <li><code>no_cache</code> = The user agent string.
+--- <li><code>headers</code> = A table of key=value pairs describing
+--- additional request headers.
+--- <li><code>body</code> = Optional body content for the request.
+--- </ul>
+---
+--- TBD: Describe the return values.
+---
+--- The response info table may include any of the following fields:
+--- <ul>
+--- <li><code>win32_error</code> = A WIN32 error code, if any.
+--- <li><code>win32_error_text</code> = A WIN32 error message string, if any.
+--- <li><code>status_code</code> = The HTTP status code (e.g. 200), if any.
+--- <li><code>status_text</code> = The HTTP status text (e.g. "OK"), if any.
+--- <li><code>raw_headers</code> = Raw headers from the response, if any.
+--- <li><code>content_type</code> = Content type in the response, if any.
+--- <li><code>content_length</code> = Content length, in bytes, if any.
+--- <li><code>completed_read</code> = True indicates that the response content
+--- was fully read.
+--- </ul>
+http.request = function (method, url, options)
+    local ay, response = http._request_internal(method, url, options)
+    if response then
         if ay then
             while not ay:ready() do
                 coroutine.yield()
             end
         end
-        return req:result()
+        return response:result()
     end
 end

@@ -154,6 +154,12 @@ local function get_bin_dir()
 end
 
 local function get_local_tag()
+    if clink.DEBUG then
+        local ver = os.getenv("DEBUG_UPDATE_VERSION")
+        if ver and ver:match("^v%d+%.%d+.%d+$") then
+            return ver
+        end
+    end
     return "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
 end
 
@@ -482,7 +488,7 @@ local function internal_check_for_update(force)
         result = string.format('"tag_name": "v%s", "browser_download_url": "%s"', ver, mock)
     else
         local options = { user_agent=user_agent, no_cache=true }
-        result, response_info = http.get(api_url, options)
+        result, response_info = http.request("GET", api_url, options)
         if not result then
             log_https_get(api_url, result, response_info)
             return nil, log_info("unable to query github api.")
@@ -538,7 +544,7 @@ local function internal_check_for_update(force)
         f:close()
     else
         local options = { user_agent=user_agent }
-        content, response_info = http.get(latest_update_file, options)
+        content, response_info = http.request("GET", latest_update_file, options)
         if not content or (response_info and (response_info.win32_error or response_info.status_code ~= 200 or not response_info.completed_read)) then -- luacheck: no max line length
             log_https_get(latest_update_file, nil, response_info)
             return nil, log_info("failed to download " .. install_type .. " file.")
