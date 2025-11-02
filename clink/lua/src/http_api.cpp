@@ -18,7 +18,6 @@
 #include <winhttp.h>
 #include <wininet.h>
 #include <VersionHelpers.h>
-#include <mutex>
 
 extern "C" {
 #include <lstate.h>
@@ -38,6 +37,7 @@ public:
     BOOL                WinHttpAddRequestHeaders(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwModifiers);
     BOOL                WinHttpSendRequest(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, DWORD dwTotalLength, DWORD_PTR dwContext);
     BOOL                WinHttpReceiveResponse(HINTERNET hRequest, LPVOID lpReserved);
+    BOOL                WinHttpQueryHeaders(HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex);
     BOOL                WinHttpQueryDataAvailable(HINTERNET hRequest, LPDWORD lpdwNumberOfBytesAvailable);
     BOOL                WinHttpReadData(HINTERNET hRequest, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead);
 private:
@@ -45,7 +45,7 @@ private:
     bool                m_ok = false;
     union
     {
-        FARPROC         proc[10];
+        FARPROC         proc[11];
         struct {
             HINTERNET (WINAPI* WinHttpOpen)(LPCWSTR pszAgentW, DWORD dwAccessType, LPCWSTR pszProxyW, LPCWSTR pszProxyBypassW, DWORD dwFlags);
             BOOL (WINAPI* WinHttpCloseHandle)(HINTERNET hInternet);
@@ -55,6 +55,7 @@ private:
             BOOL (WINAPI* WinHttpAddRequestHeaders)(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwModifiers);
             BOOL (WINAPI* WinHttpSendRequest)(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, DWORD dwTotalLength, DWORD_PTR dwContext);
             BOOL (WINAPI* WinHttpReceiveResponse)(HINTERNET hRequest, LPVOID lpReserved);
+            BOOL (WINAPI* WinHttpQueryHeaders)(HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex);
             BOOL (WINAPI* WinHttpQueryDataAvailable)(HINTERNET hRequest, LPDWORD lpdwNumberOfBytesAvailable);
             BOOL (WINAPI* WinHttpReadData)(HINTERNET hRequest, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead);
         };
@@ -85,6 +86,7 @@ bool delay_load_winhttp::init()
             m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpAddRequestHeaders");
             m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpSendRequest");
             m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpReceiveResponse");
+            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpQueryHeaders");
             m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpQueryDataAvailable");
             m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpReadData");
             assert(_countof(m_procs.proc) == c);
@@ -163,6 +165,13 @@ BOOL delay_load_winhttp::WinHttpReceiveResponse(HINTERNET hRequest, LPVOID lpRes
     return m_procs.WinHttpReceiveResponse(hRequest, lpReserved);
 }
 
+BOOL delay_load_winhttp::WinHttpQueryHeaders(HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+{
+    if (!init())
+        return false;
+    return m_procs.WinHttpQueryHeaders(hRequest, dwInfoLevel, pwszName, lpBuffer, lpdwBufferLength, lpdwIndex);
+}
+
 BOOL delay_load_winhttp::WinHttpQueryDataAvailable(HINTERNET hRequest, LPDWORD lpdwNumberOfBytesAvailable)
 {
     if (!init())
@@ -227,6 +236,76 @@ static int32 lua_osstringresult(lua_State *state, const char* result, bool stat,
 
 
 //------------------------------------------------------------------------------
+struct response_info
+{
+    void init(HINTERNET hRequest);
+
+    DWORD win32_error = 0;
+    DWORD status_code = 0;
+    str_moveable status_text;
+    str_moveable raw_headers;
+    str_moveable content_type;
+    size_t content_length = 0;
+    bool completed_read = false;
+
+private:
+    bool query(HINTERNET hRequest, DWORD dwInfoLevel, str_base& out);
+};
+
+//------------------------------------------------------------------------------
+void response_info::init(HINTERNET hRequest)
+{
+    str<> tmp;
+
+    if (query(hRequest, WINHTTP_QUERY_STATUS_CODE, tmp))
+        status_code = atoi(tmp.c_str());
+
+    query(hRequest, WINHTTP_QUERY_STATUS_TEXT, status_text);
+    query(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, raw_headers);
+    query(hRequest, WINHTTP_QUERY_CONTENT_TYPE, content_type);
+
+    if (query(hRequest, WINHTTP_QUERY_CONTENT_LENGTH, tmp))
+        content_length = atoi(tmp.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool response_info::query(HINTERNET hRequest, DWORD dwInfoLevel, str_base& out)
+{
+    out.clear();
+
+    DWORD dwSize = 0;
+    s_winhttp.WinHttpQueryHeaders(hRequest, dwInfoLevel, WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_NO_OUTPUT_BUFFER, &dwSize, WINHTTP_NO_HEADER_INDEX);
+    switch (GetLastError())
+    {
+    case ERROR_SUCCESS:
+        return true;
+    case ERROR_INSUFFICIENT_BUFFER:
+        break;
+    default:
+        assert(false);
+        return false;
+    }
+
+    wstr<> wtext;
+    if (!wtext.reserve(dwSize))
+    {
+        assert(false);
+        return false;
+    }
+
+    if (!s_winhttp.WinHttpQueryHeaders(hRequest, dwInfoLevel, WINHTTP_HEADER_NAME_BY_INDEX, wtext.data(), &dwSize, WINHTTP_NO_HEADER_INDEX))
+    {
+        assert(false);
+        return false;
+    }
+
+    out = wtext.c_str();
+    return true;
+}
+
+
+
+//------------------------------------------------------------------------------
 class httpget_async_lua_task : public async_lua_task
 {
 public:
@@ -254,6 +333,11 @@ public:
         return true;
     }
 
+    const ::response_info& response_info() const
+    {
+        return m_response_info;
+    }
+
     bool wait(uint32 timeout)
     {
         assert(m_ismain);
@@ -269,16 +353,16 @@ private:
     const str_moveable m_user_agent;
     const bool m_nocache;
     const bool m_ismain;
-    std::recursive_mutex m_mutex;
+
     char* m_result_buffer = nullptr;
     size_t m_result_size = 0;
+    ::response_info m_response_info;
 };
 
 //------------------------------------------------------------------------------
 void httpget_async_lua_task::do_work()
 {
 // TODO:  What if lua_state is recycled while this task thread is running?
-// TODO:  track error status and return error info.
 
     assert(!m_result_buffer);
     assert(!m_result_size);
@@ -297,6 +381,7 @@ void httpget_async_lua_task::do_work()
     wstr_moveable wurl(m_url.c_str());
     if (!s_winhttp.WinHttpCrackUrl(wurl.c_str(), wurl.length(), ICU_DECODE, &comp))
     {
+        m_response_info.win32_error = GetLastError();
 final_ret:
         wake_asyncyield();
         return;
@@ -307,11 +392,15 @@ final_ret:
     const DWORD access_type = IsWindows8OrGreater() ? WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY : WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     HINTERNET hSession = s_winhttp.WinHttpOpen(wuser_agent, access_type, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession)
+    {
+        m_response_info.win32_error = GetLastError();
         goto final_ret;
+    }
 
     HINTERNET hConnect = s_winhttp.WinHttpConnect(hSession, comp.lpszHostName, comp.nPort, 0);
     if (!hConnect)
     {
+        m_response_info.win32_error = GetLastError();
 close_session:
         s_winhttp.WinHttpCloseHandle(hSession);
         goto final_ret;
@@ -324,6 +413,7 @@ close_session:
     HINTERNET hRequest = s_winhttp.WinHttpOpenRequest(hConnect, L"GET", comp.lpszUrlPath, nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
     if (!hRequest)
     {
+        m_response_info.win32_error = GetLastError();
 close_connect:
         s_winhttp.WinHttpCloseHandle(hConnect);
         goto close_session;
@@ -332,6 +422,7 @@ close_connect:
     BOOL bResults = s_winhttp.WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
     if (!bResults)
     {
+        m_response_info.win32_error = GetLastError();
 close_request:
         s_winhttp.WinHttpCloseHandle(hRequest);
         goto close_connect;
@@ -339,7 +430,12 @@ close_request:
 
     bResults = s_winhttp.WinHttpReceiveResponse(hRequest, NULL);
     if (!bResults)
+    {
+        m_response_info.win32_error = GetLastError();
         goto close_request;
+    }
+
+    m_response_info.init(hRequest);
 
     constexpr uint32 c_block_size = 4096;
     std::vector<char*> blocks;
@@ -357,14 +453,20 @@ close_request:
 
         DWORD dwDownloaded = 0;
         if (!s_winhttp.WinHttpReadData(hRequest, block, available, &dwDownloaded))
+        {
+            m_response_info.win32_error = GetLastError();
             goto close_request;
+        }
 
         // Finished reading all data.
         if (!dwDownloaded)
         {
             m_result_buffer = static_cast<char*>(malloc(m_result_size));
             if (!m_result_buffer)
+            {
+                m_response_info.win32_error = ERROR_NOT_ENOUGH_MEMORY;
                 goto close_request;
+            }
 
             char* write = m_result_buffer;
             size_t remaining = m_result_size;
@@ -375,7 +477,7 @@ close_request:
                 write += to_copy;
                 remaining -= to_copy;
             }
-// TODO:  mark successful.
+            m_response_info.completed_read = true;
             goto close_request;
         }
 
@@ -410,13 +512,74 @@ int32 httpget_lua::result(lua_State* state)
     if (!m_task)
         return 0;
 
+    // Return the response body.
     char* data = nullptr;
     size_t length = 0;
-    if (!m_task->result(data, length) || !data)
-        return 0;
+    if (m_task->result(data, length))
+        lua_pushlstring(state, data, length);
+    else
+        lua_pushnil(state);
 
-    lua_pushlstring(state, data, length);
-    return 1;
+    // Return a table with status details.
+    const response_info& info = m_task->response_info();
+    lua_createtable(state, 0, 5);
+    {
+        if (info.win32_error)
+        {
+            lua_pushliteral(state, "win32_error");
+            lua_pushinteger(state, info.win32_error);
+            lua_rawset(state, -3);
+
+            wstr_moveable wmsg;
+            wmsg.reserve(4096);
+            const DWORD FMW_flags = FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS;
+            const DWORD cch = FormatMessageW(FMW_flags, 0, info.win32_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wmsg.data(), wmsg.size(), nullptr);
+            lua_pushliteral(state, "win32_error_text");
+            if (cch && cch < wmsg.size())
+            {
+                str_moveable msg(wmsg.c_str());
+                msg.trim();
+                lua_pushlstring(state, msg.c_str(), msg.length());
+            }
+            else
+            {
+                lua_pushliteral(state, "Unknown error.");
+            }
+            lua_rawset(state, -3);
+        }
+
+        if (info.status_code)
+        {
+            lua_pushliteral(state, "status_code");
+            lua_pushinteger(state, info.status_code);
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "status_text");
+            lua_pushlstring(state, info.status_text.c_str(), info.status_text.length());
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "raw_headers");
+            lua_pushlstring(state, info.raw_headers.c_str(), info.raw_headers.length());
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "content_type");
+            lua_pushlstring(state, info.content_type.c_str(), info.content_type.length());
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "content_length");
+            lua_pushinteger(state, info.content_length);
+            lua_rawset(state, -3);
+        }
+
+        if (info.completed_read)
+        {
+            lua_pushliteral(state, "completed_read");
+            lua_pushboolean(state, info.completed_read);
+            lua_rawset(state, -3);
+        }
+    }
+
+    return 2;
 }
 
 //------------------------------------------------------------------------------
