@@ -369,10 +369,13 @@ Section "!un.Application files" section_un_app_files
     ; Delete the installation directory and root directory if it's empty.
     ;
     Delete /REBOOTOK $INSTDIR\clink*
+    Delete $INSTDIR\CaskaydiaCoveNerdFontMono-Regular-Subset.woff2
     Delete $INSTDIR\CHANGES
     Delete $INSTDIR\LICENSE
     Delete $INSTDIR\default_settings
     Delete $INSTDIR\default_inputrc
+    Delete $INSTDIR\_default_settings
+    Delete $INSTDIR\_default_inputrc
     Delete "$INSTDIR\themes\4-bit Enhanced Defaults.clinktheme"
     Delete "$INSTDIR\themes\Dracula.clinktheme"
     Delete "$INSTDIR\themes\Enhanced Defaults.clinktheme"
