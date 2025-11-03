@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).
 
 ## Normal Priority
 - Add Lua APIs for:
