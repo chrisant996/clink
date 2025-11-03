@@ -744,6 +744,7 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define MATCH_TYPE_HIDDEN		0x0040
 #define MATCH_TYPE_READONLY		0x0080
 #define MATCH_TYPE_SYSTEM		0x0100
+#define MATCH_TYPE_FROMHISTORY		0x8000
 #define IS_MATCH_TYPE_NONE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
 #define IS_MATCH_TYPE_WORD(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
 #define IS_MATCH_TYPE_ARG(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ARG)
@@ -756,6 +757,7 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define IS_MATCH_TYPE_HIDDEN(x)		(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
 #define IS_MATCH_TYPE_READONLY(x)	(((x) & MATCH_TYPE_READONLY) == MATCH_TYPE_READONLY)
 #define IS_MATCH_TYPE_SYSTEM(x)		(((x) & MATCH_TYPE_SYSTEM) == MATCH_TYPE_SYSTEM)
+#define IS_MATCH_TYPE_FROMHISTORY(x)	(((x) & MATCH_TYPE_FROMHISTORY) == MATCH_TYPE_FROMHISTORY)
 #define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \
 					 ((x) & MATCH_TYPE_MASK) <= MATCH_TYPE_LINK)
 extern rl_iccpfunc_t *rl_lookup_match_type;

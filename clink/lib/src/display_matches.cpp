@@ -286,6 +286,9 @@ static void append_selection_color(void)
 static int32
 path_isdir(match_type type, const char *filename)
 {
+    if (is_match_type_fromhistory(type))
+        return false;
+
     if (!is_zero(type) && !is_match_type(type, match_type::none))
         return is_match_type(type, match_type::dir);
 

@@ -161,7 +161,7 @@ static bool is_dir_match(const wstr_base& match, match_type type)
 {
     if (is_match_type(type, match_type::dir))
         return true;
-    if (!is_match_type(type, match_type::none))
+    if (!is_match_type(type, match_type::none) || is_match_type_fromhistory(type))
         return false;
     if (match.empty())
         return false;

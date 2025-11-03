@@ -1547,7 +1547,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 /* begin_clink_change */
 	    //if (_rl_complete_mark_directories && path_isdir (s))
 	    if (_rl_complete_mark_directories &&
-		((!match_type || IS_MATCH_TYPE_NONE (match_type)) ? path_isdir (s) : IS_MATCH_TYPE_DIR (match_type)))
+		((!match_type || (IS_MATCH_TYPE_NONE (match_type) && !IS_MATCH_TYPE_FROMHISTORY (match_type))) ? path_isdir (s) : IS_MATCH_TYPE_DIR (match_type)))
 /* end_clink_change */
 	      extension_char = rl_preferred_path_separator;
 
