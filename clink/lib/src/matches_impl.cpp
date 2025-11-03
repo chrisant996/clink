@@ -95,8 +95,11 @@ match_type to_match_type(DWORD attr, const char* path, bool symlink)
     static_assert(int32(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
     static_assert(int32(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
     static_assert(int32(match_type::system) == MATCH_TYPE_SYSTEM, "match_type enum must match readline constants");
+    static_assert(int32(match_type::fromhistory) == MATCH_TYPE_FROMHISTORY, "match_type enum must match readline constants");
 
     match_type type;
+
+    assert(attr != INVALID_FILE_ATTRIBUTES);
 
     if (attr & FILE_ATTRIBUTE_DIRECTORY)
         type = match_type::dir;
@@ -1116,8 +1119,13 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     char* sep = rl_last_path_separator(match);
     bool ends_with_sep = (sep && !sep[1]);
 
-    if (is_match_type(desc.type, match_type::none) && ends_with_sep)
+    if (ends_with_sep &&
+        is_match_type(desc.type, match_type::none) &&
+        !is_match_type_fromhistory(type))
+    {
+        type &= ~match_type::mask;
         type |= match_type::dir;
+    }
 
     // Slash translation happens only for dir, file, and none match types.  And
     // only when `clink.slash_translation` is enabled.  already_normalized means
@@ -1129,7 +1137,8 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
                             (is_match_type(type, match_type::dir) ||
                              is_match_type(type, match_type::file) ||
                              (is_match_type(type, match_type::none) &&
-                              m_filename_completion_desired.get())));
+                              m_filename_completion_desired.get() &&
+                              is_match_type_fromhistory(type))));
 
     str<280> tmp;
     const bool is_none = is_match_type(type, match_type::none);
@@ -1235,27 +1244,29 @@ void matches_impl::done_building()
 
         for (uint32 i = m_count; i--;)
         {
-            if (is_match_type(m_infos[i].type, match_type::none))
+            auto& info = m_infos[i];
+            if (is_match_type(info.type, match_type::none) &&
+                !is_match_type_fromhistory(info.type))
             {
                 // If matches are relative, but not relative to the current
                 // directory, then get_path_type() might yield unexpected
                 // results.  But that will interfere with many things, so no
                 // effort is invested here to compensate.
-                match_lookup lookup = { m_infos[i].match, m_infos[i].type };
+                match_lookup lookup = { info.match, info.type };
 
                 // Remove it from the dup map before modifying it.
                 m_dedup->erase(lookup);
 
                 // Apply backward compatibility logic to the match type.
                 lookup.type = backcompat_match_type(lookup.match);
-                m_infos[i].type = lookup.type;
+                info.type = lookup.type;
 
                 // If it's a directory, add a trailing path separator.
                 if (is_match_type(lookup.type, match_type::dir))
                 {
-                    const size_t len = strlen(m_infos[i].match);
-                    const_cast<char*>(m_infos[i].match)[len] = sep;
-                    assert(m_infos[i].match[len + 1] == '\0');
+                    const size_t len = strlen(info.match);
+                    const_cast<char*>(info.match)[len] = sep;
+                    assert(info.match[len + 1] == '\0');
                 }
 
                 // Check if it has become a duplicate.

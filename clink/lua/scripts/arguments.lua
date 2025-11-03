@@ -951,6 +951,10 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
     if self._fromhistory_matcher then
         if self._fromhistory_matcher == matcher and self._fromhistory_argindex == arg_index then
             if clink.co_state._argmatcher_fromhistory.builder then
+                local thiswordinfo = line_state:getwordinfo(word_index)
+                if thiswordinfo.quoted then
+                    word = '"' .. word .. '"'
+                end
                 clink.co_state._argmatcher_fromhistory.builder:addmatch(word, "*")
             end
         end

@@ -77,6 +77,13 @@ inline bool is_match_type_hidden(match_type type)
 }
 
 //------------------------------------------------------------------------------
+inline bool is_match_type_readonly(match_type type)
+{
+    type &= match_type::readonly;
+    return type == match_type::readonly;
+}
+
+//------------------------------------------------------------------------------
 inline bool is_match_type_system(match_type type)
 {
     type &= match_type::system;
@@ -84,10 +91,10 @@ inline bool is_match_type_system(match_type type)
 }
 
 //------------------------------------------------------------------------------
-inline bool is_match_type_readonly(match_type type)
+inline bool is_match_type_fromhistory(match_type type)
 {
-    type &= match_type::readonly;
-    return type == match_type::readonly;
+    type &= match_type::fromhistory;
+    return type == match_type::fromhistory;
 }
 
 //------------------------------------------------------------------------------
