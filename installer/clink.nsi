@@ -353,6 +353,7 @@ Section "!un.Application files" section_un_app_files
     ; Delete the installation directory and root directory if it's empty.
     ;
     Delete /REBOOTOK $INSTDIR\clink*
+    Delete /REBOOTOK $INSTDIR\~clink*
     Delete $INSTDIR\CaskaydiaCoveNerdFontMono-Regular-Subset.woff2
     Delete $INSTDIR\CHANGES
     Delete $INSTDIR\LICENSE
