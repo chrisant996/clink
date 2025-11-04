@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.8.9
+
+- Fixed [#813](https://github.com/chrisant996/clink/issues/813); potential for crashes when a popup list is filtered to be empty.
+
 #### v1.8.8
 
 - Changed the installer to always install the icon files.
