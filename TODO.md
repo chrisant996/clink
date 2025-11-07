@@ -17,6 +17,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
+  - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
+  - Let the caller use a "magic" character in the match to indicate where to set the cursor?
 - Add Lua APIs for:
   - Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
   - Unzip.  So that update.lua can stop using powershell for unzipping.  Use IShellDispatch.
