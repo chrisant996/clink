@@ -1203,7 +1203,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       --}}}
 
     elseif command == "out" then
-      --{{{  step N lines (out of functions)
+      --{{{  step N levels (out of functions)
       local N = tonumber(args) or 1
       step_into  = false
       step_over  = true
@@ -1642,6 +1642,16 @@ end
 --- it will break into the debugger even if the <code>poff</code> debugger
 --- command has been used to turn off the pause command.
 
+local function get_stack_depth(level)
+  local depth = 0
+  local i = level or 1
+  while debug.getinfo(i, "") do
+    depth = depth + 1
+    i = i + 1
+  end
+  return depth
+end
+
 function pause(x,l,f)
   if not f and pause_off then return end       --being told to ignore pauses
   pausemsg = x or 'pause'
@@ -1666,7 +1676,7 @@ function pause(x,l,f)
     --set to stop when get out of pause()
     trace_level[current_thread] = 0
     step_level [current_thread] = 0
-    stack_level[current_thread] = 1
+    stack_level[current_thread] = get_stack_depth()
     step_lines = lines + step_adjust_start
     step_into  = true
     started    = true

@@ -16,7 +16,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - **Frontrunner, best compromise?** Maybe just have a special setting that gets stored in a regkey instead of in the `clink_settings` file, and the regkey can control whether to overwrite `default_settings`?  So that someone can turn off the overwriting if they really really want to manually control `default_settings` in the Clink application files directory?
 
 ## Normal Priority
-- `out` in the Lua debugger doesn't work correctly; it just steps over the current line.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
 - Add Lua APIs for:
   - Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
