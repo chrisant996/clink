@@ -91,6 +91,7 @@ public:
 #endif
     void                maybe_collect_words();
     bool                notify_matches_ready(int32 generation_id, matches* matches);
+    matches*            maybe_regenerate_matches(const char* needle, display_filter_flags flags);
     bool                call_lua_rl_global_function(const char* func_name);
     uint32              collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const;
     DWORD               get_input_hint_timeout() const;
@@ -135,6 +136,7 @@ private:
     uint32              collect_words(words& words, matches_impl* matches, collect_words_mode mode, command_line_states& command_line_states);
     void                before_display_readline();
     void                maybe_send_oncommand_event();
+    void                notify_matches_changed(const char* needle);
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal(bool force=false);
     bool                update_input();

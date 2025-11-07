@@ -188,60 +188,10 @@ matches* get_mutable_matches(bool nosort)
 // WARNING:  This calls Lua using the MAIN coroutine.
 matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags)
 {
-    if (!s_editor || s_editor->m_matches.is_regen_blocked())
+    if (!s_editor)
         return nullptr;
 
-    // Check if a match display filter is active.
-    matches_impl& regen = s_editor->m_regen_matches;
-    bool old_filtering = false;
-    if (!regen.match_display_filter(nullptr, nullptr, nullptr, flags, &old_filtering))
-        return nullptr;
-
-#ifdef DEBUG
-    int32 debug_filter = dbg_get_env_int("DEBUG_FILTER");
-    if (debug_filter) puts("REGENERATE_MATCHES");
-#endif
-
-    command_line_states command_line_states;
-    std::vector<word> words;
-    uint32 command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, command_line_states);
-
-    match_pipeline pipeline(regen);
-    pipeline.reset();
-
-#ifdef DEBUG
-    if (debug_filter) puts("-- GENERATE");
-#endif
-
-    const auto linestates = command_line_states.get_linestates(s_editor->m_buffer);
-    pipeline.generate(linestates, s_editor->m_generator, old_filtering);
-
-#ifdef DEBUG
-    if (debug_filter) puts("-- SELECT");
-#endif
-
-    pipeline.select(needle);
-    pipeline.sort();
-
-#ifdef DEBUG
-    if (debug_filter)
-    {
-        matches_iter iter = regen.get_iter();
-        while (iter.next())
-            printf("match '%s'\n", iter.get_match());
-        puts("-- DONE");
-    }
-#endif
-
-    if (old_filtering)
-    {
-        // Using old_filtering lets deprecated generators filter based on the
-        // input needle.  That poisons the collected matches for any other use,
-        // so the matches must be reset.
-        reset_generate_matches();
-    }
-
-    return &regen;
+    return s_editor->maybe_regenerate_matches(needle, flags);
 }
 
 //------------------------------------------------------------------------------

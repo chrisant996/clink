@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- **Double-running match generators?!**  Because `update_matches()` was the only thing that updated `s_needle` (via `on_matches_changed()`), so `display_matches()` wasn't able to filter correctly when only `maybe_regenerate_matches()` was called.  Seen when `git checkout on``Alt-=` then `Bkspc` then `Alt-=` again.
 - The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).
 
 ## Normal Priority
