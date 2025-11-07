@@ -4,6 +4,8 @@
 
 #### v1.8.9
 
+- Fixed match display filtering sometimes running match generators twice.
+- Fixed the `out` command in the Lua debugger.
 - Fixed [#813](https://github.com/chrisant996/clink/issues/813); potential for crashes when a popup list is filtered to be empty.
 
 #### v1.8.8
