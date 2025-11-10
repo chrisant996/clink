@@ -21,8 +21,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
   - And strip the magic character and store the index as an integer in the match entry?  Growing the size of every match entry, even if nothing uses the feature?
 - Add Lua APIs for:
-  - Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
-  - Unzip.  So that update.lua can stop using powershell for unzipping.  Use IShellDispatch.
+  - [x] Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
+  - [ ] Unzip.  So that update.lua can stop using powershell for unzipping.  Use IShellDispatch.
 - Cannot detect Windows Terminal when conhost automatically launches Windows Terminal (the "let Windows decide" setting).
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
