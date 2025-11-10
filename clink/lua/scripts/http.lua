@@ -11,21 +11,30 @@ http = http or {}
 --- -arg:   url:string
 --- -arg:   [options:table]
 --- -ret:   string, table
---- TBD: Purpose and usage.
+--- Issues a web request and returns the response body and a table with
+--- information about the response (including the status code, which indicates
+--- success or failure).
 ---
---- <span class="arg">options</span> is optional.  It may contain any of the
---- following fields:
+--- When called from a coroutine this yields until the request is complete,
+--- otherwise it is a blocking call.
+---
+--- The <span class="arg">method</span> argument is the request type
+--- (<code>"GET"</code>, <code>"POST"</code>, etc).
+---
+--- The <span class="arg">url</span> argument is the URL to call.
+---
+--- The <span class="arg">options</span> argument is optional.  It may be a
+--- table containing any of the following fields:
 --- <ul>
 --- <li><code>user_agent</code> = The user agent string.
---- <li><code>no_cache</code> = The user agent string.
+--- <li><code>no_cache</code> = A boolean value indicating whether to bypass
+--- caching.
 --- <li><code>headers</code> = A table of key=value pairs describing
 --- additional request headers.
 --- <li><code>body</code> = Optional body content for the request.
 --- </ul>
 ---
---- TBD: Describe the return values.
----
---- The response info table may include any of the following fields:
+--- The returned response info table may include any of the following fields:
 --- <ul>
 --- <li><code>win32_error</code> = A WIN32 error code, if any.
 --- <li><code>win32_error_text</code> = A WIN32 error message string, if any.
