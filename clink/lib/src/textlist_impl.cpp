@@ -848,6 +848,7 @@ navigated:
             m_input_clears_needle = false;
             m_override_title.clear();
         }
+        m_index = max(0, m_index);
         update_display();
         break;
     case bind_id_textlist_down:
@@ -981,6 +982,9 @@ find:
 
     case bind_id_textlist_delete:
         {
+            if (m_index < 0 || m_index >= m_count)
+                break;
+
             // Remove the entry.
             const int32 original_index = get_original_index(m_index);
             const int32 external_index = m_infos ? m_infos[original_index].index : original_index;
@@ -1494,7 +1498,7 @@ void textlist_impl::update_top()
             if (m_top > max(0, m_index - scroll_ofs))
                 set_top(max(0, m_index - scroll_ofs));
             else if (m_top < min(last_row, m_index + scroll_ofs - visible_rows + 1))
-                set_top(min(last_row, m_index + scroll_ofs - visible_rows + 1));
+                set_top(max(0, min(last_row, m_index + scroll_ofs - visible_rows + 1)));
         }
     }
 

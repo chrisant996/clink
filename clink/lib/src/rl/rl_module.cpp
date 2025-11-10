@@ -1531,13 +1531,16 @@ static char** alternative_matches(const char* text, int32 start, int32 end)
     // fix would need to located further upstream.
     assert(!need_collect_words());
 
-    update_matches();
     const display_filter_flags flags = display_filter_flags::none;
     if (matches* regen = maybe_regenerate_matches(text, flags))
     {
         // It's ok to redirect s_matches here because s_matches is reset in
         // every rl_module::on_input() call.
         s_matches = regen;
+    }
+    else
+    {
+        update_matches();
     }
 
     // Special case for possible-completions with a tilde by itself:  return no

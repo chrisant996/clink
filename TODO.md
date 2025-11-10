@@ -8,8 +8,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).
+  - The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.
+  - The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.
+  - Maybe the updater can look up the installer regkey about whether "Use enhanced defaults" was chosen?  But that doesn't help for zip file installations that manually renamed `_default_settings`.
+  - Maybe the updater can compute checksums, and match against known published checksums, and automatically overwrite if `default_settings` matches any previously-released checksum?  But how to automate that safely and reliably...?  It would be very easy to mess that up.
+  - Maybe the updater can do a one-time upgrade that keys off of the existence of `default_settings` and then creates an `enhanced_defaults` placeholder file which makes Clink use built-in internal enhanced defaults?
+  - **Frontrunner, best compromise?** Maybe just have a special setting that gets stored in a regkey instead of in the `clink_settings` file, and the regkey can control whether to overwrite `default_settings`?  So that someone can turn off the overwriting if they really really want to manually control `default_settings` in the Clink application files directory?
 
 ## Normal Priority
+- Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
+  - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
+  - Let the caller use a "magic" character in the match to indicate where to set the cursor?
+  - And strip the magic character and store the index as an integer in the match entry?  Growing the size of every match entry, even if nothing uses the feature?
 - Add Lua APIs for:
   - Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
   - Unzip.  So that update.lua can stop using powershell for unzipping.  Use IShellDispatch.
