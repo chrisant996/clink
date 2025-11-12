@@ -23,10 +23,6 @@ local function concat_error(specific, general)
 end
 
 --------------------------------------------------------------------------------
-local powershell_exe
-local checked_prereqs
-local prereq_error
-
 local this_install_type
 local this_install_key
 local latest_cloud_tag
@@ -75,53 +71,6 @@ local function is_rhs_version_newer(lhs, rhs)
     else
         return false
     end
-end
-
-local function make_file_at_path(root, rhs)
-    if root and rhs then
-        if root ~= "" and rhs ~= "" then
-            local ret = path.join(root, rhs)
-            if os.isfile(ret) then
-                return '"' .. ret .. '"'
-            end
-        end
-    end
-end
-
-local function find_prereqs()
-    if not checked_prereqs then
-        local sysroot = os.getenv("systemroot")
-        powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
-        checked_prereqs = true
-
-        if not powershell_exe then
-            prereq_error = log_info("unable to find PowerShell v5.")
-        else
-            -- clink.execute() launches powershell without a console window,
-            -- which prevents PowerShell v4.0 on Windows 8.1 from altering the
-            -- host's window title.
-            local o = clink.execute('2>&1 ' .. powershell_exe .. ' -Command "Get-Host | Select-Object Version"')
-            if type(o) ~= "table" then
-                powershell_exe = nil
-            else
-                for _,line in ipairs(o) do
-                    local ver = line:match("^ *([0-9]+%.[0-9]+)")
-                    if not prereq_error and ver then
-                        if is_rhs_version_newer("v" .. ver, "v5.0") then
-                            powershell_exe = nil
-                            prereq_error = log_info("found PowerShell v" .. ver .. ".")
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if prereq_error then
-        return nil, prereq_error
-    end
-
-    return true
 end
 
 --------------------------------------------------------------------------------
@@ -190,27 +139,6 @@ local function get_installation_type()
 end
 
 --------------------------------------------------------------------------------
-local function collect_output(output, line)
-    local num = #output
-    if num < 25 then
-        table.insert(output, line)
-    elseif num == 25 then
-        table.insert(output, "...")
-    end
-end
-
-local function log_output(command, output)
-    log_info(command)
-    if #output > 0 then
-        log_info("output from command:")
-        for _,line in ipairs(output) do
-            log_info("    "..line)
-        end
-    else
-        log_info("no output from command.")
-    end
-end
-
 local function log_https_get(url, result, response_info)
     log_info("HTTPS GET failed")
     log_info(string.format("url: %s", url))
@@ -281,44 +209,17 @@ local function unzip(zip, out)
         return nil, log_info("output directory '" .. tostring(out) .. "' does not exist.")
     end
 
-    local success_tag = "CLINK-UNZIP-SUCCEEDED"
-    local failure_tag = "CLINK-UNZIP-FAILED"
-    -- Including the module name avoids problems if something overrides the Expand-Archive cmdlet.
-    -- For example, older versions of PowerShell Community Extensions did (https://github.com/pscx/pscx).
-    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Microsoft.PowerShell.Archive\Expand-Archive -Force -LiteralPath '%s' -DestinationPath '%s']], zip, out) -- luacheck: no max line length
-    local powershell_command = string.format([[try { %s ; echo '%s' } catch { echo '%s' ; echo $_.Exception.Message ; echo '' 'ALL ERRORS:' '' ; echo $error }]], expand_archive, success_tag, failure_tag) -- luacheck: no max line length
-    local cmd = string.format([[2>&1 %s -Command "%s"]], powershell_exe, powershell_command)
-    local f, err = io.popen(cmd)
-    if not f then
-        log_info(cmd)
-        return nil, err
-    end
-
-    local result
-    local output = {}
-    local saw_success
-    local saw_failure
-    for line in f:lines() do
-        local utf8 = unicode.fromcodepage(line)
-        line = utf8 or line
-        collect_output(output, line)
-        if line == success_tag then
-            saw_success = true
-        elseif line == failure_tag then
-            saw_failure = true
-        end
-    end
-    if saw_success and not saw_failure then
-        result = true
-    end
-    f:close()
-
+    local result, err = clink._shell_unzip(zip, out)
     if not result then
-        log_output(cmd, output)
         -- Delete the zip file; it might have been damaged, and re-downloading
         -- it might be necessary.
         os.remove(zip)
-        return nil
+        if err then
+            for e in string.explode(err, "\n") do
+                log_info(e)
+            end
+        end
+        return nil, log_info("unable to unzip '" .. zip .. "' to '" .. out .. "'.")
     end
 
     return result
@@ -467,11 +368,6 @@ local function internal_check_for_update(force)
     local user_agent = "Clink-Updater/1.0"
 
     -- Use github API to query latest release.
-    --
-    -- PowerShell needs -UseBasicParsing to prevent assuming the response is
-    -- HTML and attempting to use IE to parse the DOM and execute scripts, and
-    -- and needs to force TLS 1.2 because older versions of PowerShell default
-    -- to using TLS 1.0.
     if force then
         need_lf = true
         print("Checking latest version...")
@@ -624,11 +520,6 @@ local function is_update_ready(force)
     local update_dir, err = get_update_dir() -- luacheck: ignore 411
     if not update_dir then
         return nil, err
-    end
-
-    local ok, err = find_prereqs() -- luacheck: ignore 411
-    if not ok then
-        return nil, concat_error(err, log_info("autoupdate requires PowerShell v5."))
     end
 
     -- Download latest update file, or use update file that's already been
@@ -995,6 +886,19 @@ function clink.printreleasesurl(tag)
     tag = tag or "\n"
     print(tag .. "To view the release notes, visit the Releases page:")
     print(string.format("  https://github.com/%s/releases", github_repo))
+end
+
+--------------------------------------------------------------------------------
+function clink._shell_unzip(zip, dest)
+    local ay, obj = clink._unzip_internal(zip, dest)
+    if obj then
+        if ay then
+            while not ay:ready() do
+                coroutine.yield()
+            end
+        end
+        return obj:result()
+    end
 end
 
 --------------------------------------------------------------------------------

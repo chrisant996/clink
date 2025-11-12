@@ -231,9 +231,7 @@ int32 update(int32 argc, char** argv)
             puts("Options:");
             puts_help(help);
             printf(
-                "Checks for an updated version of Clink and installs it.\n"
-                "\n"
-                "The updater requires PowerShell.\n");
+                "Checks for an updated version of Clink and installs it.\n");
             return ret;
         }
     }

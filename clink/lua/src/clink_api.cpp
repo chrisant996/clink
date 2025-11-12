@@ -2500,6 +2500,154 @@ static int32 get_c_callstack(lua_State* state)
 }
 #endif
 
+
+
+//------------------------------------------------------------------------------
+class unzip_async_lua_task : public async_lua_task
+{
+public:
+    unzip_async_lua_task(const char* key, const char* src, async_yield_lua* asyncyield,
+                         const char* zip, const char* dest)
+    : async_lua_task(key, src)
+    , m_zip(zip)
+    , m_dest(dest)
+    , m_ismain(!asyncyield)
+    {
+        set_asyncyield(asyncyield);
+    }
+
+    ~unzip_async_lua_task()
+    {
+    }
+
+    const char* get_error_message() const
+    {
+        if (is_complete() && !m_err_msg.empty())
+            return m_err_msg.c_str();
+        return nullptr;
+    }
+
+    bool wait(uint32 timeout)
+    {
+        assert(m_ismain);
+        const DWORD waited = WaitForSingleObject(get_wait_handle(), timeout);
+        return waited == WAIT_OBJECT_0;
+    }
+
+protected:
+    void do_work() override;
+
+private:
+    const str_moveable m_zip;
+    const str_moveable m_dest;
+    str_moveable m_err_msg;
+    HRESULT m_hr = E_UNEXPECTED;
+    const bool m_ismain;
+};
+
+//------------------------------------------------------------------------------
+void unzip_async_lua_task::do_work()
+{
+// TODO:  What if lua_state is recycled while this task thread is running?
+
+    m_hr = os::shell_unzip(m_zip.c_str(), m_dest.c_str(), m_err_msg);
+    wake_asyncyield();
+}
+
+//------------------------------------------------------------------------------
+class unzip_lua
+    : public lua_bindable<unzip_lua>
+{
+public:
+                        unzip_lua(const std::shared_ptr<unzip_async_lua_task>& task) : m_task(task) {}
+                        ~unzip_lua() {}
+
+    int32               result(lua_State* state);
+
+private:
+    std::shared_ptr<unzip_async_lua_task> m_task;
+
+    friend class lua_bindable<unzip_lua>;
+    static const char* const c_name;
+    static const unzip_lua::method c_methods[];
+};
+
+//------------------------------------------------------------------------------
+int32 unzip_lua::result(lua_State* state)
+{
+    if (!m_task)
+        return 0;
+
+    if (!m_task->is_complete())
+        return 0;
+
+    if (m_task->get_error_message())
+    {
+        lua_pushnil(state);
+        lua_pushstring(state, m_task->get_error_message());
+        return 2;
+    }
+
+    lua_pushboolean(state, true);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+const char* const unzip_lua::c_name = "unzip_lua";
+const unzip_lua::method unzip_lua::c_methods[] = {
+    { "result",         &result },
+    {}
+};
+
+//------------------------------------------------------------------------------
+static int32 _unzip_internal(lua_State* state)
+{
+    const bool ismain = is_main_coroutine(state);
+    const char* const zip = checkstring(state, 1);
+    const char* const dest = checkstring(state, 2);
+    if (!zip || !*zip || !dest || !*dest)
+        return 0;
+
+    static uint32 s_counter = 0;
+    str_moveable key;
+    key.format("asyncunzip||%08x", ++s_counter);
+
+    str<> src;
+    get_lua_srcinfo(state, src);
+
+    dbg_ignore_scope(snapshot, "async unzip");
+
+    // Push an asyncyield object.
+    async_yield_lua* asyncyield = nullptr;
+    if (ismain)
+        lua_pushnil(state);
+    else if ((asyncyield = async_yield_lua::make_new(state, "unzip_internal")) == nullptr)
+        return 0;
+
+    // Push a task object.
+    auto task = std::make_shared<unzip_async_lua_task>(key.c_str(), src.c_str(), asyncyield, zip, dest);
+    if (!task)
+        return 0;
+    unzip_lua* request = unzip_lua::make_new(state, task);
+    if (!request)
+        return 0;
+    {
+        std::shared_ptr<async_lua_task> add(task); // Because MINGW can't handle it inline.
+        add_async_lua_task(add);
+    }
+
+    // If this is the main coroutine, wait for completion.
+    if (ismain)
+    {
+        if (!task->wait(INFINITE))
+            task->cancel();
+    }
+
+    return 2;
+}
+
+
+
 //------------------------------------------------------------------------------
 // This prototype was abandoned, but is kept in case parts of it might be useful
 // in the future.  The match generator layer is too dependent on CMD and threads
@@ -2662,6 +2810,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_release_updater_mutex", &release_updater_mutex },
         { 0,    "_get_scripts_path",      &get_scripts_path },
         { 1,    "_is_break_on_error",     &is_break_on_error },
+        { 1,    "_unzip_internal",        &_unzip_internal },
 #if defined(DEBUG) && defined(_MSC_VER)
 #if defined(USE_MEMORY_TRACKING)
         { 0,    "last_allocation_number", &last_allocation_number },

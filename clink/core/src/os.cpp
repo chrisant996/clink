@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <share.h>
 #include <Shellapi.h>
+#include <shlobj.h>
 #include <shlwapi.h>
 #ifdef CAPTURE_PUSHD_STACK
 #include <vector>
@@ -1002,7 +1003,10 @@ bool get_full_path_name(const char* _path, str_base& out, uint32 len)
 
     if (!len)
     {
+        const DWORD last_err = GetLastError();
         map_errno();
+        assert(last_err == GetLastError());
+        SetLastError(last_err);
         return false;
     }
 
@@ -1284,6 +1288,132 @@ HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDL
 
     CloseHandle(process_info.hThread);
     return process_info.hProcess;
+}
+
+//------------------------------------------------------------------------------
+HRESULT shell_unzip(const char* zip, const char* dest, str_base& err_msg)
+{
+    err_msg.clear();
+
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (FAILED(hr))
+    {
+final_ret:
+        return hr;
+    }
+
+    Folder* pZipFolder = nullptr;
+    Folder* pDestFolder = nullptr;
+    FolderItems* pItems = nullptr;
+    VARIANT vZip, vDest, vOpt, vItems;
+    VariantInit(&vZip);
+    VariantInit(&vDest);
+    VariantInit(&vOpt);
+    VariantInit(&vItems);
+
+    // Create Shell.Application COM object.
+    IShellDispatch* pShell = nullptr;
+    hr = CoCreateInstance(CLSID_Shell, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pShell));
+    if (FAILED(hr))
+    {
+uninit_all:
+        if (FAILED(hr))
+        {
+            str<> tmp;
+            format_error_message(hr, tmp);
+            tmp.trim();
+            if (tmp.length() && !ispunct(uint8(tmp.c_str()[tmp.length() - 1])))
+                tmp.concat(".", 1);
+            err_msg.trim();
+            err_msg.format("\n%s", tmp.c_str());
+        }
+        if (vZip.vt == VT_BSTR) SysFreeString(vZip.bstrVal);
+        if (vDest.vt == VT_BSTR) SysFreeString(vDest.bstrVal);
+        if (pItems) pItems->Release();
+        if (pZipFolder) pZipFolder->Release();
+        if (pDestFolder) pDestFolder->Release();
+        if (pShell) pShell->Release();
+        CoUninitialize();
+        goto final_ret;
+    }
+
+    str_moveable zip_full;
+    if (!get_full_path_name(zip, zip_full))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        err_msg.format("Unable to get full path name of '%s'.", zip);
+        goto uninit_all;
+    }
+
+    wstr_moveable wzip_full(zip_full.c_str());
+    vZip.vt = VT_BSTR;
+    vZip.bstrVal = SysAllocString(wzip_full.c_str());
+    hr = pShell->NameSpace(vZip, &pZipFolder);
+    if (FAILED(hr))
+    {
+        err_msg.format("Unable to access zip file '%s'.", zip);
+        goto uninit_all;
+    }
+    if (!pZipFolder)
+    {
+        hr = E_INVALIDARG;
+        err_msg.format("Invalid argument '%s'.", zip);
+        goto uninit_all;
+    }
+
+    str_moveable dest_full;
+    if (!get_full_path_name(dest, dest_full))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        err_msg.format("Unable to get full path name of '%s'.", dest);
+        goto uninit_all;
+    }
+
+    wstr_moveable wdest_full(dest_full.c_str());
+    vDest.vt = VT_BSTR;
+    vDest.bstrVal = SysAllocString(wdest_full.c_str());
+    if (FAILED(hr))
+        goto uninit_all;
+
+    hr = pShell->NameSpace(vDest, &pDestFolder);
+    if (FAILED(hr))
+    {
+        err_msg.format("Unable to access destination folder '%s'.", dest);
+        goto uninit_all;
+    }
+    if (!pDestFolder)
+    {
+        hr = E_INVALIDARG;
+        err_msg.format("Invalid argument '%s'.", dest);
+        goto uninit_all;
+    }
+
+    hr = pZipFolder->Items(&pItems);
+    if (FAILED(hr))
+    {
+no_items_error:
+        err_msg.format("Unable to get item list from zip file '%s'.", zip);
+        goto uninit_all;
+    }
+    if (!pItems)
+    {
+        hr = E_POINTER;
+        goto no_items_error;
+    }
+
+    vItems.vt = VT_DISPATCH;
+    vItems.pdispVal = pItems;
+    vOpt.vt = VT_I4;
+    vOpt.lVal = FOF_NO_UI;
+    hr = pDestFolder->CopyHere(vItems, vOpt);
+    if (FAILED(hr))
+    {
+        err_msg.format("Unable to extract files from '%s' to '%s'.", zip, dest);
+        goto uninit_all;
+    }
+
+    hr = S_OK;
+    goto uninit_all;
 }
 
 //------------------------------------------------------------------------------
