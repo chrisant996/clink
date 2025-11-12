@@ -7,13 +7,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).
-  - The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.
-  - The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.
-  - Maybe the updater can look up the installer regkey about whether "Use enhanced defaults" was chosen?  But that doesn't help for zip file installations that manually renamed `_default_settings`.
-  - Maybe the updater can compute checksums, and match against known published checksums, and automatically overwrite if `default_settings` matches any previously-released checksum?  But how to automate that safely and reliably...?  It would be very easy to mess that up.
-  - Maybe the updater can do a one-time upgrade that keys off of the existence of `default_settings` and then creates an `enhanced_defaults` placeholder file which makes Clink use built-in internal enhanced defaults?
-  - **Frontrunner, best compromise?** Maybe just have a special setting that gets stored in a regkey instead of in the `clink_settings` file, and the regkey can control whether to overwrite `default_settings`?  So that someone can turn off the overwriting if they really really want to manually control `default_settings` in the Clink application files directory?
+- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).  The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.  The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.
+  - [] Have a special setting stored in a regkey that controls "Use enhanced defaults".
+  - [] Hard-code the enhanced defaults, i.e. stop using `default_settings` and `default_inputrc` for them.
+  - [] Do a _one-time_ rename of existing `default_*` files; renaming preserves them in case the user had modified them manually.
+    - If the updater knew the old version being updated _from_, then it could use that as the trigger for the _one-time_ rename.
+    - Maybe a regkey _in the updater hive_ can track whether it's assessed/performed the rename operation?
+    - Since the updater doesn't have any way to run "new code" during the update, it seems like something will need to do the rename during "first run after update".  **_But then how can it run with elevation?_**
+      - Maybe rely on a second manual `clink update` to do follow-up work, which could allow a natural (but awkward) way to gain elevation?
+    - Check how many versions of `default_settings` and `default_inputrc` have existed; maybe it can _delete_ instead of rename if file hashes match the known versions.
 
 ## Normal Priority
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
