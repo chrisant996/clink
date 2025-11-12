@@ -23,7 +23,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add Lua APIs for:
   - [x] Web requests.  So that update.lua can stop using powershell `Invoke-WebRequest`.  Use WinHttp.
   - [x] Unzip.  So that update.lua can stop using powershell for unzipping.  Use IShellDispatch.
-  - [ ] **IMPORTANT!**  If the Lua state gets destroyed while the async task thread is still running for the web request or unzip, then heap corruption can happen.  Need to restructure the class dependencies a little bit.
+  - [x] **Confirmed:**  If the Lua state gets destroyed while the async task thread is still running for the web request or unzip, then the `lua_state` destructor shuts down the `task_manager` which detachs all async task threads from their Lua objects.
 - Cannot detect Windows Terminal when conhost automatically launches Windows Terminal (the "let Windows decide" setting).
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~

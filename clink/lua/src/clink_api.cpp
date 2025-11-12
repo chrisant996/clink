@@ -2548,8 +2548,6 @@ private:
 //------------------------------------------------------------------------------
 void unzip_async_lua_task::do_work()
 {
-// TODO:  What if lua_state is recycled while this task thread is running?
-
     m_hr = os::shell_unzip(m_zip.c_str(), m_dest.c_str(), m_err_msg);
     wake_asyncyield();
 }

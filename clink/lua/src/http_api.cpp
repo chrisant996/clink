@@ -348,8 +348,6 @@ private:
 //------------------------------------------------------------------------------
 void httprequest_async_lua_task::do_work()
 {
-// TODO:  What if lua_state is recycled while this task thread is running?
-
     assert(!m_result_buffer);
     assert(!m_result_size);
 
