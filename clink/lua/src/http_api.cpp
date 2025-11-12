@@ -19,10 +19,6 @@
 #include <wininet.h>
 #include <VersionHelpers.h>
 
-extern "C" {
-#include <lstate.h>
-}
-
 //------------------------------------------------------------------------------
 static class delay_load_winhttp
 {
@@ -604,9 +600,6 @@ const httprequest_lua::method httprequest_lua::c_methods[] = {
 };
 
 
-
-//------------------------------------------------------------------------------
-inline bool is_main_coroutine(lua_State* state) { return G(state)->mainthread == state; }
 
 //------------------------------------------------------------------------------
 static int32 http_request_internal(lua_State* state)

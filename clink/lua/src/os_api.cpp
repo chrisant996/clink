@@ -1512,9 +1512,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline bool is_main_coroutine(lua_State* state) { return G(state)->mainthread == state; }
-
-//------------------------------------------------------------------------------
 int32 enumshares_lua::iter_aux(lua_State* state)
 {
     int ctx = 0;

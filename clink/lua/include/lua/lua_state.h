@@ -157,10 +157,12 @@ void dump_lua_stack(lua_State* L, int32 pos=0);
 #endif
 
 //------------------------------------------------------------------------------
+bool is_main_coroutine(lua_State* state);
+
+//------------------------------------------------------------------------------
 #define LUA_ONLYONMAIN(L, name) \
     do { \
-        const bool ismain = (G(L)->mainthread == L); \
-        if (!ismain) \
+        if (!is_main_coroutine(L)) \
             return luaL_error(L, LUA_QS " may only be used in the main coroutine", name); \
     } while (false)
 

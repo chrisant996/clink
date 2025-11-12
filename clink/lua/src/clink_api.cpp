@@ -43,7 +43,6 @@
 
 extern "C" {
 #include <lua.h>
-#include <lstate.h>
 #include <readline/history.h>
 }
 
@@ -1316,8 +1315,7 @@ static int32 reload(lua_State* state)
 /// Reclassify the input line text again and refresh the input line display.
 static int32 reclassify_line(lua_State* state)
 {
-    const bool ismain = (G(state)->mainthread == state);
-    if (ismain)
+    if (is_main_coroutine(state))
         reclassify(reclassify_reason::force);
     else
         lua_input_idle::signal_reclassify();
@@ -1340,8 +1338,7 @@ static int32 refilter_prompt(lua_State* state)
 
     // If called from a coroutine, schedule the refilter to happen when control
     // returns to the main coroutine.
-    const bool ismain = (G(state)->mainthread == state);
-    if (!ismain)
+    if (!is_main_coroutine(state))
     {
         save_stack_top ss(state);
 

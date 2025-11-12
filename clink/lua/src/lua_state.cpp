@@ -30,6 +30,7 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <lstate.h>
 }
 
 class line_buffer;
@@ -113,6 +114,12 @@ void http_lua_initialise(lua_state&);
 void log_lua_initialise(lua_state&);
 
 
+
+//------------------------------------------------------------------------------
+bool is_main_coroutine(lua_State* state)
+{
+    return G(state)->mainthread == state;
+}
 
 //------------------------------------------------------------------------------
 checked_num<int32> checkinteger(lua_State* L, int32 index)
