@@ -7,15 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).  The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.  The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.
-  - [] Have a special setting stored in a regkey that controls "Use enhanced defaults".
-  - [] Hard-code the enhanced defaults, i.e. stop using `default_settings` and `default_inputrc` for them.
-  - [] Do a _one-time_ rename of existing `default_*` files; renaming preserves them in case the user had modified them manually.
-    - If the updater knew the old version being updated _from_, then it could use that as the trigger for the _one-time_ rename.
-    - Maybe a regkey _in the updater hive_ can track whether it's assessed/performed the rename operation?
-    - Since the updater doesn't have any way to run "new code" during the update, it seems like something will need to do the rename during "first run after update".  **_But then how can it run with elevation?_**
-      - Maybe rely on a second manual `clink update` to do follow-up work, which could allow a natural (but awkward) way to gain elevation?
-    - Check how many versions of `default_settings` and `default_inputrc` have existed; maybe it can _delete_ instead of rename if file hashes match the known versions.
 
 ## Normal Priority
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
@@ -29,6 +20,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
+- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).  The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.  The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.  _[There don't seem to be any good solutions; for now maybe it's best to require the user to manually copy the `_default_*` files to `default_*` files.]_
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
