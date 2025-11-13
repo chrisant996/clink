@@ -7,13 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).
-  - The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.
-  - The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.
-  - Maybe the updater can look up the installer regkey about whether "Use enhanced defaults" was chosen?  But that doesn't help for zip file installations that manually renamed `_default_settings`.
-  - Maybe the updater can compute checksums, and match against known published checksums, and automatically overwrite if `default_settings` matches any previously-released checksum?  But how to automate that safely and reliably...?  It would be very easy to mess that up.
-  - Maybe the updater can do a one-time upgrade that keys off of the existence of `default_settings` and then creates an `enhanced_defaults` placeholder file which makes Clink use built-in internal enhanced defaults?
-  - **Frontrunner, best compromise?** Maybe just have a special setting that gets stored in a regkey instead of in the `clink_settings` file, and the regkey can control whether to overwrite `default_settings`?  So that someone can turn off the overwriting if they really really want to manually control `default_settings` in the Clink application files directory?
 
 ## Normal Priority
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
@@ -24,6 +17,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
+- The updater really needs to deal with `_default_settings` vs `default_settings` (and `*_inputrc`).  The original idea was to kill two birds with one stone:  allow manually overriding defaults, and also allow an install-time setting to use bash vs Windows defaults that affects all profiles.  The problem is it's natural to want to edit the `default_settings` file directly.  So letting the updater overwrite it is problematic.  But not letting the updater overwrite it creates other problems.  _[There don't seem to be any good solutions; for now maybe it's best to require the user to manually copy the `_default_*` files to `default_*` files.]_
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
