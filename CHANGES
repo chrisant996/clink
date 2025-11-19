@@ -6,6 +6,7 @@
 
 - Fixed match display filtering sometimes running match generators twice.
 - Fixed the `out` command in the Lua debugger.
+- Fixed the suggestion list to not intercept keys while a multikey input chord is in progress (e.g. if `Ctrl-X``Escape` is bound, then the suggestion list intercepted the `Escape` key by mistake).
 - Fixed [#813](https://github.com/chrisant996/clink/issues/813); potential for crashes when a popup list is filtered to be empty.
 
 #### v1.8.8
