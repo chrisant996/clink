@@ -368,6 +368,11 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
     if (m_visible_rows <= 0)
         goto catchall;
 
+    // Only process keys at the beginning of a key sequence.  E.g. if
+    // Ctrl-X,Escape is bound then this should not to try process the Escape.
+    if (RL_ISSTATE(RL_STATE_MULTIKEY))
+        goto catchall;
+
     m_ignore_scroll_offset = false;
 
     bool wrap = !!_rl_menu_complete_wraparound;
