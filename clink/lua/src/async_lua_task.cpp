@@ -232,9 +232,6 @@ async_lua_task::~async_lua_task()
 void async_lua_task::set_asyncyield(async_yield_lua* asyncyield)
 {
     assert(!m_callback_ref);
-// TODO: The underlying m_asyncyield object is garbage collected.  Is the
-// lifetime scoped correctly so that async_lua_task never outlives it?  I
-// don't think so...!
     m_asyncyield = asyncyield;
 }
 
