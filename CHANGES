@@ -5,7 +5,7 @@
 #### v1.9.0
 
 - Added new Lua API [http.request()](#http.request) which invokes an http request (and yields when used in a coroutine) and returns the result.
-- Change the updater to no longer use Powershell; now it uses native OS http APIs and zip file extraction.
+- Change the updater to no longer use Powershell; now it uses native OS APIs for http requests and zip file extraction.
 - Fixed detection of Windows Terminal when the OS automatically launched WT (regression introduced in v1.8.5).
 - Fixed match display filtering sometimes running match generators twice.
 - Fixed the `out` command in the Lua debugger.
