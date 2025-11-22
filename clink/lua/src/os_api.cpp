@@ -2065,10 +2065,13 @@ static int32 get_errorlevel(lua_State* state)
 ///
 /// If an error occurs, this returns nil.
 ///
-/// <strong>IMPORTANT:</strong> Not all of the 128 bits necessarily have the
-/// same degree of entropy on each computer.  If you discard any bits from the
-/// string then you could accidentally greatly reduce the uniqueness of the ID
-/// (even on the same computer), or even completely remove all entropy.
+/// <fieldset><legend>Warning</legend>
+/// Use only the entire GUID string.  Using a substring will discard bits from
+/// the GUID.  But not all of the 128 bits necessarily have the same degree of
+/// entropy on each computer.  Discarding any bits from the string may greatly
+/// reduce the uniqueness of the ID (even on the same computer), or even
+/// completely remove all entropy and make the GUID useless.
+/// </fieldset>
 static int32 create_guid(lua_State* state)
 {
     const bool faster = !!lua_toboolean(state, 1);
