@@ -6,7 +6,7 @@
 
 - Fixed match display filtering sometimes running match generators twice.
 - Fixed the `out` command in the Lua debugger.
-- Fixed the suggestion list to not intercept keys while a multikey input chord is in progress (e.g. if `Ctrl-X``Escape` is bound, then the suggestion list intercepted the `Escape` key by mistake).
+- Fixed the suggestion list to not intercept keys while a multikey input chord is in progress (e.g. if <kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Esc</kbd> is bound, then the suggestion list intercepted the <kbd>Esc</kbd> key by mistake, causing the input to be misinterpreted).
 - Fixed pagination for UTF8 macro text entries in `clink-show-help` (<kbd>Alt</kbd>-<kbd>h</kbd> by default).
 - Fixed a theoretical edge case where the suggestion list might activate slightly late if there's exactly only 1 key of queued input at the beginning of a new input prompt.
 - Fixed [#813](https://github.com/chrisant996/clink/issues/813); potential for crashes when a popup list is filtered to be empty.
