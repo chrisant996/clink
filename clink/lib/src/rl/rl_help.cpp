@@ -1324,7 +1324,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     uint32 longest_key[keycat_MAX] = {};
     uint32 longest_func[keycat_MAX] = {};
     uint32 desc_pad = show_descriptions ? 1 : 0;
-    const int32 macro_limit = _rl_screenwidth * 4 / 10;
+    const uint32 macro_limit = _rl_screenwidth * 4 / 10;
     for (int32 i = 1; i < offset; ++i)
     {
         const Keyentry& entry = collector[i];
@@ -1334,7 +1334,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
         if (entry.func_name)
             f = (uint32)strlen(entry.func_name);
         else if (entry.macro_text)
-            f = 2 + min<int32>(strlen(entry.macro_text), macro_limit);
+            f = 1 + min(cell_count(entry.macro_text), macro_limit) + 1;
         f += desc_pad;
         if (cat)
         {
@@ -1441,8 +1441,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
                     if (entry.func_name)
                         len += int32(strlen(entry.func_name));
                     else
-                        // TODO: strlen() isn't right; it's UTF8!
-                        len += min(2 + int32(strlen(entry.macro_text)), 32);
+                        len += 1 + min(cell_count(entry.macro_text), macro_limit) + 1;
                 }
                 lines += len / g_printer->get_columns();
             }
