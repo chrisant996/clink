@@ -2,7 +2,7 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.8.9
+#### v1.9.0
 
 - Added new Lua API [http.request()](#http.request) which invokes an http request (and yields when used in a coroutine) and returns the result.
 - Change the updater to no longer use Powershell; now it uses native OS http APIs and zip file extraction.
