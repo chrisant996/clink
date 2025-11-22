@@ -443,21 +443,9 @@ bool line_editor_impl::edit(str_base& out, bool edit)
 
     if (edit)
     {
-// TODO: is on_need_input() also required before the first update()?
-
         // Update first so the init state goes through.
         while (update())
         {
-            // Give modules a chance to reassert themselves.  For example, the
-            // suggestionlist_impl responds by re-enabling itself after having
-            // been disabled by end_prompt_lf() or by selectcomplete_impl.
-            {
-                int32 bind_group = m_bind_resolver.get_group();
-                for (auto* module : m_modules)
-                    module->on_need_input(bind_group);
-                m_bind_resolver.set_group(bind_group);
-            }
-
             if (!m_module.is_input_pending())
                 m_desc.input->select(m_idle);
         }
@@ -836,6 +824,17 @@ bool line_editor_impl::update_input()
 {
     if (maybe_handle_signal())
         return true;
+
+    // Give modules a chance to reassert themselves.  For example, the
+    // suggestionlist_impl responds by re-enabling itself after having been
+    // disabled by end_prompt_lf() or by selectcomplete_impl.
+    if (!m_dispatching)
+    {
+        int32 bind_group = m_bind_resolver.get_group();
+        for (auto* module : m_modules)
+            module->on_need_input(bind_group);
+        m_bind_resolver.set_group(bind_group);
+    }
 
     if (!m_module.is_input_pending())
     {
