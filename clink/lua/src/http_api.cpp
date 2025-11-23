@@ -25,6 +25,7 @@ static class delay_load_winhttp
 public:
                         delay_load_winhttp();
     bool                init();
+    HMODULE             module() const { return m_hlib; }
     HINTERNET           WinHttpOpen(LPCWSTR pszAgentW, DWORD dwAccessType, LPCWSTR pszProxyW, LPCWSTR pszProxyBypassW, DWORD dwFlags);
     BOOL                WinHttpCloseHandle(HINTERNET hInternet);
     BOOL                WinHttpCrackUrl(LPCWSTR pwszUrl, DWORD dwUrlLength, DWORD dwFlags, LPURL_COMPONENTSW lpUrlComponents);
@@ -39,6 +40,7 @@ public:
 private:
     bool                m_initialized = false;
     bool                m_ok = false;
+    HMODULE             m_hlib = 0;
     union
     {
         FARPROC         proc[11];
@@ -70,21 +72,21 @@ bool delay_load_winhttp::init()
     if (!m_initialized)
     {
         m_initialized = true;
-        HMODULE hlib = LoadLibrary("winhttp.dll");
-        if (hlib)
+        m_hlib = LoadLibrary("winhttp.dll");
+        if (m_hlib)
         {
             size_t c = 0;
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpOpen");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpCloseHandle");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpCrackUrl");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpConnect");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpOpenRequest");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpAddRequestHeaders");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpSendRequest");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpReceiveResponse");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpQueryHeaders");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpQueryDataAvailable");
-            m_procs.proc[c++] = GetProcAddress(hlib, "WinHttpReadData");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpOpen");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpCloseHandle");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpCrackUrl");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpConnect");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpOpenRequest");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpAddRequestHeaders");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpSendRequest");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpReceiveResponse");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpQueryHeaders");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpQueryDataAvailable");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinHttpReadData");
             assert(_countof(m_procs.proc) == c);
         }
 
@@ -231,22 +233,15 @@ bool response_info::query(HINTERNET hRequest, DWORD dwInfoLevel, str_base& out)
     case ERROR_INSUFFICIENT_BUFFER:
         break;
     default:
-        assert(false);
         return false;
     }
 
     wstr<> wtext;
     if (!wtext.reserve(dwSize))
-    {
-        assert(false);
         return false;
-    }
 
     if (!s_winhttp.WinHttpQueryHeaders(hRequest, dwInfoLevel, WINHTTP_HEADER_NAME_BY_INDEX, wtext.data(), &dwSize, WINHTTP_NO_HEADER_INDEX))
-    {
-        assert(false);
         return false;
-    }
 
     out = wtext.c_str();
     return true;
@@ -306,18 +301,73 @@ public:
         free(m_body);
     }
 
-    bool result(char*& buffer, size_t& length)
+    int32 result(lua_State* state)
     {
-        if (!is_complete())
-            return false;
-        buffer = m_result_buffer;
-        length = m_result_size;
-        return true;
-    }
+        assert(is_complete());
 
-    const ::response_info& response_info() const
-    {
-        return m_response_info;
+        // Return the response body.
+        lua_pushlstring(state, m_result_buffer, m_result_size);
+
+        // Return a table with status details.
+        const response_info& info = m_response_info;
+        lua_createtable(state, 0, 5);
+        {
+            if (info.win32_error)
+            {
+                lua_pushliteral(state, "win32_error");
+                lua_pushinteger(state, info.win32_error);
+                lua_rawset(state, -3);
+
+                wstr_moveable wmsg;
+                wmsg.reserve(4096);
+                const DWORD FMW_flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_IGNORE_INSERTS;
+                const DWORD cch = FormatMessageW(FMW_flags, s_winhttp.module(), info.win32_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wmsg.data(), wmsg.size(), nullptr);
+                lua_pushliteral(state, "win32_error_text");
+                if (cch && cch < wmsg.size())
+                {
+                    str_moveable msg(wmsg.c_str());
+                    msg.trim();
+                    lua_pushlstring(state, msg.c_str(), msg.length());
+                }
+                else
+                {
+                    lua_pushliteral(state, "Unknown error.");
+                }
+                lua_rawset(state, -3);
+            }
+
+            if (info.status_code)
+            {
+                lua_pushliteral(state, "status_code");
+                lua_pushinteger(state, info.status_code);
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "status_text");
+                lua_pushlstring(state, info.status_text.c_str(), info.status_text.length());
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "raw_headers");
+                lua_pushlstring(state, info.raw_headers.c_str(), info.raw_headers.length());
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "content_type");
+                lua_pushlstring(state, info.content_type.c_str(), info.content_type.length());
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "content_length");
+                lua_pushinteger(state, info.content_length);
+                lua_rawset(state, -3);
+            }
+
+            if (info.completed_read)
+            {
+                lua_pushliteral(state, "completed_read");
+                lua_pushboolean(state, info.completed_read);
+                lua_rawset(state, -3);
+            }
+        }
+
+        return 2;
     }
 
     bool wait(uint32 timeout)
@@ -504,7 +554,7 @@ public:
                         httprequest_lua(const std::shared_ptr<httprequest_async_lua_task>& task) : m_task(task) {}
                         ~httprequest_lua() {}
 
-    int32               result(lua_State* state);
+    static int32        continuation(lua_State* state);
 
 private:
     std::shared_ptr<httprequest_async_lua_task> m_task;
@@ -515,92 +565,109 @@ private:
 };
 
 //------------------------------------------------------------------------------
-int32 httprequest_lua::result(lua_State* state)
+int32 httprequest_lua::continuation(lua_State* state)
 {
-    if (!m_task)
+    assert(!is_main_coroutine(state));
+
+    int32 ctx = 0;
+    if (lua_getctx(state, &ctx) != LUA_YIELD)
         return 0;
 
-    // Return the response body.
-    char* data = nullptr;
-    size_t length = 0;
-    if (m_task->result(data, length))
-        lua_pushlstring(state, data, length);
-    else
-        lua_pushnil(state);
+    assert(ctx);
 
-    // Return a table with status details.
-    const response_info& info = m_task->response_info();
-    lua_createtable(state, 0, 5);
+    // Resuming from yield; remove asyncyield.
+    lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+    lua_pushnil(state);
+    lua_state::pcall_silent(state, 1, 0);
+
+    // Get the continuation state.
+    auto* async = async_yield_lua::test(state, ctx + 1);
+    auto* self = check(state, ctx + 2);
+    assert(async);
+    assert(self);
+    assert(self->m_task);
+    if (!async || !self || !self->m_task)
+        return 0;
+
+    // If expired or canceled, then bail.
+    if (async && async->is_expired())
     {
-        if (info.win32_error)
-        {
-            lua_pushliteral(state, "win32_error");
-            lua_pushinteger(state, info.win32_error);
-            lua_rawset(state, -3);
-
-            wstr_moveable wmsg;
-            wmsg.reserve(4096);
-            const DWORD FMW_flags = FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS;
-            const DWORD cch = FormatMessageW(FMW_flags, 0, info.win32_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wmsg.data(), wmsg.size(), nullptr);
-            lua_pushliteral(state, "win32_error_text");
-            if (cch && cch < wmsg.size())
-            {
-                str_moveable msg(wmsg.c_str());
-                msg.trim();
-                lua_pushlstring(state, msg.c_str(), msg.length());
-            }
-            else
-            {
-                lua_pushliteral(state, "Unknown error.");
-            }
-            lua_rawset(state, -3);
-        }
-
-        if (info.status_code)
-        {
-            lua_pushliteral(state, "status_code");
-            lua_pushinteger(state, info.status_code);
-            lua_rawset(state, -3);
-
-            lua_pushliteral(state, "status_text");
-            lua_pushlstring(state, info.status_text.c_str(), info.status_text.length());
-            lua_rawset(state, -3);
-
-            lua_pushliteral(state, "raw_headers");
-            lua_pushlstring(state, info.raw_headers.c_str(), info.raw_headers.length());
-            lua_rawset(state, -3);
-
-            lua_pushliteral(state, "content_type");
-            lua_pushlstring(state, info.content_type.c_str(), info.content_type.length());
-            lua_rawset(state, -3);
-
-            lua_pushliteral(state, "content_length");
-            lua_pushinteger(state, info.content_length);
-            lua_rawset(state, -3);
-        }
-
-        if (info.completed_read)
-        {
-            lua_pushliteral(state, "completed_read");
-            lua_pushboolean(state, info.completed_read);
-            lua_rawset(state, -3);
-        }
+        self->m_task->cancel();
+        return 0;
+    }
+    else if (self->m_task->is_canceled())
+    {
+        return 0;
     }
 
-    return 2;
+    // If complete then return the results.
+    if (self->m_task->is_complete())
+        return self->m_task->result(state);
+
+    // Result is not available yet.
+    async->clear_ready();
+
+    // Yielding; set asyncyield.
+    lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+    lua_pushvalue(state, ctx + 1);
+    lua_state::pcall_silent(state, 1, 0);
+
+    // Yield.
+    self->push(state);
+    return lua_yieldk(state, 0, ctx, continuation);
 }
 
 //------------------------------------------------------------------------------
 const char* const httprequest_lua::c_name = "httprequest_lua";
 const httprequest_lua::method httprequest_lua::c_methods[] = {
-    { "result",         &result },
     {}
 };
 
 
 
 //------------------------------------------------------------------------------
-static int32 http_request_internal(lua_State* state)
+/// -name:  http.request
+/// -ver:   1.9.0
+/// -arg:   method:string
+/// -arg:   url:string
+/// -arg:   [options:table]
+/// -ret:   string, table
+/// Issues a web request and returns the response body and a table with
+/// information about the response (including the status code, which indicates
+/// success or failure).
+///
+/// When called from a coroutine this yields until the request is complete,
+/// otherwise it is a blocking call.
+///
+/// The <span class="arg">method</span> argument is the request type
+/// (<code>"GET"</code>, <code>"POST"</code>, etc).
+///
+/// The <span class="arg">url</span> argument is the URL to call.
+///
+/// The <span class="arg">options</span> argument is optional.  It may be a
+/// table containing any of the following fields:
+/// <ul>
+/// <li><code>user_agent</code> = The user agent string.
+/// <li><code>no_cache</code> = A boolean value indicating whether to bypass
+/// caching.
+/// <li><code>headers</code> = A table of key=value pairs describing
+/// additional request headers.
+/// <li><code>body</code> = Optional body content for the request.
+/// </ul>
+///
+/// The returned response info table may include any of the following fields:
+/// <ul>
+/// <li><code>win32_error</code> = A WIN32 error code, if any.
+/// <li><code>win32_error_text</code> = A WIN32 error message string, if any.
+/// <li><code>status_code</code> = The HTTP status code (e.g. 200), if any.
+/// <li><code>status_text</code> = The HTTP status text (e.g. "OK"), if any.
+/// <li><code>raw_headers</code> = Raw headers from the response, if any.
+/// <li><code>content_type</code> = Content type in the response, if any.
+/// <li><code>content_length</code> = Content length, in bytes, if any.
+/// <li><code>completed_read</code> = True indicates that the response content
+/// was fully read.
+/// </ul>
+static int32 http_request(lua_State* state)
 {
     int32 iarg = 1;
     const bool ismain = is_main_coroutine(state);
@@ -670,20 +737,27 @@ static int32 http_request_internal(lua_State* state)
 
     dbg_ignore_scope(snapshot, "async http request");
 
-    // Push an asyncyield object.
+    // Remember the stack context for the continuation function.
+    const int32 ctx = lua_gettop(state);
+
+    // Push an asyncyield object (ctx + 1).
     async_yield_lua* asyncyield = nullptr;
     if (ismain)
         lua_pushnil(state);
     else if ((asyncyield = async_yield_lua::make_new(state, "http.request")) == nullptr)
         return 0;
 
-    // Push a task object.
+    // Make a task object.
     auto task = std::make_shared<httprequest_async_lua_task>(key.c_str(), src.c_str(), asyncyield, method, url, user_agent, no_cache, headers, body, body_len);
     if (!task)
+    {
+        lua_pop(state, 1);
+        assert(lua_gettop(state) == ctx);
         return 0;
-    httprequest_lua* request = httprequest_lua::make_new(state, task);
-    if (!request)
-        return 0;
+    }
+
+    // Add the task to the async task manager.  This is not on the Lua stack
+    // yet.  This is only a C++ class; there is no associated Lua object yet.
     {
         std::shared_ptr<async_lua_task> add(task); // Because MINGW can't handle it inline.
         add_async_lua_task(add);
@@ -694,9 +768,29 @@ static int32 http_request_internal(lua_State* state)
     {
         if (!task->wait(INFINITE))
             task->cancel();
+        lua_pop(state, 1);
+        assert(lua_gettop(state) == ctx);
+        return task->result(state);
     }
+    else
+    {
+        // Push the task object (ctx + 2).
+        httprequest_lua* request = httprequest_lua::make_new(state, task);
+        if (!request)
+            return 0;
 
-    return 2;
+        // Yielding; set asyncyield.
+        {
+            save_stack_top ss(state);
+            lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+            lua_pushvalue(state, ctx + 1);
+            lua_state::pcall_silent(state, 1, 0);
+        }
+
+        // Yield.
+        assert(lua_gettop(state) == ctx + 2);
+        return lua_yieldk(state, 0, ctx, request->continuation);
+    }
 }
 
 
@@ -708,7 +802,7 @@ void http_lua_initialise(lua_state& lua)
         const char* name;
         int32       (*method)(lua_State*);
     } methods[] = {
-        { "_request_internal",      &http_request_internal },
+        { "request",                &http_request },
     };
 
     lua_State* state = lua.get_state();

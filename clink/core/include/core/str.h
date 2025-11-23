@@ -285,7 +285,7 @@ void str_impl<TYPE>::trim()
 
     while (end > pos)
     {
-        if (end[-1] != ' ' && end[-1] != '\t')
+        if (end[-1] != ' ' && end[-1] != '\t' && end[-1] != '\r' && end[-1] != '\n')
             break;
         end--;
     }

@@ -1442,14 +1442,12 @@ bool format_error_message(DWORD code, str_base& out, const char* tag, const char
             need_term = false;
             out.concat(sep ? sep : ".  ");
             out.concat(tmp.c_str());
+            out.trim();
         }
     }
 
     if (need_term && !sep)
         out.concat(".");
-
-    while (out.length() && strchr("\r\n", out.c_str()[out.length() - 1]))
-        out.truncate(out.length() - 1);
 
     return !out.empty();
 }
