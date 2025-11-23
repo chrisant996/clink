@@ -3,6 +3,7 @@
 
 local github_repo = "chrisant996/clink"
 local tag_filename = "clink_updater_tag"
+local clink_log_for_details = " (see clink.log for details)."
 
 -- luacheck: globals http
 
@@ -160,7 +161,7 @@ local function log_https_get(url, result, response_info)
         end
     end
     if result then
-        log_info(string.format("content: %.200s", result))
+        log_info("content: " .. result:sub(1, 200))
     end
 end
 
@@ -387,7 +388,7 @@ local function internal_check_for_update(force)
         result, response_info = http.request("GET", api_url, options)
         if not result then
             log_https_get(api_url, result, response_info)
-            return nil, log_info("unable to query github api.")
+            return nil, log_info("unable to query github api" .. clink_log_for_details)
         end
     end
 
@@ -396,10 +397,10 @@ local function internal_check_for_update(force)
     latest_update_file = result:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
     if not cloud_tag then
         log_https_get(api_url, result, response_info)
-        return nil, log_info("unable to find latest release.")
+        return nil, log_info("unable to find latest release" .. clink_log_for_details)
     elseif not latest_update_file then
         log_https_get(api_url, result, response_info)
-        return nil, log_info("unable to find latest release " .. install_type .. " file.")
+        return nil, log_info("unable to find latest release " .. install_type .. " file" .. clink_log_for_details)
     end
     latest_cloud_tag = cloud_tag
 
@@ -443,7 +444,7 @@ local function internal_check_for_update(force)
         content, response_info = http.request("GET", latest_update_file, options)
         if not content or (response_info and (response_info.win32_error or response_info.status_code ~= 200 or not response_info.completed_read)) then -- luacheck: no max line length
             log_https_get(latest_update_file, nil, response_info)
-            return nil, log_info("failed to download " .. install_type .. " file.")
+            return nil, log_info("failed to download " .. install_type .. " file" .. clink_log_for_details)
         end
     end
     local outfile, dummy
