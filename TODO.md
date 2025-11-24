@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Add some environment variables for overriding certain settings in a Clink instance (e.g. `CLINK_TERMINAL_EMULATION` to force emulation on/off).  So that it's possible to override behavior for embedded terminals in editors, without needing to affect all Clink sessions.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
