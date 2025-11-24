@@ -585,7 +585,7 @@ extern "C" void terminal_begin_command()
         return;
 
     // Find which terminal shell integration mode to use.
-    const ansi_handler native = get_native_ansi_handler();
+    const ansi_handler native = get_current_ansi_handler();
     const char* sequence = nullptr;
     size_t len = 0;
     shell_integration_mode mode = shell_integration_mode::none;
@@ -2687,8 +2687,8 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
     }
 
     ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-    const ansi_handler native = get_native_ansi_handler();
-    if (native != ansi_handler::conemu && native != ansi_handler::winterminal)
+    const ansi_handler term = get_current_ansi_handler();
+    if (term != ansi_handler::conemu && term != ansi_handler::winterminal)
         flags |= ecma48_processor_flags::apply_title;
     ecma48_processor(prompt, &m_rl_prompt, nullptr/*cell_count*/, flags);
     if (rprompt)

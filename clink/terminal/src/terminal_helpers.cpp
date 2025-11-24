@@ -586,7 +586,7 @@ DWORD select_mouse_input(DWORD mode)
         break;
     case 1:
         // On.
-        switch (get_native_ansi_handler())
+        switch (get_current_ansi_handler())
         {
         case ansi_handler::conemu:
             mode |= ENABLE_MOUSE_INPUT;
@@ -599,7 +599,7 @@ DWORD select_mouse_input(DWORD mode)
         break;
     case 2:
         // Auto.
-        switch (get_native_ansi_handler())
+        switch (get_current_ansi_handler())
         {
         case ansi_handler::conemu:
             mode |= ENABLE_MOUSE_INPUT;
@@ -607,8 +607,8 @@ DWORD select_mouse_input(DWORD mode)
         default:
             if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
                 mode |= ENABLE_MOUSE_INPUT;
-            else if (get_native_ansi_handler() == ansi_handler::winterminal ||
-                     get_native_ansi_handler() == ansi_handler::wezterm)
+            else if (get_current_ansi_handler() == ansi_handler::winterminal ||
+                     get_current_ansi_handler() == ansi_handler::wezterm)
                 mode &= ~ENABLE_MOUSE_INPUT;
             else if (!(mode & ENABLE_QUICK_EDIT_MODE))
                 mode |= ENABLE_MOUSE_INPUT;
@@ -708,7 +708,7 @@ void console_config::fix_quick_edit_mode(DWORD& mode)
     if (!g_accept_mouse_input)
         return;
 
-    switch (get_native_ansi_handler())
+    switch (get_current_ansi_handler())
     {
     case ansi_handler::conemu:
         break;

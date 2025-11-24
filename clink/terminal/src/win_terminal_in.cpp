@@ -771,7 +771,7 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
 
     out.clear();
 
-    if (get_native_ansi_handler() < ansi_handler::first_native)
+    if (get_current_ansi_handler() < ansi_handler::first_native)
         return false;
 
     std::vector<INPUT_RECORD> pending_records;      // (a stack)

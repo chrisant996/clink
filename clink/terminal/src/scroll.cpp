@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "scroll.h"
-#include "screen_buffer.h"  // for get_native_ansi_handler().
+#include "screen_buffer.h"  // for get_current_ansi_handler().
 
 //------------------------------------------------------------------------------
 // Terminal can't #include from Lib.
@@ -41,7 +41,7 @@ void deduce_scroll_mode(HANDLE hout)
 {
     if (!s_scroll_mode)
     {
-        switch (get_native_ansi_handler())
+        switch (get_current_ansi_handler())
         {
         case ansi_handler::winterminal:
         case ansi_handler::wezterm:

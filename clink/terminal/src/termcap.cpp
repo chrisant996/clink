@@ -49,14 +49,16 @@ extern "C" int32 show_cursor(int32 visible)
 
         // Windows Terminal doesn't support using SetConsoleCursorInfo to change
         // the cursor size, so use termcap strings instead.
-        if (get_native_ansi_handler() == ansi_handler::winterminal ||
-            get_native_ansi_handler() == ansi_handler::wezterm)
+        switch (get_current_ansi_handler())
         {
+        case ansi_handler::winterminal:
+        case ansi_handler::wezterm:
             if (!str[0])
             {
                 str = g_enhanced_cursor ? L"\u001b[1 q" : L"\u001b[0 q";
                 len = 5;
             }
+            break;
         }
 
         // If there's a termcap string and it starts with ESC, write it.
@@ -82,7 +84,7 @@ extern "C" int32 show_cursor(int32 visible)
 common:
 
     // On Windows terminal, the common show/hide logic is simply escape codes.
-    if (get_native_ansi_handler() >= ansi_handler::winterminal)
+    if (get_current_ansi_handler() >= ansi_handler::winterminal)
     {
         DWORD dw;
         const int32 was_visible = cursor_style(h, -1, -1);
