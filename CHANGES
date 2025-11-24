@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.2
+
+- Added workaround for JetBrains terminal bug ([#819](https://github.com/chrisant996/clink/issues/819)).
+
 #### v1.9.1
 
 - Fixed [#817](https://github.com/chrisant996/clink/issues/817); error reporting was not graceful if the updater encountered a failure trying to access the github URLs (e.g. if a firewall blocks outgoing network calls).
