@@ -119,10 +119,10 @@ char32_t wcwidth_iter::next()
             if (unq && is_variant_selector(m_next))
             {
                 m_chr_end = m_iter.get_pointer();
+                m_next = m_iter.next();
 fully_qualified:
                 assert(m_chr_wcwidth == 1 || m_chr_wcwidth == 2);
                 m_chr_wcwidth = max<char32_t>(m_chr_wcwidth, 2);
-                m_next = m_iter.next();
             }
             else if (c == 0x3030 || c == 0x303d || c == 0x3297 || c == 0x3299)
             {
