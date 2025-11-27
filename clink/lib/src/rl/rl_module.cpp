@@ -594,6 +594,7 @@ extern "C" void terminal_begin_command()
     case ansi_handler::winterminal:
         {
             // Windows Terminal built-in shell integration (WT v1.18).
+            // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
             static constexpr char c_wt_begincommand[] = "\x1b]133;C\a";
             constexpr size_t c_len = _countof(c_wt_begincommand) - 1;
             static_assert(c_len == 8, "unexpected string length");
