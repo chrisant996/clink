@@ -9,7 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Add some environment variables for overriding certain settings in a Clink instance (e.g. `CLINK_TERMINAL_EMULATION` to force emulation on/off).  So that it's possible to override behavior for embedded terminals in editors, without needing to affect all Clink sessions.
+- Make a documentation section that lists all the CLINK environment variables.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
@@ -22,6 +22,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
+- `str_iter_impl<>::next` doesn't handle UTF8 decoding correctly in cases of invalid UTF8.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Low Priority
