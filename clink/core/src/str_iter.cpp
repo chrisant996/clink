@@ -51,29 +51,29 @@ int32 str_iter_impl<wchar_t>::next()
         // Decode surrogate pairs.
         if ((c & 0xfc00) == 0xd800)
         {
+            if (!more() || (*m_ptr & 0xfc00) != 0xdc00)         // Invalid.
+                return 0xfffd;
             ax = c << 10;
             continue;
         }
         else if ((c & 0xfc00) == 0xdc00)
         {
-            if (ax >= (1 << 10))
-                c = ax + c - 0x35fdc00;
-            else
-                c = 0xfffd;
+            if (ax < (1 << 10))                                 // Invalid.
+                return 0xfffd;
+            c = ax + c - 0x35fdc00;
             ax = 0;
         }
         else
         {
-            if (ax)
-            {
-                c = 0xfffd;
-                ax = 0;
-            }
+            if (ax)                                             // Invalid.
+               return 0xfffd;
         }
         return c;
     }
 
-    return ax ? 0xfffd : 0;
+    if (ax)                                                     // Invalid.
+        return 0xfffd;
+    return 0;
 }
 
 //------------------------------------------------------------------------------

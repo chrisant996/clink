@@ -93,15 +93,34 @@ TEST_CASE("String iterator (wstr_iter)")
 
     SECTION("Partial UTF-16")
     {
-        wstr_iter iter(L"\x0001\xd800");
-        REQUIRE(iter.next() == 1);
-        REQUIRE(iter.next() == 0);
-
-        new (&iter) wstr_iter(L"\xd9ff");
+        wstr_iter iter(L"\xd9ff");
+        REQUIRE(iter.next() == 0xfffd);
         REQUIRE(iter.next() == 0);
 
         new (&iter) wstr_iter(L"\xdfff");
-        REQUIRE(iter.next() == 0xdfff);
+        REQUIRE(iter.next() == 0xfffd);
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) wstr_iter(L"x\xd800");
+        REQUIRE(iter.next() == 'x');
+        REQUIRE(iter.next() == 0xfffd);
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) wstr_iter(L"x\xdfff");
+        REQUIRE(iter.next() == 'x');
+        REQUIRE(iter.next() == 0xfffd);
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) wstr_iter(L"x\xd800y");
+        REQUIRE(iter.next() == 'x');
+        REQUIRE(iter.next() == 0xfffd);
+        REQUIRE(iter.next() == 'y');
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) wstr_iter(L"x\xdfffy");
+        REQUIRE(iter.next() == 'x');
+        REQUIRE(iter.next() == 0xfffd);
+        REQUIRE(iter.next() == 'y');
         REQUIRE(iter.next() == 0);
     }
 
