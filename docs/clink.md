@@ -699,7 +699,7 @@ Clink looks for color theme files in these directories:
 3. A `themes\` subdirectory under the Clink program directory and the Clink profile directory.
 4. Or you can provide a full path name to a file, such as `c:\mythemes\Colorful.clinktheme`.
 
-To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `CLINK_COLORTHEME` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
+To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the `%CLINK_COLORTHEME%` environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile's settings file, which allows multiple concurrent Clink sessions to use different color themes.
 
 > **Note:** The `clink config theme use` command first saves the current color theme as "Previous Theme" to help avoid accidentally losing color settings.
 
@@ -728,7 +728,7 @@ Clink looks for custom prompt files in these directories:
 2. A `themes\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
 3. Or you can provide a full path name to a file, such as `c:\mythemes\Fancy Prompt.clinkprompt`.
 
-To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the `CLINK_CUSTOMPROMPT` environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile's settings file, and allows multiple concurrent Clink sessions to use different custom prompts.
+To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the `%CLINK_CUSTOMPROMPT%` environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile's settings file, and allows multiple concurrent Clink sessions to use different custom prompts.
 
 To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files (see below for previews), and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt), [clink-themes](https://github.com/chrisant996/clink-themes), and [oh-my-posh](https://ohmyposh.dev).  Check [here](#oh-my-posh) for quick info on using oh-my-posh prompt themes with Clink.
 
@@ -3884,6 +3884,22 @@ Clink's keyboard driver generally produces VT220 style key sequences, but it als
 
 Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the [`terminal.emulation`](#terminal_emulation) setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
 
+### Override Terminal Detection
+
+The `%CLINK_ANSI_HOST%` environment variable overrides any detected terminal host and causes the [`terminal.emulation`](#terminal_emulation) setting to be ignored.
+
+Set it to any of the following:
+
+Value | Description
+-|-
+`ansicon` | Behave as though the terminal host supports basic escape codes.
+`clink` | Force using Clink's terminal emulation (equivalent to setting `terminal.emulation` to `emulate`).
+`conemu` | Behave as though the terminal host is ConEmu.
+`wezterm` | Behave as though the terminal host is WezTerm.
+`winconsole` | Behave as though the terminal host supports basic escape codes.
+`winconsolev2` | Behave as though the terminal host includes support for 8-bit and 24-bit color codes.
+`winterminal` | Behave as though the terminal host is Windows Terminal.
+
 ### Key Binding Quirks
 
 If you see the input line sometimes lose typed input and start with `[A` or `[B` or similar cryptic characters, here is what's happening:
@@ -3976,14 +3992,14 @@ SetConsoleTitleW() | To enable replacing the "Administrator:" prefix in the titl
 
 There are several ways:
 1. The `cmd /d` flag disables CMD's AutoRun regkey processing, which will prevent CMD from running the Clink autorun script.
-2. If the `CLINK_NOAUTORUN` environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.
+2. If the `%CLINK_NOAUTORUN%` environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.
 3. Clink autorun can be uninstalled:  `clink autorun uninstall`.
 
 ##### Order of execution during AutoRun
 
 This is the order in which operations are performed when Clink is configured to automatically inject itself whenever CMD is started:
 1. CMD executes the commands listed in its AutoRun regkey.
-    - Clink.bat checks whether to skip injecting (e.g. the `CLINK_NOAUTORUN` environment variable).
+    - Clink.bat checks whether to skip injecting (e.g. the `%CLINK_NOAUTORUN%` environment variable).
     - Clink.bat executes clink_x64.exe with the `inject` command.
     - Clink_x64.exe checks if the parent process is supported (see [here](#checking-if-the-parent-process-is-supported) for details).
     - Clink_x64.exe injects a remote thread into its parent CMD process.
