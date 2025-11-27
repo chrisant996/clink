@@ -11,6 +11,8 @@ int32 str_iter_impl<char>::next()
     if (!more())
         return 0;
 
+    // TODO:  Detect invalid UTF8 correctly.
+
     int32 ax = 0;
     int32 encode_length = 0;
     while (int32 c = uint8(*m_ptr++))
@@ -41,11 +43,10 @@ int32 str_iter_impl<char>::next()
 template <>
 int32 str_iter_impl<wchar_t>::next()
 {
-    if (!more())
-        return 0;
-
+    int32 c;
     int32 ax = 0;
-    while (int32 c = *m_ptr++)
+
+    while (more() && (c = *m_ptr++))
     {
         // Decode surrogate pairs.
         if ((c & 0xfc00) == 0xd800)
@@ -53,13 +54,26 @@ int32 str_iter_impl<wchar_t>::next()
             ax = c << 10;
             continue;
         }
-        else if ((c & 0xfc00) == 0xdc00 && ax >= (1 << 10))
-            return ax + c - 0x35fdc00;
+        else if ((c & 0xfc00) == 0xdc00)
+        {
+            if (ax >= (1 << 10))
+                c = ax + c - 0x35fdc00;
+            else
+                c = 0xfffd;
+            ax = 0;
+        }
         else
-            return c;
+        {
+            if (ax)
+            {
+                c = 0xfffd;
+                ax = 0;
+            }
+        }
+        return c;
     }
 
-    return 0;
+    return ax ? 0xfffd : 0;
 }
 
 //------------------------------------------------------------------------------
