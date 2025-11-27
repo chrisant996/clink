@@ -351,6 +351,7 @@ void win_screen_buffer::begin()
             str<> env;
             if (os::get_env("CLINK_ANSI_HOST", env))
             {
+                env.trim();  // Ignore any leading/trailing whitespace.
                 for (unsigned i = unsigned(ansi_handler::clink); i < _countof(s_handler_names); ++i)
                 {
                     if (env.iequals(s_handler_names[i]))
