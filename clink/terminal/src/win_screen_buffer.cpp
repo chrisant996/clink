@@ -322,14 +322,6 @@ void win_screen_buffer::begin()
                 break;
             }
 
-            // Check for Windows Terminal.
-            if (s_in_windows_terminal)
-            {
-                s_found_what = s_in_windows_terminal;
-                s_native_ansi_handler = ansi_handler::winterminal;
-                break;
-            }
-
             // Check for WezTerm.
             str<16> wez;
             if (os::get_env("WEZTERM_EXECUTABLE", wez) &&
@@ -337,6 +329,14 @@ void win_screen_buffer::begin()
             {
                 s_found_what = "WEZTERM_EXECUTABLE and WEZTERM_PANE";
                 s_native_ansi_handler = ansi_handler::wezterm;
+                break;
+            }
+
+            // Check for Windows Terminal.
+            if (s_in_windows_terminal)
+            {
+                s_found_what = s_in_windows_terminal;
+                s_native_ansi_handler = ansi_handler::winterminal;
                 break;
             }
 
