@@ -35,17 +35,29 @@ static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
 static const char* s_ansicon_problem = nullptr;
 static const char* s_in_windows_terminal = nullptr;
-static char s_mode_ansi_handler = 1; // 1 is "emulate"
 bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
 
-ansi_handler get_native_ansi_handler()
-{
-    return s_native_ansi_handler;
-}
+enum { FOUND_BY_AUTO, FOUND_BY_ENV, FOUND_BY_PROFILE };
+static char s_found_by = FOUND_BY_PROFILE;
 
-const char* get_found_ansi_handler()
+static const char* const s_handler_names[] =
 {
-    return s_found_what;
+    "unknown",
+    "clink",
+    "ansicon",
+    "conemu",
+    "winterminal",
+    "wezterm",
+    "winconsolev2",
+    "winconsole",
+};
+static_assert(sizeof_array(s_handler_names) == unsigned(ansi_handler::max), "must match ansi_handler enum");
+
+ansi_handler get_native_ansi_handler(str_base* name)
+{
+    if (name)
+        *(name) = s_handler_names[unsigned(s_native_ansi_handler)];
+    return s_native_ansi_handler;
 }
 
 const char* get_ansicon_problem()
@@ -53,13 +65,37 @@ const char* get_ansicon_problem()
     return s_ansicon_problem;
 }
 
-bool get_is_auto_ansi_handler()
+void make_found_ansi_handler_string(str_base& out)
 {
-    return s_mode_ansi_handler == 2; // 2 is "auto"
+    static const char* const s_friendly_names[] =
+    {
+        "Unknown",
+        "Clink terminal emulation",
+        "ANSICON",
+        "ConEmu",
+        "Windows Terminal",
+        "WezTerm",
+        "Console V2 (with 24 bit color)",
+        "Default console (16 bit color only)",
+    };
+    static_assert(sizeof_array(s_friendly_names) == unsigned(ansi_handler::max), "must match ansi_handler enum");
+
+    out = s_friendly_names[unsigned(s_current_ansi_handler)];
+    switch (s_found_by)
+    {
+    case FOUND_BY_AUTO:
+        out.format(" (auto mode found '%s')", s_found_what);
+        break;
+    case FOUND_BY_ENV:
+        out.concat(" (set by CLINK_ANSI_HOST)");
+        break;
+    }
 }
 
-ansi_handler get_current_ansi_handler()
+ansi_handler get_current_ansi_handler(str_base* name)
 {
+    if (name)
+        (*name) = s_handler_names[unsigned(s_current_ansi_handler)];
     return s_current_ansi_handler;
 }
 
@@ -294,9 +330,11 @@ void win_screen_buffer::begin()
 
     // Always recheck the native terminal mode.  For example, it's possible
     // for ANSICON to be loaded or unloaded after Clink is initialized.
+    bool forced_clink_ansi_host = false;
     {
         // Start with Unknown.
         s_found_what = nullptr;
+        s_found_by = FOUND_BY_PROFILE;
         s_native_ansi_handler = ansi_handler::unknown;
         s_ansicon_problem = nullptr;
 
@@ -309,6 +347,24 @@ void win_screen_buffer::begin()
 
         do
         {
+            // Check environment variable.
+            str<> env;
+            if (os::get_env("CLINK_ANSI_HOST", env))
+            {
+                for (unsigned i = unsigned(ansi_handler::clink); i < _countof(s_handler_names); ++i)
+                {
+                    if (env.iequals(s_handler_names[i]))
+                    {
+                        s_found_by = FOUND_BY_ENV;
+                        s_native_ansi_handler = ansi_handler(i);
+                        forced_clink_ansi_host = true;
+                        break;
+                    }
+                }
+                if (forced_clink_ansi_host)
+                    break;
+            }
+
             // Check for ConEmu.
             s_conemu_dll = is_dll_loaded(conemu_dll_names);
             if (s_conemu_dll)
@@ -388,10 +444,12 @@ void win_screen_buffer::begin()
     case 2:
         if (s_win11)
             g_color_emoji = true;
-        else if (s_win10_15063)
-            g_color_emoji = s_in_windows_terminal;
-        else
+        else if (!s_win10_15063)
             g_color_emoji = false;
+        else if (forced_clink_ansi_host)
+            g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal);
+        else
+            g_color_emoji = s_in_windows_terminal;
         break;
     }
 
@@ -413,7 +471,7 @@ void win_screen_buffer::begin()
 
     char native_vt = m_native_vt;
     ansi_handler new_handler = s_current_ansi_handler;
-    const int32 mode = g_terminal_emulation.get();
+    const int32 mode = forced_clink_ansi_host ? 2 : g_terminal_emulation.get();
     switch (mode)
     {
     case 0:
@@ -444,7 +502,9 @@ void win_screen_buffer::begin()
 
     m_native_vt = native_vt;
     s_current_ansi_handler = new_handler;
-    s_mode_ansi_handler = mode;
+    s_found_by = ((mode != 2) ? FOUND_BY_PROFILE :
+                  forced_clink_ansi_host ? FOUND_BY_ENV :
+                  FOUND_BY_AUTO);
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);

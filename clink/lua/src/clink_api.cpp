@@ -1092,25 +1092,13 @@ static int32 get_session(lua_State* state)
 /// </table>
 static int32 get_ansi_host(lua_State* state)
 {
-    static const char* const s_handlers[] =
-    {
-        "unknown",
-        "clink",
-        "ansicon",
-        "conemu",
-        "winterminal",
-        "wezterm",
-        "winconsolev2",
-        "winconsole",
-    };
+    str<> tmp;
 
-    static_assert(sizeof_array(s_handlers) == size_t(ansi_handler::max), "must match ansi_handler enum");
+    size_t current_handler = size_t(get_current_ansi_handler(&tmp));
+    lua_pushlstring(state, tmp.c_str(), tmp.length());
 
-    size_t current_handler = size_t(get_current_ansi_handler());
-    lua_pushstring(state, s_handlers[current_handler]);
-
-    size_t native_handler = size_t(get_native_ansi_handler());
-    lua_pushstring(state, s_handlers[native_handler]);
+    size_t native_handler = size_t(get_native_ansi_handler(&tmp));
+    lua_pushlstring(state, tmp.c_str(), tmp.length());
 
     return 2;
 }

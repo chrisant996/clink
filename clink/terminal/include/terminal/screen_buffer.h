@@ -22,8 +22,8 @@ enum class ansi_handler : int32
     winconsole,
     max
 };
-ansi_handler get_native_ansi_handler();
-ansi_handler get_current_ansi_handler();
+ansi_handler get_native_ansi_handler(str_base* name=nullptr);
+ansi_handler get_current_ansi_handler(str_base* name=nullptr);
 
 //------------------------------------------------------------------------------
 class screen_buffer

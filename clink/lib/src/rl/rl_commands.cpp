@@ -2810,25 +2810,7 @@ static void do_clink_diagnostics(bool include_settings=false)
     {
         print_heading("terminal");
 
-        const char* term = nullptr;
-        switch (get_current_ansi_handler())
-        {
-        default:                            term = "Unknown"; break;
-        case ansi_handler::clink:           term = "Clink terminal emulation"; break;
-        case ansi_handler::ansicon:         term = "ANSICON"; break;
-        case ansi_handler::conemu:          term = "ConEmu"; break;
-        case ansi_handler::winterminal:     term = "Windows Terminal"; break;
-        case ansi_handler::wezterm:         term = "WezTerm"; break;
-        case ansi_handler::winconsolev2:    term = "Console V2 (with 24 bit color)"; break;
-        case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
-        }
-
-        const char* found = get_found_ansi_handler();
-        if (get_is_auto_ansi_handler() && found)
-            t.format("%s (auto mode found '%s')", term, found);
-        else
-            t = term;
-
+        make_found_ansi_handler_string(t);
         print_value("terminal", t.c_str());
 
         if (ansicon_problem)
