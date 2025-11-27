@@ -202,15 +202,14 @@ static const char* is_dll_loaded(const char* const* dll_names)
 //------------------------------------------------------------------------------
 static const char* check_for_windows_terminal()
 {
-    // Cannot use the fast check, because when Windows Terminal is configured
-    // to automatically use Windows Terminal for new console processes, then
-    // the WT_SESSION environment variable is not present.
-#if 0
+    // TODO:  The fast check cannot detect when Windows Terminal is configured
+    // to implicitly use Windows Terminal for new console processes, because
+    // the WT_SESSION environment variable is never present then.
+
     // Fast check first.
     str<16> wt_session;
     if (!os::get_env("WT_SESSION", wt_session))
         return nullptr;
-#endif
 
     // Two passes:
     //  1.  Examine parent; catches when WT spawns CMD.
