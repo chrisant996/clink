@@ -223,12 +223,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         -- same current directory as the original tab.
         pre = "\x1b]9;9;" .. os.getcwd() .. "\a" .. pre
     end
-    if native_host == "winterminal" then
-        -- Shell integration codes for beginning and end of prompt.
-        -- https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
-        pre = "\x1b]133;A\a" .. pre
-        suf = suf .. "\x1b]133;B\a"
-    end
+    -- Shell integration codes for beginning and end of prompt.
+    -- https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+    pre = clink._make_ftsc("133;A") .. pre
+    suf = suf .. clink._make_ftsc("133;B")
 
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")

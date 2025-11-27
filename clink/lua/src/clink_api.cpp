@@ -2632,6 +2632,20 @@ static int32 _unzip_internal(lua_State* state)
     return 2;
 }
 
+//------------------------------------------------------------------------------
+static int32 _make_ftsc(lua_State* state)
+{
+    const char* code = checkstring(state, 1);
+    if (!code)
+        return 0;
+
+    str<> s;
+    make_ftsc(code, s);
+
+    lua_pushlstring(state, s.c_str(), s.length());
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -2797,6 +2811,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_get_scripts_path",      &get_scripts_path },
         { 1,    "_is_break_on_error",     &is_break_on_error },
         { 1,    "_unzip_internal",        &_unzip_internal },
+        { 0,    "_make_ftsc",             &_make_ftsc },
 #if defined(DEBUG) && defined(_MSC_VER)
 #if defined(USE_MEMORY_TRACKING)
         { 0,    "last_allocation_number", &last_allocation_number },

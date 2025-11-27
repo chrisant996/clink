@@ -29,6 +29,7 @@ extern "C" DWORD select_mouse_input(DWORD mode);
 extern "C" void terminal_begin_command();
 extern "C" void terminal_end_command();
 extern void make_found_ansi_handler_string(str_base& out);
+extern bool make_ftsc(const char* code, str_base& out);
 extern const char* get_ansicon_problem();
 extern void debug_show_console_mode(const DWORD* prev_mode=nullptr, const char* tag=nullptr);
 extern void override_stdio_handles(HANDLE hin, HANDLE hout);

@@ -28,6 +28,44 @@
 #endif
 
 //------------------------------------------------------------------------------
+static setting_enum g_terminal_emulation(
+    "terminal.emulation",
+    "Controls VT emulation",
+    "Clink can emulate Virtual Terminal processing if the console doesn't\n"
+    "natively.  When set to 'emulate' then Clink performs VT emulation and handles\n"
+    "ANSI escape codes.  When 'native' then Clink passes output directly to the\n"
+    "console.  Or when 'auto' then Clink performs VT emulation unless native\n"
+    "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
+    "Terminal, WezTerm, or Windows 10 new console).",
+    "native,emulate,auto",
+    2);
+
+static setting_enum g_terminal_color_emoji(
+    "terminal.color_emoji",
+    "Color emoji support in terminal",
+    "Set this to indicate whether the terminal program draws emoji using colored\n"
+    "double width characters.  This needs to be set accurately in order for Clink\n"
+    "to display the input line properly when it contains emoji characters.\n"
+    "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
+    "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
+    "When set to 'auto' (the default) Clink tries to predict how emoji will be\n"
+    "rendered based on the OS version and terminal program.",
+    "off,on,auto",
+    2);
+
+static setting_enum g_terminal_shell_integration(
+    "terminal.shell_integration",
+    "Send terminal shell integration codes",
+    "Clink can send shell integration codes to the terminal, if the terminal\n"
+    "supports them.\n"
+    "When set to 'off' Clink never sends shell integration codes.\n"
+    "When set to 'on' Clink always sends shell integration codes.\n"
+    "When set to 'auto' Clink only sends shell integration codes if it detects\n"
+    "a terminal that is expected to support them.",
+    "off,on,auto",
+    2);
+
+//------------------------------------------------------------------------------
 static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
 static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static bool s_has_consolev2 = false;
@@ -90,6 +128,27 @@ void make_found_ansi_handler_string(str_base& out)
         out.concat(" (set by CLINK_ANSI_HOST)");
         break;
     }
+}
+
+bool make_ftsc(const char* code, str_base& out)
+{
+    const int32 mode = g_terminal_shell_integration.get();
+    bool on = (mode == 1);
+
+    if (mode == 2)
+    {
+        switch (get_current_ansi_handler())
+        {
+        case ansi_handler::winterminal:
+            on = true;
+            break;
+        }
+    }
+
+    out.clear();
+    if (on)
+        out.format("\x1b]%s\a", code);
+    return on;
 }
 
 ansi_handler get_current_ansi_handler(str_base* name)
@@ -222,32 +281,6 @@ static const char* check_for_windows_terminal()
 }
 
 
-
-//------------------------------------------------------------------------------
-static setting_enum g_terminal_emulation(
-    "terminal.emulation",
-    "Controls VT emulation",
-    "Clink can emulate Virtual Terminal processing if the console doesn't\n"
-    "natively.  When set to 'emulate' then Clink performs VT emulation and handles\n"
-    "ANSI escape codes.  When 'native' then Clink passes output directly to the\n"
-    "console.  Or when 'auto' then Clink performs VT emulation unless native\n"
-    "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
-    "Terminal, WezTerm, or Windows 10 new console).",
-    "native,emulate,auto",
-    2);
-
-static setting_enum g_terminal_color_emoji(
-    "terminal.color_emoji",
-    "Color emoji support in terminal",
-    "Set this to indicate whether the terminal program draws emoji using colored\n"
-    "double width characters.  This needs to be set accurately in order for Clink\n"
-    "to display the input line properly when it contains emoji characters.\n"
-    "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
-    "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
-    "When set to 'auto' (the default) Clink tries to predict how emoji will be\n"
-    "rendered based on the OS version and terminal program.",
-    "off,on,auto",
-    2);
 
 //------------------------------------------------------------------------------
 win_screen_buffer::~win_screen_buffer()

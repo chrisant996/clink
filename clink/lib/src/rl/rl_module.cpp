@@ -576,42 +576,22 @@ static bool find_abort_in_keymap(str_base& out)
 
 
 //------------------------------------------------------------------------------
-enum class shell_integration_mode { none, winterminal };
-static shell_integration_mode s_in_command_output = shell_integration_mode::none;
+static bool s_in_command_output = false;
 extern "C" void terminal_begin_command()
 {
+    // Windows Terminal built-in shell integration (WT v1.18).
+    // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
+
     // Only print begin code once per block of command output.
-    if (s_in_command_output != shell_integration_mode::none)
+    if (s_in_command_output)
         return;
 
-    // Find which terminal shell integration mode to use.
-    const ansi_handler native = get_current_ansi_handler();
-    const char* sequence = nullptr;
-    size_t len = 0;
-    shell_integration_mode mode = shell_integration_mode::none;
-    switch (native)
+    // Emit the shell integration code (which is a nop if disabled).
+    str<> s;
+    if (make_ftsc("133;C", s))
     {
-    case ansi_handler::winterminal:
-        {
-            // Windows Terminal built-in shell integration (WT v1.18).
-            // https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
-            static constexpr char c_wt_begincommand[] = "\x1b]133;C\a";
-            constexpr size_t c_len = _countof(c_wt_begincommand) - 1;
-            static_assert(c_len == 8, "unexpected string length");
-            assert(c_len == strlen(c_wt_begincommand));
-
-            sequence = c_wt_begincommand;
-            len = c_len;
-            mode = shell_integration_mode::winterminal;
-        }
-        break;
-    }
-
-    // Emit sequence if a shell integration mode is chosen.
-    if (sequence && len && mode != shell_integration_mode::none)
-    {
-        rl_fwrite_function(_rl_out_stream, sequence, len);
-        s_in_command_output = mode;
+        rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
+        s_in_command_output = true;
     }
 }
 
@@ -619,24 +599,18 @@ extern "C" void terminal_begin_command()
 extern "C" void terminal_end_command()
 {
     // Only print end code one per block of command output.
-    if (s_in_command_output == shell_integration_mode::none)
+    if (!s_in_command_output)
         return;
 
     // Clear the shell integration mode.
-    const shell_integration_mode mode = s_in_command_output;
-    s_in_command_output = shell_integration_mode::none;
+    s_in_command_output = false;
 
-    // Emit sequence as appropriate.
-    switch (mode)
-    {
-    case shell_integration_mode::winterminal:
-        {
-            str<16> tmp;
-            tmp.format("\x1b]133;D;%u\a", os::get_errorlevel());
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-        }
-        break;
-    }
+    // Emit the shell integration code.
+    str<> s;
+    str<> code;
+    code.format("133;D;%u", os::get_errorlevel());
+    if (make_ftsc(code.c_str(), s))
+        rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
 }
 
 //------------------------------------------------------------------------------
