@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.2</title>
+<title>Clink v1.9.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -973,7 +973,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.2</div>
+                <div id="title">Clink v1.9.3</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -2057,7 +2057,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#terminal_emulation"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_emulation"></a><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
-<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, WezTerm, or Windows 10 new console.</td>
+<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, WezTerm, or Windows 10 new console.<br/>This is superseded by <a href="#override-terminal-detection"><code>%CLINK_ANSI_HOST%</code></a> if set.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#terminal_mouse_input"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_mouse_input"></a><code>terminal.mouse_input</code></td>
@@ -2078,6 +2078,11 @@ $endif
 <td align="center"><a class="wlink" href="#terminal_scrollbars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_scrollbars"></a><code>terminal.scrollbars</code></td>
 <td align="center">True</td>
 <td>When enabled, lists show scrollbars using extended Unicode box drawing characters.  Some terminals or fonts may be incompatible with this.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#terminal_shell_integration"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_shell_integration"></a><code>terminal.shell_integration</code></td>
+<td align="center"><code>auto</code></td>
+<td>Clink can send <a href="https://learn.microsoft.com/en-us/windows/terminal/tutorials/shell-integration">shell integration codes</a> to the terminal, if the terminal supports them.  When set to <code>off</code> Clink never sends shell integration codes.  When set to <code>on</code> Clink always sends shell integration codes.  When set to <code>auto</code> Clink only sends shell integration codes if it detects a terminal that is expected to support them.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#terminal_use_altgr_substitute"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_use_altgr_substitute"></a><code>terminal.use_altgr_substitute</code></td>
@@ -2142,7 +2147,7 @@ $endif
 <li>A <code>themes\</code> subdirectory under the Clink program directory and the Clink profile directory.</li>
 <li>Or you can provide a full path name to a file, such as <code>c:\mythemes\Colorful.clinktheme</code>.</li>
 </ol>
-<p>To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the <code>CLINK_COLORTHEME</code> environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile&#39;s settings file, which allows multiple concurrent Clink sessions to use different color themes.</p>
+<p>To apply a color theme, run <code>clink config theme use <span class="arg">theme_name</span></code> which will apply the named theme and use it to replace color settings in the current Clink profile.  Or set the <code>%CLINK_COLORTHEME%</code> environment variable to the name or full path and filename of a .clinktheme file.  The environment variable causes the named theme to override color settings from the profile&#39;s settings file, which allows multiple concurrent Clink sessions to use different color themes.</p>
 <blockquote>
 <p><strong>Note:</strong> The <code>clink config theme use</code> command first saves the current color theme as &quot;Previous Theme&quot; to help avoid accidentally losing color settings.</p>
 </blockquote>
@@ -2166,7 +2171,7 @@ If you want to change a .clinktheme file that came with Clink, make a copy of th
 <li>A <code>themes\</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
 <li>Or you can provide a full path name to a file, such as <code>c:\mythemes\Fancy Prompt.clinkprompt</code>.</li>
 </ol>
-<p>To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the <code>CLINK_CUSTOMPROMPT</code> environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile&#39;s settings file, and allows multiple concurrent Clink sessions to use different custom prompts.</p>
+<p>To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the <code>%CLINK_CUSTOMPROMPT%</code> environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile&#39;s settings file, and allows multiple concurrent Clink sessions to use different custom prompts.</p>
 <p>To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files (see below for previews), and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>, <a href="https://github.com/chrisant996/clink-themes">clink-themes</a>, and <a href="https://ohmyposh.dev">oh-my-posh</a>.  Check <a href="#oh-my-posh">here</a> for quick info on using oh-my-posh prompt themes with Clink.</p>
 <p>To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.  Or to show demos of what all installed custom prompts each look like, run <code>clink config prompt show --all</code>.</p>
 <p>See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on writing your own custom prompts, and see <a href="#sharing-custom-prompts">Sharing Custom Prompts</a> for information on optionally packaging them as &quot;*.clinkprompt&quot; files.</p>
@@ -7219,6 +7224,45 @@ or edit, the word or words selected from the history event.</p>
 <p>Windows programs generally don&#39;t need to worry about terminal support.  But the Readline library used by Clink comes from Unix, where there are many different kinds of terminals, and the library requires certain kinds of terminal support.</p>
 <p>Clink&#39;s keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use <code>clink echo</code> to find key sequences for specific inputs.</p>
 <p>Clink&#39;s terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the <a href="#terminal_emulation"><code>terminal.emulation</code></a> setting is <code>emulate</code>, or when <code>auto</code> and Clink is running on an older version of Windows that doesn&#39;t support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.</p>
+<h3 id="override-terminal-detection"><a class="wlink" href="#override-terminal-detection"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Override Terminal Detection <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
+<p>The <code>%CLINK_ANSI_HOST%</code> environment variable overrides any detected terminal host and causes the <a href="#terminal_emulation"><code>terminal.emulation</code></a> setting to be ignored.</p>
+<p>Set it to any of the following:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ansicon</code></td>
+<td>Behave as though the terminal host supports basic escape codes.</td>
+</tr>
+<tr>
+<td><code>clink</code></td>
+<td>Force using Clink&#39;s terminal emulation (equivalent to setting <code>terminal.emulation</code> to <code>emulate</code>).</td>
+</tr>
+<tr>
+<td><code>conemu</code></td>
+<td>Behave as though the terminal host is ConEmu.</td>
+</tr>
+<tr>
+<td><code>wezterm</code></td>
+<td>Behave as though the terminal host is WezTerm.</td>
+</tr>
+<tr>
+<td><code>winconsole</code></td>
+<td>Behave as though the terminal host supports basic escape codes.</td>
+</tr>
+<tr>
+<td><code>winconsolev2</code></td>
+<td>Behave as though the terminal host includes support for 8-bit and 24-bit color codes.</td>
+</tr>
+<tr>
+<td><code>winterminal</code></td>
+<td>Behave as though the terminal host is Windows Terminal.</td>
+</tr>
+</tbody></table>
 <h3 id="key-binding-quirks"><a class="wlink" href="#key-binding-quirks"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Key Binding Quirks <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
 <p>If you see the input line sometimes lose typed input and start with <code>[A</code> or <code>[B</code> or similar cryptic characters, here is what&#39;s happening:</p>
 <p>Some terminal based applications ported from Unix/Linux to Windows set the console input mode to request emulated Virtual Terminal (VT) input sequences.  Some examples are <code>git</code>, <code>ls</code>, <code>cat</code> and other command Unix/Linux programs.</p>
@@ -7307,14 +7351,14 @@ set CLINK_TERM_VS=\e[?12l
 <p>There are several ways:</p>
 <ol>
 <li>The <code>cmd /d</code> flag disables CMD&#39;s AutoRun regkey processing, which will prevent CMD from running the Clink autorun script.</li>
-<li>If the <code>CLINK_NOAUTORUN</code> environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.</li>
+<li>If the <code>%CLINK_NOAUTORUN%</code> environment variable is set, then the Clink autorun script exits quickly, without even invoking clink_x64.exe.</li>
 <li>Clink autorun can be uninstalled:  <code>clink autorun uninstall</code>.</li>
 </ol>
 <h5 id="order-of-execution-during-autorun"><a class="wlink" href="#order-of-execution-during-autorun"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Order of execution during AutoRun <span class="uplinks"><a href="#how-clink-works">up</a> <a href="#toc">top</a></span></h5>
 <p>This is the order in which operations are performed when Clink is configured to automatically inject itself whenever CMD is started:</p>
 <ol>
 <li>CMD executes the commands listed in its AutoRun regkey.<ul>
-<li>Clink.bat checks whether to skip injecting (e.g. the <code>CLINK_NOAUTORUN</code> environment variable).</li>
+<li>Clink.bat checks whether to skip injecting (e.g. the <code>%CLINK_NOAUTORUN%</code> environment variable).</li>
 <li>Clink.bat executes clink_x64.exe with the <code>inject</code> command.</li>
 <li>Clink_x64.exe checks if the parent process is supported (see <a href="#checking-if-the-parent-process-is-supported">here</a> for details).</li>
 <li>Clink_x64.exe injects a remote thread into its parent CMD process.</li>
@@ -9038,6 +9082,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v193"><a class="wlink" href="#v193"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.3 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new <a href="#override-terminal-detection"><code>CLINK_ANSI_HOST</code></a> environment variable to control Clink&#39;s terminal support in a session without needing to change the <code>terminal.emulation</code> setting in the profile.</li>
+<li>Added new <code>terminal.shell_integration</code> setting to control sending <a href="https://learn.microsoft.com/en-us/windows/terminal/tutorials/shell-integration">shell integration codes</a> to the terminal.</li>
+<li>Optimized detection of Windows Terminal and resolved all known misdetection cases (tested more than 20 different specific cases).</li>
+<li>Fixed incorrect width measurement of U+3030, U+303D, U+3297, and U+3299.</li>
+<li>Fixed edge cases in parsing invalid UTF16.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/821">#821</a>; workaround for an issue occurring in WezTerm (Nightly builds of WezTerm worked, but the current WezTerm release is from February 2024 and contains an old version of ConPTY that lacks a specific fix).</li>
+</ul>
 <h4 id="v192"><a class="wlink" href="#v192"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.2 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added workaround for JetBrains terminal bug (<a href="https://github.com/chrisant996/clink/issues/819">#819</a>).</li>
