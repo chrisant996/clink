@@ -199,84 +199,164 @@ static const char* is_dll_loaded(const char* const* dll_names)
     return nullptr;
 }
 
+#if 0
+//------------------------------------------------------------------------------
+static bool is_wt_session_present()
+{
+    str<16> wt_session;
+    return os::get_env("WT_SESSION", wt_session);
+}
+
+//------------------------------------------------------------------------------
+static HWND get_console_window()
+{
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd)
+    {
+        // Small delay to improve the likelihood that the window is fully
+        // initialized.
+        Sleep(5);
+    }
+    return hwnd;
+}
+
+//------------------------------------------------------------------------------
+static bool has_owner(HWND hwnd)
+{
+    HWND owner = hwnd ? GetWindow(hwnd, GW_OWNER) : 0;
+    return !!owner;
+}
+
+//------------------------------------------------------------------------------
+static const char* get_window_class(HWND hwnd, str_base& out)
+{
+    WCHAR className[256];
+    if (hwnd && GetClassNameW(hwnd, className, _countof(className)))
+        out = className;
+    else
+        out.clear();
+    return out.c_str();
+}
+
+//------------------------------------------------------------------------------
+static bool is_window_hidden(HWND hwnd)
+{
+    return hwnd && !IsWindowVisible(hwnd);
+}
+#endif
+
 //------------------------------------------------------------------------------
 static const char* check_for_windows_terminal()
 {
-    // TODO:  The fast check cannot detect when Windows Terminal is configured
-    // to implicitly use Windows Terminal for new console processes, because
-    // the WT_SESSION environment variable is never present then.
+#if 0
+    // The big problem with using GW_OWNER to detect Windows Terminal is that
+    // it relies on using the console window handle and it's unclear whether a
+    // Sleep() is still needed anymore.  The async client/server communication
+    // for the console host architecture used to need Sleep() calls to wait
+    // for the OS APIs to catch up with the actual process state, which made
+    // all use of the console window handle timing dependent, and periodically
+    // unreliable.
 
-    // Fast check first.
-    str<16> wt_session;
-    if (!os::get_env("WT_SESSION", wt_session))
-        return nullptr;
-
-    // Two passes:
-    //  1.  Examine parent; catches when WT spawns CMD.
-    //  2.  Examine parent's parent; catches when CMD spawns clink_*.exe.
+    //                  No      Default WinTerm VSCode  WezTerm Tabby   ConsoleZ
+    // has WT_SESSION   *       *       1       *       *       *       *
+    // has window       1       1       1       1       1       1       1
+    // has owner        0       1       1       0       0       0       0
+    // is hidden        0       0       0       1       1       1       1
+    // class            CWC     PCW     PCW     PCW     PCW     PCW     CWC
     //
-    // Two passes is simpler than accurately walking the entire parent chain,
-    // and two passes should be enough to ensure consistent behavior between
-    // the active prompt and 'clink config prompt show CustomName'.
-    int32 pid = GetCurrentProcessId();
-    for (int32 pass = 1; pass <= 2; ++pass)
+    //    * = Depends on whether it was launched from within an existing Windows
+    //        Terminal session.
+    //  PCW = PseudoConsoleWindow
+    //  CWC = ConsoleWindowClass
+#ifndef DEBUG
+    if (os::get_env("CLINK_DEBUG_TERMINAL_DETECTION"))
+#endif
     {
-        // Check if parent is WindowsTerminal.exe.
-        str<> full;
-        const int32 parent = process(pid).get_parent_pid();
-        if (parent)
+        const HWND hwndConsole = get_console_window();
+        LOG("console has window?  %u", !!hwndConsole);
+        if (hwndConsole)
         {
-            process process(parent);
-            process.get_file_name(full);
+            str<> tmp;
+            LOG("console has owner?  %u", has_owner(hwndConsole));
+            LOG("console is hidden?  %u", is_window_hidden(hwndConsole));
+            LOG("console class = '%s'", get_window_class(hwndConsole, tmp));
         }
-        const char* name = path::get_name(full.c_str());
-        if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
-            return "WindowsTerminal.exe";
+    }
+#endif
 
-        // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded,
-        // or if a child process OpenConsole.exe exists.
-        std::vector<DWORD> processes;
-        if (__EnumProcesses(processes))
+    // WT_SESSION is highly unreliable for detecting Windows Terminal:
+    //  1.  Because environment variables are generally inherited by child
+    //      processes.  For example, if WezTerm is launched via `start
+    //      wezterm-gui.exe` from inside a Windows Terminal session, then
+    //      WT_SESSION will be present inside WezTerm and all child processes
+    //      inside WezTerm.
+    //  2.  WT_SESSION can only be present if WindowsTerminal.exe was directly
+    //      launched.  The "Startup > Default terminal application" setting
+    //      bypasses launching WindowsTerminal.exe entirely, and WT_SESSION
+    //      doesn't get injected into the environment.
+
+    // Check if parent is WindowsTerminal.exe.
+    int32 pid = GetCurrentProcessId();
+    str<> full;
+    const int32 parent = process(pid).get_parent_pid();
+    if (parent)
+    {
+        process process(parent);
+        process.get_file_name(full);
+    }
+    const char* name = path::get_name(full.c_str());
+    if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
+        return "WindowsTerminal.exe";
+
+    // Check if a child process conhost.exe has OpenConsoleProxy.dll
+    // loaded.  OpenConsole.exe no longer implies Windows Terminal, so it
+    // mustn't be used for detection anymore.
+    std::vector<DWORD> processes;
+    if (__EnumProcesses(processes))
+    {
+        for (const auto& inner_pid : processes)
         {
-            for (const auto& inner_pid : processes)
+            process process(inner_pid);
+            if (process.get_parent_pid() != pid)
+                continue;
+            if (!process.get_file_name(full))
+                continue;
+
+            name = path::get_name(full.c_str());
+            if (_stricmp(name, "conhost.exe") == 0)
             {
-                process process(inner_pid);
-                if (process.get_parent_pid() != pid)
-                    continue;
-                if (!process.get_file_name(full))
-                    continue;
-
-                name = path::get_name(full.c_str());
-                if (_stricmp(name, "conhost.exe") == 0)
+                std::vector<HMODULE> modules;
+                if (process.get_modules(modules))
                 {
-                    std::vector<HMODULE> modules;
-                    if (process.get_modules(modules))
+                    for (const auto& module : modules)
                     {
-                        for (const auto& module : modules)
-                        {
-                            if (!process.get_file_name(full, module))
-                                continue;
+                        if (!process.get_file_name(full, module))
+                            continue;
 
-                            name = path::get_name(full.c_str());
-                            if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
-                                return "OpenConsoleProxy.dll";
-                        }
+                        name = path::get_name(full.c_str());
+                        if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
+                            return "OpenConsoleProxy.dll";
                     }
-                }
-                else if (_stricmp(name, "OpenConsole.exe") == 0)
-                {
-                    return "OpenConsole.exe";
                 }
             }
         }
-
-        // For the next pass, examine the parent.
-        if (!parent)
-            break;
-        pid = parent;
     }
 
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+static bool parse_ansi_handler(const char* env, ansi_handler& out)
+{
+    for (unsigned i = unsigned(ansi_handler::clink); i < _countof(s_handler_names); ++i)
+    {
+        if (str_icmp(env, s_handler_names[i]) == 0)
+        {
+            out = ansi_handler(i);
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -362,7 +442,7 @@ void win_screen_buffer::begin()
 
     // Always recheck the native terminal mode.  For example, it's possible
     // for ANSICON to be loaded or unloaded after Clink is initialized.
-    bool forced_clink_ansi_host = false;
+    bool forced_ansi_host = false;
     {
         // Start with Unknown.
         s_found_what = nullptr;
@@ -379,23 +459,40 @@ void win_screen_buffer::begin()
 
         do
         {
-            // Check environment variable.
+            // Check CLINK_ANSI_HOST environment variable.
             str<> env;
             if (os::get_env("CLINK_ANSI_HOST", env))
             {
                 env.trim();  // Ignore any leading/trailing whitespace.
-                for (unsigned i = unsigned(ansi_handler::clink); i < _countof(s_handler_names); ++i)
+                if (parse_ansi_handler(env.c_str(), s_native_ansi_handler))
                 {
-                    if (env.iequals(s_handler_names[i]))
+                    s_found_by = FOUND_BY_ENV;
+                    forced_ansi_host = true;
+                    break;
+                }
+            }
+
+            // Check =clink.ansihost environment variable if =clink.id equals
+            // our parent process id.  This lets check_for_windows_terminal()
+            // use a single pass instead of checking the current process and
+            // also its parent.
+            if (os::get_env("=clink.id", env))
+            {
+                const uint32 env_id = atoi(env.c_str());
+                if (env_id != GetCurrentProcessId())
+                {
+                    const int32 parent = process().get_parent_pid();
+                    if (env_id == parent && os::get_env("=clink.ansihost", env))
                     {
-                        s_found_by = FOUND_BY_ENV;
-                        s_native_ansi_handler = ansi_handler(i);
-                        forced_clink_ansi_host = true;
-                        break;
+                        env.trim();
+                        if (parse_ansi_handler(env.c_str(), s_native_ansi_handler))
+                        {
+                            s_found_by = FOUND_BY_PROFILE;
+                            forced_ansi_host = true;
+                            break;
+                        }
                     }
                 }
-                if (forced_clink_ansi_host)
-                    break;
             }
 
             // Check for ConEmu.
@@ -411,6 +508,14 @@ void win_screen_buffer::begin()
                 break;
             }
 
+            // Check for Windows Terminal.
+            if (s_in_windows_terminal)
+            {
+                s_found_what = s_in_windows_terminal;
+                s_native_ansi_handler = ansi_handler::winterminal;
+                break;
+            }
+
             // Check for WezTerm.
             str<16> wez;
             if (os::get_env("WEZTERM_EXECUTABLE", wez) &&
@@ -418,14 +523,6 @@ void win_screen_buffer::begin()
             {
                 s_found_what = "WEZTERM_EXECUTABLE and WEZTERM_PANE";
                 s_native_ansi_handler = ansi_handler::wezterm;
-                break;
-            }
-
-            // Check for Windows Terminal.
-            if (s_in_windows_terminal)
-            {
-                s_found_what = s_in_windows_terminal;
-                s_native_ansi_handler = ansi_handler::winterminal;
                 break;
             }
 
@@ -479,7 +576,7 @@ void win_screen_buffer::begin()
             g_color_emoji = true;
         else if (!s_win10_15063)
             g_color_emoji = false;
-        else if (forced_clink_ansi_host)
+        else if (forced_ansi_host)
             g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal);
         else
             g_color_emoji = s_in_windows_terminal;
@@ -504,7 +601,7 @@ void win_screen_buffer::begin()
 
     char native_vt = m_native_vt;
     ansi_handler new_handler = s_current_ansi_handler;
-    const int32 mode = forced_clink_ansi_host ? 2 : g_terminal_emulation.get();
+    const int32 mode = forced_ansi_host ? 2 : g_terminal_emulation.get();
     switch (mode)
     {
     case 0:
@@ -531,12 +628,17 @@ void win_screen_buffer::begin()
             LOG("Using %s terminal support (auto mode found '%s').", which, s_found_what);
         else
             LOG("Using %s terminal support.", which);
+
+        const char* value = nullptr;
+        if (new_handler != ansi_handler::unknown)
+            value = s_handler_names[unsigned(new_handler)];
+        os::set_env("=clink.ansihost", value);
     }
 
     m_native_vt = native_vt;
     s_current_ansi_handler = new_handler;
     s_found_by = ((mode != 2) ? FOUND_BY_PROFILE :
-                  forced_clink_ansi_host ? FOUND_BY_ENV :
+                  forced_ansi_host ? FOUND_BY_ENV :
                   FOUND_BY_AUTO);
 
     if (m_native_vt)
