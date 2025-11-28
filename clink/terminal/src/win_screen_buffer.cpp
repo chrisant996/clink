@@ -118,14 +118,17 @@ void make_found_ansi_handler_string(str_base& out)
     };
     static_assert(sizeof_array(s_friendly_names) == unsigned(ansi_handler::max), "must match ansi_handler enum");
 
-    out = s_friendly_names[unsigned(s_current_ansi_handler)];
+    const char* name = s_friendly_names[unsigned(s_current_ansi_handler)];
     switch (s_found_by)
     {
     case FOUND_BY_AUTO:
-        out.format(" (auto mode found '%s')", s_found_what);
+        out.format("%s (auto mode found '%s')", name, s_found_what);
         break;
     case FOUND_BY_ENV:
-        out.concat(" (set by CLINK_ANSI_HOST)");
+        out.format("%s (set by CLINK_ANSI_HOST)", name);
+        break;
+    default:
+        out = name;
         break;
     }
 }
