@@ -121,12 +121,16 @@ void make_found_ansi_handler_string(str_base& out)
     const char* name = s_friendly_names[unsigned(s_current_ansi_handler)];
     switch (s_found_by)
     {
-    case FOUND_BY_AUTO:
-        out.format("%s (auto mode found '%s')", name, s_found_what);
-        break;
     case FOUND_BY_ENV:
         out.format("%s (set by CLINK_ANSI_HOST)", name);
         break;
+    case FOUND_BY_AUTO:
+        if (s_found_what)
+        {
+            out.format("%s (auto mode found '%s')", name, s_found_what);
+            break;
+        }
+        __fallthrough;
     default:
         out = name;
         break;
@@ -136,21 +140,71 @@ void make_found_ansi_handler_string(str_base& out)
 bool make_ftsc(const char* code, str_base& out)
 {
     const int32 mode = g_terminal_shell_integration.get();
-    bool on = (mode == 1);
+    const bool is_cwd_code = (strcmp(code, "9;9") == 0);
 
-    if (mode == 2)
+    bool on = false;
+    switch (mode)
     {
+    default:
+    case 0:
+        // In 'off' mode, there's an exception:  ConEmu always supports 9;9.
+        if (is_cwd_code && get_current_ansi_handler() == ansi_handler::conemu)
+            on = true;
+        break;
+    case 1:
+        // In 'on' mode, send all shell integration codes.
+        on = true;
+        break;
+    case 2:
+        // In 'auto' mode, decide based on capabilities of the current ANSI
+        // handler.
         switch (get_current_ansi_handler())
         {
+        case ansi_handler::wezterm:
+            // WezTerm 20240203 is currently the latest release, but it
+            // contains an old version of ConPTY that lacks a fix for a bug
+            // that makes the cursor teleport around (see #821).  Nightly
+            // builds have an updated ConPTY and work, but until a new
+            // version is released Clink can't default to enabling shell
+            // integration codes in WezTerm.
+#if 0
+            on = true;
+#endif
+            break;
         case ansi_handler::winterminal:
+            // Windows Terminal supports 133;A, 133;B, 133;C, 133;D, and 9;9.
             on = true;
             break;
+        case ansi_handler::conemu:
+            // ConEmu only supports 9;9.
+            on = is_cwd_code;
+            break;
         }
+        break;
     }
 
     out.clear();
     if (on)
-        out.format("\x1b]%s\a", code);
+    {
+        if (is_cwd_code)
+        {
+            // Lets the terminal know what is the current directory.  Windows
+            // Terminal uses this during Duplicate Tab to give the new tab the
+            // same current directory as the original tab.
+            str<> cwd;
+            if (os::get_current_dir(cwd))
+                out.format("\x1b]%s;%s\a", code, cwd.c_str());
+        }
+        else if (strcmp(code, "133;D") == 0)
+        {
+            // End of Command includes the exit code (errorlevel).
+            out.format("\x1b]%s;%u\a", code, os::get_errorlevel());
+        }
+        else
+        {
+            out.format("\x1b]%s\a", code);
+        }
+    }
     return on;
 }
 

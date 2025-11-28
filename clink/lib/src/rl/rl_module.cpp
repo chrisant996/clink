@@ -607,9 +607,7 @@ extern "C" void terminal_end_command()
 
     // Emit the shell integration code.
     str<> s;
-    str<> code;
-    code.format("133;D;%u", os::get_errorlevel());
-    if (make_ftsc(code.c_str(), s))
+    if (make_ftsc("133;D", s))
         rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
 }
 

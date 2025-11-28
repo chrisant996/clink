@@ -215,18 +215,12 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         end
     end
 
-    -- Shell integrations.
-    local _, native_host = clink.getansihost()
-    if native_host == "winterminal" or native_host == "conemu" then
-        -- Let the terminal know what is the current directory.  Windows
-        -- Terminal uses this during Duplicate Tab to give the new tab the
-        -- same current directory as the original tab.
-        pre = "\x1b]9;9;" .. os.getcwd() .. "\a" .. pre
-    end
-    -- Shell integration codes for beginning and end of prompt.
+    -- Shell integration codes.
+    -- https://learn.microsoft.com/en-us/windows/terminal/tutorials/shell-integration
     -- https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
-    pre = clink._make_ftsc("133;A") .. pre
-    suf = suf .. clink._make_ftsc("133;B")
+    pre = clink._make_ftsc("9;9") .. pre        -- Current Working Directory
+    pre = clink._make_ftsc("133;A") .. pre      -- Beginning of Prompt
+    suf = suf .. clink._make_ftsc("133;B")      -- End of Prompt
 
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
