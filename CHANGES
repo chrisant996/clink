@@ -5,9 +5,11 @@
 #### v1.9.3
 
 - Added new [`CLINK_ANSI_HOST`](#override-terminal-detection) environment variable to control Clink's terminal support in a session without needing to change the `terminal.emulation` setting in the profile.
+- Added new `terminal.shell_integration` setting to control sending shell integration codes to the terminal.
+- Optimized detection of Windows Terminal and resolved all known misdetection cases (tested more than 20 different specific cases).
 - Fixed incorrect width measurement of U+3030, U+303D, U+3297, and U+3299.
 - Fixed edge cases in parsing invalid UTF16.
-- Fixed [#821](https://github.com/chrisant996/clink/issues/821); WezTerm mishandles the `OSC "133;A" ST` shell integration code.
+- Fixed [#821](https://github.com/chrisant996/clink/issues/821); workaround for an issue occurring in WezTerm (Nightly builds of WezTerm worked, but the current WezTerm release is from February 2024 and contains an old version of ConPTY that lacks a specific fix).
 
 #### v1.9.2
 
