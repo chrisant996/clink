@@ -15,11 +15,11 @@ enum
 
 
 //------------------------------------------------------------------------------
-void attributes::color::as_888(uint8 (&out)[3]) const
+void attributes::color::as_888(RGB_t& out) const
 {
-    out[0] = (r << 3) | (r & 7);
-    out[1] = (g << 3) | (g & 7);
-    out[2] = (b << 3) | (b & 7);
+    out.r = (r << 3) | (r & 7);
+    out.g = (g << 3) | (g & 7);
+    out.b = (b << 3) | (b & 7);
 }
 
 

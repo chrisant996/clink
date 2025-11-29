@@ -34,7 +34,7 @@ public:
     virtual void    insert_chars(int32 count) override;
     virtual void    delete_chars(int32 count) override;
     virtual void    set_attributes(const attributes attr) override;
-    virtual bool    get_nearest_color(attributes& attr) const override;
+    virtual bool    find_best_palette_match(attributes& attr) const override;
     virtual int32   is_line_default_color(int32 line) const override;
     virtual int32   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const override;
     virtual int32   find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const override;

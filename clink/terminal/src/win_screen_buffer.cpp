@@ -1053,7 +1053,7 @@ void win_screen_buffer::set_attributes(attributes attr)
     };
 
     // Map RGB/XTerm256 colors
-    if (!get_nearest_color(attr))
+    if (!find_best_palette_match(attr))
         return;
 
     // Bold
@@ -1132,7 +1132,7 @@ void win_screen_buffer::set_attributes(attributes attr)
 }
 
 //------------------------------------------------------------------------------
-static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
+static bool find_best_palette_match(void* handle, const RGB_t& rgb, uint8& attr)
 {
     static HMODULE hmod = GetModuleHandle("kernel32.dll");
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
@@ -1144,7 +1144,8 @@ static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
     if (!GCSBIEx(proc)(handle, &infoex))
         return false;
 
-    const int32 best_idx = get_nearest_color(infoex, rgb);
+    const RGB_t (*palette)[16] = reinterpret_cast<const RGB_t (*)[16]>(&infoex.ColorTable);
+    const int32 best_idx = FindBestPaletteMatch(rgb, *palette);
     if (best_idx < 0)
         return false;
 
@@ -1154,25 +1155,25 @@ static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::get_nearest_color(attributes& attr) const
+bool win_screen_buffer::find_best_palette_match(attributes& attr) const
 {
     const attributes::color fg = attr.get_fg().value;
     const attributes::color bg = attr.get_bg().value;
     if (fg.is_rgb)
     {
         uint8 val;
-        uint8 rgb[3];
+        RGB_t rgb;
         fg.as_888(rgb);
-        if (!::get_nearest_color(m_handle, rgb, val))
+        if (!::find_best_palette_match(m_handle, rgb, val))
             return false;
         attr.set_fg(val);
     }
     if (bg.is_rgb)
     {
         uint8 val;
-        uint8 rgb[3];
+        RGB_t rgb;
         bg.as_888(rgb);
-        if (!::get_nearest_color(m_handle, rgb, val))
+        if (!::find_best_palette_match(m_handle, rgb, val))
             return false;
         attr.set_bg(val);
     }

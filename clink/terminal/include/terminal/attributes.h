@@ -30,6 +30,16 @@ enum : uint8
 };
 #undef COLOR_X
 
+
+//------------------------------------------------------------------------------
+struct RGB_t
+{
+    uint8 r;
+    uint8 g;
+    uint8 b;
+    uint8 unused;   // Pad to allow reinterpret_cast from COLORREF.
+};
+
 //------------------------------------------------------------------------------
 class attributes
 {
@@ -49,7 +59,7 @@ public:
         };
 
         bool                    operator == (const color& rhs) const { return value == rhs.value; }
-        void                    as_888(uint8 (&out)[3]) const;
+        void                    as_888(RGB_t& out) const;
     };
 
     template <typename T>

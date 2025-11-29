@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "attributes.h"
+
 #include <core/base.h>
 
 //------------------------------------------------------------------------------
@@ -80,7 +82,14 @@ void detect_console_theme();
 uint8 get_console_faint_text();
 uint8 get_console_default_attr();
 console_theme get_console_theme();
-int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3]);
+
+//------------------------------------------------------------------------------
+typedef const RGB_t (&PALETTE_t)[16];
+inline const PALETTE_t& PALETTE_cast(const COLORREF (&ColorTable)[16])
+{
+    return *reinterpret_cast<const RGB_t (*)[16]>(&ColorTable);
+}
+int FindBestPaletteMatch(const RGB_t& input, const RGB_t (&palette)[16]);
 
 //------------------------------------------------------------------------------
 class suppress_implicit_write_console_logging : public no_copy

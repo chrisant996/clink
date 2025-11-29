@@ -7,7 +7,6 @@
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
 #include "ecma48_iter.h"
-#include "cielab.h"
 
 #include <core/settings.h>
 #include <core/os.h>
@@ -280,30 +279,6 @@ void detect_console_theme()
 }
 
 
-
-//------------------------------------------------------------------------------
-int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3])
-{
-    cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
-    double best_deltaE = 0;
-    int32 best_idx = -1;
-
-    // FUTURE: consider using Oklab instead?
-    // https://bottosson.github.io/posts/oklab/
-    // https://github.com/chrisant996/dirx/blob/90d9f7422fee098776375360fb1a40b4d3da52e9/colors.cpp#L1780-L1847
-    for (int32 i = sizeof_array(csbix.ColorTable); i--;)
-    {
-        cie::lab candidate(csbix.ColorTable[i]);
-        double deltaE = cie::deltaE_2(target, candidate);
-        if (best_idx < 0 || best_deltaE > deltaE)
-        {
-            best_deltaE = deltaE;
-            best_idx = i;
-        }
-    }
-
-    return best_idx;
-}
 
 //------------------------------------------------------------------------------
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };

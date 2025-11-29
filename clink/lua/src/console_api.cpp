@@ -854,10 +854,11 @@ static int32 get_color_table(lua_State* state)
     lua_createtable(state, 16, 0);
 
     str<> s;
+    const PALETTE_t& palette = PALETTE_cast(csbix.ColorTable);
     for (uint32 i = 0; i < sizeof_array(csbix.ColorTable); ++i)
     {
-        COLORREF cr = csbix.ColorTable[i];
-        s.format("#%02x%02x%02x", GetRValue(cr), GetGValue(cr), GetBValue(cr));
+        const RGB_t& rgb = palette[i];
+        s.format("#%02x%02x%02x", rgb.r, rgb.g, rgb.b);
         lua_pushlstring(state, s.c_str(), s.length());
         lua_rawseti(state, -2, i + 1);
     }
@@ -865,10 +866,10 @@ static int32 get_color_table(lua_State* state)
     const uint8 attr = get_console_default_attr();
     const COLORREF cr_fg = csbix.ColorTable[(attr & 0x0f) >> 0];
     const COLORREF cr_bg = csbix.ColorTable[(attr & 0xf0) >> 4];
-    const uint8 rgb_fg[3] = { GetRValue(cr_fg), GetGValue(cr_fg), GetBValue(cr_fg) };
-    const uint8 rgb_bg[3] = { GetRValue(cr_bg), GetGValue(cr_bg), GetBValue(cr_bg) };
-    const int32 index_fg = get_nearest_color(csbix, rgb_fg);
-    const int32 index_bg = get_nearest_color(csbix, rgb_bg);
+    const RGB_t& rgb_fg = palette[(attr & 0x0f) >> 0];
+    const RGB_t& rgb_bg = palette[(attr & 0xf0) >> 4];
+    const int32 index_fg = FindBestPaletteMatch(rgb_fg, palette);
+    const int32 index_bg = FindBestPaletteMatch(rgb_bg, palette);
 
     if (index_fg >= 0)
     {
