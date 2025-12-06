@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.4
+
+- Changed [git.getbranch()](#git.getbranch) to accept an additional argument to compensate for a breaking change in git.
+- Changed the built-in custom prompts to compensate for the reftables breaking change in git.
+- Improve palette entry matching in the built-in terminal emulator.
+
 #### v1.9.3
 
 - Added new [`CLINK_ANSI_HOST`](#override-terminal-detection) environment variable to control Clink's terminal support in a session without needing to change the `terminal.emulation` setting in the profile.
