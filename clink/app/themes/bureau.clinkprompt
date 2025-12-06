@@ -76,7 +76,11 @@ local GIT_PROMPT_UNMERGED=""
 local GIT_PROMPT_STASHED="("..sgr(bold,blue)..""..reset_color..")"
 
 local function bureau_git_info()
-    return git.getbranch()
+    local gitinfo = git.getbranch(nil, true--[[fast]])
+    if gitinfo == ".invalid" then
+        gitinfo = "Loading..." -- Compensate for git reftable.
+    end
+    return gitinfo
 end
 
 local function get_git_status()

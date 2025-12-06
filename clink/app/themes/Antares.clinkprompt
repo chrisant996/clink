@@ -215,8 +215,11 @@ function ant:antares_update_git_status()
     end
 
     self.ANTARES_GIT_IN_WORKING_TREE=true
-    local branch_name, detached=git.getbranch()
+    local branch_name, detached=git.getbranch(nil, true--[[fast]])
     if branch_name then
+        if branch_name == ".invalid" then
+            branch_name = "Loading..." -- Compensate for git reftable.
+        end
         self:set_branch_name(branch_name, detached)
         self.ANTARES_GIT_IS_DETACHED_HEAD=detached
     end
@@ -229,6 +232,7 @@ function ant:antares_update_git_status()
 
     local git_status=clink.promptcoroutine(function()
         local status=git.getstatus()
+        detached = detached or status.detached
         local tag
         if detached then
             local git_tag=command(git.makecommand("tag --points-at=HEAD"), true)

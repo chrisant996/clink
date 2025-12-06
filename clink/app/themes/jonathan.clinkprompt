@@ -96,8 +96,12 @@ end
 
 local last_gitstatus
 local function git_prompt_info()
-    local branch=git.getbranch()
+    local branch=git.getbranch(nil, true--[[fast]])
     if not branch then return '' end
+
+    if branch == ".invalid" then
+        branch = "Loading..." -- Compensate for git reftable.
+    end
 
     local status=clink.promptcoroutine(function()
         local t=git.getstatus() or {}

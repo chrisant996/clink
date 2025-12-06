@@ -146,6 +146,31 @@ local function load_ini(fileName)
     return data
 end
 
+local function get_branch_slow(git_dir)
+    local command = "branch"
+    if type(git_dir) == "string" then
+        git_dir = git_dir:gsub('"', '')
+        command = '--git-dir "'..git_dir..'" '..command
+    end
+
+    local file = io.popen(git.makecommand(command))
+    if not file then return end
+
+    local branch, detached
+    for line in file:lines() do
+        local current = line:match("^%*%s+%((.*)%)")
+        if current then
+            detached = current:match("^HEAD detached at (.*)$")
+            branch = detached or current
+            detached = detached and true or nil
+            break
+        end
+    end
+    file:close()
+
+    return branch, detached
+end
+
 
 
 --------------------------------------------------------------------------------
@@ -288,9 +313,11 @@ end
 --- -ver:   1.7.0
 --- -arg:   [dir:string]
 --- -ret:   string, string, string | nil
---- Tests whether <span class="arg">dir</span> is part of a git repo.  If
---- <span class="arg">dir</span> is omitted then it assumes the current
---- working directory.
+--- Tests whether <span class="arg">dir</span> is part of a git repo.  This
+--- starts from <span class="arg">dir</span> and walks up through the parent
+--- directories checking <a href="#git.isgitdir">git.isgitdir()</a> for each
+--- directory.  If <span class="arg">dir</span> is omitted then it starts from
+--- the current working directory.
 ---
 --- In a git repo, it returns three strings:
 --- <ol>
@@ -300,9 +327,6 @@ end
 --- </ol>
 ---
 --- Or when not in a git repo it returns nil.
----
---- See <a href="#git.isgitdir">git.isgitdir()</a> for examples (they return
---- the same strings).
 function git.getgitdir(dir)
     return scan_upwards(dir, git.isgitdir)
 end
@@ -335,17 +359,40 @@ end
 --- -name:  git.getbranch
 --- -ver:   1.7.0
 --- -arg:   [git_dir:string]
+--- -arg:   [fast:boolean]
 --- -ret:   string, boolean | nil
 --- Returns the current git branch for <span class="arg">git_dir</span>, or
 --- for the current working directory if <span class="arg">git_dir</span> is
 --- omitted.
 ---
+--- In Clink v1.9.4 and higher the optional <span class="arg">fast</span>
+--- argument controls how to get the current branch:
+--- <ul>
+--- <li>When true this uses the fast method of reading the ".git/HEAD" file.
+--- <li>When omitted or false this invokes git.exe to get the current branch.
+--- <li>Clink v1.9.3 always behave as though <span class="arg">fast</span> is
+--- true.
+--- <li>In a git repo with a
+--- <a href="https://git-scm.com/docs/reftable">reftable</a>, the fast method
+--- is unable to get the current branch, and simply returns ".invalid".
+--- </ul>
+---
 --- If the workspace has a detached HEAD, then this returns two values:  the
 --- short hash of the current HEAD commit, and true.
 ---
 --- If unable to get the branch info, then nil is returned.
---- -show:  local branch, detached = git.getbranch()
-function git.getbranch(git_dir)
+--- -show:  local branch, detached = git.getbranch(os.getcwd(), true)
+---
+--- <strong>Note:</strong> In Clink v1.9.4 and higher,
+--- <span class="arg">fast</span> can be used to help keep the prompt
+--- responsive.  A prompt filter can pass true to try to get the branch name
+--- the fast way when available.  If a prompt filter gets ".invalid" then it
+--- can choose to instead show something like "Loading..." and use
+--- <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> to call
+--- <code>git.getbranch()</code> again and pass false for
+--- <span class="arg">fast</span> to get accurate current branch info in the
+--- background.
+function git.getbranch(git_dir, fast)
     if git._fake then return git._fake.branch end
 
     git_dir = git_dir or git.getgitdir()
@@ -362,14 +409,29 @@ function git.getbranch(git_dir)
     -- If HEAD isn't present, something is wrong.
     if not HEAD then return end
 
-    -- If HEAD matches branch expression, then we're on named branch otherwise
-    -- it is a detached commit.
+    -- If HEAD matches branch expression, then we're on named branch
+    -- otherwise it is a detached commit.
     local branch_name = HEAD:match("ref: refs/heads/(.+)")
-    if not branch_name then
-        return HEAD:sub(1, 7), true
+
+    if os.getenv("CLINK_DEBUG_GIT_REFTABLE") then
+        branch_name = ".invalid"
     end
 
-    return branch_name
+    local detached
+    if branch_name ~= ".invalid" or fast then
+        if not branch_name then
+            branch_name = HEAD:sub(1, 7)
+            detached = true
+        end
+    else
+        branch_name, detached = get_branch_slow(git_dir)
+    end
+
+    if detached then
+        return branch_name, true
+    else
+        return branch_name
+    end
 end
 
 --------------------------------------------------------------------------------

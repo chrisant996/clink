@@ -262,35 +262,6 @@ local _BRANCH_FROM_STATUS
 local _DETACHED_FROM_STATUS
 local _ACTION_FROM_STATUS
 
---[[ N/A
-# Guess the exit code meaning
-headline_exit_meaning() { # (num)
-  # REF: https://tldp.org/LDP/abs/html/exitcodes.html
-  # REF: https://man7.org/linux/man-pages/man7/signal.7.html
-  # NOTE: these meanings are not standardized
-  case $1 in
-    126) echo 'Command cannot execute';;
-    127) echo 'Command not found';;
-    129) echo 'Hangup';;
-    130) echo 'Interrupted';;
-    131) echo 'Quit';;
-    132) echo 'Illegal instruction';;
-    133) echo 'Trapped';;
-    134) echo 'Aborted';;
-    135) echo 'Bus error';;
-    136) echo 'Arithmetic error';;
-    137) echo 'Killed';;
-    138) echo 'User signal 1';;
-    139) echo 'Segmentation fault';;
-    140) echo 'User signal 2';;
-    141) echo 'Pipe error';;
-    142) echo 'Alarm';;
-    143) echo 'Terminated';;
-    *) ;;
-  esac
-}
---]]
-
 
 
 -- Git branch (or hash)
@@ -299,7 +270,10 @@ headline_git_branch = function()
     if _BRANCH_FROM_STATUS then
         ref, detached=_BRANCH_FROM_STATUS, _DETACHED_FROM_STATUS
     else
-        ref, detached=git.getbranch()
+        ref, detached=git.getbranch(nil, true--[[fast]])
+        if ref == ".invalid" then
+            ref = "Loading..." -- Compensate for git reftable.
+        end
     end
     if not ref then return ''
     elseif not detached then return ref

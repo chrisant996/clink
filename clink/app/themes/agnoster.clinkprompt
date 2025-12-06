@@ -360,12 +360,16 @@ end
 -- Git: branch/detached head, dirty status
 local last_git_info
 function ag.prompt_git()
-    local ref, detached = git.getbranch()
+    local ref, detached = git.getbranch(nil, true--[[fast]])
     if ref then
         local color
         local info = ag.async_info(ag.get_git_info)
         info = info or last_git_info or {}
+        if ref == ".invalid" then
+            ref = "Loading..." -- Compensate for git reftable.
+        end
         ref = info.branch or ref
+        detached = info.detached or detached
         if not info.ready then
             color = ag.white
             ref = ref..' '

@@ -44,6 +44,8 @@ local GIT_PROMPT_DIRTY=" "..RED..""..reset_color
 
 local last_dirty
 local function git_prompt_info()
+    if not git.getgitdir() then return "" end
+
     local branch = git.getbranch()
     if not branch then return "" end
 

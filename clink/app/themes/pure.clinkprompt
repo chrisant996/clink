@@ -211,7 +211,11 @@ local function git_func()
     if status then
         last_gitstatus = status
     else
-        status = last_gitstatus or { branch=git.getbranch() }
+        local branch = git.getbranch(nil, true--[[fast]])
+        if branch == ".invalid" then
+            branch = "Loading..." -- Compensate for git reftable.
+        end
+        status = last_gitstatus or { branch=branch }
     end
 
     local text = colors.git_branch..status.branch..sgr()
