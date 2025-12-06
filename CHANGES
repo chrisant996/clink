@@ -7,6 +7,7 @@
 - Changed [git.getbranch()](#git.getbranch) to accept an additional argument to compensate for a breaking change in git.
 - Changed the built-in custom prompts to compensate for the reftables breaking change in git.
 - Improve palette entry matching in the built-in terminal emulator.
+- Fixed some inefficiencies in the Headline clinkprompt.
 
 #### v1.9.3
 
