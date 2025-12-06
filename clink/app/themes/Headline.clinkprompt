@@ -297,9 +297,16 @@ headline_git_status = function()
 
     -- Retrieve status
     local status=clink.promptcoroutine(function()
-        local x=git.getstatus() or {}
-        x.action = git.getaction()
-        x.ready=true
+        local x=git.getstatus()
+        if x then
+            x.action = git.getaction()
+            if git.hasstash() then
+                x.stashed=git.getstashcount()
+            end
+            x.ready=true
+        else
+            x = {}
+        end
         return x
     end)
     if status then
@@ -317,6 +324,7 @@ headline_git_status = function()
     totals.CHANGED=sum(status.working)
     totals.AHEAD=sum(status.ahead)
     totals.BEHIND=sum(status.behind)
+    totals.STASHED=status.stashed
     totals.UNPUBLISHED=status.unpublished and "" -- Unpublished is a Boolean state; there's no count.
 
     -- If there's no unpublished indicator and the branch is unpublished and
@@ -326,11 +334,6 @@ headline_git_status = function()
             status.unpublished and
             (not totals.AHEAD or totals.AHEAD == 0) then
         totals.AHEAD="" -- Make the indicator show up, but without a count.
-    end
-
-    -- Check for stashes
-    if git.hasstash() then
-        totals.STASHED=git.getstashcount()
     end
 
     _BRANCH_FROM_STATUS=status.branch
