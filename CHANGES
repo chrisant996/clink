@@ -2,10 +2,14 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.5
+
+- Fixed [git.getbranch()](#git.getbranch) failure cases in a git repo using reftable storage.
+
 #### v1.9.4
 
-- Changed [git.getbranch()](#git.getbranch) to accept an additional argument to compensate for a breaking change in git.
-- Changed the built-in custom prompts to compensate for the reftables breaking change in git.
+- Changed [git.getbranch()](#git.getbranch) to accept an additional argument to compensate for a breaking change in git for reftable storage.
+- Changed the built-in custom prompts to compensate for the reftable storage breaking change in git.
 - Improve palette entry matching in the built-in terminal emulator.
 - Fixed some inefficiencies in the Headline clinkprompt.
 

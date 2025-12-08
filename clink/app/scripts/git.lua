@@ -147,26 +147,44 @@ local function load_ini(fileName)
 end
 
 local function get_branch_slow(git_dir)
-    local command = "branch"
+    local flags = ""
     if type(git_dir) == "string" then
         git_dir = git_dir:gsub('"', '')
-        command = '--git-dir "'..git_dir..'" '..command
+        flags = '--git-dir "'..git_dir..'" '
     end
 
-    local file = io.popen(git.makecommand(command))
-    if not file then return end
+    local file
+    local branch, detached, commit
 
-    local branch, detached
-    for line in file:lines() do
-        local current = line:match("^%*%s+%((.*)%)")
-        if current then
-            detached = current:match("^HEAD detached at (.*)$")
-            branch = detached or current
-            detached = detached and true or nil
-            break
+    -- Handle the most common case first.
+    if not branch then
+        file = io.popen(git.makecommand(flags.."branch"))
+        if file then
+            for line in file:lines() do
+                local current = line:match("^%*%s+(.*)")
+                if current then
+                    detached = current:match("^%(HEAD detached at (.*)%)$")
+                    branch = detached or current
+                    detached = detached and true or nil
+                    break
+                end
+            end
+            file:close()
         end
     end
-    file:close()
+
+    -- Handle the cases where "git branch" output is empty, but
+    -- "git branch --show-current" shows the branch name (e.g. a new repo).
+    if not branch then
+        file = io.popen(git.makecommand(flags.."branch --show-current"))
+        if file then
+            for line in file:lines() do -- luacheck: ignore 512
+                branch = line
+                break
+            end
+            file:close()
+        end
+    end
 
     return branch, detached
 end
