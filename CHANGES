@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.6
+
+- Fixed multiline pasting via Clink's paste command when the `clink.paste_crlf` setting is `crlf` and the pasted input causes the "More?" prompt to appear.
+- Fixed [#824](https://github.com/chrisant996/clink/issues/824); multiline pasting via the conhost or Windows Terminal paste command could miss a character, and end up processing the character out of order (regression introduced in v1.8.7).
+
 #### v1.9.5
 
 - Fixed [git.getbranch()](#git.getbranch) failure cases in a git repo using reftable storage.
