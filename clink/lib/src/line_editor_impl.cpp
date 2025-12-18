@@ -1648,10 +1648,13 @@ void line_editor_impl::try_suggest()
     if (m_suggestionlist.test_frozen())
         return;
 
-    // Don't generate suggestions if there is any pending input.  This
-    // eventually reaches Clink's input_available_hook(), so it ends up being
-    // aware of all possible input sources.
-    if (_rl_pushed_input_available() || _rl_input_queued(0))
+    // Don't generate suggestions if Readline is done or there is any pending
+    // input.  This eventually reaches Clink's input_available_hook(), so it
+    // ends up being aware of all possible input sources.
+    // NOTE:  It's important to check rl_done first, to avoid dequeuing
+    // console input that isn't for the current input line.  This ensures the
+    // "More?" prompt receives all appropriate input.
+    if (rl_done || _rl_pushed_input_available() || _rl_input_queued(0))
         return;
 
     const line_states& lines = m_command_line_states.get_linestates(m_buffer);
