@@ -587,6 +587,25 @@ void host_cmd::edit_line(wchar_t* chars, int32 max_chars, bool edit)
 }
 
 //------------------------------------------------------------------------------
+static void finalize_input_line(wstr_base& line, LPDWORD read_in=nullptr)
+{
+    // For consistency, first strip any trailing CR and/or LF characters that
+    // might be present, then append CRLF.
+    while (line.length())
+    {
+        const WCHAR c = line.c_str()[line.length() - 1];
+        if (c != '\r' && c != '\n')
+            break;
+        line.truncate(line.length() - 1);
+    }
+    line.concat(L"\r\n", 2);
+
+    // Fill in read_in with the resulting length.
+    if (read_in)
+        *read_in = line.length();
+}
+
+//------------------------------------------------------------------------------
 #ifdef DEBUG
 bool g_suppress_signal_assert = false;
 #endif
@@ -695,16 +714,16 @@ LReturnReal:
     {
         if (hc->dequeue_line(line, flags))
         {
+            // When the edit_line flag is set the line should be editable.
+            // But when not using the Readline editor, give up and treat the
+            // line as though it ended with a newline.
+            finalize_input_line(line, read_in);
             if (more_continuation || (flags & dequeue_flags::show_line) != dequeue_flags::none)
             {
                 DWORD written;
                 HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
                 __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
-                __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
             }
-            // When the edit_line flag is set the line should be editable.
-            // But when not using the Readline editor, give up and treat the
-            // line as though it ended with a newline.
             return true;
         }
         goto LReturnReal;
@@ -776,15 +795,9 @@ LReturnReal:
 #endif
     }
 
-    // ReadConsole will also include the CRLF of the line that was input.
-    size_t len = max_chars - wcslen(chars);
-    wcsncat(chars, L"\x0d\x0a", len);
-    chars[max_chars - 1] = L'\0';
-
-    if (read_in != nullptr)
-        *read_in = (unsigned)wcslen(chars);
-
-    return TRUE;
+    // ReadConsole includes the CRLF of the line that was input.
+    finalize_input_line(line, read_in);
+    return true;
 }
 
 //------------------------------------------------------------------------------
