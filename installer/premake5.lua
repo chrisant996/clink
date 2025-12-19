@@ -678,6 +678,152 @@ newaction {
 }
 
 --------------------------------------------------------------------------------
+newaction {
+    trigger = "gh-pages",
+    description = "Clink: Publish a release to gh-pages",
+    execute = function ()
+        local orig_dir = os.getcwd()
+        local root_dir = path.getabsolute(".build/release").."/"
+        local gh_pages_dir = path.getabsolute("../clink-gh-pages").."/"
+        if not os.isdir(gh_pages_dir) then
+            error("Unable to find gh-pages workspace")
+        end
+
+        local function is_workspace_clean()
+            local git_cmd = "2>nul git status --porcelain"
+            local f = io.popen(git_cmd)
+            if not f then
+                error("Unable to check gh-pages workspace status")
+            end
+            local clean = true
+            for line in f:lines() do
+                clean = false
+            end
+            f:close()
+            return clean
+        end
+
+        -- Verify the gh-pages workspace is clean.
+        --print_reverse("Verify the gh-pages workspace is clean")
+        os.chdir(gh_pages_dir)
+        if not is_workspace_clean() then
+            exec("git --no-pager status")
+            print("")
+            warn("The gh-pages workspace is not clean.")
+            print("")
+            io.write("Continue anyway? ")
+            local response = io.read()
+            if response:lower() ~= "y" and response:lower() ~= "yes" then
+                print("\x1b[93mCanceled.\x1b[m")
+                return
+            end
+        end
+
+        -- Find the most recent version tag and commit.
+        --print_reverse("Find latest version tag and commit")
+        os.chdir(orig_dir)
+        exec("git fetch --tags")
+        local tag_name, tag_commit, full_version
+        do
+            local git_cmd = "2>nul git tag --list --sort=-version:refname v*"
+            local f = io.popen(git_cmd)
+            if not f then
+                error("Unable to get tag name")
+            end
+            tag_name = f:read()
+            if not tag_name then
+                error("Unable to get tag name")
+            end
+            if not tag_name:match("^v[0-9]%.[0-9]") then
+                error("Unable to get tag name; unexpected format in '"..tag_name.."'")
+            end
+            f:close()
+        end
+        do
+            local git_cmd = "2>nul git rev-parse "..tag_name
+            local f = io.popen(git_cmd)
+            if not f then
+                error("Unable to get tag commit")
+            end
+            tag_commit = f:read()
+            if not tag_commit then
+                error("Unable to get tag commit")
+            end
+            if #tag_commit ~= 40 then
+                error("Unable to get tag commit; unexpected commit format in '"..tag_commit.."'")
+            end
+            f:close()
+        end
+        full_version = tag_name:gsub("^v", "").."."..tag_commit:sub(1, 6)
+        print("")
+        print("Found version \x1b[96m"..full_version.."\x1b[m")
+
+        -- Find the built release files.
+        --print_reverse("Find the release files for "..full_version)
+        local version_dir = os.matchdirs(root_dir.."*_"..full_version)
+        if not version_dir then
+            error("Unable to find release files")
+        end
+        if #version_dir ~= 1 then
+            if #version_dir > 1 then
+                error("Unable to find release files; too many matching directories")
+            else
+                error("Unable to find release files; no matching directories")
+            end
+        end
+        version_dir = version_dir[1]
+        assert(os.isdir(version_dir))
+        local version_files_dir = version_dir.."/clink."..full_version
+        --print("")
+        print("Found release files at "..version_files_dir)
+
+        -- Update the gh-pages files.
+        print_reverse("Update gh-pages files")
+        if not copy(version_files_dir.."/clink.html", gh_pages_dir:gsub("[/\\]+$", "")) then
+            error("Unable to copy clink.html file")
+        end
+        do
+            print("")
+            print("## WRITE: "..gh_pages_dir.."/_config.yml")
+            local f = io.open(gh_pages_dir.."/_config.yml", "w")
+            if not f then
+                error("Unable to open _config.yml for writing")
+            end
+            f:write("theme: jekyll-theme-cayman\n")
+            f:write("title: Clink\n")
+            f:write("github:\n")
+            f:write("  version: "..tag_name.."\n")
+            f:write("  download_url: https://github.com/chrisant996/clink/releases/download/"..tag_name.."/clink."..full_version..".zip\n")
+            f:write("  install_url:  https://github.com/chrisant996/clink/releases/download/"..tag_name.."/clink."..full_version.."_setup.exe\n")
+            f:close()
+        end
+        print("")
+
+        -- Is it already published?
+        os.chdir(gh_pages_dir)
+        if is_workspace_clean() then
+            print("\x1b[93mThe gh-pages workspace is already up-to-date for "..full_version.."\x1b[m")
+            return
+        end
+
+        -- Prompt for confirmation.
+        exec("git --no-pager diff")
+        io.write("Publish? ")
+        local response = io.read()
+        if response:lower() ~= "y" and response:lower() ~= "yes" then
+            print("")
+            print("\x1b[93mCanceled.\x1b[m")
+            return
+        end
+
+        -- Publish the gh-pages files.
+        print_reverse("Publish the gh-pages files")
+        exec("git add **")
+        exec('git commit -m "Update for '..tag_name..'"')
+    end
+}
+
+--------------------------------------------------------------------------------
 newoption {
    trigger     = "vsver",
    value       = "VER",
