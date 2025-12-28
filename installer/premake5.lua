@@ -820,6 +820,7 @@ newaction {
         print_reverse("Publish the gh-pages files")
         exec("git add **")
         exec('git commit -m "Update for '..tag_name..'"')
+        exec('git push')
     end
 }
 
