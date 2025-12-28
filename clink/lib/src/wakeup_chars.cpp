@@ -56,3 +56,10 @@ void strip_wakeup_chars(str_base& out)
     uint32 max_chars = out.length();
     strip_wakeup_chars_worker(out.data(), max_chars);
 }
+
+//------------------------------------------------------------------------------
+void strip_wakeup_chars(wstr_base& out)
+{
+    uint32 max_chars = out.length();
+    strip_wakeup_chars_worker(out.data(), max_chars);
+}

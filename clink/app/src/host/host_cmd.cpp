@@ -780,11 +780,13 @@ LReturnReal:
         {
             console_config cc(input, true/*accept_mouse_input*/);
             reset_wcwidths();
-            hc->edit_line(chars, max_chars, check_dequeue_flag(flags, dequeue_flags::edit_line));
+
+            assert(line.size() == max_chars);
+            hc->edit_line(line.data(), line.size(), check_dequeue_flag(flags, dequeue_flags::edit_line));
 
             // Strip any wake characters, since Clink handles completion itself
             // and isn't designed to support wake characters.
-            strip_wakeup_chars(chars, max_chars);
+            strip_wakeup_chars(line);
         }
 
         // There's a race condition where this assert can fire, and that's fine.
