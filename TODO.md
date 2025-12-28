@@ -14,7 +14,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
   - And strip the magic character and store the index as an integer in the match entry?  Growing the size of every match entry, even if nothing uses the feature?
-- Cannot detect Windows Terminal when conhost automatically launches Windows Terminal (the "let Windows decide" setting).
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
