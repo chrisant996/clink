@@ -2731,17 +2731,71 @@ static int32 is_signaled(lua_State *state)
 /// -ver:   1.3.16
 /// -arg:   seconds:number
 /// Sleeps for the indicated duration, in seconds, with millisecond granularity.
+///
+/// In Clink v1.9.8 and newer, calling this from a coroutine yields.
 /// -show:  os.sleep(0.01)  -- Sleep for 10 milliseconds.
 static int32 sleep(lua_State *state)
 {
-    int32 isnum;
-    double sec = lua_tonumberx(state, -1, &isnum);
-    if (isnum)
+    if (is_main_coroutine(state))
     {
-        const DWORD ms = DWORD(sec * 1000);
-        Sleep(ms);
+        int32 isnum;
+        double sec = lua_tonumberx(state, -1, &isnum);
+        if (isnum)
+        {
+            const DWORD ms = DWORD(sec * 1000);
+            Sleep(ms);
+        }
+        return 0;
     }
-    return 0;
+    else
+    {
+#ifdef DEBUG
+        const auto top = lua_gettop(state);
+#endif
+
+        async_yield_lua* asyncyield = nullptr;
+
+        int32 ctx = 0;
+        if (lua_getctx(state, &ctx) == LUA_OK)
+        {
+            const double sec = luaL_checknumber(state, -1);
+            const DWORD timeout = DWORD(sec * 1000);
+
+            asyncyield = async_yield_lua::make_new(state, "os.sleep", timeout);
+            if (!asyncyield)
+                return 0;
+
+            lua_pop(state, 1);
+
+            asyncyield->push(state);
+            ctx = lua_gettop(state);
+        }
+        else
+        {
+            // Resuming from yield; remove asyncyield.
+            lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+            lua_pushnil(state);
+            lua_state::pcall_silent(state, 1, 0);
+            lua_pop(state, 1);
+
+            // Check if finished.
+            asyncyield = async_yield_lua::check(state, ctx);
+            if (!asyncyield)
+                return 0;
+            if (asyncyield->is_expired())
+                return 0;
+        }
+
+        // Yielding; set asyncyield.
+        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        asyncyield->push(state);
+        lua_state::pcall_silent(state, 1, 0);
+        lua_pop(state, 1);
+
+        // Yield.
+        assert(lua_gettop(state) >= top);
+        return lua_yieldk(state, 0, ctx, sleep);
+    }
 }
 
 //------------------------------------------------------------------------------
