@@ -4,6 +4,7 @@
 
 #### v1.9.8
 
+- Changed [os.sleep()](#os.sleep) so it yields when called in a coroutine.
 - Fixed the "Display all...?" prompt in `clink-select-complete`.
 - Fixed several obscure problems with queued input, e.g. from doskey aliases that include `$T` and from pasting multiline text via the `clink-paste` bindable command.
 - Internal improvements for unit tests.
