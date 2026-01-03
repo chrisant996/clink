@@ -9,14 +9,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Make a documentation section that lists all the CLINK environment variables.
-- Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
-  - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
-  - Let the caller use a "magic" character in the match to indicate where to set the cursor?
-  - And strip the magic character and store the index as an integer in the match entry?  Growing the size of every match entry, even if nothing uses the feature?
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
+  - I just hit it again.  I'll have to try to build optional logging to track it down.
+- Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
+- Some way for input hints to show up when the suggestion list is active?
+- Make a documentation section that lists all the CLINK environment variables.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
   - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
@@ -26,7 +25,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's just a confirmation prompt.  But there's no way for Clink to inject input into ReadConsoleW.  For now, the case ends up returning the queued characters and then falling back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.  Maybe provide a simple input editor just for that case?
-- Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
+- Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
+  - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
+  - Let the caller use a "magic" character in the match to indicate where to set the cursor?
+  - And strip the magic character and store the index as an integer in the match entry?  Growing the size of every match entry, even if nothing uses the feature?
 - On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
 - Event handler enhancements:
