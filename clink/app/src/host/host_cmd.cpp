@@ -642,9 +642,9 @@ LReturnReal:
     // implementation of ReadConsoleW all of them return the next $T segment
     // from an expanded doskey macro.
 
-    // If cmd.exe is asking for one character at a time, use the original path
-    // It does this to handle y/n/all prompts which isn't an compatible use-
-    // case for readline.
+    // If cmd.exe is asking for one character at a time, then it's a
+    // confirmation prompt (e.g. Yes/No/All).  That isn't a compatible use
+    // case for Readline.
     if (max_chars == 1)
     {
         int32 reply;
@@ -660,12 +660,21 @@ LReturnReal:
             return TRUE;
         }
 
-        // Default behaviour.
+        // BUGBUG:  If only a partial line is queued (no line ending), then
+        // this falls apart.  Clink can't use Readline because it's just a
+        // confirmation prompt (e.g. Yes/No/All).  But there's no way for
+        // Clink to inject input into __Real_ReadConsoleW.  For now, this ends
+        // up returning the queued characters and then falling back to
+        // __Real_ReadConsoleW.  Unlike Conhost's implementation, the user
+        // never sees the queued characters and cannot edit them.
+        // TODO:  Provide a simple input editor just for this case?
         if (hc->dequeue_char(chars))
         {
             *read_in = 1;
             return TRUE;
         }
+
+        // Default behaviour.
         goto LReturnReal;
     }
 

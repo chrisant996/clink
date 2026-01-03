@@ -25,9 +25,6 @@ inline bool check_dequeue_flag(const dequeue_flags check, const dequeue_flags ma
 }
 
 //------------------------------------------------------------------------------
-enum class enqueue_at { front, back };
-
-//------------------------------------------------------------------------------
 struct queued_line
 {
     queued_line(str_moveable&& line, dequeue_flags flags)
@@ -48,10 +45,10 @@ public:
                     ~line_queue() = default;
 
     void            clear();
-    void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line, enqueue_at at, bool no_doskey);
-    void            enqueue_lines(std::list<queued_line>& lines, enqueue_at at);
+    void            enqueue_back(const char* line);
+    void            enqueue_front(std::list<queued_line>& lines);
     bool            dequeue_line(str_base& out, dequeue_flags& flags);
-    bool            dequeue_char(wchar_t* out);
+    bool            dequeue_char(wchar_t* out, bool& new_line);
     bool            empty() const;
     bool            incomplete() const;
 

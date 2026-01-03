@@ -47,6 +47,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
+extern void (*rl_fwrite_function)(FILE*, const char*, int);
 }
 
 //------------------------------------------------------------------------------
@@ -480,7 +481,17 @@ bool host::dequeue_char(wchar_t* out)
 {
     clink_maybe_handle_signal();
 
-    return m_line_queue.dequeue_char(out);
+    bool new_line = false;
+    const bool ret = m_line_queue.dequeue_char(out, new_line);
+    if (new_line)
+    {
+        // Add a newline so that output always starts on the line after the
+        // prompt.  Conhost starts output on the prompt line, making the
+        // output look as though it's what was typed as input.  Clink
+        // attempts to clear up the confusion.
+        write_line_feed();
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -698,7 +709,7 @@ void host::adjust_prompt_spacing()
             {
                 text.clear();
                 text.format("\x1b[%uH", y + 1);
-                g_printer->print(text.c_str(), text.length());
+                rl_fwrite_function(_rl_out_stream, text.c_str(), text.length());
             }
         }
     }
@@ -1346,7 +1357,7 @@ force_reload_lua:
 
     // Insert the lines in reverse order at the front of the queue, to execute
     // them in the original order.
-    m_line_queue.enqueue_lines(queue, enqueue_at::front);
+    m_line_queue.enqueue_front(queue);
 
     line_editor_destroy(editor);
 

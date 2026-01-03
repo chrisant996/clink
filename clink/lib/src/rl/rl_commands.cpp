@@ -272,12 +272,15 @@ bool toggle_slashes_in_rl_buffer(int32 offset, int32 length)
 }
 
 //------------------------------------------------------------------------------
-static void enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
+static void enqueue_lines(std::list<str_moveable>& lines)
 {
     auto* const queue = line_queue::get();
     assert(queue);
     if (queue)
-        queue->enqueue_lines(lines, hide_prompt, show_line, enqueue_at::back, false/*no_doskey*/);
+    {
+        for (const auto& line : lines)
+            queue->enqueue_back(line.c_str());
+    }
 }
 
 
@@ -743,7 +746,7 @@ int32 clink_paste(int32 count, int32 invoking_key)
     g_rl_buffer->insert(utf8.c_str());
     if (sel)
         g_rl_buffer->end_undo_group();
-    enqueue_lines(overflow, false, true);
+    enqueue_lines(overflow);
     if (done)
     {
         (*rl_redisplay_function)();
@@ -2480,7 +2483,7 @@ LUnlinkFile:
     g_rl_buffer->end_undo_group();
 
     // Queue any additional lines.
-    enqueue_lines(overflow, false, true);
+    enqueue_lines(overflow);
 
     // Accept the input and execute it.
     (*rl_redisplay_function)();

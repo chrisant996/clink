@@ -8,6 +8,26 @@
 #include <core/os.h>
 
 //------------------------------------------------------------------------------
+static void strip_line_endings(str_base& line)
+{
+    while (line.length() > 0)
+    {
+        const uint32 len_minus_one = (line.length() - 1);
+        const char c = line.c_str()[len_minus_one];
+        if (c != '\r' && c != '\n')
+            break;
+        line.truncate(len_minus_one);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void ensure_crlf(str_base& line)
+{
+    strip_line_endings(line);
+    line.concat("\r\n");
+}
+
+//------------------------------------------------------------------------------
 line_queue::line_queue()
     : m_doskey(os::get_shellname())
 {
@@ -20,71 +40,50 @@ void line_queue::clear()
 }
 
 //------------------------------------------------------------------------------
-void line_queue::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line, enqueue_at at, bool no_doskey)
+void line_queue::enqueue_back(const char* line)
 {
-    // It's nonsensical to hide the prompt and show the line.
-    // It's nonsensical to edit the line but not show the line.
-    assert(!(hide_prompt && show_line));
+    if (!line || !*line)
+        return;
 
-    std::list<queued_line> tmp;
-
-    for (auto& line : lines)
+    if (!m_queued_lines.empty())
     {
-        dequeue_flags flags = dequeue_flags::none;
-        if (hide_prompt) flags |= dequeue_flags::hide_prompt;
-        if (no_doskey) flags |= dequeue_flags::no_doskey;
-        if (show_line)
+        auto& back = m_queued_lines.back();
+        if (back.m_line.length() && back.m_line.c_str()[back.m_line.length() - 1] != '\n')
         {
-            flags |= dequeue_flags::show_line;
-            if (line.empty() || line[line.length() - 1] != '\n')
-                flags |= dequeue_flags::edit_line;
+            assert(!check_dequeue_flag(back.m_flags, dequeue_flags::hide_prompt));
+            assert(check_dequeue_flag(back.m_flags, dequeue_flags::show_line));
+            back.m_line.concat(line);
+            if (back.m_wchar_cursor > 0)
+            {
+                wstr_moveable wline(line);
+                back.m_wline.concat(wline.c_str());
+            }
+            return;
         }
-        tmp.emplace_back(std::move(line), flags);
-    };
+    }
 
-    enqueue_lines(tmp, at);
-
-    lines.clear();
+    str_moveable s(line);
+    queued_line tmp(std::move(s), dequeue_flags::show_line);
+    m_queued_lines.emplace_back(std::move(tmp));
 }
 
 //------------------------------------------------------------------------------
-void line_queue::enqueue_lines(std::list<queued_line>& lines, enqueue_at at)
+void line_queue::enqueue_front(std::list<queued_line>& lines)
 {
-#ifdef DEBUG
-#define assert_sensical(flags) \
-    do { \
-        /* It's nonsensical to hide the prompt and show the line. */ \
-        assert((flags & (dequeue_flags::hide_prompt|dequeue_flags::show_line)) != (dequeue_flags::hide_prompt|dequeue_flags::show_line)); \
-        /* It's nonsensical to edit the line but not show the line. */ \
-        assert((flags & (dequeue_flags::edit_line|dequeue_flags::show_line)) != (dequeue_flags::edit_line)); \
-    } while (false)
-#else
-#define assert_sensical(flags) do {} while (false)
-#endif
-
-    switch (at)
+    for (auto iter = lines.rbegin(); iter != lines.rend(); ++iter)
     {
-    case enqueue_at::front:
-        for (auto iter = lines.rbegin(); iter != lines.rend(); ++iter)
-        {
-            assert_sensical(iter->m_flags);
-            m_queued_lines.emplace_front(std::move(*iter));
-            assert(iter->m_line.empty()); // Make sure std::move() really moved it.
-        }
-        break;
+        assert(!check_dequeue_flag(iter->m_flags, dequeue_flags::edit_line));
+        iter->m_flags &= ~dequeue_flags::edit_line;
 
-    case enqueue_at::back:
-        for (auto iter = lines.begin(); iter != lines.end(); ++iter)
-        {
-            assert_sensical(iter->m_flags);
-            m_queued_lines.emplace_back(std::move(*iter));
-            assert(iter->m_line.empty()); // Make sure std::move() really moved it.
-        }
-        break;
+        // It's nonsensical to hide the prompt and show the line.
+        assert((iter->m_flags & (dequeue_flags::hide_prompt|dequeue_flags::show_line)) != (dequeue_flags::hide_prompt|dequeue_flags::show_line));
 
-    default:
-        assert(false);
-        break;
+        // Lines at the front must always be terminated with a new line.
+        ensure_crlf(iter->m_line);
+
+        // Insert the line.
+        m_queued_lines.emplace_front(std::move(*iter));
+        assert(iter->m_line.empty()); // Make sure std::move() really moved it.
     }
 
     lines.clear();
@@ -105,20 +104,18 @@ bool line_queue::dequeue_line(str_base& out, dequeue_flags& flags)
     else
         out = front.m_line.c_str();
     flags = front.m_flags;
+    if (front.m_line.length() && front.m_line.c_str()[front.m_line.length() - 1] != '\n')
+    {
+        flags |= dequeue_flags::edit_line;
+        assert(check_dequeue_flag(flags, dequeue_flags::show_line));
+    }
 
     std::list<str_moveable> queue;
     if (!front.m_wchar_cursor &&    // REVIEW:  Is this right?
         (flags & (dequeue_flags::hide_prompt|dequeue_flags::show_line|dequeue_flags::no_doskey)) == dequeue_flags::none)
     {
         str<> line(front.m_line.c_str());
-        while (line.length())
-        {
-            const char c = line[line.length() - 1];
-            if (c == '\r' || c == '\n')
-                line.truncate(line.length() - 1);
-            else
-                break;
-        }
+        strip_line_endings(line);
         doskey_alias alias;
         m_doskey.resolve(line.c_str(), alias);
         if (alias)
@@ -136,20 +133,21 @@ bool line_queue::dequeue_line(str_base& out, dequeue_flags& flags)
     for (auto& line : queue)
         m_queued_lines.emplace_front(std::move(line), dequeue_flags::hide_prompt|dequeue_flags::no_doskey);
 
+    ensure_crlf(out);
+
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool line_queue::dequeue_char(wchar_t* out)
+bool line_queue::dequeue_char(wchar_t* out, bool& new_line)
 {
     if (m_queued_lines.empty())
         return false;
 
     auto& front = m_queued_lines.front();
     if (!front.m_wchar_cursor)
-    {
         to_utf16(front.m_wline, str_iter(front.m_line.c_str(), front.m_line.length()));
-    }
+    new_line = (!front.m_wchar_cursor && front.m_line.length() && front.m_line.c_str()[front.m_line.length() - 1] == '\n');
 
     if (front.m_wchar_cursor >= front.m_wline.length())
     {

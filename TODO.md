@@ -25,6 +25,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Low Priority
+- If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's just a confirmation prompt.  But there's no way for Clink to inject input into ReadConsoleW.  For now, the case ends up returning the queued characters and then falling back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.  Maybe provide a simple input editor just for that case?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.
 - On Windows 8.1, running `clink set debug.log_terminal true` causes CMD to crash.  It seems that the detour for `WriteFile` is bad, which causes `fclose` on the log file to crash when it tries to call `WriteFile` to flush the pending output.
 - Find a high performance way to detect git bare repos and encapsulate it into a Lua function?
