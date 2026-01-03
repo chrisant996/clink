@@ -309,6 +309,13 @@ cwd_restorer::~cwd_restorer()
 }
 
 //------------------------------------------------------------------------------
+static clipboard_provider* s_clipboard_provider = nullptr;
+void set_clipboard_provider(clipboard_provider* clip)
+{
+    s_clipboard_provider = clip;
+}
+
+//------------------------------------------------------------------------------
 void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
@@ -1083,6 +1090,9 @@ time_t filetime_to_time_t(const FILETIME& ft)
 //------------------------------------------------------------------------------
 bool get_clipboard_text(str_base& out)
 {
+    if (s_clipboard_provider)
+        return s_clipboard_provider->get_clipboard_text(out);
+
     bool got = false;
     if (OpenClipboard(nullptr))
     {
@@ -1102,6 +1112,9 @@ bool get_clipboard_text(str_base& out)
 //------------------------------------------------------------------------------
 bool set_clipboard_text(const char* text, int32 length)
 {
+    if (s_clipboard_provider)
+        return s_clipboard_provider->set_clipboard_text(text, length);
+
     int32 cch = 0;
     if (length)
     {

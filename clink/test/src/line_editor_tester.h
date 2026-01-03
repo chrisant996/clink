@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "test_terminals.h"
+
 #include <core/str.h>
 #include <lib/line_editor.h>
 #include <lib/line_buffer.h>
@@ -16,54 +18,16 @@
 #define DO_COMPLETE "\x09"
 
 //------------------------------------------------------------------------------
-class test_terminal_in
-    : public terminal_in
+class clipboard_tester
+    : public os::clipboard_provider, public singleton<clipboard_tester>
 {
 public:
-    bool                    has_input() const { return (m_read == nullptr) ? false : (*m_read != '\0'); }
-    void                    set_input(const char* input) { m_input = m_read = input; }
-    virtual int32           begin(bool can_hide_cursor) override { return 1; }
-    virtual int32           end(bool can_show_cursor) override { return 0; }
-    virtual bool            available(uint32 timeout) override { return has_input(); }
-    virtual void            select(input_idle*, uint32) override {}
-    virtual int32           read() override;
-    virtual int32           peek() override { return *(uint8*)m_read; }
-    virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }
-
+                clipboard_tester() { os::set_clipboard_provider(this); }
+                ~clipboard_tester() { os::set_clipboard_provider(nullptr); }
+    bool        get_clipboard_text(str_base& out) override;
+    bool        set_clipboard_text(const char* text, int32 length) override;
 private:
-    const char*             m_input = nullptr;
-    const char*             m_read = nullptr;
-};
-
-//------------------------------------------------------------------------------
-inline int32 test_terminal_in::read()
-{
-    const uint8 c = *(uint8*)m_read;
-    if (c)
-        ++m_read;
-    return c;
-}
-
-//------------------------------------------------------------------------------
-class test_terminal_out
-    : public terminal_out
-{
-public:
-    virtual void            open() override {}
-    virtual void            begin() override {}
-    virtual void            end() override {}
-    virtual void            close() override {}
-    virtual void            write(const char* chars, int32 length) override {}
-    virtual void            flush() override {}
-    virtual int32           get_columns() const override { return 80; }
-    virtual int32           get_rows() const override { return 25; }
-    virtual int32           get_top() const override { return 0; }
-    virtual bool            get_cursor(int16& x, int16& y) const override { x = y = 0; return false; }
-    virtual bool            get_line_text(int32 line, str_base& out) const { return false; }
-    virtual int32           is_line_default_color(int32 line) const { return true; }
-    virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { return false; }
-    virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const { return 0; }
-    virtual void            set_attributes(const attributes attr) {}
+    wstr_moveable m_text;
 };
 
 
@@ -101,6 +65,7 @@ private:
     printer_context*            m_printer_context = nullptr;
     collector_tokeniser*        m_command_tokeniser = nullptr;
     collector_tokeniser*        m_word_tokeniser = nullptr;
+    clipboard_tester            m_clipboard_tester;
     std::vector<const char*>    m_expected_matches;
     std::vector<const char*>    m_expected_words;
     str<>                       m_expected_classifications;

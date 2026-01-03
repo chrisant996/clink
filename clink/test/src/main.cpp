@@ -8,6 +8,7 @@
 #include <core/os.h>
 #include <lib/recognizer.h>
 #include <lua/lua_task_manager.h>
+#include <rl/rl_commands.h>
 #include <terminal/terminal_helpers.h>
 
 extern "C" {
@@ -132,6 +133,8 @@ int32 main(int32 argc, char** argv)
         clatch::list();
         return 0;
     }
+
+    init_readline_funmap();
 
     // Make console input work, e.g. for the Lua debugger.
     console_config cc(nullptr, false);

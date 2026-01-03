@@ -126,6 +126,31 @@ void test_module::on_matches_changed(const context& context, const line_state& l
 
 
 //------------------------------------------------------------------------------
+bool clipboard_tester::get_clipboard_text(str_base& out)
+{
+    to_utf8(out, m_text.c_str());
+    return !m_text.empty();
+}
+
+//------------------------------------------------------------------------------
+bool clipboard_tester::set_clipboard_text(const char* text, int32 length)
+{
+    int32 cch = 0;
+    if (length)
+    {
+        int32 cch = MultiByteToWideChar(CP_UTF8, 0, text, length, nullptr, 0);
+        if (!cch)
+            return false;
+    }
+
+    m_text.clear();
+    to_utf16(m_text, str_iter(text, length));
+    return true;
+}
+
+
+
+//------------------------------------------------------------------------------
 line_editor_tester::line_editor_tester()
 {
     create_line_editor();
@@ -251,7 +276,7 @@ void line_editor_tester::run(bool expectationless)
     {
         REQUIRE(m_editor->update());
     }
-    while (m_terminal_in.has_input());
+    while (m_terminal_in.available(0));
 
     m_editor->update_matches();
 

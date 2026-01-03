@@ -61,6 +61,12 @@ private:
     int64       m_start;
 };
 
+struct clipboard_provider
+{
+    virtual bool get_clipboard_text(str_base& out) = 0;
+    virtual bool set_clipboard_text(const char* text, int32 length) = 0;
+};
+
 DWORD   get_file_attributes(const wchar_t* path, bool* symlink=nullptr);
 DWORD   get_file_attributes(const char* path, bool* symlink=nullptr);
 int32   get_path_type(const char* path);
@@ -96,6 +102,8 @@ bool    run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args);
 #if 0
 void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);
 #endif
+
+void    set_clipboard_provider(clipboard_provider* clip);
 
 void    map_errno();
 void    map_errno(unsigned long const oserrno);
