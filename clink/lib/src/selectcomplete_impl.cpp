@@ -232,6 +232,9 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     {
 bail_out:
         pause_suggestions(false);
+        // Override rl_last_func so the "display all" prompt can be shown
+        // again after answering 'n' to it once.
+        override_rl_last_func(_rl_null_function);
         return false;
     }
 
