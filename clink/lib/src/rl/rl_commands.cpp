@@ -58,6 +58,8 @@ extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 
 extern "C" const int32 c_clink_version = CLINK_VERSION_ENCODED;
 
+extern bool is_test_harness();
+
 
 
 //------------------------------------------------------------------------------
@@ -2917,15 +2919,18 @@ int32 clink_diagnostics_output(int32 count, int32 invoking_key)
     host_context context;
     host_get_app_context(id, context);
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
     int32 rows = 50;
     int32 cols = 80;
     int32 top = 0;
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (!is_test_harness())
     {
-        rows = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-        cols = (csbi.srWindow.Right - csbi.srWindow.Left) + 1;
-        top = csbi.srWindow.Top;
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+        {
+            rows = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+            cols = (csbi.srWindow.Right - csbi.srWindow.Left) + 1;
+            top = csbi.srWindow.Top;
+        }
     }
 
     str_moveable file;

@@ -54,6 +54,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 static bool s_test_harness = false;
 void set_test_harness() { s_test_harness = true; }
+bool is_test_harness() { return s_test_harness; }
 
 
 

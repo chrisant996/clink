@@ -47,6 +47,8 @@ int __get_y_or_n(int for_pager);
 extern int _rl_last_v_pos;
 };
 
+extern bool is_test_harness();
+
 
 
 //------------------------------------------------------------------------------
@@ -202,6 +204,8 @@ selectcomplete_impl::selectcomplete_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 bool selectcomplete_impl::activate(editor_module::result& result, bool reactivate)
 {
+    assert(!is_test_harness());
+
     assert(m_buffer);
     if (!m_buffer)
         return false;

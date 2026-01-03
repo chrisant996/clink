@@ -28,6 +28,9 @@ extern "C" int _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------
+extern bool is_test_harness();
+
+//------------------------------------------------------------------------------
 struct stdcon_handle_info
 {
     void        init(DWORD n, FILE* f)
@@ -55,13 +58,27 @@ static stdcon_handle_info s_conout = {};
 
 
 //------------------------------------------------------------------------------
-static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
+static int16 GetConsoleNumLines()
 {
     // Calculate the bottom as the line immediately preceding the beginning of
     // the Readline input line.  That may contain some of the prompt text, if
     // the prompt text is more than one line.
-    SHORT bottom_Y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-    return bottom_Y + 1;
+    COORD cursor;
+    if (!g_printer)
+    {
+        assert(!is_test_harness());
+        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+            return -1;
+        cursor = csbiInfo.dwCursorPosition;
+    }
+    else
+    {
+        g_printer->get_cursor(cursor.X, cursor.Y);
+    }
+    cursor.Y -= _rl_last_v_pos;
+    return cursor.Y + 1;
 }
 
 //------------------------------------------------------------------------------
@@ -115,6 +132,8 @@ private:
 /// </table>
 static int32 scroll(lua_State* state)
 {
+    assert(!is_test_harness());
+
     const char* mode = checkstring(state, 1);
     auto amount = checkinteger(state, 2);
     if (!mode || !amount.isnum())
@@ -235,12 +254,22 @@ int32 explode_ansi(lua_State* state)
 /// Returns the width of the console screen buffer in characters.
 static int32 get_width(lua_State* state)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return 0;
+    int32 width;
+    if (!g_printer)
+    {
+        assert(!is_test_harness());
+        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+            return 0;
+        width = csbiInfo.dwSize.X;
+    }
+    else
+    {
+        width = g_printer->get_columns();
+    }
 
-    lua_pushinteger(state, csbiInfo.dwSize.X);
+    lua_pushinteger(state, width);
     return 1;
 }
 
@@ -251,12 +280,22 @@ static int32 get_width(lua_State* state)
 /// Returns the number of visible lines of the console screen buffer.
 static int32 get_height(lua_State* state)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return 0;
+    int32 height;
+    if (!g_printer)
+    {
+        assert(!is_test_harness());
+        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+            return 0;
+        height = csbiInfo.srWindow.Bottom + 1 - csbiInfo.srWindow.Top;
+    }
+    else
+    {
+        height = g_printer->get_rows();
+    }
 
-    lua_pushinteger(state, csbiInfo.srWindow.Bottom + 1 - csbiInfo.srWindow.Top);
+    lua_pushinteger(state, height);
     return 1;
 }
 
@@ -267,12 +306,11 @@ static int32 get_height(lua_State* state)
 /// Returns the total number of lines in the console screen buffer.
 static int32 get_num_lines(lua_State* state)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+    const auto num_lines = GetConsoleNumLines();
+    if (num_lines < 0)
         return 0;
 
-    lua_pushinteger(state, GetConsoleNumLines(csbiInfo));
+    lua_pushinteger(state, num_lines);
     return 1;
 }
 
@@ -283,12 +321,22 @@ static int32 get_num_lines(lua_State* state)
 /// Returns the current top line (scroll position) in the console screen buffer.
 static int32 get_top(lua_State* state)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return 0;
+    int32 top;
+    if (!g_printer)
+    {
+        assert(!is_test_harness());
+        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+            return 0;
+        top = csbiInfo.srWindow.Top;
+    }
+    else
+    {
+        top = g_printer->get_top();
+    }
 
-    lua_pushinteger(state, csbiInfo.srWindow.Top + 1);
+    lua_pushinteger(state, top + 1);
     return 1;
 }
 
@@ -302,13 +350,23 @@ static int32 get_top(lua_State* state)
 /// -show:  local x, y = console.getcursorpos()
 static int32 get_cursor_pos(lua_State* state)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return 0;
+    COORD cursor;
+    if (!g_printer)
+    {
+        assert(!is_test_harness());
+        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+            return 0;
+        cursor = csbiInfo.dwCursorPosition;
+    }
+    else
+    {
+        g_printer->get_cursor(cursor.X, cursor.Y);
+    }
 
-    lua_pushinteger(state, csbiInfo.dwCursorPosition.X + 1);
-    lua_pushinteger(state, csbiInfo.dwCursorPosition.Y + 1);
+    lua_pushinteger(state, cursor.X + 1);
+    lua_pushinteger(state, cursor.Y + 1);
     return 2;
 }
 
@@ -331,12 +389,11 @@ static int32 get_line_text(lua_State* state)
         return 0;
     SHORT line = _line - 1;
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
+    const auto num_lines = GetConsoleNumLines();
+    if (num_lines < 0)
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
+    line = min<int32>(line, num_lines - 1);
     line = max<int32>(line, 0);
 
     str_moveable out;
@@ -354,6 +411,8 @@ static int32 get_line_text(lua_State* state)
 /// Returns the console title text.
 static int32 get_title(lua_State* state)
 {
+    assert(!is_test_harness());
+
     wstr<16> title;
     title.reserve(4096);
 
@@ -377,6 +436,8 @@ static int32 get_title(lua_State* state)
 /// Sets the console title text.
 static int32 set_title(lua_State* state)
 {
+    assert(!is_test_harness());
+
     const char* title = checkstring(state, 1);
     if (!title)
         return 0;
@@ -402,12 +463,11 @@ static int32 is_line_default_color(lua_State* state)
         return 0;
     SHORT line = _line - 1;
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
+    const auto num_lines = GetConsoleNumLines();
+    if (num_lines < 0)
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
+    line = min<int32>(line, num_lines - 1);
     line = max<int32>(line, 0);
 
     int32 result = g_printer->is_line_default_color(line);
@@ -474,12 +534,11 @@ static int32 line_has_color(lua_State* state)
         return 0;
     SHORT line = _line - 1;
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
+    const auto num_lines = GetConsoleNumLines();
+    if (num_lines < 0)
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
+    line = min<int32>(line, num_lines - 1);
     line = max<int32>(line, 0);
 
     BYTE mask = 0xff;
@@ -538,12 +597,9 @@ static int32 find_line(lua_State* state, int32 direction)
         return 0;
     SHORT starting_line = _starting_line - 1;
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
+    const auto num_lines = GetConsoleNumLines();
+    if (num_lines < 0)
         return 0;
-
-    SHORT num_lines = GetConsoleNumLines(csbi);
 
     starting_line = min<int32>(starting_line, num_lines - 1);
     starting_line = max<int32>(starting_line, 0);
@@ -840,6 +896,8 @@ static int32 check_input(lua_State* state)
 /// conhost terminal then this is always able to report the current color theme.
 static int32 get_color_table(lua_State* state)
 {
+    assert(!is_test_harness());
+
     static HMODULE hmod = GetModuleHandle("kernel32.dll");
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
     typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
@@ -1094,6 +1152,8 @@ static int32 api_ellipsify(lua_State* state)
 // UNDOCUMENTED; internal use only.
 static int32 set_width(lua_State* state)
 {
+    assert(!is_test_harness());
+
     static bool s_fudge_verified = false;
     static bool s_fudge_needed = false;
 
@@ -1222,6 +1282,8 @@ static void copy_console_mode(stdcon_handle_info& from, stdcon_handle_info& to)
 //------------------------------------------------------------------------------
 static int32 use_direct_io(lua_State* state)
 {
+    assert(!is_test_harness());
+
     // The first call to console.usedirectio(...) creates the io.conin and
     // io.conout handles.  Each call returns the current mode as "stdio" or
     // "conio".

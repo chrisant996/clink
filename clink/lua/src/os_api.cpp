@@ -16,6 +16,7 @@
 #include <lib/doskey.h>
 #include <lib/clink_ctrlevent.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 #include <process/process.h>
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
@@ -42,6 +43,7 @@ extern setting_bool g_files_hidden;
 extern setting_bool g_files_system;
 
 //------------------------------------------------------------------------------
+extern bool is_test_harness();
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
 static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
@@ -2275,19 +2277,34 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
 {
     int32 i;
     int32 values[4];
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    COORD cursor;
 
-    if (GetConsoleScreenBufferInfo(get_std_handle(STD_OUTPUT_HANDLE), &csbi))
+    if (is_test_harness())
     {
-        values[0] = csbi.dwSize.X;
-        values[1] = csbi.dwSize.Y;
-        values[2] = csbi.srWindow.Right - csbi.srWindow.Left;
-        values[3] = csbi.srWindow.Bottom - csbi.srWindow.Top;
+        assert(g_printer);
+        if (!g_printer)
+            return 0;
+        values[0] = values[2] = g_printer->get_columns();
+        values[1] = values[3] = g_printer->get_rows();
+        g_printer->get_cursor(cursor.X, cursor.Y);
     }
     else
     {
-        values[0] = values[2] = 80;
-        values[1] = values[3] = 25;
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (GetConsoleScreenBufferInfo(get_std_handle(STD_OUTPUT_HANDLE), &csbi))
+        {
+            values[0] = csbi.dwSize.X;
+            values[1] = csbi.dwSize.Y;
+            values[2] = csbi.srWindow.Right - csbi.srWindow.Left;
+            values[3] = csbi.srWindow.Bottom - csbi.srWindow.Top;
+            cursor = csbi.dwCursorPosition;
+        }
+        else
+        {
+            values[0] = values[2] = 80;
+            values[1] = values[3] = 25;
+            cursor = {};
+        }
     }
 
     lua_createtable(state, 0, 4);
@@ -2321,11 +2338,11 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
         if (!back_compat)
         {
             lua_pushstring(state, "x");
-            lua_pushinteger(state, csbi.dwCursorPosition.X);
+            lua_pushinteger(state, cursor.X);
             lua_rawset(state, -3);
 
             lua_pushstring(state, "y");
-            lua_pushinteger(state, csbi.dwCursorPosition.Y);
+            lua_pushinteger(state, cursor.Y);
             lua_rawset(state, -3);
         }
     }

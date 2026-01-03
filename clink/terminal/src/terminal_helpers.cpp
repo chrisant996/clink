@@ -15,6 +15,11 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+extern bool is_test_harness();
+#endif
+
+//------------------------------------------------------------------------------
 extern bool g_enhanced_cursor;
 printer* g_printer = nullptr;
 bool g_accept_mouse_input = false;
@@ -284,6 +289,8 @@ void detect_console_theme()
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
+    assert(!is_test_harness());
+
     static str<48> s_popup;
 
     str<48> tmp;
@@ -783,12 +790,13 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
         if (g_printer)
         {
             DWORD mode = 0;
-            CONSOLE_SCREEN_BUFFER_INFO csbi = {};
             HANDLE hOut = get_std_handle(STD_OUTPUT_HANDLE);
             if (!GetConsoleMode(get_std_handle(STD_INPUT_HANDLE), &mode))
                 return;
-            if (!GetConsoleScreenBufferInfo(hOut, &csbi))
-                return;
+
+            COORD cursor;
+            const int32 columns = g_printer->get_columns();
+            g_printer->get_cursor(cursor.X, cursor.Y);
 
             const int32 row = atoi(value.c_str());
             const char* color = (row > 0) ? ";7" : ";7;90";
@@ -796,13 +804,13 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 
             if (row > 0)
                 value.format("\x1b[s\x1b[%uH\x1b[K", row);
-            else if (csbi.dwCursorPosition.X > 0)
+            else if (cursor.X > 0)
                 value = "\n";
-            else if (!g_printer->get_line_text(csbi.dwCursorPosition.Y, tmp) || tmp.length())
+            else if (!g_printer->get_line_text(cursor.Y, tmp) || tmp.length())
                 value = "\n";
 
             tag = (row < 0) ? tag : nullptr;
-            if (csbi.dwSize.X >= 40)
+            if (columns >= 40)
             {
                 str<> rtext;
                 if (tag)
@@ -814,17 +822,17 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
                 rtext.concat("\x1b[0");
                 rtext.concat(color);
                 rtext.concat(";90m orig ");
-                append_mode(rtext, s_host_input_mode, (csbi.dwSize.X >= 72));
+                append_mode(rtext, s_host_input_mode, (columns >= 72));
                 rtext.concat(" \x1b[m\x1b[G");
 
                 const uint32 rlen = cell_count(rtext.c_str());
-                tmp.format("\x1b[%uG", csbi.dwSize.X - rlen);
+                tmp.format("\x1b[%uG", columns - rlen);
                 value.concat(tmp.c_str());
                 value.concat(rtext.c_str());
             }
             tmp.format("\x1b[0%sm qe %u \x1b[m \x1b[0%sm curr ", color, !!s_quick_edit, color);
             value.concat(tmp.c_str());
-            append_mode(value, mode, (csbi.dwSize.X >= 72));
+            append_mode(value, mode, (columns >= 72));
             value.concat(" \x1b[m");
             if (prev_mode)
             {

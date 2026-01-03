@@ -37,6 +37,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 #include <terminal/scroll.h>
 
 #include <memory>
@@ -94,6 +95,7 @@ const uint32 c_horz_scroll_indicator_chars = 1;
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
+extern bool is_test_harness();
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
@@ -147,6 +149,8 @@ static bool is_autowrap_bug_present()
 //------------------------------------------------------------------------------
 static HANDLE is_horizpos_workaround_needed()
 {
+    if (is_test_harness())
+        return nullptr;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(h, &csbi))
@@ -169,13 +173,6 @@ static void clear_to_end_of_screen()
 static void tputs(const char* s)
 {
     rl_fwrite_function(_rl_out_stream, s, strlen(s));
-}
-
-//------------------------------------------------------------------------------
-static bool get_console_screen_buffer_info(CONSOLE_SCREEN_BUFFER_INFO* info)
-{
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    return !!GetConsoleScreenBufferInfo(h, info);
 }
 
 //------------------------------------------------------------------------------
@@ -328,6 +325,7 @@ preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HAN
     ++s_nested;
     if (!s_h && h)
     {
+        assert(!is_test_harness());
         s_h = h;
         s_saved_rl_term_clreol = _rl_term_clreol;
         _rl_term_clreol = nullptr;
@@ -342,6 +340,7 @@ preserve_window_horiz_scroll_position::~preserve_window_horiz_scroll_position()
     assert(s_nested > 0);
     if (s_h)
     {
+        assert(!is_test_harness());
         display_accumulator::flush();
         CONSOLE_SCREEN_BUFFER_INFO cursor;
         GetConsoleScreenBufferInfo(s_h, &cursor);
@@ -1538,9 +1537,10 @@ void display_manager::uninitialize()
 #ifdef DEBUG
     if (!m_ignore_column_on_uninit)
     {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-        assert(!csbi.dwCursorPosition.X);
+        assert(g_printer);
+        COORD cursor;
+        if (g_printer && g_printer->get_cursor(cursor.X, cursor.Y))
+            assert(!cursor.X);
         assert(!_rl_last_c_pos);
     }
 #endif
@@ -1743,6 +1743,8 @@ int32 display_manager::write_with_clear(FILE* stream, const char* text, int leng
 void display_manager::display()
 {
     static const char* const UP = tgetstr("UP", nullptr);
+
+    assert(g_printer);
 
     if (!_rl_echoing_p || !m_initialized)
         return;
@@ -2001,12 +2003,12 @@ void display_manager::display()
 
         if (is_CJK_codepage(GetConsoleOutputCP()))
         {
-            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            COORD cursor;
             coalesce.flush();
-            if (get_console_screen_buffer_info(&csbi) &&
-                m_last_prompt_line_width != csbi.dwCursorPosition.X)
+            if (g_printer && g_printer->get_cursor(cursor.X, cursor.Y) &&
+                m_last_prompt_line_width != cursor.X)
             {
-                m_last_prompt_line_width = csbi.dwCursorPosition.X;
+                m_last_prompt_line_width = cursor.X;
 #undef m_next
                 // TODO: Is this correct when !need_update?
                 if (m_horz_scroll)
@@ -2670,6 +2672,7 @@ void display_manager::move_to_column(uint32 col, bool force)
 
     if (m_horizpos_workaround)
     {
+        assert(!is_test_harness());
         display_accumulator::flush();
 
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -3049,11 +3052,12 @@ bool has_modmark(bool* out)
 //------------------------------------------------------------------------------
 void refresh_terminal_size()
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    get_console_screen_buffer_info(&csbi);
+    assert(g_printer);
+    if (!g_printer)
+        return;
 
-    const int32 width = csbi.dwSize.X;
-    const int32 height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    const int32 width = g_printer->get_columns();
+    const int32 height = g_printer->get_rows();
 
     if (_rl_screenheight != height || _rl_screenwidth != width)
     {
@@ -3133,6 +3137,8 @@ void force_comment_row(const char* text)
 //------------------------------------------------------------------------------
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt)
 {
+    assert(g_printer);
+
     if (!s_display_manager.is_initialized())
         return;
 
@@ -3153,8 +3159,8 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     display_accumulator coalesce;
 
     // Update Readline's perception of the terminal dimensions.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    get_console_screen_buffer_info(&csbi);
+    COORD cursor;
+    const bool has_cursor = g_printer->get_cursor(cursor.X, cursor.Y);
     refresh_terminal_size();
 
     // Measure what was previously displayed.
@@ -3167,7 +3173,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     // strangely and end up inserting an extra blank line between the cursor and
     // the preceding text.  Test for a blank line above the cursor, and
     // increment cursor_line to compensate.
-    if (cursor_line > 0 && csbi.dwCursorPosition.X == 1)
+    if (has_cursor && cursor_line > 0 && cursor.X == 1)
     {
         const uint32 cur = buffer.get_cursor();
         const uint32 len = buffer.get_length();
@@ -3215,6 +3221,8 @@ uint32 get_readline_display_top_offset()
 //------------------------------------------------------------------------------
 bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
 {
+    assert(!is_test_harness());
+
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 
