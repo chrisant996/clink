@@ -94,6 +94,18 @@ uint32 printer::get_rows() const
 }
 
 //------------------------------------------------------------------------------
+uint32 printer::get_top() const
+{
+    return m_terminal.get_top();
+}
+
+//------------------------------------------------------------------------------
+bool printer::get_cursor(int16& x, int16& y) const
+{
+    return m_terminal.get_cursor(x, y);
+}
+
+//------------------------------------------------------------------------------
 bool printer::get_line_text(int32 line, str_base& out) const
 {
     return m_terminal.get_line_text(line, out);
@@ -192,25 +204,4 @@ void printer::flush_attributes()
 attributes printer::get_attributes() const
 {
     return m_next_attr;
-}
-
-//------------------------------------------------------------------------------
-void printer::insert(int32 count)
-{
-}
-
-//------------------------------------------------------------------------------
-void printer::move_cursor(int32 dc, int32 dr)
-{
-}
-
-//------------------------------------------------------------------------------
-void printer::set_cursor(cursor_state state)
-{
-}
-
-//------------------------------------------------------------------------------
-printer::cursor_state printer::get_cursor() const
-{
-    return 0;
 }

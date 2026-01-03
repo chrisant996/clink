@@ -26,6 +26,8 @@ public:
     virtual void            flush() = 0;
     virtual int32           get_columns() const = 0;
     virtual int32           get_rows() const = 0;
+    virtual int32           get_top() const = 0;
+    virtual bool            get_cursor(int16& x, int16& y) const = 0;
     virtual int32           is_line_default_color(int32 line) const = 0;
     virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const = 0;
     virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const = 0;

@@ -26,19 +26,14 @@ public:
     template <int32 S> void print(const attributes attr, const char (&data)[S]);
     uint32                  get_columns() const;
     uint32                  get_rows() const;
+    uint32                  get_top() const;
+    bool                    get_cursor(int16& x, int16& y) const;
     bool                    get_line_text(int32 line, str_base& out) const;
     int32                   is_line_default_color(int32 line) const;
     int32                   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const;
     int32                   find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const;
     attributes              set_attributes(const attributes attr);
     attributes              get_attributes() const;
-
-private: /* TODO: unimplemented API */
-    typedef uint32          cursor_state;
-    void                    insert(int32 count); // -count == delete characters.
-    void                    move_cursor(int32 dc, int32 dr);
-    void                    set_cursor(cursor_state state);
-    cursor_state            get_cursor() const;
 
 private:
     void                    flush_attributes();

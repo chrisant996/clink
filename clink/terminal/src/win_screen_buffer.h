@@ -22,6 +22,8 @@ public:
     virtual void    flush() override;
     virtual int32   get_columns() const override;
     virtual int32   get_rows() const override;
+    virtual int32   get_top() const override;
+    virtual bool    get_cursor(int16& x, int16& y) const override;
     virtual bool    get_line_text(int32 line, str_base& out) const override;
     virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;

@@ -796,6 +796,26 @@ int32 win_screen_buffer::get_rows() const
 }
 
 //------------------------------------------------------------------------------
+int32 win_screen_buffer::get_top() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return 0;
+    return csbi.srWindow.Top;
+}
+
+//------------------------------------------------------------------------------
+bool win_screen_buffer::get_cursor(int16& x, int16& y) const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return false;
+    x = csbi.dwCursorPosition.X;
+    y = csbi.dwCursorPosition.Y;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool win_screen_buffer::get_line_text(int32 line, str_base& out) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;

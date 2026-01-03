@@ -90,6 +90,18 @@ int32 ecma48_terminal_out::get_rows() const
 }
 
 //------------------------------------------------------------------------------
+int32 ecma48_terminal_out::get_top() const
+{
+    return m_screen.get_top();
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_terminal_out::get_cursor(int16& x, int16& y) const
+{
+    return m_screen.get_cursor(x, y);
+}
+
+//------------------------------------------------------------------------------
 bool ecma48_terminal_out::get_line_text(int32 line, str_base& out) const
 {
     return m_screen.get_line_text(line, out);

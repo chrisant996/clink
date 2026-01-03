@@ -2669,7 +2669,7 @@ static void analyze_char_widths(const char* s, std::vector<alert_char>& cjk)
 class terminal_file : public terminal_out
 {
 public:
-                            terminal_file(const char* file, int32 rows, int32 cols);
+                            terminal_file(const char* file, int32 rows, int32 cols, int32 top);
     virtual                 ~terminal_file();
     virtual void            open() {}
     virtual void            begin() {}
@@ -2680,6 +2680,8 @@ public:
     virtual void            flush() {}
     virtual int32           get_columns() const { return m_cols; }
     virtual int32           get_rows() const { return m_rows; }
+    virtual int32           get_top() const { return m_top; }
+    virtual bool            get_cursor(int16& x, int16& y) const { assert(false); x = y = 0; return false; }
     virtual int32           is_line_default_color(int32 line) const { assert(false); return -1; }
     virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { assert(false); return -1; }
     virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const { assert(false); return -1; }
@@ -2688,13 +2690,15 @@ private:
     FILE* const             m_file;
     const int32             m_rows;
     const int32             m_cols;
+    const int32             m_top;
 };
 
 //------------------------------------------------------------------------------
-terminal_file::terminal_file(const char* file, int32 rows, int32 cols)
+terminal_file::terminal_file(const char* file, int32 rows, int32 cols, int32 top)
 : m_file(fopen(file, "w"))
 , m_rows(rows)
 , m_cols(cols)
+, m_top(top)
 {
 }
 
@@ -2916,15 +2920,17 @@ int32 clink_diagnostics_output(int32 count, int32 invoking_key)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     int32 rows = 50;
     int32 cols = 80;
+    int32 top = 0;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
     {
         rows = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
         cols = (csbi.srWindow.Right - csbi.srWindow.Left) + 1;
+        top = csbi.srWindow.Top;
     }
 
     str_moveable file;
     path::join(context.profile.c_str(), "clink.info", file);
-    terminal_file out(file.c_str(), rows, cols);
+    terminal_file out(file.c_str(), rows, cols, top);
     printer file_printer(out);
 
     {
