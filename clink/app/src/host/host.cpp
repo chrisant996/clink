@@ -342,46 +342,6 @@ static void write_line_feed()
 }
 
 //------------------------------------------------------------------------------
-static void adjust_prompt_spacing()
-{
-    assert(g_printer);
-
-    static_assert(MAX == prompt_spacing::MAX, "ambiguous symbol");
-    const int32 _spacing = s_prompt_spacing.get();
-    const prompt_spacing spacing = (_spacing < normal || _spacing >= MAX) ? normal : prompt_spacing(_spacing);
-
-    if (spacing != normal)
-    {
-        // Consume blank lines before the prompt.  The prompt.spacing concept
-        // was inspired by Powerlevel10k, which doesn't consume blank lines,
-        // but CMD causes blank lines more often than zsh does.  So to achieve
-        // a similar effect it's necessary to actively consume blank lines.
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (GetConsoleScreenBufferInfo(h, &csbi) && csbi.dwCursorPosition.X == 0)
-        {
-            str<> text;
-            SHORT y = csbi.dwCursorPosition.Y;
-            while (y > 0)
-            {
-                if (!g_printer->get_line_text(y - 1, text))
-                    break;
-                if (!text.empty())
-                    break;
-                --y;
-            }
-            if (y < csbi.dwCursorPosition.Y)
-            {
-                COORD pos;
-                pos.X = 0;
-                pos.Y = y;
-                SetConsoleCursorPosition(h, pos);
-            }
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
 bool is_sparse_prompt_spacing()
 {
     return s_prompt_spacing.get() == prompt_spacing::sparse;
@@ -780,6 +740,44 @@ bool host::get_command_word(line_state& line, str_base& command_word, bool& quot
 std::unique_ptr<printer_context> host::make_printer_context()
 {
     return std::make_unique<printer_context>(m_terminal.out, m_printer);
+}
+
+//------------------------------------------------------------------------------
+void host::adjust_prompt_spacing()
+{
+    assert(g_printer);
+
+    static_assert(MAX == prompt_spacing::MAX, "ambiguous symbol");
+    const int32 _spacing = s_prompt_spacing.get();
+    const prompt_spacing spacing = (_spacing < normal || _spacing >= MAX) ? normal : prompt_spacing(_spacing);
+
+    if (spacing != normal)
+    {
+        // Consume blank lines before the prompt.  The prompt.spacing concept
+        // was inspired by Powerlevel10k, which doesn't consume blank lines,
+        // but CMD causes blank lines more often than zsh does.  So to achieve
+        // a similar effect it's necessary to actively consume blank lines.
+        COORD cursor;
+        if (g_printer->get_cursor(cursor.X, cursor.Y))
+        {
+            str<> text;
+            int16 y = cursor.Y;
+            while (y > 0)
+            {
+                if (!g_printer->get_line_text(y - 1, text))
+                    break;
+                if (!text.empty())
+                    break;
+                --y;
+            }
+            if (y < cursor.Y)
+            {
+                text.clear();
+                text.format("\x1b[%uH", y + 1);
+                g_printer->print(text.c_str(), text.length());
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

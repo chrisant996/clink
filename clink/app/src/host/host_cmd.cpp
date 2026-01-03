@@ -759,6 +759,8 @@ LReturnReal:
             }
             *write = '\0';
 
+            hc->adjust_prompt_spacing();
+
             g_printer->print(prompt.c_str(), prompt.length());
             // Add a newline so that output always starts on the line after the
             // prompt.  Conhost starts output on the prompt line, making the

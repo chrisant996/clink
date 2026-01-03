@@ -76,6 +76,7 @@ public:
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();
+    void            adjust_prompt_spacing();
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit=true);
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
