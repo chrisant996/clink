@@ -7,3 +7,7 @@ void clink_shutdown_ctrlevent();
 int32 clink_is_signaled();
 
 void clink_set_signaled(int32 sig);   // SIGINT, etc.
+
+#ifdef DEBUG
+extern bool g_suppress_signal_assert;
+#endif

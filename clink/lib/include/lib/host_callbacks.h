@@ -41,5 +41,4 @@ public:
 };
 
 //------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
 void host_get_app_context(int32& id, host_context& context);

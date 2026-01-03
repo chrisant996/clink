@@ -2437,6 +2437,7 @@ bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 //------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
+, m_has_pending_line(false)
 , m_old_int(SIG_DFL)
 , m_old_break(SIG_DFL)
 {
@@ -2765,14 +2766,15 @@ bool rl_module::is_input_pending()
 //------------------------------------------------------------------------------
 bool rl_module::next_line(str_base& out)
 {
-    if (m_queued_lines.empty())
+    if (!m_has_pending_line)
     {
         out.clear();
         return false;
     }
 
-    out = m_queued_lines[0].c_str();
-    m_queued_lines.erase(m_queued_lines.begin());
+    out = m_pending_line.c_str();
+    m_pending_line.clear();
+    m_has_pending_line = false;
     return true;
 }
 
@@ -2889,7 +2891,7 @@ void rl_module::on_begin_line(const context& context)
     // Apply the remembered history position from the previous command, if any.
     restore_sticky_search_position();
 
-    m_done = !m_queued_lines.empty();
+    m_done = m_has_pending_line;
     m_eof = false;
     m_prev_group = -1;
 
@@ -3187,8 +3189,10 @@ void rl_module::on_matches_changed(const context& context, const line_state& lin
 //------------------------------------------------------------------------------
 void rl_module::done(const char* line)
 {
-    if (line)
-        m_queued_lines.emplace_back(line);
+    assert(!m_has_pending_line);
+
+    m_pending_line = line;
+    m_has_pending_line = !!line;
     m_done = true;
     m_eof = (line == nullptr);
 

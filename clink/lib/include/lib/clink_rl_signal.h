@@ -5,6 +5,8 @@
 
 #include <core/base.h>
 
+extern void (*after_signal_hook_fn)();
+
 void clink_sighandler(int32 sig);
 bool clink_maybe_handle_signal();
 

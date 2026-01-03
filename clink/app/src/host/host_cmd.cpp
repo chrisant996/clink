@@ -23,6 +23,7 @@
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
 #include <lib/clink_ctrlevent.h>
+#include <lib/clink_rl_signal.h>
 #include <lib/wakeup_chars.h>
 #include <lib/rl_integration.h>
 #include <lua/lua_script_loader.h>
@@ -239,16 +240,7 @@ void host_load_app_scripts(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
-{
-    auto* const host = host_cmd::get();
-    assert(host);
-    if (host)
-        host->enqueue_lines(lines, hide_prompt, show_line);
-}
-
-//------------------------------------------------------------------------------
-void host_cleanup_after_signal()
+static void host_cleanup_after_signal()
 {
     auto* const host = host_cmd::get();
     if (host)
@@ -392,6 +384,8 @@ static void maybe_detour_write_console()
 //------------------------------------------------------------------------------
 bool host_cmd::initialise()
 {
+    after_signal_hook_fn = host_cleanup_after_signal;
+
     hook_setter hooks;
     hook_type type = get_hook_type();
     const char* module = get_kernel_module();
@@ -606,9 +600,6 @@ static void finalize_input_line(wstr_base& line, LPDWORD read_in=nullptr)
 }
 
 //------------------------------------------------------------------------------
-#ifdef DEBUG
-bool g_suppress_signal_assert = false;
-#endif
 BOOL WINAPI host_cmd::read_console(
     HANDLE input,
     void* _chars,
@@ -671,7 +662,10 @@ LReturnReal:
 
         // Default behaviour.
         if (hc->dequeue_char(chars))
+        {
+            *read_in = 1;
             return TRUE;
+        }
         goto LReturnReal;
     }
 

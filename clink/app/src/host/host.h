@@ -7,6 +7,7 @@
 
 #include <lib/doskey.h>
 #include <lib/line_editor.h>
+#include <lib/line_queue.h>
 #include <lib/history_db.h>
 #include <lib/host_callbacks.h>
 
@@ -22,31 +23,8 @@ class suggester;
 class printer_context;
 
 //------------------------------------------------------------------------------
-enum class dequeue_flags
-{
-    none            = 0x00,
-    hide_prompt     = 0x01,
-    show_line       = 0x02,
-    edit_line       = 0x04,
-};
-DEFINE_ENUM_FLAG_OPERATORS(dequeue_flags);
-
-inline bool check_dequeue_flag(const dequeue_flags check, const dequeue_flags mask)
-{
-    return (check & mask) != dequeue_flags::none;
-}
-
-//------------------------------------------------------------------------------
 class host : public host_callbacks
 {
-    struct queued_line
-    {
-        queued_line(str_moveable&& line, dequeue_flags flags)
-            : m_line(std::move(line)), m_flags(flags) {}
-        str_moveable m_line;
-        dequeue_flags m_flags;
-    };
-
 public:
                     host(const char* name);
     virtual         ~host();
@@ -55,9 +33,6 @@ public:
     virtual void    shutdown() = 0;
 
     const char*     filter_prompt(const char** rprompt, bool& ok, bool transient=false, bool final=false);
-    void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-    bool            dequeue_line(wstr_base& out, dequeue_flags& flags);
-    bool            dequeue_char(wchar_t* out);
     void            cleanup_after_signal();
 
     // host_callbacks:
@@ -78,13 +53,14 @@ protected:
     std::unique_ptr<printer_context> make_printer_context();
     void            adjust_prompt_spacing();
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit=true);
+    bool            dequeue_line(wstr_base& out, dequeue_flags& flags);
+    bool            dequeue_char(wchar_t* out);
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
 
 private:
     void            purge_old_files();
     void            update_last_cwd();
-    void            pop_queued_line();
 
 private:
     const char*     m_name;
@@ -99,8 +75,7 @@ private:
     str<256>        m_filtered_prompt;
     str<256>        m_filtered_rprompt;
     str_moveable    m_pending_command;
-    std::list<queued_line> m_queued_lines;
-    uint32          m_char_cursor = 0;
+    line_queue      m_line_queue;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
     bool            m_skip_provide_line = false;

@@ -68,7 +68,8 @@ private:
     bool            m_done;
     bool            m_eof;
     mouse_info      m_mouse;
-    std::vector<str_moveable> m_queued_lines;
+    bool            m_has_pending_line;
+    str_moveable    m_pending_line;
     str_moveable    m_rl_prompt;
     str_moveable    m_rl_rprompt;
     str<16>         m_input_color;

@@ -32,15 +32,12 @@ extern bool g_force_load_debugger;
 extern bool g_force_break_on_error;
 
 //------------------------------------------------------------------------------
-// NOTE:  If you get a linker error about these being "already defined", then
-// probably a new global function has been added in app/src/ that needs to be
-// stubbed out here.
-#ifdef DEBUG
-bool g_suppress_signal_assert = false;
-#endif
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line) { assert(false); }
-void host_cleanup_after_signal() {}
-void host_set_last_prompt(const char* prompt, uint32 length) { assert(false); }
+// NOTE:  If you get a linker error about symbols that are "already defined",
+// or about unresolved symbols that don't make sense (especially
+// MiniDumpWriteDump or symbols from the host\ directory) then probably a new
+// global was added in app/src/.  Ideally, don't allow globals in the app/src/
+// layer.  But if it's really necessary, then add a stub function or stub
+// variable here.
 
 //------------------------------------------------------------------------------
 void before_read_stdin(lua_saved_console_mode* saved, void* stream)

@@ -20,6 +20,7 @@
 #include "rl_integration.h"
 #include "line_editor_integration.h"
 #include "suggestions.h"
+#include "line_queue.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -268,6 +269,15 @@ bool toggle_slashes_in_rl_buffer(int32 offset, int32 length)
     g_rl_buffer->insert(word.c_str());
     g_rl_buffer->end_undo_group();
     return true;
+}
+
+//------------------------------------------------------------------------------
+static void enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
+{
+    auto* const queue = line_queue::get();
+    assert(queue);
+    if (queue)
+        queue->enqueue_lines(lines, hide_prompt, show_line, enqueue_at::back, false/*no_doskey*/);
 }
 
 
@@ -733,7 +743,7 @@ int32 clink_paste(int32 count, int32 invoking_key)
     g_rl_buffer->insert(utf8.c_str());
     if (sel)
         g_rl_buffer->end_undo_group();
-    host_cmd_enqueue_lines(overflow, false, true);
+    enqueue_lines(overflow, false, true);
     if (done)
     {
         (*rl_redisplay_function)();
@@ -2470,7 +2480,7 @@ LUnlinkFile:
     g_rl_buffer->end_undo_group();
 
     // Queue any additional lines.
-    host_cmd_enqueue_lines(overflow, false, true);
+    enqueue_lines(overflow, false, true);
 
     // Accept the input and execute it.
     (*rl_redisplay_function)();

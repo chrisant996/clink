@@ -189,10 +189,6 @@ extern setting_enum g_expand_mode;
 
 extern bool can_suggest_internal(const line_state& line);
 
-#ifdef DEBUG
-extern bool g_suppress_signal_assert;
-#endif
-
 
 
 //------------------------------------------------------------------------------
@@ -457,27 +453,6 @@ host::~host()
 }
 
 //------------------------------------------------------------------------------
-void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
-{
-    // It's nonsensical to hide the prompt and show the line.
-    // It's nonsensical to edit the line but not show the line.
-    assert(!(hide_prompt && show_line));
-
-    for (auto& line : lines)
-    {
-        dequeue_flags flags = dequeue_flags::none;
-        if (hide_prompt) flags |= dequeue_flags::hide_prompt;
-        if (show_line)
-        {
-            flags |= dequeue_flags::show_line;
-            if (line.empty() || line[line.length() - 1] != '\n')
-                flags |= dequeue_flags::edit_line;
-        }
-        m_queued_lines.emplace_back(std::move(line), flags);
-    }
-}
-
-//------------------------------------------------------------------------------
 bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
 {
     if (m_bypass_dequeue)
@@ -488,46 +463,15 @@ bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
     }
 
     clink_maybe_handle_signal();
-    if (m_queued_lines.empty())
-    {
-        flags = dequeue_flags::show_line|dequeue_flags::edit_line;
+
+    str_moveable tmp;
+    if (!m_line_queue.dequeue_line(tmp, flags))
         return false;
-    }
 
-    const auto& front = m_queued_lines.front();
-    out = front.m_line.c_str() + m_char_cursor;
-    flags = front.m_flags;
+    if (intercept_directory(tmp.c_str(), &tmp) == intercept_result::prev_dir)
+        prev_dir_history(tmp);
 
-    std::list<str_moveable> queue;
-    if (!m_char_cursor &&
-        (flags & (dequeue_flags::hide_prompt|dequeue_flags::show_line)) == dequeue_flags::none)
-    {
-        str<> line(front.m_line.c_str());
-        while (line.length())
-        {
-            const char c = line[line.length() - 1];
-            if (c == '\r' || c == '\n')
-                line.truncate(line.length() - 1);
-            else
-                break;
-        }
-        doskey_alias alias;
-        m_doskey.resolve(line.c_str(), alias);
-        if (alias)
-        {
-            str_moveable next;
-            if (alias.next(next))
-                out = next.c_str();
-            while (alias.next(next))
-                queue.push_front(std::move(next));
-        }
-    }
-
-    pop_queued_line();
-
-    for (auto& line : queue)
-        m_queued_lines.emplace_front(std::move(line), dequeue_flags::hide_prompt);
-
+    to_utf16(out, str_iter(tmp.c_str(), tmp.length()));
     return true;
 }
 
@@ -535,35 +479,15 @@ bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
 bool host::dequeue_char(wchar_t* out)
 {
     clink_maybe_handle_signal();
-    if (m_queued_lines.empty())
-        return false;
 
-    const auto& line = m_queued_lines.front().m_line;
-    if (m_char_cursor >= line.length())
-    {
-        assert(false);
-        return false;
-    }
-
-    *out = line.c_str()[m_char_cursor++];
-    if (m_char_cursor >= line.length())
-        pop_queued_line();
-    return true;
+    return m_line_queue.dequeue_char(out);
 }
 
 //------------------------------------------------------------------------------
 void host::cleanup_after_signal()
 {
-    m_queued_lines.clear();
-    m_char_cursor = 0;
+    m_line_queue.clear();
     m_skip_provide_line = true;
-}
-
-//------------------------------------------------------------------------------
-void host::pop_queued_line()
-{
-    m_queued_lines.pop_front();
-    m_char_cursor = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -823,11 +747,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
     static bool s_autostart = true;
     static std::unique_ptr<autostart_display> s_autostart_display;
     str_moveable autostart;
-    bool interactive = ((!edit) || // Not-edit means show and return.
-                        (m_queued_lines.size() == 0) ||
-                        (m_queued_lines.size() == 1 &&
-                         (m_queued_lines.front().m_line.length() == 0 ||
-                          m_queued_lines.front().m_line.c_str()[m_queued_lines.front().m_line.length() - 1] != '\n')));
+    bool interactive = ((!edit) || // Not-edit means show and return, which is handled inside edit() and is therefore "interactive".
+                        m_line_queue.incomplete());
     if (interactive && s_autostart)
     {
         s_autostart = false;
@@ -1402,16 +1323,16 @@ force_reload_lua:
             if (alias)
                 alias.next(out); // First line goes into OUT to be returned.
             while (alias.next(next))
-                queue.emplace_back(std::move(next), dequeue_flags::none);
+                queue.emplace_back(std::move(next), dequeue_flags::no_doskey);
         }
 
         for (auto& another : more_out)
         {
             m_doskey.resolve(another.c_str(), alias);
             if (!alias)
-                queue.emplace_back(std::move(another), dequeue_flags::hide_prompt);
+                queue.emplace_back(std::move(another), dequeue_flags::hide_prompt|dequeue_flags::no_doskey);
             while (alias.next(next))
-                queue.emplace_back(std::move(next), dequeue_flags::hide_prompt);
+                queue.emplace_back(std::move(next), dequeue_flags::hide_prompt|dequeue_flags::no_doskey);
         }
     }
 
@@ -1421,19 +1342,11 @@ force_reload_lua:
     {
         if (intercept_directory(out.c_str(), &out) == intercept_result::prev_dir)
             prev_dir_history(out);
-
-        for (auto& queued : queue)
-        {
-            if (intercept_directory(queued.m_line.c_str(), &queued.m_line) == intercept_result::prev_dir)
-                prev_dir_history(queued.m_line);
-        }
-
     }
 
     // Insert the lines in reverse order at the front of the queue, to execute
     // them in the original order.
-    for (std::list<queued_line>::reverse_iterator it = queue.rbegin(); it != queue.rend(); ++it)
-        m_queued_lines.emplace_front(std::move(*it));
+    m_line_queue.enqueue_lines(queue, enqueue_at::front);
 
     line_editor_destroy(editor);
 

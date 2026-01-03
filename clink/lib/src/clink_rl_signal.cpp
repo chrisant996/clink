@@ -15,8 +15,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern void host_cleanup_after_signal();
 static bool clink_rl_cleanup_needed = false;
+bool g_suppress_signal_assert = false;
+void (*after_signal_hook_fn)() = nullptr;
 
 //------------------------------------------------------------------------------
 static void clink_reset_event_hook()
@@ -39,7 +40,8 @@ static int32 clink_event_hook()
     rl_crlf();
     _rl_last_c_pos = 0;
 
-    host_cleanup_after_signal();
+    if (after_signal_hook_fn)
+        after_signal_hook_fn();
     clink_reset_event_hook();
     return 0;
 }
