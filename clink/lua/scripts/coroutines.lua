@@ -240,8 +240,7 @@ function clink._wait_duration()
                 -- Yield until output is ready; don't influence the timeout.
             elseif entry.asyncyield and
                     not entry.asyncyield:ready() and
-                    (not entry.asyncyield:getexpiration() or
-                     entry.asyncyield:getexpiration() > now) then -- luacheck: ignore 542
+                    not entry.asyncyield:getexpiration() then -- luacheck: ignore 542
                 -- Don't resume until asyncyield says it's ready; don't
                 -- influence the timeout.
             elseif not target or target > this_target then
@@ -306,7 +305,9 @@ function clink._resume_coroutines()
             _coroutines_resumable = true
             local now = os.clock()
             if next_entry_target(entry, now) <= now and
-                    (not entry.asyncyield or entry.asyncyield:ready()) then
+                    (not entry.asyncyield or
+                     entry.asyncyield:ready() or
+                     entry.asyncyield:getexpiration() <= now) then
                 if not entry.firstclock then
                     entry.firstclock = now
                 end
