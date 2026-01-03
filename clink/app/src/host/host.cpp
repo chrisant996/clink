@@ -458,6 +458,8 @@ bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
 {
     if (m_bypass_dequeue)
     {
+        // NOTE:  The CRT stdio handles are usually out of date here.  If you
+        // want to print anything here, use WriteConsoleA or WriteConsoleW.
         m_bypass_dequeue = false;
         flags = m_bypass_flags;
         return false;
