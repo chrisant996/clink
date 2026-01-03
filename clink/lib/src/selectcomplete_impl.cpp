@@ -279,15 +279,14 @@ cant_activate:
             (m_match_rows > m_visible_rows) :
             (rl_completion_query_items > 0 && m_matches.get_match_count() >= rl_completion_query_items)))
     {
-        // I gave up trying to coax Readline into righting the cursor position
-        // purely using only ANSI codes.
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(h, &csbi);
-        COORD restore = csbi.dwCursorPosition;
+        // Remember the cursor position so it can be restored later to stay
+        // consistent with Readline's view of the world.
+        COORD restore;
+        m_printer->get_cursor(restore.X, restore.Y);
+        // const int32 vpos = _rl_last_v_pos;
+        // const int32 cpos = _rl_last_c_pos;
 
         // Move cursor after the input line.
-        int32 vpos = _rl_last_v_pos;
         _rl_move_vert(_rl_vis_botlin);
         rl_crlf();
 
@@ -295,26 +294,23 @@ cant_activate:
         if (_rl_pager_color)
             _rl_print_pager_color();
         str<> prompt;
-        prompt.format("Display all %d possibilities? (y or n) _", m_matches.get_match_count());
+        prompt.format("Display all %d possibilities? (y or n)", m_matches.get_match_count());
         m_printer->print(prompt.c_str(), prompt.length());
         if (_rl_pager_color)
             m_printer->print("\x1b[m");
 
-        // Restore cursor position.
-        m_printer->print("\x1b[A");
-        _rl_move_vert(vpos);
-        GetConsoleScreenBufferInfo(h, &csbi);
-        restore.Y = csbi.dwCursorPosition.Y;
-        SetConsoleCursorPosition(h, restore);
-
         // Wait for input.
         bool yes = __get_y_or_n(0) > 0;
 
-        // Erase prompt.
-        _rl_move_vert(_rl_vis_botlin);
-        rl_crlf();
-        m_printer->print("\x1b[K");
-        SetConsoleCursorPosition(h, restore);
+        // Erase prompt.  The funny "-1" math is because the cursor doesn't
+        // wrap to the next line unless a character is printed past the end of
+        // the line.
+        str<16> tmp;
+        for (int32 up = 1 + ((prompt.length() - 1) / m_screen_cols); up > 0; --up)
+            m_printer->print("\r\x1b[K\x1b[A");
+        tmp.format("\x1b[%uG", restore.X + 1);
+        m_printer->print(tmp.c_str(), tmp.length());
+        // Now the cursor is back to _rl_vis_botlin and _rl_last_c_pos.
 
         if (!yes)
             goto cant_activate;
