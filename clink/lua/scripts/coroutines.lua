@@ -864,9 +864,10 @@ end
 --- error message string, and an error code.
 ---
 --- <strong>Compatibility Note:</strong> when <code>io.popen()</code> is used in
---- a coroutine, it is automatically redirected to <code>io.popenyield()</code>.
---- This means on success the second return value from <code>io.popen()</code>
---- in a coroutine may not be nil as callers might normally expect.
+--- read mode in a coroutine, it is automatically redirected to
+--- <code>io.popenyield()</code>.  This means on success the second return value
+--- from <code>io.popen()</code> in a coroutine may not be nil as callers might
+--- normally expect.
 ---
 --- <strong>Note:</strong> if the
 --- <code><a href="#prompt_async">prompt.async</a></code> setting is disabled,
