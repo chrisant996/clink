@@ -24,7 +24,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
 
 ## Low Priority
-- If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's just a confirmation prompt.  But there's no way for Clink to inject input into ReadConsoleW.  For now, the case ends up returning the queued characters and then falling back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.  Maybe provide a simple input editor just for that case?
+- If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by the "More?" prompt or a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's not the main input line prompt.  But there's no way for Clink to inject input into ReadConsoleW.  Maybe provide a custom simple input editor?
+  - For now, the "More?" prompt case returns the queued characters **and appends a newline**.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them **and a newline is added, causing the command to be accepted prematurely**.
+  - For now, the confirmation prompt case returns the queued characters and then falls back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
