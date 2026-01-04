@@ -796,7 +796,7 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 
             COORD cursor;
             const int32 columns = g_printer->get_columns();
-            g_printer->get_cursor(cursor.X, cursor.Y);
+            g_printer->get_cursor_pos(cursor.X, cursor.Y);
 
             const int32 row = atoi(value.c_str());
             const char* color = (row > 0) ? ";7" : ";7;90";

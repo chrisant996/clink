@@ -8,6 +8,7 @@
 class matches;
 class matches_iter;
 typedef int rl_command_func_t (int, int);
+class printer;
 
 //------------------------------------------------------------------------------
 // Readline is based around global variables and global functions, which
@@ -48,3 +49,22 @@ bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool f
 //------------------------------------------------------------------------------
 void    signal_terminal_resized();
 void    set_refilter_after_resize(bool refilter);
+
+//------------------------------------------------------------------------------
+class resync_rl_cursor_pos
+{
+public:
+                resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite=false);
+                ~resync_rl_cursor_pos();
+    void        clear();
+    void        resync(bool update_rl_last_pos=true);
+    int16       get_cursor_x() const { return m_cursor_x; }
+private:
+    printer*    m_printer;
+    int16       m_cursor_x;
+    const bool  m_use_rl_fwrite;
+#ifdef DEBUG
+    const int32 m_vpos;
+    const int32 m_cpos;
+#endif
+};

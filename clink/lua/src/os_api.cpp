@@ -2286,7 +2286,7 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
             return 0;
         values[0] = values[2] = g_printer->get_columns();
         values[1] = values[3] = g_printer->get_rows();
-        g_printer->get_cursor(cursor.X, cursor.Y);
+        g_printer->get_cursor_pos(cursor.X, cursor.Y);
     }
     else
     {

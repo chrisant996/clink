@@ -100,9 +100,9 @@ uint32 printer::get_top() const
 }
 
 //------------------------------------------------------------------------------
-bool printer::get_cursor(int16& x, int16& y) const
+bool printer::get_cursor_pos(int16& x, int16& y) const
 {
-    return m_terminal.get_cursor(x, y);
+    return m_terminal.get_cursor_pos(x, y);
 }
 
 //------------------------------------------------------------------------------

@@ -47,13 +47,13 @@ public:
     virtual int32   get_columns() const = 0;
     virtual int32   get_rows() const = 0;
     virtual int32   get_top() const = 0;
-    virtual bool    get_cursor(int16&x, int16& y) const = 0;
+    virtual bool    get_cursor_pos(int16&x, int16& y) const = 0;
     virtual bool    get_line_text(int32 line, str_base& out) const = 0;
     virtual bool    has_native_vt_processing() const = 0;
     virtual void    clear(clear_type type) = 0;
     virtual void    clear_line(clear_type type) = 0;
     virtual void    set_horiz_cursor(int32 column) = 0;
-    virtual void    set_cursor(int32 column, int32 row) = 0;
+    virtual void    set_cursor_pos(int32 column, int32 row) = 0;
     virtual void    move_cursor(int32 dx, int32 dy) = 0;
     virtual void    save_cursor() = 0;
     virtual void    restore_cursor() = 0;

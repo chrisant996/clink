@@ -27,7 +27,7 @@ public:
     uint32                  get_columns() const;
     uint32                  get_rows() const;
     uint32                  get_top() const;
-    bool                    get_cursor(int16& x, int16& y) const;
+    bool                    get_cursor_pos(int16& x, int16& y) const;
     bool                    get_line_text(int32 line, str_base& out) const;
     int32                   is_line_default_color(int32 line) const;
     int32                   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const;

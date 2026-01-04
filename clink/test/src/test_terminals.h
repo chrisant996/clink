@@ -52,7 +52,7 @@ public:
     virtual int32   get_columns() const override { return 80; }
     virtual int32   get_rows() const override { return max<int32>(25, uint32(m_lines.size())); }
     virtual int32   get_top() const override { return 0; }
-    virtual bool    get_cursor(int16& x, int16& y) const override { assert(false); x = 0; y = 0; return false; }
+    virtual bool    get_cursor_pos(int16& x, int16& y) const override { assert(false); x = 0; y = 0; return false; }
     virtual bool    get_line_text(int32 line, str_base& out) const;
     virtual int32   is_line_default_color(int32 line) const { return true; }
     virtual int32   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { return false; }

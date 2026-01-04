@@ -805,7 +805,7 @@ int32 win_screen_buffer::get_top() const
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::get_cursor(int16& x, int16& y) const
+bool win_screen_buffer::get_cursor_pos(int16& x, int16& y) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -935,7 +935,7 @@ void win_screen_buffer::set_horiz_cursor(int32 column)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::set_cursor(int32 column, int32 row)
+void win_screen_buffer::set_cursor_pos(int32 column, int32 row)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -987,7 +987,7 @@ void win_screen_buffer::save_cursor()
 void win_screen_buffer::restore_cursor()
 {
     if (m_saved_cursor.X >= 0 && m_saved_cursor.Y >= 0)
-        set_cursor(m_saved_cursor.X, m_saved_cursor.Y);
+        set_cursor_pos(m_saved_cursor.X, m_saved_cursor.Y);
 }
 
 //------------------------------------------------------------------------------

@@ -75,7 +75,7 @@ static int16 GetConsoleNumLines()
     }
     else
     {
-        g_printer->get_cursor(cursor.X, cursor.Y);
+        g_printer->get_cursor_pos(cursor.X, cursor.Y);
     }
     cursor.Y -= _rl_last_v_pos;
     return cursor.Y + 1;
@@ -362,7 +362,7 @@ static int32 get_cursor_pos(lua_State* state)
     }
     else
     {
-        g_printer->get_cursor(cursor.X, cursor.Y);
+        g_printer->get_cursor_pos(cursor.X, cursor.Y);
     }
 
     lua_pushinteger(state, cursor.X + 1);

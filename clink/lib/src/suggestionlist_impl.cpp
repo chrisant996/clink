@@ -768,10 +768,7 @@ void suggestionlist_impl::update_display()
 
     // Remember the cursor position so it can be restored later to stay
     // consistent with Readline's view of the world.
-    COORD restore;
-    m_printer->get_cursor(restore.X, restore.Y);
-    const int32 vpos = _rl_last_v_pos;
-    const int32 cpos = _rl_last_c_pos;
+    resync_rl_cursor_pos resync(m_printer, true/*use_rl_fwrite*/);
 
     display_accumulator coalesce;
 
@@ -963,13 +960,9 @@ void suggestionlist_impl::update_display()
     rl_fflush_function(_rl_out_stream);
     coalesce.end();
     COORD cursor;
-    m_printer->get_cursor(cursor.X, cursor.Y);
+    m_printer->get_cursor_pos(cursor.X, cursor.Y);
     m_mouse_offset = cursor.Y + 2/*to top item*/;
-    _rl_move_vert(vpos);
-    _rl_last_c_pos = cpos;
-    s.format("\x1b[%uG", restore.X + 1);
-    rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
-    rl_fflush_function(_rl_out_stream);
+    resync.resync();
 
     // Restore cursor.
     show_cursor(was_visible);

@@ -96,9 +96,9 @@ int32 ecma48_terminal_out::get_top() const
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_terminal_out::get_cursor(int16& x, int16& y) const
+bool ecma48_terminal_out::get_cursor_pos(int16& x, int16& y) const
 {
-    return m_screen.get_cursor(x, y);
+    return m_screen.get_cursor_pos(x, y);
 }
 
 //------------------------------------------------------------------------------
@@ -451,7 +451,7 @@ void ecma48_terminal_out::set_cursor(const ecma48_code::csi_base& csi)
     /* CSI Ps ; Ps H : Cursor Position [row;column] (default = [1,1]) (CUP). */
     int32 row = csi.get_param(0, 1);
     int32 column = csi.get_param(1, 1);
-    m_screen.set_cursor(column - 1, row - 1);
+    m_screen.set_cursor_pos(column - 1, row - 1);
 }
 
 //------------------------------------------------------------------------------

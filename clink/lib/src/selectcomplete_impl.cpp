@@ -285,10 +285,7 @@ cant_activate:
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        COORD restore;
-        m_printer->get_cursor(restore.X, restore.Y);
-        // const int32 vpos = _rl_last_v_pos;
-        // const int32 cpos = _rl_last_c_pos;
+        resync_rl_cursor_pos resync(m_printer);
 
         // Move cursor after the input line.
         _rl_move_vert(_rl_vis_botlin);
@@ -312,8 +309,7 @@ cant_activate:
         str<16> tmp;
         for (int32 up = 1 + ((prompt.length() - 1) / m_screen_cols); up > 0; --up)
             m_printer->print("\r\x1b[K\x1b[A");
-        tmp.format("\x1b[%uG", restore.X + 1);
-        m_printer->print(tmp.c_str(), tmp.length());
+        resync.resync();
         // Now the cursor is back to _rl_vis_botlin and _rl_last_c_pos.
 
         if (!yes)

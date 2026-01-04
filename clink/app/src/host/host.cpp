@@ -695,10 +695,11 @@ void host::adjust_prompt_spacing()
         // but CMD causes blank lines more often than zsh does.  So to achieve
         // a similar effect it's necessary to actively consume blank lines.
         COORD cursor;
-        if (g_printer->get_cursor(cursor.X, cursor.Y))
+        if (g_printer->get_cursor_pos(cursor.X, cursor.Y))
         {
+            const int32 top = g_printer->get_top();
             str<> text;
-            int16 y = cursor.Y;
+            int32 y = cursor.Y;
             while (y > 0)
             {
                 if (!g_printer->get_line_text(y - 1, text))
@@ -710,7 +711,7 @@ void host::adjust_prompt_spacing()
             if (y < cursor.Y)
             {
                 text.clear();
-                text.format("\x1b[%uH", y + 1);
+                text.format("\x1b[%uH", max(0, y - top) + 1); // max() mitigates race condition between two CSBI calls.
                 rl_fwrite_function(_rl_out_stream, text.c_str(), text.length());
             }
         }

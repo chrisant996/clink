@@ -2696,7 +2696,7 @@ public:
     virtual int32           get_columns() const { return m_cols; }
     virtual int32           get_rows() const { return m_rows; }
     virtual int32           get_top() const { return m_top; }
-    virtual bool            get_cursor(int16& x, int16& y) const { assert(false); x = y = 0; return false; }
+    virtual bool            get_cursor_pos(int16& x, int16& y) const { assert(false); x = y = 0; return false; }
     virtual int32           is_line_default_color(int32 line) const { assert(false); return -1; }
     virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { assert(false); return -1; }
     virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const { assert(false); return -1; }

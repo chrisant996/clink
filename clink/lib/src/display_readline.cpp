@@ -1539,7 +1539,7 @@ void display_manager::uninitialize()
     {
         assert(g_printer);
         COORD cursor;
-        if (g_printer && g_printer->get_cursor(cursor.X, cursor.Y))
+        if (g_printer && g_printer->get_cursor_pos(cursor.X, cursor.Y))
             assert(!cursor.X);
         assert(!_rl_last_c_pos);
     }
@@ -2005,7 +2005,7 @@ void display_manager::display()
         {
             COORD cursor;
             coalesce.flush();
-            if (g_printer && g_printer->get_cursor(cursor.X, cursor.Y) &&
+            if (g_printer && g_printer->get_cursor_pos(cursor.X, cursor.Y) &&
                 m_last_prompt_line_width != cursor.X)
             {
                 m_last_prompt_line_width = cursor.X;
@@ -3160,7 +3160,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 
     // Update Readline's perception of the terminal dimensions.
     COORD cursor;
-    const bool has_cursor = g_printer->get_cursor(cursor.X, cursor.Y);
+    const bool has_cursor = g_printer->get_cursor_pos(cursor.X, cursor.Y);
     refresh_terminal_size();
 
     // Measure what was previously displayed.

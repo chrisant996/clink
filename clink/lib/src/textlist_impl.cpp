@@ -13,6 +13,7 @@
 #include "clink_rl_signal.h"
 #include "history_timeformatter.h"
 #include "line_editor_integration.h"
+#include "rl_integration.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
 #endif
@@ -1586,15 +1587,12 @@ void textlist_impl::update_display()
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        COORD restore;
-        m_printer->get_cursor(restore.X, restore.Y);
-        const int32 vpos = _rl_last_v_pos;
-        const int32 cpos = _rl_last_c_pos;
+        resync_rl_cursor_pos resync(m_printer);
         int32 up = 0;
 
         // Move cursor to next line.  I.e. the list goes immediately below the
         // cursor line and may overlay some lines of input.
-        if (!s_standalone || restore.X > 0)
+        if (!s_standalone || resync.get_cursor_x() > 0)
         {
             m_printer->print("\n");
             up++;
@@ -1672,7 +1670,7 @@ void textlist_impl::update_display()
             str<> tmp;
 
             {
-                int32 x = restore.X - ((popup_width + 1) / 2);
+                int32 x = resync.get_cursor_x() - ((popup_width + 1) / 2);
                 int32 center_x = (m_screen_cols - effective_screen_cols) / 2;
                 if (x + popup_width > center_x + effective_screen_cols)
                     x = m_screen_cols - center_x - popup_width;
@@ -1902,16 +1900,11 @@ void textlist_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         COORD cursor;
-        m_printer->get_cursor(cursor.X, cursor.Y);
+        m_printer->get_cursor_pos(cursor.X, cursor.Y);
         m_mouse_offset = cursor.Y + 1/*to top item*/;
         if (!s_standalone)
-        {
             m_mouse_offset += 1/*to border*/;
-            _rl_move_vert(vpos);
-            _rl_last_c_pos = cpos;
-        }
-        s.format("\x1b[%uG", restore.X + 1);
-        m_printer->print(s.c_str(), s.length());
+        resync.resync(false/*update_rl_last_pos*/);
     }
 }
 

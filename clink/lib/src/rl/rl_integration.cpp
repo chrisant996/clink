@@ -11,6 +11,7 @@
 
 #include <core/base.h>
 #include <core/debugheap.h>
+#include <terminal/printer.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/wcwidth.h>
 
@@ -18,6 +19,8 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
+extern void (*rl_fwrite_function)(FILE*, const char*, int);
+extern void (*rl_fflush_function)(FILE*);
 }
 
 //------------------------------------------------------------------------------
@@ -229,4 +232,68 @@ void clear_pending_lastfunc()
     s_pending_luafunc.clear();
     s_has_override_rl_last_func = false;
     s_override_rl_last_func = nullptr;
+}
+
+
+
+//------------------------------------------------------------------------------
+resync_rl_cursor_pos::resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite)
+    : m_printer(printer ? printer : g_printer)
+    , m_use_rl_fwrite(use_rl_fwrite)
+#ifdef DEBUG
+    , m_vpos(_rl_last_v_pos)
+    , m_cpos(_rl_last_c_pos)
+#endif
+{
+    assert(m_printer);
+    if (m_printer)
+    {
+        int16 unused;
+        if (!m_printer->get_cursor_pos(m_cursor_x, unused))
+        {
+            assert(false);
+            m_printer = nullptr;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+resync_rl_cursor_pos::~resync_rl_cursor_pos()
+{
+    resync();
+}
+
+//------------------------------------------------------------------------------
+void resync_rl_cursor_pos::clear()
+{
+    m_printer = nullptr;
+}
+
+//------------------------------------------------------------------------------
+void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
+{
+    if (m_printer)
+    {
+        if (update_rl_last_pos)
+        {
+            assert(m_vpos == _rl_last_v_pos);
+            assert(m_cpos == _rl_last_c_pos);
+            _rl_move_vert(m_vpos);
+            _rl_last_c_pos = m_cpos;
+        }
+
+        str<> tmp;
+        tmp.format("\x1b[%uG", m_cursor_x + 1);
+        if (m_use_rl_fwrite)
+        {
+            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+            rl_fflush_function(_rl_out_stream);
+        }
+        else
+        {
+            m_printer->print(tmp.c_str(), tmp.length());
+        }
+
+        clear();
+    }
 }

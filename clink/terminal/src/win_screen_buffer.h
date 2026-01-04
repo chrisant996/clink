@@ -23,13 +23,13 @@ public:
     virtual int32   get_columns() const override;
     virtual int32   get_rows() const override;
     virtual int32   get_top() const override;
-    virtual bool    get_cursor(int16& x, int16& y) const override;
+    virtual bool    get_cursor_pos(int16& x, int16& y) const override;
     virtual bool    get_line_text(int32 line, str_base& out) const override;
     virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;
     virtual void    clear_line(clear_type type) override;
     virtual void    set_horiz_cursor(int32 column) override;
-    virtual void    set_cursor(int32 column, int32 row) override;
+    virtual void    set_cursor_pos(int32 column, int32 row) override;
     virtual void    move_cursor(int32 dx, int32 dy) override;
     virtual void    save_cursor() override;
     virtual void    restore_cursor() override;
