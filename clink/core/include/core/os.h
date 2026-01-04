@@ -124,7 +124,7 @@ void    set_shellname(const wchar_t* shell_name);
 const wchar_t* get_shellname();
 
 int32   system(const char* command, const char* cwd);
-HANDLE  spawn_internal(const char* command, const char* cwd, HANDLE hin, HANDLE hout);
+HANDLE  spawn_internal(const char* command, const char* cwd=nullptr, HANDLE hin=0, HANDLE hout=0, bool create_no_window=false);
 HRESULT shell_unzip(const char* zip, const char* dest, str_base& err_msg);
 
 HANDLE  dup_handle(HANDLE process_handle, HANDLE h, bool inherit=false);

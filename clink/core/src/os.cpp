@@ -1211,7 +1211,7 @@ int32 system(const char* command, const char* cwd)
 
     if (command)
     {
-        HANDLE h = spawn_internal(command, cwd, nullptr, nullptr);
+        HANDLE h = spawn_internal(command, cwd);
         if (h)
         {
             DWORD code;
@@ -1227,7 +1227,7 @@ int32 system(const char* command, const char* cwd)
 }
 
 //------------------------------------------------------------------------------
-HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDLE hStdout)
+HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDLE hStdout, bool create_no_window)
 {
     // Determine which command processor to use:  command.com or cmd.exe:
     static wchar_t const default_cmd_exe[] = L"cmd.exe";
@@ -1287,7 +1287,7 @@ HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDL
         nullptr,
         nullptr,
         TRUE/*bInheritHandles*/,
-        0,
+        create_no_window ? CREATE_NO_WINDOW : 0,
         nullptr,
         wcwd,
         &startup_info,
