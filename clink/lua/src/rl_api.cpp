@@ -583,12 +583,19 @@ static int32 invoke_command(lua_State* state)
     if (func == nullptr)
         return 0;
 
+    const auto last_func = get_effective_last_func();
+    const auto counter = get_last_func_override_counter();
+
     int32 isnum;
     int32 count = int32(lua_tointegerx(state, 2, &isnum));
     int32 self_insert = (func == rl_insert);
     int32 err = func(isnum ? count : 1, self_insert ? rl_executing_key : 0);
 
-    override_rl_last_func(func);
+    // Set rl_last_func, unless the invoked command already set rl_last_func.
+    // For example, clink-select-complete needs to override it if activation
+    // fails, to ensure it can prompt the next time activation is attempted.
+    if (last_func == get_effective_last_func() && counter == get_last_func_override_counter())
+        override_rl_last_func(func);
 
     lua_pushinteger(state, !err);
     return 1;

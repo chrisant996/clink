@@ -88,6 +88,7 @@ static str_moveable s_prev_inputline;
 static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_rl_last_func = false;
+static uint32       s_last_func_override_counter = 0;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
 static str_moveable s_last_luafunc;
 
@@ -116,6 +117,7 @@ void set_pending_luafunc(const char* macro)
 //------------------------------------------------------------------------------
 void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
 {
+    ++s_last_func_override_counter;
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
     if (func || force_when_null)
@@ -135,6 +137,12 @@ const char* get_last_luafunc()
 void* get_effective_last_func()
 {
     return reinterpret_cast<void*>(s_has_override_rl_last_func ? s_override_rl_last_func : rl_last_func);
+}
+
+//------------------------------------------------------------------------------
+uint32 get_last_func_override_counter()
+{
+    return s_last_func_override_counter;
 }
 
 //------------------------------------------------------------------------------
