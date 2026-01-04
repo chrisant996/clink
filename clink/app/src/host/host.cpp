@@ -1117,6 +1117,7 @@ force_reload_lua:
             m_bypass_dequeue = true;
             m_bypass_flags = dequeue_flags::show_line;
             m_bypass_flags |= (edit ? dequeue_flags::edit_line : dequeue_flags::none);
+            m_suppress_title = true; // Block CMD from showing these commands in the title bar.
             dbg_ignore_since_snapshot(snapshot, "command queued by get errorlevel");
 
             m_terminal.out->begin();

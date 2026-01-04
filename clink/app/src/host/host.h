@@ -55,6 +55,8 @@ protected:
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit=true);
     bool            dequeue_line(wstr_base& out, dequeue_flags& flags);
     bool            dequeue_char(wchar_t* out);
+    bool            is_suppress_title() const { return m_suppress_title; }
+    void            clear_suppress_title() { m_suppress_title = false; }
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
 
@@ -79,6 +81,7 @@ private:
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
     bool            m_skip_provide_line = false;
+    bool            m_suppress_title = false;
     bool            m_bypass_dequeue = false;
     dequeue_flags   m_bypass_flags = dequeue_flags::none;
 };

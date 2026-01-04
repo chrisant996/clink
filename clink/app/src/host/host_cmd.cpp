@@ -631,6 +631,7 @@ LReturnReal:
         goto LReturnReal;
 
     host_cmd* const hc = host_cmd::get();
+    hc->clear_suppress_title();
 
     // clink_maybe_handle_signal() needs g_printer for output.
     dbg_snapshot_heap(prt_ignore);
@@ -999,6 +1000,10 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
 LReturnReal:
         return __Real_SetConsoleTitleW(lpConsoleTitle);
     }
+
+    host_cmd* const hc = host_cmd::get();
+    if (hc->is_suppress_title())
+        return false;
 
     wstr<> clink_prefix;
 
