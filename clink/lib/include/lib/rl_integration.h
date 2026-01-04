@@ -63,8 +63,6 @@ private:
     printer*    m_printer;
     int16       m_cursor_x;
     const bool  m_use_rl_fwrite;
-#ifdef DEBUG
     const int32 m_vpos;
     const int32 m_cpos;
-#endif
 };

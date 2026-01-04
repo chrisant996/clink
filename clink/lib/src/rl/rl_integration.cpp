@@ -240,10 +240,8 @@ void clear_pending_lastfunc()
 resync_rl_cursor_pos::resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite)
     : m_printer(printer ? printer : g_printer)
     , m_use_rl_fwrite(use_rl_fwrite)
-#ifdef DEBUG
     , m_vpos(_rl_last_v_pos)
     , m_cpos(_rl_last_c_pos)
-#endif
 {
     assert(m_printer);
     if (m_printer)
