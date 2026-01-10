@@ -402,7 +402,10 @@ newaction {
         local have_mingw = have_required_tool("mingw32-make")
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         local have_7z = have_required_tool("7z", { "c:\\Program Files\\7-Zip", "c:\\Program Files (x86)\\7-Zip" })
-        local have_signtool = have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64" })
+        local have_signtool =
+            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64" }) or
+            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64" }) or
+            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64" })
 
         -- Clone repo in release folder and checkout the specified version
         local code_dir = root_dir.."~working/"
