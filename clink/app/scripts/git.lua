@@ -154,10 +154,10 @@ local function get_branch_slow(git_dir)
     end
 
     local file
-    local branch, detached, commit
+    local branch, detached
 
     -- Handle the most common case first.
-    if not branch then
+    if not branch then -- luacheck: ignore 321
         file = io.popen(git.makecommand(flags.."branch"))
         if file then
             for line in file:lines() do
