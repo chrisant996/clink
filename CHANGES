@@ -5,7 +5,7 @@
 #### v1.9.8
 
 - Changed [os.sleep()](#os.sleep) so it yields when called in a coroutine.
-- Fixed the "Display all...?" prompt in `clink-select-complete`.
+- Fixed the "Display all...?" prompt in `clink-select-complete` to show up at the right times.
 - Fixed several obscure problems with queued input, e.g. from doskey aliases that include `$T` and from pasting multiline text via the `clink-paste` bindable command.
 - Fixed title bar flicker in Windows Terminal caused by the `cmd.get_errorlevel` setting.
 - Internal improvements for unit tests.
