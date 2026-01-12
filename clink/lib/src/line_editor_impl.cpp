@@ -31,6 +31,7 @@
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
 #include <core/settings.h>
+#include <core/log.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
@@ -570,6 +571,26 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
         m_matches.transfer(static_cast<matches_impl&>(*matches));
         m_matches.done_building();
         clear_flag(flag_generate);
+        if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+        {
+            str<> tmp;
+            int32 i = 0;
+            for (matches_iter iter = m_matches.get_iter(); iter.next(); i++)
+            {
+                if (i >= 5)
+                {
+                    tmp.concat(", ...");
+                    break;
+                }
+                else if (i > 0)
+                    tmp.concat(", ");
+                else
+                    tmp.concat(" -> ");
+                tmp.concat(iter.get_match());
+            }
+            assert(generation_id == m_matches.get_generation_id());
+            LOG("TRANSFERED MATCHES: %u matches, gen %d%s%s", m_matches.get_match_count(), m_matches.get_generation_id(), m_matches.is_volatile() ? ", *VOLATILE*" : "", tmp.c_str());
+        }
     }
     else
     {
@@ -577,6 +598,10 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
         // newer generation id's autosuggest will have been canceled due to the
         // match generator coroutine that was already running, and which has
         // just now signaled its completion.
+        if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+        {
+            LOG("CLEAR MATCHES: matches gen %d vs editor gen %d", generation_id, m_matches_generation_id);
+        }
         clear_suggestion();
     }
 
@@ -1703,6 +1728,11 @@ void line_editor_impl::try_suggest()
             // Suggestions must use the TAB completion type, because they
             // cannot work with wildcards or substrings.
             rollback<int32> rb_completion_type(rl_completion_type, TAB);
+
+            if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+            {
+                LOG("try_suggest, update_matches");
+            }
 
             update_matches();
             matches = &m_matches;

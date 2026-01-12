@@ -334,9 +334,15 @@ void match_builder::set_volatile()
 }
 
 //------------------------------------------------------------------------------
-void match_builder::set_input_line(const char* text)
+void match_builder::set_input_line(const char* text, int32 generation_id)
 {
-    return ((matches_impl&)m_matches).set_input_line(text);
+    return ((matches_impl&)m_matches).set_input_line(text, generation_id);
+}
+
+//------------------------------------------------------------------------------
+int32 match_builder::get_generation_id() const
+{
+    return ((matches_impl&)m_matches).get_generation_id();
 }
 
 //------------------------------------------------------------------------------
@@ -563,8 +569,8 @@ matches_impl::store_impl::store_impl(uint32 size)
 
 
 //------------------------------------------------------------------------------
-matches_impl::matches_impl(uint32 store_size)
-: m_store(min(store_size, 0x10000u))
+matches_impl::matches_impl()
+: m_store(0x10000u)
 , m_filename_completion_desired(false)
 , m_filename_display_desired(false)
 {
@@ -931,6 +937,7 @@ void matches_impl::transfer(matches_impl& from)
 
     m_store = std::move(from.m_store);
     m_infos = std::move(from.m_infos);
+    m_generation_id = from.m_generation_id;
     m_count = from.m_count;
     m_any_none_type = from.m_any_none_type;
     m_deprecated_mode = from.m_deprecated_mode;
@@ -978,6 +985,7 @@ void matches_impl::copy(const matches_impl& from)
         m_infos.emplace_back(std::move(add));
     }
 
+    m_generation_id = from.m_generation_id;
     m_count = from.m_count;
     m_any_none_type = from.m_any_none_type;
     m_deprecated_mode = from.m_deprecated_mode;
@@ -1094,9 +1102,11 @@ void matches_impl::set_volatile()
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::set_input_line(const char* text)
+void matches_impl::set_input_line(const char* text, int32 generation_id)
 {
+    assert(generation_id > 0);
     m_input_line = text;
+    m_generation_id = generation_id;
 }
 
 //------------------------------------------------------------------------------

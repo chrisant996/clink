@@ -15,6 +15,7 @@
 #include <core/str_compare.h>
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
+#include <core/log.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -334,11 +335,32 @@ void match_pipeline::generate(
 
     m_matches.done_building();
 
+    if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+    {
+        str<> tmp;
+        int32 i = 0;
+        for (matches_iter iter = m_matches.get_iter(); iter.next(); i++)
+        {
+            if (i >= 5)
+            {
+                tmp.concat(", ...");
+                break;
+            }
+            else if (i > 0)
+                tmp.concat(", ");
+            else
+                tmp.concat(" -> ");
+            tmp.concat(iter.get_match());
+        }
+        LOG("GENERATED MATCHES: %u matches, gen %d%s%s", m_matches.get_match_count(), m_matches.get_generation_id(), m_matches.is_volatile() ? ", *VOLATILE*" : "", tmp.c_str());
+    }
+
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_PIPELINE"))
     {
-        printf("GENERATE, %u matches, word break %u, file_comp %u %s --%s",
+        printf("GENERATE, %u matches, gen %d, word break %u, file_comp %u %s --%s",
                m_matches.get_match_count(),
+               m_matches.get_generation_id(),
                m_matches.get_word_break_position(),
                m_matches.is_filename_completion_desired().get(),
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",

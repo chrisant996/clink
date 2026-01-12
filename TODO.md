@@ -13,6 +13,19 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
   - I just hit it again.  I'll have to try to build optional logging to track it down.
+  - Does not seem to be related to coroutine generators superceding main routine generators (tried injecting os.sleep into coroutine generators to make them take longer, and was unable to repro).
+  - **What to log:**
+    - context that triggered running generators
+    - context that skips generating, and why
+    - context that cancels generating, and why
+    - context of timeout of generating (suggestionlist has some kind of timeout IIRC)
+    - context of reset generate matches
+    - begin generating
+    - coroutine or ismain
+    - volatile
+    - matches
+    - generation id
+    - finish generating
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Some way for input hints to show up when the suggestion list is active?
 - Make a documentation section that lists all the CLINK environment variables.

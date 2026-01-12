@@ -26,9 +26,10 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "deprecated_addmatch", &deprecated_add_match },
     { "setmatchesarefiles", &set_matches_are_files },
     // UNDOCUMENTED; internal use only.
-    { "clear_toolkit",      &clear_toolkit },
-    { "set_input_line",     &set_input_line },
-    { "matches_ready",      &matches_ready },
+    { "_clear_toolkit",     &clear_toolkit },
+    { "_set_input_line",    &set_input_line },
+    { "_matches_ready",     &matches_ready },
+    { "_get_generation_id", &get_generation_id },
     {}
 };
 
@@ -351,11 +352,14 @@ int32 match_builder_lua::clear_toolkit(lua_State* state)
 // UNDOCUMENTED; internal use only.
 int32 match_builder_lua::set_input_line(lua_State* state)
 {
+    if (!m_toolkit)
+        return 0;
+
     const char* text = checkstring(state, LUA_SELF + 1);
     if (!text)
         return 0;
 
-    m_builder->set_input_line(text);
+    m_builder->set_input_line(text, m_toolkit->get_generation_id());
     return 0;
 }
 
@@ -372,6 +376,23 @@ int32 match_builder_lua::matches_ready(lua_State* state)
 
     lua_pushboolean(state, notify_matches_ready(m_toolkit, id));
     return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 match_builder_lua::get_generation_id(lua_State* state)
+{
+    if (m_toolkit)
+    {
+        lua_pushinteger(state, m_toolkit->get_generation_id());
+        lua_pushliteral(state, "toolkit");
+    }
+    else
+    {
+        lua_pushinteger(state, m_builder->get_generation_id());
+        lua_pushliteral(state, "builder");
+    }
+    return 2;
 }
 
 //------------------------------------------------------------------------------

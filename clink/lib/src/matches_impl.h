@@ -62,7 +62,7 @@ class matches_impl
 public:
     typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
 
-                            matches_impl(uint32 store_size=0x10000);
+                            matches_impl();
                             ~matches_impl();
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
@@ -96,6 +96,7 @@ public:
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
     int32                   get_completion_type() const { return m_completion_type; }
+    int32                   get_generation_id() const { return m_generation_id; }
 
     void                    set_generator(match_generator* generator);
     void                    done_building();
@@ -127,7 +128,7 @@ private:
     void                    set_no_sort();
     void                    set_has_descriptions();
     void                    set_volatile();
-    void                    set_input_line(const char* text);
+    void                    set_input_line(const char* text, int32 generation_id);
     bool                    is_from_current_input_line();
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
     uint32                  get_info_count() const;
@@ -150,6 +151,7 @@ private:
 
     store_impl              m_store;
     infos                   m_infos;
+    int32                   m_generation_id = -1;
     unsigned short          m_count = 0;
     bool                    m_any_none_type = false;
     bool                    m_deprecated_mode = false;
