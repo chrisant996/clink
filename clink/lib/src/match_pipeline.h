@@ -25,3 +25,6 @@ public:
 private:
     matches_impl&       m_matches;
 };
+
+//------------------------------------------------------------------------------
+int32 get_log_generators();

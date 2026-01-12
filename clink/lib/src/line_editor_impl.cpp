@@ -571,7 +571,7 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
         m_matches.transfer(static_cast<matches_impl&>(*matches));
         m_matches.done_building();
         clear_flag(flag_generate);
-        if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+        if (get_log_generators())
         {
             str<> tmp;
             int32 i = 0;
@@ -598,7 +598,7 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
         // newer generation id's autosuggest will have been canceled due to the
         // match generator coroutine that was already running, and which has
         // just now signaled its completion.
-        if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+        if (get_log_generators())
         {
             LOG("CLEAR MATCHES: matches gen %d vs editor gen %d", generation_id, m_matches_generation_id);
         }
@@ -1729,7 +1729,7 @@ void line_editor_impl::try_suggest()
             // cannot work with wildcards or substrings.
             rollback<int32> rb_completion_type(rl_completion_type, TAB);
 
-            if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+            if (get_log_generators())
             {
                 LOG("try_suggest, update_matches");
             }

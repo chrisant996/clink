@@ -55,6 +55,15 @@ extern setting_bool g_match_wild;
 
 
 //------------------------------------------------------------------------------
+int32 get_log_generators()
+{
+    char tmp[32];
+    int32 len = GetEnvironmentVariableA("CLINK_LOG_GENERATORS", tmp, sizeof(tmp));
+    int32 val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : 0;
+    return val;
+}
+
+//------------------------------------------------------------------------------
 static bool include_match_type(match_type type)
 {
     if (is_match_type_system(type))
@@ -335,7 +344,7 @@ void match_pipeline::generate(
 
     m_matches.done_building();
 
-    if (dbg_get_env_int("CLINK_LOG_GENERATORS"))
+    if (get_log_generators())
     {
         str<> tmp;
         int32 i = 0;
