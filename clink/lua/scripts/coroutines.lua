@@ -216,6 +216,16 @@ local function next_entry_target(entry, now)
 end
 
 --------------------------------------------------------------------------------
+local function is_entry_ready(entry, now)
+    if not entry.asyncyield or entry.asyncyield:ready() then
+        return true
+    else
+        local expiration = entry.asyncyield:getexpiration()
+        return (expiration and expiration <= now)
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._after_coroutines(func)
     if type(func) ~= "function" then
         error("bad argument #1 (function expected)")
@@ -304,10 +314,7 @@ function clink._resume_coroutines()
             co = c
             _coroutines_resumable = true
             local now = os.clock()
-            if next_entry_target(entry, now) <= now and
-                    (not entry.asyncyield or
-                     entry.asyncyield:ready() or
-                     entry.asyncyield:getexpiration() <= now) then
+            if next_entry_target(entry, now) <= now and is_entry_ready(entry, now) then
                 if not entry.firstclock then
                     entry.firstclock = now
                 end
