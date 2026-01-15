@@ -45,6 +45,7 @@ private:
     void                add_aliases(bool force);
     void                edit_line(wchar_t* chars, int32 max_chars, bool edit=true);
     bool                capture_prompt(const wchar_t* chars, int32 char_count);
+    bool                adjust_console_title(const wchar_t* title, wstr_base& out);
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
     doskey              m_doskey;

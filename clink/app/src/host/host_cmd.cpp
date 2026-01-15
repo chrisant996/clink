@@ -522,6 +522,14 @@ void host_cmd::edit_line(wchar_t* chars, int32 max_chars, bool edit)
     // them if so desired.
     add_aliases(false/*force*/);
 
+    // Fix the console title admin prefix, if needed.
+    if (!is_suppress_title())
+    {
+        wstr<280> tmp;
+        if (adjust_console_title(nullptr, tmp))
+            __Real_SetConsoleTitleW(tmp.c_str());
+    }
+
     m_command_tokeniser.begin_line();
 
     bool resolved = false;
@@ -990,9 +998,85 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 }
 
 //------------------------------------------------------------------------------
+static const wchar_t* get_input_title(const wchar_t* title, wstr_base& storage)
+{
+    if (!title)
+    {
+        wstr<16> current;
+        current.reserve(4096);
+
+        const DWORD len = GetConsoleTitleW(current.data(), current.size());
+        if (len || GetLastError() == ERROR_SUCCESS)
+        {
+            storage = current.c_str();
+            return storage.c_str();
+        }
+    }
+
+    return title;
+}
+
+//------------------------------------------------------------------------------
 static wstr_unordered_set s_old_prefixes;
 static linear_allocator s_old_prefix_store(1024);
 static bool s_ever_prefix = false;
+bool host_cmd::adjust_console_title(const wchar_t* const _title, wstr_base& out)
+{
+    str<32> tmp;
+    g_admin_title_prefix.get(tmp);
+    if (!tmp.length() && !s_ever_prefix)
+        return false;
+
+    wstr<32> cmd_prefix;
+    if (!get_mui_string(ADMINISTRATOR_TITLE_PREFIX, cmd_prefix))
+        return false;
+
+    s_ever_prefix = true;
+
+    wstr<280> storage;
+    const wchar_t* const title = get_input_title(_title, storage);
+
+    wstr<32> clink_prefix(tmp.c_str());
+    const wchar_t* base_title = title;
+
+    // Strip recognized administrator prefixes.
+    str_compare_scope _(str_compare_scope::caseless, false);
+    while (true)
+    {
+        const LPCWSTR orig = base_title;
+        if (cmd_prefix.length() && str_compare(base_title, cmd_prefix.c_str()) == cmd_prefix.length())
+            base_title += cmd_prefix.length();
+        if (clink_prefix.length() && str_compare(base_title, clink_prefix.c_str()) == clink_prefix.length())
+            base_title += clink_prefix.length();
+        for (auto& old : s_old_prefixes)
+        {
+            const int32 len = str_compare(base_title, old);
+            if (len > 0 && old[len] == '\0')
+                base_title += len;
+        }
+        if (orig == base_title)
+            break;
+    }
+
+    // Remember prefix.
+    if (clink_prefix.length() && s_old_prefixes.find(clink_prefix.c_str()) == s_old_prefixes.end())
+    {
+        const uint32 cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
+        wchar_t* ptr = (wchar_t*)s_old_prefix_store.alloc(cb);
+        memcpy(ptr, clink_prefix.c_str(), cb);
+        s_old_prefixes.emplace(ptr);
+    }
+
+    // Construct the title.
+    out.clear();
+    if (os::is_elevated())
+        out.concat(clink_prefix.length() ? clink_prefix.c_str() : cmd_prefix.c_str());
+    out.concat(base_title);
+
+    return !out.equals(title);
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
 {
     if (GetCurrentThreadId() != s_main_thread)
@@ -1005,52 +1089,9 @@ LReturnReal:
     if (hc->is_suppress_title())
         return false;
 
-    wstr<> clink_prefix;
-
-    if (os::is_elevated())
-    {
-        str<> tmp;
-        wstr<280> cmd_prefix;
-        g_admin_title_prefix.get(tmp);
-        if ((tmp.length() || s_ever_prefix) && get_mui_string(ADMINISTRATOR_TITLE_PREFIX, cmd_prefix))
-        {
-            s_ever_prefix = true;
-            clink_prefix = tmp.c_str();
-
-            // Strip recognized administrator prefixes.
-            str_compare_scope _(str_compare_scope::caseless, false);
-            while (true)
-            {
-                const LPCWSTR orig = lpConsoleTitle;
-                if (cmd_prefix.length() && str_compare(lpConsoleTitle, cmd_prefix.c_str()) == cmd_prefix.length())
-                    lpConsoleTitle += cmd_prefix.length();
-                if (clink_prefix.length() && str_compare(lpConsoleTitle, clink_prefix.c_str()) == clink_prefix.length())
-                    lpConsoleTitle += clink_prefix.length();
-                for (auto& old : s_old_prefixes)
-                {
-                    const int32 len = str_compare(lpConsoleTitle, old);
-                    if (len > 0 && old[len] == '\0')
-                        lpConsoleTitle += len;
-                }
-                if (orig == lpConsoleTitle)
-                    break;
-            }
-
-            // Remember prefix.
-            if (clink_prefix.length() && s_old_prefixes.find(clink_prefix.c_str()) == s_old_prefixes.end())
-            {
-                const uint32 cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
-                wchar_t* ptr = (wchar_t*)s_old_prefix_store.alloc(cb);
-                memcpy(ptr, clink_prefix.c_str(), cb);
-                s_old_prefixes.emplace(ptr);
-            }
-
-            // Concatenate the preferred prefix and the rest of the title.
-            wstr_base* title = clink_prefix.length() ? static_cast<wstr_base*>(&clink_prefix) : static_cast<wstr_base*>(&cmd_prefix);
-            title->concat(lpConsoleTitle);
-            lpConsoleTitle = title->c_str();
-        }
-    }
+    wstr<280> tmp;
+    if (hc->adjust_console_title(lpConsoleTitle, tmp))
+        return __Real_SetConsoleTitleW(tmp.c_str());
 
     goto LReturnReal;
 }
