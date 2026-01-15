@@ -177,6 +177,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
 
         if do_log then
             clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
+            clink._log_generators("cursor", line:getcursor(), "line", line:getline(), NOSTK)
         end
 
         -- Generate matches.
@@ -305,6 +306,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
     local do_log = os.getenv("CLINK_LOG_GENERATORS")
     if do_log then
         clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
+        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline())
     end
     local ok, ret = xpcall(impl, _error_handler_ret)
     if do_log then
