@@ -1148,7 +1148,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 //------------------------------------------------------------------------------
 void line_editor_impl::before_display_readline()
 {
-    if (rl_done)
+    if (!is_display_readline_initialized())
         return;
 
     // Temporarily strip off suggestions.

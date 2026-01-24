@@ -5,6 +5,9 @@
 
 class str_base;
 
+// < 0 --> color.unrecognized
+// = 0 --> color.input
+// > 0 --> color.executable
 enum class recognition : char { unrecognized = -1, unknown, executable, navigate, max };
 
 recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file);
