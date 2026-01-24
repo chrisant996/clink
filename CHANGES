@@ -4,7 +4,9 @@
 
 #### v1.9.10
 
+- Changed the default binding for <kbd>F7</kbd> to `clink-popup-history` instead of `win-history-list`.
 - Fixed potential for incorrect input line coloring after using `clink-popup-history` to choose a history line.
+- Fixed `win-history-list` with typed input (regression introduced in v1.6.13).
 - Fixed rare issues with the `cmd.admin_title_prefix` setting.
 - Internal logging improvements.
 
