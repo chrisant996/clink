@@ -192,6 +192,8 @@ private:
     line_buffer_fingerprint m_prev_command_buffer_fingerprint;
     bool                m_prev_command_word_quoted;
 
+    bool                m_in_maybe_send_oncommand_event = false;
+
     const char*         m_override_needle = nullptr;
     words               m_override_words;
     command_line_states m_override_command_line_states;

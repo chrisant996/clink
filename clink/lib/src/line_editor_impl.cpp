@@ -301,6 +301,9 @@ void line_editor_impl::begin_line()
     clear_flag(~flag_init);
     set_flag(flag_editing);
 
+    assert(!m_in_maybe_send_oncommand_event);
+    m_in_maybe_send_oncommand_event = false;
+
 #ifdef DEBUG
     m_in_matches_ready = false;
     m_in_try_suggest = false;
@@ -367,6 +370,9 @@ void line_editor_impl::end_line()
     set_active_line_editor(nullptr, nullptr);
 
     clear_flag(flag_editing);
+
+    assert(!m_in_maybe_send_oncommand_event);
+    m_in_maybe_send_oncommand_event = false;
 
     assert(!m_in_matches_ready);
     assert(!m_buffer.has_override());
@@ -1316,6 +1322,11 @@ void line_editor_impl::before_display_readline()
 //------------------------------------------------------------------------------
 void line_editor_impl::maybe_send_oncommand_event()
 {
+    // Prevent reentrancy when called inside maybe_collect_words().
+    if (m_in_maybe_send_oncommand_event)
+        return;
+    rollback<bool> rb(m_in_maybe_send_oncommand_event, true);
+
     if (!m_desc.callbacks)
         return;
 
