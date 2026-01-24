@@ -2202,7 +2202,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\eOS",          "win-delete-up-to-char" },   // F4
         { "\\e[15~",        "previous-history" },        // F5
         { "\\e[17~",        "win-insert-eof" },          // F6
-        { "\\e[18~",        "win-history-list" },        // F7
+        { "\\e[18~",        "clink-popup-history" },     // F7
         { "\\e[19~",        "history-search-backward" }, // F8
         { "\\e[20~",        "win-copy-history-number" }, // F9
         {}
