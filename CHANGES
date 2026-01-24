@@ -4,6 +4,7 @@
 
 #### v1.9.10
 
+- Fixed potential for incorrect input line coloring after using `clink-popup-history` to choose a history line.
 - Fixed rare issues with the `cmd.admin_title_prefix` setting.
 - Internal logging improvements.
 
