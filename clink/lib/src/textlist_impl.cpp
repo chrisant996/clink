@@ -908,16 +908,7 @@ navigated:
             break;
         advance_before_find = true;
 find:
-        if (m_win_history)
-        {
-            assert(!s_standalone);
-            lock_cursor(false);
-            show_cursor(true);
-            rl_ding();
-            show_cursor(false);
-            lock_cursor(true);
-        }
-        else if (m_filter)
+        if (m_filter && !m_win_history)
         {
             if (filter_items())
             {
@@ -947,11 +938,19 @@ find:
             int32 original = i;
             while (true)
             {
-                bool match = strstr_compare(m_needle, get_item_text(i));
-                if (m_has_columns)
+                bool match;
+                if (m_win_history)
                 {
-                    for (int32 col = 0; !match && col < max_columns; col++)
-                        match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+                    match = str_compare(m_needle.c_str(), get_item_text(i));
+                }
+                else
+                {
+                    match = strstr_compare(m_needle, get_item_text(i));
+                    if (m_has_columns)
+                    {
+                        for (int32 col = 0; !match && col < max_columns; col++)
+                            match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+                    }
                 }
 
                 if (match)
@@ -1619,7 +1618,7 @@ void textlist_impl::update_display()
                     footer.concat("  ");
                 footer.concat("Enter=Execute");
             }
-            if (!m_needle.empty())
+            if (!m_needle.empty() && !m_win_history)
             {
                 if (!footer.empty())
                     footer.concat("  ");
