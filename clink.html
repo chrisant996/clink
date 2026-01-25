@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.9</title>
+<title>Clink v1.9.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -929,6 +929,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <div><a class="h1" href="#usage">Usage</a></div>
 <div><a class="h1" href="#getting-started">Getting Started</a></div>
 <div><a class="h2" href="#how-completion-works">How Completion Works</a></div>
+<div><a class="h2" href="#auto-suggest">Auto-suggest</a></div>
 <div><a class="h2" href="#common-configuration">Common Configuration</a></div>
 <div><a class="h2" href="#upgrading-from-clink-v049">Upgrading from Clink v0.4.9</a></div>
 <div><a class="h1" href="#configuring-clink">Configuring Clink</a></div>
@@ -973,7 +974,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.9</div>
+                <div id="title">Clink v1.9.10</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1089,13 +1090,20 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <h1 id="getting-started"><a class="wlink" href="#getting-started"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Getting Started <span class="uplinks"><a href="#toc">top</a></span></h1>
 <p>You can use Clink right away without configuring anything:</p>
 <ul>
-<li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions.</li>
-<li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestionm or press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</li>
+<li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions; press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a popup list of command history.</li>
+<li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion, or press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</li>
 <li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match <a href="#how-completion-works">completion</a> two different ways.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the <code>/</code> and <code>?</code> symbols are on the same physical key).</li>
 </ul>
-<p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.</p>
+<p>The following sections describe how completion and suggestions work, and the most common configuration settings:</p>
+<table class="linkmenu">
+<tr><td><a href="#how-completion-works">How Completion Works</a></td><td>Describes the completion capabilities.</td></tr>
+<tr><td><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td>Describes how automatic suggestions work (often confused with completion).</td></tr>
+<tr><td><a href="#common-configuration">Common Configuration</a></td><td>An introduction to some common configuration choices.</td></tr>
+<tr><td><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td>Notes on upgrading from a very old version of Clink.</td></tr>
+</table>
+
 <p><a name="how-completion-works"></a></p>
 <h2 id="how-completion-works"><a class="wlink" href="#how-completion-works"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>How Completion Works <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
 <p>&quot;Completion&quot; is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.</p>
@@ -1125,20 +1133,89 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <h3 id="executable-completion"><a class="wlink" href="#executable-completion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Executable Completion <span class="uplinks"><a href="#how-completion-works">up</a> <a href="#toc">top</a></span></h3>
 <p>By default, Clink completes the first word of each command based on all executable programs on the system PATH and the current directory, but not non-executable files.</p>
 <p>You can turn off the &quot;executable completion&quot; behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various <a href="#exec_aliases"><code>exec.*</code></a> settings.</p>
+<p><a name="gettingstarted_autosuggest"></a></p>
+<h2 id="auto-suggest"><a class="wlink" href="#gettingstarted_autosuggest"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Auto-suggest <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
+<p>Clink can suggest command lines as you type, based on command history and completions.</p>
+<p>You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.</p>
+<p>When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
+<p>Here&#39;s an example of how auto-suggestion works.  Suppose you ran a command, so now it&#39;s in your command history:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
+</code></pre>
+
+<p>Later, you start to type a new command, and it matches the earlier command from the history:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+<p>The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.</p>
+<p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.</p>
+<p>You can press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</p>
+<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show a right-aligned usage hint when a suggestion is available (<code>Right=Insert Suggestion</code> or <code>Right=Insert F2=List</code> etc).</p>
+<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
+<p><a name="suggestion-list"></a></p>
+<h4 id="suggestion-list"><a class="wlink" href="#suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Suggestion list <span class="uplinks"><a href="#gettingstarted_autosuggest">up</a> <a href="#toc">top</a></span></h4>
+<p>Clink can show an interactive list of multiple suggestions to choose from.</p>
+<p>Press <kbd>F2</kbd> to toggle showing the suggestion list.</p>
+<p>The suggestion list looks like this:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User input</span></td></tr>
+<tr height="8px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌──┴──┐</span></td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr height="16px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;└───────────────────────┬───────────────────────┘ └────┬─────┘</span></td></tr>
+<tr height="8px"></tr>
+<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sources</span></td></tr>
+</table></code></pre>
+
+<p>When the suggestion list is visible, then the following keys control it:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><kbd>F2</kbd></td>
+<td>Toggles the suggestion list on or off.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Esc</kbd></td>
+<td>Reverts to the original input line and clears the suggestion list.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Up</kbd>/<kbd>Down</kbd></td>
+<td>When one or more suggestions are listed, the arrow keys move the selection highlight and replace the input line.  To make <kbd>Up</kbd> and <kbd>Down</kbd> navigate the history list instead of navigating in the suggestion list, press <kbd>Esc</kbd> to clear the suggestion list, and then use <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
+</tr>
+</tbody></table>
+<p>Using <kbd>Up</kbd> and <kbd>Down</kbd> to move the selection highlight looks like this:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span> <span class="color_callout">&nbsp;├── Selected suggestion</span></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+</table></code></pre>
+
+<p>To see more history, press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a <a href="#popup-windows">popup list</a> of command history matching what&#39;s been typed so far.  Typing in the popup list further searches or filters the list, and <kbd>F4</kbd> toggles between searching and filtering.</p>
+<p>The <a href="#suggestionglist_default">suggestionlist.default</a> setting controls whether each session starts with the suggestion list on or off.</p>
+<p>The colors for the suggestion list can be customized by changing the <a href="#color_suggestionlist">color.suggestionlist_*</a> settings.</p>
 <h2 id="common-configuration"><a class="wlink" href="#common-configuration"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Common Configuration <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
+<p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.  The Readline init file is for key bindings and certain configuration variables for the Readline library that Clink uses.  The Clink settings are for everything else that doesn&#39;t come from the Readline library.  Lua scripts can extend Clink in a variety of ways, and can even add new bindable commands.</p>
 <p>The following sections describe some ways to begin customizing Clink to your taste.</p>
 <table class="linkmenu">
 <tr><td><a href="#gettingstarted_enhanceddefaults">Enhanced default settings</a></td><td>Optionally use enhanced default settings.</td></tr>
 <tr><td><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td>Create a .inputrc file where config variables and key bindings can be set.</td></tr>
 <tr><td><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td>Make <kbd>Ctrl</kbd>-<kbd>F</kbd> and <kbd>Ctrl</kbd>-<kbd>M</kbd> work like usual on Windows.</td></tr>
-<tr><td><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td>How to enable and use automatic suggestions.</td></tr>
-<tr><td><a href="#gettingstarted_colors">Colors</a></td><td>Configure the colors.</td></tr>
-<tr><td><a href="#gettingstarted_keybindings">Key Bindings</a></td><td>Customize your key bindings.</td></tr>
-<tr><td><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td>Optionally enable mouse clicks in the input line, etc.</td></tr>
 <tr><td><a href="#gettingstarted_logo">Startup Message</a></td><td>Control whether the startup message is shown (copyright notice and version info).</td></tr>
 <tr><td><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td>Optional automatic <code>clink_start.cmd</code> script.</td></tr>
 <tr><td><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td>Customizing the command line prompt.</td></tr>
-<tr><td><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td>Notes on upgrading from a very old version of Clink.</td></tr>
+<tr><td><a href="#gettingstarted_colors">Colors</a></td><td>Configure the colors.</td></tr>
+<tr><td><a href="#gettingstarted_keybindings">Key Bindings</a></td><td>Customize your key bindings.</td></tr>
+<tr><td><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td>Optionally enable mouse clicks in the input line, etc.</td></tr>
 </table>
 
 <p><a name="gettingstarted_enhanceddefaults"></a></p>
@@ -1235,75 +1312,19 @@ $endif
 <td>Move forward one character.</td>
 </tr>
 </tbody></table>
-<p><a name="gettingstarted_autosuggest"></a></p>
-<h3 id="auto-suggest"><a class="wlink" href="#gettingstarted_autosuggest"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Auto-suggest <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
-<p>Clink can suggest command lines as you type, based on command history and completions.</p>
-<p>You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.</p>
-<p>When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
-<p>Here&#39;s an example of how auto-suggestion works.  Suppose you ran a command, so now it&#39;s in your command history:</p>
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
-</code></pre>
-
-<p>Later, you start to type a new command, and it matches the earlier command from the history:</p>
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
-</code></pre>
-
-<p>The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.</p>
-<p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.</p>
-<p>You can press <kbd>F2</kbd> to toggle showing an interactive <a href="#suggestion-list">list of suggestions</a>.</p>
-<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show a right-aligned usage hint when a suggestion is available (<code>Right=Insert Suggestion</code> or <code>Right=Insert F2=List</code> etc).</p>
-<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
-<p><a name="suggestion-list"></a></p>
-<h4 id="suggestion-list"><a class="wlink" href="#suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Suggestion list <span class="uplinks"><a href="#gettingstarted_autosuggest">up</a> <a href="#toc">top</a></span></h4>
-<p>Clink can show an interactive list of multiple suggestions to choose from.</p>
-<p>Press <kbd>F2</kbd> to toggle showing the suggestion list.</p>
-<p>The suggestion list looks like this:</p>
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User input</span></td></tr>
-<tr height="8px"></tr>
-<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌──┴──┐</span></td></tr>
-<tr height="16px"></tr>
-<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
-<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
-<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
-<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
-<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
-<tr height="16px"></tr>
-<tr><td><span class="color_callout">&nbsp;&nbsp;└───────────────────────┬───────────────────────┘ └────┬─────┘</span></td></tr>
-<tr height="8px"></tr>
-<tr><td><span class="color_callout">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sources</span></td></tr>
-</table></code></pre>
-
-<p>When the suggestion list is visible, then the following keys control it:</p>
-<table>
-<thead>
-<tr>
-<th align="center">Key</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center"><kbd>F2</kbd></td>
-<td>Toggles the suggestion list on or off.</td>
-</tr>
-<tr>
-<td align="center"><kbd>Esc</kbd></td>
-<td>Reverts to the original input line and clears the suggestion list.</td>
-</tr>
-<tr>
-<td align="center"><kbd>Up</kbd>/<kbd>Down</kbd></td>
-<td>When one or more suggestions are listed, the arrow keys move the selection highlight and replace the input line.  To make <kbd>Up</kbd> and <kbd>Down</kbd> navigate the history list instead of navigating in the suggestion list, press <kbd>Esc</kbd> to clear the suggestion list, and then use <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
-</tr>
-</tbody></table>
-<p>Using <kbd>Up</kbd> and <kbd>Down</kbd> to move the selection highlight looks like this:</p>
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0><tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
-<tr><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
-<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
-<tr><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span> <span class="color_callout">&nbsp;├── Selected suggestion</span></td></tr>
-<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
-</table></code></pre>
-
-<p>The <a href="#suggestionglist_default">suggestionlist.default</a> setting controls whether each session starts with the suggestion list on or off.</p>
-<p>The colors for the suggestion list can be customized by changing the <a href="#color_suggestionlist">color.suggestionlist_*</a> settings.</p>
+<p><a name="gettingstarted_logo"></a></p>
+<h3 id="startup-message"><a class="wlink" href="#gettingstarted_logo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Message <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
+<p>By default, Clink prints a startup message containing a copyright notice and the program version.  This is shown so it&#39;s easy to tell whether Clink is active and what version is being used.</p>
+<p>You can make the startup message shorter by running <code>clink set clink.logo short</code>.</p>
+<p>You can remove the startup message by running <code>clink set clink.logo none</code>.</p>
+<p><a name="gettingstarted_startupcmdscript"></a></p>
+<h3 id="startup-cmd-script"><a class="wlink" href="#gettingstarted_startupcmdscript"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Cmd Script <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
+<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown: after Clink is injected, after any <code>cmd.exe</code> command line arguments, but before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p><a name="gettingstarted_customprompt"></a></p>
+<h3 id="custom-prompt"><a class="wlink" href="#gettingstarted_customprompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Custom Prompt <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
+<p>Clink includes some pre-installed custom prompt files.  See <a href="#included-custom-prompts">Included Custom Prompts</a> for previews and how to activate a custom prompt.</p>
+<p>Or you can make your own custom prompt.  See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on how to use Lua to customize the prompt.</p>
+<p>Clink has &quot;asynchronous prompt filtering&quot; which lets custom prompts show up instantly.  Prompts can run commands (such as git) in the background and update the prompt once the background commands finish.  This keeps prompts highly responsive, with no extra delay between prompts.</p>
 <p><a name="gettingstarted_colors"></a></p>
 <h3 id="colors"><a class="wlink" href="#gettingstarted_colors"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Colors <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
@@ -1378,19 +1399,6 @@ $endif
 <li>In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.</li>
 <li>In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.</li>
 </ul>
-<p><a name="gettingstarted_logo"></a></p>
-<h3 id="startup-message"><a class="wlink" href="#gettingstarted_logo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Message <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
-<p>By default, Clink prints a startup message containing a copyright notice and the program version.  This is shown so it&#39;s easy to tell whether Clink is active and what version is being used.</p>
-<p>You can make the startup message shorter by running <code>clink set clink.logo short</code>.</p>
-<p>You can remove the startup message by running <code>clink set clink.logo none</code>.</p>
-<p><a name="gettingstarted_startupcmdscript"></a></p>
-<h3 id="startup-cmd-script"><a class="wlink" href="#gettingstarted_startupcmdscript"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Startup Cmd Script <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
-<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown: after Clink is injected, after any <code>cmd.exe</code> command line arguments, but before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
-<p><a name="gettingstarted_customprompt"></a></p>
-<h3 id="custom-prompt"><a class="wlink" href="#gettingstarted_customprompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Custom Prompt <span class="uplinks"><a href="#common-configuration">up</a> <a href="#toc">top</a></span></h3>
-<p>If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you&#39;ve been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.</p>
-<p>Other popular configurable prompts are <a href="#oh-my-posh">oh-my-posh</a> and <a href="#starship">starship</a>.</p>
-<p>See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on how to use Lua to customize the prompt.</p>
 <p><a name="upgradefrom049"></a></p>
 <h2 id="upgrading-from-clink-v049"><a class="wlink" href="#upgradefrom049"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Upgrading from Clink v0.4.9 <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
 <p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
@@ -2165,23 +2173,29 @@ If you want to change a .clinktheme file that came with Clink, make a copy of th
 <h2 id="custom-prompts"><a class="wlink" href="#custom-prompts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Custom Prompts <span class="uplinks"><a href="#configclink">up</a> <a href="#toc">top</a></span></h2>
 <p>You can choose a custom prompt to use, or you can <a href="#customizing-the-prompt">make your own prompt</a>.</p>
 <p>A custom prompt can be packaged into a .clinkprompt file to make it easy to choose which prompt to use, and easy to share custom prompts with other users.</p>
+<ul>
+<li>To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code>.  This will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.</li>
+<li>To list available custom prompts, run <code>clink config prompt list</code>.  See below for previews of some custom prompt files included with Clink.</li>
+<li>To preview what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.</li>
+<li>To preview  all installed custom prompts, run <code>clink config prompt show --all</code>.</li>
+</ul>
 <p>Clink looks for custom prompt files in these directories:</p>
 <ol>
 <li>Any directories listed in the <code>%CLINK_THEMES_DIR%</code> environment variable (multiple directories may be separated by semicolons).</li>
 <li>A <code>themes\</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
 <li>Or you can provide a full path name to a file, such as <code>c:\mythemes\Fancy Prompt.clinkprompt</code>.</li>
 </ol>
-<p>To activate a custom prompt, run <code>clink config prompt use <span class="arg">prompt_name</span></code> which will load and use the named prompt, as well as update the settings accordingly in the current Clink profile.  Or set the <code>%CLINK_CUSTOMPROMPT%</code> environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile&#39;s settings file, and allows multiple concurrent Clink sessions to use different custom prompts.</p>
-<p>To list available custom prompts, run <code>clink config prompt list</code>.  Clink includes a few custom prompt files (see below for previews), and you can find more shared online by Clink users.  Some places you can find more custom prompts for Clink are <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>, <a href="https://github.com/chrisant996/clink-themes">clink-themes</a>, and <a href="https://ohmyposh.dev">oh-my-posh</a>.  Check <a href="#oh-my-posh">here</a> for quick info on using oh-my-posh prompt themes with Clink.</p>
-<p>To show a demo of what a custom prompt will look like, run <code>clink config prompt show <span class="arg">prompt_name</span></code>.  Or to show demos of what all installed custom prompts each look like, run <code>clink config prompt show --all</code>.</p>
+<p>Another way to activate a custom prompt is to set the <code>%CLINK_CUSTOMPROMPT%</code> environment variable to the name or full path and filename of a .clinkprompt file.  The environment variable causes the named prompt to override the profile&#39;s settings file, and allows multiple concurrent Clink sessions to use different custom prompts.</p>
 <p>See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on writing your own custom prompts, and see <a href="#sharing-custom-prompts">Sharing Custom Prompts</a> for information on optionally packaging them as &quot;*.clinkprompt&quot; files.</p>
 <fieldset><legend>Warning</legend>
 If you want to change a .clinkprompt file that came with Clink, make a copy of the file and edit the copy.  Don't edit the original .clinkprompt theme file directly, because any changes in a file that came with Clink will be reverted the next time a Clink update is installed.
 </fieldset>
 
 <h3 id="included-custom-prompts"><a class="wlink" href="#included-custom-prompts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Included Custom Prompts <span class="uplinks"><a href="#custom-prompts">up</a> <a href="#toc">top</a></span></h3>
+<p>Clink includes a few custom prompt files (see below for previews).</p>
 <p>Each of the custom prompts listed below has many configuration options.  Some can be configured by setting environment variables, and some can be configured by writing a Lua script to set some Lua variables.  For information on how to configure a custom prompt, refer to its corresponding named *.clinkprompt file in the <code>themes\</code> directory under the Clink installation directory.</p>
 <p>To activate any of the prompts listed below, run <code>clink config prompt use <span class="arg">prompt_name</span></code>.</p>
+<p>Some places you can find more custom prompts for Clink are <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>, <a href="https://github.com/chrisant996/clink-themes">clink-themes</a>, and <a href="https://ohmyposh.dev">oh-my-posh</a>.  Check <a href="#oh-my-posh">here</a> for quick info on using oh-my-posh prompt themes with Clink.</p>
 <h5 id="agnoster"><a class="wlink" href="#agnoster"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>agnoster <span class="uplinks"><a href="#included-custom-prompts">up</a> <a href="#toc">top</a></span></h5>
 <DIV STYLE="display:inline-block;white-space:pre;background-color:#000000;font-family:promptFont,Cascadia Code,monospace;font-size:11pt;padding:4px;"><SPAN STYLE="color:#073642;background-color:#268BD2;"> C:\repos\clink </SPAN><SPAN STYLE="color:#268BD2;background-color:#B58900;"></SPAN><SPAN STYLE="color:#073642;background-color:#B58900;">  main ±</SPAN><SPAN STYLE="color:#B58900;background-color:#000000;"></SPAN><SPAN STYLE="color:#C8C1C1;background-color:#000000;"> </SPAN><SPAN STYLE="color:#000000;background-color:#C8C1C1;"> </SPAN><SPAN STYLE="color:#C8C1C1;background-color:#000000;">                                                   </SPAN></DIV>
 
@@ -3864,7 +3878,7 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-popup-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-history"></a><code>clink-popup-history</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd></td>
+<td align="center"><kbd>F7</kbd> or <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd></td>
 <td>Show history entries in a <a href="#popupwindow">popup list</a>.  Filters using any text before the cursor point.  In the popup, use <kbd>Enter</kbd> to execute the selected history entry.  If <a href="#history_time_stamp"><code>history.time_stamp</code></a> is <code>show</code> then timestamps are shown unless a numeric argument of 0 is provided.  If <code>history.time_stamp</code> is <code>save</code> then timestamps are only shown if a non-zero numeric argument is provided.</td>
 </tr>
 <tr>
@@ -4109,7 +4123,7 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-win-history-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-history-list"></a><code>win-history-list</code></td>
-<td align="center"><kbd>F7</kbd></td>
+<td align="center"></td>
 <td>Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).</td>
 </tr>
 <tr>
@@ -4291,7 +4305,7 @@ $endif              # end clink-only section
 <p><a name="popupwindow"></a></p>
 <h2 id="popup-windows"><a class="wlink" href="#popupwindow"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Popup Windows <span class="uplinks"><a href="#configreadline">up</a> <a href="#toc">top</a></span></h2>
 <p>Some commands show a searchable popup window that lists the available completions, directory history, or command history.</p>
-<p>For example, <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> (<kbd>F7</kbd>) and <a href="#rlcmd-clink-popup-directories"><code>clink-popup-directories</code></a> (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>PgUp</kbd>) show popup windows.</p>
+<p>For example, <a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a> (<kbd>F7</kbd>) and <a href="#rlcmd-clink-popup-directories"><code>clink-popup-directories</code></a> (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>PgUp</kbd>) show popup windows.</p>
 <p>Here&#39;s how the popup windows work:</p>
 <table>
 <thead>
@@ -4370,8 +4384,7 @@ $endif              # end clink-only section
 <td>Toggle the search mode between &quot;find&quot; and &quot;filter&quot;.  When the search mode is filter, typing filters the list instead of doing an incremental search (only in v1.6.13 and higher).  Use the <a href="#clink_popup_search_mode">clink.popup_search_mode</a> setting to set the default search mode.</td>
 </tr>
 </tbody></table>
-<p>The <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.</p>
-<p>Use the <a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a> command instead if you prefer for typing to do an incremental search.</p>
+<p>The <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with legacy <kbd>F7</kbd> behavior that existed in Windows console prompts.</p>
 <p><a name="extending-clink"></a></p>
 <h1 id="extending-clink-with-lua"><a class="wlink" href="#extending-clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Extending Clink With Lua <span class="uplinks"><a href="#toc">top</a></span></h1>
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
@@ -6775,8 +6788,8 @@ end
 </tr>
 <tr>
 <td><kbd>F7</kbd></td>
-<td>Show a popup list of selectable history entries.  Typing a number jumps to the corresponding history entry.</td>
-<td><a href="#rlcmd-win-history"><code>win-history-list</code></a></td>
+<td>Show a popup list of selectable history entries.  Typing searches or filters the list.</td>
+<td><a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a></td>
 </tr>
 <tr>
 <td><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>K</kbd></td>
@@ -9082,6 +9095,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1910"><a class="wlink" href="#v1910"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.10 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Changed the default binding for <kbd>F7</kbd> to <code>clink-popup-history</code> instead of <code>win-history-list</code>.</li>
+<li>Fixed potential for incorrect input line coloring after using <code>clink-popup-history</code> to choose a history line.</li>
+<li>Fixed <code>win-history-list</code> with typed input (regression introduced in v1.6.13).</li>
+<li>Fixed rare issues with the <code>cmd.admin_title_prefix</code> setting.</li>
+<li>Internal logging improvements.</li>
+</ul>
 <h4 id="v199"><a class="wlink" href="#v199"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.9 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/829">#829</a>; attempt to compare nil with number (regression introduced in v1.9.8).</li>
