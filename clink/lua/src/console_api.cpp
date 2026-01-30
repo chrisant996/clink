@@ -420,7 +420,9 @@ static int32 get_title(lua_State* state)
     if (len || GetLastError() == ERROR_SUCCESS)
     {
         str<> out;
-        to_utf8(out, title.c_str());
+        // GetConsoleTitleW doesn't necessarily NUL terminate the buffer.
+        // For example, if the title is an empty string.
+        to_utf8(out, wstr_iter(title.c_str(), len));
 
         lua_pushstring(state, out.c_str());
         return 1;

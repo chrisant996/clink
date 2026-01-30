@@ -1008,9 +1008,14 @@ static const wchar_t* get_input_title(const wchar_t* title, wstr_base& storage)
         const DWORD len = GetConsoleTitleW(current.data(), current.size());
         if (len || GetLastError() == ERROR_SUCCESS)
         {
-            storage = current.c_str();
+            // GetConsoleTitleW doesn't necessarily NUL terminate the buffer.
+            // For example, if the title is an empty string.
+            storage.clear();
+            storage.concat(current.c_str(), len);
             return storage.c_str();
         }
+
+        ERR("Unable to get console title.");
     }
 
     return title;
@@ -1035,6 +1040,8 @@ bool host_cmd::adjust_console_title(const wchar_t* const _title, wstr_base& out)
 
     wstr<280> storage;
     const wchar_t* const title = get_input_title(_title, storage);
+    if (!title)
+        return false;
 
     wstr<32> clink_prefix(tmp.c_str());
     const wchar_t* base_title = title;
