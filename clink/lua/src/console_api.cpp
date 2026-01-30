@@ -432,6 +432,36 @@ static int32 get_title(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.getoriginaltitle
+/// -ver:   1.9.11
+/// -ret:   string
+/// Returns the original console title text.
+///
+/// This internally calls the system API GetConsoleOriginalTitleW, and returns
+/// what the operating system considers to be the original title.
+static int32 get_original_title(lua_State* state)
+{
+    assert(!is_test_harness());
+
+    wstr<16> title;
+    title.reserve(4096);
+
+    DWORD len = GetConsoleOriginalTitleW(title.data(), title.size());
+    if (len || GetLastError() == ERROR_SUCCESS)
+    {
+        str<> out;
+        // GetConsoleOriginalTitleW says it NUL terminates the buffer, but in
+        // practice it actually does not (at least in Win11 24H2 26100.7623).
+        to_utf8(out, wstr_iter(title.c_str(), len));
+
+        lua_pushstring(state, out.c_str());
+        return 1;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  console.settitle
 /// -ver:   1.1.32
 /// -arg:   title:string
@@ -1377,6 +1407,7 @@ void console_lua_initialise(lua_state& lua, bool lua_interpreter)
         { "getcursorpos",           &get_cursor_pos },
         { "getlinetext",            &get_line_text },
         { "gettitle",               &get_title },
+        { "getoriginaltitle",       &get_original_title },
         { "settitle",               &set_title },
         { "islinedefaultcolor",     &is_line_default_color },
         { "linehascolor",           &line_has_color },
