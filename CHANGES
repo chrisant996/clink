@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.11
+
+- Added new Lua API [console.getoriginaltitle()](#console.getoriginaltitle) which gets what the OS considers to be the original console title.
+- Fixed a potential crash if the terminal title is an empty string; an OS API is not behaving as documented (regression introduced in v1.9.10).
+
 #### v1.9.10
 
 - Changed the default binding for <kbd>F7</kbd> to `clink-popup-history` instead of `win-history-list`.
