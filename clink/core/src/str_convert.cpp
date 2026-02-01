@@ -157,6 +157,13 @@ int32 to_utf8(str_base& out, const wchar_t* utf16)
     return to_utf8(out, iter);
 }
 
+//------------------------------------------------------------------------------
+int32 to_utf8(str_base& out, const wchar_t* utf16, int32 len)
+{
+    wstr_iter iter(utf16, len);
+    return to_utf8(out, iter);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -231,5 +238,12 @@ int32 to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
 int32 to_utf16(wstr_base& out, const char* utf8)
 {
     str_iter iter(utf8);
+    return to_utf16(out, iter);
+}
+
+//------------------------------------------------------------------------------
+int32 to_utf16(wstr_base& out, const char* utf8, int32 len)
+{
+    str_iter iter(utf8, len);
     return to_utf16(out, iter);
 }

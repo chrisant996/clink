@@ -227,10 +227,7 @@ bool ecma48_code::decode_osc(osc& out) const
                         needed = GetEnvironmentVariableW(name.c_str(), value.data(), value.size());
 
                         if (needed < value.size())
-                        {
-                            wstr_iter wtmpi(value.c_str(), needed);
-                            to_utf8(out.output, wtmpi);
-                        }
+                            to_utf8(out.output, value.c_str(), needed);
                         break;
                     }
                 }

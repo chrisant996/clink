@@ -834,8 +834,7 @@ bool win_screen_buffer::get_line_text(int32 line, str_base& out) const
         len--;
 
     out.clear();
-    wstr_iter tmpi(m_chars, len);
-    to_utf8(out, tmpi);
+    to_utf8(out, m_chars, len);
     return true;
 }
 

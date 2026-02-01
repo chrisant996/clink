@@ -56,6 +56,7 @@ int     hooked_fstat(int, struct hooked_stat*);
 #       define __BUILD_READLINE_MINGW__
 #       undef __MINGW32__
 #       undef __MINGW64__
+struct winsize {};
 #   endif
 
 #   define RL_LIBRARY_VERSION "8.1"

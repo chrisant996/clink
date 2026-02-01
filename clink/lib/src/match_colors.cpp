@@ -370,10 +370,7 @@ concat_numeric:
                 if (verbatim)
                     goto concat_text;
                 WCHAR wc = num;
-                {
-                    wstr_iter iter(&wc, 1); // Because MINGW can't handle it inline.
-                    to_utf8(token, iter);
-                }
+                to_utf8(token, &wc, 1);
             }
             break;
 

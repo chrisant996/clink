@@ -30,7 +30,7 @@ void str_transform(const char* in, uint32 len, str_base& out, transform_mode mod
 {
     wstr<> win;
     wstr<> wout;
-    to_utf16(win, str_iter(in, len));
+    to_utf16(win, in, len);
     str_transform(win.c_str(), win.length(), wout, mode);
     out = wout.c_str();
 }

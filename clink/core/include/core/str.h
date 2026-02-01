@@ -564,11 +564,13 @@ void str_impl<TYPE>::reset_not_owned(TYPE* data, uint32 size)
 template <typename T> class str_iter_impl;
 
 int32 to_utf8(class str_base& out, const wchar_t* utf16);
+int32 to_utf8(class str_base& out, const wchar_t* utf16, int32 len);
 int32 to_utf8(class str_base& out, str_iter_impl<wchar_t>& iter);
 int32 to_utf8(char* out, int32 max_count, const wchar_t* utf16);
 int32 to_utf8(char* out, int32 max_count, str_iter_impl<wchar_t>& iter);
 
 int32 to_utf16(class wstr_base& out, const char* utf8);
+int32 to_utf16(class wstr_base& out, const char* utf8, int32 len);
 int32 to_utf16(class wstr_base& out, str_iter_impl<char>& iter);
 int32 to_utf16(wchar_t* out, int32 max_count, const char* utf8);
 int32 to_utf16(wchar_t* out, int32 max_count, str_iter_impl<char>& iter);

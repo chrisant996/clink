@@ -362,6 +362,7 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
     assert(is_active());
 
     input input = _input;
+    bool wrap = !!_rl_menu_complete_wraparound;
 
     if (m_fallback_prev_bind_group)
         goto catchall;
@@ -375,7 +376,6 @@ void suggestionlist_impl::on_input(const input& _input, result& result, const co
 
     m_ignore_scroll_offset = false;
 
-    bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
     {
     case bind_id_suggestionlist_up:

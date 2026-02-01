@@ -296,8 +296,7 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
             const WCHAR* const chars = static_cast<const WCHAR*>(_chars);
 
             str_moveable s;
-            wstr_iter iter(chars, to_write);
-            to_utf8(s, iter);
+            to_utf8(s, chars, to_write);
 
             bool all_ascii = (to_write == s.length());
             if (all_ascii)
@@ -868,10 +867,7 @@ static void update_pushd_depth(const wchar_t* chars, int32 char_count)
     {
         str<> expanded;
         str<> captured;
-        {
-            wstr_iter iter(chars, char_count); // Because MINGW can't handle it inline.
-            to_utf8(captured, iter);
-        }
+        to_utf8(captured, chars, char_count);
         if (prompt_utils::expand_prompt_codes(var.c_str(), expanded, expand_prompt_flags::omit_pushd) &&
             expanded.length() <= captured.length())
         {

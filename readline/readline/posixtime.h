@@ -40,6 +40,9 @@
 #  endif /* !CLK_TCK */
 #endif /* !HAVE_SYSCONF && !_SC_CLK_TCK */
 
+/* begin_clink_change */
+#if !defined(__BUILD_READLINE_MINGW__)
+/* end_clink_change */
 #if !HAVE_TIMEVAL
 struct timeval
 {
@@ -47,6 +50,9 @@ struct timeval
   long int tv_usec;
 };
 #endif
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 #if !HAVE_GETTIMEOFDAY
 extern int gettimeofday (struct timeval * restrict, void * restrict);

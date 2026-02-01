@@ -422,7 +422,7 @@ static int32 get_title(lua_State* state)
         str<> out;
         // GetConsoleTitleW doesn't necessarily NUL terminate the buffer.
         // For example, if the title is an empty string.
-        to_utf8(out, wstr_iter(title.c_str(), len));
+        to_utf8(out, title.c_str(), len);
 
         lua_pushstring(state, out.c_str());
         return 1;
@@ -452,7 +452,7 @@ static int32 get_original_title(lua_State* state)
         str<> out;
         // GetConsoleOriginalTitleW says it NUL terminates the buffer, but in
         // practice it actually does not (at least in Win11 24H2 26100.7623).
-        to_utf8(out, wstr_iter(title.c_str(), len));
+        to_utf8(out, title.c_str(), len);
 
         lua_pushstring(state, out.c_str());
         return 1;

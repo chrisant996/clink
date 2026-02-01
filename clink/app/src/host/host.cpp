@@ -474,7 +474,7 @@ bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
     if (intercept_directory(tmp.c_str(), &tmp) == intercept_result::prev_dir)
         prev_dir_history(tmp);
 
-    to_utf16(out, str_iter(tmp.c_str(), tmp.length()));
+    to_utf16(out, tmp.c_str(), tmp.length());
     return true;
 }
 

@@ -722,10 +722,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     }
 
     if (out)
-    {
-        wstr_iter tmpi(wpath.c_str(), wpath.length());
-        to_utf8(*out, tmpi);
-    }
+        to_utf8(*out, wpath.c_str(), wpath.length());
 
     return f;
 }
@@ -942,10 +939,7 @@ bool get_short_path_name(const char* path, str_base& out)
         wout.reserve(len);
         len = GetShortPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
         if (len)
-        {
-            wstr_iter tmpi(wout.c_str(), wout.length());
-            to_utf8(out, tmpi);
-        }
+            to_utf8(out, wout.c_str(), wout.length());
     }
 
     if (!len)
@@ -971,10 +965,7 @@ bool get_long_path_name(const char* path, str_base& out)
         wout.reserve(len);
         len = GetLongPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
         if (len)
-        {
-            wstr_iter tmpi(wout.c_str(), wout.length());
-            to_utf8(out, tmpi);
-        }
+            to_utf8(out, wout.c_str(), wout.length());
     }
 
     if (!len)
@@ -1002,10 +993,7 @@ bool get_full_path_name(const char* _path, str_base& out, uint32 len)
         wout.reserve(len);
         len = GetFullPathNameW(wpath.c_str(), wout.size() - 1, wout.data(), nullptr);
         if (len)
-        {
-            wstr_iter tmpi(wout.c_str(), wout.length());
-            to_utf8(out, tmpi);
-        }
+            to_utf8(out, wout.c_str(), wout.length());
     }
 
     if (!len)

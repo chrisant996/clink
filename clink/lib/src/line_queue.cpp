@@ -100,7 +100,7 @@ bool line_queue::dequeue_line(str_base& out, dequeue_flags& flags)
 
     const auto& front = m_queued_lines.front();
     if (front.m_wchar_cursor)
-        to_utf8(out, wstr_iter(front.m_wline.c_str() + front.m_wchar_cursor, front.m_wline.length() - front.m_wchar_cursor));
+        to_utf8(out, front.m_wline.c_str() + front.m_wchar_cursor, front.m_wline.length() - front.m_wchar_cursor);
     else
         out = front.m_line.c_str();
     flags = front.m_flags;
@@ -146,7 +146,7 @@ bool line_queue::dequeue_char(wchar_t* out, bool& new_line)
 
     auto& front = m_queued_lines.front();
     if (!front.m_wchar_cursor)
-        to_utf16(front.m_wline, str_iter(front.m_line.c_str(), front.m_line.length()));
+        to_utf16(front.m_wline, front.m_line.c_str(), front.m_line.length());
     new_line = (!front.m_wchar_cursor && front.m_line.length() && front.m_line.c_str()[front.m_line.length() - 1] == '\n');
 
     if (front.m_wchar_cursor >= front.m_wline.length())
