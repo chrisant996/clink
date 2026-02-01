@@ -66,7 +66,7 @@ Clink can be extended through its Lua API which allows easy creation of context 
 
 ### Building Clink
 
-Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutions or makefiles for MinGW. Note that Premake >= 5.0.0-beta1 is required.
+Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutions or makefiles for MinGW. Note that Premake >= 5.0.0-beta1 and <= 5.0.0-beta7 is required.
 
 1. Cd to your clone of Clink.
 2. Run <code>premake5.exe <em>toolchain</em></code> (where <em>toolchain</em> is one of Premake's actions - see `premake5.exe --help`)
