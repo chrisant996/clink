@@ -465,7 +465,7 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
-                x86_ok = exec(have_mingw .. " CC=gcc config=final_x32 -j%number_of_processors% " .. target)
+                x86_ok = exec(have_mingw .. " CC=gcc config=final_x86 -j%number_of_processors% " .. target)
                 x64_ok = exec(have_mingw .. " CC=gcc config=final_x64 -j%number_of_processors% " .. target)
                 if include_arm64 and target ~= "luac" then
                     arm64_ok = nil

@@ -14,7 +14,7 @@ set NORM=%ASC%[0m
 set __debug_config=debug
 set __release_config=release
 set __final_config=final
-set __x86_platform=_x32
+set __x86_platform=_x86
 set __x64_platform=_x64
 
 set __MULTICPU=-j6

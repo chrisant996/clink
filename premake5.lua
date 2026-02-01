@@ -45,13 +45,13 @@ local function setup_cfg(cfg)
         targetdir(to.."/bin/"..cfg)
         objdir(to.."/obj/")
 
-    filter {cfg, "architecture:x32"}
+    filter {cfg, "architecture:x86"}
         targetsuffix("_x86")
 
     filter {cfg, "architecture:x64"}
         targetsuffix("_x64")
 
-    filter {cfg, "architecture:arm64"}
+    filter {cfg, "architecture:aarch64"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
         targetsuffix("_arm64")
 
     filter {}
@@ -62,7 +62,7 @@ end
 --------------------------------------------------------------------------------
 local function clink_project(name)
     project(name)
-    flags("fatalwarnings")
+    fatalwarnings("all")
     language("c++")
 
     filter "action:vs*"
@@ -212,11 +212,11 @@ end
 --------------------------------------------------------------------------------
 workspace("clink")
     configurations({"debug", "release", "final"})
-    platforms({"x32", "x64", "arm64"})
+    platforms({"x86", "x64", "arm64"})
     location(to)
 
     characterset("MBCS")
-    flags("NoManifest")
+    manifest("off")
     staticruntime("on")
     symbols("on")
     exceptionhandling("off")
@@ -247,11 +247,11 @@ workspace("clink")
         rtti("on")
         optimize("full")
         omitframepointer("on")
-        flags("NoBufferSecurityCheck")
+        buffersecuritycheck("off")
         defines("NDEBUG")
 
     filter {"final", "action:vs*"}
-        flags("LinkTimeOptimization")
+        linktimeoptimization("on")
 
     filter "release"
         --rtti("off")
@@ -475,7 +475,7 @@ clink_lib("clink_process")
 
     includedirs("clink/process/src")
     filter "action:vs*"
-        flags { "NoRuntimeChecks" } -- required for 32 bit by the inject lambda in process::remote_call
+        runtimechecks("off") -- required for 32 bit by the inject lambda in process::remote_call
         pchheader("pch.h")
         pchsource("clink/process/src/pch.cpp")
 
@@ -494,7 +494,7 @@ clink_lib("clink_process")
 --     files("clink/process/thunk/**")
 
 --     filter "action:vs*"
---         flags { "NoRuntimeChecks" } -- required for 32 bit by the inject thunk in process::remote_call
+--         runtimechecks("off") -- required for 32 bit by the inject thunk in process::remote_call
 --         inlining("auto") -- required by the inject thunk in process::remote_call
 --         editAndContinue("off") -- required by the inject thunk in process::remote_call
 --         omitframepointer("off") -- required by the inject thunk in process::remote_call
@@ -578,7 +578,7 @@ clink_dll("clink_app_dll")
 clink_exe("clink_app_exe")
     targetname("clink")
     if not asan then
-        flags("OmitDefaultLibrary")
+        nodefaultlib("on")
     end
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
