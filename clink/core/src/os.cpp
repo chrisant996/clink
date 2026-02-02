@@ -202,12 +202,12 @@ private:
     HMODULE             m_hlib = 0;
     union
     {
-        FARPROC         proc[11];
+        FARPROC         proc[3];
         struct {
             void        (WINAPI* VariantInit)(VARIANTARG* pvarg);
             BSTR        (WINAPI* SysAllocString)(const OLECHAR* psz);
             void        (WINAPI* SysFreeString)(BSTR bstrString);
-        };
+        } proto;
     } m_procs;
 } s_oleaut32;
 
@@ -227,6 +227,7 @@ bool delay_load_oleaut32::init()
         if (m_hlib)
         {
             size_t c = 0;
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "VariantInit");
             m_procs.proc[c++] = GetProcAddress(m_hlib, "SysAllocString");
             m_procs.proc[c++] = GetProcAddress(m_hlib, "SysFreeString");
             assert(_countof(m_procs.proc) == c);
@@ -256,21 +257,21 @@ void delay_load_oleaut32::VariantInit(VARIANTARG* pvarg)
         ZeroMemory(pvarg, sizeof(*pvarg));
         return;
     }
-    return m_procs.VariantInit(pvarg);
+    return m_procs.proto.VariantInit(pvarg);
 }
 
 BSTR delay_load_oleaut32::SysAllocString(const OLECHAR* psz)
 {
     if (!init())
         return NULL;
-    return m_procs.SysAllocString(psz);
+    return m_procs.proto.SysAllocString(psz);
 }
 
 void delay_load_oleaut32::SysFreeString(BSTR bstrString)
 {
     if (!init())
         return;
-    return m_procs.SysFreeString(bstrString);
+    return m_procs.proto.SysFreeString(bstrString);
 }
 
 
