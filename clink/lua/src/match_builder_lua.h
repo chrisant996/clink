@@ -41,6 +41,7 @@ protected:
     int32           set_input_line(lua_State* state);
     int32           matches_ready(lua_State* state);
     int32           get_generation_id(lua_State* state);
+    int32           log_matches(lua_State* state);
 
 private:
     bool            add_match_impl(lua_State* state, int32 stack_index, match_type type);

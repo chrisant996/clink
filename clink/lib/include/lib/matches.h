@@ -269,6 +269,7 @@ public:
     void                    set_matches_are_files(bool files=true);
     void                    set_input_line(const char* text, int32 generation_id);
     int32                   get_generation_id() const;
+    void                    log_matches(int32 limit=5) const;
 
 private:
     matches&                m_matches;

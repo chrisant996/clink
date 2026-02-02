@@ -16,6 +16,7 @@
 #include <core/str_tokeniser.h>
 #include <core/match_wild.h>
 #include <core/path.h>
+#include <core/log.h>
 #include <sys/stat.h>
 
 extern "C" {
@@ -343,6 +344,29 @@ void match_builder::set_input_line(const char* text, int32 generation_id)
 int32 match_builder::get_generation_id() const
 {
     return ((matches_impl&)m_matches).get_generation_id();
+}
+
+//------------------------------------------------------------------------------
+void match_builder::log_matches(int32 limit) const
+{
+    limit = clamp(limit, 1, 99);
+
+    str<> tmp;
+    int32 i = 0;
+    for (matches_iter iter = m_matches.get_iter(); iter.next(); i++)
+    {
+        if (i >= limit)
+        {
+            tmp.concat(", ...");
+            break;
+        }
+        else if (i > 0)
+            tmp.concat(", ");
+        else
+            tmp.concat(" -> ");
+        tmp.concat(iter.get_match());
+    }
+    LOG("GENERATED: %u matches%s%s", m_matches.get_match_count(), m_matches.is_volatile() ? ", *VOLATILE*" : "", tmp.c_str());
 }
 
 //------------------------------------------------------------------------------

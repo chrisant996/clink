@@ -30,6 +30,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "_set_input_line",    &set_input_line },
     { "_matches_ready",     &matches_ready },
     { "_get_generation_id", &get_generation_id },
+    { "_log_matches",       &log_matches },
     {}
 };
 
@@ -393,6 +394,15 @@ int32 match_builder_lua::get_generation_id(lua_State* state)
         lua_pushliteral(state, "builder");
     }
     return 2;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 match_builder_lua::log_matches(lua_State* state)
+{
+    const int32 limit = optinteger(state, LUA_SELF + 1, 5);
+    m_builder->log_matches(limit);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
