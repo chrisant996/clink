@@ -1423,7 +1423,9 @@ uninit_all:
             if (tmp.length() && !ispunct(uint8(tmp.c_str()[tmp.length() - 1])))
                 tmp.concat(".", 1);
             err_msg.trim();
-            err_msg.format("\n%s", tmp.c_str());
+            if (!err_msg.empty())
+                err_msg.concat("\n");
+            err_msg.concat(tmp.c_str());
         }
         if (vZip.vt == VT_BSTR) s_oleaut32.SysFreeString(vZip.bstrVal);
         if (vDest.vt == VT_BSTR) s_oleaut32.SysFreeString(vDest.bstrVal);
