@@ -16,8 +16,19 @@
 #include <assert.h>
 
 #include <winhttp.h>
-#include <wininet.h>
 #include <VersionHelpers.h>
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+// MinGW can't include wininet.h because MinGW can't handle the enum
+// definition for INTERNET_SCHEME.
+#define INTERNET_MAX_PATH_LENGTH        2048
+#define INTERNET_MAX_SCHEME_LENGTH      32          // longest protocol name length
+#define INTERNET_MAX_URL_LENGTH         (INTERNET_MAX_SCHEME_LENGTH \
+                                        + sizeof("://") \
+                                        + INTERNET_MAX_PATH_LENGTH)
+#else
+#include <wininet.h>
+#endif
 
 //------------------------------------------------------------------------------
 static class delay_load_winhttp

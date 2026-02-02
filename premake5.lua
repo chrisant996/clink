@@ -271,7 +271,6 @@ workspace("clink")
         defines("__MSVCRT_VERSION__=0x0601")
         defines("_WIN32_WINNT=0x0601")
         defines("WINVER=0x0601")
-        defines("_POSIX=1")             -- so vsnprintf returns needed size
         buildoptions("-Wno-error=missing-field-initializers")
         buildoptions("-ffunction-sections")
         buildoptions("-fdata-sections")

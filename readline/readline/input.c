@@ -27,15 +27,6 @@
 #  include <floss.h>
 #endif
 
-/* begin_clink_change
- * MinGW already defines _POSIX, so the #define below causes a compilation
- * error.  Compensate by undefining it.
- */
-#if defined (__MINGW32__)
-#  undef _POSIX
-#endif
-/* end_clink_change */
-
 /* These are needed to get the declaration of 'alarm' when including
    <unistd.h>. I'm not sure it's needed, but the compiler might require it. */
 #if defined (__MINGW32__)

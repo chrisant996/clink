@@ -26,6 +26,13 @@
 #endif
 
 //------------------------------------------------------------------------------
+#if defined(__MINGW32__) || defined(__MINGW64__)
+// {13709620-C279-11CE-A49E-444553540000}
+static const GUID c_clsid_shell = { 0x13709620, 0xC279, 0x11CE, { 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 } };
+#define CLSID_Shell c_clsid_shell
+#endif
+
+//------------------------------------------------------------------------------
 #ifdef _MSC_VER
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
 #else
@@ -175,6 +182,95 @@ bool delay_load_shell32::init()
 BOOL delay_load_shell32::ShellExecuteExW(SHELLEXECUTEINFOW* pExecInfo)
 {
     return init() && m_procs.ShellExecuteExW(pExecInfo);
+}
+
+
+
+//------------------------------------------------------------------------------
+static class delay_load_oleaut32
+{
+public:
+                        delay_load_oleaut32();
+    bool                init();
+    HMODULE             module() const { return m_hlib; }
+    void                VariantInit(VARIANTARG* pvarg);
+    BSTR                SysAllocString(const OLECHAR* psz);
+    void                SysFreeString(BSTR bstrString);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    HMODULE             m_hlib = 0;
+    union
+    {
+        FARPROC         proc[11];
+        struct {
+            void        (WINAPI* VariantInit)(VARIANTARG* pvarg);
+            BSTR        (WINAPI* SysAllocString)(const OLECHAR* psz);
+            void        (WINAPI* SysFreeString)(BSTR bstrString);
+        };
+    } m_procs;
+} s_oleaut32;
+
+//------------------------------------------------------------------------------
+delay_load_oleaut32::delay_load_oleaut32()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_oleaut32::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        m_hlib = LoadLibrary("oleaut32.dll");
+        if (m_hlib)
+        {
+            size_t c = 0;
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "SysAllocString");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "SysFreeString");
+            assert(_countof(m_procs.proc) == c);
+        }
+
+        m_ok = true;
+        static_assert(sizeof(m_procs.proc) == sizeof(m_procs), "proc[] dimension is too small");
+        for (auto const& proc : m_procs.proc)
+        {
+            if (!proc)
+            {
+                m_ok = false;
+                break;
+            }
+        }
+    }
+
+assert(m_ok);
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+void delay_load_oleaut32::VariantInit(VARIANTARG* pvarg)
+{
+    if (!init())
+    {
+        ZeroMemory(pvarg, sizeof(*pvarg));
+        return;
+    }
+    return m_procs.VariantInit(pvarg);
+}
+
+BSTR delay_load_oleaut32::SysAllocString(const OLECHAR* psz)
+{
+    if (!init())
+        return NULL;
+    return m_procs.SysAllocString(psz);
+}
+
+void delay_load_oleaut32::SysFreeString(BSTR bstrString)
+{
+    if (!init())
+        return;
+    return m_procs.SysFreeString(bstrString);
 }
 
 
@@ -1307,10 +1403,10 @@ final_ret:
     Folder* pDestFolder = nullptr;
     FolderItems* pItems = nullptr;
     VARIANT vZip, vDest, vOpt, vItems;
-    VariantInit(&vZip);
-    VariantInit(&vDest);
-    VariantInit(&vOpt);
-    VariantInit(&vItems);
+    s_oleaut32.VariantInit(&vZip);
+    s_oleaut32.VariantInit(&vDest);
+    s_oleaut32.VariantInit(&vOpt);
+    s_oleaut32.VariantInit(&vItems);
 
     // Create Shell.Application COM object.
     IShellDispatch* pShell = nullptr;
@@ -1328,8 +1424,8 @@ uninit_all:
             err_msg.trim();
             err_msg.format("\n%s", tmp.c_str());
         }
-        if (vZip.vt == VT_BSTR) SysFreeString(vZip.bstrVal);
-        if (vDest.vt == VT_BSTR) SysFreeString(vDest.bstrVal);
+        if (vZip.vt == VT_BSTR) s_oleaut32.SysFreeString(vZip.bstrVal);
+        if (vDest.vt == VT_BSTR) s_oleaut32.SysFreeString(vDest.bstrVal);
         if (pItems) pItems->Release();
         if (pZipFolder) pZipFolder->Release();
         if (pDestFolder) pDestFolder->Release();
@@ -1348,7 +1444,7 @@ uninit_all:
 
     wstr_moveable wzip_full(zip_full.c_str());
     vZip.vt = VT_BSTR;
-    vZip.bstrVal = SysAllocString(wzip_full.c_str());
+    vZip.bstrVal = s_oleaut32.SysAllocString(wzip_full.c_str());
     hr = pShell->NameSpace(vZip, &pZipFolder);
     if (FAILED(hr))
     {
@@ -1372,7 +1468,7 @@ uninit_all:
 
     wstr_moveable wdest_full(dest_full.c_str());
     vDest.vt = VT_BSTR;
-    vDest.bstrVal = SysAllocString(wdest_full.c_str());
+    vDest.bstrVal = s_oleaut32.SysAllocString(wdest_full.c_str());
     if (FAILED(hr))
         goto uninit_all;
 

@@ -144,7 +144,7 @@ bool clipboard_tester::set_clipboard_text(const char* text, int32 length)
     }
 
     m_text.clear();
-    to_utf16(m_text, str_iter(text, length));
+    to_utf16(m_text, text, length);
     return true;
 }
 

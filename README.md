@@ -73,6 +73,9 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
 3. Build scripts will be generated in <code>.build\\<em>toolchain</em></code>. For example `.build\vs2022\clink.sln`.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
+> [!NOTE]
+> Only the VS toolset is supported.  If you want to try using MinGW, then make sure to use the msvcrt version because `setjmp` doesn't link in the URT version of MinGW.
+
 ### Building Documentation
 
 1. Make sure [npm](https://nodejs.org/en/download) and [python](https://www.python.org/downloads/windows/) are installed.

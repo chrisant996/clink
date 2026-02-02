@@ -19,18 +19,12 @@ enum
     visitor_set_title       = 1 << 4,
 };
 
-#if defined(__MINGW32__) || defined(__MINGW64__)
-#define __CONSOLE_READCONSOLE_CONTROL VOID
-#else
-#define __CONSOLE_READCONSOLE_CONTROL CONSOLE_READCONSOLE_CONTROL
-#endif
-
 struct originals
 {
     BOOL    (WINAPI *set_env_var)(const wchar_t*, const wchar_t*);
     BOOL    (WINAPI *write_console)(HANDLE, const void*, DWORD, LPDWORD, LPVOID);
     DWORD   (WINAPI *get_env_var)(const wchar_t*, wchar_t*, DWORD);
-    BOOL    (WINAPI *read_console)(HANDLE, void*, DWORD, LPDWORD, __CONSOLE_READCONSOLE_CONTROL*);
+    BOOL    (WINAPI *read_console)(HANDLE, void*, DWORD, LPDWORD, CONSOLE_READCONSOLE_CONTROL*);
     BOOL    (WINAPI *set_title)(const wchar_t*);
 };
 
@@ -64,7 +58,7 @@ DWORD WINAPI get_env_var(const wchar_t* name, wchar_t* buffer, DWORD size)
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI read_console(HANDLE, void*, DWORD, LPDWORD, __CONSOLE_READCONSOLE_CONTROL*)
+BOOL WINAPI read_console(HANDLE, void*, DWORD, LPDWORD, CONSOLE_READCONSOLE_CONTROL*)
 {
     g_visited_bits |= visitor_read_console;
     return TRUE;

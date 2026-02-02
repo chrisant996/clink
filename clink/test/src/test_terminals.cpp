@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
-#pragma once
-
 #include "pch.h"
 #include "test_terminals.h"
 #include <assert.h>

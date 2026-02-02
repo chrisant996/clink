@@ -38,7 +38,7 @@ using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lp
 using func_SetEnvironmentStringsW = BOOL (WINAPI*)(LPWSTR NewEnvironment);
 using func_WriteConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleOutput, CONST VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 using func_WriteFile_t = BOOL (WINAPI*)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, __CONSOLE_READCONSOLE_CONTROL* pInputControl);
+using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, CONSOLE_READCONSOLE_CONTROL* pInputControl);
 using func_GetEnvironmentVariableW_t = DWORD (WINAPI*)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 using func_SetConsoleTitleW_t = BOOL (WINAPI*)(LPCWSTR lpConsoleTitle);
 static func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
@@ -612,13 +612,9 @@ BOOL WINAPI host_cmd::read_console(
     void* _chars,
     DWORD max_chars,
     LPDWORD read_in,
-    __CONSOLE_READCONSOLE_CONTROL* __control)
+    CONSOLE_READCONSOLE_CONTROL* __control)
 {
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    const CONSOLE_READCONSOLE_CONTROL* const control = reinterpret_cast<CONSOLE_READCONSOLE_CONTROL*>(__control);
-#else
     const CONSOLE_READCONSOLE_CONTROL* const control = __control;
-#endif
     wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
 
     if (GetCurrentThreadId() != s_main_thread)
