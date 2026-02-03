@@ -2079,8 +2079,8 @@ static int32 is_cmd_wordbreak(lua_State* state)
 //------------------------------------------------------------------------------
 static int32 find_match_highlight(lua_State* state)
 {
-    const char* match = checkstring(state, 1);
-    const char* _typed = checkstring(state, 2);
+    const char* const match = checkstring(state, 1);
+    const char* const _typed = checkstring(state, 2);
     if (!match || !_typed)
         return 0;
     if (!*match || !*_typed)
@@ -2092,19 +2092,24 @@ static int32 find_match_highlight(lua_State* state)
 again:
     int32 best_offset = -1;
     int32 best_length = -1;
+    int32 typed_length = -1;
     for (const char* walk = match; *walk; ++walk)
     {
-        const int32 result = str_compare(walk, typed);
+        int32 result = str_compare(walk, typed);
         if (result < 0)
         {
             best_offset = uint32(walk - match);
-            best_length = str_len(typed);
+            best_length = (typed_length < 0) ? str_len(typed) : typed_length;
             break;
         }
         else if (result > best_length)
         {
             best_offset = uint32(walk - match);
             best_length = result;
+            if (typed_length < 0)
+                typed_length = str_len(typed);
+            if (best_length >= typed_length)
+                break;
         }
     }
 
