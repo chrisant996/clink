@@ -5,9 +5,11 @@
 #### v1.9.12
 
 - Added new `suggestionlist.hide_hints` setting to control whether to hide input hints while using the suggestion list (input hints are normally controlled by the `comment_row.show_hints` setting, and are hidden by default while using the suggestion list).
-- Added a type-ahead optimization in popup lists to avoid repeatedly filtering the list when more input is available for the incremental search string.
+- Added a type-ahead optimization in popup lists to avoid redundant or unnecessary processing during incremental find or filter input.
 - Fixed position of highlights in the suggestion list to consistently use the earliest matching position.
 - Fixed [#835](https://github.com/chrisant996/clink/issues/835); Unicode input is garbled in popup lists (regression introduced in v1.8.0).
+- Fixed edge cases where certain Unicode input could be misinterpreted in popup lists and in `clink-select-complete`.
+- Fixed potential for a buffer overread if invalid UTF8 bytes are encountered.
 - Internal logging improvements.
 
 #### v1.9.11
