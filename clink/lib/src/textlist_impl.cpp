@@ -1268,7 +1268,7 @@ do_insert:
                 while (iter.more())
                 {
                     uint32 c = iter.next();
-                    if (CTRL_CHAR(c))
+                    if (iter.get_pointer() - seq == 1 && CTRL_CHAR(*seq))
                     {
                         // Discard ctrl characters (especially ESC when the
                         // terminal.raw_esc setting is enabled).
