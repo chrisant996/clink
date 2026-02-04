@@ -5,7 +5,9 @@
 #### v1.9.12
 
 - Added new `suggestionlist.hide_hints` setting to control whether to hide input hints while using the suggestion list (input hints are normally controlled by the `comment_row.show_hints` setting, and are hidden by default while using the suggestion list).
+- Added a type-ahead optimization in popup lists to avoid repeatedly filtering the list when more input is available for the incremental search string.
 - Fixed position of highlights in the suggestion list to consistently use the earliest matching position.
+- Fixed [#835](https://github.com/chrisant996/clink/issues/835); Unicode input is garbled in popup lists (regression introduced in v1.8.0).
 - Internal logging improvements.
 
 #### v1.9.11
@@ -155,6 +157,7 @@
 - Fixed the `operate-and-get-next` command when the `history.sticky_search` setting is enabled (it fetched the same history entry each time).
 - Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.
 - Fixed two memory management issues in Readline undo handling, which in certain edge cases could potentially cause heap corruption.
+- Fixed popup lists accidentally treating control characters as part of an incremental search (especially problematic when the `terminal.raw_esc` setting is enabled).
 - Fixed [#786](https://github.com/chrisant996/clink/issues/786); `clink autorun` claims the "AutoRun" reg key has a "current user" WOW64 key, but there's no such thing.
 - Fixed [#791](https://github.com/chrisant996/clink/issues/791); in legacy console, clicking on the terminal after using mouse to move scrollbar accidentally scrolls to the last line.
 - Minor improvement to error handling for certain failures in oh-my-posh.
