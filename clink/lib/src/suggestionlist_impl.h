@@ -99,6 +99,7 @@ private:
     int32           m_vert_scroll_car = 0;
     int32           m_vert_scroll_column = 0;
 #endif
+    bool            m_input_hints = false;
     bool            m_force_display = false;
     bool            m_clear_display = false;
     std::vector<int32> m_any_displayed;

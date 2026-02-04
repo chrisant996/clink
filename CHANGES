@@ -4,6 +4,7 @@
 
 #### v1.9.12
 
+- Added new `suggestionlist.hide_hints` setting to control whether to hide input hints while using the suggestion list (input hints are normally controlled by the `comment_row.show_hints` setting, and are hidden by default while using the suggestion list).
 - Fixed position of highlights in the suggestion list to consistently use the earliest matching position.
 - Internal logging improvements.
 

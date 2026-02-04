@@ -87,8 +87,16 @@ static setting_color s_color_suggestionlist_selected(
     "suggestion list colors specify a foreground color.",
     "default on bright black");
 
+setting_bool g_suggestionlist_hide_hints(
+    "suggestionlist.hide_hints",
+    "Hide input hints in the suggestion list",
+    "When this is true, the input hints controlled by the comment_row.show_hints\n"
+    "setting are suppressed while using the suggestion list.",
+    true);
+
 extern setting_int g_clink_scroll_offset;
 extern setting_color g_color_description;
+extern setting_bool g_comment_row_show_hints;
 
 
 
@@ -658,10 +666,11 @@ void suggestionlist_impl::init_suggestions()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_layout(bool refreshing_display)
 {
-    // TODO: this kind of has to hide the comment row, but then that disables
-    // features like input hints...
+    m_input_hints = (!g_display_manager_no_comment_row &&
+                     !g_suggestionlist_hide_hints.get() &&
+                     g_comment_row_show_hints.get());
 
-    const int32 input_height = (_rl_vis_botlin + 1);
+    const int32 input_height = (_rl_vis_botlin + 1 + m_input_hints);
     const int32 header_row = 1;
     const int32 tooltip_row = 1;
     int32 available_rows = m_screen_rows - input_height - header_row - tooltip_row;
@@ -775,8 +784,15 @@ void suggestionlist_impl::update_display()
     // Move cursor after the input line.
     _rl_move_vert(_rl_vis_botlin);
 
-    // Display suggestions.
+    // Make room for input hints.
     int32 up = 0;
+    if (m_input_hints)
+    {
+        rl_crlf();
+        up++;
+    }
+
+    // Display suggestions.
     if (is_active() && m_count > 0)
     {
         str_moveable tmp;

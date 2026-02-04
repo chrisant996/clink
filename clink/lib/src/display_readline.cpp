@@ -126,6 +126,7 @@ extern setting_color g_color_comment_row;
 extern setting_color g_color_suggestion;
 extern setting_bool g_autosuggest_hint;
 #endif
+extern setting_bool g_suggestionlist_hide_hints;
 
 //------------------------------------------------------------------------------
 #ifdef REPORT_REDISPLAY
@@ -2104,7 +2105,8 @@ void display_manager::display()
 
     // Maybe show input hint.
     if (need_update && _rl_vis_botlin < _rl_screenheight && !m_is_transient &&
-        !g_display_manager_no_comment_row && !is_suggestion_list_enabled())
+        !g_display_manager_no_comment_row &&
+        (!is_suggestion_list_enabled() || !g_suggestionlist_hide_hints.get()))
     {
         str_moveable in;
         if (m_forced_comment_row_cursorpos == rl_point)
