@@ -114,6 +114,18 @@ static int32 s_default_popup_search_mode = -1;
 const int32 min_screen_cols = 20;
 
 //------------------------------------------------------------------------------
+static bool any_invalid_utf8(const char* s)
+{
+    str_iter iter(s);
+    while (iter.more())
+    {
+        if (!iter.next())
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static int32 make_item(const char* in, str_base& out)
 {
     out.clear();
@@ -1279,6 +1291,7 @@ update_needle:
                     break;
                 }
                 if (_rl_optimize_typeahead &&
+                    (m_filter || any_invalid_utf8(m_needle.c_str())) &&
                     //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
                     (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
                     _rl_pushed_input_available () == 0 &&
