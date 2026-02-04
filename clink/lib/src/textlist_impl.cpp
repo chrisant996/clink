@@ -1229,12 +1229,11 @@ do_insert:
                     m_input_clears_needle = false;
                 }
 
-                str_iter iter(input.keys, input.len);
-                const char* seq = iter.get_pointer();
-                while (iter.more())
+                auto len = input.len;
+                for (const char* seq = input.keys; len-- > 0; ++seq)
                 {
-                    uint32 c = iter.next();
-                    if (iter.get_pointer() - seq == 1 && CTRL_CHAR(*seq))
+                    const uint8 cc = *seq;
+                    if (CTRL_CHAR(cc))
                     {
                         // Discard ctrl characters (especially ESC when the
                         // terminal.raw_esc setting is enabled).
@@ -1242,10 +1241,10 @@ do_insert:
                     else if (!m_win_history)
                     {
                         m_override_title.clear();
-                        m_needle.concat(seq, int32(iter.get_pointer() - seq));
+                        m_needle.concat(seq, 1);
                         need_display = true;
                     }
-                    else if (c >= '0' && c <= '9')
+                    else if (cc >= '0' && cc <= '9')
                     {
                         if (!m_needle_is_number)
                         {
@@ -1257,8 +1256,7 @@ do_insert:
                         }
                         if (m_needle.length() < 6)
                         {
-                            char digit = char(c);
-                            m_needle.concat(&digit, 1);
+                            m_needle.concat(seq, 1);
                         }
                     }
                     else
@@ -1266,11 +1264,10 @@ do_insert:
                         need_display = need_display || m_has_override_title;
                         m_override_title.clear();
                         m_needle.clear();
-                        m_needle.concat(seq, int32(iter.get_pointer() - seq));
+                        m_needle.concat(seq, 1);
                         m_needle_not_found = false;
                         m_needle_is_number = false;
                     }
-                    seq = iter.get_pointer();
                 }
             }
 

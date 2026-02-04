@@ -934,11 +934,10 @@ append_not_dup:
         {
             // Figure out whether the input is text to be inserted.
             {
-                str_iter iter(input.keys, input.len);
-                while (iter.more())
+                auto len = input.len;
+                for (const char* seq = input.keys; len-- > 0; ++seq)
                 {
-                    uint32 c = iter.next();
-                    if (c < ' ' || c == 0x7f)
+                    if (*seq < ' ' || *seq == 0x7f)
                     {
                         cancel(result, true/*can_reactivate*/);
                         result.pass();
