@@ -86,6 +86,7 @@ private:
     void            update_layout();
     void            update_top();
     void            update_display();
+    bool            do_find(const int32 direction, bool from_begin, bool advance_before_find);
     int32           get_scroll_offset() const;
     void            set_top(int32 top, bool ignore_scroll_offset=false);
     void            adjust_horz_offset(int32 delta);
@@ -163,6 +164,10 @@ private:
     bool            m_needle_is_number = false;
     bool            m_input_clears_needle = false;
     bool            m_ignore_scroll_offset = false;
+    bool            m_pending_find = false;    // A find is pending (optimization to avoid repeated filtering while more input is available).
+    int8            m_pending_find_direction = 0;
+    bool            m_pending_find_from_begin = false;
+    bool            m_pending_find_advance_before = false;
     scroll_helper   m_scroll_helper;
 #ifdef SHOW_VERT_SCROLLBARS
     bool            m_scroll_bar_clicked = false;

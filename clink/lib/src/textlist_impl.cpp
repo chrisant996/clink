@@ -835,6 +835,15 @@ void textlist_impl::on_input(const input& input, result& result, const context& 
 
     m_ignore_scroll_offset = false;
 
+    if (m_pending_find &&
+        input.id != bind_id_textlist_backspace &&
+        input.id != bind_id_textlist_catchall)
+    {
+        m_pending_find = false;
+        if (do_find(m_pending_find_direction, m_pending_find_from_begin, m_pending_find_advance_before))
+            update_display();
+    }
+
     switch (input.id)
     {
     case bind_id_textlist_up:
@@ -908,66 +917,8 @@ navigated:
             break;
         advance_before_find = true;
 find:
-        if (m_filter && !m_win_history)
-        {
-            if (filter_items())
-            {
-                m_prev_displayed = -1;
-                m_force_clear = true;
-                need_display = true;
-            }
-        }
-        else
-        {
-            int32 direction = (input.id == bind_id_textlist_findprev) ? -1 : 1;
-            if (m_reverse)
-                direction = 0 - direction;
-
-            int32 mode = g_ignore_case.get();
-            if (mode < 0 || mode >= str_compare_scope::num_scope_values)
-                mode = str_compare_scope::exact;
-            str_compare_scope _(mode, g_fuzzy_accent.get());
-
-            int32 i = m_index;
-            if (from_begin)
-                i = m_reverse ? m_count - 1 : 0;
-
-            if (advance_before_find)
-                advance_index(i, direction, m_count);
-
-            int32 original = i;
-            while (true)
-            {
-                bool match;
-                if (m_win_history)
-                {
-                    match = str_compare(m_needle.c_str(), get_item_text(i));
-                }
-                else
-                {
-                    match = strstr_compare(m_needle, get_item_text(i));
-                    if (m_has_columns)
-                    {
-                        for (int32 col = 0; !match && col < max_columns; col++)
-                            match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
-                    }
-                }
-
-                if (match)
-                {
-                    m_index = i;
-                    if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                        m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
-                    m_prev_displayed = -1;
-                    need_display = true;
-                    break;
-                }
-
-                advance_index(i, direction, m_count);
-                if (i == original)
-                    break;
-            }
-        }
+        if (do_find((input.id == bind_id_textlist_findprev) ? -1 : 1, from_begin, advance_before_find))
+            need_display = true;
         if (need_display)
             update_display();
         break;
@@ -1314,6 +1265,18 @@ update_needle:
                 m_override_title.clear();
                 if (m_needle.length())
                     m_override_title.format("%s: %-10s", m_filter ? "filter" : "find", m_needle.c_str());
+                if (_rl_optimize_typeahead &&
+                    //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
+                    (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
+                    _rl_pushed_input_available () == 0 &&
+                    _rl_input_queued (0))
+                {
+                    m_pending_find = true;
+                    m_pending_find_direction = (input.id == bind_id_textlist_findprev) ? -1 : 1;
+                    m_pending_find_from_begin = from_begin;
+                    m_pending_find_advance_before = advance_before_find;
+                    break;
+                }
                 goto find;
             }
             else if (m_needle_is_number)
@@ -1905,6 +1868,74 @@ void textlist_impl::update_display()
             m_mouse_offset += 1/*to border*/;
         resync.resync(false/*update_rl_last_pos*/);
     }
+}
+
+//------------------------------------------------------------------------------
+bool textlist_impl::do_find(int32 direction, const bool from_begin, const bool advance_before_find)
+{
+    bool need_display = false;
+
+    if (m_filter && !m_win_history)
+    {
+        if (filter_items())
+        {
+            m_prev_displayed = -1;
+            m_force_clear = true;
+            need_display = true;
+        }
+    }
+    else
+    {
+        if (m_reverse)
+            direction = 0 - direction;
+
+        int32 mode = g_ignore_case.get();
+        if (mode < 0 || mode >= str_compare_scope::num_scope_values)
+            mode = str_compare_scope::exact;
+        str_compare_scope _(mode, g_fuzzy_accent.get());
+
+        int32 i = m_index;
+        if (from_begin)
+            i = m_reverse ? m_count - 1 : 0;
+
+        if (advance_before_find)
+            advance_index(i, direction, m_count);
+
+        int32 original = i;
+        while (true)
+        {
+            bool match;
+            if (m_win_history)
+            {
+                match = str_compare(m_needle.c_str(), get_item_text(i));
+            }
+            else
+            {
+                match = strstr_compare(m_needle, get_item_text(i));
+                if (m_has_columns)
+                {
+                    for (int32 col = 0; !match && col < max_columns; col++)
+                        match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+                }
+            }
+
+            if (match)
+            {
+                m_index = i;
+                if (m_index < m_top || m_index >= m_top + m_visible_rows)
+                    m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+                m_prev_displayed = -1;
+                need_display = true;
+                break;
+            }
+
+            advance_index(i, direction, m_count);
+            if (i == original)
+                break;
+        }
+    }
+
+    return need_display;
 }
 
 //------------------------------------------------------------------------------
