@@ -854,6 +854,7 @@ navigated:
         if (m_needle_is_number)
         {
             m_needle.clear();
+            m_needle_not_found = false;
             m_needle_is_number = false;
             m_input_clears_needle = false;
             m_override_title.clear();
@@ -1196,6 +1197,7 @@ do_insert:
                     break;
                 int32 point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
                 m_needle.truncate(point);
+                m_needle_not_found = false;
                 need_display = true;
                 from_begin = !m_win_history;
                 goto update_needle;
@@ -1209,6 +1211,7 @@ do_insert:
                     if (!m_filter)
                     {
                         m_needle.clear();
+                        m_needle_not_found = false;
                         m_needle_is_number = false;
                     }
                     m_input_clears_needle = false;
@@ -1237,6 +1240,7 @@ do_insert:
                             need_display = need_display || m_has_override_title;
                             m_override_title.clear();
                             m_needle.clear();
+                            m_needle_not_found = false;
                             m_needle_is_number = true;
                         }
                         if (m_needle.length() < 6)
@@ -1251,6 +1255,7 @@ do_insert:
                         m_override_title.clear();
                         m_needle.clear();
                         m_needle.concat(seq, int32(iter.get_pointer() - seq));
+                        m_needle_not_found = false;
                         m_needle_is_number = false;
                     }
                     seq = iter.get_pointer();
@@ -1265,6 +1270,14 @@ update_needle:
                 m_override_title.clear();
                 if (m_needle.length())
                     m_override_title.format("%s: %-10s", m_filter ? "filter" : "find", m_needle.c_str());
+                if (m_needle_not_found)
+                {
+                    assert(!m_filter);
+                    assert(!m_win_history);
+                    if (need_display)
+                        update_display();
+                    break;
+                }
                 if (_rl_optimize_typeahead &&
                     //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
                     (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
@@ -1873,6 +1886,9 @@ void textlist_impl::update_display()
 //------------------------------------------------------------------------------
 bool textlist_impl::do_find(int32 direction, const bool from_begin, const bool advance_before_find)
 {
+    if (m_needle_not_found)
+        return false;
+
     bool need_display = false;
 
     if (m_filter && !m_win_history)
@@ -1931,7 +1947,11 @@ bool textlist_impl::do_find(int32 direction, const bool from_begin, const bool a
 
             advance_index(i, direction, m_count);
             if (i == original)
+            {
+                if (!m_filter && !m_win_history)
+                    m_needle_not_found = true;
                 break;
+            }
         }
     }
 
@@ -2062,9 +2082,11 @@ void textlist_impl::reset()
     m_prev_displayed = -1;
 
     m_needle.clear();
+    m_needle_not_found = false;
     m_needle_is_number = false;
     m_input_clears_needle = false;
     m_ignore_scroll_offset = false;
+    m_pending_find = false;
 
     m_store.clear();
 }

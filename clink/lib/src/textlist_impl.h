@@ -161,10 +161,11 @@ private:
 
     // Current input.
     str<16>         m_needle;
+    bool            m_needle_not_found = false; // Avoids wasting time on guaranteed-unsuccessful finds.
     bool            m_needle_is_number = false;
     bool            m_input_clears_needle = false;
     bool            m_ignore_scroll_offset = false;
-    bool            m_pending_find = false;    // A find is pending (optimization to avoid repeated filtering while more input is available).
+    bool            m_pending_find = false; // A find is pending (optimization to avoid repeated filtering while more input is available).
     int8            m_pending_find_direction = 0;
     bool            m_pending_find_from_begin = false;
     bool            m_pending_find_advance_before = false;
