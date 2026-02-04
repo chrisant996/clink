@@ -1028,7 +1028,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 {
     std::vector<command> commands;
     uint32 command_offset = m_collector.collect_words(m_buffer, words, mode, &commands);
-    command_line_states.set(m_buffer, words, mode, commands);
+    command_line_states.set(m_buffer, words, mode, commands, true/*use_recognizer*/);
 
 #ifdef DEBUG
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);

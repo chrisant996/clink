@@ -77,6 +77,7 @@ void line_state_copy::break_word(uint32 index, uint32 len)
     next.offset += len;
     next.length -= len;
     next.command_word = false;
+    assert(!next.is_cmd_command);
     assert(!next.is_alias);
     assert(!next.is_redir_arg);
     assert(!next.is_merged_away);
@@ -122,6 +123,7 @@ void line_state_copy::set_alias(uint32 index, bool value)
 
     auto& word = m_words[index];
 
+    assert(!word.is_cmd_command);
     assert(!word.is_alias);
     assert(!word.is_redir_arg);
     assert(!word.is_merged_away);
@@ -271,6 +273,7 @@ int32 line_state_lua::get_word_count(lua_State* state)
 /// -show:  -- t.length     [integer] Length of the word (includes embedded quotes).
 /// -show:  -- t.quoted     [boolean] Indicates whether the word is quoted.
 /// -show:  -- t.delim      [string] The delimiter character, or an empty string.
+/// -show:  -- t.cmd        [boolean | nil] true if the word is a built-in CMD command, otherwise nil.
 /// -show:  -- t.alias      [boolean | nil] true if the word is a doskey alias, otherwise nil.
 /// -show:  -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.
 int32 line_state_lua::get_word_info(lua_State* state)
@@ -303,6 +306,13 @@ int32 line_state_lua::get_word_info(lua_State* state)
     lua_pushliteral(state, "delim");
     lua_pushstring(state, delim);
     lua_rawset(state, -3);
+
+    if (word.is_cmd_command)
+    {
+        lua_pushliteral(state, "cmd");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
 
     if (word.is_alias)
     {

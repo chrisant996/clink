@@ -3300,7 +3300,7 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 local m = has_argmatcher and "m" or ""
                 if info.alias then
                     word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-                elseif not cquoted and not no_cmd and (not sanitized or reader._chain_command_mode == "cmd") and clink.is_cmd_command(cw) then
+                elseif not cquoted and not no_cmd and (not sanitized or reader._chain_command_mode == "cmd") and info.cmd then
                     word_classifier:classifyword(command_word_index, m.."c", false); --command
                 elseif unrecognized_color or executable_color then
                     local cl

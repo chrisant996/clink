@@ -60,7 +60,7 @@ void word_collector_tester::run()
     const uint32 command_offset = m_collector.collect_words(m_input, len, len, all_words, mode, &all_commands);
 
     command_line_states command_line_states;
-    command_line_states.set(m_input, len, len, all_words, mode, all_commands);
+    command_line_states.set(m_input, len, len, all_words, mode, all_commands, false/*use_recognizer*/);
 
     const std::vector<word>& words = command_line_states.get_linestate(m_input, len).get_words();
 

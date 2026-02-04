@@ -5,6 +5,8 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "word_collector.h"
+#include "cmd_tokenisers.h" // for is_cmd_command()
+#include "recognizer.h"
 #include "alias_cache.h"
 
 #include <core/base.h>
@@ -224,7 +226,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                 {
                     uint8 delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;
-                    words.push_back({command.offset, doskey_len, first, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
+                    words.push_back({command.offset, doskey_len, first, false/*is_cmd_command*/, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
                     first = false;
 
                     // Consume spaces after the alias, to ensure the tokeniser
@@ -313,7 +315,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                     if (c == ':')
                     {
                         const uint32 split_len = unsigned(split_iter.get_pointer() - word_start);
-                        words.push_back({word_offset, split_len, first, false/*is_alias*/, false/*is_redir_arg*/, 0, ':'});
+                        words.push_back({word_offset, split_len, first, false/*is_cmd_command*/, false/*is_alias*/, false/*is_redir_arg*/, 0, ':'});
                         word_offset += split_len;
                         word_length -= split_len;
                         first = false;
@@ -331,7 +333,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
             }
 
             // Add the word.
-            words.push_back(std::move(word(word_offset, unsigned(word_length), first, false/*is_alias*/, token.redir_arg, 0, token.delim)));
+            words.push_back(std::move(word(word_offset, unsigned(word_length), first, false/*is_cmd_command*/, false/*is_alias*/, token.redir_arg, 0, token.delim)));
 
             first = false;
         }
@@ -376,7 +378,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
         if (line_cursor)
             delim = line_buffer[line_cursor - 1];
 
-        words.push_back(std::move(word(line_cursor, 0, first, false, false, false, delim)));
+        words.push_back(std::move(word(line_cursor, 0, first, false, false, false, false, delim)));
     }
 
     // Adjust for quotes.
@@ -446,9 +448,12 @@ void command_line_states::set(const char* line_buffer,
                               uint32 line_cursor,
                               const std::vector<word>& words,
                               collect_words_mode mode,
-                              const std::vector<command>& commands)
+                              const std::vector<command>& commands,
+                              bool use_recognizer)
 {
     clear_internal();
+
+    str<16> tmp_cmd_command;
 
     // Pre-allocate words_storage so that emplace_back() doesn't invalidate
     // pointers (references) stored in linestates.
@@ -456,6 +461,7 @@ void command_line_states::set(const char* line_buffer,
 
     // Build vector containing one line_state per command.
     size_t i = 0;
+    bool seeking_command_word = true;
     auto command_iter = commands.begin();
     std::vector<word> tmp;
     tmp.reserve(words.size());
@@ -502,6 +508,8 @@ void command_line_states::set(const char* line_buffer,
                 command_iter->length,
                 m_words_storage.back()
             )));
+
+            seeking_command_word = true;
         }
 
         if (i >= words.size())
@@ -509,6 +517,45 @@ void command_line_states::set(const char* line_buffer,
 
         tmp.emplace_back(words[i]);
         i++;
+
+        if (seeking_command_word)
+        {
+            auto& tmp_back = tmp.back();
+            if (!tmp_back.is_redir_arg)
+            {
+                // This is the command word.
+                seeking_command_word = false;
+                if (!tmp_back.quoted && !tmp_back.is_alias)
+                {
+                    tmp_cmd_command.clear();
+                    tmp_cmd_command.concat(line_buffer + tmp_back.offset, tmp_back.length);
+                    if (is_cmd_command(tmp_cmd_command.c_str()))
+                    {
+                        // It's a built-in CMD command name.
+                        tmp_back.is_cmd_command = true;
+
+                        // But is it something like "echo.txt" when a file by
+                        // that name exists?
+                        if (use_recognizer &&
+                            i < words.size() && // (i has already been incremented)
+                            !words[i].quoted &&
+                            tmp_back.offset + tmp_back.length == words[i].offset &&
+                            line_buffer[words[i].offset] == '.')
+                        {
+                            bool ready;
+                            tmp_cmd_command.concat(line_buffer + words[i].offset, words[i].length);
+                            if (recognize_command(nullptr, tmp_cmd_command.c_str(), false, ready, nullptr) == recognition::executable)
+                            {
+                                // Join the adjacent words.
+                                tmp_back.is_cmd_command = false;
+                                tmp_back.length += words[i].length;
+                                i++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (m_words_storage.size() > 0)
@@ -523,9 +570,10 @@ void command_line_states::set(const char* line_buffer,
 void command_line_states::set(const line_buffer& buffer,
                               const std::vector<word>& words,
                               collect_words_mode mode,
-                              const std::vector<command>& commands)
+                              const std::vector<command>& commands,
+                              bool use_recognizer)
 {
-    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands);
+    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands, use_recognizer);
 }
 
 //------------------------------------------------------------------------------
@@ -553,6 +601,7 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool di
         split_word.offset = end_word->offset + truncate;
         split_word.length = end_word->length - truncate;
         split_word.command_word = false;
+        split_word.is_cmd_command = false;
         split_word.is_alias = false;
         split_word.is_redir_arg = false;
         split_word.quoted = false;
@@ -605,6 +654,7 @@ void command_line_states::split_for_hinter()
         empty_word.offset = cursorpos;
         empty_word.length = 0;
         empty_word.command_word = false;
+        empty_word.is_cmd_command = false;
         empty_word.is_alias = false;
         empty_word.is_redir_arg = false;
         empty_word.quoted = false;

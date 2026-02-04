@@ -15,10 +15,11 @@
 static bool s_can_strip_quotes = false;
 
 //------------------------------------------------------------------------------
-word::word(uint32 _offset, uint32 _length, bool _command_word, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim)
+word::word(uint32 _offset, uint32 _length, bool _command_word, bool _is_cmd_command, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim)
 : offset(_offset)
 , length(_length)
 , command_word(_command_word)
+, is_cmd_command(_is_cmd_command)
 , is_alias(_is_alias)
 , is_redir_arg(_is_redir_arg)
 , is_merged_away(false)
@@ -46,6 +47,21 @@ line_state::line_state(
 , m_range_offset(range_offset)
 , m_range_length(range_length)
 {
+#ifdef DEBUG
+    bool has_cmd_command = false;
+    for (size_t i = 0; i < words.size(); ++i)
+    {
+        if (words[i].is_cmd_command)
+        {
+            assert(!has_cmd_command);
+            assert(!words[i].is_alias);
+            assert(!words[i].is_redir_arg);
+            assert(!words[i].quoted);
+            assert(get_command_word_index() == i);
+            has_cmd_command = true;
+        }
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------

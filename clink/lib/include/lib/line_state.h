@@ -12,10 +12,11 @@
 struct word
 {
     word() : is_merged_away(false) {} // Everything else is intentionally uninitialized.
-    word(uint32 _offset, uint32 _length, bool _command_word, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim);
+    word(uint32 _offset, uint32 _length, bool _command_word, bool _is_cmd_command, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim);
     uint32              offset : 16;
     uint32              length : 16;
     bool                command_word : 1;
+    bool                is_cmd_command : 1;
     bool                is_alias : 1;
     bool                is_redir_arg : 1;
     bool                is_merged_away : 1;
