@@ -15,26 +15,26 @@ int32 str_iter_impl<char>::next()
 
     int32 ax = 0;
     int32 encode_length = 0;
-    while (int32 c = uint8(*m_ptr++))
+    do
     {
+        const int32 c = uint8(*m_ptr++);
         ax = (ax << 6) | (c & 0x7f);
         if (encode_length)
         {
             --encode_length;
-            continue;
         }
+        else
+        {
+            if ((c & 0xc0) < 0xc0)
+                return ax;
 
-        if ((c & 0xc0) < 0xc0)
-            return ax;
+            if (encode_length = !!(c & 0x20))
+                encode_length += !!(c & 0x10);
 
-        if (encode_length = !!(c & 0x20))
-            encode_length += !!(c & 0x10);
-
-        ax &= (0x1f >> encode_length);
-
-        if (!more())
-            break;
+            ax &= (0x1f >> encode_length);
+        }
     }
+    while (more());
 
     return 0;
 }
