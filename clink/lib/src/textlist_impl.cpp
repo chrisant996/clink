@@ -852,8 +852,8 @@ void textlist_impl::on_input(const input& input, result& result, const context& 
         input.id != bind_id_textlist_catchall)
     {
         m_pending_find = false;
-        if (do_find(m_pending_find_direction, m_pending_find_from_begin, m_pending_find_advance_before))
-            update_display();
+        do_find(m_pending_find_direction, m_pending_find_from_begin, m_pending_find_advance_before);
+        update_display();
     }
 
     switch (input.id)
