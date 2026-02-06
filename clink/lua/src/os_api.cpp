@@ -699,6 +699,9 @@ ret:
         goto ret;
     }
 
+    CloseHandle(hFile);
+    hFile = INVALID_HANDLE_VALUE;
+
     // WCHAR whash[1 + _countof(hash_bytes) * 2];
     // for (DWORD i = 0; i < hash_len; ++i)
     //     swprintf_s(&whash[i * 2], 3, L"%02X", hash_bytes[i]);

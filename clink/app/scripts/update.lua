@@ -35,13 +35,21 @@ local need_lf
 
 local function parse_version_tag(tag)
     local maj, min, pat
-    maj, min, pat = tag:match("v(%d+)%.(%d+)%.(%d+)")
+    maj, min, pat = tag:match("^clink%.(%d+)%.(%d+)%.(%d+).%x+$")
     if not maj then
-        maj, min = tag:match("v(%d+)%.(%d+)")
+        maj, min = tag:match("^clink%.(%d+)%.(%d+).%x+$")
     end
     if maj and min then
         return tonumber(maj), tonumber(min), tonumber(pat or 0)
     end
+end
+
+local function version_from_tag(tag)
+    local maj, min, pat = parse_version_tag(tag)
+    if maj then
+        return string.format("v%s.%s.%s", maj, min, pat)
+    end
+    return "vUnknown"
 end
 
 local function is_rhs_version_newer(lhs, rhs)
@@ -113,11 +121,12 @@ end
 local function get_local_tag()
     if clink.DEBUG then
         local ver = os.getenv("DEBUG_UPDATE_VERSION")
-        if ver and ver:match("^v%d+%.%d+.%d+$") then
+        if ver and ver:match("^clink%.%d+%.%d+.%d+.%x+$") then
             return ver
         end
     end
-    return "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
+    return string.format("clink.%u.%u.%u.%s", clink.version_major,
+            clink.version_minor, clink.version_patch, clink.version_commit)
 end
 
 local function did_themes_update_fail(exe_path, cloud_tag)
@@ -341,14 +350,14 @@ local function can_check_for_update(force)
     tagfile = path.join(tagfile, tag_filename)
 
     if not force then
-        local f = io.open(tagfile)
-        if not f then
-            log_info("updating because there is no record of having updated before.")
+        if did_themes_update_fail(bin_dir) then
+            log_info("updating because the themes directory is missing.")
             return true
         end
 
-        if did_themes_update_fail(bin_dir) then
-            log_info("updating because the themes directory is missing.")
+        local f = io.open(tagfile)
+        if not f then
+            log_info("updating because there is no record of having updated before.")
             return true
         end
 
@@ -385,7 +394,7 @@ local function internal_check_for_update(force)
     if clink.DEBUG and os.getenv("DEBUG_UPDATE_FILE") then
         api_url = "DEBUG-MOCK"
         mock = os.getenv("DEBUG_UPDATE_FILE")
-        local ver = mock:match("clink%.(%d+%.%d+%.?%d*)%.[0-9a-fA-F]+%.zip")
+        local ver = mock:match("clink%.(%d+%.%d+%.?%d*)%.%x+%.zip")
         if not ver then
             error("invalid DEBUG_UPDATE_FILE name '" .. mock .. "'.")
         end
@@ -409,6 +418,7 @@ local function internal_check_for_update(force)
         log_https_get(api_url, result, response_info)
         return nil, log_info("unable to find latest release " .. install_type .. " file" .. clink_log_for_details)
     end
+    cloud_tag = path.getbasename(latest_update_file)
     latest_cloud_tag = cloud_tag
 
     -- Compare versions.
@@ -432,7 +442,7 @@ local function internal_check_for_update(force)
     -- expand will fail, and if it's not an exe file then execution will fail.
     -- That's good enough.
     if force then
-        print("Downloading latest release " .. cloud_tag .. "...")
+        print("Downloading latest release " .. version_from_tag(cloud_tag) .. "...")
     end
     local_update_file, err = get_update_dir()
     if local_update_file then
@@ -620,7 +630,8 @@ local function prepare_to_update(elevated, cloud_tag)
     local local_tag = get_local_tag()
     if not is_rhs_version_newer(local_tag, cloud_tag) and
             not did_themes_update_fail(bin_dir, cloud_tag) then
-        return nil, nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+        log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+        return nil, nil, "already updated; local version " .. version_from_tag(local_tag) .. " is not older than update candidate " .. version_from_tag(cloud_tag) .. "." -- luacheck: no max line length
     end
 
     return bin_dir, update_dir
@@ -638,7 +649,7 @@ local function apply_zip_update(elevated, zip_file, no_verify)
         print("Verifying the digital signature of the zip file...")
         log_info("verifying digital signature of " .. zip_file .. ".")
         local catalog = replace_extension(zip_file, "cat")
-        local verified, vmsg = os._verify_from_catalog(catalog, zip_file)
+        local verified, vmsg = os._verify_from_catalog(zip_file, catalog)
         if not verified then
             return nil, vmsg
         end
@@ -713,7 +724,8 @@ local function apply_zip_update(elevated, zip_file, no_verify)
     delete_files(bin_dir, "~clink.*.old")
 
     print("")
-    return 1, log_info("updated Clink to " .. cloud_tag .. ".")
+    log_info("updated Clink to " .. cloud_tag .. ".")
+    return 1, "updated Clink to " .. version_from_tag(cloud_tag) .. "."
 end
 
 local function run_exe_installer(elevated, setup_exe, no_verify)
@@ -748,7 +760,8 @@ local function run_exe_installer(elevated, setup_exe, no_verify)
     delete_files(update_dir, "*.exe", setup_exe)
 
     print("")
-    return 1, log_info("updated Clink to " .. cloud_tag .. ".")
+    log_info("updated Clink to " .. cloud_tag .. ".")
+    return 1, "updated Clink to " .. version_from_tag(cloud_tag) .. "."
 end
 
 local function check_need_ui(update_file, mode)
@@ -863,7 +876,7 @@ local function report_if_update_available(manual, redirected)
             if manual and need_lf then
                 print("")
             end
-            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " needs to be updated again to install the themes directory.") -- luacheck: no max line length
+            print_update_message(nil, redirected, "Clink " .. version_from_tag(cloud_tag) .. " needs to be updated again to install the themes directory.") -- luacheck: no max line length
             print("- To apply the update, run 'clink update'.")
             clink.printreleasesurl("- ")
             if not manual then
@@ -877,7 +890,7 @@ local function report_if_update_available(manual, redirected)
             if manual and need_lf then
                 print("")
             end
-            print_update_message(nil, redirected, "Clink " .. cloud_tag .. " is available.")
+            print_update_message(nil, redirected, "Clink " .. version_from_tag(cloud_tag) .. " is available.")
             print("- To apply the update, run 'clink update'.")
             if not manual then
                 print("- To stop checking for updates, run 'clink set clink.autoupdate off'.")
