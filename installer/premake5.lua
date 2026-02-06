@@ -395,6 +395,7 @@ newaction {
     execute = function ()
         local premake = '"'.._PREMAKE_COMMAND..'"'
         local root_dir = path.getabsolute(".build/release").."/"
+        local sign = not _OPTIONS["nosign"]
 
         -- Check we have the tools we need.
         print_reverse("Finding tools")
@@ -402,10 +403,22 @@ newaction {
         local have_mingw = have_required_tool("mingw32-make")
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         local have_7z = have_required_tool("7z", { "c:\\Program Files\\7-Zip", "c:\\Program Files (x86)\\7-Zip" })
-        local have_signtool =
-            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64" }) or
-            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64" }) or
-            have_required_tool("signtool", { "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64" })
+        local have_signtool
+        local have_makecat
+        if sign then
+            local kitsbin = "c:\\Program Files (x86)\\Windows Kits\\10\\bin\\"
+            have_signtool =
+                have_required_tool("signtool", { kitsbin .. "10.0.26100.0\\x64" }) or
+                have_required_tool("signtool", { kitsbin .. "10.0.22621.0\\x64" }) or
+                have_required_tool("signtool", { kitsbin .. "10.0.22000.0\\x64" })
+            have_makecat =
+                have_required_tool("makecat", { kitsbin .. "10.0.26100.0\\x64" }) or
+                have_required_tool("makecat", { kitsbin .. "10.0.22621.0\\x64" }) or
+                have_required_tool("makecat", { kitsbin .. "10.0.22000.0\\x64" })
+            if not have_signtool or not have_makecat then
+                error("Unable to find signtool or makecat; use --nosign")
+            end
+        end
 
         -- Clone repo in release folder and checkout the specified version
         local code_dir = root_dir.."~working/"
@@ -510,7 +523,6 @@ newaction {
         end
 
         -- Now we can sign the files.
-        local sign = not _OPTIONS["nosign"]
         local signed_ok -- nil means unknown, false means failed, true means ok.
         local function sign_files(file_table)
             local orig_dir = os.getcwd()
@@ -618,10 +630,6 @@ newaction {
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             print_reverse("Build setup program")
             nsis_ok = exec(nsis_cmd)
-            if sign then
-                print_reverse("Sign setup program")
-                sign_files({path.getabsolute(dest) .. "_setup.exe"})
-            end
         end
 
         -- Tidy up code directory.
@@ -654,6 +662,35 @@ newaction {
             end
             print_reverse("Zip Clink files")
             exec(have_7z .. " a -x!*.pdb -r  ../"..clink_suffix .. ".zip  *")
+        end
+
+        -- Sign the zip file and setup exe file.
+        if sign then
+            local sign_list = {}
+            if have_nsis then
+                table.insert(sign_list, path.getabsolute(dest) .. "_setup.exe")
+            end
+            if have_7z then
+                local cdf, cdf_err = io.open(path.getabsolute(dest) .. ".cdf", "w")
+                if not cdf then
+                    error("Failed to write '" .. path.getabsolute(dest) .. ".cdf'; " .. cdf_err);
+                else
+                    local oldcwd = os.getcwd()
+                    local lowbase = clink_suffix:lower()
+                    os.chdir("..")
+                    cdf:write("[CatalogHeader]\nName=" .. lowbase .. ".cat\n")
+                    cdf:write("[CatalogFiles]\n<hash>" .. lowbase .. ".zip=" .. lowbase .. ".zip\n")
+                    cdf:close()
+                    exec(have_makecat .. " " .. lowbase .. ".cdf")
+                    -- os.remove(clink_suffix .. ".cdf")
+                    os.chdir(oldcwd)
+                    table.insert(sign_list, path.getabsolute(dest) .. ".cat")
+                end
+            end
+            if sign_list[1] then
+                print_reverse("Sign installation packages")
+                sign_files(sign_list)
+            end
         end
 
         -- Report some facts about what just happened.

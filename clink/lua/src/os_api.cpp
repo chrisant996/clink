@@ -37,6 +37,9 @@ extern int _rl_match_hidden_files;
 #include <lmcons.h>
 #include <lmshare.h>
 #include <shlwapi.h>
+#include <wintrust.h>
+#include <mscat.h>
+#include <softpub.h>
 
 //------------------------------------------------------------------------------
 extern setting_bool g_files_hidden;
@@ -499,6 +502,232 @@ bool delay_load_rpcrt4::UuidToStringA(const UUID* id, str_base& out)
         return (status == RPC_S_OK);
     }
     return false;
+}
+
+
+
+//------------------------------------------------------------------------------
+static class delay_load_wintrust
+{
+public:
+                        delay_load_wintrust();
+    bool                init();
+    HMODULE             module() const { return m_hlib; }
+    LONG                WinVerifyTrust(HWND hwnd, GUID* pgActionID, LPVOID pWVTData);
+    BOOL                CryptCATAdminAcquireContext(HCATADMIN* phCatAdmin, const GUID* pgSubsystem, DWORD dwFlags);
+    BOOL                CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags);
+    BOOL                CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash, BYTE* pbHash, DWORD dwFlags);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    HMODULE             m_hlib = 0;
+    union
+    {
+        FARPROC         proc[4];
+        struct {
+            LONG        (WINAPI* WinVerifyTrust)(HWND hwnd, GUID* pgActionID, LPVOID pWVTData);
+            BOOL        (WINAPI* CryptCATAdminAcquireContext)(HCATADMIN* phCatAdmin, const GUID* pgSubsystem, DWORD dwFlags);
+            BOOL        (WINAPI* CryptCATAdminReleaseContext)(HCATADMIN hCatAdmin, DWORD dwFlags);
+            BOOL        (WINAPI* CryptCATAdminCalcHashFromFileHandle)(HANDLE hFile, DWORD* pcbHash, BYTE* pbHash, DWORD dwFlags);
+        } proto;
+    } m_procs;
+} s_wintrust;
+
+//------------------------------------------------------------------------------
+delay_load_wintrust::delay_load_wintrust()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_wintrust::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        m_hlib = LoadLibrary("wintrust.dll");
+        if (m_hlib)
+        {
+            size_t c = 0;
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "WinVerifyTrust");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "CryptCATAdminAcquireContext");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "CryptCATAdminReleaseContext");
+            m_procs.proc[c++] = GetProcAddress(m_hlib, "CryptCATAdminCalcHashFromFileHandle");
+            assert(_countof(m_procs.proc) == c);
+        }
+
+        m_ok = true;
+        static_assert(sizeof(m_procs.proc) == sizeof(m_procs.proto), "proc vs proto mismatch");
+        for (auto const& proc : m_procs.proc)
+        {
+            if (!proc)
+            {
+                m_ok = false;
+                break;
+            }
+        }
+    }
+
+    assert(m_ok);
+    if (!m_ok)
+        SetLastError(ERROR_ACCESS_DENIED);  // TODO: Choose a better error.
+
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+LONG delay_load_wintrust::WinVerifyTrust(HWND hwnd, GUID* pgActionID, LPVOID pWVTData)
+{
+    if (!init())
+        return ERROR_ACCESS_DENIED;         // TODO: Choose a better error.
+    return m_procs.proto.WinVerifyTrust(hwnd, pgActionID, pWVTData);
+}
+
+//------------------------------------------------------------------------------
+BOOL delay_load_wintrust::CryptCATAdminAcquireContext(HCATADMIN* phCatAdmin, const GUID* pgSubsystem, DWORD dwFlags)
+{
+    if (!init())
+        return false;
+    return m_procs.proto.CryptCATAdminAcquireContext(phCatAdmin, pgSubsystem, dwFlags);
+}
+
+BOOL delay_load_wintrust::CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags)
+{
+    if (!init())
+        return false;
+    return m_procs.proto.CryptCATAdminReleaseContext(hCatAdmin, dwFlags);
+}
+
+BOOL delay_load_wintrust::CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash, BYTE* pbHash, DWORD dwFlags)
+{
+    if (!init())
+        return false;
+    return m_procs.proto.CryptCATAdminCalcHashFromFileHandle(hFile, pcbHash, pbHash, dwFlags);
+}
+
+
+//------------------------------------------------------------------------------
+static void format_message_from_system(LONG code, str_base& out, const char* tag1=nullptr, const char* tag2=nullptr)
+{
+    wstr_moveable wmsg;
+    wmsg.reserve(4096);
+
+    const DWORD FMW_flags = FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS;
+    const DWORD cch = FormatMessageW(FMW_flags, 0, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wmsg.data(), wmsg.size(), nullptr);
+    if (cch && cch < wmsg.size())
+    {
+        out.clear();
+        if (tag1)
+        {
+            out.concat(tag1);
+            out.concat(": ");
+        }
+        if (tag2)
+        {
+            out.concat(tag2);
+            out.concat(": ");
+        }
+        to_utf8(out, wmsg.c_str());
+        out.trim();
+    }
+    else
+    {
+        out.format("Unknown error 0x%x.", code);
+    }
+}
+
+//------------------------------------------------------------------------------
+static bool win_verify_trust_file(const char* name, str_base& msg)
+{
+    wstr_moveable wname(name);
+
+    WINTRUST_FILE_INFO file_info = { sizeof(file_info) };
+    file_info.pcwszFilePath = wname.c_str();
+
+    WINTRUST_DATA wintrust_data = { sizeof(wintrust_data) };
+    wintrust_data.dwUIChoice = WTD_UI_NONE;
+    wintrust_data.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+    wintrust_data.dwUnionChoice = WTD_CHOICE_FILE;
+    wintrust_data.dwStateAction = WTD_STATEACTION_VERIFY;
+    wintrust_data.pFile = &file_info;
+
+    GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    const LONG lStatus = s_wintrust.WinVerifyTrust(nullptr, &action, &wintrust_data);
+
+    if (ERROR_SUCCESS != lStatus)
+        format_message_from_system(lStatus, msg, name);
+
+    wintrust_data.dwStateAction = WTD_STATEACTION_CLOSE;
+    s_wintrust.WinVerifyTrust(nullptr, &action, &wintrust_data);
+
+    return (ERROR_SUCCESS == lStatus);
+}
+
+//------------------------------------------------------------------------------
+static bool win_verify_trust_catalog(const char* catalog, const char* name, str_base& msg)
+{
+    wstr_moveable wcatalog(catalog);
+    wstr_moveable wname(name);
+
+    bool verified = false;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hCatAdmin = 0;
+
+    hFile = CreateFileW(wname.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        format_message_from_system(GetLastError(), msg, "open", name);
+ret:
+        if (hCatAdmin)
+            s_wintrust.CryptCATAdminReleaseContext(hCatAdmin, 0);
+        if (INVALID_HANDLE_VALUE != hFile)
+            CloseHandle(hFile);
+        return verified;
+    }
+
+    if (!s_wintrust.CryptCATAdminAcquireContext(&hCatAdmin, nullptr, 0))
+    {
+        format_message_from_system(GetLastError(), msg, "catalog");
+        goto ret;
+    }
+
+    BYTE hash_bytes[32];
+    DWORD hash_len = sizeof(hash_bytes);
+    if (!s_wintrust.CryptCATAdminCalcHashFromFileHandle(hFile, &hash_len, hash_bytes, 0))
+    {
+        format_message_from_system(GetLastError(), msg, "hash", name);
+        goto ret;
+    }
+
+    // WCHAR whash[1 + _countof(hash_bytes) * 2];
+    // for (DWORD i = 0; i < hash_len; ++i)
+    //     swprintf_s(&whash[i * 2], 3, L"%02X", hash_bytes[i]);
+
+    WINTRUST_CATALOG_INFO catalog_info = { sizeof(catalog_info) };
+    catalog_info.pcwszCatalogFilePath = wcatalog.c_str();
+    catalog_info.pcwszMemberFilePath = wname.c_str();
+    catalog_info.pbCalculatedFileHash = hash_bytes;
+    catalog_info.cbCalculatedFileHash = hash_len;
+    // catalog_info.pcwszMemberTag = whash;
+    // catalog_info.hCatAdmin = hCatAdmin;
+
+    WINTRUST_DATA wintrust_data = { sizeof(wintrust_data) };
+    wintrust_data.dwUIChoice = WTD_UI_NONE;
+    wintrust_data.dwUnionChoice = WTD_CHOICE_CATALOG;
+    wintrust_data.dwStateAction = WTD_STATEACTION_VERIFY;
+    wintrust_data.pCatalog = &catalog_info;
+
+    GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    const LONG lStatus = s_wintrust.WinVerifyTrust(nullptr, &action, &wintrust_data);
+
+    if (ERROR_SUCCESS != lStatus)
+        format_message_from_system(lStatus, msg, catalog, name);
+
+    wintrust_data.dwStateAction = WTD_STATEACTION_CLOSE;
+    s_wintrust.WinVerifyTrust(nullptr, &action, &wintrust_data);
+
+    verified = (ERROR_SUCCESS == lStatus);
+    goto ret;
 }
 
 
@@ -1068,6 +1297,49 @@ int32 has_file_association(lua_State* state)
 
     lua_pushboolean(state, !!ext);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int32 win_verify_trust(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    if (!name)
+        return 0;
+
+    str_moveable msg;
+    if (win_verify_trust_file(name, msg))
+    {
+        lua_pushboolean(state, true);
+        return 1;
+    }
+    else
+    {
+        lua_pushnil(state);
+        lua_pushlstring(state, msg.c_str(), msg.length());
+        return 2;
+    }
+}
+
+//------------------------------------------------------------------------------
+int32 verify_from_catalog(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    const char* catalog = checkstring(state, 2);
+    if (!name || !catalog)
+        return 0;
+
+    str_moveable msg;
+    if (win_verify_trust_catalog(catalog, name, msg))
+    {
+        lua_pushboolean(state, true);
+        return 1;
+    }
+    else
+    {
+        lua_pushnil(state);
+        lua_pushlstring(state, msg.c_str(), msg.length());
+        return 2;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -3248,6 +3520,8 @@ void os_lua_initialise(lua_state& lua)
         { "_makedirglobber", &make_dir_globber },
         { "_makefileglobber", &make_file_globber },
         { "_hasfileassociation", &has_file_association },
+        { "_win_verify_trust", &win_verify_trust },
+        { "_verify_from_catalog", &verify_from_catalog },
     };
 
     lua_State* state = lua.get_state();

@@ -74,6 +74,13 @@ local function is_rhs_version_newer(lhs, rhs)
     end
 end
 
+local function replace_extension(pathname, ext)
+    if ext ~= "" then
+        ext = "." .. ext:gsub("^%.+", "") -- Ensure a leading dot.
+    end
+    return path.join(path.getdirectory(pathname), path.getbasename(pathname)) .. ext
+end
+
 --------------------------------------------------------------------------------
 local function get_update_dir()
     local target = os.gettemppath()
@@ -433,44 +440,60 @@ local function internal_check_for_update(force)
     else
         return nil, err
     end
-    log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
-    local content
-    if clink.DEBUG and mock then
-        local f = io.open(latest_update_file, "rb")
-        content = f:read("*a")
-        f:close()
-    else
-        local options = { user_agent=user_agent }
-        content, response_info = http.request("GET", latest_update_file, options)
-        if not content or (response_info and (response_info.win32_error or response_info.status_code ~= 200 or not response_info.completed_read)) then -- luacheck: no max line length
-            log_https_get(latest_update_file, nil, response_info)
-            return nil, log_info("failed to download " .. install_type .. " file" .. clink_log_for_details)
-        end
+    local download_files = {}
+    if install_type == "zip" then
+        table.insert(download_files, {
+            latest = replace_extension(latest_update_file, "cat"),
+            localfile = replace_extension(local_update_file, "cat")
+        })
     end
-    local outfile, dummy
-    outfile, err = io.open(local_update_file, "wb")
+    table.insert(download_files, {
+        latest = latest_update_file,
+        localfile = local_update_file
+    })
+    for _, download in ipairs(download_files) do
+        log_info("downloading " .. download.latest .. " to " .. download.localfile .. ".")
+        local content
+        local download_type = path.extension(download.latest)
+        if clink.DEBUG and mock then
+            local f = io.open(download.latest, "rb")
+            content = f:read("*a")
+            f:close()
+        else
+            local options = { user_agent=user_agent }
+            content, response_info = http.request("GET", download.latest, options)
+            if not content or (response_info and (response_info.win32_error or response_info.status_code ~= 200 or not response_info.completed_read)) then -- luacheck: no max line length
+                log_https_get(download.latest, nil, response_info)
+                return nil, log_info("failed to download " .. download_type .. " file" .. clink_log_for_details)
+            end
+        end
+        local outfile, dummy
+        outfile, err = io.open(download.localfile, "wb")
 ::failed_write::
-    if not outfile then
-        os.remove(local_update_file)
-        return nil, concat_error(err, log_info("failed to download " .. install_type .. " file."))
-    end
-    dummy, err = outfile:write(content)
-    outfile:close()
-    outfile = nil -- Make sure any subsequent 'goto failed_write' works.
-    if not dummy then
-        goto failed_write
-    end
-
-    local ok = os.isfile(local_update_file)
-    if ok then
-        local info = os.globfiles(local_update_file, 2)
-        if not info or not info[1] or not info[1].size or info[1].size == 0 then
-            ok = false
+        if not outfile then
+            for _, r in ipairs(download_files) do
+                os.remove(r.localfile)
+            end
+            return nil, concat_error(err, log_info("failed to download " .. download_type .. " file."))
         end
-    end
-    if not ok then
-        err = "unknown problem while writing file."
-        goto failed_write
+        dummy, err = outfile:write(content)
+        outfile:close()
+        outfile = nil -- Make sure any subsequent 'goto failed_write' works.
+        if not dummy then
+            goto failed_write
+        end
+
+        local ok = os.isfile(download.localfile)
+        if ok then
+            local info = os.globfiles(download.localfile, 2)
+            if not info or not info[1] or not info[1].size or info[1].size == 0 then
+                ok = false
+            end
+        end
+        if not ok then
+            err = "unknown problem while writing file."
+            goto failed_write
+        end
     end
 
     return local_update_file
@@ -603,11 +626,22 @@ local function prepare_to_update(elevated, cloud_tag)
     return bin_dir, update_dir
 end
 
-local function apply_zip_update(elevated, zip_file)
+local function apply_zip_update(elevated, zip_file, no_verify)
     local cloud_tag = path.getbasename(zip_file)
     local bin_dir, update_dir, err = prepare_to_update(elevated, cloud_tag)
     if not bin_dir or not update_dir then
         return nil, err
+    end
+
+    -- Verify the signature for the zip file.
+    if not no_verify then
+        print("Verifying the digital signature of the zip file...")
+        log_info("verifying digital signature of " .. zip_file .. ".")
+        local catalog = replace_extension(zip_file, "cat")
+        local verified, vmsg = os._verify_from_catalog(catalog, zip_file)
+        if not verified then
+            return nil, vmsg
+        end
     end
 
     local expand_dir = path.join(update_dir, cloud_tag)
@@ -675,22 +709,33 @@ local function apply_zip_update(elevated, zip_file)
     -- Cleanup.
     delete_expand_dir(expand_dir)
     delete_files(update_dir, "*.zip", zip_file)
+    delete_files(update_dir, "*.cat", replace_extension(zip_file, "cat"))
     delete_files(bin_dir, "~clink.*.old")
 
     print("")
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
-local function run_exe_installer(elevated, setup_exe)
+local function run_exe_installer(elevated, setup_exe, no_verify)
     local cloud_tag = path.getbasename(setup_exe)
     local bin_dir, update_dir, err = prepare_to_update(elevated, cloud_tag)
     if not bin_dir or not update_dir then
         return nil, err
     end
 
+    -- Verify the signature for the setup exe file.
+    if not no_verify then
+        print("Verifying the digital signature of the Clink setup program...")
+        log_info("verifying digital signature of '" .. setup_exe .. "'.")
+        local verified, msg = os._win_verify_trust(setup_exe)
+        if not verified then
+            return nil, msg
+        end
+    end
+
     print("Launching the Clink setup program...")
     local command = setup_exe .. " /S /D=" .. bin_dir
-    log_info("launching setup program '" .. command .. "'")
+    log_info("launching setup program '" .. command .. "'.")
 
     -- Run the setup program.
     -- NOTE:  This can get blocked by malware protection.
@@ -907,7 +952,7 @@ end
 --      ok  = Status; -1 elevate, 0 failure, 1 success.
 --      msg = Message to be displayed.
 -- Returning 1 by itself suppresses any further messages (e.g. "canceled").
-function clink.updatenow(elevated, force_prompt, redirected)
+function clink.updatenow(elevated, force_prompt, redirected, no_verify)
     latest_cloud_tag = nil
 
     local update_file, err = is_update_ready(true)
@@ -968,9 +1013,9 @@ function clink.updatenow(elevated, force_prompt, redirected)
     end
 
     if ext == "zip" then
-        return apply_zip_update(elevated, update_file, true)
+        return apply_zip_update(elevated, update_file, no_verify)
     elseif ext == "exe" then
-        return run_exe_installer(elevated, update_file)
+        return run_exe_installer(elevated, update_file, no_verify)
     else
         return nil, log_info("unrecognized update file type (" .. ext .. ").")
     end

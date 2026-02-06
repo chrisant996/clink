@@ -72,7 +72,7 @@ static bool is_redirected()
 }
 
 //------------------------------------------------------------------------------
-static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
+static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt, bool no_verify)
 {
     const bool elevated = os::is_elevated();
     const bool redirected = is_redirected();
@@ -100,7 +100,8 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
     lua_pushboolean(state, elevated);
     lua_pushboolean(state, force_prompt);
     lua_pushboolean(state, redirected);
-    lua.pcall_silent(state, 3, 2);
+    lua_pushboolean(state, no_verify);
+    lua.pcall_silent(state, 4, 2);
 
     int32 ok = int32(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);
@@ -189,6 +190,7 @@ int32 update(int32 argc, char** argv)
         { "help",               no_argument,        nullptr, 'h' },
         { "check",              no_argument,        nullptr, 'n' },
         { "nothing",            no_argument,        nullptr, 'n' },
+        { "no-verify",          no_argument,        nullptr, '~' },
         { "prompt",             no_argument,        nullptr, '|' },
         { nullptr, 0, nullptr, 0 }
     };
@@ -196,6 +198,7 @@ int32 update(int32 argc, char** argv)
     static const char* const help[] = {
         "-h, --help",               "Shows this help text.",
         "-n, --check",              "Do nothing; check for an update, but don't install it.",
+        "--no-verify",              "Do not verify digital signatures.",
         nullptr
     };
 
@@ -211,6 +214,7 @@ int32 update(int32 argc, char** argv)
     bool is_autorun = false;
     bool do_nothing = false;
     bool force_prompt = false;
+    bool no_verify = false;
     while ((i = getopt_long(argc, argv, "?hn", options, nullptr)) != -1)
     {
         switch (i)
@@ -220,6 +224,9 @@ int32 update(int32 argc, char** argv)
             break;
         case '|':
             force_prompt = true;
+            break;
+        case '~':
+            no_verify = true;
             break;
         case '?':
         case 'h':
@@ -250,7 +257,7 @@ int32 update(int32 argc, char** argv)
     host_load_app_scripts(lua);
 
     // Call the updater.
-    const bool ok = call_updater(lua, do_nothing, force_prompt);
+    const bool ok = call_updater(lua, do_nothing, force_prompt, no_verify);
     ret = !ok; // Return 0 on success.
 
     return ret;
