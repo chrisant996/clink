@@ -682,7 +682,7 @@ newaction {
                     cdf:write("[CatalogFiles]\n<hash>" .. lowbase .. ".zip=" .. lowbase .. ".zip\n")
                     cdf:close()
                     exec(have_makecat .. " " .. lowbase .. ".cdf")
-                    -- os.remove(clink_suffix .. ".cdf")
+                    os.remove(clink_suffix .. ".cdf")
                     os.chdir(oldcwd)
                     table.insert(sign_list, path.getabsolute(dest) .. ".cat")
                 end
