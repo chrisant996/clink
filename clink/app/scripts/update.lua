@@ -454,7 +454,7 @@ local function internal_check_for_update(force)
     for _, download in ipairs(download_files) do
         log_info("downloading " .. download.latest .. " to " .. download.localfile .. ".")
         local content
-        local download_type = path.extension(download.latest)
+        local download_type = path.getextension(download.latest)
         if clink.DEBUG and mock then
             local f = io.open(download.latest, "rb")
             content = f:read("*a")
