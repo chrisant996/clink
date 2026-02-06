@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- `cmd_tokeniser` doesn't differentiate whether `echo.exe` exists along the search path; it makes a difference how the input line should be colored (as `echo` command followed by `.exe` or as `echo.exe` executable).
 
 ## Normal Priority
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
