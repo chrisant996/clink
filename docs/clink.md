@@ -1009,7 +1009,7 @@ Checks for an updated version of Clink.  If one is available, it is downloaded a
 
 ## Automatic Updates
 
-By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run `clink update` when convenient to do so.
+By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run `clink update` when convenient to do so.  Clink verifies the digital signatures in the update before applying it.
 
 The default interval between checks is 5 days, which means after Clink checks for an update it waits at least 5 days before checking again.  You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
 
