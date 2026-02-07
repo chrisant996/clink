@@ -12,5 +12,5 @@ class word_classifications;
 class word_classifier
 {
 public:
-    virtual void    classify(const line_states& commands, word_classifications& classifications) = 0;
+    virtual void    classify(const line_states& commands, word_classifications& classifications, bool word_classes=false) = 0;
 };

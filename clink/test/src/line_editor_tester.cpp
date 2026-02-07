@@ -374,7 +374,8 @@ void line_editor_tester::run(bool expectationless)
         });
 
         str<> c;
-        for (uint32 i = 0; i < classifications->size(); ++i)
+        const word_class_infos* infos = classifications->get_test_infos();
+        for (uint32 i = 0; i < infos->size(); ++i)
         {
             static const char c_lookup[] =
             {
@@ -389,7 +390,7 @@ void line_editor_tester::run(bool expectationless)
             };
             static_assert(sizeof_array(c_lookup) == int32(word_class::max), "c_lookup size does not match word_class::max");
 
-            const word_class_info& wc = *(*classifications)[i];
+            const word_class_info& wc = (*infos)[i];
             if (m_mark_argmatchers && wc.argmatcher)
                 c.concat("m", 1);
             if (unsigned(wc.word_class) < sizeof_array(c_lookup))

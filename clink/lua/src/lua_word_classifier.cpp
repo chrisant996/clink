@@ -55,7 +55,7 @@ lua_word_classifier::lua_word_classifier(lua_state& state)
 }
 
 //------------------------------------------------------------------------------
-void lua_word_classifier::classify(const line_states& commands, word_classifications& classifications)
+void lua_word_classifier::classify(const line_states& commands, word_classifications& classifications, bool word_classes)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
@@ -68,7 +68,9 @@ void lua_word_classifier::classify(const line_states& commands, word_classificat
     line_states_lua lines(commands, classifications);
     lines.push(state);
 
+    lua_pushboolean(state, word_classes);
+
     os::cwd_restorer cwd;
 
-    m_state.pcall(state, 1, 1);
+    m_state.pcall(state, 2, 1);
 }

@@ -338,15 +338,17 @@ TEST_CASE("Lua word classification")
 
         SECTION("Separator && 3")
         {
+            // The unclassified "&&" is no longer even tracked.
             tester.set_input("nullcmd \"&&\" && cd t");
-            tester.set_expected_classifications("o co");
+            tester.set_expected_classifications("oco");
             tester.run();
         }
 
         SECTION("Separator && 4")
         {
+            // The unclassified "&&" is no longer even tracked.
             tester.set_input("nullcmd \"&&\"&&cd t");
-            tester.set_expected_classifications("o co");
+            tester.set_expected_classifications("oco");
             tester.run();
         }
 
@@ -387,8 +389,9 @@ TEST_CASE("Lua word classification")
 
         SECTION("Multiple commands with args")
         {
+            // The unclassified "etc" and "etc" are no longer even tracked.
             tester.set_input("xyz abc green | asdfjkl etc | echo etc | xyz -a def && argcmd t");
-            tester.set_expected_classifications("oano c ofaoo");
+            tester.set_expected_classifications("oanocofaoo");
             tester.run();
         }
 

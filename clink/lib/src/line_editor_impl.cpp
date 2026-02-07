@@ -186,7 +186,7 @@ static void classify_history_expansions(const history_expansion* list, word_clas
         return;
 
     for (const history_expansion* e = list; e; e = e->next)
-        classifications.apply_face(e->start, e->len, FACE_HISTEXPAND, true);
+        classifications.apply_face(false, e->start, e->len, FACE_HISTEXPAND, true);
 }
 
 
@@ -1080,7 +1080,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 {
     commands commands;
     uint32 command_offset = m_collector.collect_words(m_buffer, words, mode, &commands);
-    command_line_states.set(m_buffer, words, mode, commands, true/*use_recognizer*/);
+    command_line_states.set(m_buffer, words, mode, commands);
 
 #ifdef DEBUG
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
@@ -1164,17 +1164,23 @@ void line_editor_impl::before_display_readline()
     {
         // Hang on to the old classifications so it's possible to detect changes.
         word_classifications old_classifications(std::move(m_classifications));
-        m_classifications.init(m_buffer.get_length(), &old_classifications);
+        m_classifications.init(m_buffer.get_length(), &old_classifications, m_module.is_showing_argmatchers());
+
+#ifdef DEBUG
+        const int32 dbgrow = dbg_get_env_int("DEBUG_CLASSIFY");
+        const bool dbg_word_classes = !!dbgrow;
+#else
+        const bool dbg_word_classes = false;
+#endif
 
         if (plain)
         {
-            m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
-            m_classifications.finish(m_module.is_showing_argmatchers());
+            m_classifications.apply_face(false, 0, m_buffer.get_length(), FACE_NORMAL, true);
         }
         else
         {
             // Use the full line; don't stop at the cursor.
-            m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications);
+            m_classifier->classify(command_line_states.get_linestates(m_buffer), m_classifications, dbg_word_classes);
             if (g_history_autoexpand.get() &&
                 g_expand_mode.get() &&
                 (g_history_show_preview.get() ||
@@ -1185,25 +1191,30 @@ void line_editor_impl::before_display_readline()
                 set_history_expansions(list);
                 calced_history_expansions = true;
             }
-            m_classifications.finish(m_module.is_showing_argmatchers());
         }
 
+        m_classifications.finish();
+
 #ifdef DEBUG
-        const int32 dbgrow = dbg_get_env_int("DEBUG_CLASSIFY");
         if (dbgrow)
         {
             str<> c;
             str<> f;
             str<> tmp;
-            static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
+            static const char *const word_class_name[] = {"oother", "uunrecognized", "xexecutable", "ccommand", "ddoskey", "aarg", "fflag", "nnone"};
             static_assert(sizeof_array(word_class_name) == int32(word_class::max), "word_class flag count mismatch");
-            word_class wc;
-            for (uint32 i = 0; i < m_classifications.size(); ++i)
+            const std::vector<word_class_info>* test_infos = m_classifications.get_test_infos();
+            if (test_infos)
             {
-                if (m_classifications.get_word_class(i, wc))
+                for (uint32 i = 0; i < test_infos->size(); ++i)
                 {
-                    tmp.format(" \x1b[90m%d\x1b[m\x1b[7m%c\x1b[m", i + 1, word_class_name[int32(wc)][0]);
-                    c.concat(tmp.c_str(), tmp.length());
+                    const word_class wc = (*test_infos)[i].word_class;
+                    if (wc < word_class::max)
+                    {
+                        const char* m = (*test_infos)[i].argmatcher ? "m" : "";
+                        tmp.format(" \x1b[90m%d\x1b[m\x1b[7m%s%c\x1b[m", i + 1, m, word_class_name[int32(wc)][0]);
+                        c.concat(tmp.c_str(), tmp.length());
+                    }
                 }
             }
             for (uint32 i = 0; i < m_classifications.length(); ++i)

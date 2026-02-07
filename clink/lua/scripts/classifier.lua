@@ -62,23 +62,23 @@ local function log_cost(tick, classifier)
 end
 
 --------------------------------------------------------------------------------
-local function reset_commands(commands)
+local function prepare_classify(commands, test)
     for _, command in ipairs(commands) do
         command.line_state:_reset_shift()
-        command.classifications:_reset_shift()
+        command.classifications:_set_line_state(command.line_state, test)
     end
 end
 
 --------------------------------------------------------------------------------
 -- Receives a table of line_state_lua/lua_word_classifications pairs.
-function clink._classify(commands)
+function clink._classify(commands, test)
     local impl = function ()
         clink.classifier_stopped = nil
         elapsed_this_pass = 0
 
         for _, classifier in ipairs(_classifiers) do
             if classifier.classify then
-                reset_commands(commands)
+                prepare_classify(commands, test)
                 local tick = os.clock()
                 local ret = classifier:classify(commands)
                 log_cost(tick, classifier)

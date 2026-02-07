@@ -345,7 +345,7 @@ local function break_slash(line_state, word_index, word_classifications)
         local ls = line_state:_break_word(word_index, slash - 1)
         if ls then
             if word_classifications then
-                word_classifications:_break_word(word_index, slash - 1)
+                word_classifications:_set_line_state(ls)
             end
             return ls, word_classifications
         end
@@ -607,7 +607,7 @@ function _argreader:start_chained_command(word_index, mode, expand_aliases, hint
     line_state = self._line_state
     line_state:_shift(word_index)
     if self._word_classifier and not self._extra then
-        self._word_classifier:_shift(word_index, line_state:getcommandwordindex())
+        self._word_classifier:_set_line_state(line_state)
     end
     self._word_index = 2
     return line_state:getword(1)
@@ -695,7 +695,7 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
                 self._line_state = adjusted
                 line_state = adjusted
                 if self._word_classifier then
-                    self._word_classifier:_unbreak_word(word_index, len, skip_word)
+                    self._word_classifier:_set_line_state(line_state)
                 end
                 if skip_word then
                     if is_flag then
@@ -3069,6 +3069,10 @@ function clink._generate_from_historyline(line_state)
     local no_cmd
     local reader
 ::do_command::
+    -- PERF:  This does *not* call line_state:_test_cmd_builtin(), for
+    -- performance reasons.  And even if it merely checked the recognizer
+    -- cache without starting any lookups, then the results would be
+    -- inconsistent and unpredictable.
     local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
@@ -3118,6 +3122,15 @@ local function do_generate(line_state, match_builder)
     local no_cmd
     local reader
 ::do_command::
+    if not no_cmd then
+        local ls = line_state:_test_cmd_builtin()
+        if ls then
+            line_state = ls
+            if reader then
+                reader._line_state = ls
+            end
+        end
+    end
     local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if argmatcher then
@@ -3170,6 +3183,15 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local no_cmd
     local reader
 ::do_command::
+    if not no_cmd then
+        local ls = line_state:_test_cmd_builtin()
+        if ls then
+            line_state = ls
+            if reader then
+                reader._line_state = ls
+            end
+        end
+    end
     local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
     if argmatcher then
@@ -3281,6 +3303,16 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
         local reader
 ::do_command::
 
+        if not no_cmd then
+            local ls = line_state:_test_cmd_builtin()
+            if ls then
+                line_state = ls
+                word_classifier:_set_line_state(ls)
+                if reader then
+                    reader._line_state = ls
+                end
+            end
+        end
         local argmatcher, has_argmatcher, extra = _find_argmatcher(line_state, true, lookup, no_cmd, reader and reader._extra)
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil -- luacheck: ignore 311
@@ -3421,6 +3453,15 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
     local no_follow_argmatcher
 ::do_command::
 
+    if not no_cmd then
+        local ls = line_state:_test_cmd_builtin()
+        if ls then
+            line_state = ls
+            if reader then
+                reader._line_state = ls
+            end
+        end
+    end
     local chained = (lookup and true)
     local argmatcher, _, extra = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, true)
     lookup = nil -- luacheck: ignore 311
@@ -3568,6 +3609,15 @@ function clink._get_command_word(line_state)
     local reader
     local oncommand = {}
 ::do_command::
+    if not no_cmd then
+        local ls = line_state:_test_cmd_builtin()
+        if ls then
+            line_state = ls
+            if reader then
+                reader._line_state = ls
+            end
+        end
+    end
     local argmatcher, has_argmatcher, extra, command_word = _find_argmatcher(line_state, nil, lookup, no_cmd, reader and reader._extra, nil, oncommand) -- luacheck: no unused
     if argmatcher then
         lookup = nil -- luacheck: ignore 311

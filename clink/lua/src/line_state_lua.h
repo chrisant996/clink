@@ -22,6 +22,7 @@ public:
                         ~line_state_lua();
 
     const line_state*   get_line_state() const { return m_line; }
+    uint32              get_shift() const { return m_shift; }
 
 protected:
     int32               get_line(lua_State* state);
@@ -41,11 +42,13 @@ protected:
     int32               unbreak_word(lua_State* state);
     int32               overwrite_from(lua_State* state);
     int32               set_alias(lua_State* state);
+    int32               test_cmd_builtin(lua_State* state);
 
 private:
     const line_state*   m_line;
     line_state_copy*    m_copy;
     uint32              m_shift = 0;
+    bool                m_tested_cmd_builtin = false;
 
     friend class lua_bindable<line_state_lua>;
     static const char* const c_name;

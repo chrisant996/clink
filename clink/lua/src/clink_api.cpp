@@ -1419,11 +1419,9 @@ static int32 parse_line(lua_State* state)
     const collect_words_mode tmp_mode = collect_words_mode::whole_command;
     collector.collect_words(line, len, 0, tmp_words, tmp_mode, &tmp_commands);
 
-    // Group words into one line_state per command.  This uses the recognizer
-    // to differentiate whether "echo.txt" is "echo" followed by ".txt" or an
-    // "echo.txt" file.
+    // Group words into one line_state per command.
     command_line_states command_line_states;
-    command_line_states.set(line, len, 0, tmp_words, tmp_mode, tmp_commands, true/*use_recognizer*/);
+    command_line_states.set(line, len, 0, tmp_words, tmp_mode, tmp_commands);
 
     // Make a deep copy in an object allocated in the Lua heap.  Garbage
     // collection will free it.
@@ -1952,11 +1950,7 @@ static int32 generate_from_history(lua_State* state)
         command_line_states command_line_states;
         const collect_words_mode mode = collect_words_mode::whole_command;
         collector.collect_words(buffer, len, len/*cursor*/, words, mode, &commands);
-        // For performance reasons, this does NOT use the recognizer to
-        // differentiate whether "echo.txt" is "echo" followed by ".txt" or an
-        // "echo.txt" file.  In such cases, this may cause a different
-        // argmatcher to be selected than if it were the current input line.
-        command_line_states.set(buffer, len, 0, words, mode, commands, false/*use_recognizer*/);
+        command_line_states.set(buffer, len, 0, words, mode, commands);
 
         for (const line_state& line : command_line_states.get_linestates(buffer, len))
         {

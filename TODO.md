@@ -7,6 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Word classifications rewrite (run `set DEBUG_CLASSIFY=1` to enable debugging):
+  - [x] On the positive side, `echo.txt`, `sudo echo`, and `sudo echo.txt` all color correctly.
+  - [x] `rem asdf` doesn't color the `asdf` correctly.
+  - [x] `echo blah` doesn't list any CLASSIFICATIONS at all (most CMD commands make it empty, but not `rem`).
+  - [x] `test "lua word"` hits two failures.
 
 ## Normal Priority
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.

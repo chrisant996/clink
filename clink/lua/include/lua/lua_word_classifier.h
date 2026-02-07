@@ -15,7 +15,7 @@ class lua_word_classifier
 {
 public:
                     lua_word_classifier(lua_state& state);
-    virtual void    classify(const line_states& commands, word_classifications& classifications) override;
+    virtual void    classify(const line_states& commands, word_classifications& classifications, bool word_classes=false) override;
 
 private:
     lua_state&      m_state;

@@ -33,10 +33,10 @@ line_states_lua::line_states_lua(const line_states& lines, word_classifications&
 {
     m_lines.reserve(lines.size());
     m_classifications.reserve(lines.size());
-    for (const auto& line : lines)
+    for (uint32 ii = 0; ii < lines.size(); ++ii)
     {
-        m_lines.emplace_back(line);
-        m_classifications.emplace_back(classifications, classifications.add_command(line), line.get_command_word_index(), line.get_word_count());
+        m_lines.emplace_back(lines[ii]);
+        m_classifications.emplace_back(classifications, ii);
     }
 }
 

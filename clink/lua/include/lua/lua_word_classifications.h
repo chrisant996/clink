@@ -16,31 +16,27 @@ class word_classifications;
 class lua_word_classifications
     : public lua_bindable<lua_word_classifications>
 {
-public:
-                            lua_word_classifications(word_classifications& classifications, uint32 index_offset, uint32 command_word_index, uint32 num_words);
+    struct word_def
+    {
+        uint16              offset;
+        uint16              length;
+    };
 
-    bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
+public:
+                            lua_word_classifications(word_classifications& classifications, uint32 index_command);
 
 protected:
     int32                   classify_word(lua_State* state);
     int32                   apply_color(lua_State* state);
-    int32                   shift(lua_State* state);
-    int32                   reset_shift(lua_State* state);
-    int32                   break_word(lua_State* state);
-    int32                   unbreak_word(lua_State* state);
-#ifdef DEBUG
-    int32                   get_word_count(lua_State* state);
-    int32                   get_word_start(lua_State* state);
-    int32                   get_word_end(lua_State* state);
-#endif
+    int32                   set_line_state(lua_State* state);
 
 private:
     word_classifications&   m_classifications;
-    const uint32            m_index_offset;
-    uint32                  m_num_words;
-    uint32                  m_command_word_index;
+    const uint32            m_index_command;
+    std::vector<word_def>   m_words;
+    uint32                  m_command_word_index = 0;
     uint32                  m_shift = 0;
-    const uint32            m_original_command_word_index;
+    bool                    m_test = false;
 
     friend class lua_bindable<lua_word_classifications>;
     static const char* const c_name;

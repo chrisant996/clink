@@ -448,8 +448,7 @@ void command_line_states::set(const char* line_buffer,
                               uint32 line_cursor,
                               const words& words,
                               collect_words_mode mode,
-                              const commands& commands,
-                              bool use_recognizer)
+                              const commands& commands)
 {
     clear_internal();
 
@@ -533,25 +532,6 @@ void command_line_states::set(const char* line_buffer,
                     {
                         // It's a built-in CMD command name.
                         tmp_back.is_cmd_command = true;
-
-                        // But is it something like "echo.txt" when a file by
-                        // that name exists?
-                        if (use_recognizer &&
-                            i < words.size() && // (i has already been incremented)
-                            !words[i].quoted &&
-                            tmp_back.offset + tmp_back.length == words[i].offset &&
-                            line_buffer[words[i].offset] == '.')
-                        {
-                            bool ready;
-                            tmp_cmd_command.concat(line_buffer + words[i].offset, words[i].length);
-                            if (recognize_command(nullptr, tmp_cmd_command.c_str(), false, ready, nullptr) == recognition::executable)
-                            {
-                                // Join the adjacent words.
-                                tmp_back.is_cmd_command = false;
-                                tmp_back.length += words[i].length;
-                                i++;
-                            }
-                        }
                     }
                 }
             }
@@ -570,10 +550,9 @@ void command_line_states::set(const char* line_buffer,
 void command_line_states::set(const line_buffer& buffer,
                               const words& words,
                               collect_words_mode mode,
-                              const commands& commands,
-                              bool use_recognizer)
+                              const commands& commands)
 {
-    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands, use_recognizer);
+    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands);
 }
 
 //------------------------------------------------------------------------------
@@ -592,6 +571,12 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool di
             end_word->length -= truncate;
         else
             end_word->length = 0;
+        assert(!end_word->is_cmd_command);
+        assert(!end_word->is_alias);
+        assert(!end_word->is_redir_arg);
+        end_word->is_cmd_command = false;
+        end_word->is_alias = false;
+        end_word->is_redir_arg = false;
     }
     else if (truncate)
     {
@@ -614,7 +599,14 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool di
     }
 
     keep = min<uint32>(keep, end_word->length);
-    end_word->length = keep;
+    if (end_word->length != keep)
+    {
+        end_word->length = keep;
+        end_word->is_cmd_command = false;
+        // REVIEW:  There isn't enough context available to be able to guess
+        // at whether the word is even a candidate for being a builtin CMD
+        // command.  It seems the only option is to clear it.
+    }
     return end_word->offset;
 }
 
@@ -636,7 +628,22 @@ void command_line_states::split_for_hinter()
         else
         {
             if (end_word.offset <= cursorpos && cursorpos <= end_word.offset + end_word.length)
+            {
                 end_word.length = cursorpos - end_word.offset;
+                end_word.is_cmd_command = false;
+                // REVIEW:  There doesn't seem to be a reasonable way to
+                // determine whether the word is a candidate for being a
+                // builtin CMD command word.  And hinters probably don't
+                // really need to know that anyway.
+#if 0
+                if (end_word.length)
+                {
+                    str<> tmp;
+                    tmp.concat(line_state.get_line() + end_word.offset, end_word.length);
+                    end_word.is_cmd_command = is_cmd_command(tmp.c_str());
+                }
+#endif
+            }
             break;
         }
     }

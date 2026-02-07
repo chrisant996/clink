@@ -48,17 +48,13 @@ line_state::line_state(
 , m_range_length(range_length)
 {
 #ifdef DEBUG
-    bool has_cmd_command = false;
     for (size_t i = 0; i < words.size(); ++i)
     {
         if (words[i].is_cmd_command)
         {
-            assert(!has_cmd_command);
             assert(!words[i].is_alias);
             assert(!words[i].is_redir_arg);
             assert(!words[i].quoted);
-            assert(get_command_word_index() == i);
-            has_cmd_command = true;
         }
     }
 #endif

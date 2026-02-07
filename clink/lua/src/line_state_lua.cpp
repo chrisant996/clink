@@ -7,6 +7,7 @@
 
 #include <core/array.h>
 #include <lib/line_state.h>
+#include <lib/cmd_tokenisers.h>
 
 //------------------------------------------------------------------------------
 const char* const line_state_lua::c_name = "line_state_lua";
@@ -29,6 +30,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "_unbreak_word",          &unbreak_word },
     { "_set_alias",             &set_alias },
     { "_overwrite_from",        &overwrite_from },
+    { "_test_cmd_builtin",      &test_cmd_builtin },
     {}
 };
 
@@ -47,10 +49,13 @@ public:
     void                        break_word(uint32 index, uint32 len);
     bool                        unbreak_word(uint32 index, uint32 len);
     void                        set_alias(uint32 index, bool value);
+    void                        test_cmd_builtin(uint32 index);
+    bool                        is_tested_cmd_builtin() const { return m_tested_cmd_builtin; }
 private:
     line_state*                 m_line;
     str_moveable                m_buffer;
     words                       m_words;
+    bool                        m_tested_cmd_builtin = false;
 };
 
 //------------------------------------------------------------------------------
@@ -133,6 +138,39 @@ void line_state_copy::set_alias(uint32 index, bool value)
     word.command_word = true;
 }
 
+//------------------------------------------------------------------------------
+void line_state_copy::test_cmd_builtin(uint32 index)
+{
+    if (m_tested_cmd_builtin)
+        return;
+    m_tested_cmd_builtin = true;
+
+    assert(index < m_words.size());
+    m_words[index].is_cmd_command = true;
+
+    if (index + 1 >= m_words.size())
+        return;
+    if (m_words[index].offset + m_words[index].length != m_words[index + 1].offset)
+        return;
+    if (m_words[index + 1].length < 1)
+        return;
+    if (m_words[index + 1].offset >= m_buffer.length())
+        return;
+    if (m_buffer.c_str()[m_words[index + 1].offset] != '.')
+        return;
+
+    // Is it something like "echo.txt" when a file by that name exists?
+    str<> tmp;
+    bool ready;
+    tmp.concat(m_buffer.c_str() + m_words[index].offset, m_words[index].length + m_words[index + 1].length);
+    if (recognize_command(nullptr, tmp.c_str(), false, ready, nullptr) == recognition::executable)
+    {
+        m_words[index].length += m_words[index + 1].length;
+        m_words[index].is_cmd_command = false;
+        m_words.erase(m_words.begin() + index + 1);
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -148,6 +186,7 @@ line_state_lua::line_state_lua(line_state_copy* copy, uint32 shift)
     m_line = copy->get_line();
     m_copy = copy;
     m_shift = shift;
+    m_tested_cmd_builtin = copy->is_tested_cmd_builtin();
 }
 
 //------------------------------------------------------------------------------
@@ -468,6 +507,7 @@ int32 line_state_lua::shift(lua_State* state)
             return 0;
 
         m_shift += num;
+        m_tested_cmd_builtin = false;
     }
 
     lua_pushinteger(state, m_shift);
@@ -479,6 +519,7 @@ int32 line_state_lua::shift(lua_State* state)
 int32 line_state_lua::reset_shift(lua_State* state)
 {
     m_shift = 0;
+    m_tested_cmd_builtin = false;
     return 0;
 }
 
@@ -622,5 +663,43 @@ int32 line_state_lua::overwrite_from(lua_State* state)
     const bool ok = const_cast<line_state*>(m_line)->overwrite_from(from->m_line);
     assert(ok);
     lua_pushboolean(state, ok);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::test_cmd_builtin(lua_State* state)
+{
+    if (m_tested_cmd_builtin)
+        return 0;
+    m_tested_cmd_builtin = true;
+
+    const uint32 index = m_line->get_command_word_index() + m_shift;
+    const words& words = m_line->get_words();
+    if (index >= words.size())
+        return 0;
+
+    const word& word = words[index];
+    if (word.quoted)
+        return 0;
+
+    // Is it a builtin cmd command?
+    str<> tmp;
+    tmp.concat(m_line->get_line() + word.offset, word.length);
+    if (!is_cmd_command(tmp.c_str()))
+    {
+        assert(!word.is_cmd_command);
+        return 0;
+    }
+
+    // Definitely need to make a copy:  either the word needs to be marked as
+    // a builtin cmd command, or the word needs to be joined with the next
+    // adjacent word.
+    line_state_copy* copy = make_line_state_copy(*m_line);
+    copy->test_cmd_builtin(index);
+
+    // PERF: Can it return itself if it's already a copy?  Does anything rely
+    // on the copy operation, e.g. "original != line_state"?
+    line_state_lua::make_new(state, copy, m_shift);
     return 1;
 }
