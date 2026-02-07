@@ -774,7 +774,7 @@ Nope:
         return 0;
     }
 
-    std::vector<word> words;
+    words words;
     collect_words(*g_rl_buffer, words, collect_words_mode::whole_command);
     if (words.empty())
         goto Nope;
@@ -988,7 +988,7 @@ Nope:
         return 0;
     }
 
-    std::vector<word> words;
+    words words;
     collect_words(*g_rl_buffer, words, collect_words_mode::whole_command);
     if (words.empty())
         goto Nope;

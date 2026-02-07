@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "line_state.h"
 #include <core/base.h>
 
 #include <vector>
@@ -11,9 +12,6 @@ class line_editor_impl;
 class host_callbacks;
 class matches;
 class line_buffer;
-struct word;
-class line_state;
-class line_states;
 struct host_context;
 enum class display_filter_flags;
 enum class collect_words_mode;
@@ -41,7 +39,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
 matches* get_mutable_matches(bool nosort=false);
 
 //------------------------------------------------------------------------------
-uint32 collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode);
+uint32 collect_words(const line_buffer& buffer, words& words, collect_words_mode mode);
 const input_hint* get_input_hint();
 void refresh_recognizer();
 

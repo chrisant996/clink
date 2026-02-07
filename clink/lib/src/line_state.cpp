@@ -37,7 +37,7 @@ line_state::line_state(
     uint32 command_offset,
     uint32 range_offset,
     uint32 range_length,
-    const std::vector<word>& words)
+    const words& words)
 : m_words(words)
 , m_line(line)
 , m_length(length)
@@ -128,7 +128,7 @@ uint32 line_state::get_range_length() const
 }
 
 //------------------------------------------------------------------------------
-const std::vector<word>& line_state::get_words() const
+const words& line_state::get_words() const
 {
     return m_words;
 }
@@ -212,7 +212,7 @@ bool line_state::overwrite_from(const line_state* other)
     if (strcmp(other->m_line, m_line) != 0)
         return false;
 
-    const_cast<std::vector<word>&>(m_words).resize(other->m_words.size());
+    const_cast<words&>(m_words).resize(other->m_words.size());
 
     size_t resize = 0;
     word* tortoise = const_cast<word*>(&*m_words.begin());
@@ -226,7 +226,7 @@ bool line_state::overwrite_from(const line_state* other)
         ++resize;
     }
 
-    const_cast<std::vector<word>&>(m_words).resize(resize);
+    const_cast<words&>(m_words).resize(resize);
 
     return true;
 }

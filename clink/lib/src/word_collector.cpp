@@ -107,7 +107,7 @@ char word_collector::get_closing_quote() const
 
 //------------------------------------------------------------------------------
 void word_collector::find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
-                                         std::vector<command>& commands, bool stop_at_cursor) const
+                                         commands& commands, bool stop_at_cursor) const
 {
     const uint32 line_stop = stop_at_cursor ? cursor : length;
 
@@ -184,13 +184,13 @@ bool word_collector::is_alias_allowed(const char* buffer, uint32 offset) const
 
 //------------------------------------------------------------------------------
 uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length, uint32 line_cursor,
-                                     std::vector<word>& words, collect_words_mode mode,
-                                     std::vector<command>* _commands) const
+                                     words& words, collect_words_mode mode,
+                                     commands* _commands) const
 {
     words.clear();
 
-    std::vector<command> tmp;
-    std::vector<command>& commands = _commands ? *_commands : tmp;
+    commands tmp;
+    commands& commands = _commands ? *_commands : tmp;
 
     commands.reserve(5);
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
@@ -437,7 +437,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
 }
 
 //------------------------------------------------------------------------------
-uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode, std::vector<command>* commands) const
+uint32 word_collector::collect_words(const line_buffer& buffer, words& words, collect_words_mode mode, commands* commands) const
 {
     return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands);
 }
@@ -446,9 +446,9 @@ uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word
 void command_line_states::set(const char* line_buffer,
                               uint32 line_length,
                               uint32 line_cursor,
-                              const std::vector<word>& words,
+                              const words& words,
                               collect_words_mode mode,
-                              const std::vector<command>& commands,
+                              const commands& commands,
                               bool use_recognizer)
 {
     clear_internal();
@@ -463,7 +463,7 @@ void command_line_states::set(const char* line_buffer,
     size_t i = 0;
     bool seeking_command_word = true;
     auto command_iter = commands.begin();
-    std::vector<word> tmp;
+    ::words tmp;
     tmp.reserve(words.size());
     while (true)
     {
@@ -561,16 +561,16 @@ void command_line_states::set(const char* line_buffer,
     if (m_words_storage.size() > 0)
     {
         // Guarantee room for get_word_break_info() to append an empty end word.
-        std::vector<word>& last = m_words_storage.back();
+        ::words& last = m_words_storage.back();
         last.reserve(last.size() + 1);
     }
 }
 
 //------------------------------------------------------------------------------
 void command_line_states::set(const line_buffer& buffer,
-                              const std::vector<word>& words,
+                              const words& words,
                               collect_words_mode mode,
-                              const std::vector<command>& commands,
+                              const commands& commands,
                               bool use_recognizer)
 {
     set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode, commands, use_recognizer);
@@ -607,7 +607,7 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool di
         split_word.quoted = false;
         split_word.delim = str_token::invalid_delim;
 
-        std::vector<word>* words = const_cast<std::vector<word>*>(&m_words_storage.back());
+        ::words* words = const_cast<::words*>(&m_words_storage.back());
         end_word->length = truncate;
         words->push_back(split_word);
         end_word = &words->back();
@@ -622,7 +622,7 @@ uint32 command_line_states::break_end_word(uint32 truncate, uint32 keep, bool di
 void command_line_states::split_for_hinter()
 {
     auto& line_state = m_linestates.back();
-    std::vector<word>* const words = const_cast<std::vector<word>*>(&m_words_storage.back());
+    ::words* const words = const_cast<::words*>(&m_words_storage.back());
     const uint32 cursorpos = line_state.get_cursor();
 
     // Discard words after the cursor.
@@ -695,7 +695,7 @@ const line_states& command_line_states::get_linestates(const char* buffer, uint3
         if (!s_none)
         {
             dbg_ignore_scope(snapshot, "globals; get_linestate");
-            std::vector<word>* wv = new std::vector<word>;
+            words* wv = new words;
             s_none = new line_states;
             s_none->push_back(std::move(line_state(nullptr, 0, 0, 0, 0, 0, 0, *wv)));
         }
@@ -722,7 +722,7 @@ const line_state& command_line_states::get_linestate(const char* buffer, uint32 
         if (!s_none)
         {
             dbg_ignore_scope(snapshot, "globals; get_linestate");
-            std::vector<word>* wv = new std::vector<word>;
+            words* wv = new words;
             s_none = new line_state(nullptr, 0, 0, 0, 0, 0, 0, *wv);
         }
         return *s_none;

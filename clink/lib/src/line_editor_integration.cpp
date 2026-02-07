@@ -196,7 +196,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
 
 //------------------------------------------------------------------------------
 // WARNING:  This calls Lua using the MAIN coroutine.
-uint32 collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode)
+uint32 collect_words(const line_buffer& buffer, words& words, collect_words_mode mode)
 {
     if (!s_editor)
         return 0;

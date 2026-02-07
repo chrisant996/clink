@@ -722,7 +722,7 @@ matches* line_editor_impl::maybe_regenerate_matches(const char* needle, display_
 #endif
 
     command_line_states command_line_states;
-    std::vector<word> words;
+    words words;
     uint32 command_offset = collect_words(words, &regen, collect_words_mode::stop_at_cursor, command_line_states);
 
     match_pipeline pipeline(regen);
@@ -1024,9 +1024,61 @@ command_line_states line_editor_impl::collect_command_line_states()
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+static void print_words(printer& printer, int32 row, bool after_break, const words& words, const rl_buffer& buffer)
+{
+    str<> tmp;
+    if (words.size() > 0)
+    {
+        bool command = true;
+        int32 i_word = 1;
+        const char* tag = after_break ? "after word break info:  " : "collected words:        ";
+        tmp.format("\x1b[s\x1b[%dH%s", row, tag);
+        printer.print(tmp.c_str(), tmp.length());
+        for (auto const& w : words)
+        {
+            tmp.format("\x1b[90m%u\x1b[m", i_word);
+            printer.print(tmp.c_str(), tmp.length());
+
+            const char* q = w.quoted ? "\"" : "";
+            const char* color = "37";
+            if (w.command_word)
+            {
+                command = true;
+                printer.print("!");
+            }
+            if (w.is_redir_arg)
+            {
+                printer.print(">");
+                color = "33";
+            }
+            if (command && !w.is_redir_arg)
+            {
+                command = false;
+                color = "4;32";
+            }
+            if (after_break && i_word == words.size())
+                color = "35";
+            tmp.format("%s\x1b[0;%s;7m%.*s\x1b[m%s ", q, color, w.length, buffer.get_buffer() + w.offset, q);
+            printer.print(tmp.c_str(), tmp.length());
+            i_word++;
+        }
+        printer.print("\x1b[K\x1b[u");
+    }
+    else if (!after_break)
+    {
+        tmp.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", row);
+        printer.print(tmp.c_str(), tmp.length());
+        tmp.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", row + 1);
+        printer.print(tmp.c_str(), tmp.length());
+    }
+}
+#endif
+
+//------------------------------------------------------------------------------
 uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, command_line_states& command_line_states)
 {
-    std::vector<command> commands;
+    commands commands;
     uint32 command_offset = m_collector.collect_words(m_buffer, words, mode, &commands);
     command_line_states.set(m_buffer, words, mode, commands, true/*use_recognizer*/);
 
@@ -1047,46 +1099,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     str<> tmp2;
     if (dbg_row > 0)
     {
-        if (words.size() > 0)
-        {
-            bool command = true;
-            int32 i_word = 1;
-            tmp1.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
-            m_printer.print(tmp1.c_str(), tmp1.length());
-            for (auto const& w : words)
-            {
-                tmp1.format("\x1b[90m%u\x1b[m", i_word);
-                m_printer.print(tmp1.c_str(), tmp1.length());
-
-                const char* q = w.quoted ? "\"" : "";
-                if (w.command_word)
-                    command = true;
-                if (w.is_redir_arg)
-                    m_printer.print(">");
-                if (w.command_word)
-                    m_printer.print("!");
-                const char* color = "37";
-                if (command && !w.is_redir_arg)
-                {
-                    command = false;
-                    color = "4;32";
-                }
-                if (w.length)
-                    tmp1.format("%s\x1b[0;%s;7m%.*s\x1b[m%s ", q, color, w.length, m_buffer.get_buffer() + w.offset, q);
-                else
-                    tmp1.format("\x1b[0;37;7m \x1b[m ");
-                m_printer.print(tmp1.c_str(), tmp1.length());
-                i_word++;
-            }
-            m_printer.print("\x1b[K\x1b[u");
-        }
-        else
-        {
-            tmp1.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", dbg_row);
-            m_printer.print(tmp1.c_str(), tmp1.length());
-            tmp2.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
-            m_printer.print(tmp2.c_str(), tmp2.length());
-        }
+        print_words(m_printer, dbg_row, false, words, m_buffer);
     }
 #endif
 
@@ -1106,36 +1119,8 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 #ifdef DEBUG
         if (dbg_row > 0)
         {
-            bool command = true;
-            int32 i_word = 1;
-            tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
-            m_printer.print(tmp2.c_str(), tmp2.length());
             auto const& after_break_words = command_line_states.get_linestate(m_buffer).get_words();
-            for (auto const& w : after_break_words)
-            {
-                tmp1.format("\x1b[90m%u\x1b[m", i_word);
-                m_printer.print(tmp1.c_str(), tmp1.length());
-
-                const char* q = w.quoted ? "\"" : "";
-                if (w.command_word)
-                    command = true;
-                if (w.is_redir_arg)
-                    m_printer.print(">");
-                if (w.command_word)
-                    m_printer.print("!");
-                const char* color = "37;7";
-                if (command && !w.is_redir_arg)
-                {
-                    command = false;
-                    color = "4;32;7";
-                }
-                if (i_word == after_break_words.size())
-                    color = "35;7";
-                tmp2.format("%s\x1b[0;%sm%.*s\x1b[m%s ", q, color, w.length, m_buffer.get_buffer() + w.offset, q);
-                m_printer.print(tmp2.c_str(), tmp2.length());
-                i_word++;
-            }
-            m_printer.print("\x1b[K\x1b[u");
+            print_words(m_printer, dbg_row + 1, true, after_break_words, m_buffer);
         }
 #endif
 
@@ -1765,7 +1750,7 @@ bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-uint32 line_editor_impl::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
+uint32 line_editor_impl::collect_words(const line_buffer& buffer, words& words, collect_words_mode mode) const
 {
     return m_collector.collect_words(buffer, words, mode, nullptr);
 }

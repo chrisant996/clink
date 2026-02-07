@@ -78,7 +78,7 @@ uint32 word_classifications::add_command(const line_state& line)
 {
     uint32 index = uint32(m_info.size());
 
-    const std::vector<word>& words = line.get_words();
+    const words& words = line.get_words();
     for (const auto& word : words)
     {
         m_info.emplace_back();

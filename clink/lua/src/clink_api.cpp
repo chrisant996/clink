@@ -1413,8 +1413,8 @@ static int32 parse_line(lua_State* state)
     word_collector collector(&command_tokeniser, &word_tokeniser);
 
     // Collect words from the whole line.
-    std::vector<word> tmp_words;
-    std::vector<command> tmp_commands;
+    words tmp_words;
+    commands tmp_commands;
     uint32 len = uint32(strlen(line));
     const collect_words_mode tmp_mode = collect_words_mode::whole_command;
     collector.collect_words(line, len, 0, tmp_words, tmp_mode, &tmp_commands);
@@ -1947,8 +1947,8 @@ static int32 generate_from_history(lua_State* state)
         uint32 len = uint32(strlen(buffer));
 
         // Collect one line_state for each command in the line.
-        std::vector<word> words;
-        std::vector<command> commands;
+        words words;
+        commands commands;
         command_line_states command_line_states;
         const collect_words_mode mode = collect_words_mode::whole_command;
         collector.collect_words(buffer, len, len/*cursor*/, words, mode, &commands);

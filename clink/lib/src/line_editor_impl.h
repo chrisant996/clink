@@ -93,7 +93,7 @@ public:
     bool                notify_matches_ready(int32 generation_id, matches* matches);
     matches*            maybe_regenerate_matches(const char* needle, display_filter_flags flags);
     bool                call_lua_rl_global_function(const char* func_name);
-    uint32              collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const;
+    uint32              collect_words(const line_buffer& buffer, words& words, collect_words_mode mode) const;
     DWORD               get_input_hint_timeout() const;
     void                clear_input_hint_timeout();
     const input_hint*   get_input_hint() const;
@@ -101,7 +101,6 @@ public:
 private:
     typedef editor_module                       module;
     typedef fixed_array<editor_module*, 16>     modules;
-    typedef std::vector<word>                   words;
     friend void update_matches();
     friend matches* get_mutable_matches(bool nosort);
     friend matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);

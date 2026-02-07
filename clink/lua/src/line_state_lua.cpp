@@ -50,7 +50,7 @@ public:
 private:
     line_state*                 m_line;
     str_moveable                m_buffer;
-    std::vector<word>           m_words;
+    words                       m_words;
 };
 
 //------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ int32 line_state_lua::get_word_info(lua_State* state)
     if (!lua_isnumber(state, LUA_SELF + 1))
         return 0;
 
-    const std::vector<word>& words = m_line->get_words();
+    const words& words = m_line->get_words();
     uint32 index = int32(lua_tointeger(state, LUA_SELF + 1)) - 1 + m_shift;
     if (index >= words.size())
         return 0;
@@ -519,7 +519,7 @@ int32 line_state_lua::break_word(lua_State* state)
         return 0;
     const uint32 index = _index - 1 + m_shift;
 
-    const std::vector<word>& words = m_line->get_words();
+    const words& words = m_line->get_words();
     if (index >= words.size())
         return 0;
 
@@ -553,7 +553,7 @@ int32 line_state_lua::unbreak_word(lua_State* state)
         return luaL_argerror(state, LUA_SELF + 2, "must contain only ASCII characters");
     const uint32 index = _index - 1 + m_shift;
 
-    const std::vector<word>& words = m_line->get_words();
+    const words& words = m_line->get_words();
     if (index >= words.size())
         return 0;
 
@@ -598,7 +598,7 @@ int32 line_state_lua::set_alias(lua_State* state)
         return 0;
     const uint32 index = _index - 1 + m_shift;
 
-    const std::vector<word>& words = m_line->get_words();
+    const words& words = m_line->get_words();
     if (index >= words.size())
         return 0;
 

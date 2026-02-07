@@ -25,13 +25,16 @@ struct word
 };
 
 //------------------------------------------------------------------------------
+typedef std::vector<word> words;
+
+//------------------------------------------------------------------------------
 class line_state
 #ifdef USE_DEBUG_OBJECT
 : public object
 #endif
 {
 public:
-                        line_state(const char* line, uint32 length, uint32 cursor, uint32 words_limit, uint32 command_offset, uint32 range_offset, uint32 range_length, const std::vector<word>& words);
+                        line_state(const char* line, uint32 length, uint32 cursor, uint32 words_limit, uint32 command_offset, uint32 range_offset, uint32 range_length, const words& words);
     const char*         get_line() const;
     uint32              get_length() const;
     uint32              get_cursor() const;
@@ -41,7 +44,7 @@ public:
     uint32              get_end_word_offset() const;
     uint32              get_range_offset() const;
     uint32              get_range_length() const;
-    const std::vector<word>& get_words() const;
+    const words&        get_words() const;
     uint32              get_word_count() const;
     bool                get_word(uint32 index, str_base& out) const;    // MAY STRIP quotes, except during getworkbreakinfo().
     str_iter            get_word(uint32 index) const;                   // Never strips quotes.
@@ -53,7 +56,7 @@ public:
     static void         set_can_strip_quotes(bool can);
 
 private:
-    const std::vector<word>& m_words;
+    const words&        m_words;
     const char*         m_line;
     uint32              m_length;
     uint32              m_cursor;

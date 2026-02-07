@@ -46,6 +46,9 @@ struct command
 };
 
 //------------------------------------------------------------------------------
+typedef std::vector<command> commands;
+
+//------------------------------------------------------------------------------
 class word_collector
 {
 public:
@@ -55,17 +58,17 @@ public:
     void init_alias_cache();
 
     uint32 collect_words(const char* buffer, uint32 length, uint32 cursor,
-                         std::vector<word>& words, collect_words_mode mode,
-                         std::vector<command>* commands) const;
+                         words& words, collect_words_mode mode,
+                         commands* commands) const;
     uint32 collect_words(const line_buffer& buffer,
-                         std::vector<word>& words, collect_words_mode mode,
-                         std::vector<command>* commands) const;
+                         words& words, collect_words_mode mode,
+                         commands* commands) const;
 
 private:
     char get_opening_quote() const;
     char get_closing_quote() const;
     void find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
-                             std::vector<command>& commands, bool stop_at_cursor) const;
+                             commands& commands, bool stop_at_cursor) const;
     bool get_alias(const char* name, str_base& out) const;
     bool is_alias_allowed(const char* buffer, uint32 offset) const;
 
@@ -98,8 +101,8 @@ class command_line_states
 {
 public:
     command_line_states() { clear(); }
-    void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words, collect_words_mode mode, const std::vector<command>& commands, bool use_recognizer);
-    void set(const line_buffer& buffer, const std::vector<word>& words, collect_words_mode mode, const std::vector<command>& commands, bool use_recognizer);
+    void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const words& words, collect_words_mode mode, const commands& commands, bool use_recognizer);
+    void set(const line_buffer& buffer, const words& words, collect_words_mode mode, const commands& commands, bool use_recognizer);
     uint32 break_end_word(uint32 truncate, uint32 keep, bool discard);
     void split_for_hinter();
     void clear();
@@ -109,7 +112,7 @@ public:
     const line_state& get_linestate(const line_buffer& buffer) const;
 private:
     void clear_internal();
-    std::vector<std::vector<word>> m_words_storage;
+    std::vector<words> m_words_storage;
     line_states m_linestates;
 #ifdef DEBUG
     bool m_broke_end_word;

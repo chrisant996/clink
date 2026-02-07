@@ -53,8 +53,8 @@ void word_collector_tester::run()
     REQUIRE(m_has_words);
 
     // Collect words.
-    std::vector<word> all_words;
-    std::vector<command> all_commands;
+    words all_words;
+    commands all_commands;
     const collect_words_mode mode = collect_words_mode::stop_at_cursor;
     const uint32 len = uint32(strlen(m_input));
     const uint32 command_offset = m_collector.collect_words(m_input, len, len, all_words, mode, &all_commands);
@@ -62,7 +62,7 @@ void word_collector_tester::run()
     command_line_states command_line_states;
     command_line_states.set(m_input, len, len, all_words, mode, all_commands, false/*use_recognizer*/);
 
-    const std::vector<word>& words = command_line_states.get_linestate(m_input, len).get_words();
+    const words& words = command_line_states.get_linestate(m_input, len).get_words();
 
     auto report = [&] ()
     {
@@ -139,7 +139,7 @@ TEST_CASE("Redir parsing")
     cmd_word_tokeniser word_tokeniser;
 
     word_collector_tester tester(&command_tokeniser, &word_tokeniser);
-    std::vector<word> words;
+    words words;
 
     SECTION("Commands")
     {
