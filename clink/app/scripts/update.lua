@@ -35,9 +35,15 @@ local need_lf
 
 local function parse_version_tag(tag)
     local maj, min, pat
-    maj, min, pat = tag:match("^clink%.(%d+)%.(%d+)%.(%d+).%x+$")
+    maj, min, pat = tag:match("clink%.(%d+)%.(%d+)%.(%d+).%x+")
     if not maj then
-        maj, min = tag:match("^clink%.(%d+)%.(%d+).%x+$")
+        maj, min = tag:match("clink%.(%d+)%.(%d+).%x+")
+        if not maj then
+            maj, min, pat = tag:match("v(%d+)%.(%d+)%.(%d+)")
+            if not maj then
+                maj, min = tag:match("v(%d+)%.(%d+)")
+            end
+        end
     end
     if maj and min then
         return tonumber(maj), tonumber(min), tonumber(pat or 0)
@@ -82,11 +88,13 @@ local function is_rhs_version_newer(lhs, rhs)
     end
 end
 
-local function replace_extension(pathname, ext)
-    if ext ~= "" then
-        ext = "." .. ext:gsub("^%.+", "") -- Ensure a leading dot.
+local function replace_extension(pathname, new_ext)
+    if new_ext ~= "" then
+        new_ext = "." .. new_ext:gsub("^%.+", "") -- Ensure a leading dot.
     end
-    return path.join(path.getdirectory(pathname), path.getbasename(pathname)) .. ext
+    local old_ext = path.getextension(pathname)
+    pathname = pathname:sub(1, #pathname - #old_ext)
+    return pathname .. new_ext
 end
 
 --------------------------------------------------------------------------------
@@ -379,7 +387,7 @@ local function can_check_for_update(force)
     return true
 end
 
-local function internal_check_for_update(force)
+local function internal_check_for_update(force, no_verify)
     local local_tag = get_local_tag()
     local install_type = get_installation_type()
     local user_agent = "Clink-Updater/1.0"
@@ -425,7 +433,7 @@ local function internal_check_for_update(force)
     log_info("latest release is " .. cloud_tag .. "; install type is " .. install_type .. ".")
     if did_themes_update_fail(nil, cloud_tag) then
         log_info("update again to version " .. local_tag .. " because themes directory is missing.")
-    elseif not is_rhs_version_newer(nil, local_tag, cloud_tag) then
+    elseif not is_rhs_version_newer(local_tag, cloud_tag) then
         log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
         return "", "already up-to-date.", true
     end
@@ -451,7 +459,7 @@ local function internal_check_for_update(force)
         return nil, err
     end
     local download_files = {}
-    if install_type == "zip" then
+    if install_type == "zip" and not no_verify then
         table.insert(download_files, {
             latest = replace_extension(latest_update_file, "cat"),
             localfile = replace_extension(local_update_file, "cat")
@@ -520,7 +528,7 @@ local function update_lastcheck(update_dir)
     end
 end
 
-local function check_for_update(force)
+local function check_for_update(force, no_verify)
     local update_dir, err = get_update_dir()
     if not update_dir then
         return nil, err
@@ -534,7 +542,7 @@ local function check_for_update(force)
     end
 
     -- Attempt to update.
-    local ret, err, stop = internal_check_for_update(force) -- luacheck: ignore 411
+    local ret, err, stop = internal_check_for_update(force, no_verify) -- luacheck: ignore 411
 
     -- Record last update time.
     update_lastcheck(update_dir)
@@ -545,7 +553,7 @@ local function check_for_update(force)
     return ret, err, stop
 end
 
-local function is_update_ready(force)
+local function is_update_ready(force, no_verify)
     local exe_path, err = get_bin_dir()
     if not exe_path then
         return nil, err
@@ -566,7 +574,7 @@ local function is_update_ready(force)
             return nil, err
         end
     end
-    update_file, err, stop = check_for_update(force)
+    update_file, err, stop = check_for_update(force, no_verify)
     if not update_file then
         -- If an update is already downloaded, then ignore transient errors
         -- that may have occurred while attempting to check or download a new
@@ -968,7 +976,7 @@ end
 function clink.updatenow(elevated, force_prompt, redirected, no_verify)
     latest_cloud_tag = nil
 
-    local update_file, err = is_update_ready(true)
+    local update_file, err = is_update_ready(true, no_verify)
     if not update_file then
         return nil, err
     elseif update_file == "" then -- Indicates already up-to-date.
