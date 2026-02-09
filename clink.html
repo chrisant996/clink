@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.11</title>
+<title>Clink v1.9.12</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -974,7 +974,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.11</div>
+                <div id="title">Clink v1.9.12</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1201,7 +1201,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </table></code></pre>
 
 <p>To see more history, press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a <a href="#popup-windows">popup list</a> of command history matching what&#39;s been typed so far.  Typing in the popup list further searches or filters the list, and <kbd>F4</kbd> toggles between searching and filtering.</p>
-<p>The <a href="#suggestionglist_default">suggestionlist.default</a> setting controls whether each session starts with the suggestion list on or off.</p>
+<p>The <a href="#suggestionlist_default">suggestionlist.default</a> setting controls whether each session starts with the suggestion list on or off.</p>
 <p>The colors for the suggestion list can be customized by changing the <a href="#color_suggestionlist">color.suggestionlist_*</a> settings.</p>
 <h2 id="common-configuration"><a class="wlink" href="#common-configuration"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Common Configuration <span class="uplinks"><a href="#getting-started">up</a> <a href="#toc">top</a></span></h2>
 <p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.  The Readline init file is for key bindings and certain configuration variables for the Readline library that Clink uses.  The Clink settings are for everything else that doesn&#39;t come from the Readline library.  Lua scripts can extend Clink in a variety of ways, and can even add new bindable commands.</p>
@@ -2038,9 +2038,19 @@ $endif
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
 </tr>
 <tr>
-<td align="center"><a class="wlink" href="#suggestionglist_default"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionglist_default"></a><code>suggestionlist.default</code></td>
+<td align="center"><a class="wlink" href="#suggestionlist_default"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_default"></a><code>suggestionlist.default</code></td>
 <td align="center">False</td>
 <td>When this is true, a Clink session starts with the suggestion list enabled.  The suggestion list can be toggled on/off with <kbd>F2</kbd> or whatever key is bound to the <a href="#rlcmd-clink-toggle-suggestion-list"><code>clink-toggle-suggestion-list</code></a> command.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#suggestionlist_hide_hints"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_hide_hints"></a><code>suggestionlist.hide_hints</code></td>
+<td align="center">True</td>
+<td>When this is true, the input hints controlled by the <a href="#comment_row_show_hints"><code>comment_row.show_hints</code></a> setting are suppressed while using the suggestion list.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#suggestionlist_num_history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_num_history"></a><code>suggestionlist.num_history</code></td>
+<td align="center"><code>3</code></td>
+<td>When the suggestion list shows suggestions from multiple sources, this limits how many history suggestions can be shown before suggestions from other sources.  This can be any integer from 1 to 8.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#terminal_adjust_cursor_style"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_adjust_cursor_style"></a><code>terminal.adjust_cursor_style</code></td>
@@ -2414,7 +2424,7 @@ Checks for an updated version of Clink.  If one is available, it is downloaded a
 </p>
 
 <h2 id="automatic-updates"><a class="wlink" href="#automatic-updates"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Automatic Updates <span class="uplinks"><a href="#configclink">up</a> <a href="#toc">top</a></span></h2>
-<p>By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run <code>clink update</code> when convenient to do so.</p>
+<p>By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run <code>clink update</code> when convenient to do so.  Clink verifies the digital signatures in the update before applying it.</p>
 <p>The default interval between checks is 5 days, which means after Clink checks for an update it waits at least 5 days before checking again.  You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.</p>
 <p>You can control what happens when an update is available by using <code>clink set <a href="#clink_autoupdate">clink.autoupdate</a> <span class="arg">mode</span></code>, where <span class="arg">mode</span> is one of these:</p>
 <table>
@@ -8179,6 +8189,7 @@ line_state:getrangelength() == 18          --          <----------------></code>
 -- t.length     [integer] Length of the word (includes embedded quotes).
 -- t.quoted     [boolean] Indicates whether the word is quoted.
 -- t.delim      [string] The delimiter character, or an empty string.
+-- t.cmd        [boolean | nil] true if the word is a built-in CMD command, otherwise nil.
 -- t.alias      [boolean | nil] true if the word is a doskey alias, otherwise nil.
 -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.</code></pre></div></div><hr/>
 
@@ -9097,6 +9108,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1912"><a class="wlink" href="#v1912"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.12 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new <code>suggestionlist.hide_hints</code> setting to control whether to hide input hints while using the suggestion list (input hints are normally controlled by the <code>comment_row.show_hints</code> setting, and are hidden by default while using the suggestion list).</li>
+<li>Added a type-ahead optimization in popup lists to avoid redundant or unnecessary processing during incremental find or filter input.</li>
+<li>Improve command line parsing to recognize when an executable exists with the same name as a built-in CMD command (e.g. &quot;echo.exe&quot;) and predict whether CMD will run the built-in CMD command or the executable file.  This affects argmatchers, completion, and input line coloring.</li>
+<li>Changed Clink&#39;s built-in updater to verify digital signatures before applying an update.</li>
+<li>Fixed position of highlights in the suggestion list to consistently use the earliest matching position.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/835">#835</a>; Unicode input is garbled in popup lists (regression introduced in v1.8.0).</li>
+<li>Fixed edge cases where certain Unicode input could be misinterpreted in popup lists and in <code>clink-select-complete</code>.</li>
+<li>Fixed potential for a buffer overread if invalid UTF8 bytes are encountered.</li>
+<li>Internal logging improvements.</li>
+</ul>
 <h4 id="v1911"><a class="wlink" href="#v1911"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.11 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new Lua API <a href="#console.getoriginaltitle">console.getoriginaltitle()</a> which gets what the OS considers to be the original console title.</li>
@@ -9246,6 +9269,7 @@ end</code></pre></div></div><hr/>
 <li>Fixed the <code>operate-and-get-next</code> command when the <code>history.sticky_search</code> setting is enabled (it fetched the same history entry each time).</li>
 <li>Fixed a potential crash after <kbd>Enter</kbd>, due to Readline ending a prompt with inconsistent state left over.</li>
 <li>Fixed two memory management issues in Readline undo handling, which in certain edge cases could potentially cause heap corruption.</li>
+<li>Fixed popup lists accidentally treating control characters as part of an incremental search (especially problematic when the <code>terminal.raw_esc</code> setting is enabled).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/786">#786</a>; <code>clink autorun</code> claims the &quot;AutoRun&quot; reg key has a &quot;current user&quot; WOW64 key, but there&#39;s no such thing.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/791">#791</a>; in legacy console, clicking on the terminal after using mouse to move scrollbar accidentally scrolls to the last line.</li>
 <li>Minor improvement to error handling for certain failures in oh-my-posh.</li>
