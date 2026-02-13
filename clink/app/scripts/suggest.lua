@@ -19,6 +19,7 @@ local function test_dupe(seen, entry, line, add)
     local es = entry[1] or entry.suggestion or nil
     local eo = entry[2] or entry.offset or nil
     local full = line:getline():sub(1, (eo or 0) - 1)..es
+    full = full:gsub("%s+$", "") -- Ignore trailing whitespace differences.
     if seen[full] then
         return true
     end
