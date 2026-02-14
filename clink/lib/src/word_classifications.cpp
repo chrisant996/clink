@@ -215,7 +215,7 @@ void word_classifications::apply_face(bool words, uint32 start, uint32 length, c
     char* const faces = words ? m_word_faces : m_faces;
     while (length > 0 && start < m_length)
     {
-        if (overwrite || m_faces[start] == FACE_SPACE)
+        if (overwrite || faces[start] == FACE_SPACE)
             faces[start] = face;
         start++;
         length--;
