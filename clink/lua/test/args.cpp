@@ -949,9 +949,10 @@ TEST_CASE("Lua arg parsers")
             end\
             \
             clink.argmatcher('foo')\
-            :addflags({'-qq'})\
+            :addflags({'-qq', '--zz='})\
             :addarg({'aa', 'bb', 'cc', hint='arg one'})\
             :addarg({'dd', 'ee', 'ff', hint=argtwohint})\
+            :adddescriptions({['--zz=']={'<zz_arg>','zz description'}})\
         ";
 
         REQUIRE_LUA_DO_STRING(lua, script);
@@ -976,6 +977,14 @@ TEST_CASE("Lua arg parsers")
 
             tester.set_input("foo xx yy");
             tester.set_expected_hint("arg two");
+            tester.run();
+
+            tester.set_input("foo --zz=");
+            tester.set_expected_hint("Argument expected:  <zz_arg>");
+            tester.run();
+
+            tester.set_input("foo --zz=abc");
+            tester.set_expected_hint("Argument expected:  <zz_arg>");
             tester.run();
         }
 
@@ -1002,6 +1011,18 @@ TEST_CASE("Lua arg parsers")
 
             tester.set_input("foo xx yy" META_B META_B);
             tester.set_expected_hint("arg one");
+            tester.run();
+
+            tester.set_input("foo --zz=" CTRL_B);
+            tester.set_expected_hint(nullptr);
+            tester.run();
+
+            tester.set_input("foo --zz=a" CTRL_B);
+            tester.set_expected_hint("Argument expected:  <zz_arg>");
+            tester.run();
+
+            tester.set_input("foo --zz=ab" CTRL_B);
+            tester.set_expected_hint("Argument expected:  <zz_arg>");
             tester.run();
         }
     }

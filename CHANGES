@@ -5,6 +5,7 @@
 #### v1.9.14
 
 - Changed the suggestion list to ignore trailing whitespace when filtering for duplicate entries.
+- Fixed a case where if an input hint exists for a flag ending in `=` then the input hint didn't get shown until more text was typed (such as after `foo --flag=`).
 
 #### v1.9.13
 

@@ -763,6 +763,12 @@ function _argreader:update(word, word_index, last_onadvance) -- luacheck: no unu
             arg_match_type = "f" --flag
             pushed_flags = true
         else
+            if matcher._flags then
+                local arg = matcher._flags._args[1]
+                if arg and self._need_arginfo then
+                    self._arginfo = get_word_arginfo(word, arg, realmatcher)
+                end
+            end
             return
         end
     end
@@ -3488,7 +3494,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
             -- advances the parser and sets up state for the NEXT pass.
             local arg_index = reader._arg_index
             local user_data = reader._user_data
-            local prev_arginfo = reader._arginfo
             local noflags = reader._noflags
             argmatcher = reader._realmatcher
 
@@ -3509,7 +3514,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                                 (cursorpos == nextposafterendword and line_state:getline():find("^[:=]", nextposafterendword - 1)) then
                             -- When chained, don't carry previous arginfo
                             -- past the last word.
-                            prev_arginfo = nil
                             reader._arginfo = nil
                         end
                     elseif cursorpos >= nextposafterendword then
@@ -3524,7 +3528,6 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 -- When chained, don't use previous arginfo.  Note that this
                 -- only kicks in _after_ the command word that chained, and
                 -- only if an argmatcher was found.
-                prev_arginfo = nil
                 reader._arginfo = nil
             end
 
@@ -3554,7 +3557,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                 elseif cursorpos < info.offset then
                     if not prev_info or prev_info.offset + prev_info.length < cursorpos then
                         -- Cursor is between words.
-                        return between_words(argmatcher, arg_index, word_index, line_state, user_data, prev_arginfo, reader._chain_command_hint, chained)
+                        return between_words(argmatcher, arg_index, word_index, line_state, user_data, reader._arginfo, reader._chain_command_hint, chained)
                     end
                     break
                 elseif not info.redir and info.offset <= cursorpos and cursorpos <= info.offset + info.length then
@@ -3562,8 +3565,9 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                     if not noflags and argmatcher._flags and argmatcher:_is_flag(word) then
                         arg_index = 0
                         args = argmatcher._flags._args[1]
-                        prev_arginfo = nil
-                        reader._arginfo = nil
+                        if not word:find("[:=]$") then
+                            reader._arginfo = nil
+                        end
                     else
                         args = argmatcher._args[arg_index]
                     end
@@ -3578,8 +3582,8 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
                                 besthint = h
                                 bestpos = p or info.offset
                             end
-                        elseif prev_arginfo then
-                            besthint = "Argument expected:  "..console.plaintext(prev_arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
+                        elseif reader._arginfo then
+                            besthint = "Argument expected:  "..console.plaintext(reader._arginfo:gsub("^%s+", ""):gsub("%s+$", ""))
                             bestpos = info.offset
                         end
                     end
