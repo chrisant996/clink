@@ -341,7 +341,7 @@ end
 --- <ol>
 --- <li>The git dir.
 --- <li>The workspace dir.  If not in a workspace, then this matches the git dir.
---- <li>The original input <span class="arg">dir</span>.
+--- <li>The workspace root dir.
 --- </ol>
 ---
 --- Or when not in a git repo it returns nil.
