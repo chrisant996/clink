@@ -4,6 +4,7 @@
 
 #### v1.9.15
 
+- Fixed the suggestion list to only respond to <kbd>Ctrl</kbd>-<kbd>G</kbd> if it's currently bound to `abort` (the default binding).  This is important to allow custom key bindings for <kbd>Ctrl</kbd>-<kbd>G</kbd> to coexist peacefully with the suggestion list.
 - Fixed incorrect input line coloring in some cases (regression introduced in v1.9.12).
 
 #### v1.9.14
