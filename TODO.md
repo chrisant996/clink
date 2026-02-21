@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- [ ] Type a command line, have suggestion list visible, press `Ctrl-S` --> the prompt display becomes garbled.
 - [ ] `rem` colors the rest of the input line as description, but it's just cosmetic:
   - [ ] Other classifiers can still run and overwrite the colors.  For example any `&` in the `rem` text are colored as though they are command separators, but they really are not.
   - [ ] Other argmatchers run after `&` in the input line.  But CMD treats the rest of the input line as part of the `rem` command, regardless of command separators or etc.
