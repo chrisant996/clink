@@ -617,6 +617,11 @@ void suggestionlist_impl::on_signal(int32 sig)
             virtual int32   set_bind_group(int32 id) override { return 0; }
         };
 
+        // Restore the suggestion list enabled state after cleaning up the
+        // suggestion list.
+        rollback<bool> rb(s_suggestion_list_enabled);
+
+        // Gracefully clean up the suggestion list.
         dummy_result result;
         cancel(result);
     }
@@ -637,7 +642,7 @@ void suggestionlist_impl::cancel(editor_module::result& result)
 
     update_display();
 
-    s_suggestion_list_enabled = false; // Also re-enables the comment row.
+    s_suggestion_list_enabled = false;
 }
 
 //------------------------------------------------------------------------------
