@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.16
+
+- Added new Lua API [os.getexesubsystem()](#os.getexesubsystem) which returns whether an executable file uses the console or GUI subsystem.
+- Fixed <kbd>Ctrl</kbd>-<kbd>C</kbd> disabling the suggestion list.
+
 #### v1.9.15
 
 - Fixed the suggestion list to only respond to <kbd>Ctrl</kbd>-<kbd>G</kbd> if it's currently bound to `abort` (the default binding).  This is important to allow custom key bindings for <kbd>Ctrl</kbd>-<kbd>G</kbd> to coexist peacefully with the suggestion list.
