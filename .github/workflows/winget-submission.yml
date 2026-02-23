@@ -22,8 +22,11 @@ jobs:
           $targetRelease = Invoke-RestMethod -uri "https://api.github.com/repos/chrisant996/clink/releases/latest"
           
           $installerUrl = $targetRelease | Select -ExpandProperty assets -First 1 | Where-Object -Property name -match 'clink.*.exe' | Select -ExpandProperty browser_download_url
+          $hash = ([regex]::Match($installerUrl, '\.([0-9a-fA-F]+)_setup\.exe$')).Groups[1].Value
+          
           $ver = $targetRelease.tag_name.Trim("v")
+          $dispver = "clink v$ver.$hash"
           
           # getting latest wingetcreate file
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          .\wingetcreate.exe update $wingetPackage -s -v $ver -u "$installerUrl|x86" "$installerUrl|x64" -t $gitToken
+          .\wingetcreate.exe update $wingetPackage -s -v $ver --display-version $dispver -u "$installerUrl|x86" "$installerUrl|x64" -t $gitToken
