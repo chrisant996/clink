@@ -1907,6 +1907,102 @@ bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
     return exitcode == 0;
 }
 
+//------------------------------------------------------------------------------
+subsystem_type get_executable_subsystem(const char* file)
+{
+    subsystem_type result = unknown;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+
+    do
+    {
+        const char* ext = path::get_extension(file);
+        if (!ext)
+            break;
+        if (!stricmp(ext, ".cmd") || !stricmp(ext, ".bat"))
+        {
+            result = console;
+            break;
+        }
+        if (stricmp(ext, ".exe") && stricmp(ext, ".com"))
+            break;
+
+        DWORD bytesRead;
+        wstr_moveable wfile(file);
+
+        hFile = CreateFileW(wfile.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (hFile == INVALID_HANDLE_VALUE)
+            break;
+
+        IMAGE_DOS_HEADER dosHeader;
+        if (!ReadFile(hFile, &dosHeader, sizeof(dosHeader), &bytesRead, nullptr))
+            break;
+        if (bytesRead != sizeof(dosHeader))
+            break;
+        if (dosHeader.e_magic != IMAGE_DOS_SIGNATURE)
+            break;
+
+        if (SetFilePointer(hFile, dosHeader.e_lfanew, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+            break;
+
+        DWORD ntSignature;
+        if (!ReadFile(hFile, &ntSignature, sizeof(ntSignature), &bytesRead, nullptr))
+            break;
+        if (bytesRead != sizeof(ntSignature))
+            break;
+        if (ntSignature != IMAGE_NT_SIGNATURE)
+            break;
+
+        IMAGE_FILE_HEADER fileHeader;
+        if (!ReadFile(hFile, &fileHeader, sizeof(fileHeader), &bytesRead, nullptr))
+            break;
+        if (bytesRead != sizeof(fileHeader))
+            break;
+
+        WORD magic;
+        if (!ReadFile(hFile, &magic, sizeof(magic), &bytesRead, nullptr))
+            break;
+        if (bytesRead != sizeof(magic))
+            break;
+
+        DWORD subsystemOffset = 0;
+        switch (magic)
+        {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            // 32-bit and 64-bit: Subsystem is at offset 68 in optional header.
+            subsystemOffset = dosHeader.e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + 68;
+            break;
+        }
+        if (!subsystemOffset)
+            break;
+
+        if (SetFilePointer(hFile, subsystemOffset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+            break;
+
+        WORD subsystem;
+        if (!ReadFile(hFile, &subsystem, sizeof(subsystem), &bytesRead, nullptr))
+            break;
+        if (bytesRead != sizeof(subsystem))
+            break;
+
+        switch (subsystem)
+        {
+        case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+            result = GUI;
+            break;
+        case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+            result = console;
+            break;
+        }
+    }
+    while (false);
+
+    if (hFile != INVALID_HANDLE_VALUE)
+        CloseHandle(hFile);
+
+    return result;
+}
+
 }; // namespace os
 
 

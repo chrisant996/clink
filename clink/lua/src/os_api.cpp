@@ -2106,6 +2106,36 @@ static int32 get_disk_free_space(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getexesubsystem
+/// -ver:   1.9.16
+/// -arg:   [file:string]
+/// -ret:   string | nil
+/// Returns the subsystem for an executable file.
+///
+/// The possible return values are:
+/// <p><table>
+/// <tr><th>Type</th><th>Description</th></tr>
+/// <tr><td>nil</td><td>The subsystem could not be determined.</td></tr>
+/// <tr><td>"console"</td><td>The file is an executable file and uses character based output.</td></tr>
+/// <tr><td>"GUI"</td><td>The file is an executable file and uses graphical UI.</td></tr>
+/// </table></p>
+static int32 get_exe_subsystem(lua_State* state)
+{
+    const char* file = checkstring(state, 1);
+    if (!file)
+        return 0;
+
+    os::subsystem_type type = os::get_executable_subsystem(file);
+    switch (type)
+    {
+    case os::console:   lua_pushliteral(state, "console"); break;
+    case os::GUI:       lua_pushliteral(state, "GUI"); break;
+    default:            return 0;
+    }
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.touch
 /// -ver:   1.2.31
 /// -arg:   path:string
@@ -3517,6 +3547,7 @@ void os_lua_initialise(lua_state& lua)
         { "enumshares",  &enum_shares },
         { "findfiles",   &find_files },
         { "getdiskfreespace", &get_disk_free_space },
+        { "getexesubsystem", &get_exe_subsystem },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.

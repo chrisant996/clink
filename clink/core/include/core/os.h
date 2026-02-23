@@ -49,6 +49,12 @@ enum argv_quote_mode {
     force               = 0x0002,   // force arg to be quoted
 };
 
+enum subsystem_type {
+    unknown,
+    console,
+    GUI
+};
+
 DEFINE_ENUM_FLAG_OPERATORS(temp_file_mode);
 
 class high_resolution_clock
@@ -98,6 +104,7 @@ bool    set_clipboard_text(const char* text, int32 length);
 bool    disambiguate_abbreviated_path(const char*& in, str_base& out);
 bool    is_elevated();
 bool    run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args);
+subsystem_type get_executable_subsystem(const char* file);
 
 #if 0
 void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);
