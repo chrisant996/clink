@@ -9,17 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- [ ] `fzf_rg` needs to be able to check if a program is GUI or console.  Lift the code from list-redux and expose it in an `os` Lua API.
-- [ ] Type a command line, have suggestion list visible, press `Ctrl-S` --> the prompt display becomes garbled.
-  - `UP`, `x`, `Ctrl-S` --> the prompt display becomes garbled.
-  - Happens regardless of `suggestionlist.hide_hints`.
-  - Also it results in the prompt getting stuck with the modmark showing when at the end of the history.
-  - It happens when `clink.refilterprompt()` is called inside the `onaftercommand` event (and specifically because of the `{modmark}` module in flexprompt).
-  - Two things are happening:
-    1. `rl_message()` is removing everything before the last `\n`.
-    2. `rl_set_prompt()` while a "message" is active loses the message.
-  - So any `rl.refilterprompt()` that happens while a "message" is active will both lose the message and mess up where the prompt is displayed (and that confuses `display_manager` into thinking it doesn't need to redisplay certain parts of the prompt).
-  - But also, the modmark is getting messed up and memory is leaked if `history-search-backward` then `"x"` then `Ctrl-S`.
 - [ ] `rem` colors the rest of the input line as description, but it's just cosmetic:
   - [ ] Other classifiers can still run and overwrite the colors.  For example any `&` in the `rem` text are colored as though they are command separators, but they really are not.
   - [ ] Other argmatchers run after `&` in the input line.  But CMD treats the rest of the input line as part of the `rem` command, regardless of command separators or etc.
