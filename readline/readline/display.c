@@ -3344,6 +3344,9 @@ rl_message (const char *format, ...)
       FREE (local_prompt);
       FREE (local_prompt_prefix);
       local_prompt = (char *)NULL;
+/* begin_clink_change */
+      local_prompt_prefix = (char *)NULL;
+/* end_clink_change */
     }
   rl_display_prompt = msg_buf;
 /* begin_clink_change */
