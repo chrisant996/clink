@@ -85,9 +85,11 @@ function cmd_classifier:classify(commands) -- luacheck: no self
         end
 
         -- Command separators, redirection arguments, and rem command.
+        local rem
         local last_offset
         for _, command in ipairs(commands) do
             line_state = command.line_state
+            local cwi = line_state:getcommandwordindex()
             if last_offset then
                 color_separators(line, last_offset, line_state:getcommandoffset() - 1, classifications, color_cmdsep)
             end
@@ -98,14 +100,14 @@ function cmd_classifier:classify(commands) -- luacheck: no self
                 end
                 if info.redir then
                     classifications:applycolor(info.offset, info.length, color_cmdredir)
-                elseif word_index == 1 and line_state:getword(word_index) == "rem" then
+                elseif not info.alias and word_index == cwi and line_state:getword(word_index) == "rem" then
                     local color = settings.get("color.description")
                     if color == "" then
                         color = "0"
                     end
                     command.classifications:classifyword(1, "c")
-                    command.classifications:applycolor(info.offset + info.length, #line, color)
-                    break
+                    command.classifications:applycolor(info.offset + info.length, #line, color, true)
+                    return
                 end
             end
             local info = line_state:getwordinfo(line_state:getwordcount())
