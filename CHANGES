@@ -4,7 +4,7 @@
 
 #### v1.9.17
 
-- Fixed [#843](https://github.com/chrisant996/clink/issues/843); `clink update` writes malformed `DisplayVersion` which confuses `winget`.
+- Fixed [#843](https://github.com/chrisant996/clink/issues/843); `clink update` writes malformed `DisplayVersion` which confuses `winget` (regression introduced in v1.9.12).
 
 #### v1.9.16
 
