@@ -5,6 +5,7 @@
 #### v1.9.16
 
 - Added new Lua API [os.getexesubsystem()](#os.getexesubsystem) which returns whether an executable file uses the console or GUI subsystem.
+- Fixed a garbled prompt if `clink.refilterprompt()` changes the prompt while a Readline mode with a message is active (e.g. `reverse-search-history`).
 - Fixed <kbd>Ctrl</kbd>-<kbd>C</kbd> disabling the suggestion list.
 
 #### v1.9.15
