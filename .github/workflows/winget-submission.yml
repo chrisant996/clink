@@ -27,6 +27,12 @@ jobs:
           $ver = $targetRelease.tag_name.Trim("v")
           $dispver = "clink v$ver.$hash"
           
+          # diagnostics
+          Write-Host "installerUrl = $installerUrl"
+          Write-Host "ver = $ver"
+          Write-Host "hash = $hash"
+          Write-Host "dispver = $dispver"
+          
           # getting latest wingetcreate file
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
           .\wingetcreate.exe update $wingetPackage -s -v $ver --display-version $dispver -u "$installerUrl|x86" "$installerUrl|x64" -t $gitToken
