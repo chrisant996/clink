@@ -722,7 +722,7 @@ local function apply_zip_update(elevated, zip_file, no_verify)
     -- Update installed version.
     if this_install_type == "exe" and this_install_key then
         print("Updating registry keys...")
-        clink._set_install_version(this_install_key, cloud_tag);
+        clink._set_install_version(this_install_key, version_from_tag(cloud_tag));
     end
 
     -- Cleanup.
@@ -938,7 +938,7 @@ clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
 local function do_prompt(tag)
-    local action = clink._show_update_prompt(tag)
+    local action = clink._show_update_prompt(version_from_tag(tag))
     if not action then
         return -1
     elseif action == "update" then

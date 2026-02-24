@@ -245,7 +245,7 @@ INT_PTR command_link_dialog::dlgproc(UINT msg, WPARAM wParam, LPARAM lParam)
                     RECT rcText = rcCtl;
                     const HFONT hfontOld = SelectFont(hdc, m_hfont_normal);
                     DrawText(hdc, m_message.c_str(), m_message.length(), &rcText, DT_CALCRECT|DT_WORDBREAK);
-                    if (rcCtl.bottom < rcText.bottom)
+                    if (rcText.bottom < rcCtl.bottom)
                     {
                         rcText = rcCtl;
                         DrawText(hdc, m_message.c_str(), m_message.length(), &rcText, DT_CALCRECT|DT_SINGLELINE);
