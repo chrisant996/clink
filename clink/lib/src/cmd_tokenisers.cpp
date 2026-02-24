@@ -393,6 +393,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
     bool any_text = false;
     tokeniser_state state = sSpc;
     cmd_state cmd_state(true/*only_rem*/);
+    cmd_state.clear(true);
 
     // The first word can contain any non-space characters if it's an alias.
     const uint32 alias_len = is_alias_word(m_iter, m_alias_cache);
