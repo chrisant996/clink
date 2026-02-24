@@ -9,9 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- [ ] `rem` colors the rest of the input line as description, but it's just cosmetic:
-  - [ ] Other classifiers can still run and overwrite the colors.  For example any `&` in the `rem` text are colored as though they are command separators, but they really are not.
-  - [ ] Other argmatchers run after `&` in the input line.  But CMD treats the rest of the input line as part of the `rem` command, regardless of command separators or etc.
 - Completion sometimes doesn't work.  In the rare cases where I've experienced this, there were no matches at all.
   - ~~Maybe the repro is to queue up typing before the prompt, so that when the prompt shows it starts a coroutine to generate matches (e.g. for suggestions) but then typing and `TAB` is processed while the matches coroutine is already running?~~
   - I tried forcing several different race conditions, and none of them could reproduce the issue.  It happens only very rarely, so until I can find more detailed context, I can't even tell if it's a recent regression or if it only occurs in a certain configuration.  But my guess is it's either a recent regression, or an issue exposed/exacerbated by recent features.
