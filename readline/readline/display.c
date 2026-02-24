@@ -207,6 +207,7 @@ rl_get_face_func_t *rl_get_face_func = (rl_get_face_func_t *)NULL;
 rl_puts_face_func_t *rl_puts_face_func = (rl_puts_face_func_t *)NULL;
 static const char *_normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
+static char* _rl_current_message = NULL;
 /* end_clink_change */
 
 /* Global variables declared here. */
@@ -3304,6 +3305,14 @@ rl_character_len (int c, int pos)
    mini-modeline. */
 static int msg_saved_prompt = 0;
 
+/* begin_clink_change */
+int
+rl_is_prompt_saved (void)
+{
+  return saved_local_prompt != 0;
+}
+/* end_clink_change */
+
 int
 rl_message (const char *format, ...)
 {
@@ -3329,10 +3338,37 @@ rl_message (const char *format, ...)
       vsnprintf (msg_buf, msg_bufsiz, format, args);
     }
 #else
+/* begin_clink_change */
+#error This is a buffer overflow if the message exceeds 128 bytes!
+/* end_clink_change */
   vsprintf (msg_buf, format, args);
   msg_buf[msg_bufsiz - 1] = '\0';	/* overflow? */
 #endif
   va_end (args);
+
+/* begin_clink_change
+ * The Lua API clink.refilterprompt() can end up calling rl_set_prompt() while
+ * a message from rl_message() is active.  _rl_current_message holds a copy of
+ * the message so clink.refilterprompt() can reapply the current message. */
+  {
+    const char* msg_color = (_rl_display_message_color && *_rl_display_message_color) ? _rl_display_message_color : _normal_color;
+    const char* end_color = (_rl_display_message_color && *_rl_display_message_color) ? _normal_color : "";
+    const char* end = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
+    const int pmt_len = end ? (end + 1 - rl_prompt) : 0;
+    char* full_msg_buf;
+    bneed += pmt_len;
+    bneed += strlen (msg_color);
+    bneed += strlen (end_color);
+    ++bneed;
+    full_msg_buf = xmalloc (bneed);
+    memcpy (full_msg_buf, rl_prompt, pmt_len);
+    _snprintf (full_msg_buf + pmt_len, bneed - pmt_len, "%s%s%s", msg_color, msg_buf, end_color);
+    assert (strlen (full_msg_buf) < bneed);
+    xfree (_rl_current_message);
+    _rl_current_message = msg_buf;
+    msg_buf = full_msg_buf;
+  }
+/* end_clink_change */
 
   if (saved_local_prompt == 0)
     {
@@ -3363,10 +3399,28 @@ rl_message (const char *format, ...)
   return 0;
 }
 
+/* begin_clink_change */
+void
+rl_reapply_message (void)
+{
+  if (_rl_current_message)
+    {
+      char* message = _rl_current_message;
+      _rl_current_message = 0;
+      rl_message (message);
+      xfree (message);
+    }
+}
+/* end_clink_change */
+
 /* How to clear things from the "echo-area". */
 int
 rl_clear_message (void)
 {
+/* begin_clink_change */
+  xfree (_rl_current_message);
+  _rl_current_message = 0;
+/* end_clink_change */
   rl_display_prompt = rl_prompt;
   if (msg_saved_prompt)
     {
@@ -3447,10 +3501,6 @@ _rl_make_prompt_for_search (int pchar)
 {
   int len;
   char *pmt, *p;
-/* begin_clink_change */
-  const char* color;
-  int extra;
-/* end_clink_change */
 
   rl_save_prompt ();
 
@@ -3484,28 +3534,11 @@ _rl_make_prompt_for_search (int pchar)
 /* end_clink_change */
 
 /* begin_clink_change */
-  color = (_rl_display_message_color && 
-           *_rl_display_message_color) ? _rl_display_message_color : _normal_color;
-  extra = color ? _normal_color_len + strlen(color) + _normal_color_len : 0;
-  pmt = (char *)xmalloc (len + extra + 2);
-  if (extra)
-    {
-      if (len)
-        {
-          strcpy (pmt, _normal_color);
-          strcpy (pmt + _normal_color_len, p ? p : rl_prompt);
-        }
-      strcpy (pmt + _normal_color_len + len, color);
-      pmt[extra + len - _normal_color_len] = pchar;
-      strcpy (pmt + extra + len + 1 - _normal_color_len, _normal_color);
-    }
-  else
-    {
-      if (len)
-        strcpy (pmt, p ? p : rl_prompt);
-      pmt[len] = pchar;
-      pmt[len+1] = '\0';
-    }
+  pmt = (char *)xmalloc (len + 2);
+  if (len)
+    strcpy (pmt, p ? p : rl_prompt);
+  pmt[len] = pchar;
+  pmt[len+1] = '\0';
 /* end_clink_change */
 
   /* will be overwritten by expand_prompt, called from rl_message */
@@ -3711,6 +3744,9 @@ cr (void)
   _rl_last_c_pos = 0;
 }
 
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
 /* Redraw the last line of a multi-line prompt that may possibly contain
    terminal escape sequences.  Called with the cursor at column 0 of the
    line to draw the prompt on. */
@@ -3737,9 +3773,6 @@ redraw_prompt (char *t)
   rl_restore_prompt();
 }
       
-/* begin_clink_change */
-#if 0
-/* end_clink_change */
 /* Redisplay the current line after a SIGWINCH is received. */
 void
 _rl_redisplay_after_sigwinch (void)

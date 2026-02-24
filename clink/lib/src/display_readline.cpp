@@ -1870,8 +1870,7 @@ void display_manager::display()
         rl_before_display_function();
 
     // Modmark.
-    bool is_message;
-    const bool modmark = has_modmark(&is_message);
+    const bool modmark = has_modmark();
 
     // If someone thought that the redisplay was handled, but the currently
     // visible line has a different modification state than the one about to
@@ -1989,16 +1988,10 @@ void display_manager::display()
                 rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
         }
 
-        if (is_message && _rl_display_message_color)
-            rl_fwrite_function(_rl_out_stream, _rl_display_message_color, strlen(_rl_display_message_color));
-
         if (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM)
             m_curr.clear();
 
         rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
-
-        if (is_message && _rl_display_message_color)
-            rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
 
         m_pending_wrap = force_wrap;
 
@@ -3040,15 +3033,11 @@ void rl_set_rprompt(const char* rprompt)
 }
 
 //------------------------------------------------------------------------------
-bool has_modmark(bool* out)
+bool has_modmark()
 {
     const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
                              !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
-    const bool modmark = (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
-
-    if (out)
-        *out = is_message;
-    return modmark;
+    return (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
 }
 
 //------------------------------------------------------------------------------

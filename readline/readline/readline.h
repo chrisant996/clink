@@ -467,6 +467,10 @@ extern void rl_redraw_prompt_last_line (void);
 /* Save and restore internal prompt redisplay information. */
 extern void rl_save_prompt (void);
 extern void rl_restore_prompt (void);
+/* begin_clink_change */
+extern int rl_is_prompt_saved (void);
+extern void rl_reapply_message (void);
+/* end_clink_change */
 
 /* Modifying text. */
 extern void rl_replace_line (const char *, int);
