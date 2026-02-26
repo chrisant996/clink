@@ -51,7 +51,7 @@ function clink._log_generators(...)
     if add_stack and (tonumber(os.getenv("CLINK_LOG_GENERATORS")) or 0) > 1 then
         msg = msg.."  ---  " .. debug.traceback(nil, 3) -- 1 is traceback, 2 is _log_generators, 3 is caller.
     end
-    log.info(msg)
+    log.info(msg, 2)
 end
 
 
@@ -177,7 +177,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
 
         if do_log then
             clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
-            clink._log_generators("cursor", line:getcursor(), "line", line:getline(), NOSTK)
+            clink._log_generators("cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK)
         end
 
         -- Generate matches.
@@ -269,6 +269,8 @@ end
 
 --------------------------------------------------------------------------------
 function clink._generate(line_state, line_states, match_builder, old_filtering)
+    local do_log = os.getenv("CLINK_LOG_GENERATORS")
+
     local impl = function ()
         clink.generator_stopped = nil
 
@@ -285,6 +287,10 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
             if ret == true then
                 -- Remember the generator function that stopped.
                 clink.generator_stopped = generator.generate
+                if do_log then
+                    local info = debug.getinfo(clink.generator_stopped, 'S')
+                    clink._log_generators("clink._generate", "STOPPED", "who", info.short_src..":"..info.linedefined)
+                end
                 return true
             end
         end
@@ -303,7 +309,6 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
     prepare()
     clink.co_state._current_builder = match_builder
 
-    local do_log = os.getenv("CLINK_LOG_GENERATORS")
     if do_log then
         clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
         clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), NOSTK)
