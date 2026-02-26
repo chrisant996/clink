@@ -2484,6 +2484,12 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
 
         // Find left index of difference.
         {
+            uint32 lcol_whole = lcol;
+            const char* oc_whole = o->m_chars;
+            const char* of_whole = o->m_faces;
+            const char* dc_whole = d->m_chars;
+            const char* df_whole = d->m_faces;
+
             wcwidth_iter oiter(oc, o->m_len);
             wcwidth_iter diter(dc, d->m_len);
             const char* p = dc;
@@ -2501,7 +2507,23 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
                 of += bytes;
                 dc += bytes;
                 df += bytes;
+                // Avoid splitting a FACE_HISTEXPAND run, otherwise Windows
+                // Terminal will split the hyperlink's hover underline.
+                if (*(df - 1) != FACE_HISTEXPAND)
+                {
+                    lcol_whole = lcol;
+                    oc_whole = oc;
+                    of_whole = of;
+                    dc_whole = dc;
+                    df_whole = df;
+                }
             }
+
+            lcol = lcol_whole;
+            oc = oc_whole;
+            of = of_whole;
+            dc = dc_whole;
+            df = df_whole;
         }
 
         lind = uint32(dc - d->m_chars);
@@ -2572,6 +2594,20 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
                     }
                     --ec;
                     --ef;
+                }
+            }
+
+            // If rightmost char's face is FACE_HISTEXPAND then increment
+            // right index until it contains the full run of FACE_HISTEXPAND,
+            // otherwise Windows Terminal splits the hyperlink.
+            if (df2 > df && *(df2 - 1) == FACE_HISTEXPAND)
+            {
+                while (df2 < d->m_faces + d->m_len && *df2 == FACE_HISTEXPAND)
+                {
+                    ++oc2;
+                    ++of2;
+                    ++dc2;
+                    ++df2;
                 }
             }
         }
