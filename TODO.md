@@ -15,6 +15,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - I just hit it again.  I'll have to try to build optional logging to track it down.
   - Does not seem to be related to coroutine generators superceding main routine generators (tried injecting os.sleep into coroutine generators to make them take longer, and was unable to repro).
   - **What to log:**
+    - (context includes input line, os.getcwd(), and traceback)
     - context that triggered running generators
     - context that skips generating, and why
     - context that cancels generating, and why
@@ -26,6 +27,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - matches
     - generation id
     - finish generating
+  - Logs showed main coroutine ran generators with input `showver r` and got 0 matches, and a suggestions coroutine ran generators with input either `showver resou` or `showver r` (can't remember which) and got the correct set of matches for the current directory.
+    - Was cwd wrong in the main coroutine?  _(Added logging to show os.getcwd().)_
+    - Did something stop generators?  _(Added logging to show who stops generators.)_
+    - Was access denied by Windows Defender?  _(Seems so unlikely that I'm not even pursuing that possibility yet.)_
+    - **New information:**  The reason repeated <kbd>Tab</kbd> did not cycle through anything even though the suggestion list shows completions is because `old-menu-complete` takes a snapshot of the matches and doesn't update it until some other command is invoked and then `old-menu-complete` is invoked again.  _That part is working as expected; the issue is that the initial generate pass got 0 matches in the first place._
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Some way for input hints to show up when the suggestion list is active?
 - Make a documentation section that lists all the CLINK environment variables.
