@@ -85,7 +85,6 @@ function cmd_classifier:classify(commands) -- luacheck: no self
         end
 
         -- Command separators, redirection arguments, and rem command.
-        local rem
         local last_offset
         for _, command in ipairs(commands) do
             line_state = command.line_state
