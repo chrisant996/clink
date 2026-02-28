@@ -138,6 +138,20 @@ static int32 docall (lua_State *L, int32 narg, int32 nres) {
 }
 
 //------------------------------------------------------------------------------
+static void init_global_vars(lua_State* L)
+{
+    WCHAR module[280];
+    DWORD len = GetModuleFileNameW(nullptr, module, sizeof_array(module));
+    if (!len || len >= sizeof_array(module))
+        return;
+
+    str_moveable exe_path(module);
+
+    lua_pushlstring(L, exe_path.c_str(), exe_path.length());
+    lua_setglobal(L, "CLINK_EXE");
+}
+
+//------------------------------------------------------------------------------
 // Various functions lifted verbatim from lua.c.
 #include "interpreter_lua_c.h"
 
@@ -270,6 +284,8 @@ int32 interpreter(int32 argc, char** argv)
         flags |= lua_state_flags::no_env;
     lua_state lua(flags);
     lua_State *L = lua.get_state();
+
+    init_global_vars(L);
 
     if (show_version)
     {
