@@ -49,7 +49,8 @@ function clink._log_generators(...)
         end
     end
     if add_stack and (tonumber(os.getenv("CLINK_LOG_GENERATORS")) or 0) > 1 then
-        msg = msg.."  ---  " .. debug.traceback(nil, 3) -- 1 is traceback, 2 is _log_generators, 3 is caller.
+        -- 1 is traceback, 2 is _log_generators, 3 is caller.
+        msg = msg.."  ---  " .. debug.traceback(nil, 3):gsub("\n", " | "):gsub("%s%s+", " ")
     end
     log.info(msg, 2)
 end
