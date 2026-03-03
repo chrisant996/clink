@@ -18,6 +18,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Did something stop generators?  _(Added logging to show who stops generators.)_
     - Was access denied by Windows Defender?  _(Seems so unlikely that I'm not even pursuing that possibility yet.)_
     - **New information:**  The reason repeated <kbd>Tab</kbd> did not cycle through anything even though the suggestion list shows completions is because `old-menu-complete` takes a snapshot of the matches and doesn't update it until some other command is invoked and then `old-menu-complete` is invoked again.  _That part is working as expected; the issue is that the initial generate pass got 0 matches in the first place._
+    - **More new information:**  The empty matches case reports that `argmatcher:generate` stopped the generators.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Some way for input hints to show up when the suggestion list is active?
 - Make a documentation section that lists all the CLINK environment variables.

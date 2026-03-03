@@ -2061,6 +2061,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         end
         local chain, chainlookup = reader:update(word, word_index)
         if chain then
+            clink._why_argmatcher_stopped = string.format("chain command (lookup '%s')", chainlookup or "")
             return true, true, chainlookup
         end
     end
@@ -2077,6 +2078,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     reader._match_builder = match_builder
     if reader:update(word, word_index, true--[[last_onadvance]]) then
         if reader._line_state:getwordcount() > word_index then
+            clink._why_argmatcher_stopped = "last_onadvance chain command"
             return true, true
         end
     end
@@ -2085,6 +2087,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     -- Disable completion when _stop_after is set, i.e. when a doskey alias
     -- has no $ tokens.
     if reader._stop_after then
+        clink._why_argmatcher_stopped = "reader._stop_after"
         return true
     end
 
@@ -2194,17 +2197,20 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         -- The word is an argument to a redirection symbol, so generate file
         -- matches.
         match_builder:addmatches(clink.filematches(line_state:getendword()))
+        clink._why_argmatcher_stopped = "redirection"
         return true
     elseif not reader._noflags and matcher._flags and matcher:_is_flag(line_state:getendword()) then
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
         add_matches(matcher._flags._args[1], "arg")
+        clink._why_argmatcher_stopped = "flags"
         return true
     elseif reader._phantomposition then
         -- Generate file matches for phantom positions, i.e. any flag ending
         -- with : or = that does not explicitly link to another matcher.
         match_builder:addmatches(clink.filematches(line_state:getendword()))
+        clink._why_argmatcher_stopped = "phantom position"
         return true
     else
         -- Generate matches for the argument position.
@@ -2217,7 +2223,11 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         if matcher._chain_command or reader._chain_command then
             local expand_aliases = matcher._chain_command_expand_aliases or reader._chain_command_expand_aliases
             local exec = clink._exec_matches(line_state, match_builder, true--[[chained]], not expand_aliases)
-            return exec or add_matches({clink.filematches}) or false
+            local stop = exec or add_matches({clink.filematches}) or false
+            if stop then
+                clink._why_argmatcher_stopped = "chain command exec matches"
+            end
+            return stop
         end
     end
 
@@ -2226,6 +2236,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     if matcher._no_file_generation then
         -- Don't match files if :nofiles() was explicitly used.
         no_files = true
+        clink._why_argmatcher_stopped = ":nofiles()"
     elseif #matcher._args == 0 and not matcher._flags then
         -- A completely empty argmatcher is a synonym for :nofiles().  It's
         -- empty if neither :addarg() nor :addflags() have been called on it
@@ -2234,6 +2245,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         -- important so that it's possible to generate flag matches without
         -- losing the ability to generate file matches.
         no_files = true
+        clink._why_argmatcher_stopped = "empty argmatcher"
     end
     return no_files
 end
@@ -3128,6 +3140,7 @@ local function do_generate(line_state, match_builder)
     local no_cmd
     local reader
 ::do_command::
+    clink._why_argmatcher_stopped = nil
     if not no_cmd then
         local ls = line_state:_test_cmd_builtin()
         if ls then

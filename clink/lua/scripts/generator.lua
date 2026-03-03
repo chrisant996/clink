@@ -50,7 +50,7 @@ function clink._log_generators(...)
     end
     if add_stack and (tonumber(os.getenv("CLINK_LOG_GENERATORS")) or 0) > 1 then
         -- 1 is traceback, 2 is _log_generators, 3 is caller.
-        msg = msg.."  ---  " .. debug.traceback(nil, 3):gsub("\n", " | "):gsub("%s%s+", " ")
+        msg = msg.."  ///  " .. debug.traceback(nil, 3):gsub("\n", " | "):gsub("%s%s+", " ")
     end
     log.info(msg, 2)
 end
@@ -178,7 +178,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
 
         if do_log then
             clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
-            clink._log_generators("cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK)
+            clink._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK)
         end
 
         -- Generate matches.
@@ -208,7 +208,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
             end)
         else
             if do_log then
-                clink._log_generators("_clear_toolkit", NOSTK)
+                clink._log_generators("match_generate_coroutine", "_clear_toolkit", NOSTK)
             end
             builder:_clear_toolkit()
         end
@@ -237,8 +237,10 @@ end
 --      print("file: "..info.short_src)
 --      print("line: "..info.linedefined)
 clink.generator_stopped = nil
+clink._why_argmatcher_stopped = nil
 local function generator_onbeginedit()
     clink.generator_stopped = nil
+    clink._why_argmatcher_stopped = nil
     _match_generate_state = {}
 end
 clink.onbeginedit(generator_onbeginedit)
@@ -274,6 +276,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
 
     local impl = function ()
         clink.generator_stopped = nil
+        clink._why_argmatcher_stopped = nil
 
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
@@ -290,7 +293,8 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
                 clink.generator_stopped = generator.generate
                 if do_log then
                     local info = debug.getinfo(clink.generator_stopped, 'S')
-                    clink._log_generators("clink._generate", "STOPPED", "who", info.short_src..":"..info.linedefined)
+                    clink._log_generators("clink._generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
+                                          clink._why_argmatcher_stopped and "why" or nil, clink._why_argmatcher_stopped)
                 end
                 return true
             end
@@ -312,7 +316,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
 
     if do_log then
         clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
-        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), NOSTK)
+        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK)
     end
     local ok, ret = xpcall(impl, _error_handler_ret)
     if do_log then
