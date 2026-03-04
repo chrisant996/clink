@@ -74,7 +74,8 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #define FACE_MESSAGE        '('
 #define FACE_SCROLL         '<'
 #define FACE_SELECTION      '#'
-#define FACE_HISTEXPAND     '!'
+#define FACE_HISTEXPAND1    '!'
+#define FACE_HISTEXPAND2    '?'
 #define FACE_SUGGESTION     '-'
 #ifdef USE_SUGGESTION_HINT_INLINE
 #define FACE_SUGGESTIONKEY  char(0x1a)  // In OEM 437 codepage, 0x1a is a right-arrow character.

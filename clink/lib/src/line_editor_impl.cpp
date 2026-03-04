@@ -185,8 +185,14 @@ static void classify_history_expansions(const history_expansion* list, word_clas
     if (is_null_or_empty(g_color_histexpand.get()))
         return;
 
+    char face = FACE_HISTEXPAND1;
     for (const history_expansion* e = list; e; e = e->next)
-        classifications.apply_face(false, e->start, e->len, FACE_HISTEXPAND, true);
+    {
+        classifications.apply_face(false, e->start, e->len, face, true);
+        // Alternate face codes to separate the hyperlinks.
+        face = FACE_HISTEXPAND1 + ((FACE_HISTEXPAND2 - FACE_HISTEXPAND1) - (face - FACE_HISTEXPAND1));
+        assert(face == FACE_HISTEXPAND1 || face == FACE_HISTEXPAND2);
+    }
 }
 
 

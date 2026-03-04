@@ -2493,6 +2493,7 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
             wcwidth_iter oiter(oc, o->m_len);
             wcwidth_iter diter(dc, d->m_len);
             const char* p = dc;
+            char histface = 0;
             while (oiter.next() && diter.next())
             {
                 const uint32 bytes = diter.character_length();
@@ -2507,15 +2508,24 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
                 of += bytes;
                 dc += bytes;
                 df += bytes;
-                // Avoid splitting a FACE_HISTEXPAND run, otherwise Windows
-                // Terminal will split the hyperlink's hover underline.
-                if (*(df - 1) != FACE_HISTEXPAND)
+                // Avoid splitting a FACE_HISTEXPAND1 or FACE_HISTEXPAND2 run,
+                // otherwise Windows Terminal splits the hyperlink underline.
+                const char thisface = *(df - 1);
+                if (thisface != FACE_HISTEXPAND1 && thisface != FACE_HISTEXPAND2)
                 {
+                    histface = 0;
+left_whole:
                     lcol_whole = lcol;
                     oc_whole = oc;
                     of_whole = of;
                     dc_whole = dc;
                     df_whole = df;
+                }
+                else if (thisface != histface)
+                {
+                    histface = thisface;
+                    if (diter.more() && thisface != *df)
+                        goto left_whole;
                 }
             }
 
@@ -2597,17 +2607,21 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
                 }
             }
 
-            // If rightmost char's face is FACE_HISTEXPAND then increment
-            // right index until it contains the full run of FACE_HISTEXPAND,
-            // otherwise Windows Terminal splits the hyperlink.
-            if (df2 > df && *(df2 - 1) == FACE_HISTEXPAND)
+            // If rightmost char face is FACE_HISTEXPAND1 or FACE_HISTEXPAND2
+            // then increment right index until it contains the full run of
+            // the face, otherwise Windows Terminal splits the hyperlink.
+            if (df2 > df)
             {
-                while (df2 < d->m_faces + d->m_len && *df2 == FACE_HISTEXPAND)
+                const char face = *(df2 - 1);
+                if (face == FACE_HISTEXPAND1 || face == FACE_HISTEXPAND2)
                 {
-                    ++oc2;
-                    ++of2;
-                    ++dc2;
-                    ++df2;
+                    while (df2 < d->m_faces + d->m_len && *df2 == face)
+                    {
+                        ++oc2;
+                        ++of2;
+                        ++dc2;
+                        ++df2;
+                    }
                 }
             }
         }

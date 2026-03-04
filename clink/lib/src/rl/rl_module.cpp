@@ -926,7 +926,8 @@ static void puts_face_func(const char* s, const char* face, int32 n)
             case FACE_SCROLL:       out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case FACE_SELECTION:    out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
 
-            case FACE_HISTEXPAND:
+            case FACE_HISTEXPAND1:
+            case FACE_HISTEXPAND2:
                 out << fallback_color(s_histexpand_color, "\x1b[0;97;45m") << c_hyperlink << c_doc_histexpand << c_BEL;
                 hyperlink = true;
                 break;
