@@ -20,11 +20,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - **New information:**  The reason repeated <kbd>Tab</kbd> did not cycle through anything even though the suggestion list shows completions is because `old-menu-complete` takes a snapshot of the matches and doesn't update it until some other command is invoked and then `old-menu-complete` is invoked again.  _That part is working as expected; the issue is that the initial generate pass got 0 matches in the first place._
     - **More new information:**  The empty matches case reports that `argmatcher:generate` stopped the generators.
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
-- Some way for input hints to show up when the suggestion list is active?
 - Make a documentation section that lists all the CLINK environment variables.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
   - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
-  - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths;
+  - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths.
 - `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
 - `str_iter_impl<>::next` doesn't handle UTF8 decoding correctly in cases of invalid UTF8.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
