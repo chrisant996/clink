@@ -91,6 +91,14 @@ static const char* const s_handler_names[] =
 };
 static_assert(sizeof_array(s_handler_names) == unsigned(ansi_handler::max), "must match ansi_handler enum");
 
+#ifdef DEBUG
+static bool is_console(HANDLE h)
+{
+    DWORD dw;
+    return !!GetConsoleMode(h, &dw);
+}
+#endif
+
 ansi_handler get_native_ansi_handler(str_base* name)
 {
     if (name)
@@ -726,6 +734,7 @@ void win_screen_buffer::close()
 void win_screen_buffer::write(const char* data, int32 length)
 {
     assert(m_ready);
+    assert(is_console(m_handle));
 
     str_iter iter(data, length);
 
@@ -769,6 +778,8 @@ void win_screen_buffer::write(const char* data, int32 length)
 //------------------------------------------------------------------------------
 void win_screen_buffer::flush()
 {
+    assert(is_console(m_handle));
+
     // When writing to the console conhost.exe will restart the cursor blink
     // timer and hide it which can be disorientating, especially when moving
     // around a line. The below will make sure it stays visible.

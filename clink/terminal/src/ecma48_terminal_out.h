@@ -52,10 +52,12 @@ private:
     void                reset_private_mode(const ecma48_code::csi_base& csi);
     int32               build_pending(char c);
     void                reset_pending();
+    void                init_redirection();
     ecma48_state        m_state;
     screen_buffer&      m_screen;
     int32               m_ax;
     int32               m_encode_length;
     int32               m_pending = 0;
     char                m_buffer[4];
+    bool                m_redirected = false;
 };

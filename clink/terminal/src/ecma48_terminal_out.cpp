@@ -40,18 +40,21 @@ ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::override_handle()
 {
+    init_redirection();
     m_screen.override_handle();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::open()
 {
+    init_redirection();
     m_screen.open();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::begin()
 {
+    init_redirection();
     m_screen.begin();
     reset_pending();
     init_termcap_intercept();
@@ -73,7 +76,8 @@ void ecma48_terminal_out::close()
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::flush()
 {
-    m_screen.flush();
+    if (!m_redirected)
+        m_screen.flush();
     reset_pending();
 }
 
@@ -234,6 +238,20 @@ void ecma48_terminal_out::write(const char* chars, int32 length)
         length = m_pending;
     }
     reset_pending();
+
+    if (m_redirected)
+    {
+        // REVIEW:  Notice that this means the redirected output uses UTF8,
+        // not the current console or system codepage.  This should only
+        // happen in standalone Lua interpreter mode.  Some places use the C
+        // runtime to write output, and the C runtime has to be in UTF8 mode,
+        // so intercepting and converting output to a different encoding would
+        // be an invasive change.
+        DWORD written = 0;
+        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+        WriteFile(h, chars, length, &written, nullptr);
+        return;
+    }
 
     if (do_termcap_intercept(chars))
         return;
@@ -559,4 +577,11 @@ int32 ecma48_terminal_out::build_pending(char c)
 void ecma48_terminal_out::reset_pending()
 {
     m_pending = 0;
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::init_redirection()
+{
+    DWORD dw;
+    m_redirected = !GetConsoleMode(get_std_handle(STD_OUTPUT_HANDLE), &dw);
 }
