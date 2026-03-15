@@ -6,6 +6,7 @@
 
 - Fixed a race condition where `menu-complete` style completion functions could get stuck thinking there were 0 matches if completion was invoked while an argmatcher's `delayinit` function was running in the background.
 - Fixed a cosmetic issue where the clickable link for History Expansion input line coloring could get split into many separate hover-underline segments.
+- Fixed the `suggestionlist.hide_hints` setting (when false) to allow History Expansion input hints.
 - Fixed glitches in displaying Readline messages in the prompt during `execute-named-command` and `non-incremental-reverse-search-history` (regression introduced in v1.9.16).
 - Internal logging improvements.
 
