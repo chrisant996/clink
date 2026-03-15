@@ -1289,7 +1289,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
             io_write('Cannot get info for '..v..'\n')
           end
         else
-          io_write(v..' is not a function\n')
+          io_write(args..' is not a function\n')
         end
       else
         io_write("Bad request\n")
