@@ -19,6 +19,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Was access denied by Windows Defender?  _(Seems so unlikely that I'm not even pursuing that possibility yet.)_
     - **New information:**  The reason repeated <kbd>Tab</kbd> did not cycle through anything even though the suggestion list shows completions is because `old-menu-complete` takes a snapshot of the matches and doesn't update it until some other command is invoked and then `old-menu-complete` is invoked again.  _That part is working as expected; the issue is that the initial generate pass got 0 matches in the first place._
     - **More new information:**  The empty matches case reports that `argmatcher:generate` stopped the generators.
+  - **ROOT CAUSE FOUND:**  `delayinit` function always happen in a background coroutine to keep typing responsive.  If `TAB` is pressed before the `delayinit` function finishes in the coroutine, then there will be no matches.
+    - This is by design.
+    - But its effect on the `menu-complete` family of completion commands is not intentional.
+    - Simple repro:  make a macro for `showver r\t`, reload Clink, type the key binding for the macro.
+  - _Options:_
+    - With sufficient complexity, the code might be able to wait for the `delayinit` coroutine to complete before trying to generate matches, but technically it's possible for that to deadlock, depending on the precise implementation of the `delayinit` function.  That's a bit fragile to consider as a solution.
+    - When any `delayinit` coroutine completes, it could kick the `menu-complete` family of commands so they don't try to use the already-generated empty list of matches.  What about other commands that might use similar techniques?
+    - When any `delayinit` coroutine completes, it already kicks the match pipeline to regenerate matches, but the `menu-complete` family of commands doesn't notice.
+    - **SO**, the simplest and most widely interoperable thing would be to clear `_rl_last_func` (it should work for the `menu-complete` family of commands and all other commands that use `rl.getlastcommand()` or `_rl_last_func` to recognize repeated invocations).
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Make a documentation section that lists all the CLINK environment variables.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
