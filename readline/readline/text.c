@@ -2132,7 +2132,10 @@ _rl_readstr_init (int pchar, int flags)
 
   p = _rl_make_prompt_for_search (pchar ? pchar : '@');
   cxt->flags |= READSTR_FREEPMT;
-  rl_message ("%s", p);
+/* begin_clink_change */
+  //rl_message ("%s", p);
+  rl_message_append ("%s", p);
+/* end_clink_change */
   xfree (p);
 
 /* begin_clink_change

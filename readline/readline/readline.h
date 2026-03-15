@@ -456,7 +456,11 @@ extern void rl_activate_mark (void);
 extern void rl_deactivate_mark (void);
 extern int rl_mark_active_p (void);
 
-extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+/* begin_clink_change */
+//extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+extern void rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+extern void rl_message_append (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+/* end_clink_change */
 
 extern int rl_show_char (int);
 

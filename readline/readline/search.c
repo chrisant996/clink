@@ -327,7 +327,10 @@ _rl_nsearch_init (int dir, int pchar)
 
   p = _rl_make_prompt_for_search (pchar ? pchar : ':');
   cxt->sflags |= SF_FREEPMT;
-  rl_message ("%s", p);
+/* begin_clink_change */
+  //rl_message ("%s", p);
+  rl_message_append ("%s", p);
+/* end_clink_change */
   xfree (p);
 
 /* begin_clink_change */

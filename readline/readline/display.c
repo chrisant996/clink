@@ -208,6 +208,7 @@ rl_puts_face_func_t *rl_puts_face_func = (rl_puts_face_func_t *)NULL;
 static const char *_normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
 static char* _rl_current_message = NULL;
+static int _rl_current_message_append = 0;
 /* end_clink_change */
 
 /* Global variables declared here. */
@@ -271,7 +272,9 @@ static int last_lmargin;
 
 /* A buffer for `modeline' messages. */
 static char *msg_buf = 0;
-static int msg_bufsiz = 0;
+/* begin_clink_change */
+//static int msg_bufsiz = 0;
+/* end_clink_change */
 
 /* Non-zero forces the redisplay even if we thought it was unnecessary. */
 static int forced_display;
@@ -3311,8 +3314,118 @@ rl_is_prompt_saved (void)
 {
   return saved_local_prompt != 0;
 }
+
+static void
+rl_message_internal (int append, char* message)
+{
+  int bneed = 0;
+  int pmt_len = 0;
+  char* buf = 0;
+  const char* msg_color = (_rl_display_message_color && *_rl_display_message_color) ? _rl_display_message_color : _normal_color;
+  const char* end_color = (_rl_display_message_color && *_rl_display_message_color) ? _normal_color : "";
+
+  assert (message);
+  if (!message)
+    return;
+
+  if (append)
+    {
+      pmt_len = rl_prompt ? strlen (rl_prompt) : 0;
+    }
+  else
+    {
+      const char* end = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
+      pmt_len = end ? (end + 1 - rl_prompt) : 0;
+    }
+
+  bneed += pmt_len;
+  bneed += 1 + strlen (msg_color) + 1;
+  bneed += strlen (message);
+  bneed += 1 + strlen (end_color) + 1;
+  ++bneed;
+
+  buf = xmalloc (bneed);
+  if (!buf)
+    return;
+
+  memcpy (buf, rl_prompt, pmt_len);
+  snprintf (buf + pmt_len, bneed - pmt_len, "%c%s%c%s%c%s%c",
+	RL_PROMPT_START_IGNORE, msg_color, RL_PROMPT_END_IGNORE,
+	message,
+	RL_PROMPT_START_IGNORE, end_color, RL_PROMPT_END_IGNORE);
+  assert (strlen (buf) < bneed);
+
+  xfree (msg_buf);
+  msg_buf = buf;
+
+  /* The Lua API clink.refilterprompt() can end up calling rl_set_prompt()
+     while a message from rl_message() is active.  _rl_current_message holds
+     a copy of the message so clink.refilterprompt() can reapply the current
+     message. */
+  xfree (_rl_current_message);
+  _rl_current_message = message;
+  _rl_current_message_append = append;
+
+  if (saved_local_prompt == 0)
+    {
+      rl_save_prompt ();
+      msg_saved_prompt = 1;
+    }
+  else if (local_prompt != saved_local_prompt)
+    {
+      FREE (local_prompt);
+      FREE (local_prompt_prefix);
+      local_prompt = (char *)NULL;
+      local_prompt_prefix = (char *)NULL;
+    }
+
+  rl_display_prompt = msg_buf;
+  rl_expand_prompt (msg_buf);
+  (*rl_redisplay_function) ();
+}
+
+static char*
+make_message (const char *format, va_list args)
+{
+#if !defined (HAVE_VSNPRINTF)
+#error vsnprintf is required.
+#endif
+
+  char* buf = 0;
+  int bneed;
+
+  bneed = vsnprintf (0, 0, format, args);
+  if (bneed < 0)
+    return 0;
+
+  ++bneed;
+  buf = xmalloc (bneed);
+  vsnprintf (buf, bneed, format, args);
+  return buf;
+}
+
+void
+rl_message (const char *format, ...)
+{
+  va_list args;
+  va_start (args, format);
+  rl_message_internal (0, make_message(format, args));
+  va_end (args);
+}
+
+void
+rl_message_append (const char *format, ...)
+{
+  va_list args;
+  va_start (args, format);
+  rl_message_internal (1, make_message(format, args));
+  va_end (args);
+}
 /* end_clink_change */
 
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
 int
 rl_message (const char *format, ...)
 {
@@ -3346,30 +3459,6 @@ rl_message (const char *format, ...)
 #endif
   va_end (args);
 
-/* begin_clink_change
- * The Lua API clink.refilterprompt() can end up calling rl_set_prompt() while
- * a message from rl_message() is active.  _rl_current_message holds a copy of
- * the message so clink.refilterprompt() can reapply the current message. */
-  {
-    const char* msg_color = (_rl_display_message_color && *_rl_display_message_color) ? _rl_display_message_color : _normal_color;
-    const char* end_color = (_rl_display_message_color && *_rl_display_message_color) ? _normal_color : "";
-    const char* end = rl_prompt ? strrchr (rl_prompt, '\n') : 0;
-    const int pmt_len = end ? (end + 1 - rl_prompt) : 0;
-    char* full_msg_buf;
-    bneed += pmt_len;
-    bneed += strlen (msg_color);
-    bneed += strlen (end_color);
-    ++bneed;
-    full_msg_buf = xmalloc (bneed);
-    memcpy (full_msg_buf, rl_prompt, pmt_len);
-    _snprintf (full_msg_buf + pmt_len, bneed - pmt_len, "%s%s%s", msg_color, msg_buf, end_color);
-    assert (strlen (full_msg_buf) < bneed);
-    xfree (_rl_current_message);
-    _rl_current_message = msg_buf;
-    msg_buf = full_msg_buf;
-  }
-/* end_clink_change */
-
   if (saved_local_prompt == 0)
     {
       rl_save_prompt ();
@@ -3398,6 +3487,9 @@ rl_message (const char *format, ...)
 
   return 0;
 }
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* begin_clink_change */
 void
@@ -3407,8 +3499,7 @@ rl_reapply_message (void)
     {
       char* message = _rl_current_message;
       _rl_current_message = 0;
-      rl_message (message);
-      xfree (message);
+      rl_message_internal (_rl_current_message_append, message);
     }
 }
 /* end_clink_change */
@@ -3420,6 +3511,8 @@ rl_clear_message (void)
 /* begin_clink_change */
   xfree (_rl_current_message);
   _rl_current_message = 0;
+  xfree (msg_buf);
+  msg_buf = 0;
 /* end_clink_change */
   rl_display_prompt = rl_prompt;
   if (msg_saved_prompt)
@@ -3504,6 +3597,9 @@ _rl_make_prompt_for_search (int pchar)
 
   rl_save_prompt ();
 
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
   /* We've saved the prompt, and can do anything with the various prompt
      strings we need before they're restored.  We want the unexpanded
      portion of the prompt string after any final newline. */
@@ -3543,6 +3639,14 @@ _rl_make_prompt_for_search (int pchar)
 
   /* will be overwritten by expand_prompt, called from rl_message */
   prompt_physical_chars = saved_physical_chars + 1;
+/* begin_clink_change */
+#else
+  pmt = (char *)xmalloc (2);
+  pmt[0] = pchar;
+  pmt[1] = '\0';
+#endif
+/* end_clink_change */
+
   return pmt;
 }
 

@@ -2731,7 +2731,7 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
     {
         rollback<rl_voidfunc_t*> rdf(rl_redisplay_function, suppress_redisplay);
         char* p = _rl_make_prompt_for_search(_rl_readstr_pchar);
-        rl_message("%s", p);
+        rl_message_append("%s", p);
         xfree(p);
     }
 
