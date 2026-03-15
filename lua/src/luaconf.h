@@ -574,6 +574,9 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size);
 #   else // !USE_MEMORY_TRACKING
 #       define LUA_HEAP_REALLOC realloc
 #   endif // !USE_MEMORY_TRACKING
+#   include <assert.h>
+#   define lua_assert assert
+#   define LUA_USE_APICHECK
 #endif // BUILD_LUA
 /* end_clink_change */
 

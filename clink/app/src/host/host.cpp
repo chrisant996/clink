@@ -899,6 +899,8 @@ force_reload_lua:
         initialise_lua(lua);
         lua.load_scripts();
     }
+    assert(lua_gettop(static_cast<lua_state&>(lua).get_state()) == 0);
+    assert_stack_top ast(static_cast<lua_state&>(lua).get_state());
 
     // Detect light vs dark console theme.
     if (send_event)
@@ -1201,9 +1203,15 @@ force_reload_lua:
         update_dir_history();
 
         // Call the editor to accept a line of input.
-        ret = skip_editor || (editor && editor->edit(out, edit));
-        if (!ret)
-            break;
+        {
+            ast.verify();
+            assert(static_cast<lua_state&>(lua).get_state());
+            assert_stack_top ast_edit(static_cast<lua_state&>(lua).get_state());
+
+            ret = skip_editor || (editor && editor->edit(out, edit));
+            if (!ret)
+                break;
+        }
 
         // Determine whether to add the line to history.  Must happen before
         // calling expand() because that resets the history position.
@@ -1269,6 +1277,7 @@ force_reload_lua:
         if (add_history && history && send_event)
         {
             lua_state& state = lua;
+            assert_stack_top ast_onhistory(state.get_state());
             lua_pushlstring(state.get_state(), out.c_str(), out.length());
             add_history = !lua.send_event_cancelable("onhistory", 1);
         }
@@ -1313,12 +1322,17 @@ force_reload_lua:
         if (send_event)
         {
             lua_state& state = lua;
+            assert_stack_top ast_onendedit(state.get_state());
             lua_pushlstring(state.get_state(), out.c_str(), out.length());
             lua.send_event("onendedit", 1);
         }
 
         if (send_event)
+        {
+            lua_state& state = lua;
+            assert_stack_top ast_onfilterinput(state.get_state());
             lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out, &more_out);
+        }
 
         clink_shutdown_ctrlevent();
     }

@@ -1137,6 +1137,8 @@ static int32 get_history_count(lua_State* state)
 /// not have an associated time.
 static int32 get_history_items(lua_State* state)
 {
+    assert_stack_top ast(state, 1);
+
     const auto _start = checkinteger(state, 1);
     const auto _end = checkinteger(state, 2);
     if (!_start.isnum() || !_end.isnum())

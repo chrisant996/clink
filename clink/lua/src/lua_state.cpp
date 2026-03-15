@@ -661,6 +661,8 @@ void lua_state::load_colortheme_in_memory(const char* theme)
 // the original level and then nargs are popped.
 bool lua_state::send_event_internal(lua_State* L, const char* event_name, const char* event_mechanism, int32 nargs, int32 nret)
 {
+    assert_stack_top ast(L, nret - nargs); // nargs were already pushed.
+
     bool ret = false;
 
     int32 top = lua_gettop(L);
@@ -724,6 +726,7 @@ bool lua_state::send_event_string_out(const char* event_name, str_base& out, int
     if (lua_isstring(L, -1))
         out = lua_tostring(L, -1);
 
+    lua_pop(L, 1);
     return true;
 }
 
@@ -736,10 +739,10 @@ bool lua_state::send_event_cancelable(const char* event_name, int32 nargs)
     if (!send_event_internal(L, event_name, "_send_event_cancelable", nargs, 1))
         return false;
 
-    if (lua_isboolean(L, -1) && !lua_toboolean(L, -1))
-        return true;
+    const bool canceled = (lua_isboolean(L, -1) && !lua_toboolean(L, -1));
 
-    return false;
+    lua_pop(L, 1);
+    return canceled;
 }
 
 //------------------------------------------------------------------------------
@@ -780,6 +783,7 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
         }
     }
 
+    lua_pop(L, 1);
     return true;
 }
 
@@ -984,6 +988,32 @@ save_stack_top::~save_stack_top()
     assert(lua_gettop(m_state) >= m_top);
     lua_settop(m_state, m_top);
 }
+
+
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+assert_stack_top::assert_stack_top(lua_State* L, int32 delta)
+: m_state(L)
+, m_top(lua_gettop(L))
+, m_delta(delta)
+{
+}
+
+assert_stack_top::~assert_stack_top()
+{
+    assert(lua_gettop(m_state) == m_top + m_delta);
+}
+
+void assert_stack_top::verify(int32 delta) const
+{
+    assert(lua_gettop(m_state) == m_top + delta);
+}
+#else
+assert_stack_top::assert_stack_top(lua_State*, int32) {}
+assert_stack_top::~assert_stack_top() {}
+void assert_stack_top::verify(int32) const {}
+#endif
 
 
 

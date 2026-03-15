@@ -142,6 +142,21 @@ private:
 };
 
 //------------------------------------------------------------------------------
+class assert_stack_top
+{
+public:
+    assert_stack_top(lua_State* L, int32 delta=0);
+    ~assert_stack_top();
+    void verify(int32 delta=0) const;
+#ifdef DEBUG
+private:
+    lua_State* const m_state;
+    int32 const m_top;
+    int32 const m_delta;
+#endif
+};
+
+//------------------------------------------------------------------------------
 void get_lua_srcinfo(lua_State* L, str_base& out);
 void set_lua_terminal(terminal_in* in, terminal_out* out);
 terminal_in* get_lua_terminal_input();
