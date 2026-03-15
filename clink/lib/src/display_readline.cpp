@@ -1783,12 +1783,13 @@ void display_manager::display()
         m_is_transient = true;
 
     // Is history expansion preview desired?
-    const bool want_histexpand_preview = (!m_is_transient &&
-                                          !g_display_manager_no_comment_row &&
+    const bool can_show_comment_row = (!m_is_transient &&
+                                       !g_display_manager_no_comment_row &&
+                                       (!is_suggestion_list_enabled() || !g_suggestionlist_hide_hints.get()));
+    const bool want_histexpand_preview = (can_show_comment_row &&
                                           g_history_show_preview.get() &&
                                           g_history_autoexpand.get() &&
-                                          g_expand_mode.get() > 0 &&
-                                          !is_suggestion_list_enabled());
+                                          g_expand_mode.get() > 0);
 
     // Max number of rows to use when displaying the input line.
     uint32 max_rows = g_input_rows.get();
@@ -2097,9 +2098,7 @@ void display_manager::display()
     }
 
     // Maybe show input hint.
-    if (need_update && _rl_vis_botlin < _rl_screenheight && !m_is_transient &&
-        !g_display_manager_no_comment_row &&
-        (!is_suggestion_list_enabled() || !g_suggestionlist_hide_hints.get()))
+    if (need_update && can_show_comment_row && _rl_vis_botlin < _rl_screenheight)
     {
         str_moveable in;
         if (m_forced_comment_row_cursorpos == rl_point)
