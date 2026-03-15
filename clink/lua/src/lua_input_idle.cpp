@@ -193,6 +193,16 @@ void lua_input_idle::on_idle()
     if (s_signaled_delayed_init)
     {
         s_signaled_delayed_init = false;
+        // Argmatcher delayinit functions are executed in a background
+        // coroutine.  This means TAB may be pressed before the delayinit
+        // finishes, in which case a menu-complete style of completion
+        // function will generate 0 matches.  Clearing _rl_last_func is a
+        // simple solution to make subsequent TABs generate matches anew
+        // instead of using an empty cached list of completions.  This also
+        // works for any other completion commands that look at
+        // rl.getlastcommand() or _rl_last_func.  But it can't happen on every
+        // reset_generate_matches() otherwise menu-complete can't iterate.
+        host_clear_last_command();
         host_invalidate_matches();
     }
 

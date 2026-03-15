@@ -82,6 +82,7 @@ public:
     virtual bool        translate(const char* seq, int32 len, str_base& out) override;
 
     void                reset_generate_matches();
+    void                clear_last_command();
     void                reselect_matches();
     void                reclassify(reclassify_reason why);
     void                try_suggest();

@@ -52,6 +52,7 @@ void host_filter_prompt();
 extern "C" void host_filter_transient_prompt(int32 crlf);
 int32 host_filter_matches(char** matches);
 void host_invalidate_matches();
+void host_clear_last_command();
 const char** host_copy_dir_history(int32* total);
 void host_get_app_context(int32& id, host_context& context);
 bool is_sparse_prompt_spacing();
