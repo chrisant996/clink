@@ -16,6 +16,7 @@
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
 #include "line_editor_integration.h"
+#include "rl_integration.h"
 #include "suggestions.h"
 #include "recognizer.h"
 #include "hinter.h"
@@ -536,6 +537,21 @@ void line_editor_impl::reset_generate_matches()
     set_flag(flag_select);
     m_prev_key.reset();
     m_prev_generate.clear();
+
+    // Argmatcher delayinit functions are executed in a background coroutine.
+    // This means TAB may be pressed before the delayinit finishes, in which
+    // case a menu-complete style of completion function will generate 0
+    // matches.  When the delayinit function finishes, reset_generate_matches
+    // is called (via s_signaled_delayed_init and host_invalidate_matches()).
+    // It's also called from many other sites.  All of the call sites seem to
+    // either want menu-complete style functions to regenerate new matches, or
+    // at least tolerate clearing _rl_last_func.
+    //
+    // Therefore, clearing _rl_last_func is a simple solution to make
+    // subsequent TABs generate matches anew instead of using an empty cached
+    // list of completions.  This also works for any other completion commands
+    // that look at rl.getlastcommand() or _rl_last_func.
+    override_rl_last_func(_rl_null_function);
 }
 
 //------------------------------------------------------------------------------
