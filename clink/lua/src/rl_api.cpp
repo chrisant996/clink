@@ -1153,7 +1153,7 @@ static int32 get_history_items(lua_State* state)
     if (end > history_length)
         end = history_length;
 
-    lua_createtable(state, (end - start) - 1, 0);
+    lua_createtable(state, (end - start), 0);
 
     HIST_ENTRY const* const* const items = history_list();
     int32 index = 0;
