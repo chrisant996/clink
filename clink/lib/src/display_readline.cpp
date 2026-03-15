@@ -1785,6 +1785,7 @@ void display_manager::display()
     // Is history expansion preview desired?
     const bool can_show_comment_row = (!m_is_transient &&
                                        !g_display_manager_no_comment_row &&
+                                       !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR) &&
                                        (!is_suggestion_list_enabled() || !g_suggestionlist_hide_hints.get()));
     const bool want_histexpand_preview = (can_show_comment_row &&
                                           g_history_show_preview.get() &&
