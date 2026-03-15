@@ -178,7 +178,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
 
         if do_log then
             clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
-            clink._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK)
+            clink._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
         end
 
         -- Generate matches.
@@ -316,7 +316,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
 
     if do_log then
         clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
-        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK)
+        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
     end
     local ok, ret = xpcall(impl, _error_handler_ret)
     if do_log then
