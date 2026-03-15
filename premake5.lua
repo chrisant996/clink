@@ -346,7 +346,7 @@ project("lua52")
 
     if asan then
         filter {"debug", "action:vs*"}
-            flags("NoIncrementalLink")
+            incrementallink("off")
     end
 
 --------------------------------------------------------------------------------
@@ -570,7 +570,7 @@ clink_dll("clink_app_dll")
     if asan then
         filter {"debug", "action:vs*"}
             buildoptions("/fsanitize=address")
-            flags("NoIncrementalLink")
+            incrementallink("off")
     end
 
 --------------------------------------------------------------------------------
@@ -605,7 +605,7 @@ clink_exe("clink_app_exe")
     if asan then
         filter {"debug", "action:vs*"}
             buildoptions("/fsanitize=address")
-            flags("NoIncrementalLink")
+            incrementallink("off")
     end
 
 --------------------------------------------------------------------------------
@@ -661,7 +661,7 @@ clink_exe("clink_test")
     if asan then
         filter {"debug", "action:vs*"}
             buildoptions("/fsanitize=address")
-            flags("NoIncrementalLink")
+            incrementallink("off")
     end
 
 --------------------------------------------------------------------------------
