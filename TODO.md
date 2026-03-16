@@ -7,6 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Crash inside `suggester::suggest` and `get_history_items`.  It's unclear how to reproduce the crash, and it's rare/inconsistent.
+- A key macro for `"\e[27;27~\nex"` hangs after the `\n` invokes `accept-line`.  The regression was introduced somewhere between 1.7.22 and 1.8.0.
 
 ## Normal Priority
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
