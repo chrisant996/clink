@@ -3592,8 +3592,11 @@ rl_restore_prompt (void)
 char *
 _rl_make_prompt_for_search (int pchar)
 {
-  int len;
-  char *pmt, *p;
+/* begin_clink_change */
+  //int len;
+  //char *pmt, *p;
+  char *pmt;
+/* end_clink_change */
 
   rl_save_prompt ();
 
