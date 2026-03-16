@@ -542,7 +542,7 @@ void line_editor_impl::reset_generate_matches()
 //------------------------------------------------------------------------------
 void line_editor_impl::clear_last_command()
 {
-    override_rl_last_func(_rl_null_function);
+    //override_rl_last_func(_rl_null_function);
 }
 
 //------------------------------------------------------------------------------
