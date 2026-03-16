@@ -90,12 +90,12 @@ void reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
-void clear_last_command()
+void reset_menu_completion()
 {
     if (!s_editor)
         return;
 
-    s_editor->clear_last_command();
+    s_editor->reset_menu_completion();
 }
 
 //------------------------------------------------------------------------------
@@ -309,13 +309,6 @@ void host_invalidate_matches()
     clear_suggestion();
     if (s_editor)
         s_editor->try_suggest();
-}
-
-//------------------------------------------------------------------------------
-void host_clear_last_command()
-{
-    if (s_editor)
-        s_editor->clear_last_command();
 }
 
 

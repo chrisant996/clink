@@ -540,9 +540,18 @@ void line_editor_impl::reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::clear_last_command()
+void line_editor_impl::reset_menu_completion()
 {
-    //override_rl_last_func(_rl_null_function);
+    // Force freeing any cached matches.  This is called when a delayinit
+    // function updates an argmatcher, which can change what completions will
+    // be generated.
+    //
+    // NOTE:  The -2 means "only reset if no matches" -- if it reset after a
+    // match had already been inserted then it would leave the current match
+    // inserted in the argument slot and start generating completions for the
+    // NEXT argument slot.
+    rl_menu_complete(-1, -2);
+    rl_old_menu_complete(-1, -2);
 }
 
 //------------------------------------------------------------------------------

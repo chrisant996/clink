@@ -3784,12 +3784,16 @@ rl_old_menu_complete (int count, int invoking_key)
      up to insert them. */
 /* begin_clink_change */
   //if (rl_last_func != rl_old_menu_complete)
-#ifdef USE_MEMORY_TRACKING
-  const int force_free = (count == -1 && invoking_key == -1);
-#else
-  const int force_free = 0;
-#endif
-  if ((rl_last_func != rl_old_menu_complete && rl_last_func != rl_backward_old_menu_complete) || force_free)
+  static int full_completion = 0;	/* set to 1 if menu completion should reinitialize on next call */
+  const int force_free = (count == -1 && (invoking_key == -1 || invoking_key == -2));
+  if (force_free)
+    {
+      if (invoking_key == -2 && match_list_size != 0)
+	return 0;
+      full_completion = 1;
+      return 0;
+    }
+  if ((rl_last_func != rl_old_menu_complete && rl_last_func != rl_backward_old_menu_complete) || full_completion)
 /* end_clink_change */
     {
       /* Clean up from previous call, if any. */
@@ -3800,17 +3804,11 @@ rl_old_menu_complete (int count, int invoking_key)
       match_list_index = match_list_size = 0;
       matches = (char **)NULL;
 
-      rl_completion_invoking_key = invoking_key;
-
 /* begin_clink_change */
-#ifdef USE_MEMORY_TRACKING
-      if (force_free)
-        {
-          orig_text = 0;
-          return 0;
-        }
-#endif
+      full_completion = 0;
 /* end_clink_change */
+
+      rl_completion_invoking_key = invoking_key;
 
       RL_SETSTATE(RL_STATE_COMPLETING);
 
@@ -3992,11 +3990,13 @@ rl_menu_complete (int count, int ignore)
   /* The first time through, we generate the list of matches and set things
      up to insert them. */
 /* begin_clink_change */
-#ifdef USE_MEMORY_TRACKING
-  const int force_free = (count == -1 && ignore == -1);
+  const int force_free = (count == -1 && (ignore == -1 || ignore == -2));
   if (force_free)
-    full_completion = 1;
-#endif
+    {
+      if (ignore == -1 || match_list_size == 0)
+	full_completion = 1;
+      return 0;
+    }
 /* end_clink_change */
   if ((rl_last_func != rl_menu_complete && rl_last_func != rl_backward_menu_complete) || full_completion)
     {
@@ -4009,16 +4009,6 @@ rl_menu_complete (int count, int ignore)
       matches = (char **)NULL;
 
       full_completion = 0;
-
-/* begin_clink_change */
-#ifdef USE_MEMORY_TRACKING
-      if (force_free)
-        {
-          orig_text = 0;
-          return 0;
-        }
-#endif
-/* end_clink_change */
 
       RL_SETSTATE(RL_STATE_COMPLETING);
 
