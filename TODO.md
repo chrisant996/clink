@@ -7,10 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Crash inside `suggester::suggest` and `get_history_items`.  It's unclear how to reproduce the crash, and it's rare/inconsistent.
-- Macro text `"\e[27;27~\nex"` is either dropping into an infinite loop, or putting cursor PAST the end of the buffer.
+- [ ] Crash during Lua garbage collection during `get_history_items` inside `suggester::suggest`.  It's unclear how to reproduce the crash, and it's rare/inconsistent.
+- [ ] Macro text `"\e[27;27~\nex"` is either dropping into an infinite loop, or putting cursor PAST the end of the buffer.
   - The problems seem to have been introduced by 3084fec746dfc175248ba814d65ab3e76b5de66c.
-  - `F2` is making a difference _even when `autosuggest.enable` is `false`_.  It seems that the suggestionlist code is not fully disabled when `autosuggest.enable` is `false`.
+  - [x] `F2` is making a difference _even when `autosuggest.enable` is `false`_.  It seems that the suggestionlist code is not fully disabled when `autosuggest.enable` is `false`.
 
 ## Normal Priority
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
