@@ -77,6 +77,7 @@ private:
     bool            m_fallback_prev_bind_group = false;
     bool            m_first_input = true;
     bool            m_hide = false;
+    bool            m_disabled = true;
 
     // Configuration.
     str<16>         m_list_color;

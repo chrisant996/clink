@@ -94,6 +94,7 @@ setting_bool g_suggestionlist_hide_hints(
     "setting are suppressed while using the suggestion list.",
     true);
 
+extern setting_bool g_autosuggest_enable;
 extern setting_int g_clink_scroll_offset;
 extern setting_color g_color_description;
 extern setting_bool g_comment_row_show_hints;
@@ -132,6 +133,8 @@ static suggestionlist_impl* s_suggestionlist = nullptr;
 suggestionlist_impl::suggestionlist_impl(input_dispatcher& dispatcher)
     : m_dispatcher(dispatcher)
 {
+    m_disabled = !g_autosuggest_enable.get();
+
     if (s_suggestion_list_default != s_suggestionlist_default.get())
     {
         // If the setting's value changed since last we saw it, then update
@@ -144,6 +147,10 @@ suggestionlist_impl::suggestionlist_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::allow(bool allow)
 {
+    assert(!m_disabled);
+    if (m_disabled)
+        return;
+
     const bool was_active = is_active();
 
     m_hide = !allow;
@@ -159,6 +166,10 @@ void suggestionlist_impl::allow(bool allow)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::enable(editor_module::result& result)
 {
+    assert(!m_disabled);
+    if (m_disabled)
+        return;
+
     s_suggestion_list_enabled = true; // Also disables the comment row.
 
     clear_suggestion(); // Trigger rerunning suggesters with limit > 1.
@@ -188,7 +199,7 @@ void suggestionlist_impl::enable(editor_module::result& result)
 bool suggestionlist_impl::toggle(editor_module::result& result)
 {
     assert(m_buffer);
-    if (!m_buffer)
+    if (m_disabled || !m_buffer)
         return false;
 
     if (is_active_even_if_hidden())
@@ -219,6 +230,9 @@ uint32 suggestionlist_impl::get_height() const
 //------------------------------------------------------------------------------
 void suggestionlist_impl::bind_input(binder& binder)
 {
+    if (m_disabled)
+        return;
+
     const char* esc = get_bindable_esc();
 
     m_bind_group = binder.create_group("suggestionlist");
@@ -322,7 +336,7 @@ void suggestionlist_impl::on_end_line()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_need_input(int32& bind_group)
 {
-    if (is_select_complete_active())
+    if (m_disabled || is_select_complete_active())
         return;
 
     if (m_index >= 0 && !is_locked_against_suggestions())
@@ -369,6 +383,7 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_input(const input& _input, result& result, const context& context)
 {
+    assert(!m_disabled);
     assert(is_active());
 
     input input = _input;
@@ -630,6 +645,7 @@ void suggestionlist_impl::on_signal(int32 sig)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::cancel(editor_module::result& result)
 {
+    assert(!m_disabled);
     assert(is_active_even_if_hidden());
 
     if (m_applied && is_locked_against_suggestions())
@@ -651,7 +667,7 @@ void suggestionlist_impl::init_suggestions()
     // Don't update suggestions if the cursor isn't at the end of the line.
     // There will be no suggestions, so the suggestion list would disappear,
     // which isn't the intended behavior for the suggestion list.
-    if (m_buffer->get_cursor() < m_buffer->get_length())
+    if (m_disabled || m_buffer->get_cursor() < m_buffer->get_length())
         return;
 
     const auto& id = m_suggestions.get_generation_id();
@@ -673,6 +689,9 @@ void suggestionlist_impl::init_suggestions()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_layout(bool refreshing_display)
 {
+    if (m_disabled)
+        return;
+
     m_input_hints = (!g_display_manager_no_comment_row &&
                      !g_suggestionlist_hide_hints.get() &&
                      g_comment_row_show_hints.get());
@@ -718,6 +737,8 @@ void suggestionlist_impl::update_layout(bool refreshing_display)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::update_top()
 {
+    assert(!m_disabled);
+
     int32 y = m_index;
     if (m_top > y)
     {
@@ -753,7 +774,7 @@ void suggestionlist_impl::update_top()
 void suggestionlist_impl::update_display()
 {
     // No-op if there are no visible rows and nothing needs to be erased.
-    if (m_visible_rows <= 0 && m_any_displayed.empty())
+    if (m_disabled || (m_visible_rows <= 0 && m_any_displayed.empty()))
     {
         m_force_display = false;
         m_clear_display = false;
@@ -995,6 +1016,8 @@ void suggestionlist_impl::update_display()
 #ifdef SHOW_VERT_SCROLLBARS
 void suggestionlist_impl::draw_scrollbar_char(int32 row, int32 car_top)
 {
+    assert(!m_disabled);
+
     if (m_vert_scroll_car)
     {
 #ifdef USE_FULL_SCROLLBAR
@@ -1025,6 +1048,8 @@ void suggestionlist_impl::draw_scrollbar_char(int32 row, int32 car_top)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::make_sources_header(str_base& out, uint32 max_width)
 {
+    assert(!m_disabled);
+
     // Ensure room for the "<" and ">" ends.
     if (max_width <= 2)
         return;
@@ -1149,6 +1174,8 @@ static void concat_expandctrl_adjust_highlight(str_base& out, const char* text, 
 //------------------------------------------------------------------------------
 void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out, uint32 width)
 {
+    assert(!m_disabled);
+
     const auto& s = m_suggestions[index];
     const bool selected = (index == m_index);
     const char* const selected_color = selected ? m_selected_color.c_str() : nullptr;
@@ -1249,6 +1276,7 @@ void suggestionlist_impl::make_suggestion_list_string(int32 index, str_base& out
 //------------------------------------------------------------------------------
 void suggestionlist_impl::apply_suggestion(int32 index)
 {
+    assert(!m_disabled);
     assert(is_active());
 
     if (m_applied && is_locked_against_suggestions())
@@ -1315,6 +1343,8 @@ void suggestionlist_impl::reset_top()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::clear_index(bool force)
 {
+    assert(!m_disabled);
+
     if (force || is_locked_against_suggestions())
     {
         m_index = -1;
@@ -1328,6 +1358,8 @@ void suggestionlist_impl::clear_index(bool force)
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::get_selected_history_index(int32& index) const
 {
+    assert(!m_disabled);
+
     if (!is_active() || m_index < 0)
     {
         index = -1;
@@ -1341,6 +1373,8 @@ bool suggestionlist_impl::get_selected_history_index(int32& index) const
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::remove_history_index(int32 history_index)
 {
+    assert(!m_disabled);
+
     if (!is_active() || m_index < 0)
         return false;
 
@@ -1367,18 +1401,20 @@ bool suggestionlist_impl::remove_history_index(int32 history_index)
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_printer && !m_hide;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer && !m_hide;
 }
 
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active_even_if_hidden() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_printer;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer;
 }
 
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::test_frozen()
 {
+    if (m_disabled)
+        return true;
     if (m_index < 0 || !m_buffer)
         return false;
     if (is_locked_against_suggestions())
@@ -1390,6 +1426,7 @@ bool suggestionlist_impl::test_frozen()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::refresh_display(bool clear)
 {
+    assert(!m_disabled);
     if (!is_active())
         return;
 
@@ -1423,6 +1460,9 @@ bool suggestionlist_impl::accepts_mouse_input(mouse_input_type type) const
 //------------------------------------------------------------------------------
 void suggestionlist_impl::hide_suggestion_list()
 {
+    if (m_disabled)
+        return;
+
     allow_suggestion_list(0);
     m_fallback_prev_bind_group = true;
     suppress_suggestions();
@@ -1489,7 +1529,7 @@ bool remove_suggestion_list_history_index(int32 rl_history_index)
 //------------------------------------------------------------------------------
 bool is_suggestion_list_enabled()
 {
-    return s_suggestion_list_enabled;
+    return s_suggestion_list_enabled && g_autosuggest_enable.get();
 }
 
 //------------------------------------------------------------------------------
@@ -1501,15 +1541,6 @@ bool is_suggestion_list_active(bool even_if_hidden)
     return even_if_hidden ?
         s_suggestionlist->is_active_even_if_hidden() :
         s_suggestionlist->is_active();
-}
-
-//------------------------------------------------------------------------------
-bool test_suggestion_list_frozen()
-{
-    if (!s_suggestionlist)
-        return false;
-
-    return s_suggestionlist->test_frozen();
 }
 
 //------------------------------------------------------------------------------

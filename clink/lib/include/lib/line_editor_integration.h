@@ -67,7 +67,6 @@ bool host_can_suggest(const line_state& line);
 bool host_suggest(const line_states& lines, matches* matches, int32 matches_generation_id);
 extern "C" void allow_suggestion_list(int enable);
 bool is_suggestion_list_active(bool even_if_hidden);
-bool test_suggestion_list_frozen();
 uint32 get_suggestion_list_height();
 const char* get_suggestion_hint_text();
 
