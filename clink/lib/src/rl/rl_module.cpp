@@ -73,6 +73,7 @@ static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
 const int32 RL_RESET_STATES = ~(RL_STATE_INITIALIZED|
                                 RL_STATE_TERMPREPPED|
+                                RL_STATE_MACROINPUT|
                                 RL_STATE_OVERWRITE|
                                 RL_STATE_CALLBACK|
                                 RL_STATE_VICMDONCE|
@@ -2433,6 +2434,44 @@ bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 
 
 //------------------------------------------------------------------------------
+struct shim_in : public terminal_in
+{
+    shim_in(const char* keys, uint32 len, terminal_in* old) : data(keys), remaining(len), old(old) { s_processed_input = this; }
+    ~shim_in() { s_processed_input = old; }
+    virtual int32   begin(bool) override                { assert(false); return 1; }
+    virtual int32   end(bool) override                  { assert(false); return 0; }
+    virtual bool    available(uint32 timeout) override  { assert(false); return more(); }
+    virtual void    select(input_idle*, uint32) override{ assert(false); }
+    virtual int32   read() override;
+    virtual int32   peek() override                     { assert(false); return 0; }
+    virtual key_tester* set_key_tester(key_tester*) override { assert(false); return nullptr; }
+    bool            more() const                        { return remaining > 0; }
+    const char*     data;
+    uint32          remaining;
+    terminal_in*    old;
+};
+
+//------------------------------------------------------------------------------
+int32 shim_in::read()
+{
+    if (more())
+    {
+        if (*data)
+        {
+            --remaining;
+            return *(uint8*)(data++);
+        }
+        if (old)
+            return old->read();
+        if (s_direct_input)
+            return s_direct_input->read();
+    }
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
 , m_has_pending_line(false)
@@ -3047,31 +3086,19 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = &result;
 
     // Setup the terminal.
-    struct shim_in : public terminal_in
-    {
-        shim_in(const char* keys, terminal_in* old) : data(keys), old(old) { s_processed_input = this; }
-        ~shim_in() { s_processed_input = old; }
-        virtual int32   begin(bool) override                { assert(false); return 1; }
-        virtual int32   end(bool) override                  { assert(false); return 0; }
-        virtual bool    available(uint32 timeout) override  { assert(false); return false; }
-        virtual void    select(input_idle*, uint32) override{ assert(false); }
-        virtual int32   read() override                     { if (*data) return *(uint8*)(data++);
-                                                              else if (old) return old->read();
-                                                              else if (s_direct_input) return s_direct_input->read();
-                                                              else return 0; }
-        virtual int32   peek() override                     { assert(false); return 0; }
-        virtual key_tester* set_key_tester(key_tester*) override { assert(false); return nullptr; }
-        const char*  data;
-        terminal_in* old;
-    } term_in(input.keys, s_processed_input);
+// TODO:  Seems like this needs to instead use _rl_unget_char().  The tricky
+// part is this needs to not let Readline read past input.len.  Except that
+// the typeahead optimization relies on being able to read past input.len.
+// Seems like the typeahead optimization has still never been integrated
+// correctly yet with Clink?
+    shim_in term_in(input.keys, input.len, s_processed_input);
 
     s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
-    uint32 len = input.len;
-    rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &len);
+    rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &term_in.remaining);
     rollback<bool> rb_input_more(s_input_more, input.more);
-    while (len && !m_done)
+    while (term_in.more() && !m_done)
     {
         // Reset the scroll mode right before handling input so that "scroll
         // mode" can be deduced based on whether the most recently invoked
@@ -3103,7 +3130,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             result.set_bind_group(m_prev_group);
 
         // Let Readline handle the next input char.
-        --len;
         rl_callback_read_char();
 
 #if 0

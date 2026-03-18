@@ -21,6 +21,8 @@ bind_resolver::binding::binding(bind_resolver* resolver, int32 node_index, const
     const auto& node = binder.get_node(m_node_index);
 
     m_module = node.module;
+    assert(node.depth >= 0);
+    assert(params.length() >= 0);
     m_len = max<uint8>(1, node.depth) + params.length();
     m_id = node.id;
     assert(m_len > 0);
@@ -80,6 +82,7 @@ void bind_resolver::binding::claim()
 bind_resolver::bind_resolver(const binder& binder)
 : m_binder(binder)
 {
+    m_keys[0] = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -205,9 +208,14 @@ bind_resolver::binding bind_resolver::next()
 
         // Check to see if where we're currently at a node in the tree that is
         // a valid bind (at the point of call).
-        int32 key_index = m_tail + node.depth + m_params.length() - 1;
-        if (node.bound && (!node.key || node.key == m_keys[key_index]))
-            return binding(this, node_index, m_params);
+        if (node.bound)
+        {
+            const int32 key_index = m_tail + node.depth + m_params.length() - 1;
+            assertimplies(node.key, 0 <= key_index);
+            assertimplies(node.key, key_index < m_key_count);
+            if (!node.key || (key_index >= 0 && node.key == m_keys[key_index]))
+                return binding(this, node_index, m_params);
+        }
     }
 
     // We can't get any further traversing the tree with the input provided.

@@ -889,9 +889,14 @@ bool line_editor_impl::update_input()
         m_bind_resolver.set_group(bind_group);
     }
 
-    if (!m_module.is_input_pending())
+    int32 key;
+    if (m_module.is_input_pending())
     {
-        int32 key = m_desc.input->read();
+        key = rl_read_key();
+    }
+    else
+    {
+        key = m_desc.input->read();
 
         if (key == terminal_in::input_terminal_resize)
         {
@@ -925,17 +930,17 @@ bool line_editor_impl::update_input()
             }
             return true;
         }
-
-        if (key < 0)
-            return true;
-
-        // `quoted-insert` should always behave as though the key resolved a
-        // binding, to ensure that Readline gets to handle the key (even Esc).
-        if (!m_bind_resolver.step(key) &&
-            !rl_is_insert_next_callback_pending() &&
-            !rl_vi_insert_mode_esc_special_case(key))
-            return false;
     }
+
+    if (key < 0)
+        return true;
+
+    // `quoted-insert` should always behave as though the key resolved a
+    // binding, to ensure that Readline gets to handle the key (even Esc).
+    if (!m_bind_resolver.step(key) &&
+        !rl_is_insert_next_callback_pending() &&
+        !rl_vi_insert_mode_esc_special_case(key))
+        return false;
 
     struct result_impl : public editor_module::result
     {

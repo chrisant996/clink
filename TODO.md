@@ -8,9 +8,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - [ ] Crash during Lua garbage collection during `get_history_items` inside `suggester::suggest`.  It's unclear how to reproduce the crash, and it's rare/inconsistent.
-- [ ] Macro text `"\e[27;27~\nex"` is either dropping into an infinite loop, or putting cursor PAST the end of the buffer.
-  - The problems seem to have been introduced by 3084fec746dfc175248ba814d65ab3e76b5de66c.
-  - [x] `F2` is making a difference _even when `autosuggest.enable` is `false`_.  It seems that the suggestionlist code is not fully disabled when `autosuggest.enable` is `false`.
+- [ ] Macro text `"\e[27;27~\nexit"` is processing the `e` last, after the `xit`, resulting in `xite`.
+  - The new `rl_read_key` inside `line_editor_impl::update_input` gets the `e` and puts it into `shim_in`.  Next `rl_module::on_input` calls `rl_callback_read_char`, which calls `rl_read_key` again, which gets the next character from the executing macro:  `shim_in` isn't used until the executing macro is exhausted.
+  - Readline treats macro input as the highest priority input (after "pending", which is only a single key).
+- [ ] Readline macro input is not seen by `bind_resolver`.
+  - `"\e[27;5;32~\e[C\e[C"` invokes `clink-select-complete` and moves the cursor right two, instead of moving the selection right two.
 
 ## Normal Priority
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
