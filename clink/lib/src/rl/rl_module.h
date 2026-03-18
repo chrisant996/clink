@@ -48,9 +48,9 @@ public:
     bool            translate(const char* seq, int32 len, str_base& out);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false);
 
-    bool            is_input_pending();
     bool            next_line(str_base& out);
 
+    static bool     rl_has_queued_input();
     static bool     is_showing_argmatchers();
 
 private:

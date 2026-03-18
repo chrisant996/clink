@@ -443,16 +443,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static bool is_readline_input_pending()
-{
-    assert(!!rl_pending_input == !!RL_ISSTATE(RL_STATE_INPUTPENDING));
-    return (rl_pending_input ||
-            _rl_pushed_input_available() ||
-            RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) ||
-            _rl_peek_macro_key());
-}
-
-//------------------------------------------------------------------------------
 static uint32* s_input_len_ptr = nullptr;
 static bool s_input_more = false;
 extern "C" int32 input_available_hook(void)
@@ -472,7 +462,7 @@ extern "C" int32 input_available_hook(void)
             return true;
 
         // Any pending input from Readline?
-        if (is_readline_input_pending())
+        if (rl_module::rl_has_queued_input())
             return true;
 
         // Any unread input available from stdin?
@@ -2581,6 +2571,16 @@ LNope:
 }
 
 //------------------------------------------------------------------------------
+bool rl_module::rl_has_queued_input()
+{
+    assert(!!rl_pending_input == !!RL_ISSTATE(RL_STATE_INPUTPENDING));
+    return (rl_pending_input ||
+            _rl_pushed_input_available() ||
+            RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) ||
+            _rl_peek_macro_key());
+}
+
+//------------------------------------------------------------------------------
 bool rl_module::accepts_mouse_input(mouse_input_type type)
 {
     // `quoted-insert` only accepts keyboard input.
@@ -2792,12 +2792,6 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
         if (was_visible)
             show_cursor(true);
     }
-}
-
-//------------------------------------------------------------------------------
-bool rl_module::is_input_pending()
-{
-    return is_readline_input_pending();
 }
 
 //------------------------------------------------------------------------------

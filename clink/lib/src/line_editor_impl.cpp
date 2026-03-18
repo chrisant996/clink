@@ -460,7 +460,7 @@ bool line_editor_impl::edit(str_base& out, bool edit)
         // Update first so the init state goes through.
         while (update())
         {
-            if (!m_module.is_input_pending())
+            if (!m_module.rl_has_queued_input())
                 m_desc.input->select(m_idle);
         }
     }
@@ -890,7 +890,7 @@ bool line_editor_impl::update_input()
     }
 
     int32 key;
-    if (m_module.is_input_pending())
+    if (m_module.rl_has_queued_input())
     {
         key = rl_read_key();
     }
