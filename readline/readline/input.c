@@ -824,6 +824,26 @@ _rl_timeout_handle_sigalrm ()
 /*								    */
 /* **************************************************************** */
 
+/* begin_clink_change */
+static const char* _clink_input = 0;
+static int _clink_input_len = 0;
+
+void
+rl_set_clink_input (const char *input, int len)
+{
+  assert(!_clink_input || !input);
+  assert(!_clink_input_len);	/* If this is non-zero, input will be lost. */
+  _clink_input = input;
+  _clink_input_len = len;
+}
+
+int
+rl_has_clink_input (void)
+{
+  return _clink_input_len > 0;
+}
+/* end_clink_change */
+
 /* Read a key, including pending input. */
 int
 rl_read_key (void)
@@ -832,6 +852,12 @@ rl_read_key (void)
 
 /* begin_clink_change */
   const char* src = NULL;
+  if (_clink_input_len > 0)
+    {
+      c = *(_clink_input++);
+      --_clink_input_len;
+      goto out;
+    }
 /* end_clink_change */
 
   if (rl_pending_input)

@@ -344,6 +344,10 @@ extern int _rl_input_queued (int);
 extern void _rl_insert_typein (int);
 extern int _rl_unget_char (int);
 extern int _rl_pushed_input_available (void);
+/* begin_clink_change */
+extern void rl_set_clink_input (const char *input, int len);
+extern int  rl_has_clink_input (void);
+/* end_clink_change */
 
 extern int _rl_timeout_init (void);
 extern int _rl_timeout_handle_sigalrm (void);

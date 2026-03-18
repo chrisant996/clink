@@ -117,8 +117,7 @@ extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
 extern int32 g_prompt_redisplay;
 
-static terminal_in* s_direct_input = nullptr;       // for read_key_hook
-static terminal_in* s_processed_input = nullptr;    // for read thunk
+static terminal_in* s_direct_input = nullptr;       // for read_key_hook and read thunk
 
 // TODO: Refactor to avoid globals.
 line_buffer*        g_rl_buffer = nullptr;
@@ -443,7 +442,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static uint32* s_input_len_ptr = nullptr;
 static bool s_input_more = false;
 extern "C" int32 input_available_hook(void)
 {
@@ -453,7 +451,7 @@ extern "C" int32 input_available_hook(void)
         // These are in order of next-ness:
 
         // Any remaining read-but-not-processed bytes in input chord?
-        if (s_input_len_ptr && *s_input_len_ptr > 0)
+        if (rl_has_clink_input())
             return true;
 
         // Any read-but-not-processed bytes not yet in input chord?  The binding
@@ -607,17 +605,15 @@ static int32 terminal_getc_thunk(FILE* stream)
 {
     if (stream == in_stream)
     {
+        assert(s_direct_input);
         if (RL_ISSTATE(RL_STATE_READSTR))
         {
-            assert(s_direct_input);
             s_direct_input->select();
             return s_direct_input->read();
         }
-        else
-        {
-            assert(s_processed_input);
-            return s_processed_input->read();
-        }
+        if (rl_has_clink_input())
+            return rl_read_key();
+        return 0;
     }
 
     if (stream == null_stream)
@@ -2424,44 +2420,6 @@ bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 
 
 //------------------------------------------------------------------------------
-struct shim_in : public terminal_in
-{
-    shim_in(const char* keys, uint32 len, terminal_in* old) : data(keys), remaining(len), old(old) { s_processed_input = this; }
-    ~shim_in() { s_processed_input = old; }
-    virtual int32   begin(bool) override                { assert(false); return 1; }
-    virtual int32   end(bool) override                  { assert(false); return 0; }
-    virtual bool    available(uint32 timeout) override  { assert(false); return more(); }
-    virtual void    select(input_idle*, uint32) override{ assert(false); }
-    virtual int32   read() override;
-    virtual int32   peek() override                     { assert(false); return 0; }
-    virtual key_tester* set_key_tester(key_tester*) override { assert(false); return nullptr; }
-    bool            more() const                        { return remaining > 0; }
-    const char*     data;
-    uint32          remaining;
-    terminal_in*    old;
-};
-
-//------------------------------------------------------------------------------
-int32 shim_in::read()
-{
-    if (more())
-    {
-        if (*data)
-        {
-            --remaining;
-            return *(uint8*)(data++);
-        }
-        if (old)
-            return old->read();
-        if (s_direct_input)
-            return s_direct_input->read();
-    }
-    return 0;
-}
-
-
-
-//------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
 , m_has_pending_line(false)
@@ -2575,9 +2533,7 @@ bool rl_module::rl_has_queued_input()
 {
     assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
     assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
-    if (RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) || _rl_pushed_input_available())
-        return true;
-    return false;
+    return (RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) || _rl_pushed_input_available());
 }
 
 //------------------------------------------------------------------------------
@@ -3079,20 +3035,19 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
     g_result = &result;
 
-    // Setup the terminal.
-// TODO:  Seems like this needs to instead use _rl_unget_char().  The tricky
-// part is this needs to not let Readline read past input.len.  Except that
-// the typeahead optimization relies on being able to read past input.len.
-// Seems like the typeahead optimization has still never been integrated
-// correctly yet with Clink?
-    shim_in term_in(input.keys, input.len, s_processed_input);
+    // Tell Readline about the input chord, and whether the binding resolver
+    // has more bytes pending.
+    struct shim_in
+    {
+        shim_in(const char* input, int32 len) { rl_set_clink_input(input, len); }
+        ~shim_in() { rl_set_clink_input(nullptr, 0); }
+    } rl_in(input.keys, input.len);
 
     s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
-    rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &term_in.remaining);
     rollback<bool> rb_input_more(s_input_more, input.more);
-    while (term_in.more() && !m_done)
+    while (rl_has_clink_input() && !m_done)
     {
         // Reset the scroll mode right before handling input so that "scroll
         // mode" can be deduced based on whether the most recently invoked
