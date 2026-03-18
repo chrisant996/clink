@@ -403,7 +403,6 @@ clink_lib("clink_lua")
     files("clink/lua/src/**")
     files("clink/lua/include/**")
     files("clink/lua/scripts/**")
-    excludes("clink/lua/src/lua_editor_tester.cpp")
 
     includedirs("clink/lua/src")
     filter "action:vs*"

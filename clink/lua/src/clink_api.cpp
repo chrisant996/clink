@@ -12,10 +12,6 @@
 #include "sessionstream.h"
 #include "../../app/src/version.h" // Ugh.
 
-#ifdef CLINK_USE_LUA_EDITOR_TESTER
-#include "lua_editor_tester.h"
-#endif
-
 #include <core/base.h>
 #include <core/os.h>
 #include <core/cwd_restorer.h>
@@ -2676,81 +2672,6 @@ static int32 _make_ftsc(lua_State* state)
 
 
 //------------------------------------------------------------------------------
-// This prototype was abandoned, but is kept in case parts of it might be useful
-// in the future.  The match generator layer is too dependent on CMD and threads
-// and things that don't make sense in a standalone Lua interpreter.  And how to
-// initialize textlist_impl or Readline or various other things differs based on
-// whether they're needed for normal usage or for the lua_editor_tester.
-// There's very little value in this niche mode, and the cost and compatibility
-// conflicts make it not worth pursing further.
-#ifdef CLINK_USE_LUA_EDITOR_TESTER
-static int32 run_editor_test(lua_State* state)
-{
-    // Arg 1 is input line text.
-    const char* input = checkstring(state, 1);
-    if (!input)
-        return 0;
-
-    // Arg 2 is table of expectations.
-    if (!lua_istable(state, 2))
-    {
-        const char* expected = lua_typename(state, LUA_TTABLE);
-        const char* got = luaL_typename(state, 2);
-        const char* msg = lua_pushfstring(state, "%s expected, got %s", expected, got);
-        return luaL_argerror(state, 2, msg);
-    }
-
-    rollback<printer*> rb_printer(g_printer, nullptr);
-    os::cwd_restorer cwd;
-
-    str_moveable message;
-    lua_editor_tester tester(state);
-    tester.set_input(input);
-
-    // Expected output.
-    lua_getfield(state, 2, "output");
-    tester.set_expected_output(lua_tostring(state, -1));
-    lua_pop(state, 1);
-
-    // Expected matches.
-    lua_getfield(state, 2, "matches");
-    if (lua_istable(state, -1))
-    {
-        std::vector<str_moveable> matches;
-        const int32 len = int32(lua_rawlen(state, -1));
-        for (int32 idx = 1; idx <= len; ++idx)
-        {
-            lua_rawgeti(state, -1, idx);
-            if (const char* s = lua_tostring(state, -1))
-                matches.emplace_back(s);
-            lua_pop(state, 1);
-        }
-        tester.set_expected_matches(matches);
-    }
-    lua_pop(state, 1);
-
-    // Expected classifications.
-    lua_getfield(state, 2, "classifications");
-    tester.set_expected_classifications(lua_tostring(state, -1));
-    lua_pop(state, 1);
-
-    // Run test.
-    const bool ok = tester.run(message);
-
-    lua_pushboolean(state, ok);
-    if (!ok)
-    {
-        lua_pushlstring(state, message.c_str(), message.length());
-        return 2;
-    }
-
-    return 1;
-}
-#endif // CLINK_USE_LUA_EDITOR_TESTER
-
-
-
-//------------------------------------------------------------------------------
 extern int32 set_current_dir(lua_State* state);
 extern int32 get_aliases(lua_State* state);
 extern int32 get_current_dir(lua_State* state);
@@ -2847,12 +2768,6 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #endif
     };
 
-#ifdef CLINK_USE_LUA_EDITOR_TESTER
-    static const method_def standalone_methods[] = {
-        { 1,    "runeditortest",          &run_editor_test },
-    };
-#endif
-
     clear_deprecated_argmatchers();
 
     lua_State* state = lua.get_state();
@@ -2868,18 +2783,6 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
             lua_rawset(state, -3);
         }
     }
-
-#ifdef CLINK_USE_LUA_EDITOR_TESTER
-    if (lua_interpreter)
-    {
-        for (const auto& method : standalone_methods)
-        {
-            lua_pushstring(state, method.name);
-            lua_pushcfunction(state, method.method);
-            lua_rawset(state, -3);
-        }
-    }
-#endif
 
     lua_pushliteral(state, "version_encoded");
     lua_pushinteger(state, CLINK_VERSION_ENCODED);
