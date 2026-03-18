@@ -2573,11 +2573,11 @@ LNope:
 //------------------------------------------------------------------------------
 bool rl_module::rl_has_queued_input()
 {
-    assert(!!rl_pending_input == !!RL_ISSTATE(RL_STATE_INPUTPENDING));
-    return (rl_pending_input ||
-            _rl_pushed_input_available() ||
-            RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) ||
-            _rl_peek_macro_key());
+    assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
+    assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
+    if (RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) || _rl_pushed_input_available())
+        return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------
