@@ -482,7 +482,7 @@ extern "C" int32 input_available_hook(void)
         if (s_direct_input->available(timeout > 0 ? timeout / 1000 : 0))
         {
             // Buffers the available input so it's available to Readline for
-            // reading.  Clink's terminal_read_thunk is designed to require a
+            // reading.  Clink's terminal_getc_thunk is designed to require a
             // loop of select() and read() in order to control how/when/whether
             // Readline sees input.  It's necessary to call select here so
             // that win_terminal_in has the input queued, otherwise rl_read_key
@@ -613,7 +613,7 @@ extern "C" void terminal_end_command()
 }
 
 //------------------------------------------------------------------------------
-static int32 terminal_read_thunk(FILE* stream)
+static int32 terminal_getc_thunk(FILE* stream)
 {
     if (stream == in_stream)
     {
@@ -638,7 +638,7 @@ static int32 terminal_read_thunk(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static void terminal_write_thunk(FILE* stream, const char* chars, int32 char_count)
+static void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
 {
     if (stream == out_stream)
     {
@@ -677,7 +677,7 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int32 char_cou
 
 //------------------------------------------------------------------------------
 static int32 s_puts_face = 0;
-static void terminal_log_write(FILE* stream, const char* chars, int32 char_count)
+static void terminal_log_fwrite(FILE* stream, const char* chars, int32 char_count)
 {
     suppress_implicit_write_console_logging nolog;
 
@@ -732,7 +732,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
 }
 
 //------------------------------------------------------------------------------
-static void terminal_log_read(int c, const char* _src)
+static void terminal_log_read_key(int c, const char* _src)
 {
     str<16> src;
     if (_src)
@@ -1822,13 +1822,13 @@ static void init_readline_hooks()
     // sequences even during initialization.
     //
     // And reset these for each input line because of g_debug_log_terminal.
-    rl_getc_function = terminal_read_thunk;
-    rl_fwrite_function = terminal_write_thunk;
+    rl_getc_function = terminal_getc_thunk;
+    rl_fwrite_function = terminal_fwrite_thunk;
     rl_log_read_key_hook = nullptr;
     if (g_debug_log_terminal.get())
     {
-        rl_fwrite_function = terminal_log_write;
-        rl_log_read_key_hook = terminal_log_read;
+        rl_fwrite_function = terminal_log_fwrite;
+        rl_log_read_key_hook = terminal_log_read_key;
     }
     rl_fflush_function = terminal_fflush_thunk;
     rl_instream = in_stream;
@@ -2858,8 +2858,8 @@ void rl_module::on_begin_line(const context& context)
     refresh_terminal_size();
 
     // Reset the fwrite function so logging changes can take effect immediately.
-    rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
-    rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
+    rl_fwrite_function = log_terminal ? terminal_log_fwrite : terminal_fwrite_thunk;
+    rl_log_read_key_hook = log_terminal ? terminal_log_read_key : nullptr;
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up
