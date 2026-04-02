@@ -3008,7 +3008,8 @@ extern "C" void end_prompt_lf()
 //------------------------------------------------------------------------------
 extern "C" void _rl_refresh_line(void)
 {
-    reset_display_readline();
+    _rl_want_redisplay = true;
+    maybe_redisplay_readline();
     rl_keep_mark_active();
 }
 
