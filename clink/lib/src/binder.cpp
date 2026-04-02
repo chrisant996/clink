@@ -146,6 +146,7 @@ int32 binder::create_group(const char* name)
         return -1;
 
     // Create a new group node;
+    assert(get_group(name) < 0);
     group_node* group = get_group_node(index);
     *(int32*)(group->hash) = str_hash(name);
     group->is_group = 1;
