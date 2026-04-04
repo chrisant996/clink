@@ -2533,7 +2533,9 @@ bool rl_module::rl_has_queued_input()
 {
     assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
     assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
-    return (RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) || _rl_pushed_input_available());
+    return ((RL_ISSTATE(RL_STATE_INPUTPENDING)) ||
+            (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()) ||
+            _rl_pushed_input_available());
 }
 
 //------------------------------------------------------------------------------

@@ -1289,8 +1289,8 @@ update_needle:
                 }
                 if (_rl_optimize_typeahead &&
                     (m_filter || any_invalid_utf8(m_needle.c_str())) &&
-                    //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
-                    (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
+                    (!RL_ISSTATE(RL_STATE_INPUTPENDING)) &&
+                    (!RL_ISSTATE(RL_STATE_MACROINPUT) || !_rl_peek_macro_key()) &&
                     _rl_pushed_input_available () == 0 &&
                     _rl_input_queued (0))
                 {

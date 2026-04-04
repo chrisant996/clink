@@ -82,18 +82,13 @@ static bool rl_vi_insert_mode_esc_special_case(int32 key)
         key == ESC &&
         _rl_keymap == vi_insertion_keymap &&
         _rl_keymap[key].type == ISKMAP &&
-        (FUNCTION_TO_KEYMAP(_rl_keymap, key))[ANYOTHERKEY].type == ISFUNC)
+        (FUNCTION_TO_KEYMAP(_rl_keymap, key))[ANYOTHERKEY].type == ISFUNC &&
+        (!RL_ISSTATE(RL_STATE_INPUTPENDING)) &&
+        (!RL_ISSTATE(RL_STATE_MACROINPUT) || !_rl_peek_macro_key()) &&
+        _rl_pushed_input_available() == 0 &&
+        _rl_input_queued(0) == 0)
     {
-        if ((RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
-            _rl_pushed_input_available() == 0 &&
-            _rl_input_queued(0) == 0)
-            return true;
-
-        if ((RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
-            (RL_ISSTATE (RL_STATE_MACROINPUT) && _rl_peek_macro_key() == 0) &&
-            _rl_pushed_input_available() == 0 &&
-            _rl_input_queued(0) == 0)
-            return true;
+        return true;
     }
 
     return false;
