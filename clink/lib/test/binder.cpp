@@ -4,6 +4,8 @@
 #include "pch.h"
 #include "clatch.h" // (so that VSCode can parse the macros, since it parses the wrong pch.h file)
 
+#include <core/str.h>
+
 #include "bind_resolver.h"
 #include "binder.h"
 #include "editor_module.h"
@@ -34,8 +36,13 @@ TEST_CASE("Binder")
 
     SECTION("Overflow : group")
     {
+        str<16> group_name;
+
         for (int32 i = 1; i < 256; ++i)
-            REQUIRE(binder.create_group("group") == (i * 2) + 1);
+        {
+            group_name.format("group%d", i);
+            REQUIRE(binder.create_group(group_name.c_str()) == (i * 2) + 1);
+        }
 
         REQUIRE(binder.create_group("group") == -1);
     }

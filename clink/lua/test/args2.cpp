@@ -26,11 +26,17 @@ static bool verify_ret_true(lua_state& lua, const char* func_name, int32 nargs)
 {
     lua_State *state = lua.get_state();
 
+#ifdef DEBUG
+    const int32 top = lua_gettop(state);
+#endif
+
     str<> msg;
     if (!lua.push_named_function(state, func_name, &msg))
     {
         puts("");
         puts(msg.c_str());
+        lua_pop(state, nargs);
+        assert(top - nargs == lua_gettop(state));
         return false;
     }
 
@@ -50,10 +56,10 @@ static bool verify_ret_true(lua_state& lua, const char* func_name, int32 nargs)
         return false;
     }
 
-    if (!lua_isboolean(state, -1))
-        return false;
-
-    return lua_toboolean(state, -1);
+    const bool ret = lua_isboolean(state, -1) && lua_toboolean(state, -1);
+    lua_pop(state, 1);
+    assert(top - nargs == lua_gettop(state));
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -68,6 +74,7 @@ struct onarg_case
 void verify_data(lua_state& lua, const onarg_case* cases, size_t count)
 {
     lua_State* L = lua.get_state();
+    save_stack_top ss(L);
 
     lua_pushinteger(L, count);
     REQUIRE(verify_ret_true(lua, "verify_count", 1));

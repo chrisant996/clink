@@ -22,6 +22,7 @@ extern "C" {
 static bool verify_ret_true(lua_state& lua, const char* func_name)
 {
     lua_State *state = lua.get_state();
+    save_stack_top ss(state);
 
     str<> msg;
     if (!lua.push_named_function(state, func_name, &msg))

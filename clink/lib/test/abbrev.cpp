@@ -32,6 +32,7 @@ struct testcase_abbrev
 static bool verify_abbrev(lua_state& lua, const testcase_abbrev& t, str_base& out, bool transform)
 {
     lua_State *state = lua.get_state();
+    save_stack_top ss(state);
 
     str<> msg;
     if (!lua.push_named_function(state, "os.abbreviatepath", &msg))
