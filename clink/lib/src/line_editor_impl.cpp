@@ -935,6 +935,18 @@ bool line_editor_impl::update_input()
     if (key < 0)
         return true;
 
+#ifdef DEBUG
+#ifdef DEBUG_BIND_RESOLVER
+    str_moveable group_name;
+    if (!m_bind_resolver.get_group_name(group_name))
+        group_name.format("<unknown group %d>", m_bind_resolver.get_group());
+    dbg_printf_row(-1, "bind_resolver:  group '%s' (%d), key 0x%02x ('%c'), multikey %s",
+        group_name.c_str(), m_bind_resolver.get_group(),
+        key, (key < 32) ? '.' : key,
+        RL_ISSTATE(RL_STATE_MULTIKEY) ? "true" : "false");
+#endif
+#endif
+
     // `quoted-insert` should always behave as though the key resolved a
     // binding, to ensure that Readline gets to handle the key (even Esc).
     if (!m_bind_resolver.step(key) &&

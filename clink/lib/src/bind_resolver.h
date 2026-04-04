@@ -54,6 +54,10 @@ public:
     int32               is_bound(const char* seq, int32 len) const;
     bool                more_than(uint32 len) const;
 
+#ifdef DEBUG
+    bool                get_group_name(str_base& name) const;
+#endif
+
 private:
     void                claim(binding& binding);
     bool                step_impl(uint8 key);

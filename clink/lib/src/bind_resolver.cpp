@@ -236,6 +236,14 @@ bool bind_resolver::more_than(uint32 len) const
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+bool bind_resolver::get_group_name(str_base& name) const
+{
+    return m_binder.get_group_name(get_group(), name);
+}
+#endif
+
+//------------------------------------------------------------------------------
 void bind_resolver::claim(binding& binding)
 {
     if (binding)

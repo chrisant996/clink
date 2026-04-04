@@ -4,6 +4,11 @@
 #pragma once
 
 #include <core/array.h>
+#include <core/str.h>
+
+#ifdef DEBUG
+#include <map>
+#endif
 
 class editor_module;
 
@@ -21,6 +26,10 @@ public:
     int32               create_group(const char* name);
     bool                bind(uint32 group, const char* chord, editor_module& module, uint8 id, bool has_params=false);
     int32               is_bound(uint32 group, const char* seq, int32 len) const;
+
+#ifdef DEBUG
+    bool                get_group_name(uint32 group, str_base& name) const;
+#endif
 
 private:
     static const int32  link_bits = 9;
@@ -66,4 +75,8 @@ private:
     modules             m_modules;
     node                m_nodes[1 << link_bits];
     uint32              m_next_node;
+
+#ifdef DEBUG
+    std::map<int32, str_moveable> m_group_names;
+#endif
 };

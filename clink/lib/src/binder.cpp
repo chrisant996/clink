@@ -111,6 +111,10 @@ binder::binder()
     m_nodes[1] = { 0 };
     m_next_node = 2;
 
+#ifdef DEBUG
+    m_group_names.emplace(1, "default_group");
+#endif
+
     static_assert(sizeof(node) == sizeof(group_node), "Size assumption");
 }
 
@@ -159,8 +163,26 @@ int32 binder::create_group(const char* name)
     // Next node along is the group's root.
     ++index;
     m_nodes[index] = {};
+#ifdef DEBUG
+    m_group_names.emplace(index, name);
+#ifdef DEBUG_BIND_RESOLVER
+    dbg_printf_row(-1, "binder:  CREATE GROUP '%s' (%d)", name, index);
+#endif
+#endif
     return index;
 }
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+bool binder::get_group_name(uint32 group, str_base& name) const
+{
+    const auto it = m_group_names.find(group);
+    if (it == m_group_names.end())
+        return false;
+    name = it->second.c_str();
+    return true;
+}
+#endif
 
 //------------------------------------------------------------------------------
 bool binder::bind(
@@ -186,6 +208,24 @@ bool binder::bind(
     int32 module_index = add_module(module);
     if (module_index < 0)
         return false;
+
+#ifdef DEBUG
+#ifdef DEBUG_BIND_RESOLVER
+    str_moveable group_name;
+    str_moveable formatted_chord;
+    if (!get_group_name(group, group_name))
+        group_name.format("<unknown group %d>", group);
+    for (const char* walk = chord; *walk; ++walk)
+    {
+        if (*walk < 32)
+            formatted_chord.format_append("^%c", toupper(*walk|0x40));
+        else
+            formatted_chord.format_append("%c", *walk);
+    }
+    dbg_printf_row(-1, "binder:  BIND group '%s' (%d), chord '%s', id %d",
+        group_name.c_str(), group, formatted_chord.c_str(), id);
+#endif
+#endif
 
     // Add the chord of keys into the node graph.
     int32 depth = 0;
