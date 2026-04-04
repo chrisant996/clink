@@ -842,6 +842,12 @@ rl_has_clink_input (void)
 {
   return _clink_input_len > 0;
 }
+
+int
+rl_has_clink_input_ended (void)
+{
+  return _clink_input && !_clink_input_len;
+}
 /* end_clink_change */
 
 /* Read a key, including pending input. */

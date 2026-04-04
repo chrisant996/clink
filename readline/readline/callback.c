@@ -329,6 +329,11 @@ rl_callback_read_char (void)
 	  if (in_handler == 0 && rl_linefunc)
 	    _rl_callback_newline ();
 	}
+
+/* begin_clink_change */
+      if (rl_has_clink_input_ended ())
+	break;
+/* end_clink_change */
     }
   while (rl_pending_input || _rl_pushed_input_available () || RL_ISSTATE (RL_STATE_MACROINPUT));
 

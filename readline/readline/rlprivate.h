@@ -347,6 +347,7 @@ extern int _rl_pushed_input_available (void);
 /* begin_clink_change */
 extern void rl_set_clink_input (const char *input, int len);
 extern int  rl_has_clink_input (void);
+extern int  rl_has_clink_input_ended (void);
 /* end_clink_change */
 
 extern int _rl_timeout_init (void);

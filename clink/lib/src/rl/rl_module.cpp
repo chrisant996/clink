@@ -2421,7 +2421,7 @@ bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 
 //------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
-: m_prev_group(-1)
+: m_catch_group(-1)
 , m_has_pending_line(false)
 , m_old_int(SIG_DFL)
 , m_old_break(SIG_DFL)
@@ -2776,7 +2776,8 @@ bool rl_module::is_showing_argmatchers()
 //------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
-    int32 default_group = binder.get_group();
+    const int32 default_group = binder.get_group();
+    assert(default_group == 1);
     binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*D", bind_id_double_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*M", bind_id_drag, true/*has_params*/);
@@ -2882,7 +2883,6 @@ void rl_module::on_begin_line(const context& context)
 
     m_done = m_has_pending_line;
     m_eof = false;
-    m_prev_group = -1;
 
     m_mouse.clear();
 }
@@ -3066,20 +3066,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // history search position has been cached.
         capture_sticky_search_position();
 
-        // Capture the previous binding group.  This must be captured before
-        // Readline handles the input, so that Readline commands can set the
-        // binding group (e.g. clink-select-complete).
-        if (m_prev_group < 0)
-        {
-            m_prev_group = result.set_bind_group(0);
-            result.set_bind_group(m_prev_group);
-        }
-
-        // Always make sure result has the real prev group, so that Readline
-        // commands can get the real prev group (not m_catch_group).
-        if (m_prev_group >= 0)
-            result.set_bind_group(m_prev_group);
-
         // Let Readline handle the next input char.
         rl_callback_read_char();
 
@@ -3140,18 +3126,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         return;
     }
 
-    // Check if Readline wants more input or if we're done.
-    if (RL_ISSTATE(RL_MORE_INPUT_STATES))
-    {
-        assert(m_prev_group >= 0);
-        int32 group = result.set_bind_group(m_catch_group);
-        assert(group == m_prev_group || group == m_catch_group);
-        suppress_unused_var(group);
-    }
-    else if (m_prev_group >= 0)
-    {
-        m_prev_group = -1;
-    }
 }
 
 //------------------------------------------------------------------------------

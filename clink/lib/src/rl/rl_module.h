@@ -63,7 +63,6 @@ private:
     virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
     virtual void    on_signal(int32 sig) override;
     void            done(const char* line);
-    int32           m_prev_group;
     int32           m_catch_group;
     bool            m_done;
     bool            m_eof;
