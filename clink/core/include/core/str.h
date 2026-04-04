@@ -72,6 +72,8 @@ public:
     bool                concat_no_truncate(const TYPE* src, int32 n);
     bool                format(const TYPE* format, ...);
     bool                vformat(const TYPE* format, va_list args);
+    bool                format_append(const TYPE* format, ...);
+    bool                vformat_append(const TYPE* format, va_list args);
     TYPE                operator [] (uint32 i) const;
     str_impl&           operator << (const TYPE* rhs);
     template <int32 I>
@@ -411,81 +413,89 @@ bool str_impl<TYPE>::concat_no_truncate(const TYPE* src, int32 n)
 }
 
 //------------------------------------------------------------------------------
-template <>
-inline bool str_impl<char>::format(const char* format, ...)
+template <typename TYPE>
+inline bool str_impl<TYPE>::format(const TYPE* format, ...)
 {
     va_list args;
     va_start(args, format);
 
-    int32 len = vsnprint(m_data, m_size, format, args);
-    assert(len >= 0); // Compiler should comply with spec.
-    if (len >= int32(m_size) && reserve(len))
-        len = vsnprint(m_data, m_size, format, args);
+    clear();
+    const bool ret = vformat_append(format, args);
+
     va_end(args);
-
-    m_data[m_size - 1] = '\0';
-    m_length = 0;
-
-    return ((uint32)len <= m_size);
+    return ret;
 }
 
 //------------------------------------------------------------------------------
-template <>
-inline bool str_impl<char>::vformat(const char* format, va_list args)
+template <typename TYPE>
+inline bool str_impl<TYPE>::vformat(const TYPE* format, va_list args)
 {
-    int32 len = vsnprint(m_data, m_size, format, args);
-    assert(len >= 0); // Compiler should comply with spec.
-    if (len >= int32(m_size) && reserve(len))
-        len = vsnprint(m_data, m_size, format, args);
-
-    m_data[m_size - 1] = '\0';
-    m_length = 0;
-
-    return ((uint32)len <= m_size);
+    clear();
+    return vformat_append(format, args);
 }
 
 //------------------------------------------------------------------------------
-template <>
-inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
+template <typename TYPE>
+inline bool str_impl<TYPE>::format_append(const TYPE* format, ...)
 {
     va_list args;
     va_start(args, format);
 
-    int32 len = vsnprint(m_data, m_size - 1, format, args);
+    const bool ret = vformat_append(format, args);
+
+    va_end(args);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+template <>
+inline bool str_impl<char>::vformat_append(const char* format, va_list args)
+{
+    const int32 orig_len = length();
+    assert(orig_len < m_size);
+    int32 len = vsnprint(m_data + orig_len, m_size - orig_len, format, args);
+    assert(len >= 0); // Compiler should comply with spec.
+    if (orig_len + len >= int32(m_size) && reserve(orig_len + len))
+    {
+        len = vsnprint(m_data + orig_len, m_size - orig_len, format, args);
+        assert(orig_len + len < m_size);
+        assert(!m_data[orig_len + len]);
+    }
+    len += orig_len;
+
+    m_data[m_size - 1] = '\0';
+    m_length = 0;
+    assert(str_len(m_data) < m_size);
+
+    return (!len || (uint32)len < m_size);
+}
+
+//------------------------------------------------------------------------------
+template <>
+inline bool str_impl<wchar_t>::vformat_append(const wchar_t* format, va_list args)
+{
+    const uint32 orig_len = length();
+    assert(orig_len < m_size);
+    int32 len = vsnprint(m_data + orig_len, m_size - 1 - orig_len, format, args);
     if (len < 0 && is_growable())
     {
         // _vsnwprintf works differently and only indicates how much space is
         // needed if explicitly asked.
         len = vsnprint(nullptr, 0, format, args);
-        if (len >= 0 && reserve(len))
-            len = vsnprint(m_data, m_size - 1, format, args);
+        if (len >= 0 && reserve(orig_len + len))
+        {
+            len = vsnprint(m_data + orig_len, m_size - 1 - orig_len, format, args);
+            assert(orig_len + len < m_size);
+            assert(!m_data[orig_len + len]);
+        }
     }
-    va_end(args);
+    len += orig_len;
 
     m_data[m_size - 1] = '\0';
     m_length = 0;
+    assert(str_len(m_data) < m_size);
 
-    return ((uint32)len <= m_size);
-}
-
-//------------------------------------------------------------------------------
-template <>
-inline bool str_impl<wchar_t>::vformat(const wchar_t* format, va_list args)
-{
-    int32 len = vsnprint(m_data, m_size - 1, format, args);
-    if (len < 0 && is_growable())
-    {
-        // _vsnwprintf works differently and only indicates how much space is
-        // needed if explicitly asked.
-        len = vsnprint(nullptr, 0, format, args);
-        if (len >= 0 && reserve(len))
-            len = vsnprint(m_data, m_size - 1, format, args);
-    }
-
-    m_data[m_size - 1] = '\0';
-    m_length = 0;
-
-    return ((uint32)len <= m_size);
+    return (!len || (uint32)len < m_size);
 }
 
 //------------------------------------------------------------------------------
