@@ -888,6 +888,8 @@ bool lua_state::get_command_word(line_state& line, str_base& command_word, bool&
 bool lua_state::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     lua_State* L = get_state();
+    save_stack_top ss(L);
+
     rl_buffer_lua buffer(*g_rl_buffer);
     std::unique_ptr<line_state_lua> line_lua = std::unique_ptr<line_state_lua>(line ? new line_state_lua(*line) : nullptr);
 
