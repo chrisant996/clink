@@ -71,16 +71,17 @@ extern int _rl_default_init_file_optional_set;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-const int32 RL_RESET_STATES = ~(RL_STATE_INITIALIZED|
+const int32 RL_RESET_STATES = ~(RL_STATE_INITIALIZED|       // NOT these...
                                 RL_STATE_TERMPREPPED|
                                 RL_STATE_MACROINPUT|
+                                RL_STATE_MACRODEF|
                                 RL_STATE_OVERWRITE|
                                 RL_STATE_CALLBACK|
                                 RL_STATE_VICMDONCE|
                                 RL_STATE_DONE|
                                 RL_STATE_TIMEOUT|
                                 RL_STATE_EOF);
-const int32 RL_MORE_INPUT_STATES = (RL_STATE_READCMD|
+const int32 RL_MORE_INPUT_STATES = (RL_STATE_READCMD|       // All of these...
                                     RL_STATE_METANEXT|
                                     RL_STATE_DISPATCHING|
                                     RL_STATE_MOREINPUT|
@@ -95,7 +96,7 @@ const int32 RL_MORE_INPUT_STATES = (RL_STATE_READCMD|
                                     RL_STATE_MULTIKEY|
                                     RL_STATE_CHARSEARCH|
                                     RL_STATE_READSTR);
-const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
+const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|   // All of these...
                                       RL_STATE_NSEARCH|
                                       RL_STATE_CHARSEARCH|
                                       RL_STATE_READSTR);
