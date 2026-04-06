@@ -237,6 +237,18 @@ void clear_pending_lastfunc()
 
 
 //------------------------------------------------------------------------------
+bool rl_has_queued_input()
+{
+    assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
+    assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
+    return ((RL_ISSTATE(RL_STATE_INPUTPENDING)) ||
+            (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()) ||
+            _rl_pushed_input_available());
+}
+
+
+
+//------------------------------------------------------------------------------
 resync_rl_cursor_pos::resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite)
     : m_printer(printer ? printer : g_printer)
     , m_use_rl_fwrite(use_rl_fwrite)

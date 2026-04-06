@@ -47,6 +47,9 @@ void    clear_macro_descriptions();
 bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort);
 
 //------------------------------------------------------------------------------
+bool    rl_has_queued_input();
+
+//------------------------------------------------------------------------------
 void    signal_terminal_resized();
 void    set_refilter_after_resize(bool refilter);
 

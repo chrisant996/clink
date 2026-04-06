@@ -455,7 +455,7 @@ bool line_editor_impl::edit(str_base& out, bool edit)
         // Update first so the init state goes through.
         while (update())
         {
-            if (!m_module.rl_has_queued_input())
+            if (!rl_has_queued_input())
                 m_desc.input->select(m_idle);
         }
     }
@@ -805,7 +805,8 @@ void line_editor_impl::dispatch(int32 bind_group)
 
     do
     {
-        m_desc.input->select();
+        if (!rl_has_queued_input())
+            m_desc.input->select();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -885,7 +886,7 @@ bool line_editor_impl::update_input()
     }
 
     int32 key;
-    if (m_module.rl_has_queued_input())
+    if (rl_has_queued_input())
     {
         key = rl_read_key();
     }

@@ -50,7 +50,6 @@ public:
 
     bool            next_line(str_base& out);
 
-    static bool     rl_has_queued_input();
     static bool     is_showing_argmatchers();
 
 private:

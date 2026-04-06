@@ -2408,7 +2408,8 @@ void standalone_input::dispatch(int32 bind_group)
 
     do
     {
-        m_terminal.in->select();
+        if (!rl_has_queued_input())
+            m_terminal.in->select();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -2458,7 +2459,9 @@ bool standalone_input::update_input()
         return true;
     }
 
-    int32 key = m_terminal.in->read();
+    const int32 key = (rl_has_queued_input() ?
+                       rl_read_key() :
+                       m_terminal.in->read());
 
     if (key == terminal_in::input_terminal_resize)
     {
