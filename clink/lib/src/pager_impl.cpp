@@ -13,6 +13,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
+#include <core/auto_closure.h>
 #include <terminal/printer.h>
 
 setting_color g_color_interact(
@@ -83,6 +84,8 @@ void pager_impl::on_need_input(int32& bind_group)
 //------------------------------------------------------------------------------
 void pager_impl::on_input(const input& input, result& result, const context& context)
 {
+    add_to_rl_macro(input);
+
     switch (input.id)
     {
     case bind_id_pager_help:        context.printer.print("\r\x1b[K"); print_pager_prompt(true/*help*/); result.loop(); break;

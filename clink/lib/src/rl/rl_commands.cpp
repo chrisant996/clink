@@ -1272,16 +1272,9 @@ int32 clink_popup_show_help(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_select_complete(int32 count, int32 invoking_key)
 {
-    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
-    {
-ding:
-        rl_ding();
-        return 0;
-    }
-
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
     if (!g_result || !activate_select_complete(*g_result, rl_last_func == clink_select_complete))
-        goto ding;
+        rl_ding();
     return 0;
 }
 
@@ -1290,16 +1283,9 @@ ding:
 //------------------------------------------------------------------------------
 int32 clink_toggle_suggestion_list(int32 count, int32 invoking_key)
 {
-    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
-    {
-ding:
-        rl_ding();
-        return 0;
-    }
-
     extern bool toggle_suggestion_list(editor_module::result& result);
     if (!g_result || !toggle_suggestion_list(*g_result))
-        goto ding;
+        rl_ding();
     return 0;
 }
 
@@ -2154,17 +2140,15 @@ int32 win_f6(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 win_f7(int32 count, int32 invoking_key)
 {
-    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+
+    history_infos hi;
+    const int32 total = hi.make();
+    if (!total)
     {
 ding:
         rl_ding();
         return 0;
     }
-
-    history_infos hi;
-    const int32 total = hi.make();
-    if (!total)
-        goto ding;
 
     const popup_results results = hi.activate_history_text_list(true/*win_history*/);
 

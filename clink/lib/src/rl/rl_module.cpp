@@ -3031,6 +3031,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             {
                 m_mouse.clear();
             }
+            add_to_rl_macro(input);
             return;
         }
     }

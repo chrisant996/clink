@@ -28,6 +28,7 @@
 #include <core/settings.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
+#include <core/auto_closure.h>
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
@@ -443,11 +444,13 @@ void selectcomplete_impl::on_need_input(int32& bind_group)
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::on_input(const input& _input, result& result, const context& context)
+void selectcomplete_impl::on_input(const input& input, result& result, const context& context)
 {
     assert(is_active());
 
-    input input = _input;
+    // Automatically add input while recording a macro.  Some places that use
+    // result.pass() will clear instead, to let something else add the input.
+    auto_closure add_to_macro([this, input](){ add_to_rl_macro(input); });
 
 #ifdef FISH_ARROW_KEYS
     const uint8 prev_input_id = m_prev_input_id;
@@ -480,6 +483,7 @@ revert:
     {
         assert(count);
         cancel(result);
+        // REVIEW: should this record an ESC sequence?
         return;
     }
 
@@ -487,6 +491,7 @@ revert:
     if (m_visible_rows <= 0)
     {
         cancel(result);
+        // REVIEW: should this record an ESC sequence?
         return;
     }
 
@@ -781,6 +786,7 @@ do_mouse_position:
                 {
                     cancel(result, true/*can_reactivate*/);
                     result.pass();
+                    add_to_macro.clear();
                     return;
                 }
             }
@@ -879,6 +885,7 @@ enter:
             cancel(result);
             m_inserted = false; // A subsequent activation should not resume.
             result.pass();
+            add_to_macro.clear();
             break;
         }
 append_not_dup:
@@ -905,6 +912,7 @@ append_not_dup:
         cancel(result);
         m_inserted = false; // A subsequent activation should not resume.
         result.pass();
+        add_to_macro.clear();
         break;
 
     case bind_id_selectcomplete_f1:
@@ -941,6 +949,7 @@ append_not_dup:
                     {
                         cancel(result, true/*can_reactivate*/);
                         result.pass();
+                        add_to_macro.clear();
                         return;
                     }
                 }

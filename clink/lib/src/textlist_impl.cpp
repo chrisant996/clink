@@ -22,6 +22,7 @@
 #include <core/settings.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
+#include <core/auto_closure.h>
 #include <core/debugheap.h>
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
@@ -551,10 +552,6 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         assert(m_buffer);
         if (!m_buffer)
             return popup_result::error;
-
-        // Doesn't make sense to record macro with a popup list.
-        if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
-            return popup_result::error;
     }
 
     if (!entries || count <= 0)
@@ -832,6 +829,8 @@ void textlist_impl::on_need_input(int32& bind_group)
 void textlist_impl::on_input(const input& input, result& result, const context& /*context*/)
 {
     assert(m_active);
+
+    auto_closure add_to_macro([this, input](){ add_to_rl_macro(input); });
 
     bool set_input_clears_needle = true;
     bool from_begin = false;

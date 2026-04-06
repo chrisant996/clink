@@ -64,4 +64,7 @@ public:
     virtual void            on_matches_changed(const context& context, const line_state& line, const char* needle) = 0;
     virtual void            on_terminal_resize(int32 columns, int32 rows, const context& context) = 0;
     virtual void            on_signal(int32 sig) = 0;
+
+protected:
+    void                    add_to_rl_macro(const input& input);
 };

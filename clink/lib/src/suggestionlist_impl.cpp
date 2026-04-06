@@ -24,6 +24,7 @@
 #include <core/settings.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
+#include <core/auto_closure.h>
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
@@ -381,12 +382,15 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
 }
 
 //------------------------------------------------------------------------------
-void suggestionlist_impl::on_input(const input& _input, result& result, const context& context)
+void suggestionlist_impl::on_input(const input& input, result& result, const context& context)
 {
     assert(!m_disabled);
     assert(is_active());
 
-    input input = _input;
+    // Automatically add input while recording a macro.  Some places that use
+    // result.pass() will clear instead, to let something else add the input.
+    auto_closure add_to_macro([this, input](){ add_to_rl_macro(input); });
+
     bool wrap = !!_rl_menu_complete_wraparound;
 
     if (m_fallback_prev_bind_group)
@@ -595,6 +599,7 @@ catchall:
         m_fallback_prev_bind_group = false;
         result.set_bind_group(m_prev_bind_group);
         result.pass();
+        add_to_macro.clear();
         break;
     }
 }
