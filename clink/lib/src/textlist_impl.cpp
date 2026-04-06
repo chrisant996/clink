@@ -2544,37 +2544,8 @@ bool standalone_input::update_input()
             if (result.flags & result_impl::flag_invalid)
                 m_invalid_dispatch = true;
         }
-        else
-        {
-            // There's no "done".
-#if 0
-            if (result.flags & result_impl::flag_done)
-            {
-                end_line();
-
-                if (result.flags & result_impl::flag_eof)
-                    set_flag(flag_eof);
-            }
-#endif
-
-            // There's no editing.
-#if 0
-            if (!check_flag(flag_editing))
-                return true;
-#endif
-        }
-
-        // There's nothing to draw.
-#if 0
-        if (result.flags & result_impl::flag_redraw)
-            m_buffer.redraw();
-#endif
     }
 
-    // There's nothing to draw.
-#if 0
-    m_buffer.draw();
-#endif
     return true;
 }
 
