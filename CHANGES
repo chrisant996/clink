@@ -7,8 +7,15 @@
 - Fixed a race condition where `menu-complete` could get stuck thinking there were 0 matches if completion was invoked while an argmatcher's `delayinit` function was running in the background.
 - Fixed the `suggestionlist.hide_hints` setting (when false) to allow History Expansion input hints.
 - Fixed glitches in displaying Readline messages in the prompt during `execute-named-command` and `non-incremental-reverse-search-history` (regression introduced in v1.9.16).
-- Fixed some obscure problems with using Readline macro text in Clink that have existed since 2016 (both when recording and replaying macros).
+- Fixed some problems with using Readline macro text in Clink.
+  - Fixed popup lists to work with recording and playing macros.
+  - Fixed the `clink-select-complete` command to work with recording and playing macros.
+  - Fixed <kbd>Enter</kbd> (the `accept-line` command) so it doesn't cancel recording a macro.
+  - Fixed some obscure problems that have existed since 2016 when recording and replaying macros.
+  - FIxed the `print-last-kbd-macro` command so it doesn't garble the input line display.
+  - Disabled suggestions and the suggestion list while recording and playing macros; suggestions are generated asynchronously, so they're never available during playback.
 - Fixed a cosmetic issue where the clickable link for History Expansion input line coloring could get split into many separate hover-underline segments.
+- Fixed an inaccurate Lua table size pre-allocation optimization, which seems to have been responsible for an obscure crash that could happen if Lua garbage collection activated at a precise moment during generated suggestions from history.
 - Fixed some Lua stack leaks (since v1.1.13).
 - Internal logging improvements.
 
