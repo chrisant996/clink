@@ -17,22 +17,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - I haven't experienced the crash in at least 2 weeks, but I've never been exactly sure how to reproduce it in the first place.
 
 ## Normal Priority
-- [x] Readline macro input is not seen by `bind_resolver`.
-  - `"\e[27;5;32~\e[C\e[C"` invokes `clink-select-complete` and moves the cursor right two, instead of moving the selection right two.
-  - Seems to be due to attempt at handling `RL_MORE_INPUT_STATES` in `rl_module::on_input`, which has a bad assumption about the current bind group.
-  - There's a fundamental disconnect between Clink and Readline:  When recording a keyboard macro Readline only records characters that reach it but `bind_resolver` can handle things without them reaching Readline, and replaying such a macro can misbehave because it may not contain all the actual original input.
-  - Options:
-    1. When the bind group is neither default_group nor the "readline" group, then maybe don't read through Readline's input functions?  Except that Readline's built-in pager (which Clink doesn't use) consumes macro input, which makes recorded macros inherently fragile, but is easy to understand from a user's perspective.
-    2. When replaying a keyboard macro send all characters through `bind_resolver` (for example so arrow keys inside `clink-select-complete` work correctly), and when recording a macro make sure characters that don't reach the "readline" group still get added to the recorded macro.
-  - I think option 2 is the most overall consistent.
-  - [x] Option 2 has been hooked up and seems to be working cleanly and reliably.  And it also removed some hacks and cleaned up some lingering edge case bugs.
-  - [x] The input gauntlet needs to somehow call `_rl_add_macro_char` for chars that don't reach the Readline dispatcher.  Also look for other existing edge cases missing that.
-    - [x] Basic recording is hooked up in pager_impl, selectcomplete_impl, textlist_impl, and suggestionlist_impl.
-    - [x] Macro recording seems to get lost if `rl_newline` is invoked while a recording is in progress.  This means that `clink-popup-history` and ENTER in the suggestion list discard any macro being recorded.  _`_RL_RESET_STATES` needed to exclude `RL_STATE_MACRODEF`._
-    - [x] The textlist_impl doesn't seem to use replayed macro input.  _`line_editor_impl::dispatch` didn't check for queued Readline input._
-    - [x] The suggestion list inherently doesn't play well with recording keyboard macros, because the suggestion list is populated asynchronously but keyboard macros replay with no delays.
-      - ~~Maybe make macro playback of suggestion list input wait for the suggestion list to be populated?  _But it's ambiguous because there's no way to know whether the user waited for the suggestion list while recording the macro._~~
-      - [x] Maybe disable the suggestion list while recording and replaying macros?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Make a documentation section that lists all the CLINK environment variables.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
