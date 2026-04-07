@@ -65,7 +65,7 @@ public:
     bool            more() const;
     bool            get_visible(str_base& out, bool* includes_hint=nullptr) const;
     bool            has_suggestion() const;
-    void            clear();
+    void            clear(bool redraw=true);
     bool            can_suggest(const line_state& line);
     bool            can_update_matches();
     bool            is_locked_against_suggestions();

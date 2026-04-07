@@ -271,9 +271,11 @@ bool suggestion_manager::has_suggestion() const
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::clear()
+void suggestion_manager::clear(bool redraw)
 {
-    if (m_iter.more() && g_rl_buffer)
+    const bool had = m_iter.more() || has_suggestion() || get_suggestion_list_height();
+
+    if (had && g_rl_buffer)
         g_rl_buffer->set_need_draw();
 
     new (&m_iter) str_iter();
@@ -284,6 +286,9 @@ void suggestion_manager::clear()
     m_suppress = false;
 
     new_generation();
+
+    if (redraw && had && g_rl_buffer)
+        g_rl_buffer->draw();
 }
 
 //------------------------------------------------------------------------------
@@ -297,11 +302,14 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (m_paused)
         return false;
 
-    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR))
+    // Disable suggestions during incremental search and readstr because input
+    // is not for the command line.  Disable suggestions during macro playback
+    // or recording because suggestions are generated asynchronously so
+    // recorded keys won't behave as expected.
+    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR|RL_STATE_MACRODEF) ||
+        (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()))
     {
         clear();
-        g_rl_buffer->set_need_draw();
-        g_rl_buffer->draw();
         return false;
     }
 

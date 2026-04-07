@@ -1137,11 +1137,7 @@ extern "C" void lock_against_suggestions(int lock)
 extern "C" void clear_suggestion()
 {
     if (!is_locked_against_suggestions())
-    {
         s_suggestion.clear();
-        if (g_rl_buffer)
-            g_rl_buffer->draw();
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -2881,7 +2877,7 @@ void rl_module::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_end_line()
 {
-    s_suggestion.clear();
+    s_suggestion.clear(false/*redraw*/);
 
     if (!m_done)
         done(rl_line_buffer);
