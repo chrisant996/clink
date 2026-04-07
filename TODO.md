@@ -7,14 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- [ ] Crash during Lua garbage collection during `get_history_items` inside `suggester::suggest`.  It's unclear how to reproduce the crash, and it's rare/inconsistent.
-  - Was observed in correlation with using commands that show Readline message text, but correlation does not imply causation.
-  - AI said it was likely related to Lua stack overflow during garbage collection.
-  - That led to finding and fixing multiple Lua usage issues:
-    - First, 3 Lua stack leaks.  But the crash continued to occur.
-    - Then, an incorrect too-small table preallocation size in `get_history_items`.  Was that the root cause?
-    - Did a recent change related to history or messages trigger calling suggesters and `get_history_items` more frequently or in higher volume?
-    - I haven't experienced the crash in at least 2 weeks, but I've never been exactly sure how to reproduce it in the first place.
 
 ## Normal Priority
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
