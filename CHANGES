@@ -4,6 +4,7 @@
 
 #### v1.9.18
 
+- Fixed `rl_buffer:refreshline()` to correctly force redrawing the input line (regression introduced in v1.7.0).
 - Fixed a race condition where `menu-complete` could get stuck thinking there were 0 matches if completion was invoked while an argmatcher's `delayinit` function was running in the background.
 - Fixed the `suggestionlist.hide_hints` setting (when false) to allow History Expansion input hints.
 - Fixed glitches in displaying Readline messages in the prompt during `execute-named-command` and `non-incremental-reverse-search-history` (regression introduced in v1.9.16).
