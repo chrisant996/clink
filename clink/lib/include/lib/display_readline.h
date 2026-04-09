@@ -39,6 +39,7 @@ COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nu
 SHORT calc_max_y_scroll_pos(SHORT y);
 
 void clear_comment_row();
+int32 count_prompt_lines(const char* prompt_prefix);
 void defer_clear_lines(uint32 prompt_lines, bool transient);
 
 extern bool g_display_manager_no_comment_row;

@@ -33,9 +33,6 @@ extern "C" {
 #include <readline/rlprivate.h>
 }
 
-// TODO: Clean up extern.
-extern int32 count_prompt_lines(const char* prompt_prefix);
-
 
 
 //------------------------------------------------------------------------------

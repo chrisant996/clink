@@ -270,7 +270,17 @@ int32 rl_buffer_lua::begin_output(lua_State* state)
 /// Redraws the input line.
 int32 rl_buffer_lua::refresh_line(lua_State* state)
 {
-    rl_refresh_line(0, 0);
+    // Get height of prompt.
+    const int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
+
+    // Move up to top of prompt and prepare to clear subsequent lines.
+    defer_clear_lines(lines, false);
+
+    // Force a full redraw.  For example, fzf clears at least part of the
+    // input buffer display, and rl_buffer:refreshline() is used to fix the
+    // display after that.  So it has to do a full redraw instead of a normal
+    // optimized redraw.
+    rl_forced_update_display();
     return 0;
 }
 
