@@ -254,6 +254,27 @@ private:
 };
 
 //------------------------------------------------------------------------------
+static bool is_jpsoft(const char* host)
+{
+    if (host)
+    {
+        static const char* const c_jpsoft[] =
+        {
+            "tcc.exe",
+            "tccle.exe",
+            "4nt.exe",
+        };
+
+        for (const auto candidate : c_jpsoft)
+        {
+            if (_stricmp(host, candidate) == 0)
+                return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_host=false)
 {
     // Get path to clink's DLL that we'll inject.  Using _pgmptr favors the
@@ -306,79 +327,9 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
         return {};
     }
 
-    // Check for supported host (keep in sync with initialise_clink in dll.cpp).
-    process cmd_process(target_pid);
-    {
-        str<> host;
-        if (!cmd_process.get_file_name(host))
-        {
-            ERR("Unable to get host name.");
-            return {};
-        }
-
-        const char* host_name = path::get_name(host.c_str());
-        if (!host_name || stricmp(host_name, "cmd.exe"))
-        {
-            if (host_name)
-            {
-                const bool is_tcc = !stricmp(host_name, "tcc.exe");
-                const bool is_4nt = !stricmp(host_name, "4nt.exe");
-                if (is_tcc || is_4nt)
-                {
-                    // Take Command (and 4NT) from JPSoft are recognized during
-                    // autorun as benignly invalid hosts.  They may invoke the
-                    // AutoRun regkey contents and try to inject Clink, which is
-                    // just a side effect of their design.  Since the scenario
-                    // is well understood, it's reasonable to be silent about it
-                    // during autorun.
-                    if (is_autorun)
-                        return {-1, nullptr};
-                    LOG("Host '%s' is not supported; Clink is not compatible with the JPSoft command shells.", host_name);
-                    return {};
-                }
-            }
-
-            LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
-            if (!force_host)
-                return {};
-        }
-
-        // Can't inject (or get the command line) if the architecture doesn't
-        // match.
-        if (!cmd_process.is_arch_match())
-            return {};
-
-        // Parse cmd.exe command line for /c or /k to determine whether the host
-        // is interactive.  Don't waste time injecting a remote thread if Clink
-        // will cancel the inject anyway.  This helps make autorun more
-        // reasonable to use.
-        wstr<> command_line;
-        if (!cmd_process.get_command_line(command_line))
-        {
-            ERR("Unable to get host command line.");
-            return {};
-        }
-        for (const wchar_t* args = command_line.c_str(); args && (args = wcschr(args, '/'));)
-        {
-            ++args;
-            switch (tolower(*args))
-            {
-            case 'c':
-                // Only log this is something else has already gotten logged.
-                // The intent is to avoid filling a log file with a ton of these
-                // when Clink is configured in the CMD AutoRun regkey.
-                if (!logger::can_defer())
-                    LOG("Host is not interactive; cancelling inject.");
-                return { -1 };
-            case 'k':
-                args = nullptr;
-                break;
-            }
-        }
-    }
-
     // Inject Clink DLL.
     wait_monitor monitor("Injecting Clink");
+    process cmd_process(target_pid);
     return cmd_process.inject_module(dll_path.c_str(), &monitor);
 }
 
@@ -413,6 +364,79 @@ static bool is_clink_present(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
+static int32 is_host_supported(DWORD target_pid, bool is_autorun, bool force_host)
+{
+    // Check for supported host (keep in sync with initialise_clink in dll.cpp).
+    process cmd_process(target_pid);
+    {
+        str<> host;
+        if (!cmd_process.get_file_name(host))
+        {
+            ERR("Unable to get host name.");
+            return 0;
+        }
+
+        const char* host_name = path::get_name(host.c_str());
+        if (!host_name || stricmp(host_name, "cmd.exe"))
+        {
+            if (is_jpsoft(host_name))
+            {
+                // Take Command (and 4NT) from JPSoft are recognized during
+                // autorun as benignly invalid hosts.  They may invoke the
+                // AutoRun regkey contents and try to inject Clink, which is
+                // just a side effect of their design.  Since the scenario
+                // is well understood, it's reasonable to be silent about it
+                // during autorun.
+                if (is_autorun)
+                    return -1;
+                LOG("Host '%s' is not supported; Clink is not compatible with the JPSoft command shells.", host_name);
+                fprintf(stderr, "Host '%s' is not supported.\n", host_name);
+                return 0;
+            }
+
+            LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
+            if (!force_host)
+                return 0;
+        }
+
+        // Can't inject (or get the command line) if the architecture doesn't
+        // match.
+        if (!cmd_process.is_arch_match())
+            return 0;
+
+        // Parse cmd.exe command line for /c or /k to determine whether the host
+        // is interactive.  Don't waste time injecting a remote thread if Clink
+        // will cancel the inject anyway.  This helps make autorun more
+        // reasonable to use.
+        wstr<> command_line;
+        if (!cmd_process.get_command_line(command_line))
+        {
+            ERR("Unable to get host command line.");
+            return 0;
+        }
+        for (const wchar_t* args = command_line.c_str(); args && (args = wcschr(args, '/'));)
+        {
+            ++args;
+            switch (tolower(*args))
+            {
+            case 'c':
+                // Only log this if something else has already gotten logged.
+                // The intent is to avoid filling a log file with a ton of these
+                // when Clink is configured in the CMD AutoRun regkey.
+                if (!logger::can_defer())
+                    LOG("Host is not interactive; cancelling inject.");
+                return -1;
+            case 'k':
+                args = nullptr;
+                break;
+            }
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static DWORD find_inject_target()
 {
     str<512, false> buffer;
@@ -421,9 +445,7 @@ static DWORD find_inject_target()
         process process(pid);
         process.get_file_name(buffer);
         const char* name = path::get_name(buffer.c_str());
-        if (_stricmp(name, "cmd.exe") == 0)
-            return pid;
-        if (_stricmp(name, "tcc.exe") == 0 || _stricmp(name, "4nt.exe"))
+        if (_stricmp(name, "cmd.exe") == 0 || is_jpsoft(name))
             return pid;
 
         pid = process.get_parent_pid();
@@ -654,6 +676,20 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
             CloseHandle(handle);
         if (!handle)
             return ret;
+    }
+
+    // Check to see if clink supports the host.
+    {
+        const int32 supported = is_host_supported(target_pid, is_autorun, app_desc.force);
+        if (supported <= 0)
+        {
+            if (supported < 0)
+            {
+                errrep.set_ok();
+                ret = exit_code_success;
+            }
+            return ret;
+        }
     }
 
     // Check to see if clink is already installed.
