@@ -1824,7 +1824,10 @@ void display_manager::display()
         {
             _rl_clear_to_eol(_rl_screenwidth);
             if (lines)
+            {
                 rl_fwrite_function(_rl_out_stream, "\n", 1);
+                _rl_last_c_pos = 0;
+            }
         }
         // Go back up to where the cursor was before clearing lines.
         if (s_defer_clear_lines > 1)
