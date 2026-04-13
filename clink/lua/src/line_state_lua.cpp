@@ -454,7 +454,7 @@ int32 line_state_lua::get_end_word_offset(lua_State* state)
 /// See [line_state:getcommandoffset](#line_state:getcommandoffset) for details.
 /// -show:  -- Given a line_state for the 2nd command in;  abc & ( @where   >nul  )  & xyz
 /// -show:  line_state:getrangeoffset() == 9           --          ^
-/// -show:  line_state:getcommandoffset() == 10        -            ^
+/// -show:  line_state:getcommandoffset() == 10        --           ^
 /// -show:  line_state:getrangelength() == 15          --          <------------->
 /// -show:
 /// -show:  -- Given a line_state for the 2nd command in;  abc & (   @ where   >nul  )  & xyz
