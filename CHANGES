@@ -9,6 +9,8 @@
   - TCC/LE (tccle.exe) wasn't detected.
   - Optimized detection of JP Soft command shells to remove an unnecessary delay.
   - Added friendlier error message for JP Soft command shells.
+- Fixed potential cursor placement issues when using the legacy conhost terminal and the window width is less than the screen width.
+- Fixed the suggestion list failing to redraw in some cases after having been erased.
 
 #### v1.9.18
 
