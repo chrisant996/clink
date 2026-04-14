@@ -3931,6 +3931,7 @@ _rl_clean_up_for_exit (void)
     }
 }
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 void
 _rl_erase_entire_line (void)
 {
@@ -3939,6 +3940,7 @@ _rl_erase_entire_line (void)
   cr ();
   fflush (rl_outstream);
 }
+#endif
 
 void
 _rl_ttyflush (void)

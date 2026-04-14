@@ -322,7 +322,9 @@ extern void _rl_save_prompt (void);
 extern void _rl_restore_prompt (void);
 extern char *_rl_make_prompt_for_search (int);
 extern void _rl_erase_at_end_of_line (int);
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 extern void _rl_clear_to_eol (int);
+#endif
 extern void _rl_clear_screen (int);
 extern void _rl_update_final (void);
 extern void _rl_optimize_redisplay (void);

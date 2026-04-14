@@ -1474,6 +1474,7 @@ private:
     void                clear_comment_row_internal();
     void                move_to_column(uint32 col, bool force=false);
     void                move_to_row(int32 row);
+    void                clear_to_eol(int32 count);
     void                shift_cols(uint32 col, int32 delta);
     void                print(const char* chars, uint32 len);
     void                print_rprompt(const char* s);
@@ -1651,7 +1652,7 @@ void display_manager::end_prompt_lf()
             const uint32 len = d->m_len - index;
             const uint32 wc = clink_wcswidth(d->m_chars + index, len);
             move_to_column(_rl_screenwidth - wc);
-            _rl_clear_to_eol(wc);
+            clear_to_eol(wc);
             rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
         }
         else if (m_top == m_last_prompt_line_botlin && count <= 1)
@@ -1732,7 +1733,7 @@ int32 display_manager::write_with_clear(FILE* stream, const char* text, int leng
                 ++text, --remaining;
             length = int(text - eol);
             if (erase_in_line)
-                _rl_clear_to_eol(erase_length);
+                clear_to_eol(erase_length);
             if (length > 0)
                 rl_fwrite_function(stream, eol, length);
         }
@@ -1822,12 +1823,9 @@ void display_manager::display()
         move_to_column(0);
         for (int32 lines = s_defer_clear_lines; lines--;)
         {
-            _rl_clear_to_eol(_rl_screenwidth);
+            clear_to_eol(_rl_screenwidth);
             if (lines)
-            {
                 rl_fwrite_function(_rl_out_stream, "\n", 1);
-                _rl_last_c_pos = 0;
-            }
         }
         // Go back up to where the cursor was before clearing lines.
         if (s_defer_clear_lines > 1)
@@ -2058,7 +2056,7 @@ void display_manager::display()
         {
             move_to_row(old_botlin + 1);
             move_to_column(0);
-            _rl_clear_to_eol(_rl_screenwidth);
+            clear_to_eol(_rl_screenwidth);
         }
 
         // Update each display line for the line buffer.
@@ -2087,7 +2085,7 @@ void display_manager::display()
             for (int32 i = new_botlin; i++ < old_botlin;)
             {
                 move_to_row(i);
-                _rl_clear_to_eol(_rl_screenwidth);
+                clear_to_eol(_rl_screenwidth);
                 if (_rl_last_c_pos)
                 {
                     print("\r", 1);
@@ -2187,7 +2185,7 @@ void display_manager::display()
         }
 
         print("\x1b[m", 3);
-        _rl_clear_to_eol(_rl_screenwidth - _rl_last_c_pos);
+        clear_to_eol(_rl_screenwidth - _rl_last_c_pos);
 
         if (reset_col)
         {
@@ -2232,7 +2230,7 @@ void display_manager::display()
             const int32 delta = old_height - next_height;
             for (int32 lines = delta; lines--;)
             {
-                _rl_clear_to_eol(_rl_screenwidth);
+                clear_to_eol(_rl_screenwidth);
                 if (lines)
                     print("\n", 1);
             }
@@ -2415,7 +2413,7 @@ void display_manager::clear_comment_row_internal()
         _rl_move_vert(_rl_vis_botlin + 1);
         _rl_cr();
         _rl_last_c_pos = 0;
-        _rl_clear_to_eol(_rl_screenwidth);
+        clear_to_eol(_rl_screenwidth);
         m_curr.clear_comment_row();
     }
 }
@@ -2686,7 +2684,7 @@ left_whole:
         {
             // Using _rl_screenwidth is more accurate than lastcol, because
             // the escape code clears to the screen width.
-            _rl_clear_to_eol(_rl_screenwidth - rcol);
+            clear_to_eol(_rl_screenwidth - rcol);
         }
         else
         {
@@ -2759,6 +2757,37 @@ void display_manager::move_to_row(int32 row)
 
     preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
     _rl_move_vert(row);
+}
+
+//------------------------------------------------------------------------------
+void display_manager::clear_to_eol(int32 count)
+{
+    if (_rl_last_v_pos == 0)
+    {
+        // If the cursor is on the first line of the input buffer, then flag
+        // that the right side prompt is not shown, so it can be redisplayed
+        // later as appropriate.
+        _rl_rprompt_shown_len = 0;
+    }
+
+    assert(_rl_last_c_pos < _rl_screenwidth);
+    assert(count >= 0);
+
+    if (count)
+    {
+        if (_rl_term_clreol)
+        {
+            tputs(_rl_term_clreol);
+        }
+        else
+        {
+            str_moveable s;
+            s.reserve(count);
+            concat_spaces(s, count);
+            tputs(s.c_str());
+            move_to_column(_rl_last_c_pos);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -2856,7 +2885,7 @@ void display_manager::print_rprompt(const char* s)
     }
     else
     {
-        _rl_clear_to_eol(_rl_rprompt_shown_len);
+        clear_to_eol(_rl_rprompt_shown_len);
     }
 
     dbg_ignore_scope(snapshot, "display_readline");
@@ -3085,33 +3114,12 @@ extern "C" void _rl_refresh_line(void)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void _rl_clear_to_eol(int32 count)
+extern "C" void _rl_erase_entire_line(void)
 {
-    if (_rl_last_v_pos == 0)
-    {
-        // If the cursor is on the first line of the input buffer, then flag
-        // that the right side prompt is not shown, so it can be redisplayed
-        // later as appropriate.
-        _rl_rprompt_shown_len = 0;
-    }
-
-    if (count)
-    {
-        if (_rl_term_clreol)
-        {
-            tputs(_rl_term_clreol);
-        }
-        else
-        {
-            str_moveable s;
-            s.reserve(count);
-            concat_spaces(s, count);
-            tputs(s.c_str());
-            _rl_last_c_pos += count;
-            assert(_rl_last_c_pos <= _rl_screenwidth);
-        }
-    }
+    // Should be unreachable since rl_erase_empty_line is never set.
+    assert(false);
 }
+
 
 //------------------------------------------------------------------------------
 static char* expand_rprompt(const char* pmt)
