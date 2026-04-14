@@ -786,10 +786,16 @@ void suggestionlist_impl::update_display()
         return;
     }
 
-    // No-op if the selected item hasn't changed, unless the list is not
-    // active and m_any_displayed is not empty.
-    if (!m_force_display && m_prev_displayed == m_index &&
-        !(!is_active() && !m_any_displayed.empty()) && !m_clear_display)
+    // Check if an update is needed.
+    const bool update_needed =
+        m_force_display ||              // Forcing?
+        m_clear_display ||              // Clearing?
+        m_prev_displayed != m_index ||  // Selected item changed?
+        (is_active() ? (m_count > 0 && m_any_displayed.empty()) // Active and items and none displayed?
+                     : (!m_any_displayed.empty()));             // Not active and anything displayed?
+
+    // No-op and return if an update isn't needed.
+    if (!update_needed)
     {
 #ifdef DEBUG
         str<> value;
@@ -993,10 +999,7 @@ void suggestionlist_impl::update_display()
             up++;
             rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[J", 6);
         }
-        m_prev_displayed = -1;
-        m_any_displayed.clear();
-        m_tooltip_displayed = -1;
-        m_clear_display = false;
+        notify_cleared();
     }
 
     // Restore cursor position.
@@ -1361,6 +1364,15 @@ void suggestionlist_impl::clear_index(bool force)
 }
 
 //------------------------------------------------------------------------------
+void suggestionlist_impl::notify_cleared()
+{
+    m_prev_displayed = -1;
+    m_any_displayed.clear();
+    m_tooltip_displayed = -1;
+    m_clear_display = false;
+}
+
+//------------------------------------------------------------------------------
 bool suggestionlist_impl::get_selected_history_index(int32& index) const
 {
     assert(!m_disabled);
@@ -1508,6 +1520,15 @@ extern "C" void clear_suggestion_list_index(void)
         return;
 
     s_suggestionlist->clear_index();
+}
+
+//------------------------------------------------------------------------------
+void notify_suggestion_list_cleared()
+{
+    if (!s_suggestionlist)
+        return;
+
+    s_suggestionlist->notify_cleared();
 }
 
 //------------------------------------------------------------------------------

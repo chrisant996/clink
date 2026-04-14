@@ -29,6 +29,7 @@ public:
     bool            point_within(int32 in) const;
     uint32          get_height() const;
     void            clear_index(bool force=false);
+    void            notify_cleared();
     bool            get_selected_history_index(int32& index) const;
     bool            remove_history_index(int32 history_index);
     bool            is_active() const;
@@ -129,4 +130,5 @@ private:
 //------------------------------------------------------------------------------
 bool is_suggestion_list_enabled();
 void update_suggestion_list_display(bool clear=false);
+void notify_suggestion_list_cleared();
 void hide_suggestion_list();

@@ -168,6 +168,7 @@ static void clear_to_end_of_screen()
     rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
     if (_rl_last_v_pos == 0)
         _rl_rprompt_shown_len = 0;
+    notify_suggestion_list_cleared();
 }
 
 //------------------------------------------------------------------------------
