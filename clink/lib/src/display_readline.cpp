@@ -2786,7 +2786,7 @@ void display_manager::clear_to_eol(int32 count)
             s.reserve(count);
             concat_spaces(s, count);
             tputs(s.c_str());
-            move_to_column(_rl_last_c_pos);
+            move_to_column(_rl_last_c_pos, true/*force*/);
         }
     }
 }
