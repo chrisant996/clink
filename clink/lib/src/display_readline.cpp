@@ -37,6 +37,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/screen_buffer.h>
 #include <terminal/printer.h>
 #include <terminal/scroll.h>
 
@@ -330,7 +331,8 @@ preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HAN
         assert(!is_test_harness());
         s_h = h;
         s_saved_rl_term_clreol = _rl_term_clreol;
-        _rl_term_clreol = nullptr;
+        if (get_current_ansi_handler() != ansi_handler::clink)
+            _rl_term_clreol = nullptr;
         display_accumulator::flush();
         GetConsoleScreenBufferInfo(s_h, &s_window);
     }
