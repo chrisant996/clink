@@ -2936,6 +2936,9 @@ int32 clink_diagnostics_output(int32 count, int32 invoking_key)
     printer file_printer(out);
 
     {
+        // Because redirecting to a file, not the console.
+        suppress_implicit_write_console_logging nolog;
+
         rollback<printer*> rb_printer(g_printer, &file_printer);
         rollback<int> rb_numeric_arg(rl_numeric_arg, 999);
         rollback<int> rb_explicit_arg(rl_explicit_arg, 1);

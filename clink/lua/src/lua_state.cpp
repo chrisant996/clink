@@ -1063,14 +1063,12 @@ extern "C" size_t lua_fwrite(void const* buffer, size_t size, size_t count, FILE
 
     if ((stream == stderr || stream == stdout || is_lua_conout(stream)) && size == 1 && !(count & ~uint32(0x7fffffff)) && !g_direct_lua_fwrite)
     {
-        suppress_implicit_write_console_logging nolog;
-
         DWORD dw;
         HANDLE h = get_std_handle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
         if (GetConsoleMode(h, &dw))
         {
             // Maybe log.
-            if (g_debug_log_terminal.get())
+            if (g_debug_log_terminal.get() && !suppress_implicit_write_console_logging::is_suppressed())
             {
                 LOGCURSORPOS(h);
                 LOG("%s \"%.*s\", %d", (stream == stderr) ? "LUACONERR" : "LUACONOUT", count, buffer, count);
@@ -1088,6 +1086,7 @@ extern "C" size_t lua_fwrite(void const* buffer, size_t size, size_t count, FILE
             assert(g_printer);
 
             // Print the buffer.
+            suppress_implicit_write_console_logging nolog;
             if (g_printer)
             {
                 g_printer->print(static_cast<const char*>(buffer), uint32(count));
