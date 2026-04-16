@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.18</title>
+<title>Clink v1.9.19</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -974,7 +974,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.18</div>
+                <div id="title">Clink v1.9.19</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -8172,7 +8172,7 @@ line_state:getrangelength() == 18          --          <----------------></code>
 
 <div class="function"><div class="header"> <div id="line_state:getrangeoffset" class="name"><a class="wlink" href="#line_state:getrangeoffset"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>line_state:getrangeoffset</span> <span class="uplinks"><a href="#line_state">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() : integer<br/><div class="version">v1.6.1 and newer</div></div></div><div class="body"><p class="desc">Each line_state describes a range of text in a line.  This function returns the offset to the start of the range described by this line_state.</p><p class="desc"> For all commands after the first command in a line, the first space (if any) is not part of the range. See [line_state:getcommandoffset](#line_state:getcommandoffset) for details.</p><pre class="language-lua"><code>-- Given a line_state for the 2nd command in;  abc & ( @where   >nul  )  & xyz
 line_state:getrangeoffset() == 9           --          ^
-line_state:getcommandoffset() == 10        -            ^
+line_state:getcommandoffset() == 10        --           ^
 line_state:getrangelength() == 15          --          <------------->
 
 -- Given a line_state for the 2nd command in;  abc & (   @ where   >nul  )  & xyz
@@ -9110,6 +9110,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1919"><a class="wlink" href="#v1919"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.19 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Fixed host detection.<ul>
+<li>Host parent chain wasn&#39;t examined correctly (regression in v1.2.37).</li>
+<li>TCC/LE (tccle.exe) wasn&#39;t detected.</li>
+<li>Optimized detection of JP Soft command shells to remove an unnecessary delay.</li>
+<li>Added friendlier error message for JP Soft command shells.</li>
+</ul>
+</li>
+<li>Fixed the suggestion list failing to redraw in some cases after having been erased.</li>
+<li>Fixed potential cursor placement issues when using the legacy conhost terminal and the window width is less than the screen width.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/851">#851</a>; mitigate a console wrapping problem on Windows 8.1 and earlier when the window width is less than the screen width (revealed by v1.7.17).</li>
+</ul>
 <h4 id="v1918"><a class="wlink" href="#v1918"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.18 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <code>rl_buffer:refreshline()</code> to correctly force redrawing the input line (regression introduced in v1.7.0).</li>
