@@ -8,6 +8,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <lib/editor_module.h>
+#include <lib/rl_integration.h>
 #include <lib/matches.h>
 #include <lib/hinter.h>
 #include <lib/word_classifier.h>
@@ -276,7 +277,7 @@ void line_editor_tester::run(bool expectationless)
     {
         REQUIRE(m_editor->update());
     }
-    while (m_terminal_in.available(0));
+    while (rl_has_queued_input() || m_terminal_in.available(0));
 
     m_editor->update_matches();
 
