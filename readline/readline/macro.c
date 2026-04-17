@@ -129,7 +129,12 @@ _rl_next_macro_key (void)
 
 #if defined (READLINE_CALLBACKS)
   c = rl_executing_macro[executing_macro_index++];
-  if (RL_ISSTATE (RL_STATE_CALLBACK) && RL_ISSTATE (RL_STATE_READCMD|RL_STATE_MOREINPUT) && rl_executing_macro[executing_macro_index] == 0)
+/* begin_clink_change
+ * BUGBUG: Readline read past the end of the macro.
+ * BUGBUG: Readline **NEVER** popped the executing macro once it completed. */
+  //if (RL_ISSTATE (RL_STATE_CALLBACK) && RL_ISSTATE (RL_STATE_READCMD|RL_STATE_MOREINPUT) && rl_executing_macro[executing_macro_index] == 0)
+  if (RL_ISSTATE (RL_STATE_CALLBACK) && (c == 0 || rl_executing_macro[executing_macro_index] == 0))
+/* end_clink_change */
       _rl_pop_executing_macro ();
   return c;
 #else
@@ -147,7 +152,16 @@ _rl_peek_macro_key (void)
   if (rl_executing_macro[executing_macro_index] == 0 && (macro_list == 0 || macro_list->string == 0))
     return (0);
   if (rl_executing_macro[executing_macro_index] == 0 && macro_list && macro_list->string)
-    return (macro_list->string[0]);
+/* begin_clink_change
+ * BUGBUG: Neglected to consider sindex. */
+    //return (macro_list->string[0]);
+    {
+      const struct saved_macro* m = macro_list;
+      while (m && m->string && !m->string[m->sindex])
+	m = m->next;
+      return (m && m->string) ? m->string[m->sindex] : 0;
+    }
+/* end_clink_change */
   return (rl_executing_macro[executing_macro_index]);
 }
 

@@ -725,6 +725,9 @@ extern int _rl_term_autowrap;
 
 /* text.c */
 extern int _rl_optimize_typeahead;
+/* begin_clink_change */
+extern int _rl_reading_for_typeahead;
+/* end_clink_change */
 extern int _rl_keep_mark_active;
 
 extern _rl_readstr_cxt *_rl_rscxt;
