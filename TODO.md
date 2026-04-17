@@ -9,6 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Make a documentation section that lists all the CLINK environment variables.
 - Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
