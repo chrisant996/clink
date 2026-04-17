@@ -58,6 +58,10 @@
 #include "rlshell.h"
 #include "xmalloc.h"
 
+/* begin_clink_change */
+#include <windows.h>
+/* end_clink_change */
+
 /* Forward declarations. */
 static int rl_change_case (int, int);
 static int _rl_char_search (int, int, int);
@@ -74,6 +78,7 @@ static int _rl_char_search_callback (_rl_callback_generic_arg *);
 int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 
 /* begin_clink_change */
+int _rl_reading_for_typeahead = 0;
 rl_vintfunc_t *rl_buffer_changing_hook = 0;
 rl_intfunc_t *rl_selection_event_hook = 0;
 rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook = 0;
@@ -1012,6 +1017,10 @@ int
 rl_insert (int count, int c)
 {
   int r, n, x;
+/* begin_clink_change */
+  const DWORD tick = GetTickCount ();
+  const DWORD batch_timeout = 50;
+/* end_clink_change */
 
 /* begin_clink_change */
   if (rl_selection_event_hook)
@@ -1021,6 +1030,8 @@ rl_insert (int count, int c)
 /* begin_clink_change */
   if (rl_selection_event_hook)
     rl_selection_event_hook (SEL_AFTER_INSERTCHAR);
+  assert (!_rl_reading_for_typeahead);
+  _rl_reading_for_typeahead = _rl_optimize_typeahead;
 /* end_clink_change */
 
   /* XXX -- attempt to batch-insert pending input that maps to self-insert */
@@ -1029,6 +1040,7 @@ rl_insert (int count, int c)
   while (_rl_optimize_typeahead &&
 	 rl_num_chars_to_read == 0 &&
 /* begin_clink_change */
+	 GetTickCount () - tick < batch_timeout &&
 	 //(RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
 	 (RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
 /* end_clink_change */
@@ -1062,6 +1074,10 @@ rl_insert (int count, int c)
       if (rl_done || r != 0)
 	break;
     }
+
+/* begin_clink_change */
+  _rl_reading_for_typeahead = 0;
+/* end_clink_change */
 
   /* If we didn't insert n and there are pending bytes, we need to insert
      them if _rl_insert_char didn't do that on its own. */

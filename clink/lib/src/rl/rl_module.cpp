@@ -607,13 +607,15 @@ static int32 terminal_getc_thunk(FILE* stream)
     if (stream == in_stream)
     {
         assert(s_direct_input);
-        if (RL_ISSTATE(RL_STATE_READSTR))
+        if (rl_has_clink_input())
+            return rl_read_key();
+        if (_rl_reading_for_typeahead)
         {
+            assert(!s_input_more);
+            assert(s_direct_input->available(0));
             s_direct_input->select();
             return s_direct_input->read();
         }
-        if (rl_has_clink_input())
-            return rl_read_key();
         return 0;
     }
 
