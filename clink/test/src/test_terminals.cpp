@@ -54,7 +54,7 @@ int32 test_terminal_in::peek()
 }
 
 //------------------------------------------------------------------------------
-bool test_terminal_in::send_terminal_request(const char* request, const char* pattern, str_base& out)
+bool test_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, str_base& out)
 {
     assert(false);
     out.clear();

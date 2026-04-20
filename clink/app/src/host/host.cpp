@@ -33,6 +33,7 @@
 #include <lua/prompt.h>
 #include <lua/suggest.h>
 #include <terminal/printer.h>
+#include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
 #include <utils/app_context.h>
@@ -885,6 +886,18 @@ force_reload_lua:
             m_suggester = new suggester(*m_lua);
     }
     host_lua& lua = *m_lua;
+
+    struct terminal_inout_scope
+    {
+        ~terminal_inout_scope() { if (in) in->end(false); }
+        void begin(terminal_in* in) { this->in = in; in->begin(); }
+        terminal_in* in = nullptr;
+    } terminal_inout_scope;
+
+    // The win_terminal_in needs to be initialized in case a Lua script wants
+    // to send a terminal request code.
+    if (init_scripts || send_event)
+        terminal_inout_scope.begin(m_terminal.in);
 
     // Load scripts.
     if (init_scripts)

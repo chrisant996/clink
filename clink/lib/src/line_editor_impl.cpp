@@ -321,8 +321,7 @@ void line_editor_impl::begin_line()
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
-    const int32 began = m_desc.input->begin();
-    assert(began == 1);
+    m_desc.input->begin();
     m_desc.output->begin();
     m_buffer.begin_line();
 
@@ -362,8 +361,7 @@ void line_editor_impl::end_line()
 
     m_buffer.end_line();
     m_desc.output->end();
-    const int32 began = m_desc.input->end();
-    assert(!began);
+    m_desc.input->end();
 
     m_words.clear();
     m_command_line_states.clear();

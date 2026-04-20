@@ -1181,6 +1181,76 @@ static int32 api_ellipsify(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.sendterminalrequest
+/// -ver:   1.9.20
+/// -arg:   request_code:string
+/// -arg:   response_prefix:string
+/// -arg:   [response_final:string]
+/// -ret:   string | nil
+/// Sends the <span class="arg">request_code</span> escape sequence to the
+/// terminal and receives a response code that begins with the
+/// <span class="arg">response_prefix</span>.  Since this is implemented
+/// inside Clink's keyboard driver, it's able to read the response without
+/// losing any input that's may have already been queued.
+///
+/// The available request codes depends on the terminal in use; refer to
+/// terminal documentation for more information.
+///
+/// If the request is a CSI code, then <span class="arg">response_final</span>
+/// is required and must specify the response's Final Byte.  Or for non-CSI
+/// request codes, then the <span class="arg">response_final</span> should be
+/// nil.
+///
+/// If an error occurs, or if no response code is found, then nil is returned.
+/// Otherwise the response code from the terminal is returned.
+static int32 send_terminal_request(lua_State* state)
+{
+    // Only supported when stdin and stdout are both console handles.
+    {
+        DWORD mode;
+        if (!GetConsoleMode(get_std_handle(STD_INPUT_HANDLE), &mode) ||
+            !GetConsoleMode(get_std_handle(STD_OUTPUT_HANDLE), &mode))
+            return 0;
+    }
+
+    const char* request = luaL_checkstring(state, 1);
+    const char* prefix = luaL_checkstring(state, 2);
+    const char* final = lua_isstring(state, 3) ? luaL_checkstring(state, 3) : nullptr;
+    if (!request || !prefix)
+        return 0;
+
+    if (!*request)
+        return luaL_argerror(state, 1, "request string cannot be empty");
+    if (*request != 27)
+        return luaL_argerror(state, 1, "request string must begin with ESC byte");
+    if (*prefix != 27)
+        return luaL_argerror(state, 1, "response prefix string must begin with ESC byte");
+    if (prefix[1] == '[')
+    {
+        if (!final || !final[0] || final[1])
+            return luaL_argerror(state, 1, "response final string must be 1 character for a CSI sequence");
+    }
+    else
+    {
+        if (!final || !*final || !strcmp(final, "\x07") || !strcmp(final, "\x1b\x9c") || !strcmp(final, "\x9c"))
+            final = nullptr;
+        else
+            return luaL_argerror(state, 1, "invalid response final string for a non-CSI sequence");;
+    }
+
+    terminal_in* const in = get_lua_terminal_input();
+    if (!in)
+        return 0;
+
+    str_moveable out;
+    if (!in->send_terminal_request(request, prefix, final, out))
+        return 0;
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 static int32 set_width(lua_State* state)
 {
@@ -1418,6 +1488,7 @@ void console_lua_initialise(lua_state& lua, bool lua_interpreter)
         { "getcolortable",          &get_color_table },
         { "cellcountiter",          &cell_count_iter },
         { "ellipsify",              &api_ellipsify },
+        { "sendterminalrequest",    &send_terminal_request },
         // UNDOCUMENTED; internal use only.
         { "__set_width",            &set_width },
     };

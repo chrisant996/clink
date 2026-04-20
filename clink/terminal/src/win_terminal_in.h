@@ -24,7 +24,7 @@ public:
     virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) override;
     virtual int32   read() override;
     virtual int32   peek() override;
-    virtual bool    send_terminal_request(const char* request, const char* pattern, str_base& out) override;
+    virtual bool    send_terminal_request(const char* request, const char* response_prefix, const char* response_final, str_base& out) override;
     virtual key_tester* set_key_tester(key_tester* keys) override;
 
 private:

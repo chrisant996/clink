@@ -764,26 +764,61 @@ int32 win_terminal_in::peek()
 //      str<> response;
 //      if (send_terminal_request("\x1b[?2027$p", "\x1b[?2027;0$y", response))
 //          printf("ESC%s\n", response.c_str() + 1);
-bool win_terminal_in::send_terminal_request(const char* request, const char* pattern, str_base& out)
+bool win_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, str_base& out)
 {
+    assert(m_stdin);
+    assert(m_stdout);
     assert(request && *request);
-    assert(pattern && *pattern);
+    assert(prefix && *prefix);
+    assertimplies(prefix[0] == 27 && prefix[1] == '[', final && final[0] && !final[1]);
+    assertimplies(prefix[0] == 27 && prefix[1] != '[', !final || !*final || !strcmp(final, "\x07") || !strcmp(final, "\x1b\x9c") || !strcmp(final, "\x9c"));
 
     out.clear();
 
     if (get_current_ansi_handler() < ansi_handler::first_native)
         return false;
 
+    DWORD mode;
+    if (!GetConsoleMode(m_stdin, &mode) ||
+        !GetConsoleMode(m_stdout, &mode))
+        return false;
+
+    if (!request || !*request)
+        return false;
+    if (!prefix || !*prefix)
+        return false;
+    if (prefix[0] != 27)
+        return false;
+    if (prefix[1] == '[')
+    {
+        if (!(final && final[0] && !final[1]))
+            return false;
+    }
+    else
+    {
+        if (!final || !*final || !strcmp(final, "\x07") || !strcmp(final, "\x1b\x9c") || !strcmp(final, "\x9c"))
+            final = nullptr;
+        else
+            return false;
+    }
+
+    constexpr uint16 c_max_pending = 16*1024;
+    if (m_pending_records.size() >= c_max_pending - 1024)
+        return false;
+
     std::vector<INPUT_RECORD> pending_records;      // (a stack)
     std::vector<INPUT_RECORD> processed_records;    // (an array)
+    uint8 buffer[sizeof(m_buffer)];
     auto buffer_head = m_buffer_head;
     auto buffer_count = m_buffer_count;
     auto lead_surrogate = m_lead_surrogate;
+    memcpy(buffer, m_buffer, sizeof(m_buffer));
     m_pending_records.swap(pending_records);
     m_processed_records.swap(processed_records);
     m_buffer_head = 0;
     m_buffer_count = 0;
     m_lead_surrogate = 0;
+    static_assert(sizeof(m_buffer) == sizeof(buffer), "mismatched buffer sizes");
 
     assert(!s_sending_terminal_request);
     rollback<bool> str(s_sending_terminal_request, true);
@@ -797,7 +832,8 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     // appended to any queued input.  So it's necessary to apply ECMA48
     // compliant stateful parsing against the input.
     bool ret = false;
-    if (available(0))
+    const uint32 timeout = 150;
+    if (available(timeout))
     {
         struct InputRecordCorrelation
         {
@@ -807,19 +843,16 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
         };
         std::vector<InputRecordCorrelation> correlations;
 
-        // First read all available input.  If there's more than 16KB of input
-        // then give up.
+        // Read available input.  If too many input records then stop reading.
         s_force_raw_esc = true;
         str_moveable input;
-        constexpr uint16 c_max_input = 16*1024;
-        while (available(0) && input.length() < c_max_input)
+        while (available(0) && pending_records.size() + m_processed_records.size() < c_max_pending)
         {
             correlations.emplace_back();
             auto& correlation = correlations.back();
             correlation.record_index = m_processed_records.size();
             correlation.stream_index = input.length();
 
-            const uint32 buffer_count = m_buffer_count;
             read_console(nullptr, 0, false);
 
             while (m_buffer_count)
@@ -833,118 +866,86 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
         s_force_raw_esc = false;
 
         // Next use stateful inspection to seek the pattern.
-        if (input.length() < c_max_input)
+        ecma48_state state;
+        ecma48_iter input_iter(input.c_str(), state, input.length());
+        while (true)
         {
-            ecma48_state state;
-            ecma48_iter input_iter(input.c_str(), state, input.length());
-            while (true)
+            // Remember the input_iter pointer because code.get_pointer()
+            // points at a copy of the input data, not at the actual input
+            // string buffer.
+            const char* input_iter_ptr = input_iter.get_pointer();
+
+            // Get the next parsed code.
+            const ecma48_code& code = input_iter.next();
+            if (!code)
+                break;
+            if (code.get_type() != ecma48_code::type_c1)
+                continue;
+
+            // Compare the C1 code against the prefix.
+            const char* matched = input_iter_ptr;
+            str_iter code_iter(code.get_pointer(), code.get_length());
+            for (const char* walk = prefix; code_iter.more() && *walk; ++walk)
             {
-                // Remember the input_iter pointer because code.get_pointer()
-                // points at a copy of the input data, not at the actual input
-                // string buffer.
-                const char* input_iter_ptr = input_iter.get_pointer();
-
-                // Get the next parsed code.
-                const ecma48_code& code = input_iter.next();
-                if (!code)
+                const uint32 c = code_iter.next();
+                const uint32 w = (uint8)*walk;
+                if (c != w)
+                {
+                    matched = nullptr;
                     break;
-                if (code.get_type() != ecma48_code::type_c1)
-                    continue;
-
-                // Compare the C1 code against the pattern.
-                const char* matched = input_iter_ptr;
-                bool digits = false;
-                str_iter code_iter(code.get_pointer(), code.get_length());
-                for (const char* walk = pattern; code_iter.more() && (digits || *walk);)
-                {
-                    const uint32 c = code_iter.next();
-                    if (c > 0x7f)
-                    {
-                        matched = nullptr;
-                        break;
-                    }
-
-                    // Parse wildcarded digits.
-                    if (digits || (*walk == '0' &&
-                                    ((pattern == walk || (pattern < walk && !isdigit(uint8(*(walk - 1))))) &&
-                                    (!isdigit(uint8(*(walk + 1)))))))
-                    {
-                        if (c >= '0' && c <= '9')
-                        {
-                            if (!digits)
-                            {
-                                assert(*walk);
-                                ++walk;
-                                // Report sequences cannot end in a wildcarded digit.
-                                if (!*walk)
-                                {
-                                    matched = nullptr;
-                                    break;
-                                }
-                            }
-                            digits = true;
-                            continue;
-                        }
-                        else
-                        {
-                            // Digit expected; stop if something else.
-                            if (!digits)
-                            {
-                                matched = nullptr;
-                                break;
-                            }
-                            // Done with digits.
-                            digits = false;
-                            assert(*walk);
-                        }
-                    }
-
-                    if (c != *walk)
-                    {
-                        matched = nullptr;
-                        break;
-                    }
-
-                    assert(*walk);
-                    ++walk;
                 }
+            }
 
-                assert(out.empty());
-                if (matched)
+            if (matched)
+            {
+                const char* last = code.get_pointer() + code.get_length() - 1;
+                if (final)
                 {
-                    // Fill the out parameter with the matched code.
-                    out.concat(code.get_pointer(), code.get_length());
-                    assert(!out.empty());
+                    if (*last != *final)
+                        matched = nullptr;
+                }
+                else
+                {
+                    if (!(*last == 0x07) && !(*last == '\\' && last[-1] == 27))
+                        matched = nullptr;
+                }
+            }
 
-                    // Remove the corresponding input records.
-                    assert(m_pending_records.empty());
-                    const size_t begin_offset = matched - input.c_str();
-                    const size_t end_offset = begin_offset + code.get_length();
-                    size_t begin_erasure = -1;
-                    for (size_t ii = 0; ii < correlations.size(); ++ii)
+            assert(out.empty());
+            if (matched)
+            {
+                // Fill the out parameter with the matched code.
+                out.concat(code.get_pointer(), code.get_length());
+                assert(!out.empty());
+
+                // Remove the corresponding input records.
+                assert(m_pending_records.empty());
+                const size_t begin_offset = matched - input.c_str();
+                const size_t end_offset = begin_offset + code.get_length();
+                size_t begin_erasure = -1;
+                for (size_t ii = 0; ii < correlations.size(); ++ii)
+                {
+                    const auto& correlation = correlations[ii];
+                    if (size_t(correlation.stream_index) + size_t(correlation.char_count) > begin_offset)
                     {
-                        const auto& correlation = correlations[ii];
-                        if (size_t(correlation.stream_index) + size_t(correlation.char_count) > begin_offset)
-                        {
-                            assert(correlation.stream_index == begin_offset);
-                            begin_erasure = ii;
+                        assert(correlation.stream_index == begin_offset);
+                        begin_erasure = ii;
+                        break;
+                    }
+                }
+                assert(begin_erasure < correlations.size());
+                if (begin_erasure < correlations.size())
+                {
+                    assert(correlations.size() == m_processed_records.size());
+                    const size_t index_erase = correlations[begin_erasure].record_index;
+                    for (size_t ii = begin_erasure; ii < correlations.size(); ++ii)
+                    {
+                        if (correlations[ii].stream_index >= end_offset)
                             break;
-                        }
+                        m_processed_records.erase(m_processed_records.begin() + index_erase);
                     }
-                    assert(begin_erasure < correlations.size());
-                    if (begin_erasure < correlations.size())
-                    {
-                        assert(correlations.size() == m_processed_records.size());
-                        const size_t index_erase = correlations[begin_erasure].record_index;
-                        for (size_t ii = begin_erasure; ii < correlations.size(); ++ii)
-                        {
-                            if (correlations[ii].stream_index >= end_offset)
-                                break;
-                            m_processed_records.erase(m_processed_records.begin() + index_erase);
-                        }
-                    }
-                    break;
                 }
+                break;
             }
         }
     }
@@ -952,6 +953,7 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pat
     // Restore the original pending state.
     assert(m_pending_records.empty());
     m_processed_records.swap(processed_records);
+    memcpy(m_buffer, buffer, sizeof(m_buffer));
     m_buffer_head = buffer_head;
     m_buffer_count = buffer_count;
     m_lead_surrogate = lead_surrogate;
@@ -1113,6 +1115,8 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool peek)
 {
+    assert(m_stdout);
+
     // If there's already input buffered, then don't read further.
     if (m_buffer_count > 0)
         return;
