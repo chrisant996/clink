@@ -4,6 +4,7 @@
 
 #### v1.9.20
 
+- Added new Lua API [console.sendterminalrequest()](#console.sendterminalrequest) which sends a terminal request escape code and receives a response escape code (the available terminal request escape codes and their responses depends on the terminal).
 - Fixed several bugs in Readline macro text support in CALLBACKS mode (the mode that Clink has to use):
   - Never correctly detects the end of any macro during playback.
   - Gets permanently stuck thinking it's in macro playback once playback begins.
