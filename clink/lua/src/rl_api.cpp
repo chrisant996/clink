@@ -88,11 +88,11 @@ static void unquote_keys(const char* in, str_base& out)
 /// Undoes Readline tilde expansion.  See
 /// <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.
 /// -show:  rl.collapsetilde("C:\\Users\\yourusername\\Documents")
-/// -show:  &nbsp;
+/// -show:
 /// -show:  -- The return value depends on the expand-tilde configuration variable:
 /// -show:  -- When "on", the function returns "C:\\Users\\yourusername\\Documents".
 /// -show:  -- When "off", the function returns "~\\Documents".
-/// -show:  &nbsp;
+/// -show:
 /// -show:  -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".
 static int32 collapse_tilde(lua_State* state)
 {
@@ -140,25 +140,25 @@ static int32 collapse_tilde(lua_State* state)
 /// -show:  -- This dir_matches function demonstrates efficient use of rl.expandtilde()
 /// -show:  -- and rl.collapsetilde() to generate directory matches from the file system.
 /// -show:  function dir_matches(match_word, word_index, line_state)
-/// -show:  &nbsp;   -- Expand tilde before scanning file system.
-/// -show:  &nbsp;   local word = line_state:getword(word_index)
-/// -show:  &nbsp;   local expanded
-/// -show:  &nbsp;   word, expanded = rl.expandtilde(word)
+/// -show:      -- Expand tilde before scanning file system.
+/// -show:      local word = line_state:getword(word_index)
+/// -show:      local expanded
+/// -show:      word, expanded = rl.expandtilde(word)
 /// -show:
-/// -show:  &nbsp;   -- Get the directory from 'word', and collapse tilde before generating
-/// -show:  &nbsp;   -- matches.  Notice that collapsetilde() only needs to be called once!
-/// -show:  &nbsp;   local root = path.getdirectory(word) or ""
-/// -show:  &nbsp;   if expanded then
-/// -show:  &nbsp;       root = rl.collapsetilde(root)
-/// -show:  &nbsp;   end
+/// -show:      -- Get the directory from 'word', and collapse tilde before generating
+/// -show:      -- matches.  Notice that collapsetilde() only needs to be called once!
+/// -show:      local root = path.getdirectory(word) or ""
+/// -show:      if expanded then
+/// -show:          root = rl.collapsetilde(root)
+/// -show:      end
 /// -show:
-/// -show:  &nbsp;   local matches = {}
-/// -show:  &nbsp;   for _, d in ipairs(os.globdirs(word.."*", true)) do
-/// -show:  &nbsp;       -- Join the filename with the input directory (might have a tilde).
-/// -show:  &nbsp;       local dir = path.join(root, d.name)
-/// -show:  &nbsp;       table.insert(matches, { match = dir, type = d.type })
-/// -show:  &nbsp;   end
-/// -show:  &nbsp;   return matches
+/// -show:      local matches = {}
+/// -show:      for _, d in ipairs(os.globdirs(word.."*", true)) do
+/// -show:          -- Join the filename with the input directory (might have a tilde).
+/// -show:          local dir = path.join(root, d.name)
+/// -show:          table.insert(matches, { match = dir, type = d.type })
+/// -show:      end
+/// -show:      return matches
 /// -show:  end
 /// <fieldset><legend>Compatibility Note:</legend>
 /// The original intended usage for this function was to expand tildes in a
@@ -355,9 +355,9 @@ static int32 is_rl_variable_true(lua_State* state)
 /// <a href="#rl.invokecommand">rl.invokecommand()</a>.
 /// -show:  local b,t = rl.getbinding([["\e[H"]], "emacs")
 /// -show:  if b then
-/// -show:  &nbsp;   print("Home is bound to "..b.." ("..t..") in emacs mode.")
+/// -show:      print("Home is bound to "..b.." ("..t..") in emacs mode.")
 /// -show:  else
-/// -show:  &nbsp;   print("Home is not bound in emacs mode.")
+/// -show:      print("Home is not bound in emacs mode.")
 /// -show:  end
 static int32 get_rl_binding(lua_State* state)
 {
@@ -469,8 +469,8 @@ static int32 get_rl_binding(lua_State* state)
 /// they may replace the key binding again.
 /// -show:  local old_space = rl.getbinding('" "')
 /// -show:  function hijack_space(rl_buffer)
-/// -show:  &nbsp;   rl.invokecommand("clink-expand-line")   -- Expand envvars, etc in the line.
-/// -show:  &nbsp;   rl.invokecommand(old_space)             -- Then invoke whatever was previously bound to Space.
+/// -show:      rl.invokecommand("clink-expand-line")   -- Expand envvars, etc in the line.
+/// -show:      rl.invokecommand(old_space)             -- Then invoke whatever was previously bound to Space.
 /// -show:  end
 /// -show:  rl.setbinding([[" "]], [["luafunc:hijack_space"]])
 /// -show:
@@ -670,17 +670,17 @@ static int32 get_last_command(lua_State* state)
 ///
 /// <em>Example Lua function:</em>
 /// -show:  function completenumbers()
-/// -show:  &nbsp;   local _,last_luafunc = rl.getlastcommand()
-/// -show:  &nbsp;   if last_luafunc ~= "completenumbers" then
-/// -show:  &nbsp;       -- Collect numbers from the screen (minimum of three digits).
-/// -show:  &nbsp;       -- The numbers can be any base up to hexadecimal (decimal, octal, etc).
-/// -show:  &nbsp;       local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
-/// -show:  &nbsp;       -- They're already sorted by distance from the input line.
-/// -show:  &nbsp;       matches["nosort"] = true
-/// -show:  &nbsp;       rl.setmatches(matches)
-/// -show:  &nbsp;   end
+/// -show:      local _,last_luafunc = rl.getlastcommand()
+/// -show:      if last_luafunc ~= "completenumbers" then
+/// -show:          -- Collect numbers from the screen (minimum of three digits).
+/// -show:          -- The numbers can be any base up to hexadecimal (decimal, octal, etc).
+/// -show:          local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
+/// -show:          -- They're already sorted by distance from the input line.
+/// -show:          matches["nosort"] = true
+/// -show:          rl.setmatches(matches)
+/// -show:      end
 /// -show:
-/// -show:  &nbsp;   rl.invokecommand("old-menu-complete")
+/// -show:      rl.invokecommand("old-menu-complete")
 /// -show:  end
 static int32 set_matches(lua_State* state)
 {
@@ -749,28 +749,28 @@ static int32 set_matches(lua_State* state)
 /// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
 /// of key bindings, and then invoke whichever key binding is selected.
 /// -show:  function luafunc_showkeybindings(rl_buffer)
-/// -show:  &nbsp;   local bindings = rl.getkeybindings()
-/// -show:  &nbsp;   if #bindings <= 0 then
-/// -show:  &nbsp;       rl_buffer:refreshline()
-/// -show:  &nbsp;       return
-/// -show:  &nbsp;   end
+/// -show:      local bindings = rl.getkeybindings()
+/// -show:      if #bindings <= 0 then
+/// -show:          rl_buffer:refreshline()
+/// -show:          return
+/// -show:      end
 /// -show:
-/// -show:  &nbsp;   local items = {}
-/// -show:  &nbsp;   for _,kb in ipairs(bindings) do
-/// -show:  &nbsp;       table.insert(items, {
-/// -show:  &nbsp;           value = kb.binding,     -- Return the binding when selected, so it can be invoked.
-/// -show:  &nbsp;           display = kb.key,       -- Display the key name.
-/// -show:  &nbsp;           description = kb.binding.."\t"..kb.desc -- Also display the command and description.
-/// -show:  &nbsp;       })
-/// -show:  &nbsp;   end
+/// -show:      local items = {}
+/// -show:      for _,kb in ipairs(bindings) do
+/// -show:          table.insert(items, {
+/// -show:              value = kb.binding,     -- Return the binding when selected, so it can be invoked.
+/// -show:              display = kb.key,       -- Display the key name.
+/// -show:              description = kb.binding.."\t"..kb.desc -- Also display the command and description.
+/// -show:          })
+/// -show:      end
 /// -show:
-/// -show:  &nbsp;   -- Show a popup that lists the items from above.
-/// -show:  &nbsp;   local binding, _, index = clink.popuplist("Key Bindings", items)
-/// -show:  &nbsp;   rl_buffer:refreshline()
-/// -show:  &nbsp;   if binding then
-/// -show:  &nbsp;       -- Invoke the selected binding (a command or macro).
-/// -show:  &nbsp;       rl.invokecommand(binding)
-/// -show:  &nbsp;   end
+/// -show:      -- Show a popup that lists the items from above.
+/// -show:      local binding, _, index = clink.popuplist("Key Bindings", items)
+/// -show:      rl_buffer:refreshline()
+/// -show:      if binding then
+/// -show:          -- Invoke the selected binding (a command or macro).
+/// -show:          rl.invokecommand(binding)
+/// -show:      end
 /// -show:  end
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 int32 get_key_bindings(lua_State* state)
@@ -838,20 +838,20 @@ int32 get_key_bindings(lua_State* state)
 /// -show:  -- or for example '"luafunc:my_macro_function"' or '"some macro text"'
 /// -show:  local info = rl.getcommandbindings(command)
 /// -show:  if info then
-/// -show:  &nbsp;   local info = rl.getcommandbindings(command)
-/// -show:  &nbsp;   print("Info for '"..command.."':")
-/// -show:  &nbsp;   print("Description is:  "..info.desc)
-/// -show:  &nbsp;   print("Category is:     "..info.category)
-/// -show:  &nbsp;   if #info.keys > 0 then
-/// -show:  &nbsp;       print("Bound to:")
-/// -show:  &nbsp;       for _,key in ipairs(info.keys) do
-/// -show:  &nbsp;           print("    "..key)
-/// -show:  &nbsp;       end
-/// -show:  &nbsp;   else
-/// -show:  &nbsp;       print("Not bound to any keys.")
-/// -show:  &nbsp;   end
+/// -show:      local info = rl.getcommandbindings(command)
+/// -show:      print("Info for '"..command.."':")
+/// -show:      print("Description is:  "..info.desc)
+/// -show:      print("Category is:     "..info.category)
+/// -show:      if #info.keys > 0 then
+/// -show:          print("Bound to:")
+/// -show:          for _,key in ipairs(info.keys) do
+/// -show:              print("    "..key)
+/// -show:          end
+/// -show:      else
+/// -show:          print("Not bound to any keys.")
+/// -show:      end
 /// -show:  else
-/// -show:  &nbsp;   print("Command '"..command.."' not recognized.")
+/// -show:      print("Command '"..command.."' not recognized.")
 /// -show:  end
 int32 get_command_bindings(lua_State* state)
 {
@@ -1013,36 +1013,36 @@ static int32 getset_insert_mode(lua_State* state)
 /// -show:  local normal = "\x1b[m"
 /// -show:
 /// -show:  local function get_settings_color(name)
-/// -show:  &nbsp;   return "\x1b[" .. settings.get(name) .. "m"
+/// -show:      return "\x1b[" .. settings.get(name) .. "m"
 /// -show:  end
 /// -show:
 /// -show:  function p:filter(prompt)
-/// -show:  &nbsp;   prompt = os.getcwd()
-/// -show:  &nbsp;   if rl.ismodifiedline() then
-/// -show:  &nbsp;       -- If the current line is a history entry and has been modified,
-/// -show:  &nbsp;       -- then show an indicator.
-/// -show:  &nbsp;       prompt = get_settings_color("color.modmark") .. "*" .. normal .. " " .. prompt
-/// -show:  &nbsp;   end
-/// -show:  &nbsp;   prompt = prompt .. "\n$ "
-/// -show:  &nbsp;   return prompt
+/// -show:      prompt = os.getcwd()
+/// -show:      if rl.ismodifiedline() then
+/// -show:          -- If the current line is a history entry and has been modified,
+/// -show:          -- then show an indicator.
+/// -show:          prompt = get_settings_color("color.modmark") .. "*" .. normal .. " " .. prompt
+/// -show:      end
+/// -show:      prompt = prompt .. "\n$ "
+/// -show:      return prompt
 /// -show:  end
 /// -show:
 /// -show:  local last_modmark = false
 /// -show:
 /// -show:  local function modmark_reset()
-/// -show:  &nbsp;   -- Reset the remembered state at the beginning of each edit line.
-/// -show:  &nbsp;   last_modmark = rl.ismodifiedline()
+/// -show:      -- Reset the remembered state at the beginning of each edit line.
+/// -show:      last_modmark = rl.ismodifiedline()
 /// -show:
-/// -show:  &nbsp;   -- Turn off `mark-modified-lines` to avoid two modmarks showing up.
-/// -show:  &nbsp;   rl.setvariable("mark-modified-lines", "off")
+/// -show:      -- Turn off `mark-modified-lines` to avoid two modmarks showing up.
+/// -show:      rl.setvariable("mark-modified-lines", "off")
 /// -show:  end
 /// -show:
 /// -show:  local function modmark_refilter()
-/// -show:  &nbsp;   -- If the modmark state has changed, refresh the prompt.
-/// -show:  &nbsp;   if last_modmark ~= rl.ismodifiedline() then
-/// -show:  &nbsp;       last_modmark = rl.ismodifiedline()
-/// -show:  &nbsp;       clink.refilterprompt()
-/// -show:  &nbsp;   end
+/// -show:      -- If the modmark state has changed, refresh the prompt.
+/// -show:      if last_modmark ~= rl.ismodifiedline() then
+/// -show:          last_modmark = rl.ismodifiedline()
+/// -show:          clink.refilterprompt()
+/// -show:      end
 /// -show:  end
 /// -show:
 /// -show:  clink.onbeginedit(modmark_reset)
@@ -1245,35 +1245,35 @@ static int32 need_quotes(lua_State* state)
 /// If the optional <span class="arg">to_cursor</span> is true, then only the
 /// line up to the current cursor position is compared.
 /// -show:  local function matches_func(word, index, line_state, builder)
-/// -show:  &nbsp;    -- Delay match generation briefly, to allow coalescing typed letters into
-/// -show:  &nbsp;    -- a single query.  This can make auto-suggestions more responsive if the
-/// -show:  &nbsp;    -- match generation operation is slow, such as doing a network query.
-/// -show:  &nbsp;    local co, ismain = coroutine.running()
-/// -show:  &nbsp;    if not ismain then
-/// -show:  &nbsp;        local orig_line = line_state:getline()
-/// -show:  &nbsp;        orig_line = orig_line:sub(1, line_state:getcursor() - 1)
-/// -show:  &nbsp;        -- Yield for 0.2 seconds.
-/// -show:  &nbsp;        clink.setcoroutineinterval(co, 0.2)
-/// -show:  &nbsp;        coroutine.yield()
-/// -show:  &nbsp;        -- Reset the interval back to normal.
-/// -show:  &nbsp;        clink.setcoroutineinterval(co, 0)
-/// -show:  &nbsp;        -- If the input line changed during the 0.2 seconds, then don't generate
-/// -show:  &nbsp;        -- matches, and mark the matches as needing to be regenerated.
-/// -show:  &nbsp;        if not rl.islineequal(orig_line, true) then
-/// -show:  &nbsp;            builder:setvolatile()
-/// -show:  &nbsp;            return {}
-/// -show:  &nbsp;        end
-/// -show:  &nbsp;    end
+/// -show:       -- Delay match generation briefly, to allow coalescing typed letters into
+/// -show:       -- a single query.  This can make auto-suggestions more responsive if the
+/// -show:       -- match generation operation is slow, such as doing a network query.
+/// -show:       local co, ismain = coroutine.running()
+/// -show:       if not ismain then
+/// -show:           local orig_line = line_state:getline()
+/// -show:           orig_line = orig_line:sub(1, line_state:getcursor() - 1)
+/// -show:           -- Yield for 0.2 seconds.
+/// -show:           clink.setcoroutineinterval(co, 0.2)
+/// -show:           coroutine.yield()
+/// -show:           -- Reset the interval back to normal.
+/// -show:           clink.setcoroutineinterval(co, 0)
+/// -show:           -- If the input line changed during the 0.2 seconds, then don't generate
+/// -show:           -- matches, and mark the matches as needing to be regenerated.
+/// -show:           if not rl.islineequal(orig_line, true) then
+/// -show:               builder:setvolatile()
+/// -show:               return {}
+/// -show:           end
+/// -show:       end
 /// -show:
-/// -show:  &nbsp;    -- Do something slow that generates matches.
-/// -show:  &nbsp;    local matches = {}
-/// -show:  &nbsp;    local f = io.popen("slow_operation.exe")
-/// -show:  &nbsp;    if f then
-/// -show:  &nbsp;        for l in f:lines() do
-/// -show:  &nbsp;            table.insert(matches, l)
-/// -show:  &nbsp;        end
-/// -show:  &nbsp;    end
-/// -show:  &nbsp;    return matches
+/// -show:       -- Do something slow that generates matches.
+/// -show:       local matches = {}
+/// -show:       local f = io.popen("slow_operation.exe")
+/// -show:       if f then
+/// -show:           for l in f:lines() do
+/// -show:               table.insert(matches, l)
+/// -show:           end
+/// -show:       end
+/// -show:       return matches
 /// -show:  end
 static int32 is_line_equal(lua_State* state)
 {

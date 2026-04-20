@@ -131,17 +131,17 @@ static int32 match_len(lua_State* state)
 /// This can be used for manually sorting a subset of matches when a match
 /// builder has been told not to sort the list of matches.
 /// -show:  local files = {
-/// -show:  &nbsp;   { match="xyzFile", type="file" },
-/// -show:  &nbsp;   { match="abcFile", type="file" },
+/// -show:      { match="xyzFile", type="file" },
+/// -show:      { match="abcFile", type="file" },
 /// -show:  }
 /// -show:  local other = {
-/// -show:  &nbsp;   { match="abc_branch", type="arg" },
-/// -show:  &nbsp;   { match="xyz_branch", type="arg" },
-/// -show:  &nbsp;   { match="mno_tag", type="alias" },
+/// -show:      { match="abc_branch", type="arg" },
+/// -show:      { match="xyz_branch", type="arg" },
+/// -show:      { match="mno_tag", type="alias" },
 /// -show:  }
 /// -show:
 /// -show:  local function comparator(a, b)
-/// -show:  &nbsp;   return string.comparematches(a.match, a.type, b.match, b.type)
+/// -show:      return string.comparematches(a.match, a.type, b.match, b.type)
 /// -show:  end
 /// -show:
 /// -show:  -- Sort files.

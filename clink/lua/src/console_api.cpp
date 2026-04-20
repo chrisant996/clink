@@ -881,10 +881,10 @@ static int32 read_input(lua_State* state)
 ///
 /// <strong>Note:</strong> Mouse input is not supported.
 /// -show:  if console.checkinput() then
-/// -show:  &nbsp;   local key = console.readinput() -- Returns immediately since input is available.
-/// -show:  &nbsp;   if key == "\x03" or key == "\x1b[27;27~" or key == "\x1b" then
-/// -show:  &nbsp;       -- Ctrl-C or ESC was pressed.
-/// -show:  &nbsp;   end
+/// -show:      local key = console.readinput() -- Returns immediately since input is available.
+/// -show:      if key == "\x03" or key == "\x1b[27;27~" or key == "\x1b" then
+/// -show:          -- Ctrl-C or ESC was pressed.
+/// -show:      end
 /// -show:  end
 static int32 check_input(lua_State* state)
 {
@@ -1016,21 +1016,21 @@ static int32 get_color_table(lua_State* state)
 /// -show:  -- Index by byte:        12   3   4   5   6   7   8   9   10  11  12  13  14  15
 /// -show:
 /// -show:  for str, width, emoji in console.cellcountiter(text) do
-/// -show:  &nbsp;   -- Build string showing byte values.
-/// -show:  &nbsp;   local bytes = ""
-/// -show:  &nbsp;   for i = 1, #str do
-/// -show:  &nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
-/// -show:  &nbsp;   end
-/// -show:  &nbsp;   -- Print the cellcount substring and info about it.
-/// -show:  &nbsp;   clink.print(str, width, emoji, bytes)
-/// -show:  &nbsp;   -- Print the individual codepoints in the cellcount substring.
-/// -show:  &nbsp;   for s, value in unicode.iter(str) do
-/// -show:  &nbsp;       bytes = ""
-/// -show:  &nbsp;       for i = 1, #s do
-/// -show:  &nbsp;           bytes = bytes .. string.format("\\x%02x", s:byte(i, i))
-/// -show:  &nbsp;       end
-/// -show:  &nbsp;       clink.print("", s, string.format("U+%X", value), bytes)
-/// -show:  &nbsp;   end
+/// -show:      -- Build string showing byte values.
+/// -show:      local bytes = ""
+/// -show:      for i = 1, #str do
+/// -show:          bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
+/// -show:      end
+/// -show:      -- Print the cellcount substring and info about it.
+/// -show:      clink.print(str, width, emoji, bytes)
+/// -show:      -- Print the individual codepoints in the cellcount substring.
+/// -show:      for s, value in unicode.iter(str) do
+/// -show:          bytes = ""
+/// -show:          for i = 1, #s do
+/// -show:              bytes = bytes .. string.format("\\x%02x", s:byte(i, i))
+/// -show:          end
+/// -show:          clink.print("", s, string.format("U+%X", value), bytes)
+/// -show:      end
 /// -show:  end
 /// -show:
 /// -show:  -- The above prints the following:
@@ -1204,25 +1204,25 @@ static int32 api_ellipsify(lua_State* state)
 /// If an error occurs, or if no response code is found, then nil is returned.
 /// Otherwise the response code from the terminal is returned.
 /// -show:  if console.sendterminalrequest then
-/// -show:  &nbsp   -- XTerm documentation:
-/// -show:  &nbsp   -- https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-/// -show:  &nbsp   -- Search there for "Send Device Attributes (Primary DA)" to see details
-/// -show:  &nbsp   -- of how this specific request code works.
-/// -show:  &nbsp   local response = console.sendterminalrequest(
-/// -show:  &nbsp           "\x1b[c",   -- The request code.
-/// -show:  &nbsp           "\x1b[?",   -- The prefix of the expected response.
-/// -show:  &nbsp           "c")        -- The final character of the expected response.
-/// -show:  &nbsp   if response then
-/// -show:  &nbsp       -- Get the attributes from between the prefix and the final character.
-/// -show:  &nbsp       local attributes = response:sub(4, #response - 1)
-/// -show:  &nbsp       -- The attributes are semicolon delimited, so to make parsing simple,
-/// -show:  &nbsp       -- add extra semicolons at the beginning and end.
-/// -show:  &nbsp       response = ";"..response:sub(4, #response - 1)..";"
-/// -show:  &nbsp       -- Check if the "4" attribute is present.
-/// -show:  &nbsp       if response:find(";4;") then
-/// -show:  &nbsp           print("Terminal claims to have SIXEL support.")
-/// -show:  &nbsp       end
-/// -show:  &nbsp   end
+/// -show:      -- XTerm documentation:
+/// -show:      -- https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+/// -show:      -- Search there for "Send Device Attributes (Primary DA)" to see details
+/// -show:      -- of how this specific request code works.
+/// -show:      local response = console.sendterminalrequest(
+/// -show:              "\x1b[c",   -- The request code.
+/// -show:              "\x1b[?",   -- The prefix of the expected response.
+/// -show:              "c")        -- The final character of the expected response.
+/// -show:      if response then
+/// -show:          -- Get the attributes from between the prefix and the final character.
+/// -show:          local attributes = response:sub(4, #response - 1)
+/// -show:          -- The attributes are semicolon delimited, so to make parsing simple,
+/// -show:          -- add extra semicolons at the beginning and end.
+/// -show:          response = ";"..response:sub(4, #response - 1)..";"
+/// -show:          -- Check if the "4" attribute is present.
+/// -show:          if response:find(";4;") then
+/// -show:              print("Terminal claims to have SIXEL support.")
+/// -show:          end
+/// -show:      end
 /// -show:  end
 static int32 send_terminal_request(lua_State* state)
 {

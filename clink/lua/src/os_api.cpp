@@ -867,7 +867,7 @@ static int32 is_file(lua_State* state)
 /// </table></p>
 /// -show:  local t = os.getdrivetype("c:")
 /// -show:  if t == "remote" then
-/// -show:  &nbsp;   -- Network paths are often slow, and code may want to detect and skip them.
+/// -show:      -- Network paths are often slow, and code may want to detect and skip them.
 /// -show:  end
 static int32 get_drive_type(lua_State* state)
 {
@@ -1214,8 +1214,8 @@ int32 globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// By default hidden directories are included and system directories are
 /// omitted.
 /// -show:  local flags = {
-/// -show:  &nbsp;   hidden = true,      -- True includes hidden directories (default), or false omits them.
-/// -show:  &nbsp;   system = false,     -- True includes system directories, or false omits them (default).
+/// -show:      hidden = true,      -- True includes hidden directories (default), or false omits them.
+/// -show:      system = false,     -- True includes system directories, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globdirs("*", true, flags)
 int32 glob_dirs(lua_State* state)
@@ -1260,8 +1260,8 @@ int32 glob_dirs(lua_State* state)
 /// can be a table with fields that select how file globbing should behave.  By
 /// default hidden files are included and system files are omitted.
 /// -show:  local flags = {
-/// -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
-/// -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
+/// -show:      hidden = true,      -- True includes hidden files (default), or false omits them.
+/// -show:      system = false,     -- True includes system files, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globfiles("*", true, flags)
 int32 glob_files(lua_State* state)
@@ -2027,15 +2027,15 @@ static void get_bool_field(lua_State* state, const char* field, bool& out)
 /// directories, hidden files/directories are included, system
 /// files/directories are omitted, and directories have a <code>\</code> suffix.
 /// -show:  local flags = {
-/// -show:  &nbsp;   files = true,       -- True includes files, or false omits them.
-/// -show:  &nbsp;   dirs = true,        -- True includes directories, or false omits them.
-/// -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
-/// -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
-/// -show:  &nbsp;   dirsuffix = true,   -- True adds a \ suffix to directories, or false omits it.
+/// -show:      files = true,       -- True includes files, or false omits them.
+/// -show:      dirs = true,        -- True includes directories, or false omits them.
+/// -show:      hidden = true,      -- True includes hidden files (default), or false omits them.
+/// -show:      system = false,     -- True includes system files, or false omits them (default).
+/// -show:      dirsuffix = true,   -- True adds a \ suffix to directories, or false omits it.
 /// -show:  }
 /// -show:  local ff = os.findfiles(pattern, true, flags)
 /// -show:  for t in ff:files() do
-/// -show:  &nbsp;   print(t.name.." ("..t.type..")")
+/// -show:      print(t.name.." ("..t.type..")")
 /// -show:  end
 /// -show:  ff:close()
 static int32 find_files(lua_State* state)

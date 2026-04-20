@@ -102,13 +102,13 @@ int32 match_builder_lua::do_add_matches(lua_State* state, bool self_on_stack)
 /// Alternatively, the <span class="arg">match</span> argument can be a table
 /// with the following scheme:
 /// -show:  {
-/// -show:  &nbsp;   match           = "..."    -- [string] The match text.
-/// -show:  &nbsp;   display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
-/// -show:  &nbsp;   arginfo         = "..."    -- [string] OPTIONAL; an argument info string (requires v1.5.4 or greater).
-/// -show:  &nbsp;   description     = "..."    -- [string] OPTIONAL; a description for the match.
-/// -show:  &nbsp;   type            = "..."    -- [string] OPTIONAL; the match type.
-/// -show:  &nbsp;   appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
-/// -show:  &nbsp;   suppressappend  = t_or_f   -- [boolean] OPTIONAL; whether to suppress appending a character after the match.
+/// -show:      match           = "..."    -- [string] The match text.
+/// -show:      display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
+/// -show:      arginfo         = "..."    -- [string] OPTIONAL; an argument info string (requires v1.5.4 or greater).
+/// -show:      description     = "..."    -- [string] OPTIONAL; a description for the match.
+/// -show:      type            = "..."    -- [string] OPTIONAL; the match type.
+/// -show:      appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
+/// -show:      suppressappend  = t_or_f   -- [boolean] OPTIONAL; whether to suppress appending a character after the match.
 /// -show:  }
 ///
 /// <ul>
@@ -423,9 +423,9 @@ int32 match_builder_lua::log_matches(lua_State* state)
 /// -show:  builder:addmatches({"abc", "def"}) -- Adds two matches of type "none"
 /// -show:  builder:addmatches({"abc", "def"}, "file") -- Adds two matches of type "file"
 /// -show:  builder:addmatches({
-/// -show:  &nbsp;   -- Same table scheme per entry here as in builder:addmatch()
-/// -show:  &nbsp;   { match="remote/origin/master", type="word" },
-/// -show:  &nbsp;   { match="remote/origin/topic", type="word" }
+/// -show:      -- Same table scheme per entry here as in builder:addmatch()
+/// -show:      { match="remote/origin/master", type="word" },
+/// -show:      { match="remote/origin/topic", type="word" }
 /// -show:  })
 int32 match_builder_lua::add_matches(lua_State* state)
 {

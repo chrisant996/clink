@@ -711,12 +711,12 @@ static bool popup_del_callback(int32 index)
 /// Alternatively, the <span class="arg">items</span> argument can be a table of
 /// tables with the following scheme:
 /// -show:  {
-/// -show:  &nbsp;   {
-/// -show:  &nbsp;       value       = "...",   -- Required; this is returned if the item is chosen.
-/// -show:  &nbsp;       display     = "...",   -- Optional; displayed instead of value.
-/// -show:  &nbsp;       description = "...",   -- Optional; displayed in a dimmed color in a second column.
-/// -show:  &nbsp;   },
-/// -show:  &nbsp;   ...
+/// -show:      {
+/// -show:          value       = "...",   -- Required; this is returned if the item is chosen.
+/// -show:          display     = "...",   -- Optional; displayed instead of value.
+/// -show:          description = "...",   -- Optional; displayed in a dimmed color in a second column.
+/// -show:      },
+/// -show:      ...
 /// -show:  }
 ///
 /// The <code>value</code> field is returned if the item is chosen.
@@ -741,19 +741,19 @@ static bool popup_del_callback(int32 index)
 /// <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a>
 /// and will be automatically converted into the corresponding ANSI escape code.
 /// -show:  {
-/// -show:  &nbsp;   height          = 20,       -- Preferred height, not counting the border.
-/// -show:  &nbsp;   width           = 60,       -- Preferred width, not counting the border.
-/// -show:  &nbsp;   reverse         = true,     -- Start at bottom; search upwards.
-/// -show:  &nbsp;   searchmode      = "filter", -- Use "find" or "filter" to override the default search mode (in v1.6.13 and higher).
-/// -show:  &nbsp;   colors = {                  -- Override the popup colors using any colors in this table.
-/// -show:  &nbsp;       items       = "97;44",  -- The items color (e.g. bright white on blue).
-/// -show:  &nbsp;       desc        = "...",    -- The description color.
-/// -show:  &nbsp;       border      = "...",    -- The border color (defaults to items color).
-/// -show:  &nbsp;       header      = "...",    -- The title color (defaults to border).
-/// -show:  &nbsp;       footer      = "...",    -- The footer message color (defaults to border color).
-/// -show:  &nbsp;       select      = "...",    -- The selected item color (defaults to reverse video of items color).
-/// -show:  &nbsp;       selectdesc  = "...",    -- The selected item description color (defaults to selected item color).
-/// -show:  &nbsp;   }
+/// -show:      height          = 20,       -- Preferred height, not counting the border.
+/// -show:      width           = 60,       -- Preferred width, not counting the border.
+/// -show:      reverse         = true,     -- Start at bottom; search upwards.
+/// -show:      searchmode      = "filter", -- Use "find" or "filter" to override the default search mode (in v1.6.13 and higher).
+/// -show:      colors = {                  -- Override the popup colors using any colors in this table.
+/// -show:          items       = "97;44",  -- The items color (e.g. bright white on blue).
+/// -show:          desc        = "...",    -- The description color.
+/// -show:          border      = "...",    -- The border color (defaults to items color).
+/// -show:          header      = "...",    -- The title color (defaults to border).
+/// -show:          footer      = "...",    -- The footer message color (defaults to border color).
+/// -show:          select      = "...",    -- The selected item color (defaults to reverse video of items color).
+/// -show:          selectdesc  = "...",    -- The selected item description color (defaults to selected item color).
+/// -show:      }
 /// -show:  }
 static int32 popup_list(lua_State* state)
 {
@@ -975,14 +975,14 @@ static int32 popup_list(lua_State* state)
 /// -ret:   table
 /// Returns the default popup colors in a table with the following scheme:
 /// -show:  {
-/// -show:  &nbsp;   items      = "...",   -- The SGR parameters for the items color.
-/// -show:  &nbsp;   desc       = "...",   -- The SGR parameters for the description color.
-/// -show:  &nbsp;   -- Clink v1.7.0 adds the following colors to the table:
-/// -show:  &nbsp;   border     = "...",   -- The SGR parameters for the border color.
-/// -show:  &nbsp;   header     = "...",   -- The SGR parameters for the title color.
-/// -show:  &nbsp;   footer     = "...",   -- The SGR parameters for the footer message color.
-/// -show:  &nbsp;   select     = "...",   -- The SGR parameters for the selected item color.
-/// -show:  &nbsp;   selectdesc = "...",   -- The SGR parameters for the selected item description color.
+/// -show:      items      = "...",   -- The SGR parameters for the items color.
+/// -show:      desc       = "...",   -- The SGR parameters for the description color.
+/// -show:      -- Clink v1.7.0 adds the following colors to the table:
+/// -show:      border     = "...",   -- The SGR parameters for the border color.
+/// -show:      header     = "...",   -- The SGR parameters for the title color.
+/// -show:      footer     = "...",   -- The SGR parameters for the footer message color.
+/// -show:      select     = "...",   -- The SGR parameters for the selected item color.
+/// -show:      selectdesc = "...",   -- The SGR parameters for the selected item description color.
 /// -show:  }
 /// See
 /// <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a>
@@ -1036,10 +1036,10 @@ static int32 get_popup_list_colors(lua_State* state)
 /// -show:  local exe = string.format('"%s" --session %s', CLINK_EXE, clink.getsession())
 /// -show:  local r = io.popen('2>nul '..exe..' history')
 /// -show:  if r then
-/// -show:  &nbsp;   for line in r:lines() do
-/// -show:  &nbsp;       print(line)
-/// -show:  &nbsp;   end
-/// -show:  &nbsp;   r:close()
+/// -show:      for line in r:lines() do
+/// -show:          print(line)
+/// -show:      end
+/// -show:      r:close()
 /// -show:  end
 static int32 get_session(lua_State* state)
 {
@@ -1138,8 +1138,8 @@ static int32 get_ansi_host(lua_State* state)
 /// -show:  -- in its :generate() function and return true.
 /// -show:  local force_slashes = clink.generator(-1)
 /// -show:  function force_slashes:generate()
-/// -show:  &nbsp;   clink.translateslashes(2)  -- Convert to slashes.
-/// -show:  &nbsp;   return false               -- Allow generators to continue.
+/// -show:      clink.translateslashes(2)  -- Convert to slashes.
+/// -show:      return false               -- Allow generators to continue.
 /// -show:  end
 static int32 translate_slashes(lua_State* state)
 {
@@ -1239,7 +1239,7 @@ static int32 api_slash_translation(lua_State* state)
 /// -show:  -- Reopen the same stream later in the session
 /// -show:  local r = clink.opensessionstream("my_history_stream", "r")
 /// -show:  for line in r:lines() do
-/// -show:  &nbsp;   print(line)
+/// -show:      print(line)
 /// -show:  end
 /// -show:  r:close()
 static int32 open_session_stream(lua_State* state)

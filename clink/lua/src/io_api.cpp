@@ -366,11 +366,11 @@ private:
 /// -show:  w:close()
 /// -show:
 /// -show:  while (true) do
-/// -show:  &nbsp;   local line = r:read("*line")
-/// -show:  &nbsp;   if not line then
-/// -show:  &nbsp;       break
-/// -show:  &nbsp;   end
-/// -show:  &nbsp;   print(line)
+/// -show:      local line = r:read("*line")
+/// -show:      if not line then
+/// -show:          break
+/// -show:      end
+/// -show:      print(line)
 /// -show:  end
 /// -show:  r:close()
 /*static*/ int32 io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.

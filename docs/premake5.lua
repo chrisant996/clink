@@ -173,6 +173,7 @@ local function parse_doc_tags_impl(out, file)
     local desc_num = 1
     local show_num = 1
     local seen_show
+    local spaces_pattern
 
     -- Reads a tagged line, extracting its key and value; '/// key: value'
     local function read_tagged()
@@ -191,13 +192,20 @@ local function parse_doc_tags_impl(out, file)
         end
 
         line = line:sub(right + 1)
-        local _, right, tag, value = line:find("^-([a-z]+):")
+        local _, right, tag = line:find("^-([a-z]+):")
+        local value
         if tag then
             if tag == "show" then
+                if not seen_show then
+                    local padding = line:match("^-[a-z]+:(%s+)[^%s]")
+                    if padding then
+                        spaces_pattern = padding
+                    end
+                end
                 tag = tag..show_num
                 seen_show = true
             end
-            _, right, value = line:sub(right + 1):find("^%s*(.+)")
+            _, right, value = line:sub(right + 1):find("^"..(spaces_pattern or "%s*").."(.+)")
             if value == nil then
                 value = ""
             end
@@ -206,6 +214,7 @@ local function parse_doc_tags_impl(out, file)
                 desc_num = desc_num + 1
                 show_num = show_num + 1
                 seen_show = nil
+                spaces_pattern = nil
             end
             tag = "desc"..desc_num
             _, _, value = line:find("^%s*(.+)")
