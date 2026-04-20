@@ -1203,6 +1203,27 @@ static int32 api_ellipsify(lua_State* state)
 ///
 /// If an error occurs, or if no response code is found, then nil is returned.
 /// Otherwise the response code from the terminal is returned.
+/// -show:  if console.sendterminalrequest then
+/// -show:  &nbsp   -- XTerm documentation:
+/// -show:  &nbsp   -- https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+/// -show:  &nbsp   -- Search there for "Send Device Attributes (Primary DA)" to see details
+/// -show:  &nbsp   -- of how this specific request code works.
+/// -show:  &nbsp   local response = console.sendterminalrequest(
+/// -show:  &nbsp           "\x1b[c",   -- The request code.
+/// -show:  &nbsp           "\x1b[?",   -- The prefix of the expected response.
+/// -show:  &nbsp           "c")        -- The final character of the expected response.
+/// -show:  &nbsp   if response then
+/// -show:  &nbsp       -- Get the attributes from between the prefix and the final character.
+/// -show:  &nbsp       local attributes = response:sub(4, #response - 1)
+/// -show:  &nbsp       -- The attributes are semicolon delimited, so to make parsing simple,
+/// -show:  &nbsp       -- add extra semicolons at the beginning and end.
+/// -show:  &nbsp       response = ";"..response:sub(4, #response - 1)..";"
+/// -show:  &nbsp       -- Check if the "4" attribute is present.
+/// -show:  &nbsp       if response:find(";4;") then
+/// -show:  &nbsp           print("Terminal claims to have SIXEL support.")
+/// -show:  &nbsp       end
+/// -show:  &nbsp   end
+/// -show:  end
 static int32 send_terminal_request(lua_State* state)
 {
     // Only supported when stdin and stdout are both console handles.
