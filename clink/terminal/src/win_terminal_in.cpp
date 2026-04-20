@@ -12,6 +12,7 @@
 #include "ecma48_iter.h" // for send_terminal_request()
 
 #include <core/base.h>
+#include <core/os.h>
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_hash.h>
@@ -821,18 +822,24 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
     static_assert(sizeof(m_buffer) == sizeof(buffer), "mismatched buffer sizes");
 
     assert(!s_sending_terminal_request);
-    rollback<bool> str(s_sending_terminal_request, true);
+    rollback<bool> rb_str(s_sending_terminal_request, true);
 
     // Print the request.
     DWORD written;
     wstr<16> tmp(request);
     WriteConsoleW(m_stdout, tmp.c_str(), tmp.length(), &written, nullptr);
 
+    // Choose the timeout to use.
+    uint32 timeout = 0;
+    {
+        str<16> value;
+        if (os::get_env("CLINK_TERMINAL_REQUEST_TIMEOUT", value))
+            timeout = atoi(value.c_str());
+    }
+
     // Read input and match against the pattern.  The DECRPM response is
     // appended to any queued input.  So it's necessary to apply ECMA48
     // compliant stateful parsing against the input.
-    bool ret = false;
-    const uint32 timeout = 150;
     if (available(timeout))
     {
         struct InputRecordCorrelation
