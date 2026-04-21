@@ -806,7 +806,6 @@ static void puts_face_func(const char* s, const char* face, int32 n)
     static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
 #ifdef USE_SUGGESTION_HINT_INLINE
     static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-    static const char c_doc_autosuggest2[] = DOC_HYPERLINK_AUTOSUGGEST2;
 #endif
 
     str<280> out;
@@ -861,7 +860,6 @@ static void puts_face_func(const char* s, const char* face, int32 n)
 #ifdef USE_SUGGESTION_HINT_INLINE
             case FACE_SUGGESTIONKEY:
             case FACE_SUGGESTIONLINK:
-            case FACE_SUGGESTIONLINK2:
 #endif
                 assert(g_autosuggest_enable.get());
                 if (s_suggestion_color)
@@ -893,11 +891,6 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                 else if (cur_face == FACE_SUGGESTIONLINK)
                 {
                     out << c_hyperlink << c_doc_autosuggest << c_BEL;
-                    hyperlink = true;
-                }
-                else if (cur_face == FACE_SUGGESTIONLINK2)
-                {
-                    out << c_hyperlink << c_doc_autosuggest2 << c_BEL;
                     hyperlink = true;
                 }
 #endif
