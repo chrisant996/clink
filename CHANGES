@@ -5,8 +5,8 @@
 #### v1.9.20
 
 - **Breaking Change:** the "gray text" auto-suggestions display is now off by default, due to too many complaints and frustration and support cost.
-  - The "gray text" or "inline" auto-suggestions display can be turned on again via `clink set autosuggest.inline true`.
-  - The [Suggestions List](#suggestion-list) can still be toggled by pressing <kbd>F2</kbd> or enabled by default via `clink set suggestionlist.default true`.
+  - The [Suggestions List](#suggestion-list) since v1.8.0 is friendlier and more powerful; toggle it by pressing <kbd>F2</kbd> or enable it by default via `clink set suggestionlist.default true`.
+  - The "gray text" or "inline" auto-suggestions display can be turned on again via `clink set autosuggest.inline true` if preferred.
 - Added new Lua API [console.sendterminalrequest()](#console.sendterminalrequest) which sends a terminal request escape code and receives a response escape code (the available terminal request escape codes and their responses depends on the terminal).
 - Fixed several bugs in Readline macro text support in CALLBACKS mode (the mode that Clink has to use):
   - Never correctly detects the end of any macro during playback.
