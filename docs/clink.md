@@ -12,12 +12,39 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 **Auto-Suggestions**
 
-Clink offers suggestions as you type based on history, files, and completions.
+Clink offers suggestions as you type based on history and completions.
 
+<!-- INLINE MODE ---
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
 Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a muted color), or press <kbd>F2</kbd> to toggle showing an interactive list of suggestions.
+--- INLINE MODE --->
+
+<span id="animated-auto-suggest-preview">
+<pre style="border-radius:initial;border:initial;background-color:black"><code data-highlighted="yes" class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\repos\reference\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;1/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;<span class="color_sugg_markup">history(1)</span> completion(2)&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</span></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\repos\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;3/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(2/2)</span>&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span></td></tr>
+</table></code></pre>
+</span>
 
 See [Auto-Suggest](#gettingstarted_autosuggest) to learn more.
 
@@ -53,7 +80,7 @@ See [Saved Command History](#saved-command-history) to learn more.
 
 **Scriptable Prompt and Colored Input**
 
-You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!
+You can customize the prompt dynamically with Lua scripts, or choose from several included custom prompts.
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#0087ff">C:\repos\clink</span> <span style="color:#888">git</span> <span style="color:#ff0">main</span><span style="color:#888">-></span><span style="color:#ff0">origin *3</span> <span style="color:#f33">!1</span>
 <span style="color:#0f0">></span> <span class="color_argmatcher">git</span> <span class="color_arg">merge</span> <span class="color_flag">--help</span><span class="cursor">_</span></span>
@@ -127,7 +154,7 @@ Once Clink is installed, there are several ways to start it.
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions; press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a popup list of command history.
-- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion, or press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
+- [Suggestions](#gettingstarted_autosuggest) can be automatically offered as you type; press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>-<kbd>?</kbd> followed by another key to see what command is bound to the key (for example, on US keyboards <kbd>Alt</kbd>-<kbd>?</kbd> means <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> since the `/` and `?` symbols are on the same physical key).
@@ -147,7 +174,7 @@ The following sections describe how completion and suggestions work, and the mos
 
 "Completion" is for the word at the cursor; when you press <kbd>Tab</kbd> Clink tries to complete the word from a list of possible completions.  Press <kbd>Alt</kbd>-<kbd>=</kbd> to see the list of possible completions.
 
-"Suggestions" are for the whole command line; Clink offers an [automatic suggestion](#gettingstarted_autosuggest) for the whole input line, which you can insert by pressing <kbd>Right</kbd> or <kbd>End</kbd>.  Press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
+"Suggestions" are for the whole command line; press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list) for the whole input line, which you can choose by pressing <kbd>Up</kbd> or <kbd>Down</kbd>.
 
 Some examples of what completions can offer:
 - File names,
@@ -182,29 +209,18 @@ You can turn off the "executable completion" behavior by running <code>clink set
 
 Clink can suggest command lines as you type, based on command history and completions.
 
+Clink can show suggestions two different ways:
+
+<table class="linkmenu">
+<tr><td><a href="#suggestion-list">Suggestion list</a></td><td>Shows an interactive list of several suggestions to choose from (press <kbd>F2</kbd>).</td></tr>
+<tr><td><a href="#inline-suggestions">Inline suggestions</a></td><td>Shows a single suggestion in a muted color at the end of the input line.</td></tr>
+</table>
+
 You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.
 
-When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
+The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show a right-aligned usage hint when a suggestion is available (e.g. `F2=List Suggestions` or `Right=Insert F2=List`).
 
-Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
-
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
-</code></pre>
-
-Later, you start to type a new command, and it matches the earlier command from the history:
-
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
-</code></pre>
-
-The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.
-
-If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.
-
-You can press <kbd>F2</kbd> to toggle showing an interactive [list of suggestions](#suggestion-list).
-
-The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show a right-aligned usage hint when a suggestion is available (`Right=Insert Suggestion` or `Right=Insert F2=List` etc).
-
-The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
+The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are generated.
 
 <a name="suggestion-list"></a>
 
@@ -250,9 +266,38 @@ Using <kbd>Up</kbd> and <kbd>Down</kbd> to move the selection highlight looks li
 
 To see more history, press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a [popup list](#popup-windows) of command history matching what's been typed so far.  Typing in the popup list further searches or filters the list, and <kbd>F4</kbd> toggles between searching and filtering.
 
-The [suggestionlist.default](#suggestionlist_default) setting controls whether each session starts with the suggestion list on or off.
+The [`suggestionlist.default`](#suggestionlist_default) setting controls whether each session starts with the suggestion list on or off.
 
-The colors for the suggestion list can be customized by changing the [color.suggestionlist_*](#color_suggestionlist) settings.
+The colors for the suggestion list can be customized by changing the [`color.suggestionlist_*`](#color_suggestionlist) settings.
+
+### Inline suggestions
+
+Clink can alternatively show a suggestion in a muted color at the end of the input line.
+
+The "inline" suggestion mode is disabled by default, but can be enabled via <code>clink set <a href="#autosuggest_inline">autosuggest.inline</a> true</code>.
+
+When it's enabled and the suggestion list isn't active and the cursor is at the end of the input line, then the first available suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the suggestion using the following keys:
+
+Key | Description
+:-:|---
+<kbd>Right</kbd> or <kbd>End</kbd>|Insert the whole suggestion.
+<kbd>Ctrl</kbd>-<kbd>Right</kbd>|Insert the next word of the suggestion.
+<kbd>Shift</kbd>-<kbd>Right</kbd>|Insert the next full word of the suggestion up to a space.
+<kbd>F2</kbd>|Toggles the suggestion list on or off (shows all of the available suggestions, instead of just the first one).
+
+Here's an example of how the "inline" suggestion mode works.  Suppose you ran a command, so now it's in your command history:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
+</code></pre>
+
+Later, you start to type a new command, and it matches the earlier command from the history:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+The muted text shows a suggestion that might be what you intend to type.  You can insert the muted text into the input line by pressing the <kbd>Right</kbd> key.
+
+If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.
 
 ## Common Configuration
 
@@ -516,8 +561,9 @@ Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
 <a name="argmatcher_show_hints"></a>`argmatcher.show_hints` | True | When both the [`comment_row.show_hints`](#comment_row_show_hints) and `argmatcher.show_hints` settings are enabled, [argmatchers](#argumentcompletion) can show usage hints in the comment row (below the input line).
 <a name="autosuggest_async"></a>`autosuggest.async` | True | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
-<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` a suggested command may appear in [`color.suggestion`](#color_suggestion) color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or insert the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, insert the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or insert the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
-<a name="autosuggest_hint"></a>`autosuggest.hint` | True | The default is `true`.  When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a right-aligned usage hint to help make the feature more discoverable and easy to use (`Right=Insert Suggestion` or `Right=Insert F2=List` etc).  Set this to `false` to hide the usage hint.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | True | When this is `true` then Clink generates suggestions automatically based on input.  Suggestions may be shown two ways; a [list of suggestions](#suggestion-list) or [inline suggestions](#inline-suggestions).
+<a name="autosuggest_hint"></a>`autosuggest.hint` | True | When this and [`autosuggest.enable`](#autosuggest_enable) are both `true` and a suggestion is available, show a right-aligned usage hint to help make the feature more discoverable and easy to use (`Right=Insert Suggestion` or `Right=Insert F2=List` etc).  Set this to `false` to hide the usage hint.
+<a name="autosuggest_inline"></a>`autosuggest.inline` | False | When both this and [`autosuggest.enable`](#autosuggest_enable) are `true` then a suggested command may appear in the [`color.suggestion`](#color_suggestion) color after the cursor, unless the suggestion list is active (see [Auto-Suggest](#gettingstarted_autosuggest)).
 <a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), inserting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the [`history.dupe_mode`](#history_dupe_mode) setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
@@ -607,7 +653,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="history_show_preview"></a>`history.show_preview` | True | When enabled, if the text at the cursor is subject to history expansion, then this shows a preview of the expanded result below the input line using the [`color.comment_row`](#color_comment_row) setting.
 <a name="history_sticky_search"></a>`history.sticky_search` | False | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
 <a name="history_time_format"></a>`history.time_format` | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set history.time_format</code> or [History Timestamps](#history-timestamps).
-<a name="history_time_stamp"></a>`history.time_stamp` | `off` | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` or `--no-show-time` flag is used.
+<a name="history_time_stamp"></a>`history.time_stamp` | `off` | When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` or `--no-show-time` flag is used.
 <a name="lua_break_on_error"></a>`lua.break_on_error` | False | Breaks into Lua debugger on Lua errors.
 <a name="lua_break_on_traceback"></a>`lua.break_on_traceback` | False | Breaks into Lua debugger on `traceback()`.
 <a name="lua_debug"></a>`lua.debug` | False | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling [pause()](#pause).

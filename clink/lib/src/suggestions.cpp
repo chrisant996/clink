@@ -33,13 +33,41 @@ setting_bool g_autosuggest_async(
 setting_bool g_autosuggest_enable(
     "autosuggest.enable",
     "Enable automatic suggestions",
-    "The default is 'true'.  When this is 'true' a suggested command may appear\n"
-    "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
-    "what you want, just ignore it.  Or accept the whole suggestion with the Right\n"
-    "arrow or End key, accept the next word of the suggestion with Ctrl+Right, or\n"
-    "accept the next full word of the suggestion up to a space with Shift+Right.\n"
-    "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
+    "The default is 'true'.  When this is 'true' then Clink generates suggestions\n"
+    "automatically based on input.  Suggestions may be shown two ways:\n"
+    "\n"
+    "The F2 key or the 'suggestionlist.default' setting shows a list of\n"
+    "suggestions below the input line.  While the suggestion list is active, the\n"
+    "Up/Down keys select which suggestion to use.  The Esc key temporarily hides\n"
+    "the suggestion list, for example to allow using whatever Up/Down are normally\n"
+    "bound to.  Toggle the suggestion list on or off by pressing F2.\n"
+    "\n"
+    "The 'autosuggest.inline' setting shows a suggestion inline after the cursor\n"
+    "using the 'color.suggestion' color, unless the suggestion list is active (see\n"
+    "above).  If the inline suggestion isn't what you want, just ignore it.  Or\n"
+    "accept the suggestion in whole or in part:  The Right arrow or End key\n"
+    "inserts the whole suggestion.  Ctrl+Right inserts the next word of the\n"
+    "suggestion.  Shift+Right inserts the next full word of the suggestion up to a\n"
+    "space character.\n"
+    "\n"
+    "The 'autosuggest.strategy' setting determines how suggestions are generated.",
     true);
+
+setting_bool g_autosuggest_inline(
+    "autosuggest.inline",
+    "Show a suggestion in a muted color",
+    "The default is 'false'.  When both this and 'autosuggest.enable' are 'true'\n"
+    "then a suggested command may appear in the 'color.suggestion' color after the\n"
+    "cursor, unless the suggestion list is active (due to the F2 key or the\n"
+    "'suggestionlist.default' setting).\n"
+    "\n"
+    "If the inline suggestion isn't what you want, just ignore it.  Or accept the\n"
+    "suggestion in whole or in part:  The Right arrow or End key inserts the whole\n"
+    "suggestion.  Ctrl+Right inserts the next word of the suggestion.  Shift+Right\n"
+    "inserts the next full word of the suggestion up to a space character.\n"
+    "\n"
+    "The 'autosuggest.strategy' setting determines how suggestions are generated.",
+    false);
 
 setting_bool g_autosuggest_hint(
     "autosuggest.hint",
@@ -234,8 +262,15 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
     if (orig.more())
         return false;
 
-    out.concat(g_rl_buffer->get_buffer(), uint32(orig.get_pointer() - g_rl_buffer->get_buffer()));
-    out.concat(sugg.get_pointer(), sugg.length());
+    if (g_autosuggest_inline.get())
+    {
+        out.concat(g_rl_buffer->get_buffer(), uint32(orig.get_pointer() - g_rl_buffer->get_buffer()));
+        out.concat(sugg.get_pointer(), sugg.length());
+    }
+    else
+    {
+        out.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    }
 
 #ifdef USE_SUGGESTION_HINT_INLINE
     if (can_show_suggestion_hint())
@@ -548,6 +583,7 @@ static bool is_suggestion_word_break(int32 c)
 void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 {
     assert(g_autosuggest_enable.get());
+    assert(g_autosuggest_inline.get());
     assert(m_suggestions.size() == 1);
 
     const int32 consume = g_rl_buffer->get_cursor() - old_cursor;
@@ -570,7 +606,7 @@ uint32 suggestion_manager::new_generation()
 //------------------------------------------------------------------------------
 bool suggestion_manager::insert(suggestion_action action)
 {
-    if (!g_autosuggest_enable.get())
+    if (!g_autosuggest_enable.get() || !g_autosuggest_inline.get())
         return false;
 
     if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.size() != 1)

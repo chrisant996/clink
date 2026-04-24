@@ -351,6 +351,7 @@ extern setting_bool g_debug_log_output_callstacks;
 extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
+extern setting_bool g_autosuggest_inline;
 #ifdef USE_SUGGESTION_HINT_INLINE
 extern setting_bool g_autosuggest_hint;
 #endif
@@ -771,6 +772,10 @@ static char get_face_func(int32 in, int32 active_begin, int32 active_end)
             if (0 <= index && index < s_suggestion_hint_text.length())
                 return s_suggestion_hint_faces[index];
         }
+        else
+        {
+            assert(g_autosuggest_inline.get());
+        }
 #endif
         return FACE_SUGGESTION;
     }
@@ -1101,14 +1106,18 @@ bool can_show_suggestion_hint()
             str_moveable tmp;
             rl_command_func_t* func_right = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
             const bool has_right = (type == ISFUNC &&
+                                    g_autosuggest_inline.get() &&
                                     (func_right == win_f1 ||
-                                    func_right == clink_forward_char ||
-                                    func_right == clink_forward_byte ||
-                                    func_right == clink_end_of_line));
+                                     func_right == clink_forward_char ||
+                                     func_right == clink_forward_byte ||
+                                     func_right == clink_end_of_line));
             rl_command_func_t* func_f2 = rl_function_of_keyseq_len("\x1bOQ", 3, nullptr, &type);
-            const bool has_f2 = (type == ISFUNC && func_f2 == clink_toggle_suggestion_list);
             const char* toggle_key_name = nullptr;
-            if (!has_f2)
+            if (type == ISFUNC && func_f2 == clink_toggle_suggestion_list)
+            {
+                toggle_key_name = "F2";
+            }
+            else
             {
                 str<> desc;
                 str<> cat;
@@ -1119,7 +1128,7 @@ bool can_show_suggestion_hint()
                     toggle_key_name = tmp.c_str();
                 }
             }
-            if (has_right || has_f2 || toggle_key_name)
+            if (has_right || toggle_key_name)
             {
                 s_suggestion_hint_text.concat("    ");
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 4);
@@ -1129,7 +1138,7 @@ bool can_show_suggestion_hint()
                 s_suggestion_hint_text.concat("Right=");
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, 5);
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
-                if (has_f2 || toggle_key_name)
+                if (toggle_key_name)
                 {
                     s_suggestion_hint_text.concat("Insert ");
                     append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 6);
@@ -1141,20 +1150,18 @@ bool can_show_suggestion_hint()
                     append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 17);
                 }
             }
-            if (has_f2)
-            {
-                s_suggestion_hint_text.concat("F2=List");
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, 2);
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 4);
-            }
-            else if (toggle_key_name)
+            if (toggle_key_name)
             {
                 s_suggestion_hint_text.concat(toggle_key_name);
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, str_len(toggle_key_name));
                 s_suggestion_hint_text.concat("=List");
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
                 append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 4);
+                if (!has_right)
+                {
+                    s_suggestion_hint_text.concat(" Suggestions");
+                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 12);
+                }
             }
         }
         s_build_suggestion_hint = false;

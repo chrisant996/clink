@@ -15,6 +15,32 @@
 <script type="text/javascript">
     $(INCLUDE docs/highlight.pack.js)
 
+    function init_animation()
+    {
+        const table = document.getElementById('animated-auto-suggest-preview');
+        const rows = table.querySelectorAll('tr');
+        const groups = [
+            Array.from(rows).slice(0, 5),
+            Array.from(rows).slice(5, 10),
+            Array.from(rows).slice(10, 15),
+            Array.from(rows).slice(15, 20)
+        ];
+        const sequence = [0, 0, 0, 1, 2, 3, 3, 2, 1];
+        let current = 0;
+        let up = true;
+
+        function showGroup(index) {
+            rows.forEach(row => row.style.display = 'none');
+            groups[index].forEach(row => row.style.display = '');
+        }
+
+        showGroup(0);
+        setInterval(() => {
+            current = (current + 1) % sequence.length;
+            showGroup(sequence[current]);
+        }, 1000);
+    };
+
     function go()
     {
         // Apply syntax highlighting.
@@ -33,6 +59,8 @@
             var e = source_links[i];
             e.classList.replace("hljs-comment", "comment-web-link");
         }
+
+        init_animation();
     }
 </script>
 </head>
