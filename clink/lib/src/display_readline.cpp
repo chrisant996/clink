@@ -3119,8 +3119,34 @@ extern "C" void _rl_refresh_line(void)
 //------------------------------------------------------------------------------
 extern "C" void _rl_erase_entire_line(void)
 {
-    // Should be unreachable since rl_erase_empty_line is never set.
-    assert(false);
+    _rl_cr ();
+    _rl_last_c_pos = 0;
+
+    if (_rl_last_v_pos == 0)
+    {
+        // If the cursor is on the first line of the input buffer, then flag
+        // that the right side prompt is not shown, so it can be redisplayed
+        // later as appropriate.
+        _rl_rprompt_shown_len = 0;
+    }
+
+    if (_rl_term_clreol)
+    {
+        tputs(_rl_term_clreol);
+    }
+    else
+    {
+        const uint32 count = _rl_screenwidth;
+
+        str_moveable s;
+        s.reserve(count);
+        concat_spaces(s, count);
+        tputs(s.c_str());
+        _rl_cr();
+        _rl_last_c_pos = 0;
+    }
+
+    fflush(rl_outstream);
 }
 
 
