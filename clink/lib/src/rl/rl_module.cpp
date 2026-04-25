@@ -609,15 +609,17 @@ static int32 terminal_getc_thunk(FILE* stream)
     {
         assert(s_direct_input);
         if (rl_has_clink_input())
+        {
             return rl_read_key();
-        if (_rl_reading_for_typeahead)
+        }
+        else
         {
             assert(!s_input_more);
-            assert(s_direct_input->available(0));
+            assert(!rl_has_queued_input());
+            assertimplies(_rl_reading_for_typeahead, s_direct_input->available(0));
             s_direct_input->select();
             return s_direct_input->read();
         }
-        return 0;
     }
 
     if (stream == null_stream)
