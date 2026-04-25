@@ -1217,9 +1217,9 @@ static int32 api_ellipsify(lua_State* state)
 /// -show:          local attributes = response:sub(4, #response - 1)
 /// -show:          -- The attributes are semicolon delimited, so to make parsing simple,
 /// -show:          -- add extra semicolons at the beginning and end.
-/// -show:          response = ";"..response:sub(4, #response - 1)..";"
+/// -show:          attributes = ";"..attributes..";"
 /// -show:          -- Check if the "4" attribute is present.
-/// -show:          if response:find(";4;") then
+/// -show:          if attributes:find(";4;") then
 /// -show:              print("Terminal claims to have SIXEL support.")
 /// -show:          end
 /// -show:      end
