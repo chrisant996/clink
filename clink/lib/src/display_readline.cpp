@@ -1510,6 +1510,8 @@ private:
     str_moveable        m_forced_comment_row;
     int32               m_forced_comment_row_cursorpos = -1;
 
+    bool                m_modal_input = false;
+
 #ifdef DEBUG
     bool                m_ignore_column_on_uninit = false;
 #endif
@@ -1576,6 +1578,8 @@ void display_manager::clear()
 
     m_forced_comment_row.free();
     m_forced_comment_row_cursorpos = -1;
+
+    m_modal_input = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1753,6 +1757,17 @@ void display_manager::display()
 
     if (!_rl_echoing_p || !m_initialized)
         return;
+
+    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR))
+    {
+        m_modal_input = true;
+        allow_suggestion_list(0);
+    }
+    else if (m_modal_input)
+    {
+        m_modal_input = false;
+        allow_suggestion_list(1);
+    }
 
     init_horizpos_workaround();
     preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
