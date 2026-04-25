@@ -753,6 +753,70 @@ int32 win_terminal_in::peek()
     return terminal_in::input_none;
 }
 
+static bool is_final_byte(const char* final, const char* candidate)
+{
+    if (final)
+        return (*candidate == *final);
+    else
+        return (!(*candidate == 0x07) && !(*candidate == '\\' && candidate[-1] == 27));
+}
+
+static bool is_matching_response(const str_base& input, const char* prefix, const char* final, str_base& out, size_t& begin_offset, size_t& end_offset)
+{
+    // Use stateful inspection to seek the pattern.
+    ecma48_state state;
+    ecma48_iter input_iter(input.c_str(), state, input.length());
+    while (true)
+    {
+        // Remember the input_iter pointer because code.get_pointer()
+        // points at a copy of the input data, not at the actual input
+        // string buffer.
+        const char* input_iter_ptr = input_iter.get_pointer();
+
+        // Get the next parsed code.
+        const ecma48_code& code = input_iter.next();
+        if (!code)
+            break;
+        if (code.get_type() != ecma48_code::type_c1)
+            continue;
+
+        // Compare the C1 code against the prefix.
+        const char* matched = input_iter_ptr;
+        str_iter code_iter(code.get_pointer(), code.get_length());
+        for (const char* walk = prefix; code_iter.more() && *walk; ++walk)
+        {
+            const uint32 c = code_iter.next();
+            const uint32 w = (uint8)*walk;
+            if (c != w)
+            {
+                matched = nullptr;
+                break;
+            }
+        }
+
+        if (matched)
+        {
+            const char* last = code.get_pointer() + code.get_length() - 1;
+            if (!is_final_byte(final, last))
+                matched = nullptr;
+        }
+
+        assert(out.empty());
+        if (matched)
+        {
+            // Fill the out parameter with the matched code.
+            out.concat(code.get_pointer(), code.get_length());
+            assert(!out.empty());
+
+            // Get the offsets of the matched response.
+            begin_offset = matched - input.c_str();
+            end_offset = begin_offset + code.get_length();
+            return true;
+        }
+    }
+    return false;
+}
+
 //------------------------------------------------------------------------------
 // In the pattern string, use '0' by itself as a wildcard meaning "one or more
 // digits".  E.g. "2027" in the pattern matches "2027", but "0" in the pattern
@@ -765,7 +829,7 @@ int32 win_terminal_in::peek()
 //      str<> response;
 //      if (send_terminal_request("\x1b[?2027$p", "\x1b[?2027;0$y", response))
 //          printf("ESC%s\n", response.c_str() + 1);
-bool win_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, str_base& out)
+bool win_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, uint32 timeout1, uint32 timeout2, str_base& out)
 {
     assert(m_stdin);
     assert(m_stdout);
@@ -829,18 +893,19 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
     wstr<16> tmp(request);
     WriteConsoleW(m_stdout, tmp.c_str(), tmp.length(), &written, nullptr);
 
-    // Choose the timeout to use.
-    uint32 timeout = 0;
+    // Maybe override the timeouts.
     {
         str<16> value;
         if (os::get_env("CLINK_TERMINAL_REQUEST_TIMEOUT", value))
-            timeout = atoi(value.c_str());
+            timeout1 = atoi(value.c_str());
+        if (os::get_env("CLINK_TERMINAL_REQUEST_TIMEOUT2", value))
+            timeout2 = atoi(value.c_str());
     }
 
     // Read input and match against the pattern.  The DECRPM response is
     // appended to any queued input.  So it's necessary to apply ECMA48
     // compliant stateful parsing against the input.
-    if (available(timeout))
+    if (available(timeout1))
     {
         struct InputRecordCorrelation
         {
@@ -850,10 +915,11 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
         };
         std::vector<InputRecordCorrelation> correlations;
 
-        // Read available input.  If too many input records then stop reading.
-        s_force_raw_esc = true;
+        // Read available input and use stateful inspection to seek the
+        // pattern.  If too many input records then stop reading.
         str_moveable input;
-        while (available(0) && pending_records.size() + m_processed_records.size() < c_max_pending)
+        s_force_raw_esc = true;
+        while (available(timeout2) && pending_records.size() + m_processed_records.size() < c_max_pending)
         {
             correlations.emplace_back();
             auto& correlation = correlations.back();
@@ -869,92 +935,43 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
             }
 
             correlation.char_count = input.length() - correlation.stream_index;
-        }
-        s_force_raw_esc = false;
 
-        // Next use stateful inspection to seek the pattern.
-        ecma48_state state;
-        ecma48_iter input_iter(input.c_str(), state, input.length());
-        while (true)
-        {
-            // Remember the input_iter pointer because code.get_pointer()
-            // points at a copy of the input data, not at the actual input
-            // string buffer.
-            const char* input_iter_ptr = input_iter.get_pointer();
-
-            // Get the next parsed code.
-            const ecma48_code& code = input_iter.next();
-            if (!code)
-                break;
-            if (code.get_type() != ecma48_code::type_c1)
-                continue;
-
-            // Compare the C1 code against the prefix.
-            const char* matched = input_iter_ptr;
-            str_iter code_iter(code.get_pointer(), code.get_length());
-            for (const char* walk = prefix; code_iter.more() && *walk; ++walk)
+            if (input.length() && is_final_byte(final, input.c_str() + input.length() - 1))
             {
-                const uint32 c = code_iter.next();
-                const uint32 w = (uint8)*walk;
-                if (c != w)
+                size_t begin_offset;
+                size_t end_offset;
+                if (is_matching_response(input, prefix, final, out, begin_offset, end_offset))
                 {
-                    matched = nullptr;
+                    // Remove the corresponding input records.
+                    assert(m_pending_records.empty());
+                    size_t begin_erasure = -1;
+                    for (size_t ii = 0; ii < correlations.size(); ++ii)
+                    {
+                        const auto& correlation = correlations[ii];
+                        if (size_t(correlation.stream_index) + size_t(correlation.char_count) > begin_offset)
+                        {
+                            assert(correlation.stream_index == begin_offset);
+                            begin_erasure = ii;
+                            break;
+                        }
+                    }
+                    assert(begin_erasure < correlations.size());
+                    if (begin_erasure < correlations.size())
+                    {
+                        assert(correlations.size() == m_processed_records.size());
+                        const size_t index_erase = correlations[begin_erasure].record_index;
+                        for (size_t ii = begin_erasure; ii < correlations.size(); ++ii)
+                        {
+                            if (correlations[ii].stream_index >= end_offset)
+                                break;
+                            m_processed_records.erase(m_processed_records.begin() + index_erase);
+                        }
+                    }
                     break;
                 }
             }
-
-            if (matched)
-            {
-                const char* last = code.get_pointer() + code.get_length() - 1;
-                if (final)
-                {
-                    if (*last != *final)
-                        matched = nullptr;
-                }
-                else
-                {
-                    if (!(*last == 0x07) && !(*last == '\\' && last[-1] == 27))
-                        matched = nullptr;
-                }
-            }
-
-            assert(out.empty());
-            if (matched)
-            {
-                // Fill the out parameter with the matched code.
-                out.concat(code.get_pointer(), code.get_length());
-                assert(!out.empty());
-
-                // Remove the corresponding input records.
-                assert(m_pending_records.empty());
-                const size_t begin_offset = matched - input.c_str();
-                const size_t end_offset = begin_offset + code.get_length();
-                size_t begin_erasure = -1;
-                for (size_t ii = 0; ii < correlations.size(); ++ii)
-                {
-                    const auto& correlation = correlations[ii];
-                    if (size_t(correlation.stream_index) + size_t(correlation.char_count) > begin_offset)
-                    {
-                        assert(correlation.stream_index == begin_offset);
-                        begin_erasure = ii;
-                        break;
-                    }
-                }
-                assert(begin_erasure < correlations.size());
-                if (begin_erasure < correlations.size())
-                {
-                    assert(correlations.size() == m_processed_records.size());
-                    const size_t index_erase = correlations[begin_erasure].record_index;
-                    for (size_t ii = begin_erasure; ii < correlations.size(); ++ii)
-                    {
-                        if (correlations[ii].stream_index >= end_offset)
-                            break;
-                        m_processed_records.erase(m_processed_records.begin() + index_erase);
-                    }
-                }
-                break;
-            }
         }
+        s_force_raw_esc = false;
     }
 
     // Restore the original pending state.

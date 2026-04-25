@@ -1186,6 +1186,7 @@ static int32 api_ellipsify(lua_State* state)
 /// -arg:   request_code:string
 /// -arg:   response_prefix:string
 /// -arg:   [response_final:string]
+/// -arg:   [timeout:number]
 /// -ret:   string | nil
 /// Sends the <span class="arg">request_code</span> escape sequence to the
 /// terminal and receives a response code that begins with the
@@ -1200,6 +1201,10 @@ static int32 api_ellipsify(lua_State* state)
 /// is required and must specify the response's Final Byte.  Or for non-CSI
 /// request codes, then the <span class="arg">response_final</span> should be
 /// nil.
+///
+/// In v1.9.21 and newer, an optional <span class="arg">timeout</span> may be
+/// provided (in seconds).  If omitted, it defaults to 0.5 seconds (500
+/// milliseconds).
 ///
 /// If an error occurs, or if no response code is found, then nil is returned.
 /// Otherwise the response code from the terminal is returned.
@@ -1237,6 +1242,11 @@ static int32 send_terminal_request(lua_State* state)
     const char* request = luaL_checkstring(state, 1);
     const char* prefix = luaL_checkstring(state, 2);
     const char* final = lua_isstring(state, 3) ? luaL_checkstring(state, 3) : nullptr;
+    int32 isnum;
+    double timeout_sec = lua_tonumberx(state, 4, &isnum);
+    const uint32 timeout = (!isnum ? 500 :
+                            timeout_sec <= 0 ? 0 :
+                            uint32(timeout_sec * 1000));
     if (!request || !prefix)
         return 0;
 
@@ -1264,7 +1274,7 @@ static int32 send_terminal_request(lua_State* state)
         return 0;
 
     str_moveable out;
-    if (!in->send_terminal_request(request, prefix, final, out))
+    if (!in->send_terminal_request(request, prefix, final, timeout, timeout, out))
         return 0;
 
     lua_pushlstring(state, out.c_str(), out.length());

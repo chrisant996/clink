@@ -26,6 +26,6 @@ public:
     virtual void    select(input_idle* callback=nullptr, uint32 timeout=INFINITE) = 0;
     virtual int32   read() = 0;
     virtual int32   peek() = 0;
-    virtual bool    send_terminal_request(const char* request, const char* response_prefix, const char* response_final, str_base& out) { return false; }
+    virtual bool    send_terminal_request(const char* request, const char* response_prefix, const char* response_final, uint32 timeout1, uint32 timeout2, str_base& out) { return false; }
     virtual key_tester* set_key_tester(key_tester* keys) = 0;
 };
