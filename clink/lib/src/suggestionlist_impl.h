@@ -38,6 +38,7 @@ public:
     void            refresh_display(bool clear=false);
     bool            accepts_mouse_input(mouse_input_type type) const;
     void            hide_suggestion_list();
+    void            force_redisplay_suggestion_list();
 
 private:
     // editor_module.
@@ -132,3 +133,4 @@ bool is_suggestion_list_enabled();
 void update_suggestion_list_display(bool clear=false);
 void notify_suggestion_list_cleared();
 void hide_suggestion_list();
+void force_redisplay_suggestion_list();

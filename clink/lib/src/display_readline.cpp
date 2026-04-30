@@ -2012,7 +2012,7 @@ void display_manager::display()
                 rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
         }
 
-        if (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM)
+        if (forced_display || (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM))
             m_curr.clear();
 
         rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
@@ -2302,6 +2302,8 @@ void display_manager::display()
         if (old_botlin != _rl_vis_botlin)
             clear_suggestion_list = true;
         coalesce.end(); // Because suggestionlist_impl uses m_printer directly.
+        if (forced_display)
+            force_redisplay_suggestion_list();
         update_suggestion_list_display(clear_suggestion_list);
     }
 
