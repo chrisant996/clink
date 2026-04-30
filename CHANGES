@@ -6,8 +6,10 @@
 
 - Added an optional `timeout` argument to the [console.sendterminalrequest()](#console.sendterminalrequest) Lua API, with a default of 0.5 seconds if omitted.  The timeout accommodates cases where the terminal's response isn't immediately available.
 - Fixed suggestion list display issues with certain Readline input states.
+- Fixed suggestion list display issue after <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>L</kbd> to clear the screen.
 - Fixed `execute-named-command` (regression introduced in v1.9.18 / v1.9.20).
 - Fixed clearing the pager prompt (regression introduced in v1.9.19).
+- Fixed [#861](https://github.com/chrisant996/clink/issues/861); Ctrl + Alt + L doesn't clear the scrollback buffer.
 
 #### v1.9.20
 
