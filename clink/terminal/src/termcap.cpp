@@ -359,7 +359,7 @@ char* tgetstr(const char* name, char** out)
     case 'cb': str = CSI(1K);       break; // Line to cursor
     case 'ce': str = CSI(K);        break; // Line to end
     case 'cd': str = CSI(J);        break; // Screen to end
-    case 'cl': str = CSI(H) CSI(J); break; // Clear screen, cursor to top-left.
+    case 'cl': str = CSI(H) CSI(2J) CSI(3J); break; // Clear screen and scrollback buffer, cursor to top-left.
 
     // Movement key bindings.
     case 'kh': str = CSI(H);  break; // Home

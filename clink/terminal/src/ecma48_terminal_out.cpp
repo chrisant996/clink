@@ -436,6 +436,7 @@ void ecma48_terminal_out::erase_in_display(const ecma48_code::csi_base& csi)
     case 0: m_screen.clear(screen_buffer::clear_type_after);    break;
     case 1: m_screen.clear(screen_buffer::clear_type_before);   break;
     case 2: m_screen.clear(screen_buffer::clear_type_all);      break;
+    case 3: m_screen.clear(screen_buffer::clear_type_saved);    break;
     }
 }
 

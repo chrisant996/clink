@@ -886,6 +886,47 @@ void win_screen_buffer::clear(clear_type type)
         xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
         count = width - csbi.dwCursorPosition.X;
         break;
+
+    case clear_type_saved:
+        if (csbi.dwCursorPosition.Y <= 0)
+        {
+            return;
+        }
+        else
+        {
+            // Copy the current window and below up to the top of the buffer.
+            xy = { 0, 0 };
+            SMALL_RECT scroll_rect;
+            scroll_rect.Left = 0;
+            scroll_rect.Top = csbi.srWindow.Top;
+            scroll_rect.Right = csbi.dwSize.X - 1;
+            scroll_rect.Bottom = csbi.dwSize.Y - 1;
+            CHAR_INFO fill;
+            fill.Char.UnicodeChar = ' ';
+            fill.Attributes = csbi.wAttributes;
+            ScrollConsoleScreenBufferW(m_handle, &scroll_rect, nullptr, xy, &fill);
+
+            // Set the current window offset to the top of the buffer.
+            SMALL_RECT win_rect = csbi.srWindow;
+            win_rect.Bottom -= win_rect.Top;
+            win_rect.Top = 0;
+            SetConsoleWindowInfo(m_handle, true/*fAbsolute*/, &win_rect);
+
+            // Set the cursor position, keeping it constant relative to the
+            // current window top.
+            xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y - csbi.srWindow.Top };
+            SetConsoleCursorPosition(m_handle, xy);
+
+            // Set region to be cleared.
+            width = csbi.dwSize.X;
+            height = csbi.dwSize.Y - xy.Y;
+            xy.X = 0;
+            ++xy.Y;
+        }
+        break;
+
+    default:
+        return;
     }
 
     count += width * height;
@@ -920,6 +961,9 @@ void win_screen_buffer::clear_line(clear_type type)
         width = csbi.dwSize.X - csbi.dwCursorPosition.X;
         xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
         break;
+
+    default:
+        return;
     }
 
     DWORD written;

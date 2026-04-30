@@ -34,6 +34,7 @@ public:
         clear_type_before,
         clear_type_after,
         clear_type_all,
+        clear_type_saved,
     };
 
     virtual         ~screen_buffer() = default;
