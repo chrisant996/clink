@@ -5,6 +5,7 @@
 #### v1.9.21
 
 - Added an optional `timeout` argument to the [console.sendterminalrequest()](#console.sendterminalrequest) Lua API, with a default of 0.5 seconds if omitted.  The timeout accommodates cases where the terminal's response isn't immediately available.
+- Changed the bindable `clink-diagnostics` command to accept an explicit numeric arg 0 (<kbd>Alt</kbd>-<kbd>0</kbd>) to show only basic diagnostic info.
 - Fixed suggestion list display issues with certain Readline input states.
 - Fixed suggestion list display issue after <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>L</kbd> to clear the screen.
 - Fixed `execute-named-command` (regression introduced in v1.9.18 / v1.9.20).
