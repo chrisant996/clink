@@ -132,6 +132,10 @@ end
 
 --------------------------------------------------------------------------------
 function clink._diag_hinters(arg)
+    if arg == 0 then
+        return
+    end
+
     arg = (arg and arg >= 2)
     if not arg and not settings.get("lua.debug") and not force_diag_hinters then
         return

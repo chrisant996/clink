@@ -388,6 +388,10 @@ end
 
 --------------------------------------------------------------------------------
 function clink._diag_suggesters(arg)
+    if arg == 0 then
+        return
+    end
+
     arg = (arg and arg >= 2)
     if not arg and not settings.get("lua.debug") then
         return

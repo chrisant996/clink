@@ -2726,6 +2726,7 @@ static void do_clink_diagnostics(bool include_settings=false)
     str<> t;
     const char* p;
     const int32 spacing = 16;
+    const bool has_explicit_nonzero_arg = (rl_explicit_arg && rl_numeric_arg);
 
     int32 id = 0;
     host_context context;
@@ -2757,7 +2758,7 @@ static void do_clink_diagnostics(bool include_settings=false)
 #endif
     print_value("binaries", context.binaries.c_str());
 
-    if (rl_explicit_arg)
+    if (has_explicit_nonzero_arg)
         print_value("architecture", AS_STR(ARCHITECTURE_NAME));
 
     // Session info.
@@ -2787,7 +2788,7 @@ static void do_clink_diagnostics(bool include_settings=false)
     // Language info.
 
     const DWORD cpid = GetACP();
-    if (rl_explicit_arg || cpid != 1252)
+    if (has_explicit_nonzero_arg || cpid != 1252)
     {
         print_heading("language");
 
@@ -2808,7 +2809,7 @@ static void do_clink_diagnostics(bool include_settings=false)
     // Terminal info.
 
     const char* const ansicon_problem = get_ansicon_problem();
-    if (rl_explicit_arg || ansicon_problem)
+    if (has_explicit_nonzero_arg || ansicon_problem)
     {
         print_heading("terminal");
 
@@ -2899,7 +2900,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
 
     do_clink_diagnostics();
 
-    if (!rl_explicit_arg)
+    if (!rl_explicit_arg || !rl_numeric_arg)
         g_printer->print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");
 
     rl_forced_update_display();

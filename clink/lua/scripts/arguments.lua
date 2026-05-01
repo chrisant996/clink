@@ -3738,6 +3738,10 @@ end
 
 --------------------------------------------------------------------------------
 function clink._diag_completions_dirs(arg)
+    if arg == 0 then
+        return
+    end
+
     arg = (arg and arg >= 1)
     if not arg and not settings.get("lua.debug") then
         return
