@@ -669,10 +669,13 @@ void suggestionlist_impl::cancel(editor_module::result& result)
 //------------------------------------------------------------------------------
 void suggestionlist_impl::init_suggestions()
 {
-    // Don't update suggestions if the cursor isn't at the end of the line.
-    // There will be no suggestions, so the suggestion list would disappear,
-    // which isn't the intended behavior for the suggestion list.
-    if (m_disabled || m_buffer->get_cursor() < m_buffer->get_length())
+    // Don't update suggestions if a suggestion is selected or if the cursor
+    // isn't at the end of the line.  Otherwise the suggestions would either
+    // change or disappear, neither of which are intended behavior for the
+    // suggestion list.
+    if (m_disabled ||
+        m_index >= 0 ||
+        m_buffer->get_cursor() < m_buffer->get_length())
         return;
 
     const auto& id = m_suggestions.get_generation_id();
