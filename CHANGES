@@ -8,6 +8,7 @@
 - Changed the bindable `clink-diagnostics` command to accept an explicit numeric arg 0 (<kbd>Alt</kbd>-<kbd>0</kbd>) to show only basic diagnostic info.
 - Fixed suggestion list display issues with certain Readline input states.
 - Fixed suggestion list display issue after <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>L</kbd> to clear the screen.
+- Fixed suggestion list getting discarded if the cursor was moved left and then <kbd>Up</kbd> or <kbd>Down</kbd> was used to select a suggestion.
 - Fixed `execute-named-command` (regression introduced in v1.9.18 / v1.9.20).
 - Fixed clearing the pager prompt (regression introduced in v1.9.19).
 - Fixed [#861](https://github.com/chrisant996/clink/issues/861); Ctrl + Alt + L doesn't clear the scrollback buffer.
