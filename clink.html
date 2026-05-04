@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.20</title>
+<title>Clink v1.9.21</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.20</div>
+                <div id="title">Clink v1.9.21</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -8087,7 +8087,7 @@ print(ellipsify("c:/abcd/wxyz", 5, "path", ""))
 
 <div class="function"><div class="header"> <div id="console.scroll" class="name"><a class="wlink" href="#console.scroll"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.scroll</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down.</td></tr> <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down.</td></tr> <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive.</td></tr> <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr> </table></p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="console.sendterminalrequest" class="name"><a class="wlink" href="#console.sendterminalrequest"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.sendterminalrequest</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> request_code</span>:string, <span class="arg_name"> response_prefix</span>:string, <span class="arg_name"> [response_final</span>:string] ) :  string | nil<br/><div class="version">v 1.9.20</div></div></div><div class="body"><p class="desc">Sends the <span class="arg">request_code</span> escape sequence to the terminal and receives a response code that begins with the <span class="arg">response_prefix</span>.  Since this is implemented inside Clink's keyboard driver, it's able to read the response without losing any input that's may have already been queued.</p><p class="desc"> The available request codes depends on the terminal in use; refer to terminal documentation for more information.</p><p class="desc"> If the request is a CSI code, then <span class="arg">response_final</span> is required and must specify the response's Final Byte.  Or for non-CSI request codes, then the <span class="arg">response_final</span> should be nil.</p><p class="desc"> If an error occurs, or if no response code is found, then nil is returned. Otherwise the response code from the terminal is returned.</p><pre class="language-lua"><code>if console.sendterminalrequest then
+<div class="function"><div class="header"> <div id="console.sendterminalrequest" class="name"><a class="wlink" href="#console.sendterminalrequest"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.sendterminalrequest</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> request_code</span>:string, <span class="arg_name"> response_prefix</span>:string, <span class="arg_name"> [response_final</span>:string], <span class="arg_name"> [timeout</span>:number] ) :  string | nil<br/><div class="version">v 1.9.20</div></div></div><div class="body"><p class="desc">Sends the <span class="arg">request_code</span> escape sequence to the terminal and receives a response code that begins with the <span class="arg">response_prefix</span>.  Since this is implemented inside Clink's keyboard driver, it's able to read the response without losing any input that's may have already been queued.</p><p class="desc"> The available request codes depends on the terminal in use; refer to terminal documentation for more information.</p><p class="desc"> If the request is a CSI code, then <span class="arg">response_final</span> is required and must specify the response's Final Byte.  Or for non-CSI request codes, then the <span class="arg">response_final</span> should be nil.</p><p class="desc"> In v1.9.21 and newer, an optional <span class="arg">timeout</span> may be provided (in seconds).  If omitted, it defaults to 0.5 seconds (500 milliseconds).</p><p class="desc"> If an error occurs, or if no response code is found, then nil is returned. Otherwise the response code from the terminal is returned.</p><pre class="language-lua"><code>if console.sendterminalrequest then
     -- XTerm documentation:
     -- https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
     -- Search there for "Send Device Attributes (Primary DA)" to see details
@@ -8101,9 +8101,9 @@ print(ellipsify("c:/abcd/wxyz", 5, "path", ""))
         local attributes = response:sub(4, #response - 1)
         -- The attributes are semicolon delimited, so to make parsing simple,
         -- add extra semicolons at the beginning and end.
-        response = ";"..response:sub(4, #response - 1)..";"
+        attributes = ";"..attributes..";"
         -- Check if the "4" attribute is present.
-        if response:find(";4;") then
+        if attributes:find(";4;") then
             print("Terminal claims to have SIXEL support.")
         end
     end
@@ -9225,6 +9225,17 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1921"><a class="wlink" href="#v1921"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.21 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added an optional <code>timeout</code> argument to the <a href="#console.sendterminalrequest">console.sendterminalrequest()</a> Lua API, with a default of 0.5 seconds if omitted.  The timeout accommodates cases where the terminal&#39;s response isn&#39;t immediately available.</li>
+<li>Changed the bindable <code>clink-diagnostics</code> command to accept an explicit numeric arg 0 (<kbd>Alt</kbd>-<kbd>0</kbd>) to show only basic diagnostic info.</li>
+<li>Fixed suggestion list display issues with certain Readline input states.</li>
+<li>Fixed suggestion list display issue after <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>L</kbd> to clear the screen.</li>
+<li>Fixed suggestion list getting discarded if the cursor was moved left and then <kbd>Up</kbd> or <kbd>Down</kbd> was used to select a suggestion.</li>
+<li>Fixed <code>execute-named-command</code> (regression introduced in v1.9.18 / v1.9.20).</li>
+<li>Fixed clearing the pager prompt (regression introduced in v1.9.19).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/861">#861</a>; Ctrl + Alt + L doesn&#39;t clear the scrollback buffer.</li>
+</ul>
 <h4 id="v1920"><a class="wlink" href="#v1920"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.20 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li><strong>Breaking Change:</strong> the &quot;gray text&quot; auto-suggestions display is now off by default, due to too many complaints and frustration and support cost.<ul>
