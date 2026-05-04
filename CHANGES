@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.22
+
+- Fixed [#862](https://github.com/chrisant996/clink/issues/862); Ctrl + L shouldn't clear the scrollback buffer (regression introduced in v1.9.21).
+
 #### v1.9.21
 
 - Added an optional `timeout` argument to the [console.sendterminalrequest()](#console.sendterminalrequest) Lua API, with a default of 0.5 seconds if omitted.  The timeout accommodates cases where the terminal's response isn't immediately available.
