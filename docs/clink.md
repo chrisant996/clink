@@ -664,6 +664,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="match_coloring_rules"></a>`match.coloring_rules` | | Provides a series of color definitions used when displaying match completions.  See [Completion Colors](#completioncolors) for details.
 <a name="match_expand_abbrev"></a>`match.expand_abbrev` | True | Expands an abbreviated path before performing completion.  In an abbreviated path, directory names may be shortened to the minimum number of characters to unambiguously refer to a directory.  For example, "c:\Users\chris\Documents" could be abbreviated as "c:\U\c\Do", depending on what directories exist in the file system.
 <a name="match_expand_envvars"></a>`match.expand_envvars` | False [*](#alternatedefault) | Expands environment variables in a word before performing completion.
+<a name="match_file_sizes"></a>`match.file_sizes` | False | When enabled, displaying file completions shows the file size in the match description field.
 <a name="match_fit_columns"></a>`match.fit_columns` | True | When displaying match completions, this calculates column widths to fit as many as possible on the screen.
 <a name="match_ignore_accent"></a>`match.ignore_accent` | True | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
 <a name="match_ignore_case"></a>`match.ignore_case` | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
