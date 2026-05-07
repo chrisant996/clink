@@ -35,6 +35,10 @@ local _argmatcher_loaders = {}
 local _argmatcher_loaders_unsorted = false
 
 --------------------------------------------------------------------------------
+settings.add("match.file_sizes", false, "Show file size in match description",
+[[Show file size in match description for file matches.]])
+
+--------------------------------------------------------------------------------
 clink.onbeginedit(function ()
     _enable_hints = settings.get("argmatcher.show_hints")
     _delayinit_generation = _delayinit_generation + 1
@@ -2506,6 +2510,60 @@ local function dir_matches_impl(match_word, exact)
 end
 
 --------------------------------------------------------------------------------
+local abbrev_chars = { 'K', 'M', 'G', 'T' }
+local lo_abbrev_fraction_index = 1
+local hi_abbrev_fraction_index = 1
+local kilo_size = 1024
+local function format_file_size(size)
+    local s
+
+    local abbrev_index = 0
+    local major_size = size
+    while major_size > 999 and abbrev_index < 4 do -- 999 because 3 digits.
+        major_size = major_size / kilo_size
+        abbrev_index = abbrev_index + 1
+    end
+
+    local show_decimal = (abbrev_index >= lo_abbrev_fraction_index and
+                          abbrev_index <= hi_abbrev_fraction_index and
+                          major_size + 0.05 < 10.0)
+    if show_decimal then
+        if abbrev_index == 0 then
+            -- Special case:  show 1..999 bytes as "1K", 0 bytes as "0K".
+            if size > 0 then
+                major_size = major_size / kilo_size
+                abbrev_index = abbrev_index + 1
+            end
+            major_size = major_size + 0.05
+            if major_size < 0.1 and size > 0 then
+                size = 1
+            else
+                size = major_size * 10
+            end
+        else
+            major_size = major_size + 0.05
+            size = major_size * 10
+        end
+        s = string.format("%u.%u", size / 10, size % 10)
+    else
+        major_size = major_size + 0.5
+        size = major_size
+        if abbrev_index == 0 then
+            -- Special case:  show 1..999 bytes as "1K", 0 bytes as "0K".
+            if size > 0 then
+                size = 1
+                abbrev_index = abbrev_index + 1
+            end
+        end
+        s = string.format("%u", size);
+    end
+
+    s = s..abbrev_chars[abbrev_index]
+
+    return s
+end
+
+--------------------------------------------------------------------------------
 local function file_matches_impl(match_word, exact)
     local word, expanded = rl.expandtilde(match_word or "")
     local hidden = settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files")
@@ -2536,9 +2594,13 @@ local function file_matches_impl(match_word, exact)
     }
 
     local matches = {}
-    for _, i in ipairs(os.globfiles(word..(exact and "" or "*"), true, flags)) do
-        local m = path.join(root, i.name)
-        table.insert(matches, { match = m, type = i.type })
+    local show_sizes = settings.get("match.file_sizes")
+    for _, i in ipairs(os.globfiles(word..(exact and "" or "*"), 2, flags)) do
+        local m = { match = path.join(root, i.name), type = i.type }
+        if show_sizes and i.type:find("file") then
+            m.description = format_file_size(i.size)
+        end
+        table.insert(matches, m)
         if not ismain and _ % 100 == 0 then
             coroutine.yield()
         end
