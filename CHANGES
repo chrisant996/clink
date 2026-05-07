@@ -4,6 +4,7 @@
 
 #### v1.9.22
 
+- Added new `match.file_sizes` setting to optionally show the file size in the match description for file matches.
 - Fixed [#862](https://github.com/chrisant996/clink/issues/862); Ctrl + L shouldn't clear the scrollback buffer (regression introduced in v1.9.21).
 
 #### v1.9.21
