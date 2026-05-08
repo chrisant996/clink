@@ -211,8 +211,6 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (!m_buffer)
         return false;
 
-    allow_suggestion_list(0);
-
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {
 #ifdef DEBUG
@@ -275,6 +273,11 @@ cant_activate:
     if (m_visible_rows <= 0)
         goto cant_activate;
 
+    // Need to disable the suggestion list while clink-select-complete is
+    // active.  BUT, to avoid flicker, don't disable the suggestion list until
+    // it's known whether anything needs to get displayed.
+    allow_suggestion_list(0);
+
     // Depending on the mode, either show the first few entries and don't expand
     // until the selection reaches an entry not yet visible, or just prompt if
     // there are too many matches.
@@ -314,7 +317,12 @@ cant_activate:
         // Now the cursor is back to _rl_vis_botlin and _rl_last_c_pos.
 
         if (!yes)
+        {
+            // The suggestion list was disabled earlier, so reenable it since
+            // the clink-select-complete command has been canceled.
+            allow_suggestion_list(1);
             goto cant_activate;
+        }
 
         m_expanded = true;
         m_can_prompt = false;
