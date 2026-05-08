@@ -240,7 +240,7 @@ local function unzip(zip, out)
         -- it might be necessary.
         os.remove(zip)
         if err then
-            for e in string.explode(err, "\n") do
+            for _, e in ipairs(string.explode(err, "\n")) do
                 log_info(e)
             end
         end
