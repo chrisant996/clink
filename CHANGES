@@ -5,6 +5,7 @@
 #### v1.9.22
 
 - Added new `match.file_sizes` setting to optionally show the file size in the match description for file matches.
+- Fixed the suggestion list disappearing when `clink-select-complete` is invoked but there are no completions available.
 - Fixed [#862](https://github.com/chrisant996/clink/issues/862); Ctrl + L shouldn't clear the scrollback buffer (regression introduced in v1.9.21).
 - Fixed [#867](https://github.com/chrisant996/clink/issues/867); "attempt to call a table value" after `clink update` fails to expand the zip file.
 
