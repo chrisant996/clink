@@ -160,7 +160,8 @@ void suggestionlist_impl::allow(bool allow)
     {
         if (allow)
             update_layout();
-        update_display();
+        else
+            update_display();
     }
 }
 

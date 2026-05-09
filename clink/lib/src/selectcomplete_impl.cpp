@@ -211,6 +211,8 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (!m_buffer)
         return false;
 
+    allow_suggestion_list(0);
+
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {
 #ifdef DEBUG
@@ -235,6 +237,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     {
 bail_out:
         pause_suggestions(false);
+        allow_suggestion_list(1);
         // Override rl_last_func so the "display all" prompt can be shown
         // again after answering 'n' to it once.
         override_rl_last_func(_rl_null_function);
@@ -272,11 +275,6 @@ cant_activate:
     update_layout();
     if (m_visible_rows <= 0)
         goto cant_activate;
-
-    // Need to disable the suggestion list while clink-select-complete is
-    // active.  BUT, to avoid flicker, don't disable the suggestion list until
-    // it's known whether anything needs to get displayed.
-    allow_suggestion_list(0);
 
     // Depending on the mode, either show the first few entries and don't expand
     // until the selection reaches an entry not yet visible, or just prompt if
@@ -1047,6 +1045,7 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
         override_rl_last_func(nullptr, true/*force_when_null*/);
 
     pause_suggestions(false);
+    allow_suggestion_list(1);
 
     reset_generate_matches();
 
