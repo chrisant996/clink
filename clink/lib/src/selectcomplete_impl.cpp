@@ -1346,8 +1346,7 @@ force_desc_below:
 #endif
         const bool best_fit = g_match_best_fit.get();
         const int32 limit_fit = g_match_limit_fitted.get();
-        const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
-        const bool one_column = desc_inline && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
+        const bool one_column = !m_desc_below && m_matches.is_one_column_preferred();
         rollback<int32> rcpdl(_rl_completion_prefix_display_length, 0);
         m_widths = calculate_columns(m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
@@ -1360,7 +1359,10 @@ force_desc_below:
 
     // If initializing where to display descriptions, and they don't fit inline
     // in a small number of rows, then display them below.
-    if (init_desc_below && !m_desc_below && m_match_rows > DESC_ONE_COLUMN_THRESHOLD)
+    if (init_desc_below &&
+        !m_desc_below &&
+        m_matches.has_descriptions() &&
+        m_match_rows > DESC_ONE_COLUMN_THRESHOLD)
     {
         m_calc_widths = true;
         goto force_desc_below;

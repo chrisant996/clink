@@ -476,6 +476,26 @@ bool match_adapter::has_descriptions() const
 }
 
 //------------------------------------------------------------------------------
+bool match_adapter::is_one_column_preferred() const
+{
+    if (!has_descriptions())
+        return false;
+
+    const uint32 count = get_match_count();
+    if (count > DESC_ONE_COLUMN_THRESHOLD)
+        return false;
+
+    for (uint32 i = 0; i < count; ++i)
+    {
+        const char* desc = get_match_description(i);
+        if (desc && cell_count(desc) > 24)
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void match_adapter::free_filtered()
 {
     if (m_filtered_matches)

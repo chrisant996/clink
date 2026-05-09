@@ -45,6 +45,7 @@ public:
     bool            is_alt_matches() const;
     bool            is_initialized() const;
     bool            has_descriptions() const;
+    bool            is_one_column_preferred() const;
 
 private:
     const char*     get_match_display_internal(uint32 index) const;
