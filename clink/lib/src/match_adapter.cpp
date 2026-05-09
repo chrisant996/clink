@@ -26,6 +26,7 @@ void match_adapter::cached_info::clear()
     m_count = 0;
     m_lcd.clear();
     m_has_descriptions = -1;
+    m_only_short_descriptions = -1;
     m_has_lcd = false;
 }
 
@@ -476,23 +477,36 @@ bool match_adapter::has_descriptions() const
 }
 
 //------------------------------------------------------------------------------
-bool match_adapter::is_one_column_preferred() const
+bool match_adapter::is_only_short_descriptions() const
 {
     if (!has_descriptions())
         return false;
 
-    const uint32 count = get_match_count();
-    if (count > DESC_ONE_COLUMN_THRESHOLD)
+    cached_info* cache = nullptr;
+    if (m_filtered_matches)
+        cache = &m_filtered_cached;
+    else if (m_alt_matches)
+        cache = &m_alt_cached;
+    else if (m_matches)
+        cache = &m_cached;
+    else
         return false;
 
-    for (uint32 i = 0; i < count; ++i)
+    if (cache->m_only_short_descriptions < 0)
     {
-        const char* desc = get_match_description(i);
-        if (desc && cell_count(desc) > 24)
-            return true;
+        cache->m_only_short_descriptions = true;
+        for (uint32 i = get_match_count(); i--;)
+        {
+            const char* desc = get_match_description(i);
+            if (desc && cell_count(desc) > 24)
+            {
+                cache->m_only_short_descriptions = false;
+                break;
+            }
+        }
     }
 
-    return false;
+    return !!cache->m_only_short_descriptions;
 }
 
 //------------------------------------------------------------------------------

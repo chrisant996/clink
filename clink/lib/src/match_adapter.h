@@ -45,7 +45,7 @@ public:
     bool            is_alt_matches() const;
     bool            is_initialized() const;
     bool            has_descriptions() const;
-    bool            is_one_column_preferred() const;
+    bool            is_only_short_descriptions() const;
 
 private:
     const char*     get_match_display_internal(uint32 index) const;
@@ -61,6 +61,7 @@ private:
         uint32          m_count;
         str<32>         m_lcd;
         char            m_has_descriptions;
+        char            m_only_short_descriptions;
         bool            m_has_lcd;
     };
 

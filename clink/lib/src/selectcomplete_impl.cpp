@@ -1329,7 +1329,9 @@ void selectcomplete_impl::update_layout()
     {
         m_init_desc_below = false;
         m_desc_below = false;
-        if (m_matches.has_descriptions() && (m_matches.get_match_count() > 100))
+        if (m_matches.has_descriptions() &&
+            m_matches.get_match_count() > 100 &&
+            !m_matches.is_only_short_descriptions())
         {
 force_desc_below:
             m_desc_below = true;
@@ -1346,7 +1348,10 @@ force_desc_below:
 #endif
         const bool best_fit = g_match_best_fit.get();
         const int32 limit_fit = g_match_limit_fitted.get();
-        const bool one_column = !m_desc_below && m_matches.is_one_column_preferred();
+        const bool one_column = (!m_desc_below &&
+                                 m_matches.has_descriptions() &&
+                                 m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD &&
+                                 !m_matches.is_only_short_descriptions());
         rollback<int32> rcpdl(_rl_completion_prefix_display_length, 0);
         m_widths = calculate_columns(m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
@@ -1362,7 +1367,8 @@ force_desc_below:
     if (init_desc_below &&
         !m_desc_below &&
         m_matches.has_descriptions() &&
-        m_match_rows > DESC_ONE_COLUMN_THRESHOLD)
+        m_match_rows > DESC_ONE_COLUMN_THRESHOLD &&
+        !m_matches.is_only_short_descriptions())
     {
         m_calc_widths = true;
         goto force_desc_below;
