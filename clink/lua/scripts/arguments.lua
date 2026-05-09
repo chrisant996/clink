@@ -2510,16 +2510,16 @@ local function dir_matches_impl(match_word, exact)
 end
 
 --------------------------------------------------------------------------------
-local abbrev_chars = { 'K', 'M', 'G', 'T' }
-local lo_abbrev_fraction_index = 1
-local hi_abbrev_fraction_index = 1
+local abbrev_chars = { 'K', 'K', 'M', 'G', 'T' }
+local lo_abbrev_fraction_index = 2
+local hi_abbrev_fraction_index = 2
 local kilo_size = 1024
 local function format_file_size(size)
     local s
 
-    local abbrev_index = 0
+    local abbrev_index = 1
     local major_size = size
-    while major_size > 999 and abbrev_index < 4 do -- 999 because 3 digits.
+    while major_size > 999 and abbrev_index < 5 do -- 999 because 3 digits.
         major_size = major_size / kilo_size
         abbrev_index = abbrev_index + 1
     end
@@ -2528,31 +2528,25 @@ local function format_file_size(size)
                           abbrev_index <= hi_abbrev_fraction_index and
                           major_size + 0.05 < 10.0)
     if show_decimal then
-        if abbrev_index == 0 then
+        if abbrev_index == 1 then
             -- Special case:  show 1..999 bytes as "1K", 0 bytes as "0K".
             if size > 0 then
                 major_size = major_size / kilo_size
-                abbrev_index = abbrev_index + 1
             end
             major_size = major_size + 0.05
-            if major_size < 0.1 and size > 0 then
-                size = 1
-            else
-                size = major_size * 10
-            end
+            size = (major_size < 0.1 and size > 0) and 1 or major_size * 10
         else
             major_size = major_size + 0.05
-            size = major_size * 10
+            size = math.floor(major_size * 10)
         end
         s = string.format("%u.%u", size / 10, size % 10)
     else
         major_size = major_size + 0.5
-        size = major_size
-        if abbrev_index == 0 then
+        size = math.floor(major_size)
+        if abbrev_index == 1 then
             -- Special case:  show 1..999 bytes as "1K", 0 bytes as "0K".
             if size > 0 then
                 size = 1
-                abbrev_index = abbrev_index + 1
             end
         end
         s = string.format("%u", size);
