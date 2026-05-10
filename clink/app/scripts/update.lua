@@ -659,6 +659,9 @@ local function apply_zip_update(elevated, zip_file, no_verify)
         local catalog = replace_extension(zip_file, "cat")
         local verified, vmsg = os._verify_from_catalog(zip_file, catalog)
         if not verified then
+            -- Deleting the zip file allows the next update attempt to
+            -- download a new copy of the file, in case it got corrupted.
+            os.remove(zip_file)
             return nil, vmsg
         end
     end
