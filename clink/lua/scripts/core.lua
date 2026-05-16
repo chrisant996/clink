@@ -758,15 +758,22 @@ function clink.addpackagepath(dir, literal)
         pattern = path.join(parent, pattern)
     end
 
-    -- Avoid adding a duplicate pattern.
+    -- Strip any duplicate patterns.  This ensures that the new pattern is
+    -- always first in the search list, and avoids wasting time searching
+    -- paths that have already been searched.
     local paths = string.explode(package.path, ";")
     local lower_pattern = clink.lower(pattern)
+    local new_paths = {}
     for _, p in ipairs(paths) do
-        if clink.lower(p) == lower_pattern then
-            return
+        if clink.lower(p) ~= lower_pattern then
+            table.insert(new_paths, p)
         end
     end
 
     -- Extend package.path with the new pattern.
-    package.path = pattern .. ";" .. package.path
+    local package_path = table.concat(new_paths, ";")
+    if package_path ~= "" then
+        package_path = ";" .. package_path
+    end
+    package.path = pattern .. package_path
 end
