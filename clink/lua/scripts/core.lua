@@ -686,3 +686,87 @@ function os.abbreviatepath(dir, decide, transform)
     local ret = s:gsub("[/\\]+$", "")
     return ret
 end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.addpackagepath
+--- -ver:   1.9.23
+--- -arg:   [dir:string]
+--- -arg:   [literal:boolean]
+--- Inserts a new Lua package path pattern, unless it's a duplicate.
+---
+--- This adds the <span class="arg">dir</span> directory to Lua's list of
+--- paths to search when using <code>require()</code> to load a Lua module.
+---
+--- If <span class="arg">dir</span> is an absolute path, or if
+--- <span class="arg">literal</span> is true, then <span class="arg">dir</span>
+--- is added as an absolute path.
+---
+--- Otherwise, <span class="arg">dir</span> is appended to the current script
+--- file's directory before adding it.
+--- -show:  -- Adds "modules" subdirectory under the current script file's directory.
+--- -show:  clink.addpackagepath()
+--- -show:
+--- -show:  -- Adds "xyz" subdirectory under the _parent_ of the current script file's
+--- -show:  -- directory.
+--- -show:  clink.addpackagepath("../xyz")
+--- -show:
+--- -show:  -- Adds absolute path "c:\foo\bar".
+--- -show:  clink.addpackagepath("c:\\foo\\bar")
+--- -show:
+--- -show:  -- Adds "../xyz" as a literal path.  This is discouraged because Clink will
+--- -show:  -- behave differently subdirectory depending on the value of the current
+--- -show:  -- working directory at the moment that require() is called.
+--- -show:  clink.addpackagepath("../xyz", true)
+--- -show:
+--- -show:  -- Looks for a module named "modname.lua" in all of the directories in Lua's
+--- -show:  -- package path.
+--- -show:  require("modname")
+function clink.addpackagepath(dir, literal)
+    if dir then
+        if type(dir) ~= "string" then
+            error("bad argument #1 (string expected)")
+        end
+        if dir:find("[;?]") then
+            error("bad argument #1 (directory cannot contain ';' or '?')")
+        end
+    end
+
+    if not dir or dir == "" then
+        -- Assume "modules" if dir was omitted.
+        dir = "modules"
+        literal = nil
+    elseif not literal then
+        -- Assume literal if dir is an absolute path.
+        local joined = path.join("foo", dir)
+        if joined == dir then
+            literal = true
+        end
+    end
+
+    local pattern = dir .. "/?.lua"
+    if not literal then
+        -- Get the parent path of the calling script.
+        local info = debug.getinfo(2, "S")
+        if not info or not info.source then
+            error("Unable to get parent path of the calling script.")
+        end
+        if info.source:sub(1, 1) ~= "@" then
+            error("Unable to get parent path of the calling script (the calling script is a string).")
+        end
+        local source = info.source:gsub("^@", "")
+        local parent = path.getdirectory(source)
+        pattern = path.join(parent, pattern)
+    end
+
+    -- Avoid adding a duplicate pattern.
+    local paths = string.explode(package.path, ";")
+    local lower_pattern = clink.lower(pattern)
+    for _, p in ipairs(paths) do
+        if clink.lower(p) == lower_pattern then
+            return
+        end
+    end
+
+    -- Extend package.path with the new pattern.
+    package.path = pattern .. ";" .. package.path
+end
