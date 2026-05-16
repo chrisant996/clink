@@ -4,6 +4,7 @@
 
 #### v1.9.23
 
+- Added new Lua API [clink.addpackagepath()](#clink.addpackagepath) which simplifies adding a search path for shared Lua modules.
 - Added a workaround for [#870](https://github.com/chrisant996/clink/issues/870) by automatically disabling Clink's shell integration support whenever a prompt filter has already inserted its own shell integration codes.
 
 #### v1.9.22
