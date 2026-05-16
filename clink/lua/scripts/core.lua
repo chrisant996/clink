@@ -692,10 +692,12 @@ end
 --- -ver:   1.9.23
 --- -arg:   [dir:string]
 --- -arg:   [literal:boolean]
---- Inserts a new Lua package path pattern, unless it's a duplicate.
+--- Inserts a new Lua package path pattern.
 ---
---- This adds the <span class="arg">dir</span> directory to Lua's list of
---- paths to search when using <code>require()</code> to load a Lua module.
+--- This inserts the <span class="arg">dir</span> directory at the beginning
+--- of Lua's list of paths to search when using <code>require()</code> to load
+--- a Lua module.  To optimize performance, any duplicates later in the list
+--- are stripped.
 ---
 --- If <span class="arg">dir</span> is an absolute path, or if
 --- <span class="arg">literal</span> is true, then <span class="arg">dir</span>
