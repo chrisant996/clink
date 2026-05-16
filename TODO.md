@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Update docs for `completions\` directory to explain how to factor shared code by using `require()` to load a module.
 
 ## Normal Priority
 - Measure width of sixel sequences?  But _only_ in prompt strings.  There are several edge cases, and some non-trivial escape sequences to handle.
