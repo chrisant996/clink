@@ -175,8 +175,29 @@ end
 --- -ver:   1.1.11
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
---- prompt is activated.  The function receives no arguments and has no return
---- values.
+--- prompt is activated, and before any prompt filters run.  The function
+--- receives no arguments and has no return values.
+---
+--- Some scripts may want to run external programs or print messages during
+--- initialization.  Every time <code>clink set</code> is run it loads all of
+--- the scripts, so a script should use <code>clink.onbeginedit()</code> to
+--- defer that kind of initialization code until just before the first edit
+--- prompt (using a variable to make sure it only runs once).  For example:
+--- -show:  -- This must be outside the one_time_init() function.
+--- -show:  local initialized = false
+--- -show:
+--- -show:  -- Function that makes sure initialization only happens once.
+--- -show:  local function one_time_init()
+--- -show:      if not initialized then
+--- -show:          -- Mark that initialization happened.
+--- -show:          initialized = true
+--- -show:          -- Your initialization code goes here...
+--- -show:          print("One Time Init")
+--- -show:      end
+--- -show:  end
+--- -show:
+--- -show:  -- Registers a callback function to be executed before each edit prompt.
+--- -show:  clink.onbeginedit(one_time_init)
 function clink.onbeginedit(func)
     _add_event_callback("onbeginedit", func)
 end

@@ -1958,6 +1958,8 @@ Clink looks for completion scripts in these directories:
 
 In v1.5.3 and higher, when a `completions\` script is loaded on demand the script receives as an argument the fully qualified path name to the typed program or file.  The script can access the argument by using `local fullname = ...` (literally three dots).  For example, that can be useful for checking whether it's a supported program, registering different argmatchers for different copies of the program or file, checking whether it's a supported program, and so on.
 
+See [Using Modules](#using-modules) for how to let different completion scripts share code (e.g. `rustc` and `cargo` are related and naturally want to share code).
+
 > **Note:**  If you download scripts, then don't put them in a "completions" directory unless they specifically say they can be put there.
 >
 > If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
@@ -1975,6 +1977,8 @@ Here are some tips for getting started writing Lua scripts:
 - Clink uses [Lua 5.2](https://www.lua.org/manual/5.2/).
 - Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
 - Code not inside a function is executed immediately when the script is loaded.
+  - Don't use that to run external programs or print messages, because scripts are also loaded every time `clink set` is run.
+  - If the script needs to do that during its initialization, then instead use [clink.onbeginedit()](#clink.onbeginedit) (see example there).
 - Usually scripts will register functions to customize various behaviors:
   - Generate completion matches.
   - Apply color to input text.
@@ -1983,6 +1987,85 @@ Here are some tips for getting started writing Lua scripts:
   - Provide new custom commands that can be bound to keys via the [luafunc: key macro syntax](#luakeybindings).
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
 - Clink extends the Lua language by adding many new [APIs and features](#lua-api) for use within Clink.
+
+### Using Modules
+
+Sometimes scripts want to share code for various reasons.
+
+The Lua [`require(modname)`](https://www.lua.org/manual/5.2/manual.html#pdf-require) function is designed for that.
+- If <span class="arg">modname</span> isn't loaded yet, then `require` loads it, remembers the return values from the script, and also returns them to the caller.
+- If <span class="arg">modname</span> is already loaded, then the remembered return values are returned to the caller.
+
+This allows code to be shared by putting it in a "module" which is in a separate directory (so that it doesn't get automatically loaded by Clink).
+
+A module can return whatever it wants to.  The most common things to return are either nothing, or an "exports" table containing some function.
+
+Here's an example showing how multiple different scripts in a [Completion directory](#completion-directories) can share code.  Using [clink.addpackagepath()](#clink.addpackagepath) lets <code>require()</code> find the module.  Note that older versions of Clink don't have that function, and the docs for it show how to support backward compatibility.
+
+**modules\foo_module.lua**
+```lua
+local function add_common_flags(argmatcher)
+    argmatcher:addflags({
+        "-?", "-h", "--help",
+        "-V", "--version",
+    })
+end
+
+-- This creates a function and returns the function.  When something calls
+-- make_file_matcher_func(".xyz"), it creates a function to match *.xyz files
+-- and returns the function, without running the function yet.
+local function make_file_matcher_func(extensions)
+    if type(extensions) ~= "table" then
+        error("expected a table of strings")
+    end
+
+    local matcher_func = function(word)
+        local matches = clink.dirmatches(word)
+        for _, ext in ipairs(extensions) do
+            for _, m in ipairs(clink.filematchesexact(word.."*"..ext)) do
+                table.insert(matches, m)
+            end
+        end
+        return matches
+    end
+
+    return matcher_func
+end
+
+local exports = {
+    -- Exported name        |  Local function name
+    add_common_flags        =  add_common_flags,
+    make_file_matcher_func  =  make_file_matcher_func,
+}
+
+return exports
+```
+
+**completions\foo_js.lua**
+```lua
+clink.addpackagepath("../modules")              -- Directory for modules.
+local foo_exports = require("foo_module")       -- Require foo_module.
+
+-- Make an argmatcher for a "foo_js" program.
+local am = clink.argmatcher("foo_js")
+
+-- Use foo_exports to do the heavy lifting for filling in the argmatcher.
+foo_exports.add_common_flags(am)
+am:addarg(foo_exports.make_file_matcher_func({".js", ".ts"}))
+```
+
+**completions\foo_c.lua**
+```lua
+clink.addpackagepath("../modules")              -- Directory for modules.
+local foo_exports = require("foo_module")       -- Require foo_module.
+
+-- Make an argmatcher for a "foo_c" program.
+local am = clink.argmatcher("foo_c")
+
+-- Use foo_exports to do the heavy lifting for filling in the argmatcher.
+foo_exports.add_common_flags(am)
+am:addarg(foo_exports.make_file_matcher_func({".c", ".h", ".cpp", ".hpp"}))
+```
 
 <a name="argumentcompletion"></a>
 

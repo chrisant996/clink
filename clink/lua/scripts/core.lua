@@ -723,6 +723,41 @@ end
 --- -show:  -- Looks for a module named "modname.lua" in all of the directories in Lua's
 --- -show:  -- package path.
 --- -show:  require("modname")
+---
+--- <strong>Compatibility Note:</strong> In Clink v1.9.22 and older this
+--- function is not present and the <code>package.path</code> variable must be
+--- modified manually.  Here is a compatibility helper function that handles
+--- the two most common ways of using <code>clink.addpackagepath()</code>:
+--- -show:  local function addpackagepath(dir, literal)
+--- -show:      if clink.addpackagepath then
+--- -show:          clink.addpackagepath(dir, literal)
+--- -show:      else
+--- -show:          local pattern
+--- -show:          if literal then
+--- -show:              pattern = dir
+--- -show:          elseif dir and
+--- -show:                  dir ~= "modules" and
+--- -show:                  not dir:find("^%.%.[/\\]modules$") then
+--- -show:              error('only supports "modules" and "../modules"')
+--- -show:          else
+--- -show:              local info = debug.getinfo(2, "S")
+--- -show:              local source = info.source:gsub("^@", "")
+--- -show:              local parent = source:match([[^@?(.*[\/])[^\/]-$]])
+--- -show:              pattern = parent .. (dir or "modules")
+--- -show:          end
+--- -show:          pattern = pattern .. "/?.lua"
+--- -show:          package.path = pattern .. ";" .. package.path
+--- -show:      end
+--- -show:  end
+--- -show:
+--- -show:  -- Adds "modules" subdir under this script's directory.
+--- -show:  -- Use this in a normal .lua script.
+--- -show:  addpackagepath()
+--- -show:
+--- -show:  -- Adds "modules" subdir under parent directory of this script's directory.
+--- -show:  -- Use this in a completion script under a "completions\" directory.
+--- -show:  -- Adds a "modules\" directory that's a sibling of the "completions\" directory.
+--- -show:  addpackagepath("../modules")
 function clink.addpackagepath(dir, literal)
     if dir then
         if type(dir) ~= "string" then
@@ -764,10 +799,10 @@ function clink.addpackagepath(dir, literal)
     -- always first in the search list, and avoids wasting time searching
     -- paths that have already been searched.
     local paths = string.explode(package.path, ";")
-    local lower_pattern = clink.lower(pattern)
+    local lower_pattern = clink.lower(pattern):gsub("\\", "/")
     local new_paths = {}
     for _, p in ipairs(paths) do
-        if clink.lower(p) ~= lower_pattern then
+        if clink.lower(p):gsub("\\", "/") ~= lower_pattern then
             table.insert(new_paths, p)
         end
     end
