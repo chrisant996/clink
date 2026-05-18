@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.22</title>
+<title>Clink v1.9.23</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.22</div>
+                <div id="title">Clink v1.9.23</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -4535,6 +4535,7 @@ $endif              # end clink-only section
 <li>A <code>completions\</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
 </ol>
 <p>In v1.5.3 and higher, when a <code>completions\</code> script is loaded on demand the script receives as an argument the fully qualified path name to the typed program or file.  The script can access the argument by using <code>local fullname = ...</code> (literally three dots).  For example, that can be useful for checking whether it&#39;s a supported program, registering different argmatchers for different copies of the program or file, checking whether it&#39;s a supported program, and so on.</p>
+<p>See <a href="#using-modules">Using Modules</a> for how to let different completion scripts share code (e.g. <code>rustc</code> and <code>cargo</code> are related and naturally want to share code).</p>
 <blockquote>
 <p><strong>Note:</strong>  If you download scripts, then don&#39;t put them in a &quot;completions&quot; directory unless they specifically say they can be put there.</p>
 <p>If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
@@ -4547,7 +4548,11 @@ $endif              # end clink-only section
 <ul>
 <li>Clink uses <a href="https://www.lua.org/manual/5.2/">Lua 5.2</a>.</li>
 <li>Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.</li>
-<li>Code not inside a function is executed immediately when the script is loaded.</li>
+<li>Code not inside a function is executed immediately when the script is loaded.<ul>
+<li>Don&#39;t use that to run external programs or print messages, because scripts are also loaded every time <code>clink set</code> is run.</li>
+<li>If the script needs to do that during its initialization, then instead use <a href="#clink.onbeginedit">clink.onbeginedit()</a> (see example there).</li>
+</ul>
+</li>
 <li>Usually scripts will register functions to customize various behaviors:<ul>
 <li>Generate completion matches.</li>
 <li>Apply color to input text.</li>
@@ -4559,6 +4564,75 @@ $endif              # end clink-only section
 <li>Often scripts will also define some functions and variables for use by itself and/or other scripts.</li>
 <li>Clink extends the Lua language by adding many new <a href="#lua-api">APIs and features</a> for use within Clink.</li>
 </ul>
+<h3 id="using-modules"><a class="wlink" href="#using-modules"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Using Modules <span class="uplinks"><a href="#tips-for-starting-to-write-lua-scripts">up</a> <a href="#toc">top</a></span></h3>
+<p>Sometimes scripts want to share code for various reasons.</p>
+<p>The Lua <a href="https://www.lua.org/manual/5.2/manual.html#pdf-require"><code>require(modname)</code></a> function is designed for that.</p>
+<ul>
+<li>If <span class="arg">modname</span> isn&#39;t loaded yet, then <code>require</code> loads it, remembers the return values from the script, and also returns them to the caller.</li>
+<li>If <span class="arg">modname</span> is already loaded, then the remembered return values are returned to the caller.</li>
+</ul>
+<p>This allows code to be shared by putting it in a &quot;module&quot; which is in a separate directory (so that it doesn&#39;t get automatically loaded by Clink).</p>
+<p>A module can return whatever it wants to.  The most common things to return are either nothing, or an &quot;exports&quot; table containing some function.</p>
+<p>Here&#39;s an example showing how multiple different scripts in a <a href="#completion-directories">Completion directory</a> can share code.  Using <a href="#clink.addpackagepath">clink.addpackagepath()</a> lets <code>require()</code> find the module.  Note that older versions of Clink don&#39;t have that function, and the docs for it show how to support backward compatibility.</p>
+<p><strong>modules\foo_module.lua</strong></p>
+<pre><code class="language-lua">local function add_common_flags(argmatcher)
+    argmatcher:addflags({
+        &quot;-?&quot;, &quot;-h&quot;, &quot;--help&quot;,
+        &quot;-V&quot;, &quot;--version&quot;,
+    })
+end
+
+-- This creates a function and returns the function.  When something calls
+-- make_file_matcher_func(&quot;.xyz&quot;), it creates a function to match *.xyz files
+-- and returns the function, without running the function yet.
+local function make_file_matcher_func(extensions)
+    if type(extensions) ~= &quot;table&quot; then
+        error(&quot;expected a table of strings&quot;)
+    end
+
+    local matcher_func = function(word)
+        local matches = clink.dirmatches(word)
+        for _, ext in ipairs(extensions) do
+            for _, m in ipairs(clink.filematchesexact(word..&quot;*&quot;..ext)) do
+                table.insert(matches, m)
+            end
+        end
+        return matches
+    end
+
+    return matcher_func
+end
+
+local exports = {
+    -- Exported name        |  Local function name
+    add_common_flags        =  add_common_flags,
+    make_file_matcher_func  =  make_file_matcher_func,
+}
+
+return exports
+</code></pre>
+<p><strong>completions\foo_js.lua</strong></p>
+<pre><code class="language-lua">clink.addpackagepath(&quot;../modules&quot;)              -- Directory for modules.
+local foo_exports = require(&quot;foo_module&quot;)       -- Require foo_module.
+
+-- Make an argmatcher for a &quot;foo_js&quot; program.
+local am = clink.argmatcher(&quot;foo_js&quot;)
+
+-- Use foo_exports to do the heavy lifting for filling in the argmatcher.
+foo_exports.add_common_flags(am)
+am:addarg(foo_exports.make_file_matcher_func({&quot;.js&quot;, &quot;.ts&quot;}))
+</code></pre>
+<p><strong>completions\foo_c.lua</strong></p>
+<pre><code class="language-lua">clink.addpackagepath(&quot;../modules&quot;)              -- Directory for modules.
+local foo_exports = require(&quot;foo_module&quot;)       -- Require foo_module.
+
+-- Make an argmatcher for a &quot;foo_c&quot; program.
+local am = clink.argmatcher(&quot;foo_c&quot;)
+
+-- Use foo_exports to do the heavy lifting for filling in the argmatcher.
+foo_exports.add_common_flags(am)
+am:addarg(foo_exports.make_file_matcher_func({&quot;.c&quot;, &quot;.h&quot;, &quot;.cpp&quot;, &quot;.hpp&quot;}))
+</code></pre>
 <p><a name="argumentcompletion"></a></p>
 <h2 id="argument-completion"><a class="wlink" href="#argumentcompletion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Argument Completion <span class="uplinks"><a href="#extending-clink">up</a> <a href="#toc">top</a></span></h2>
 <p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches and apply <a href="#classifywords">input line coloring</a>.</p>
@@ -7688,7 +7762,55 @@ builder:addmatches({
 
 </div><div class="group">
 <h5 id="clink" class="group_name"><a class="wlink" href="#clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.opensessionstream">opensessionstream</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.argmatcherloader">argmatcherloader</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.reload">reload</a></td></tr><tr><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#clink.addpackagepath">addpackagepath</a></td><td><a href="#clink.getprompts">getprompts</a></td><td><a href="#clink.oninputlinechanged">oninputlinechanged</a></td><td><a href="#clink.runcoroutineuntilcomplete">runcoroutineuntilcomplete</a></td></tr><tr><td><a href="#clink.applytheme">applytheme</a></td><td><a href="#clink.getsession">getsession</a></td><td><a href="#clink.onprovideline">onprovideline</a></td><td><a href="#clink.runonmain">runonmain</a></td></tr><tr><td><a href="#clink.argmatcher">argmatcher</a></td><td><a href="#clink.getthemes">getthemes</a></td><td><a href="#clink.opensessionstream">opensessionstream</a></td><td><a href="#clink.setcoroutineinterval">setcoroutineinterval</a></td></tr><tr><td><a href="#clink.argmatcherloader">argmatcherloader</a></td><td><a href="#clink.hinter">hinter</a></td><td><a href="#clink.parseline">parseline</a></td><td><a href="#clink.setcoroutinename">setcoroutinename</a></td></tr><tr><td><a href="#clink.classifier">classifier</a></td><td><a href="#clink.lower">lower</a></td><td><a href="#clink.popuplist">popuplist</a></td><td><a href="#clink.suggester">suggester</a></td></tr><tr><td><a href="#clink.dirmatches">dirmatches</a></td><td><a href="#clink.onaftercommand">onaftercommand</a></td><td><a href="#clink.print">print</a></td><td><a href="#clink.translateslashes">translateslashes</a></td></tr><tr><td><a href="#clink.dirmatchesexact">dirmatchesexact</a></td><td><a href="#clink.onbeginedit">onbeginedit</a></td><td><a href="#clink.promptcoroutine">promptcoroutine</a></td><td><a href="#clink.upper">upper</a></td></tr><tr><td><a href="#clink.filematches">filematches</a></td><td><a href="#clink.oncommand">oncommand</a></td><td><a href="#clink.promptfilter">promptfilter</a></td><td><a href="#clink.version_commit">version_commit</a></td></tr><tr><td><a href="#clink.filematchesexact">filematchesexact</a></td><td><a href="#clink.ondisplaymatches">ondisplaymatches</a></td><td><a href="#clink.readtheme">readtheme</a></td><td><a href="#clink.version_encoded">version_encoded</a></td></tr><tr><td><a href="#clink.generator">generator</a></td><td><a href="#clink.onendedit">onendedit</a></td><td><a href="#clink.reclassifyline">reclassifyline</a></td><td><a href="#clink.version_major">version_major</a></td></tr><tr><td><a href="#clink.getansihost">getansihost</a></td><td><a href="#clink.onfilterinput">onfilterinput</a></td><td><a href="#clink.recognizecommand">recognizecommand</a></td><td><a href="#clink.version_minor">version_minor</a></td></tr><tr><td><a href="#clink.getargmatcher">getargmatcher</a></td><td><a href="#clink.onfiltermatches">onfiltermatches</a></td><td><a href="#clink.refilterafterterminalresize">refilterafterterminalresize</a></td><td><a href="#clink.version_patch">version_patch</a></td></tr><tr><td><a href="#clink.getclinkprompt">getclinkprompt</a></td><td><a href="#clink.onhistory">onhistory</a></td><td><a href="#clink.refilterprompt">refilterprompt</a></td></tr><tr><td><a href="#clink.getpopuplistcolors">getpopuplistcolors</a></td><td><a href="#clink.oninject">oninject</a></td><td><a href="#clink.reload">reload</a></td></tr></table>
+<div class="function"><div class="header"> <div id="clink.addpackagepath" class="name"><a class="wlink" href="#clink.addpackagepath"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.addpackagepath</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> [dir</span>:string], <span class="arg_name"> [literal</span>:boolean] ) : nil<br/><div class="version">v 1.9.23</div></div></div><div class="body"><p class="desc">Inserts a new Lua package path pattern.</p><p class="desc"> This inserts the <span class="arg">dir</span> directory at the beginning of Lua's list of paths to search when using <code>require()</code> to load a Lua module.  To optimize performance, any duplicates later in the list are stripped.</p><p class="desc"> If <span class="arg">dir</span> is an absolute path, or if <span class="arg">literal</span> is true, then <span class="arg">dir</span> is added as an absolute path.</p><p class="desc"> Otherwise, <span class="arg">dir</span> is appended to the current script file's directory before adding it.</p><pre class="language-lua"><code>-- Adds "modules" subdirectory under the current script file's directory.
+clink.addpackagepath()
+
+-- Adds "xyz" subdirectory under the _parent_ of the current script file's
+-- directory.
+clink.addpackagepath("../xyz")
+
+-- Adds absolute path "c:\foo\bar".
+clink.addpackagepath("c:\\foo\\bar")
+
+-- Adds "../xyz" as a literal path.  This is discouraged because Clink will
+-- behave differently subdirectory depending on the value of the current
+-- working directory at the moment that require() is called.
+clink.addpackagepath("../xyz", true)
+
+-- Looks for a module named "modname.lua" in all of the directories in Lua's
+-- package path.
+require("modname")</code></pre><p class="desc"><strong>Compatibility Note:</strong> In Clink v1.9.22 and older this function is not present and the <code>package.path</code> variable must be modified manually.  Here is a compatibility helper function that handles the two most common ways of using <code>clink.addpackagepath()</code>:</p><pre class="language-lua"><code>local function addpackagepath(dir, literal)
+    if clink.addpackagepath then
+        clink.addpackagepath(dir, literal)
+    else
+        local pattern
+        if literal then
+            pattern = dir
+        elseif dir and
+                dir ~= "modules" and
+                not dir:find("^%.%.[/\\]modules$") then
+            error('only supports "modules" and "../modules"')
+        else
+            local info = debug.getinfo(2, "S")
+            local source = info.source:gsub("^@", "")
+            local parent = source:match([[^@?(.*[\/])[^\/]-$]])
+            pattern = parent .. (dir or "modules")
+        end
+        pattern = pattern .. "/?.lua"
+        package.path = pattern .. ";" .. package.path
+    end
+end
+
+-- Adds "modules" subdir under this script's directory.
+-- Use this in a normal .lua script.
+addpackagepath()
+
+-- Adds "modules" subdir under parent directory of this script's directory.
+-- Use this in a completion script under a "completions\" directory.
+-- Adds a "modules\" directory that's a sibling of the "completions\" directory.
+addpackagepath("../modules")</code></pre></div></div><hr/>
+
 <div class="function"><div class="header"> <div id="clink.applytheme" class="name"><a class="wlink" href="#clink.applytheme"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.applytheme</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">theme</span>:string, [<span class="arg_name">clearall</span>:boolean], [<span class="arg_name">no_save</span>:boolean] ) : table, message<br/><div class="version">v1.7.0 and newer</div></div></div><div class="body"><p class="desc">Finds the <span class="arg">theme</span> and tries to apply its setting (which are saved in the current profile settings, which affects all Clink sessions using that profile directory).</p><p class="desc"> If successful, it returns true.  If unsuccessful, it returns nil followed by a message describing the failure.</p><p class="desc"> Applying a color theme clears the built-in color settings to their default values before loading the theme.  If the optional <span class="arg">clearall</span> argument is true, then it also clears any color settings added by Lua scripts.</p><p class="desc"> If the optional <span class="arg">no_save</span> argument is true, then the color theme is loaded into memory but is not saved back to the Clink settings file.</p><p class="desc"> Refer to <a href="#color-themes">Color Themes</a> for more information.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.argmatcher" class="name"><a class="wlink" href="#clink.argmatcher"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.argmatcher</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( [<span class="arg_name">commands...</span>:string] ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> Passing more than one <span class="arg">command</span> registers the new argmatcher with all of the specified commands.</p><p class="desc"> Passing no arguments creates a new argmatcher without registering it with any commands.  This is useful for creating <a href="#argmatcher_linking">linked argmatchers</a>.</p><p class="desc"> In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a fully qualified path, then it is only used when the typed command expands to the same fully qualified path.  This makes it possible to create one argmatcher for <code>c:\general\program.exe</code> and another for <code>c:\special\program.exe</code>.  For example, aliases may be used to make both programs runnable, or the system PATH might be changed temporarily while working in a particular context.</p><p class="desc"> <strong>Notes:</strong> <ul> <li>Merging <a href="#argmatcher_linking">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases. <li>The documentation used to mention an optional <span class="arg">priority</span> argument, but it never did anything. </ul></p></div></div><hr/>
@@ -7783,9 +7905,23 @@ clink.lower("ÁÈÏõû")       -- returns "áèïõû"</code></pre></div></div>
 
 <div class="function"><div class="header"> <div id="clink.onaftercommand" class="name"><a class="wlink" href="#clink.onaftercommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onaftercommand</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.2.50</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after every editing command (key binding).</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onbeginedit" class="name"><a class="wlink" href="#clink.onbeginedit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onbeginedit</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.11 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onbeginedit" class="name"><a class="wlink" href="#clink.onbeginedit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onbeginedit</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.11 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated, and before any prompt filters run.  The function receives no arguments and has no return values.</p><p class="desc"> Some scripts may want to run external programs or print messages during initialization.  Every time <code>clink set</code> is run it loads all of the scripts, so a script should use <code>clink.onbeginedit()</code> to defer that kind of initialization code until just before the first edit prompt (using a variable to make sure it only runs once).  For example:</p><pre class="language-lua"><code>-- This must be outside the one_time_init() function.
+local initialized = false
 
-<div class="function"><div class="header"> <div id="clink.oncommand" class="name"><a class="wlink" href="#clink.oncommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.oncommand</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.3.12 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when the command word changes in the edit line.</p><p class="desc"> The function receives 2 arguments:  the <a href="#line_state">line_state</a> for the command, and a table with the following scheme:</p><pre class="language-lua"><code>{
+-- Function that makes sure initialization only happens once.
+local function one_time_init()
+    if not initialized then
+        -- Mark that initialization happened.
+        initialized = true
+        -- Your initialization code goes here...
+        print("One Time Init")
+    end
+end
+
+-- Registers a callback function to be executed before each edit prompt.
+clink.onbeginedit(one_time_init)</code></pre></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="clink.oncommand" class="name"><a class="wlink" href="#clink.oncommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.oncommand</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.3.12</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when the command word changes in the edit line.</p><p class="desc"> The function receives 2 arguments:  the <a href="#line_state">line_state</a> for the command, and a table with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   command =   -- [string] The command.
 &nbsp;   quoted  =   -- [boolean] Whether the command is quoted in the command line.
 &nbsp;   type    =   -- [string] "unrecognized", "executable", or "command" (a CMD command name).
@@ -7813,13 +7949,13 @@ function my_match_generator:generate(line_state, match_builder)
 &nbsp;   clink.ondisplaymatches(my_filter)
 end</code></pre></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onendedit" class="name"><a class="wlink" href="#clink.onendedit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onendedit</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.</p><p class="desc"> <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the user's input has been moved to a separate <a href="#clink.onfilterinput">onfilterinput</a> event.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onendedit" class="name"><a class="wlink" href="#clink.onendedit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onendedit</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.1.20</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.</p><p class="desc"> <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the user's input has been moved to a separate <a href="#clink.onfilterinput">onfilterinput</a> event.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onfilterinput" class="name"><a class="wlink" href="#clink.onfilterinput"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onfilterinput</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onfilterinput" class="name"><a class="wlink" href="#clink.onfilterinput"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onfilterinput</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.2.16</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.onfiltermatches" class="name"><a class="wlink" href="#clink.onfiltermatches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onfiltermatches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.1.41</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onhistory" class="name"><a class="wlink" href="#clink.onhistory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onhistory</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.5.13 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when an input line has been accepted and is about to be added to history.  The function receives a string argument containing the input text from the edit prompt.  The function can return false to cancel adding the line to history (if it returns false then no further onhistory handlers will run for that line).</p><p class="desc"> <strong>Note:</strong>  The onhistory handler functions are not called by <code><a href="#rlcmd-add-history">add-history</a></code> or the <code>clink history</code> command.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onhistory" class="name"><a class="wlink" href="#clink.onhistory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onhistory</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.5.13</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when an input line has been accepted and is about to be added to history.  The function receives a string argument containing the input text from the edit prompt.  The function can return false to cancel adding the line to history (if it returns false then no further onhistory handlers will run for that line).</p><p class="desc"> <strong>Note:</strong>  The onhistory handler functions are not called by <code><a href="#rlcmd-add-history">add-history</a></code> or the <code>clink history</code> command.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.oninject" class="name"><a class="wlink" href="#clink.oninject"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.oninject</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
 
@@ -7851,7 +7987,7 @@ function clink.oninputlinechanged(func)
 &nbsp;   _add_event_callback("oninputlinechanged", func)
 end</code></pre></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onprovideline" class="name"><a class="wlink" href="#clink.onprovideline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onprovideline</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onprovideline" class="name"><a class="wlink" href="#clink.onprovideline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onprovideline</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.3.18</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.opensessionstream" class="name"><a class="wlink" href="#clink.opensessionstream"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.opensessionstream</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> name</span>:string, <span class="arg_name"> [mode</span>:string] ) :  stream<br/><div class="version">v 1.8.0</div></div></div><div class="body"><p class="desc">Opens or creates a named in-memory stream that behaves like a Lua file handle.  Unlike <code>io.open</code>, the stream is not stored in the file system.  Instead it lives entirely in memory and exists for the duration of the current Clink session.</p><p class="desc"> The <span class="arg">name</span> string identifies the stream.  Any calls with the same <span class="arg">name</span> string access the same stream.</p><p class="desc"> The <span class="arg">mode</span> string can be any of the following: <ul> <li><code>"r"</code>: opens for read (the default), fails if the stream doesn't exist; <li><code>"w"</code>: opens for write, all previous data is erased, creates the stream if it doesn't exist; <li><code>"wx"</code>: opens for write, but fail if the stream already exists; <li><code>"a"</code>: opens for writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist; <li><code>"r+"</code>: opens for read and write, all previous data is preserved, fails if the stream doesn't exist; <li><code>"w+"</code>: opens for read and write, all previous data is erased, creates the stream if it doesn't exist; <li><code>"w+x"</code>: opens for read and write, all previous data is erased, but fail if the stream already exists; <li><code>"a+"</code>: opens for reading and writing at the end of the stream (append), writing is only allowed at the end of stream, creates the stream if it doesn't exist. </ul></p><p class="desc"> The <span class="arg">mode</span> string can also have a <code>'b'</code> at the end to open the stream in binary mode.</p><p class="desc"> Session streams are limited to 4 MB in size.</p><p class="desc"> Scripts can use this function when data needs to survive across Lua VM reboots, but not across different Clink sessions.  The `clink-reload` command reboots the Lua VM inside the current Clink session, causing all variables to be lost.  However, session streams created by `clink.opensessionstream` are not lost.</p><pre class="language-lua"><code>-- Create or open a session stream named "history"
 local s = clink.opensessionstream("my_history_stream", "w")
@@ -9230,6 +9366,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1923"><a class="wlink" href="#v1923"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.23 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new Lua API <a href="#clink.addpackagepath">clink.addpackagepath()</a> which simplifies adding a search path for shared Lua modules.</li>
+<li>Added a workaround for <a href="https://github.com/chrisant996/clink/issues/870">#870</a> by automatically disabling Clink&#39;s shell integration support whenever a prompt filter has already inserted its own shell integration codes.</li>
+</ul>
 <h4 id="v1922"><a class="wlink" href="#v1922"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.22 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new <code>match.file_sizes</code> setting to optionally show the file size in the match description for file matches.</li>
