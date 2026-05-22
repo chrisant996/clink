@@ -228,23 +228,25 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Shell integration codes.
     -- https://learn.microsoft.com/en-us/windows/terminal/tutorials/shell-integration
     -- https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
-    if not has_ftsc(ret, "9;9") then
-        pre = clink._make_ftsc("9;9") .. pre    -- Current Working Directory
+    if ret then
+        if not has_ftsc(ret, "9;9") then
+            pre = clink._make_ftsc("9;9") .. pre    -- Current Working Directory
+        end
+        local has_ftsc_A = has_ftsc(ret, "133;A")
+        local has_ftsc_B = has_ftsc(ret, "133;B")
+        if not has_ftsc_A then
+            pre = clink._make_ftsc("133;A") .. pre  -- Beginning of Prompt
+        end
+        if not has_ftsc_B then
+            suf = suf .. clink._make_ftsc("133;B")  -- End of Prompt
+        end
+        --[[
+        if has_ftsc_A or has_ftsc_B then
+            -- FUTURE:  Maybe disable all shell integration until the next prompt,
+            -- including the 133;C and 133;D codes.
+        end
+        --]]
     end
-    local has_ftsc_A = has_ftsc(ret, "133;A")
-    local has_ftsc_B = has_ftsc(ret, "133;B")
-    if not has_ftsc_A then
-        pre = clink._make_ftsc("133;A") .. pre  -- Beginning of Prompt
-    end
-    if not has_ftsc_B then
-        suf = suf .. clink._make_ftsc("133;B")  -- End of Prompt
-    end
-    --[[
-    if has_ftsc_A or has_ftsc_B then
-        -- FUTURE:  Maybe disable all shell integration until the next prompt,
-        -- including the 133;C and 133;D codes.
-    end
-    --]]
 
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
