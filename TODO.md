@@ -7,10 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Update docs for `completions\` directory to explain how to factor shared code by using `require()` to load a module.
 
 ## Normal Priority
-- Measure width of sixel sequences?  But _only_ in prompt strings.  There are several edge cases, and some non-trivial escape sequences to handle.
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Make a documentation section that lists all the CLINK environment variables.
@@ -25,6 +23,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by the "More?" prompt or a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's not the main input line prompt.  But there's no way for Clink to inject input into ReadConsoleW.  Maybe provide a custom simple input editor?
   - For now, the "More?" prompt case returns the queued characters **and appends a newline**.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them **and a newline is added, causing the command to be accepted prematurely**.
   - For now, the confirmation prompt case returns the queued characters and then falls back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.
+- Measure width of sixel sequences?  But _only_ in prompt strings.  There are several edge cases, and some non-trivial escape sequences to handle.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
