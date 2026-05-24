@@ -247,14 +247,14 @@ static bool set_value_impl(const char* key, const char* value, bool compat)
     {
         if (!setting->set(value))
         {
-            printf("ERROR: Failed to set value '%s'.\n", key);
+            printf("ERROR: Failed to set '%s' to '%s'.\n", key, value);
             return false;
         }
     }
 
     str<> result;
     setting->get_descriptive(result, compat);
-    printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
+    printf("Setting '%s' %sset to '%s'.\n", key, value ? "" : "re", result.c_str());
     return true;
 }
 
