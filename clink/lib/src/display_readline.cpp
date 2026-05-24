@@ -123,10 +123,6 @@ extern setting_bool g_debug_log_terminal;
 extern setting_bool g_history_autoexpand;
 extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;
-#ifdef USE_SUGGESTION_HINT_INLINE
-extern setting_color g_color_suggestion;
-extern setting_bool g_autosuggest_hint;
-#endif
 extern setting_bool g_suggestionlist_hide_hints;
 
 //------------------------------------------------------------------------------
