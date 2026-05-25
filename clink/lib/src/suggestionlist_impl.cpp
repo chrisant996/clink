@@ -53,6 +53,14 @@ static setting_bool s_suggestionlist_default(
     "to the clink-toggle-suggestion-list command.",
     false);
 
+static setting_bool s_suggestionlist_autooff(
+    "suggestionlist.autooff",
+    "Automatically disable suggestion list after use",
+    "When this is true, the suggestion list is automatically disabled after every\n"
+    "use (ending with ESC or ENTER).  The suggestion list can be toggled on/off\n"
+    "with F2 or whatever key is bound to the clink-toggle-suggestion-list command.",
+    false);
+
 static setting_color s_color_suggestionlist(
     "color.suggestionlist",
     "Color for suggestions in the suggestion list",
@@ -348,17 +356,19 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
 
     if (m_first_input)
     {
-        // At the beginning of a new input line, maybe automatically enable
-        // the suggestion list.  This applies the suggestionlist.default
-        // setting, as well as carrying over the suggestion list mode from
-        // the previous input line.
+        // At the beginning of a new input line, maybe automatically enable or
+        // disable the suggestion list.
         m_first_input = false;
         assert(m_buffer);
         assert(m_printer);
         assert(m_bind_group >= 0);
-        if (s_suggestion_list_enabled && m_prev_bind_group < 0 &&
-            bind_group >= 0 && bind_group != m_bind_group &&
-            !rl_has_saved_history())
+        if (s_suggestionlist_autooff.get())
+        {
+            s_suggestion_list_enabled = false;
+        }
+        else if (s_suggestion_list_enabled && m_prev_bind_group < 0 &&
+                 bind_group >= 0 && bind_group != m_bind_group &&
+                 !rl_has_saved_history())
         {
             class result_shim : public editor_module::result
             {
@@ -588,11 +598,20 @@ do_mouse_position:
         break;
 
     case bind_id_suggestionlist_escape:
-        // Hide suggestion list until the input line is changed by something
-        // other than the suggestion list.
-        apply_suggestion(-1);
-        hide_suggestion_list();
-        update_display();
+        if (s_suggestionlist_autooff.get())
+        {
+            // Turn off the suggestion list until manually turned on again.
+            apply_suggestion(-1);
+            cancel(result);
+        }
+        else
+        {
+            // Hide suggestion list until the input line is changed by something
+            // other than the suggestion list.
+            apply_suggestion(-1);
+            hide_suggestion_list();
+            update_display();
+        }
         return;
 
     case bind_id_suggestionlist_catchall:
