@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.24</title>
+<title>Clink v1.9.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.24</div>
+                <div id="title">Clink v1.9.25</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1252,6 +1252,7 @@ Press <kbd>Right</kbd> or <kbd>End</kbd> to insert a suggestion (shown in a mute
 
 <p>To see more history, press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> to show a <a href="#popup-windows">popup list</a> of command history matching what&#39;s been typed so far.  Typing in the popup list further searches or filters the list, and <kbd>F4</kbd> toggles between searching and filtering.</p>
 <p>The <a href="#suggestionlist_default"><code>suggestionlist.default</code></a> setting controls whether each session starts with the suggestion list on or off.</p>
+<p>The <a href="#suggestionlist_autooff"><code>suggestionlist.autooff</code></a> setting controls whether to automatically turn off the suggestion list after each time it&#39;s used (ending with <kbd>Esc</kbd> or <kbd>Enter</kbd>).</p>
 <p>The colors for the suggestion list can be customized by changing the <a href="#color_suggestionlist"><code>color.suggestionlist_*</code></a> settings.</p>
 <h3 id="inline-suggestions"><a class="wlink" href="#inline-suggestions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Inline suggestions <span class="uplinks"><a href="#gettingstarted_autosuggest">up</a> <a href="#toc">top</a></span></h3>
 <p>Clink can alternatively show a suggestion in a muted color at the end of the input line.</p>
@@ -2134,6 +2135,11 @@ $endif
 <td align="center"><a class="wlink" href="#readline_hide_stderr"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="readline_hide_stderr"></a><code>readline.hide_stderr</code></td>
 <td align="center">False</td>
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#suggestionlist_autooff"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_autooff"></a><code>suggestionlist.autooff</code></td>
+<td align="center">False</td>
+<td>When this is true, the suggestion list is automatically disabled after every use (ending with <kbd>Esc</kbd> or <kbd>Enter</kbd>).  The suggestion list can be toggled on/off with <kbd>F2</kbd> or whatever key is bound to the <a href="#rlcmd-clink-toggle-suggestion-list"><code>clink-toggle-suggestion-list</code></a> command.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#suggestionlist_default"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_default"></a><code>suggestionlist.default</code></td>
@@ -9366,6 +9372,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1925"><a class="wlink" href="#v1925"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.25 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new <code>suggestionlist.autooff</code> setting to optionally automatically disable the suggestion list after each use (ended by <kbd>Esc</kbd> or <kbd>Enter</kbd>).</li>
+</ul>
 <h4 id="v1924"><a class="wlink" href="#v1924"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.24 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/871">#871</a>; bad argument error in prompt.lua within the VS Code embedded terminal.</li>
