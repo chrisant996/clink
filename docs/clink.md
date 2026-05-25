@@ -268,6 +268,8 @@ To see more history, press <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>
 
 The [`suggestionlist.default`](#suggestionlist_default) setting controls whether each session starts with the suggestion list on or off.
 
+The [`suggestionlist.autooff`](#suggestionlist_autooff) setting controls whether to automatically turn off the suggestion list after each time it's used (ending with <kbd>Esc</kbd> or <kbd>Enter</kbd>).
+
 The colors for the suggestion list can be customized by changing the [`color.suggestionlist_*`](#color_suggestionlist) settings.
 
 ### Inline suggestions
@@ -679,6 +681,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="prompt_spacing"></a>`prompt.spacing` | `normal` | The default is `normal` which never removes or adds blank lines.  Set to `compact` to remove blank lines before the prompt, or set to `sparse` to remove blank lines and then add one blank line.
 <a name="prompt-transient"></a>`prompt.transient` | `off` | Controls when past prompts are collapsed ([transient prompts](#transientprompts)).  `off` = never collapse past prompts, `always` = always collapse past prompts, `same_dir` = only collapse past prompts when the current working directory hasn't changed since the last prompt.
 <a name="readline_hide_stderr"></a>`readline.hide_stderr` | False | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
+<a name="suggestionlist_autooff"></a>`suggestionlist.autooff` | False | When this is true, the suggestion list is automatically disabled after every use (ending with <kbd>Esc</kbd> or <kbd>Enter</kbd>).  The suggestion list can be toggled on/off with <kbd>F2</kbd> or whatever key is bound to the [`clink-toggle-suggestion-list`](#rlcmd-clink-toggle-suggestion-list) command.
 <a name="suggestionlist_default"></a>`suggestionlist.default` | False | When this is true, a Clink session starts with the suggestion list enabled.  The suggestion list can be toggled on/off with <kbd>F2</kbd> or whatever key is bound to the [`clink-toggle-suggestion-list`](#rlcmd-clink-toggle-suggestion-list) command.
 <a name="suggestionlist_hide_hints"></a>`suggestionlist.hide_hints` | True | When this is true, the input hints controlled by the [`comment_row.show_hints`](#comment_row_show_hints) setting are suppressed while using the suggestion list.
 <a name="suggestionlist_num_history"></a>`suggestionlist.num_history` | `3` | When the suggestion list shows suggestions from multiple sources, this limits how many history suggestions can be shown before suggestions from other sources.  This can be any integer from 1 to 8.
