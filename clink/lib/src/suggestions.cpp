@@ -89,8 +89,9 @@ static setting_str g_autosuggest_strategy(
     "autosuggest.strategy",
     "Controls how suggestions are chosen",
     "This determines how suggestions are chosen.  The suggestion generators are\n"
-    "tried in the order listed, until one provides a suggestion.  There are three\n"
-    "built-in suggestion generators, and scripts can provide new ones.\n"
+    "tried in the order listed (separated by spaces), until one provides a\n"
+    "suggestion.  There are three built-in suggestion generators, and scripts can\n"
+    "provide new ones.\n"
     "'history' chooses the most recent matching command from the history.\n"
     "'completion' chooses the first of the matching completions.\n"
     "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
