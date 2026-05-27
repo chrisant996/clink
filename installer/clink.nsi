@@ -79,11 +79,6 @@ Function cleanLegacyInstall
     ; Install dir
     ;
     Delete /REBOOTOK $INSTDIR
-
-    ; Migrate state to the new location.
-    ;
-    IfFileExists $APPDATA\clink 0 +2
-        Rename $APPDATA\clink $LOCALAPPDATA\clink
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
@@ -204,8 +199,6 @@ Section "!Application files" app_files_id
     ; Clean up legacy installs.
     ;
     Call cleanLegacyInstall
-
-    CreateDirectory $LOCALAPPDATA\clink
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -395,10 +388,12 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section /o "un.User scripts and history" section_un_scripts
-    SetShellVarContext all
+    SetShellVarContext current
 
     RMDIR /r $APPDATA\clink         ; ...legacy path.
     RMDIR /r $LOCALAPPDATA\clink
+
+    SetShellVarContext all
 SectionEnd
 
 ;-------------------------------------------------------------------------------
