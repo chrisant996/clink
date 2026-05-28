@@ -317,7 +317,10 @@ public:
         assert(is_complete());
 
         // Return the response body.
-        lua_pushlstring(state, m_result_buffer, m_result_size);
+        if (m_result_buffer && m_result_size)
+            lua_pushlstring(state, m_result_buffer, m_result_size);
+        else
+            lua_pushliteral(state, "");
 
         // Return a table with status details.
         const response_info& info = m_response_info;
