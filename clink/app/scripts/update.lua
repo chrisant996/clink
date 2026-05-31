@@ -978,7 +978,7 @@ end
 --      ok  = Status; -1 elevate, 0 failure, 1 success.
 --      msg = Message to be displayed.
 -- Returning 1 by itself suppresses any further messages (e.g. "canceled").
-function clink.updatenow(elevated, force_prompt, redirected, no_verify)
+function clink._internal.updatenow(elevated, force_prompt, redirected, no_verify)
     latest_cloud_tag = nil
 
     local update_file, err = is_update_ready(true, no_verify)
@@ -1048,7 +1048,7 @@ function clink.updatenow(elevated, force_prompt, redirected, no_verify)
 end
 
 --------------------------------------------------------------------------------
-function clink.checkupdate(redirected)
+function clink._internal.checkupdate(redirected)
     need_lf = nil
     local can, err = can_check_for_update(true)
     if can then

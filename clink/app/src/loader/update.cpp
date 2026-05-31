@@ -85,7 +85,7 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt, boo
 
     if (do_nothing)
     {
-        lua.push_named_function(state, "clink.checkupdate");
+        lua.push_named_function(state, "clink._internal.checkupdate");
         lua_pushboolean(state, redirected);
         lua.pcall_silent(state, 1, 1);
 
@@ -96,7 +96,7 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt, boo
     if (g_elevated)
         force_prompt = false; // Already prompted; don't prompt again.
 
-    lua.push_named_function(state, "clink.updatenow");
+    lua.push_named_function(state, "clink._internal.updatenow");
     lua_pushboolean(state, elevated);
     lua_pushboolean(state, force_prompt);
     lua_pushboolean(state, redirected);
