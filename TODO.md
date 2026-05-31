@@ -7,8 +7,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Stop polluting the Lua namespace with internal Clink stuff.
 
 ## Normal Priority
+- Add tracking for what is the highest Clink version that's been run.
+  - Next run after an update can do post-update work (but must be very careful because of concurrency!).
+  - Updater can show message about important post-update information (such as breaking changes).
+- Issues with scrolling jitter:
+  - Disable (defer) prompt refreshes while the prompt is scrolled out of view, in conhost?
+  - So that mouse wheel scrolling can work despite animated prompts?
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Make a documentation section that lists all the CLINK environment variables.
