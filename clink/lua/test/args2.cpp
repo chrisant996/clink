@@ -785,25 +785,25 @@ TEST_CASE("Lua advanced arg parsers")
             end\
             \
             local function onarg1(arg_index, word, word_index, line_state, user_data)\
-                if clink._in_generate() then\
+                if import_internal._in_generate() then\
                     table.insert(data, { 1, arg_index, word, word_index })\
                 end\
             end\
             \
             local function onarg2(arg_index, word, word_index, line_state, user_data)\
-                if clink._in_generate() then\
+                if import_internal._in_generate() then\
                     table.insert(data, { 2, arg_index, word, word_index })\
                 end\
             end\
             \
             local function onarg3(arg_index, word, word_index, line_state, user_data)\
-                if clink._in_generate() then\
+                if import_internal._in_generate() then\
                     table.insert(data, { 3, arg_index, word, word_index })\
                 end\
             end\
             \
             local function onflag(arg_index, word, word_index, line_state, user_data)\
-                if clink._in_generate() then\
+                if import_internal._in_generate() then\
                     table.insert(data, { 0, arg_index, word, word_index })\
                 end\
             end\

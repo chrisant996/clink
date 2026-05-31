@@ -61,7 +61,7 @@ end
 --------------------------------------------------------------------------------
 local function set_current_prompt_filter(filter)
     prompt_filter_current = filter
-    clink._set_coroutine_context(filter)
+    internal._set_coroutine_context(filter)
 end
 
 
@@ -262,17 +262,17 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
 end
 
 --------------------------------------------------------------------------------
-function clink._filter_prompt(prompt, rprompt, line, cursor)
+function clink._internal._filter_prompt(prompt, rprompt, line, cursor)
     return _do_filter_prompt("", prompt, rprompt, line, cursor)
 end
 
 --------------------------------------------------------------------------------
-function clink._filter_transient_prompt(prompt, rprompt, line, cursor, final)
+function clink._internal._filter_transient_prompt(prompt, rprompt, line, cursor, final)
     return _do_filter_prompt("transient", prompt, rprompt, line, cursor, final)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_refilter()
+function clink._internal._diag_refilter()
     local refilter,redisplay = internal.get_refilter_redisplay_count()
     if refilter > 0 or redisplay > 0 then
         clink.print("\x1b[1mprompt refilter:\x1b[m")
@@ -303,7 +303,7 @@ function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
     local ret = { _priority = priority }
-    local module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+    local module = internal._get_clinkprompt_wrapping_module and internal._get_clinkprompt_wrapping_module()
     if module then
         ret._clinkprompt_module = module
         ret._clinkprompt_basename = path.getbasename(module)
@@ -417,7 +417,7 @@ local function print_filter_src(t, type)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_customprompt()
+function clink._internal._diag_customprompt()
     local which
     local file = os.getenv("CLINK_CUSTOMPROMPT")
     if file and file ~= "" then
@@ -437,7 +437,7 @@ function clink._diag_customprompt()
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_prompts(arg)
+function clink._internal._diag_prompts(arg)
     if arg == 0 then
         return
     end
@@ -616,7 +616,7 @@ function clink.promptcoroutine(func, cookie)
 
         if async then
             -- Add the coroutine.
-            clink._after_coroutines(refilterprompt_after_coroutines)
+            clink._internal._after_coroutines(refilterprompt_after_coroutines)
         else
             -- Run the coroutine synchronously if async is disabled.
             local max_iter = 25

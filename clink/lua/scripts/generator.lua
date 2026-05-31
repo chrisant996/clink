@@ -39,7 +39,7 @@ clink.match_display_filter = nil
 -- luacheck: globals NOSTK
 local nostk_cookie = {}
 NOSTK = nostk_cookie
-function clink._log_generators(...)
+function internal._log_generators(...)
     local co, ismain = coroutine.running()
     local msg = (ismain and "*" or "")..tostring(co).."  ---"
     local add_stack = true
@@ -149,10 +149,10 @@ local function cancel_match_generate_coroutine()
         -- Make things (e.g. globbers) short circuit to faciliate coroutine
         -- completing as quickly as possible.
         if os.getenv("CLINK_LOG_GENERATORS") then
-            clink._log_generators("cancel_match_generate_coroutine", _match_generate_state.coroutine,
+            internal._log_generators("cancel_match_generate_coroutine", _match_generate_state.coroutine,
                                   "started", _match_generate_state.started and "true" or "false")
         end
-        clink._cancel_coroutine(_match_generate_state.coroutine)
+        internal._cancel_coroutine(_match_generate_state.coroutine)
         if not _match_generate_state.started then
             -- If it never started, remove it from the scheduler.
             clink.removecoroutine(_match_generate_state.coroutine)
@@ -162,7 +162,7 @@ local function cancel_match_generate_coroutine()
 end
 
 --------------------------------------------------------------------------------
-function clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id) -- luacheck: no unused
+function internal._make_match_generate_coroutine(line, lines, matches, builder, generation_id) -- luacheck: no unused
     -- Bail if there's already a match generator coroutine running.
     if _match_generate_state.coroutine then
         return
@@ -179,12 +179,12 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
         _match_generate_state.started = true
 
         if do_log then
-            clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
-            clink._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
+            internal._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
+            internal._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
         end
 
         -- Generate matches.
-        clink._generate(line, lines, builder)
+        clink._internal._generate(line, lines, builder)
 
         -- Coroutine completed, so stop tracking it.  Must stop tracking before
         -- calling clink.matches_ready() so it doesn't immediately bail out.
@@ -194,34 +194,34 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
         end
 
         -- Check for cancelation.
-        if not clink._is_coroutine_canceled(c) then
+        if not internal._is_coroutine_canceled(c) then
             -- Keep the coroutine events:  if a completion command invokes a
             -- generator and the generator uses a coroutine and runs it to
             -- completion before continuing, then the command will need the
             -- events (onfiltermatches, ondisplaymatches, etc).
-            clink._keep_coroutine_events(c)
+            internal._keep_coroutine_events(c)
             clink.runonmain(function()
                 -- PERF: This can potentially take some time, especially in
                 -- Debug builds.
                 if do_log then
-                    clink._log_generators("_matches_ready", string.format("(FROM %s)", tostring(c)))
+                    internal._log_generators("_matches_ready", string.format("(FROM %s)", tostring(c)))
                 end
                 builder:_matches_ready(generation_id)
             end)
         else
             if do_log then
-                clink._log_generators("match_generate_coroutine", "_clear_toolkit", NOSTK)
+                internal._log_generators("match_generate_coroutine", "_clear_toolkit", NOSTK)
             end
             builder:_clear_toolkit()
         end
 
         if do_log then
-            clink._log_generators("match_generate_coroutine", "END", NOSTK)
+            internal._log_generators("match_generate_coroutine", "END", NOSTK)
         end
     end)
 
     if do_log then
-        clink._log_generators("_make_match_generate_coroutine", "->", c, NOSTK)
+        internal._log_generators("_make_match_generate_coroutine", "->", c, NOSTK)
     end
 
     clink.setcoroutinename(c, "generate matches")
@@ -261,19 +261,19 @@ local function prepare()
 end
 
 --------------------------------------------------------------------------------
-function clink._reset_display_filter()
+function clink._internal._reset_display_filter()
     clink.match_display_filter = nil
     internal._event_callbacks["onfiltermatches"] = nil
     internal._event_callbacks["ondisplaymatches"] = nil
 end
 
 --------------------------------------------------------------------------------
-function clink._in_generate()
+function internal._in_generate()
     return internal.co_state._current_builder and true
 end
 
 --------------------------------------------------------------------------------
-function clink._generate(line_state, line_states, match_builder, old_filtering)
+function clink._internal._generate(line_state, line_states, match_builder, old_filtering)
     local do_log = os.getenv("CLINK_LOG_GENERATORS")
 
     local impl = function ()
@@ -295,7 +295,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
                 clink.generator_stopped = generator.generate
                 if do_log then
                     local info = debug.getinfo(clink.generator_stopped, 'S')
-                    clink._log_generators("clink._generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
+                    internal._log_generators("_generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
                                           clink._why_argmatcher_stopped and "why" or nil, clink._why_argmatcher_stopped)
                 end
                 return true
@@ -309,7 +309,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         return false
     end
 
-    clink._reset_display_filter()
+    clink._internal._reset_display_filter()
     internal.co_state.use_old_filtering = old_filtering
     internal.co_state.argmatcher_line_states = line_states
 
@@ -317,13 +317,13 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
     internal.co_state._current_builder = match_builder
 
     if do_log then
-        clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
-        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
+        internal._log_generators("_generate", "BEGIN", "gen", match_builder:_get_generation_id())
+        internal._log_generators("_generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
     end
     local ok, ret = xpcall(impl, _error_handler_ret)
     if do_log then
         match_builder:_log_matches()
-        clink._log_generators("clink._generate", "END", NOSTK)
+        internal._log_generators("_generate", "END", NOSTK)
     end
     if not ok then
         print("")
@@ -336,7 +336,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         return
     end
 
-    if not clink._is_coroutine_canceled(coroutine.running()) then
+    if not internal._is_coroutine_canceled(coroutine.running()) then
         match_builder:_set_input_line(line_state:getline(), match_builder:_get_generation_id())
     end
 
@@ -348,7 +348,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
 end
 
 --------------------------------------------------------------------------------
-function clink._get_word_break_info(line_state)
+function clink._internal._get_word_break_info(line_state)
     local impl = function ()
         local truncate = 0
         local keep = 0
@@ -672,7 +672,7 @@ function clink.register_match_generator(func, priority)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_generators(arg)
+function clink._internal._diag_generators(arg)
     if arg == 0 then
         return
     end

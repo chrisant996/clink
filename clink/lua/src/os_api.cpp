@@ -1487,7 +1487,7 @@ int32 enumshares_lua::iter_aux(lua_State* state)
     if (lua_getctx(state, &ctx) == LUA_YIELD && ctx)
     {
         // Resuming from yield; remove asyncyield.
-        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
         lua_pushnil(state);
         lua_state::pcall_silent(state, 1, 0);
     }
@@ -1526,7 +1526,7 @@ int32 enumshares_lua::iter_aux(lua_State* state)
         async->clear_ready();
 
         // Yielding; set asyncyield.
-        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
         lua_pushvalue(state, lua_upvalueindex(1));
         lua_state::pcall_silent(state, 1, 0);
 
@@ -2770,7 +2770,7 @@ static int32 sleep(lua_State *state)
         else
         {
             // Resuming from yield; remove asyncyield.
-            lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+            lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
             lua_pushnil(state);
             lua_state::pcall_silent(state, 1, 0);
 
@@ -2783,7 +2783,7 @@ static int32 sleep(lua_State *state)
         }
 
         // Yielding; set asyncyield.
-        lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+        lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
         asyncyield->push(state);
         lua_state::pcall_silent(state, 1, 0);
 

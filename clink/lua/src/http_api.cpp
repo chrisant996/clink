@@ -590,7 +590,7 @@ int32 httprequest_lua::continuation(lua_State* state)
     assert(ctx);
 
     // Resuming from yield; remove asyncyield.
-    lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+    lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
     lua_pushnil(state);
     lua_state::pcall_silent(state, 1, 0);
 
@@ -622,7 +622,7 @@ int32 httprequest_lua::continuation(lua_State* state)
     async->clear_ready();
 
     // Yielding; set asyncyield.
-    lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+    lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
     lua_pushvalue(state, ctx + 1);
     lua_state::pcall_silent(state, 1, 0);
 
@@ -796,7 +796,7 @@ static int32 http_request(lua_State* state)
         // Yielding; set asyncyield.
         {
             save_stack_top ss(state);
-            lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
+            lua_state::push_named_function(state, "clink._internal._set_coroutine_asyncyield");
             lua_pushvalue(state, ctx + 1);
             lua_state::pcall_silent(state, 1, 0);
         }

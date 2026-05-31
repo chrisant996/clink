@@ -241,4 +241,4 @@ function exec_generator:generate(line_state, match_builder) -- luacheck: no self
 end
 
 -- So that argmatcher :chaincommand() can use exec completion.
-clink._exec_matches = exec_matches
+internal._exec_matches = exec_matches

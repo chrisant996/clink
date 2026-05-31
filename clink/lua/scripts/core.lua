@@ -172,7 +172,7 @@ function os.globdirs(pattern, extrainfo, flags)
     if ismain then
         -- Use a fully native implementation for higher performance.
         return internal._globdirs(pattern, extrainfo, flags)
-    elseif clink._is_coroutine_canceled(c) then
+    elseif internal._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
@@ -180,7 +180,7 @@ function os.globdirs(pattern, extrainfo, flags)
         local g = internal._makedirglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 t = {}
                 break
             end
@@ -201,7 +201,7 @@ function os.globfiles(pattern, extrainfo, flags)
     if ismain then
         -- Use a fully native implementation for higher performance.
         return internal._globfiles(pattern, extrainfo, flags)
-    elseif clink._is_coroutine_canceled(c) then
+    elseif internal._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
@@ -209,7 +209,7 @@ function os.globfiles(pattern, extrainfo, flags)
         local g = internal._makefileglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 t = {}
                 break
             end
@@ -345,7 +345,7 @@ function os.globmatch(pattern, extrainfo, flags)
                 coroutine.yield()
                 last_yield = os.clock()
             end
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 return true
             end
         end

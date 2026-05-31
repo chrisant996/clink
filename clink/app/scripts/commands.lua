@@ -12,59 +12,59 @@ local function collect_number_matches()
 end
 
 --------------------------------------------------------------------------------
-function clink._complete_numbers()
+function clink._internal._complete_numbers()
     collect_number_matches()
     rl.invokecommand("complete")
 end
 
 --------------------------------------------------------------------------------
-function clink._menu_complete_numbers()
+function clink._internal._menu_complete_numbers()
     local _, last_lua_func = rl.getlastcommand()
-    if last_lua_func ~= "clink._menu_complete_numbers" and
-            last_lua_func ~= "clink._menu_complete_numbers_backward" then
+    if last_lua_func ~= "clink._internal._menu_complete_numbers" and
+            last_lua_func ~= "clink._internal._menu_complete_numbers_backward" then
         collect_number_matches()
     end
     rl.invokecommand("menu-complete")
 end
 
 --------------------------------------------------------------------------------
-function clink._menu_complete_numbers_backward()
+function clink._internal._menu_complete_numbers_backward()
     local _, last_lua_func = rl.getlastcommand()
-    if last_lua_func ~= "clink._menu_complete_numbers" and
-            last_lua_func ~= "clink._menu_complete_numbers_backward" then
+    if last_lua_func ~= "clink._internal._menu_complete_numbers" and
+            last_lua_func ~= "clink._internal._menu_complete_numbers_backward" then
         collect_number_matches()
     end
     rl.invokecommand("menu-complete-backward")
 end
 
 --------------------------------------------------------------------------------
-function clink._old_menu_complete_numbers()
+function clink._internal._old_menu_complete_numbers()
     local _, last_lua_func = rl.getlastcommand()
-    if last_lua_func ~= "clink._old_menu_complete_numbers" and
-            last_lua_func ~= "clink._old_menu_complete_numbers_backward" then
+    if last_lua_func ~= "clink._internal._old_menu_complete_numbers" and
+            last_lua_func ~= "clink._internal._old_menu_complete_numbers_backward" then
         collect_number_matches()
     end
     rl.invokecommand("old-menu-complete")
 end
 
 --------------------------------------------------------------------------------
-function clink._old_menu_complete_numbers_backward()
+function clink._internal._old_menu_complete_numbers_backward()
     local _, last_lua_func = rl.getlastcommand()
-    if last_lua_func ~= "clink._old_menu_complete_numbers" and
-            last_lua_func ~= "clink._old_menu_complete_numbers_backward" then
+    if last_lua_func ~= "clink._internal._old_menu_complete_numbers" and
+            last_lua_func ~= "clink._internal._old_menu_complete_numbers_backward" then
         collect_number_matches()
     end
     rl.invokecommand("old-menu-complete-backward")
 end
 
 --------------------------------------------------------------------------------
-function clink._popup_complete_numbers()
+function clink._internal._popup_complete_numbers()
     collect_number_matches()
     rl.invokecommand("clink-select-complete")
 end
 
 --------------------------------------------------------------------------------
-function clink._popup_show_help(rl_buffer)
+function clink._internal._popup_show_help(rl_buffer)
     local bindings = rl.getkeybindings(false, rl_buffer:getargument())
     if #bindings <= 0 then
         rl_buffer:refreshline()
@@ -85,9 +85,9 @@ function clink._popup_show_help(rl_buffer)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_loaded_scripts(arg)
+function clink._internal._diag_loaded_scripts(arg)
     arg = (arg and arg >= 9)
-    if not arg or not clink._loaded_scripts then
+    if not arg or not clink._internal._loaded_scripts then
         return
     end
 
@@ -97,7 +97,7 @@ function clink._diag_loaded_scripts(arg)
     local any = false
 
     clink.print(bold.."loaded scripts:"..norm)
-    for i,chunkname in ipairs (clink._loaded_scripts) do
+    for i,chunkname in ipairs (clink._internal._loaded_scripts) do
         if chunkname == "[string \"\x1bLuaR\"]" then
             chunkname = "[precompiled script]"
         end
@@ -111,20 +111,20 @@ function clink._diag_loaded_scripts(arg)
 end
 
 --------------------------------------------------------------------------------
-function clink._diagnostics(rl_buffer)
+function clink._internal._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
-    clink._diag_coroutines()
-    clink._diag_refilter()
-    clink._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
-    clink._diag_loaded_scripts(arg)         -- When arg >= 9.
-    clink._diag_argmatchers(arg)            -- When arg >= 2.
-    clink._diag_customprompt(arg)
-    clink._diag_prompts(arg)                -- When arg >= 1 or lua.debug is set.
-    clink._diag_generators(arg)             -- When arg >= 3 or lua.debug is set.
-    clink._diag_classifiers(arg)            -- When arg >= 2 or lua.debug is set or classifiers took more than 10 ms.
-    clink._diag_hinters(arg)                -- When arg >= 2 or lua.debug is set or hinters took more than 10 ms.
-    clink._diag_suggesters(arg)             -- When arg >= 2 or lua.debug is set.
-    clink._diag_completions_dirs(arg)       -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_coroutines()
+    clink._internal._diag_refilter()
+    clink._internal._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_loaded_scripts(arg)         -- When arg >= 9.
+    clink._internal._diag_argmatchers(arg)            -- When arg >= 2.
+    clink._internal._diag_customprompt(arg)
+    clink._internal._diag_prompts(arg)                -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_generators(arg)             -- When arg >= 3 or lua.debug is set.
+    clink._internal._diag_classifiers(arg)            -- When arg >= 2 or lua.debug is set or classifiers took more than 10 ms.
+    clink._internal._diag_hinters(arg)                -- When arg >= 2 or lua.debug is set or hinters took more than 10 ms.
+    clink._internal._diag_suggesters(arg)             -- When arg >= 2 or lua.debug is set.
+    clink._internal._diag_completions_dirs(arg)       -- When arg >= 1 or lua.debug is set.
     if clink._diag_custom then
         clink._diag_custom(arg)
     end

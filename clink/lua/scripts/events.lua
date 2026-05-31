@@ -130,7 +130,7 @@ function clink._internal._send_event_cancelable_string_inout(event, string)
 end
 
 --------------------------------------------------------------------------------
-function clink._has_event_callbacks(event)
+function clink._internal._has_event_callbacks(event)
     local callbacks = internal._event_callbacks[event];
     if callbacks ~= nil then
         return #callbacks > 0
@@ -152,10 +152,10 @@ local function _add_event_callback(event, func)
     if callbacks[func] == nil then
         -- Prevent duplicates.
         callbacks[func] = true
-        -- Some events are added before clink._get_clinkprompt_wrapping_module
+        -- Some events are added before internal._get_clinkprompt_wrapping_module
         -- is available, but they are internal events and can never be inside
         -- a clinkprompt module, so the module should be nil anyway.
-        local wrapping_module = clink._get_clinkprompt_wrapping_module and clink._get_clinkprompt_wrapping_module()
+        local wrapping_module = internal._get_clinkprompt_wrapping_module and internal._get_clinkprompt_wrapping_module()
         -- Add entry.
         local entry = { func=func }
         entry._clinkprompt_module = wrapping_module
@@ -443,7 +443,7 @@ function clink._internal._send_onfiltermatches_event(matches, completion_type, f
 end
 
 --------------------------------------------------------------------------------
-function clink._set_coroutine_events(new_events)
+function internal._set_coroutine_events(new_events)
     local old_events = {}
     new_events = new_events or {}
 
@@ -534,7 +534,7 @@ local function print_event_src(t, event)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_events(arg)
+function clink._internal._diag_events(arg)
     if arg == 0 then
         return
     end

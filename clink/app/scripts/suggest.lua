@@ -278,7 +278,7 @@ local function deferred_generate(line, lines, matches, builder, generation_id)
     internal.set_suggestion_started(line:getline())
 
     -- Start coroutine for match generation.
-    clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
+    internal._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ local function wrap(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, lines, matches, builder, generation_id)
+function clink._internal._suggest(line, lines, matches, builder, generation_id)
     if builder then
         matches = wrap(line, lines, matches, builder, generation_id)
     end
@@ -389,7 +389,7 @@ function clink.suggester(name)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_suggesters(arg)
+function clink._internal._diag_suggesters(arg)
     if arg == 0 then
         return
     end

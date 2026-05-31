@@ -57,8 +57,8 @@
 #endif
 
 //------------------------------------------------------------------------------
-// Define this to maintain a clink._loaded_scripts table tracking an array of
-// scripts that have been loaded during the session.
+// Define this to maintain a clink._internal._loaded_scripts table tracking an
+// array of scripts that have been loaded during the session.
 #define LUA_TRACK_LOADED_FILES
 
 //------------------------------------------------------------------------------

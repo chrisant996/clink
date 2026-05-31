@@ -637,25 +637,14 @@ void lua_state::load_colortheme_in_memory(lua_State* L, const char* theme)
     if (!theme || !*theme)
         return;
 
-#ifdef DEBUG
-    const int32 top = lua_gettop(L);
-#endif
+    save_stack_top ss(L);
 
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_load_colortheme_in_memory");
-    lua_rawget(L, -2);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-    }
-    else
+    if (lua_state::push_named_function(L, "clink._internal._load_colortheme_in_memory") &&
+        !lua_isnil(L, -1))
     {
         lua_pushstring(L, theme);
         pcall(L, 1, 0);
     }
-    lua_pop(L, 1);
-
-    assert(lua_gettop(L) == top);
 }
 
 //------------------------------------------------------------------------------
@@ -866,9 +855,7 @@ bool lua_state::get_command_word(line_state& line, str_base& command_word, bool&
     file.clear();
 
     // Call to Lua to calculate prefix length.
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_get_command_word");
-    lua_rawget(L, -2);
+    lua_state::push_named_function(L, "clink._internal._get_command_word");
 
     line_state_lua line_lua(line);
     line_lua.push(L);

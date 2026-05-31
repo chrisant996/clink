@@ -1,6 +1,8 @@
 -- Copyright (c) 2024 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, hinter).
 
@@ -50,7 +52,7 @@ end
 
 --------------------------------------------------------------------------------
 -- Receives a line_state_lua.
-function clink._gethint(line_state)
+function clink._internal._gethint(line_state)
     local impl = function ()
         local bestpos
         local besthint
@@ -131,7 +133,7 @@ local function pad_string(s, len)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_hinters(arg)
+function clink._internal._diag_hinters(arg)
     if arg == 0 then
         return
     end

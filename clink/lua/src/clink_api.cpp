@@ -1330,7 +1330,7 @@ static int32 api_recognize_command(lua_State* state)
 //------------------------------------------------------------------------------
 static int32 generate_from_history(lua_State* state)
 {
-    LUA_ONLYONMAIN(state, "clink._generate_from_history");
+    LUA_ONLYONMAIN(state, "clink._internal._generate_from_history");
 
     HIST_ENTRY** list = history_list();
     if (!list)
@@ -1343,9 +1343,7 @@ static int32 generate_from_history(lua_State* state)
 
     save_stack_top ss(state);
 
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_generate_from_historyline");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._generate_from_historyline");
 
     while (*list)
     {
@@ -1362,7 +1360,7 @@ static int32 generate_from_history(lua_State* state)
 
         for (const line_state& line : command_line_states.get_linestates(buffer, len))
         {
-            // clink._generate_from_historyline
+            // clink._internal._generate_from_historyline
             lua_pushvalue(state, -1);
 
             // line_state
@@ -1468,9 +1466,6 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "is_rl_variable_true",    &is_rl_variable_true },
         { 0,    "slash_translation",      &api_slash_translation },
         { 1,    "split",                  &explode },
-        // UNDOCUMENTED; internal use only.
-        { 0,    "_generate_from_history", &generate_from_history },
-        { 0,    "_reset_generate_matches", &api_reset_generate_matches },
         // UNDOCUMENTED; only in DEBUG builds.
 #if defined(DEBUG) && defined(_MSC_VER)
 #if defined(USE_MEMORY_TRACKING)
@@ -1480,9 +1475,16 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #endif
     };
 
+    static const method_def methods_internal[] = {
+        // APIs in the "clink._internal." namespace.
+        { 0,    "_generate_from_history", &generate_from_history },
+        { 0,    "_reset_generate_matches", &api_reset_generate_matches },
+    };
+
     clear_deprecated_argmatchers();
 
     lua_State* state = lua.get_state();
+    assert_stack_top ast(state);
 
     lua_createtable(state, 0, sizeof_array(methods));
 
@@ -1530,4 +1532,24 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #endif
 
     lua_setglobal(state, "clink");
+
+    // And the clink._internal namespace.
+
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_internal");
+
+    lua_createtable(state, 0, sizeof_array(methods_internal));
+
+    for (const auto& method : methods_internal)
+    {
+        if (method.always || !lua_interpreter)
+        {
+            lua_pushstring(state, method.name);
+            lua_pushcfunction(state, method.method);
+            lua_rawset(state, -3);
+        }
+    }
+
+    lua_rawset(state, -3);
+    lua_pop(state, 1);
 }

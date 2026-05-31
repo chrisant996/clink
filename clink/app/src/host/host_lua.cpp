@@ -144,9 +144,7 @@ void host_lua::load_scripts()
         lua_State* state = m_state.get_state();
         save_stack_top ss(state);
 
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_set_completion_dirs");
-        lua_rawget(state, -2);
+        lua_state::push_named_function(state, "clink._internal._set_completion_dirs");
 
         lua_pushlstring(state, script_path.c_str(), script_path.length());
 

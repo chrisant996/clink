@@ -122,7 +122,7 @@ local function do_delayed_init(list, matcher, arg_index)
     end
 
     local _, ismain = coroutine.running()
-    local async_delayinit = not ismain or not clink._in_generate()
+    local async_delayinit = not ismain or not internal._in_generate()
 
     -- Start the delay init callback if it hasn't already started.
     local c = matcher._init_coroutine and matcher._init_coroutine[arg_index]
@@ -170,7 +170,7 @@ local function do_delayed_init(list, matcher, arg_index)
     -- Finish (run) the coroutine immediately only when the main coroutine is
     -- generating matches.
     if not async_delayinit then
-        clink._finish_coroutine(c)
+        internal._finish_coroutine(c)
     else
         -- Run the coroutine up to the first yield, so that if it doesn't need
         -- to yield at all then it completes right now.
@@ -198,7 +198,7 @@ local function do_onuse_callback(argmatcher, command_word)
     end
 
     local _, ismain = coroutine.running()
-    local async_delayinit = not ismain or not clink._in_generate()
+    local async_delayinit = not ismain or not internal._in_generate()
 
     -- Start the delay init callback if it hasn't already started.
     local c = argmatcher._onuse_coroutine
@@ -232,7 +232,7 @@ local function do_onuse_callback(argmatcher, command_word)
     -- Finish (run) the coroutine immediately only when the main coroutine is
     -- generating matches.
     if not async_delayinit then
-        clink._finish_coroutine(c)
+        internal._finish_coroutine(c)
     else
         -- Run the coroutine up to the first yield, so that if it doesn't need
         -- to yield at all then it completes right now.
@@ -1213,7 +1213,7 @@ local function apply_options_to_builder(reader, arg, builder)
             internal.co_state._argmatcher_fromhistory.builder = builder
             -- Let the C++ code iterate through the history and call back into
             -- Lua to parse individual history lines.
-            internal._generate_from_history()
+            clink._internal._generate_from_history()
             -- Clear references.  Clear builder because it goes out of scope,
             -- and clear other references to facilitate garbage collection.
             internal.co_state._argmatcher_fromhistory = {}
@@ -2228,7 +2228,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         -- Check reader._chain_command for onadvance callback that returns -1.
         if matcher._chain_command or reader._chain_command then
             local expand_aliases = matcher._chain_command_expand_aliases or reader._chain_command_expand_aliases
-            local exec = clink._exec_matches(line_state, match_builder, true--[[chained]], not expand_aliases)
+            local exec = internal._exec_matches(line_state, match_builder, true--[[chained]], not expand_aliases)
             local stop = exec or add_matches({clink.filematches}) or false
             if stop then
                 clink._why_argmatcher_stopped = "chain command exec matches"
@@ -2796,7 +2796,7 @@ end
 local _completion_dirs_env = ""
 local _completion_dirs_str = ""
 local _completion_dirs_list = {}
-function clink._set_completion_dirs(str)
+function clink._internal._set_completion_dirs(str)
     local env = os.getenv("CLINK_COMPLETIONS_DIR")
     if env ~= _completion_dirs_env or str ~= _completion_dirs_str then
         local dirs = {}
@@ -3140,7 +3140,7 @@ function clink.getargmatcher(find)
 end
 
 --------------------------------------------------------------------------------
-function clink._generate_from_historyline(line_state)
+function clink._internal._generate_from_historyline(line_state)
     local lookup
     local no_cmd
     local reader
@@ -3678,7 +3678,7 @@ function argmatcher_hinter:gethint(line_state) -- luacheck: no self
 end
 
 --------------------------------------------------------------------------------
-function clink._get_command_word(line_state)
+function clink._internal._get_command_word(line_state)
     local lookup
     local no_cmd
     local reader
@@ -3753,7 +3753,7 @@ local function spairs(t, order)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_argmatchers(arg)
+function clink._internal._diag_argmatchers(arg)
     arg = (arg and arg >= 2)
     if not arg then
         return
@@ -3795,7 +3795,7 @@ function clink._diag_argmatchers(arg)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_completions_dirs(arg)
+function clink._internal._diag_completions_dirs(arg)
     if arg == 0 then
         return
     end

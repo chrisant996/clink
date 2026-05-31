@@ -59,9 +59,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
     save_stack_top ss(state);
 
     // Call to Lua to generate matches.
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_generate");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._generate");
 
     line_state_lua line_lua(lines.back());
     line_lua.push(state);
@@ -90,9 +88,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
     save_stack_top ss(state);
 
     // Call to Lua to calculate prefix length.
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_get_word_break_info");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._get_word_break_info");
 
     line_state_lua line_lua(line);
     line_lua.push(state);
@@ -199,9 +195,7 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
     do
     {
         // First check for ondisplaymatches handlers.
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_has_event_callbacks");
-        lua_rawget(state, -2);
+        lua_state::push_named_function(state, "clink._internal._has_event_callbacks");
 
         lua_pushliteral(state, "ondisplaymatches");
 
@@ -410,10 +404,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     save_stack_top ss(state);
 
     // Check there's a match filter set.
-
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_has_event_callbacks");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._has_event_callbacks");
 
     lua_pushliteral(state, "onfiltermatches");
 

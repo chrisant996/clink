@@ -636,11 +636,12 @@ static int skipcomment (LoadF *lf, int *cp) {
 
 char g_track_loaded_files = 0;
 
-void add_loaded_file (lua_State *L, const char *filename, int add)
+void add_loaded_file (lua_State *L, const char *filename)
 {
   int top = lua_gettop(L);
 
   lua_getglobal(L, "clink");
+  assert(lua_gettop(L) == top + 1);
   if (!lua_istable(L, -1))
   {
     lua_pop(L, 1);
@@ -648,31 +649,32 @@ void add_loaded_file (lua_State *L, const char *filename, int add)
     lua_setglobal(L, "clink");
     lua_getglobal(L, "clink");
   }
+  assert(lua_gettop(L) == top + 1);
+
+  lua_pushliteral(L, "_internal");
+  lua_rawget(L, -2);
+  assert(lua_gettop(L) == top + 2);
 
   lua_pushliteral(L, "_loaded_scripts");
   lua_rawget(L, -2);
+  assert(lua_gettop(L) == top + 3);
   if (!lua_istable(L, -1))
   {
     lua_pop(L, 1);
-    lua_getglobal(L, "clink");
     lua_pushliteral(L, "_loaded_scripts");
     lua_newtable(L);
     lua_rawset(L, -3);
     lua_pushliteral(L, "_loaded_scripts");
     lua_rawget(L, -2);
   }
+  assert(lua_gettop(L) == top + 3);
 
-  if (add) {
-    /* add to end of array */
-    int e = luaL_len(L, -1) + 1;
-    char short_src[LUA_IDSIZE];
-    luaO_chunkid(short_src, filename, LUA_IDSIZE);
-    lua_pushstring(L, short_src);
-    lua_rawseti(L, -2, e);
-  } else {
-    /* TODO: Loop to find last matching entry. */
-    /* TODO: Append " // ERROR" to its end; maybe even include an error number. */
-  }
+  /* add to end of array */
+  int e = luaL_len(L, -1) + 1;
+  char short_src[LUA_IDSIZE];
+  luaO_chunkid(short_src, filename, LUA_IDSIZE);
+  lua_pushstring(L, short_src);
+  lua_rawseti(L, -2, e);
 
   lua_settop(L, top);
 }
@@ -695,11 +697,6 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
   int status, readstatus;
   int c;
   int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
-/* begin_clink_change */
-#ifdef LUA_TRACK_LOADED_FILES
-  const char* loaded_name = 0;
-#endif
-/* end_clink_change */
   if (filename == NULL) {
     lua_pushliteral(L, "=stdin");
     lf.f = stdin;
@@ -724,24 +721,10 @@ LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
   }
   if (c != EOF)
     lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
-/* begin_clink_change */
-#ifdef LUA_TRACK_LOADED_FILES
-  if (g_track_loaded_files)
-    loaded_name = lua_tostring(L, -1);
-#endif
-/* end_clink_change */
   status = lua_load(L, getF, &lf, lua_tostring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
   if (readstatus) {
-/* begin_clink_change */
-#ifdef LUA_TRACK_LOADED_FILES
-#if 0
-    if (g_track_loaded_files)
-      add_loaded_file(L, loaded_name, 0);
-#endif
-#endif
-/* end_clink_change */
     lua_settop(L, fnameindex);  /* ignore results from `lua_load' */
     return errfile(L, "read", fnameindex);
   }

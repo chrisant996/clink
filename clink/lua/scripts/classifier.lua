@@ -1,6 +1,8 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, classifier).
 
@@ -71,7 +73,7 @@ end
 
 --------------------------------------------------------------------------------
 -- Receives a table of line_state_lua/lua_word_classifications pairs.
-function clink._classify(commands, test)
+function clink._internal._classify(commands, test)
     local impl = function ()
         clink.classifier_stopped = nil
         elapsed_this_pass = 0
@@ -139,7 +141,7 @@ local function pad_string(s, len)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_classifiers(arg)
+function clink._internal._diag_classifiers(arg)
     if arg == 0 then
         return
     end

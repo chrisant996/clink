@@ -1213,7 +1213,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_complete_numbers(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._internal._complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -1221,7 +1221,7 @@ int32 clink_complete_numbers(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._menu_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -1229,7 +1229,7 @@ int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
+    if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers_backward"))
         rl_ding();
     return 0;
 }
@@ -1237,7 +1237,7 @@ int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -1245,7 +1245,7 @@ int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
+    if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers_backward"))
         rl_ding();
     return 0;
 }
@@ -1253,7 +1253,7 @@ int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._popup_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._internal._popup_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -1261,7 +1261,7 @@ int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_popup_show_help(int32 count, int32 invoking_key)
 {
-    if (!host_call_lua_rl_global_function("clink._popup_show_help"))
+    if (!host_call_lua_rl_global_function("clink._internal._popup_show_help"))
         rl_ding();
     return 0;
 }
@@ -2828,7 +2828,7 @@ static void do_clink_diagnostics(bool include_settings=false)
         }
     }
 
-    host_call_lua_rl_global_function("clink._diagnostics");
+    host_call_lua_rl_global_function("clink._internal._diagnostics");
 
     task_manager_diagnostics();
 

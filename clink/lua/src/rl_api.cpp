@@ -701,9 +701,7 @@ static int32 set_matches(lua_State* state)
     {
         save_stack_top ss(state);
 
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_reset_display_filter");
-        lua_rawget(state, -2);
+        lua_state::push_named_function(state, "clink._internal._reset_display_filter");
         if (lua_state::pcall(state, 0, 0) != 0)
             return 0;
     }
