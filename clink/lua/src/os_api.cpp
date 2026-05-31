@@ -2626,7 +2626,9 @@ static int32 debug_print(lua_State *state)
     }
 
     out.concat("\r\n");
-    OutputDebugStringA(out.c_str());
+
+    wstr_moveable wide(out.c_str());
+    OutputDebugStringW(wide.c_str());
     return 0;
 }
 
