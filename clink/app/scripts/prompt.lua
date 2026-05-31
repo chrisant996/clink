@@ -1,6 +1,8 @@
 -- Copyright (c) 2016 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 clink = clink or {}
 local prompt_filters = {}
@@ -230,15 +232,15 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md
     if ret then
         if not has_ftsc(ret, "9;9") then
-            pre = clink._make_ftsc("9;9") .. pre    -- Current Working Directory
+            pre = internal._make_ftsc("9;9") .. pre     -- Current Working Directory
         end
         local has_ftsc_A = has_ftsc(ret, "133;A")
         local has_ftsc_B = has_ftsc(ret, "133;B")
         if not has_ftsc_A then
-            pre = clink._make_ftsc("133;A") .. pre  -- Beginning of Prompt
+            pre = internal._make_ftsc("133;A") .. pre   -- Beginning of Prompt
         end
         if not has_ftsc_B then
-            suf = suf .. clink._make_ftsc("133;B")  -- End of Prompt
+            suf = suf .. internal._make_ftsc("133;B")   -- End of Prompt
         end
         --[[
         if has_ftsc_A or has_ftsc_B then
@@ -250,10 +252,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
 
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
-        ret = (leading or "") .. clink._expand_prompt_codes(pre) .. (trailing or ret) .. clink._expand_prompt_codes(suf)
+        ret = (leading or "") .. internal._expand_prompt_codes(pre) .. (trailing or ret) .. internal._expand_prompt_codes(suf)
     end
     if rret and rret ~= "" then
-        rret = clink._expand_prompt_codes(rpre, true) .. rret .. clink._expand_prompt_codes(rsuf, true)
+        rret = internal._expand_prompt_codes(rpre, true) .. rret .. internal._expand_prompt_codes(rsuf, true)
     end
 
     return ret, rret, ok
@@ -271,7 +273,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._diag_refilter()
-    local refilter,redisplay = clink.get_refilter_redisplay_count()
+    local refilter,redisplay = internal.get_refilter_redisplay_count()
     if refilter > 0 or redisplay > 0 then
         clink.print("\x1b[1mprompt refilter:\x1b[m")
         print("  refilter", refilter)
@@ -372,7 +374,7 @@ local function collect_filter_src(t, type)
         end
         if func then
             local info = debug.getinfo(func, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 local cost = prompt["cost"..type]
                 table.insert(tsub, { src=src, cost=cost })
@@ -610,7 +612,7 @@ function clink.promptcoroutine(func, cookie)
             entry.result = o
         end)
 
-        local async = settings.get("prompt.async") and not clink.istransientpromptfilter()
+        local async = settings.get("prompt.async") and not internal.istransientpromptfilter()
 
         if async then
             -- Add the coroutine.

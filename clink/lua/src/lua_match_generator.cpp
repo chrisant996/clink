@@ -222,6 +222,8 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
         // comfortable saying that if this loophole is a problem in practice
         // then the affected script should be updated to use the new API.
         lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_internal");
+        lua_rawget(state, -2);
         if (ondisplaymatches)
             lua_pushliteral(state, "_send_ondisplaymatches_event");
         else

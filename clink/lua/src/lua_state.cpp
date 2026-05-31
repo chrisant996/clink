@@ -101,6 +101,8 @@ extern setting_bool g_debug_log_output_callstacks;
 
 
 //------------------------------------------------------------------------------
+void internal_lua_initialise(lua_state&, bool lua_interpreter=false);
+void internal_lua_revoke(lua_state&);
 void clink_lua_initialise(lua_state&, bool lua_interpreter=false);
 void os_lua_initialise(lua_state&);
 void io_lua_initialise(lua_state&);
@@ -272,6 +274,7 @@ void lua_state::initialise(lua_state_flags flags)
     lua_state& self = *this;
 
     // Initialize API namespaces.
+    internal_lua_initialise(self, interpreter);
     clink_lua_initialise(self, interpreter);
     os_lua_initialise(self);
     io_lua_initialise(self);
@@ -394,6 +397,8 @@ bool lua_state::do_file(const char* path)
 //------------------------------------------------------------------------------
 bool lua_state::push_named_function(lua_State* L, const char* func_name, str_base* e)
 {
+    const int32 top = lua_gettop(L);
+
     bool first = true;
     str_iter part;
     str_tokeniser name_parts(func_name, ".");
@@ -424,6 +429,7 @@ report_error:
                     }
                     (*e) << "\n";
                 }
+                assert(top + 1 == lua_gettop(L));
                 return false;
             }
             else if (!lua_istable(L, -1))
@@ -449,6 +455,7 @@ report_error:
 
     if (e)
         e->clear();
+    assert(top + 1 == lua_gettop(L));
     return true;
 }
 
@@ -671,6 +678,8 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
 
     // Push the global _send_event function.
     lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_internal");
+    lua_rawget(L, -2);
     lua_pushstring(L, event_mechanism);
     lua_rawget(L, -2);
     if (lua_isnil(L, -1))
@@ -679,8 +688,8 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
         lua_pop(L, nargs);
         return false;
     }
-    lua_insert(L, -2);
-    lua_pop(L, 1);
+    lua_insert(L, -3);
+    lua_pop(L, 2);
 
     // Push the event name.
     lua_pushstring(L, event_name);

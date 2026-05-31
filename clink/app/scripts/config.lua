@@ -112,7 +112,7 @@ local function get_theme_files(name, ext)
     add_dirs_from_var(dirs, os.getenv("CLINK_THEMES_DIR"), false)
     add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
     add_dirs_from_var(dirs, os.getenv("=clink.profile"), true)
-    add_dirs_from_var(dirs, clink._get_scripts_path(), true)
+    add_dirs_from_var(dirs, internal._get_scripts_path(), true)
 
     local list = {}
     local indexed = {}
@@ -338,8 +338,8 @@ function clink._show_prompt_demo(module)
         print(m)
     elseif type(m) ~= "table" or not m.demo then
         local simulated_cursor = "\x1b[0;7m \x1b[m"
-        local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
-        local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
+        local left = internal._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
+        local right = internal._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
         left, right = clink._filter_prompt(left, right, "", 1)
         left = (left or "")..simulated_cursor
         right = right or ""

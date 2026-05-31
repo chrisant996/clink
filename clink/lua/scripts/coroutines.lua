@@ -1,6 +1,8 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 -- luacheck: max line length 150
 
 --------------------------------------------------------------------------------
@@ -18,7 +20,7 @@ local _pending_on_main = nil            -- Funcs to run when control returns to 
 local _throttle_interval = nil          -- Whether to throttle long-running coroutines.
 
 local _main_perthread_state = {}
-clink.co_state = _main_perthread_state
+internal.co_state = _main_perthread_state
 
 local print = clink.print
 
@@ -635,8 +637,8 @@ local function restore_coroutine_state(entry, thread)
         end
     end
 
-    old_state.global_modes = clink._save_global_modes()
-    clink._restore_global_modes(state.global_modes)
+    old_state.global_modes = internal._save_global_modes()
+    internal._restore_global_modes(state.global_modes)
 
     entry.old_state = old_state
 end
@@ -669,9 +671,9 @@ local function save_coroutine_state(entry, thread)
     end
 
     -- When not old_state then this is a new coroutine.
-    state.global_modes = clink._save_global_modes(not old_state--[[new_coroutine]]);
+    state.global_modes = internal._save_global_modes(not old_state--[[new_coroutine]]);
     if old_state then
-        clink._restore_global_modes(old_state.global_modes)
+        internal._restore_global_modes(old_state.global_modes)
     end
 
     entry.old_state = nil
@@ -906,7 +908,7 @@ function io.popenyield(command, mode)
     if not ismain then
         -- Prompt coroutines may not run async under certain conditions.
         if is_prompt_coroutine(c) then
-            can_async = settings.get("prompt.async") and not clink.istransientpromptfilter()
+            can_async = settings.get("prompt.async") and not internal.istransientpromptfilter()
         else
             can_async = true
         end
@@ -1109,7 +1111,7 @@ function coroutine.create(func) -- luacheck: ignore 122
 
     -- Wake up idle processing.
     _coroutines_resumable = true
-    clink.kick_idle()
+    internal.kick_idle()
     return thread
 end
 
@@ -1119,8 +1121,8 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
     local entry = _coroutines[co]
     restore_coroutine_state(entry, co)
 
-    local old_co_state = clink.co_state
-    clink.co_state = entry.co_state
+    local old_co_state = internal.co_state
+    internal.co_state = entry.co_state
 
     local clock = os.clock()
     local tresumed = table.pack(orig_coroutine_resume(co, ...))
@@ -1135,7 +1137,7 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         end
     end
 
-    clink.co_state = old_co_state
+    internal.co_state = old_co_state
     save_coroutine_state(entry, co)
 
     if _pending_on_main then

@@ -151,7 +151,7 @@ function clink._diag_hinters(arg)
     for _,hinter in ipairs (_hinters) do
         if hinter.gethint then
             local info = debug.getinfo(hinter.gethint, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 table.insert(t, { src=src, cost=hinter.cost })
                 if longest < #src then

@@ -1,6 +1,8 @@
 -- Copyright (c) 2015 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, generator).
 
@@ -261,13 +263,13 @@ end
 --------------------------------------------------------------------------------
 function clink._reset_display_filter()
     clink.match_display_filter = nil
-    clink._event_callbacks["onfiltermatches"] = nil
-    clink._event_callbacks["ondisplaymatches"] = nil
+    internal._event_callbacks["onfiltermatches"] = nil
+    internal._event_callbacks["ondisplaymatches"] = nil
 end
 
 --------------------------------------------------------------------------------
 function clink._in_generate()
-    return clink.co_state._current_builder and true
+    return internal.co_state._current_builder and true
 end
 
 --------------------------------------------------------------------------------
@@ -308,11 +310,11 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
     end
 
     clink._reset_display_filter()
-    clink.co_state.use_old_filtering = old_filtering
-    clink.co_state.argmatcher_line_states = line_states
+    internal.co_state.use_old_filtering = old_filtering
+    internal.co_state.argmatcher_line_states = line_states
 
     prepare()
-    clink.co_state._current_builder = match_builder
+    internal.co_state._current_builder = match_builder
 
     if do_log then
         clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
@@ -327,9 +329,9 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         print("")
         print("match generator failed:")
         print(ret)
-        clink.co_state._current_builder = nil
-        clink.co_state.use_old_filtering = nil
-        clink.co_state.argmatcher_line_states = nil
+        internal.co_state._current_builder = nil
+        internal.co_state.use_old_filtering = nil
+        internal.co_state.argmatcher_line_states = nil
         rl_state = nil
         return
     end
@@ -338,9 +340,9 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         match_builder:_set_input_line(line_state:getline(), match_builder:_get_generation_id())
     end
 
-    clink.co_state._current_builder = nil
-    clink.co_state.use_old_filtering = nil
-    clink.co_state.argmatcher_line_states = nil
+    internal.co_state._current_builder = nil
+    internal.co_state.use_old_filtering = nil
+    internal.co_state.argmatcher_line_states = nil
     rl_state = nil
     return ret or false
 end
@@ -417,8 +419,8 @@ end
 --- This is a shim that lets clink.register_match_generator continue to work
 --- for now, despite being obsolete.
 function clink.add_match(match)
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:deprecated_addmatch(match)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:deprecated_addmatch(match)
     end
 end
 
@@ -430,7 +432,7 @@ end
 --- know how many matches it added, the script should keep track of the count
 --- itself.
 function clink.match_count()
-    clink._compat_warning("clink.match_count() is no longer supported.")
+    internal._compat_warning("clink.match_count() is no longer supported.")
     return 0
 end
 
@@ -443,7 +445,7 @@ end
 --- script needs to access matches it added, the script should keep track of the
 --- matches itself.
 function clink.get_match()
-    clink._compat_warning("clink.get_match() is no longer supported.")
+    internal._compat_warning("clink.get_match() is no longer supported.")
     return ""
 end
 
@@ -454,7 +456,7 @@ end
 --- -arg:   value:string
 --- This is no longer supported, and does nothing.
 function clink.set_match()
-    clink._compat_warning("clink.set_match() is no longer supported.")
+    internal._compat_warning("clink.set_match() is no longer supported.")
 end
 
 --------------------------------------------------------------------------------
@@ -546,7 +548,7 @@ end
 --- generators are no longer responsible for filtering matches.  The match
 --- pipeline itself handles that internally now.
 function clink.compute_lcd()
-    clink._compat_warning("clink.compute_lcd() is no longer supported.")
+    internal._compat_warning("clink.compute_lcd() is no longer supported.")
     return ""
 end
 
@@ -557,7 +559,7 @@ end
 --- -ret:   boolean
 --- This is no longer supported, and always returns false.
 function clink.is_single_match()
-    clink._compat_warning("clink.is_single_match() is no longer supported.")
+    internal._compat_warning("clink.is_single_match() is no longer supported.")
     return false
 end
 
@@ -591,8 +593,8 @@ end
 --- This is only needed when using deprecated APIs.  It's automatically inferred
 --- from the match types when using the current APIs.
 function clink.matches_are_files(files)
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setmatchesarefiles(files)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setmatchesarefiles(files)
     end
 end
 
@@ -600,8 +602,8 @@ end
 --- -name:  clink.suppress_char_append
 --- -deprecated: builder:setsuppressappend
 function clink.suppress_char_append()
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setsuppressappend(true)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setsuppressappend(true)
     end
 end
 
@@ -609,8 +611,8 @@ end
 --- -name:  clink.suppress_quoting
 --- -deprecated: builder:setsuppressquoting
 function clink.suppress_quoting()
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setsuppressquoting(true)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setsuppressquoting(true)
     end
 end
 
@@ -658,7 +660,7 @@ function clink.register_match_generator(func, priority)
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset
         local last
-        if clink.co_state.use_old_filtering then
+        if internal.co_state.use_old_filtering then
             last = line_state:getcursor() - 1
         else
             last = first + info.length - 1
@@ -690,7 +692,7 @@ function clink._diag_generators(arg)
     for _,generator in ipairs (_generators) do
         if generator.generate then
             local info = debug.getinfo(generator.generate, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 print("  "..info.short_src..":"..info.linedefined)
                 any = true
             end

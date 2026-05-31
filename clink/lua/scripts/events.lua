@@ -1,9 +1,12 @@
 -- Copyright (c) 2020 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 clink = clink or {}
-clink._event_callbacks = clink._event_callbacks or {}
+clink._internal = clink._internal or {}
+internal._event_callbacks = internal._event_callbacks or {}
 
 --------------------------------------------------------------------------------
 local bold = "\x1b[1m"                  -- Bold (bright).
@@ -49,8 +52,8 @@ end
 
 --------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it.
-function clink._send_event(event, ...)
-    local callbacks = clink._event_callbacks[event]
+function clink._internal._send_event(event, ...)
+    local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c.func then
@@ -65,8 +68,8 @@ end
 --------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it.  If any
 -- handler returns a string then stop.
-function clink._send_event_string_out(event, ...)
-    local callbacks = clink._event_callbacks[event]
+function clink._internal._send_event_string_out(event, ...)
+    local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c.func then
@@ -85,8 +88,8 @@ end
 --------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it, and if any
 -- handler returns false then stop (returning nil does not stop).
-function clink._send_event_cancelable(event, ...)
-    local callbacks = clink._event_callbacks[event]
+function clink._internal._send_event_cancelable(event, ...)
+    local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c.func then
@@ -106,8 +109,8 @@ end
 -- provided string argument.  The first return value replaces string, unless
 -- nil.  If any handler returns false as the second return value then stop
 -- (returning nil does not stop).
-function clink._send_event_cancelable_string_inout(event, string)
-    local callbacks = clink._event_callbacks[event]
+function clink._internal._send_event_cancelable_string_inout(event, string)
+    local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c.func then
@@ -128,7 +131,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._has_event_callbacks(event)
-    local callbacks = clink._event_callbacks[event];
+    local callbacks = internal._event_callbacks[event];
     if callbacks ~= nil then
         return #callbacks > 0
     end
@@ -140,10 +143,10 @@ local function _add_event_callback(event, func)
         error(event.." requires a function", 2)
     end
 
-    local callbacks = clink._event_callbacks[event]
+    local callbacks = internal._event_callbacks[event]
     if callbacks == nil then
         callbacks = {}
-        clink._event_callbacks[event] = callbacks
+        internal._event_callbacks[event] = callbacks
     end
 
     if callbacks[func] == nil then
@@ -333,13 +336,13 @@ function clink.ondisplaymatches(func)
     -- the next.  It got messy trying to keep it simple and flexible without
     -- creating stability loopholes.  That's why this not-really-an-event is
     -- wedged in amongst the real events.
-    clink._event_callbacks["ondisplaymatches"] = {}
+    internal._event_callbacks["ondisplaymatches"] = {}
     _add_event_callback("ondisplaymatches", func)
 end
 
 --------------------------------------------------------------------------------
-function clink._send_ondisplaymatches_event(matches, popup)
-    local callbacks = clink._event_callbacks["ondisplaymatches"]
+function clink._internal._send_ondisplaymatches_event(matches, popup)
+    local callbacks = internal._event_callbacks["ondisplaymatches"]
     if callbacks ~= nil then
         local c = callbacks[1]
         if c and c.func then
@@ -420,9 +423,9 @@ function clink.onaftercommand(func)
 end
 
 --------------------------------------------------------------------------------
-function clink._send_onfiltermatches_event(matches, completion_type, filename_completion_desired)
+function clink._internal._send_onfiltermatches_event(matches, completion_type, filename_completion_desired)
     local ret = nil
-    local callbacks = clink._event_callbacks["onfiltermatches"]
+    local callbacks = internal._event_callbacks["onfiltermatches"]
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c and c.func then
@@ -445,12 +448,12 @@ function clink._set_coroutine_events(new_events)
     new_events = new_events or {}
 
     old_events.match_display_filter = clink.match_display_filter
-    old_events.ondisplaymatches = clink._event_callbacks["ondisplaymatches"]
-    old_events.onfiltermatches = clink._event_callbacks["onfiltermatches"]
+    old_events.ondisplaymatches = internal._event_callbacks["ondisplaymatches"]
+    old_events.onfiltermatches = internal._event_callbacks["onfiltermatches"]
 
     clink.match_display_filter = new_events.match_display_filter
-    clink._event_callbacks["ondisplaymatches"] = new_events.ondisplaymatches
-    clink._event_callbacks["onfiltermatches"] = new_events.onfiltermatches
+    internal._event_callbacks["ondisplaymatches"] = new_events.ondisplaymatches
+    internal._event_callbacks["onfiltermatches"] = new_events.onfiltermatches
 
     return old_events
 end
@@ -472,7 +475,7 @@ end
 
 --------------------------------------------------------------------------------
 local function collect_event_src(t, event)
-    local callbacks = clink._event_callbacks[event]
+    local callbacks = internal._event_callbacks[event]
     if not callbacks[1] then
         return
     end
@@ -486,7 +489,7 @@ local function collect_event_src(t, event)
     for _,c in ipairs(callbacks) do -- ALL callbacks, even for inactive clinkprompt modules.
         if c.func then
             local info = debug.getinfo(c.func, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 local entry = { src=src, cost=c.cost }
                 table.insert(tsub, entry)
@@ -542,7 +545,7 @@ function clink._diag_events(arg)
     end
 
     local sorted_events = {}
-    for event_name in pairs(clink._event_callbacks) do
+    for event_name in pairs(internal._event_callbacks) do
         table.insert(sorted_events, event_name)
     end
     table.sort(sorted_events, function(a, b) return a < b end)

@@ -158,7 +158,7 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt, boo
 
         if (ok)
         {
-            lua.push_named_function(state, "clink.printreleasesurl");
+            lua.push_named_function(state, "clink._internal.printreleasesurl");
             lua.pcall_silent(state, 0, 0);
         }
     }

@@ -417,14 +417,14 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         local function co_func()\
-            clink.co_state.argmatcher_line_states = { 77 }\
+            import_internal.co_state.argmatcher_line_states = { 77 }\
             CO_actual.cwd = os.getcwd()\
             CO_actual.rs = rl_state[1]\
-            CO_actual.als = clink.co_state.argmatcher_line_states[1]\
+            CO_actual.als = import_internal.co_state.argmatcher_line_states[1]\
         end\
         \
         rl_state = { 11 }\
-        clink.co_state.argmatcher_line_states = { 12 }\
+        import_internal.co_state.argmatcher_line_states = { 12 }\
         \
         CO_expected.cwd = os.getcwd()\
         CO_expected.rs = 11\
@@ -435,7 +435,7 @@ TEST_CASE("Lua coroutines.")
         \
         os.chdir('dir1')\
         rl_state = { 33 }\
-        clink.co_state.argmatcher_line_states = { 34 }\
+        import_internal.co_state.argmatcher_line_states = { 34 }\
         \
         MN_expected.cwd = os.getcwd()\
         MN_expected.rs = 33\
@@ -448,7 +448,7 @@ TEST_CASE("Lua coroutines.")
         \
         MN_actual.cwd = os.getcwd()\
         MN_actual.rs = rl_state[1]\
-        MN_actual.als = clink.co_state.argmatcher_line_states[1]\
+        MN_actual.als = import_internal.co_state.argmatcher_line_states[1]\
         ";
 
         REQUIRE_LUA_DO_STRING(lua, script);

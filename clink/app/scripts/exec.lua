@@ -1,6 +1,8 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 settings.add("exec.enable", true, "Enable executable completions",
 [[When enabled, the completion commands only match executables and directories
@@ -60,7 +62,7 @@ local function add_commands(line_state, match_builder, chained)
         return
     end
 
-    match_builder:addmatches(clink._get_cmd_commands(), "cmd")
+    match_builder:addmatches(internal._get_cmd_commands(), "cmd")
 end
 
 --------------------------------------------------------------------------------
@@ -179,7 +181,7 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
                     local ext = path.getextension(m.match):lower()
                     local has = associations[ext]
                     if has == nil and include_associations then
-                        has = os._hasfileassociation(m.match)
+                        has = internal._hasfileassociation(m.match)
                         associations[ext] = has
                     end
                     if has then

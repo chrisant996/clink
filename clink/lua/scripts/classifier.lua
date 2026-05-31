@@ -159,7 +159,7 @@ function clink._diag_classifiers(arg)
     for _,classifier in ipairs (_classifiers) do
         if classifier.classify then
             local info = debug.getinfo(classifier.classify, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 table.insert(t, { src=src, cost=classifier.cost })
                 if longest < #src then

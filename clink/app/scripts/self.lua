@@ -1,6 +1,8 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, app, self).
 
@@ -430,7 +432,7 @@ local function value_handler(_, word_index, line_state, builder, user_data)
         return color_handler(value_word_index, line_state)
     elseif info.type == "string" then
         if name == "autosuggest.strategy" then
-            return clink._list_suggesters()
+            return internal._list_suggesters()
         elseif line_state:getword(value_word_index) == "clear" then
             return {}
         else
