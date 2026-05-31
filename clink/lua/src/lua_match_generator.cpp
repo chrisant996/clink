@@ -196,9 +196,7 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
     {
         // First check for ondisplaymatches handlers.
         lua_state::push_named_function(state, "clink._internal._has_event_callbacks");
-
         lua_pushliteral(state, "ondisplaymatches");
-
         if (lua_state::pcall(state, 1, 1) != 0)
             goto done;
 
@@ -405,9 +403,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Check there's a match filter set.
     lua_state::push_named_function(state, "clink._internal._has_event_callbacks");
-
     lua_pushliteral(state, "onfiltermatches");
-
     if (lua_state::pcall(state, 1, 1) != 0)
         return false;
 

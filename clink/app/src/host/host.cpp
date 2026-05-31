@@ -654,9 +654,7 @@ bool host::has_event_handler(const char* event_name)
     save_stack_top ss(state);
 
     lua_state::push_named_function(state, "clink._internal._has_event_callbacks");
-
     lua_pushstring(state, event_name);
-
     if (lua.pcall(1, 1) != 0)
         return false;
 

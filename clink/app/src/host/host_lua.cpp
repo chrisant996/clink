@@ -145,9 +145,7 @@ void host_lua::load_scripts()
         save_stack_top ss(state);
 
         lua_state::push_named_function(state, "clink._internal._set_completion_dirs");
-
         lua_pushlstring(state, script_path.c_str(), script_path.length());
-
         m_state.pcall(1, 0);
     }
 }

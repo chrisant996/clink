@@ -104,7 +104,6 @@ uint32 lua_input_idle::get_timeout()
 
         // Call to Lua to check for coroutines.
         lua_state::push_named_function(state, "clink._internal._wait_duration");
-
         if (m_state.pcall(state, 0, 1) == 0)
         {
             int32 isnum;
@@ -270,7 +269,6 @@ bool lua_input_idle::has_coroutines()
 
     // Call to Lua to check for coroutines.
     lua_state::push_named_function(state, "clink._internal._has_coroutines");
-
     if (m_state.pcall(state, 0, 1) != 0)
         return false;
 
@@ -286,6 +284,5 @@ void lua_input_idle::resume_coroutines()
 
     // Call to Lua to check for coroutines.
     lua_state::push_named_function(state, "clink._internal._resume_coroutines");
-
     m_state.pcall(state, 0, 0);
 }

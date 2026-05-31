@@ -115,16 +115,16 @@ function clink._internal._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
     clink._internal._diag_coroutines()
     clink._internal._diag_refilter()
-    clink._internal._diag_events(arg)                 -- When arg >= 1 or lua.debug is set.
-    clink._internal._diag_loaded_scripts(arg)         -- When arg >= 9.
-    clink._internal._diag_argmatchers(arg)            -- When arg >= 2.
+    clink._internal._diag_events(arg)           -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_loaded_scripts(arg)   -- When arg >= 9.
+    clink._internal._diag_argmatchers(arg)      -- When arg >= 2.
     clink._internal._diag_customprompt(arg)
-    clink._internal._diag_prompts(arg)                -- When arg >= 1 or lua.debug is set.
-    clink._internal._diag_generators(arg)             -- When arg >= 3 or lua.debug is set.
-    clink._internal._diag_classifiers(arg)            -- When arg >= 2 or lua.debug is set or classifiers took more than 10 ms.
-    clink._internal._diag_hinters(arg)                -- When arg >= 2 or lua.debug is set or hinters took more than 10 ms.
-    clink._internal._diag_suggesters(arg)             -- When arg >= 2 or lua.debug is set.
-    clink._internal._diag_completions_dirs(arg)       -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_prompts(arg)          -- When arg >= 1 or lua.debug is set.
+    clink._internal._diag_generators(arg)       -- When arg >= 3 or lua.debug is set.
+    clink._internal._diag_classifiers(arg)      -- When arg >= 2 or lua.debug is set or classifiers took > 10 ms.
+    clink._internal._diag_hinters(arg)          -- When arg >= 2 or lua.debug is set or hinters took > 10 ms.
+    clink._internal._diag_suggesters(arg)       -- When arg >= 2 or lua.debug is set.
+    clink._internal._diag_completions_dirs(arg) -- When arg >= 1 or lua.debug is set.
     if clink._diag_custom then
         clink._diag_custom(arg)
     end

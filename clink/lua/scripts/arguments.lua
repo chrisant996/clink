@@ -3187,10 +3187,9 @@ end
 
 
 --------------------------------------------------------------------------------
-clink.argmatcher_generator_priority = 24
-local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority)
-local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priority)
-local argmatcher_hinter = clink.hinter(clink.argmatcher_generator_priority)
+local argmatcher_generator = clink.generator(24)
+local argmatcher_classifier = clink.classifier(24)
+local argmatcher_hinter = clink.hinter(24)
 
 --------------------------------------------------------------------------------
 local function do_generate(line_state, match_builder)
