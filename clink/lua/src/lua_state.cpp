@@ -609,12 +609,9 @@ void dump_lua_stack(lua_State* L, int32 pos)
 //------------------------------------------------------------------------------
 void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
 {
-#ifdef DEBUG
-    const int32 top = lua_gettop(L);
-#endif
+    save_stack_top ss(L);
 
-    push_named_function(L, "clink._internal._activate_clinkprompt_module");
-    if (!lua_isnil(L, -1))
+    if (push_named_function(L, "clink._internal._activate_clinkprompt_module"))
     {
         if (module)
             lua_pushstring(L, module);
@@ -626,9 +623,6 @@ void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
             puts(err);
         }
     }
-    lua_pop(L, 1);
-
-    assert(lua_gettop(L) == top);
 }
 
 //------------------------------------------------------------------------------
@@ -639,8 +633,7 @@ void lua_state::load_colortheme_in_memory(lua_State* L, const char* theme)
 
     save_stack_top ss(L);
 
-    if (lua_state::push_named_function(L, "clink._internal._load_colortheme_in_memory") &&
-        !lua_isnil(L, -1))
+    if (lua_state::push_named_function(L, "clink._internal._load_colortheme_in_memory"))
     {
         lua_pushstring(L, theme);
         pcall(L, 1, 0);
