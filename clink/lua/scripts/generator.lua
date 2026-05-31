@@ -233,16 +233,12 @@ end
 
 --------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
--- most recent generate pass.  It's useful for diagnostic purposes; the file and
--- line number can be retrieved by:
---      local info = debug.getinfo(clink.generator_stopped, 'S')
---      print("file: "..info.short_src)
---      print("line: "..info.linedefined)
-clink.generator_stopped = nil
-clink._why_argmatcher_stopped = nil
+-- most recent generate pass.
+clink._internal._generator_stopped = nil
+clink._internal._why_argmatcher_stopped = nil
 local function generator_onbeginedit()
-    clink.generator_stopped = nil
-    clink._why_argmatcher_stopped = nil
+    clink._internal._generator_stopped = nil
+    clink._internal._why_argmatcher_stopped = nil
     _match_generate_state = {}
 end
 clink.onbeginedit(generator_onbeginedit)
@@ -277,8 +273,8 @@ function clink._internal._generate(line_state, line_states, match_builder, old_f
     local do_log = os.getenv("CLINK_LOG_GENERATORS")
 
     local impl = function ()
-        clink.generator_stopped = nil
-        clink._why_argmatcher_stopped = nil
+        clink._internal._generator_stopped = nil
+        clink._internal._why_argmatcher_stopped = nil
 
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
@@ -292,11 +288,12 @@ function clink._internal._generate(line_state, line_states, match_builder, old_f
             local ret = generator:generate(line_state, match_builder)
             if ret == true then
                 -- Remember the generator function that stopped.
-                clink.generator_stopped = generator.generate
+                clink._internal._generator_stopped = generator.generate
                 if do_log then
-                    local info = debug.getinfo(clink.generator_stopped, 'S')
+                    local info = debug.getinfo(clink._internal._generator_stopped, 'S')
+                    local why = clink._internal._why_argmatcher_stopped
                     internal._log_generators("_generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
-                                          clink._why_argmatcher_stopped and "why" or nil, clink._why_argmatcher_stopped)
+                                          why and "why" or nil, why)
                 end
                 return true
             end
@@ -683,6 +680,7 @@ function clink._internal._diag_generators(arg)
     end
 
     local bold = "\x1b[1m"          -- Bold (bright).
+    local italic = "\x1b[3m"        -- Italics.
     local norm = "\x1b[m"           -- Normal.
     local print = clink.print
 
@@ -696,6 +694,16 @@ function clink._internal._diag_generators(arg)
                 print("  "..info.short_src..":"..info.linedefined)
                 any = true
             end
+        end
+    end
+
+    if clink._internal._generator_stopped then
+        local info = debug.getinfo(clink._internal._generator_stopped, 'S')
+        clink.print(bold.."generators stopped by:"..norm)
+        clink.print("  "..(info.short_src or "unknown")..":"..(info.linedefined or "unknown"))
+        local why = clink._internal._why_argmatcher_stopped
+        if why then
+            clink.print("    "..italics.."because"..norm.." "..why)
         end
     end
 
