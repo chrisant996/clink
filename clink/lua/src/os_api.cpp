@@ -2773,7 +2773,6 @@ static int32 sleep(lua_State *state)
             lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
             lua_pushnil(state);
             lua_state::pcall_silent(state, 1, 0);
-            lua_pop(state, 1);
 
             // Check if finished.
             asyncyield = async_yield_lua::check(state, ctx);
@@ -2787,7 +2786,6 @@ static int32 sleep(lua_State *state)
         lua_state::push_named_function(state, "clink._set_coroutine_asyncyield");
         asyncyield->push(state);
         lua_state::pcall_silent(state, 1, 0);
-        lua_pop(state, 1);
 
         // Yield.
         assert(lua_gettop(state) >= top);

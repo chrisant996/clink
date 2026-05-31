@@ -1,6 +1,8 @@
 -- Copyright (c) 2024 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 -- luacheck: globals git
 
 --------------------------------------------------------------------------------
@@ -332,7 +334,7 @@ end
 function clink._show_prompt_demo(module)
     clink.print("\x1b[m", NONL)
 
-    local m = clink._activate_clinkprompt_module(module)
+    local m = clink._internal._activate_clinkprompt_module(module)
 
     if type(m) == "string" then
         print(m)
@@ -355,7 +357,7 @@ function clink._show_prompt_demo(module)
         m.demo()
     end
 
-    clink._activate_clinkprompt_module(nil)
+    clink._internal._activate_clinkprompt_module(nil)
 
     clink.print("\x1b[m\x1b[K", NONL)
 end

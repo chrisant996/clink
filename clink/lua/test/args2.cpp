@@ -35,7 +35,7 @@ static bool verify_ret_true(lua_state& lua, const char* func_name, int32 nargs)
     {
         puts("");
         puts(msg.c_str());
-        lua_pop(state, nargs);
+        lua_pop(state, nargs + 1);
         assert(top - nargs == lua_gettop(state));
         return false;
     }

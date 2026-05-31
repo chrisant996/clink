@@ -434,12 +434,21 @@ report_error:
             }
             else if (!lua_istable(L, -1))
             {
+                lua_pop(L, 1);
+                lua_pushnil(L);
                 error = "'%s' is not a table";
                 goto report_error;
             }
 
             lua_pushlstring(L, part.get_pointer(), part.length());
             lua_rawget(L, -2);
+
+            // Move the result and pop extra so this always leaves only one
+            // value on the stack.
+            assert(top + 2 == lua_gettop(L));
+            lua_insert(L, -2);
+            lua_pop(L, 1);
+            assert(top + 1 == lua_gettop(L));
 
             global.clear();
             global.concat(func_name, int32(part.get_pointer() - func_name + part.length()));
@@ -448,7 +457,9 @@ report_error:
 
     if (first || !lua_isfunction(L, -1))
     {
-        lua_pop(L, 1);
+        if (!first)
+            lua_pop(L, 1);
+        lua_pushnil(L);
         error = "not a function";
         goto report_error;
     }
@@ -602,9 +613,7 @@ void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
     const int32 top = lua_gettop(L);
 #endif
 
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_activate_clinkprompt_module");
-    lua_rawget(L, -2);
+    push_named_function(L, "clink._internal._activate_clinkprompt_module");
     if (!lua_isnil(L, -1))
     {
         if (module)
@@ -617,7 +626,7 @@ void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
             puts(err);
         }
     }
-    lua_pop(L, 2);
+    lua_pop(L, 1);
 
     assert(lua_gettop(L) == top);
 }
