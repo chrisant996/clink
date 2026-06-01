@@ -228,7 +228,7 @@ local function is_entry_ready(entry, now)
 end
 
 --------------------------------------------------------------------------------
-function clink._internal._after_coroutines(func)
+function internal._after_coroutines(func)
     if type(func) ~= "function" then
         error("bad argument #1 (function expected)")
     end

@@ -616,7 +616,7 @@ function clink.promptcoroutine(func, cookie)
 
         if async then
             -- Add the coroutine.
-            clink._internal._after_coroutines(refilterprompt_after_coroutines)
+            internal._after_coroutines(refilterprompt_after_coroutines)
         else
             -- Run the coroutine synchronously if async is disabled.
             local max_iter = 25

@@ -1378,13 +1378,6 @@ static int32 generate_from_history(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int32 api_reset_generate_matches(lua_State* state)
-{
-    reset_generate_matches();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
 #if defined(USE_MEMORY_TRACKING)
 static int32 last_allocation_number(lua_State* state)
@@ -1478,7 +1471,6 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
     static const method_def methods_internal[] = {
         // APIs in the "clink._internal." namespace.
         { 0,    "_generate_from_history", &generate_from_history },
-        { 0,    "_reset_generate_matches", &api_reset_generate_matches },
     };
 
     clear_deprecated_argmatchers();
