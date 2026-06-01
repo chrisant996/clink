@@ -1,6 +1,8 @@
 -- Copyright (c) 2024 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 local norm = "\x1b[m"
 --local bold = "\x1b[1m"
 --local italic = "\x1b[3m"
@@ -605,7 +607,7 @@ local function show_color_theme(args)
         if ini then
             -- Must temporarily load the theme in order for rl.getmatchcolor()
             -- to represent colors properly.
-            clink._load_colortheme_in_memory(ini)
+            clink._internal._load_colortheme_in_memory(ini)
             show_demo(title, ini.preferred, preferred)
         end
 
@@ -669,7 +671,7 @@ local function print_color_theme(args)
             end
         end
     end
-    clink._add_clear_colors(ini, all)
+    internal._add_clear_colors(ini, all)
 
     local anyset
     local anyclear
@@ -751,7 +753,7 @@ local function clear_color_theme(args)
         end
     end
 
-    clink._clear_colors(all, rules)
+    internal._clear_colors(all, rules)
     return true
 end
 
@@ -910,7 +912,7 @@ local function show_custom_prompt(args)
             caption = string.format("%s  (%s)", caption, current_file)
         end
         clink.print(caption)
-        clink._show_prompt_demo(customprompt)
+        internal._show_prompt_demo(customprompt)
         if file then
             clink.print()
         end
@@ -975,7 +977,7 @@ local function show_custom_prompt(args)
         end
 
         -- Show the prompt.
-        clink._show_prompt_demo(e.file)
+        internal._show_prompt_demo(e.file)
     end
 
     if file and name then

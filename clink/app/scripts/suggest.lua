@@ -1,6 +1,8 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 clink = clink or {}
 local suggesters = {}
@@ -177,7 +179,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Reset cancel flag.
     _cancel = nil
 
-    local limit = clink._is_suggestionlist_mode() and 30 or nil
+    local limit = internal._is_suggestionlist_mode() and 30 or nil
     local results = {}
 
     -- Protected call to suggesters.
@@ -264,7 +266,7 @@ local function _do_suggest(line, lines, matches) -- luacheck: no unused
     end
 
     local info = line:getwordinfo(line:getwordcount())
-    clink.set_suggestion_result(line:getline(), info and info.offset or 1, results)
+    internal.set_suggestion_result(line:getline(), info and info.offset or 1, results)
 end
 
 --------------------------------------------------------------------------------
@@ -273,10 +275,10 @@ local function deferred_generate(line, lines, matches, builder, generation_id)
     _cancel = true
 
     -- Make sure volatile matches don't cause an infinite cycle.
-    clink.set_suggestion_started(line:getline())
+    internal.set_suggestion_started(line:getline())
 
     -- Start coroutine for match generation.
-    clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
+    internal._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
@@ -300,7 +302,7 @@ local function wrap(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, lines, matches, builder, generation_id)
+function clink._internal._suggest(line, lines, matches, builder, generation_id)
     if builder then
         matches = wrap(line, lines, matches, builder, generation_id)
     end
@@ -309,7 +311,7 @@ function clink._suggest(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
-function clink._list_suggesters()
+function internal._list_suggesters()
     local list = {}
     for name,_ in pairs(suggesters) do
         table.insert(list, name)
@@ -318,7 +320,7 @@ function clink._list_suggesters()
 end
 
 --------------------------------------------------------------------------------
-function clink._print_suggesters()
+function clink._internal._print_suggesters()
     local list = {}
     for name,_ in pairs(suggesters) do
         table.insert(list, name)
@@ -387,7 +389,7 @@ function clink.suggester(name)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_suggesters(arg)
+function clink._internal._diag_suggesters(arg)
     if arg == 0 then
         return
     end
@@ -420,7 +422,7 @@ function clink._diag_suggesters(arg)
     for _,entry in ipairs(list) do
         if entry.suggest then
             local info = debug.getinfo(entry.suggest, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 if not any then
                     clink.print(bold.."suggesters:"..norm)
                     any = true
@@ -453,13 +455,13 @@ end
 --------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
 function history_suggester:suggest(line, matches, limit) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), is_first_word(line), limit, false)
+    return internal.history_suggester(line:getline(), is_first_word(line), limit, false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
 function prevcmd_suggester:suggest(line, matches, limit) -- luacheck: no unused
-    return clink.history_suggester(line:getline(), is_first_word(line), limit, true)
+    return internal.history_suggester(line:getline(), is_first_word(line), limit, true)
 end
 
 --------------------------------------------------------------------------------
@@ -482,7 +484,7 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                     break
                 elseif m ~= typed and (limit or info.quoted or no_quotes or not rl.needquotes(m)) then
                     local append_quote = info.quoted
-                    local hofs, matchlen = clink._find_match_highlight(m, typed)
+                    local hofs, matchlen = internal._find_match_highlight(m, typed)
                     hofs = hofs or 0
                     matchlen = matchlen or 0
                     hofs = hofs + info.offset

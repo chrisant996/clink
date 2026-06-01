@@ -1,6 +1,8 @@
 -- Copyright (c) 2023 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- Provide a stub implementation of pause() if the debugger isn't loaded.
 local _can_pause = true
@@ -26,7 +28,7 @@ end
 -- This is the error handler used by native code calls into Lua scripts.
 function _error_handler(message)
     message = resolve_error_message(message)
-    if _can_pause and clink._is_break_on_error() then
+    if _can_pause and internal._is_break_on_error() then
         pause("break on error: "..message)
     end
     if settings.get("lua.traceback_on_error") then
@@ -45,7 +47,7 @@ end
 -- suppress error messages than force error messages to show up twice.
 function _error_handler_ret(message)
     message = resolve_error_message(message)
-    if _can_pause and clink._is_break_on_error() then
+    if _can_pause and internal._is_break_on_error() then
         pause("break on error: "..message)
     end
     return debug.traceback(message, 3)
@@ -56,7 +58,7 @@ end
 function _co_error_handler(co, message)
     message = resolve_error_message(message)
     if settings.get("lua.traceback_on_error") or
-            (_can_pause and clink._is_break_on_error()) then
+            (_can_pause and internal._is_break_on_error()) then
         local m = debug.traceback(co, message)
         print(m)
         log.info(m)

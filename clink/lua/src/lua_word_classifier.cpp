@@ -61,9 +61,7 @@ void lua_word_classifier::classify(const line_states& commands, word_classificat
     save_stack_top ss(state);
 
     // Call to Lua to generate matches.
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_classify");
-    lua_rawget(state, -2);
+    m_state.push_named_function(state, "clink._internal._classify");
 
     line_states_lua lines(commands, classifications);
     lines.push(state);

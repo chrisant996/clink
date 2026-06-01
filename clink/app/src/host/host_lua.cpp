@@ -122,6 +122,16 @@ void host_lua::load_scripts()
     assert(!m_loaded_scripts);
     m_loaded_scripts = true;
 
+    // Revoke the import_internal global, preventing anything other than
+    // internal Clink Lua scripts from gaining access to internal APIs.
+    {
+        lua_State* state = m_state.get_state();
+        save_stack_top ss(state);
+
+        lua_pushnil(state);
+        lua_setglobal(state, "import_internal");
+    }
+
     // Load scripts.
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
@@ -134,12 +144,8 @@ void host_lua::load_scripts()
         lua_State* state = m_state.get_state();
         save_stack_top ss(state);
 
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_set_completion_dirs");
-        lua_rawget(state, -2);
-
+        lua_state::push_named_function(state, "clink._internal._set_completion_dirs");
         lua_pushlstring(state, script_path.c_str(), script_path.length());
-
         m_state.pcall(1, 0);
     }
 }

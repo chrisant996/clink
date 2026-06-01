@@ -1,6 +1,8 @@
 -- Copyright (c) 2015 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, generator).
 
@@ -37,7 +39,7 @@ clink.match_display_filter = nil
 -- luacheck: globals NOSTK
 local nostk_cookie = {}
 NOSTK = nostk_cookie
-function clink._log_generators(...)
+function internal._log_generators(...)
     local co, ismain = coroutine.running()
     local msg = (ismain and "*" or "")..tostring(co).."  ---"
     local add_stack = true
@@ -147,10 +149,10 @@ local function cancel_match_generate_coroutine()
         -- Make things (e.g. globbers) short circuit to faciliate coroutine
         -- completing as quickly as possible.
         if os.getenv("CLINK_LOG_GENERATORS") then
-            clink._log_generators("cancel_match_generate_coroutine", _match_generate_state.coroutine,
+            internal._log_generators("cancel_match_generate_coroutine", _match_generate_state.coroutine,
                                   "started", _match_generate_state.started and "true" or "false")
         end
-        clink._cancel_coroutine(_match_generate_state.coroutine)
+        internal._cancel_coroutine(_match_generate_state.coroutine)
         if not _match_generate_state.started then
             -- If it never started, remove it from the scheduler.
             clink.removecoroutine(_match_generate_state.coroutine)
@@ -160,7 +162,7 @@ local function cancel_match_generate_coroutine()
 end
 
 --------------------------------------------------------------------------------
-function clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id) -- luacheck: no unused
+function internal._make_match_generate_coroutine(line, lines, matches, builder, generation_id) -- luacheck: no unused
     -- Bail if there's already a match generator coroutine running.
     if _match_generate_state.coroutine then
         return
@@ -177,12 +179,12 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
         _match_generate_state.started = true
 
         if do_log then
-            clink._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
-            clink._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
+            internal._log_generators("match_generate_coroutine", "BEGIN", "gen", generation_id)
+            internal._log_generators("match_generate_coroutine", "cursor", line:getcursor(), "line", line:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
         end
 
         -- Generate matches.
-        clink._generate(line, lines, builder)
+        clink._internal._generate(line, lines, builder)
 
         -- Coroutine completed, so stop tracking it.  Must stop tracking before
         -- calling clink.matches_ready() so it doesn't immediately bail out.
@@ -192,34 +194,34 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
         end
 
         -- Check for cancelation.
-        if not clink._is_coroutine_canceled(c) then
+        if not internal._is_coroutine_canceled(c) then
             -- Keep the coroutine events:  if a completion command invokes a
             -- generator and the generator uses a coroutine and runs it to
             -- completion before continuing, then the command will need the
             -- events (onfiltermatches, ondisplaymatches, etc).
-            clink._keep_coroutine_events(c)
+            internal._keep_coroutine_events(c)
             clink.runonmain(function()
                 -- PERF: This can potentially take some time, especially in
                 -- Debug builds.
                 if do_log then
-                    clink._log_generators("_matches_ready", string.format("(FROM %s)", tostring(c)))
+                    internal._log_generators("_matches_ready", string.format("(FROM %s)", tostring(c)))
                 end
                 builder:_matches_ready(generation_id)
             end)
         else
             if do_log then
-                clink._log_generators("match_generate_coroutine", "_clear_toolkit", NOSTK)
+                internal._log_generators("match_generate_coroutine", "_clear_toolkit", NOSTK)
             end
             builder:_clear_toolkit()
         end
 
         if do_log then
-            clink._log_generators("match_generate_coroutine", "END", NOSTK)
+            internal._log_generators("match_generate_coroutine", "END", NOSTK)
         end
     end)
 
     if do_log then
-        clink._log_generators("_make_match_generate_coroutine", "->", c, NOSTK)
+        internal._log_generators("_make_match_generate_coroutine", "->", c, NOSTK)
     end
 
     clink.setcoroutinename(c, "generate matches")
@@ -231,16 +233,12 @@ end
 
 --------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
--- most recent generate pass.  It's useful for diagnostic purposes; the file and
--- line number can be retrieved by:
---      local info = debug.getinfo(clink.generator_stopped, 'S')
---      print("file: "..info.short_src)
---      print("line: "..info.linedefined)
-clink.generator_stopped = nil
-clink._why_argmatcher_stopped = nil
+-- most recent generate pass.
+clink._internal._generator_stopped = nil
+clink._internal._why_argmatcher_stopped = nil
 local function generator_onbeginedit()
-    clink.generator_stopped = nil
-    clink._why_argmatcher_stopped = nil
+    clink._internal._generator_stopped = nil
+    clink._internal._why_argmatcher_stopped = nil
     _match_generate_state = {}
 end
 clink.onbeginedit(generator_onbeginedit)
@@ -259,24 +257,24 @@ local function prepare()
 end
 
 --------------------------------------------------------------------------------
-function clink._reset_display_filter()
+function clink._internal._reset_display_filter()
     clink.match_display_filter = nil
-    clink._event_callbacks["onfiltermatches"] = nil
-    clink._event_callbacks["ondisplaymatches"] = nil
+    internal._event_callbacks["onfiltermatches"] = nil
+    internal._event_callbacks["ondisplaymatches"] = nil
 end
 
 --------------------------------------------------------------------------------
-function clink._in_generate()
-    return clink.co_state._current_builder and true
+function internal._in_generate()
+    return internal.co_state._current_builder and true
 end
 
 --------------------------------------------------------------------------------
-function clink._generate(line_state, line_states, match_builder, old_filtering)
+function clink._internal._generate(line_state, line_states, match_builder, old_filtering)
     local do_log = os.getenv("CLINK_LOG_GENERATORS")
 
     local impl = function ()
-        clink.generator_stopped = nil
-        clink._why_argmatcher_stopped = nil
+        clink._internal._generator_stopped = nil
+        clink._internal._why_argmatcher_stopped = nil
 
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
@@ -290,11 +288,12 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
             local ret = generator:generate(line_state, match_builder)
             if ret == true then
                 -- Remember the generator function that stopped.
-                clink.generator_stopped = generator.generate
+                clink._internal._generator_stopped = generator.generate
                 if do_log then
-                    local info = debug.getinfo(clink.generator_stopped, 'S')
-                    clink._log_generators("clink._generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
-                                          clink._why_argmatcher_stopped and "why" or nil, clink._why_argmatcher_stopped)
+                    local info = debug.getinfo(clink._internal._generator_stopped, 'S')
+                    local why = clink._internal._why_argmatcher_stopped
+                    internal._log_generators("_generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
+                                          why and "why" or nil, why)
                 end
                 return true
             end
@@ -307,46 +306,46 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         return false
     end
 
-    clink._reset_display_filter()
-    clink.co_state.use_old_filtering = old_filtering
-    clink.co_state.argmatcher_line_states = line_states
+    clink._internal._reset_display_filter()
+    internal.co_state.use_old_filtering = old_filtering
+    internal.co_state.argmatcher_line_states = line_states
 
     prepare()
-    clink.co_state._current_builder = match_builder
+    internal.co_state._current_builder = match_builder
 
     if do_log then
-        clink._log_generators("clink._generate", "BEGIN", "gen", match_builder:_get_generation_id())
-        clink._log_generators("clink._generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
+        internal._log_generators("_generate", "BEGIN", "gen", match_builder:_get_generation_id())
+        internal._log_generators("_generate", "cursor", line_state:getcursor(), "line", line_state:getline(), "cwd", os.getcwd(), NOSTK) -- luacheck: no max line length
     end
     local ok, ret = xpcall(impl, _error_handler_ret)
     if do_log then
         match_builder:_log_matches()
-        clink._log_generators("clink._generate", "END", NOSTK)
+        internal._log_generators("_generate", "END", NOSTK)
     end
     if not ok then
         print("")
         print("match generator failed:")
         print(ret)
-        clink.co_state._current_builder = nil
-        clink.co_state.use_old_filtering = nil
-        clink.co_state.argmatcher_line_states = nil
+        internal.co_state._current_builder = nil
+        internal.co_state.use_old_filtering = nil
+        internal.co_state.argmatcher_line_states = nil
         rl_state = nil
         return
     end
 
-    if not clink._is_coroutine_canceled(coroutine.running()) then
+    if not internal._is_coroutine_canceled(coroutine.running()) then
         match_builder:_set_input_line(line_state:getline(), match_builder:_get_generation_id())
     end
 
-    clink.co_state._current_builder = nil
-    clink.co_state.use_old_filtering = nil
-    clink.co_state.argmatcher_line_states = nil
+    internal.co_state._current_builder = nil
+    internal.co_state.use_old_filtering = nil
+    internal.co_state.argmatcher_line_states = nil
     rl_state = nil
     return ret or false
 end
 
 --------------------------------------------------------------------------------
-function clink._get_word_break_info(line_state)
+function clink._internal._get_word_break_info(line_state)
     local impl = function ()
         local truncate = 0
         local keep = 0
@@ -417,8 +416,8 @@ end
 --- This is a shim that lets clink.register_match_generator continue to work
 --- for now, despite being obsolete.
 function clink.add_match(match)
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:deprecated_addmatch(match)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:deprecated_addmatch(match)
     end
 end
 
@@ -430,7 +429,7 @@ end
 --- know how many matches it added, the script should keep track of the count
 --- itself.
 function clink.match_count()
-    clink._compat_warning("clink.match_count() is no longer supported.")
+    internal._compat_warning("clink.match_count() is no longer supported.")
     return 0
 end
 
@@ -443,7 +442,7 @@ end
 --- script needs to access matches it added, the script should keep track of the
 --- matches itself.
 function clink.get_match()
-    clink._compat_warning("clink.get_match() is no longer supported.")
+    internal._compat_warning("clink.get_match() is no longer supported.")
     return ""
 end
 
@@ -454,7 +453,7 @@ end
 --- -arg:   value:string
 --- This is no longer supported, and does nothing.
 function clink.set_match()
-    clink._compat_warning("clink.set_match() is no longer supported.")
+    internal._compat_warning("clink.set_match() is no longer supported.")
 end
 
 --------------------------------------------------------------------------------
@@ -546,7 +545,7 @@ end
 --- generators are no longer responsible for filtering matches.  The match
 --- pipeline itself handles that internally now.
 function clink.compute_lcd()
-    clink._compat_warning("clink.compute_lcd() is no longer supported.")
+    internal._compat_warning("clink.compute_lcd() is no longer supported.")
     return ""
 end
 
@@ -557,7 +556,7 @@ end
 --- -ret:   boolean
 --- This is no longer supported, and always returns false.
 function clink.is_single_match()
-    clink._compat_warning("clink.is_single_match() is no longer supported.")
+    internal._compat_warning("clink.is_single_match() is no longer supported.")
     return false
 end
 
@@ -591,8 +590,8 @@ end
 --- This is only needed when using deprecated APIs.  It's automatically inferred
 --- from the match types when using the current APIs.
 function clink.matches_are_files(files)
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setmatchesarefiles(files)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setmatchesarefiles(files)
     end
 end
 
@@ -600,8 +599,8 @@ end
 --- -name:  clink.suppress_char_append
 --- -deprecated: builder:setsuppressappend
 function clink.suppress_char_append()
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setsuppressappend(true)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setsuppressappend(true)
     end
 end
 
@@ -609,8 +608,8 @@ end
 --- -name:  clink.suppress_quoting
 --- -deprecated: builder:setsuppressquoting
 function clink.suppress_quoting()
-    if clink.co_state._current_builder then
-        clink.co_state._current_builder:setsuppressquoting(true)
+    if internal.co_state._current_builder then
+        internal.co_state._current_builder:setsuppressquoting(true)
     end
 end
 
@@ -658,7 +657,7 @@ function clink.register_match_generator(func, priority)
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset
         local last
-        if clink.co_state.use_old_filtering then
+        if internal.co_state.use_old_filtering then
             last = line_state:getcursor() - 1
         else
             last = first + info.length - 1
@@ -670,7 +669,7 @@ function clink.register_match_generator(func, priority)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_generators(arg)
+function clink._internal._diag_generators(arg)
     if arg == 0 then
         return
     end
@@ -681,6 +680,7 @@ function clink._diag_generators(arg)
     end
 
     local bold = "\x1b[1m"          -- Bold (bright).
+    local italic = "\x1b[3m"        -- Italics.
     local norm = "\x1b[m"           -- Normal.
     local print = clink.print
 
@@ -690,10 +690,20 @@ function clink._diag_generators(arg)
     for _,generator in ipairs (_generators) do
         if generator.generate then
             local info = debug.getinfo(generator.generate, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 print("  "..info.short_src..":"..info.linedefined)
                 any = true
             end
+        end
+    end
+
+    if clink._internal._generator_stopped then
+        local info = debug.getinfo(clink._internal._generator_stopped, 'S')
+        clink.print(bold.."generators stopped by:"..norm)
+        clink.print("  "..(info.short_src or "unknown")..":"..(info.linedefined or "unknown"))
+        local why = clink._internal._why_argmatcher_stopped
+        if why then
+            clink.print("    "..italics.."because"..norm.." "..why)
         end
     end
 

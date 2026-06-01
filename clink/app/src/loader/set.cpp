@@ -53,7 +53,7 @@ static void list_options(lua_state& lua, const char* key)
     {
         lua_State *state = lua.get_state();
         save_stack_top ss(state);
-        lua.push_named_function(state, "clink._print_suggesters");
+        lua.push_named_function(state, "clink._internal._print_suggesters");
         lua.pcall_silent(state, 0, 0);
         return;
     }

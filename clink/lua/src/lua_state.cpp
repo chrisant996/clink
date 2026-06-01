@@ -101,6 +101,8 @@ extern setting_bool g_debug_log_output_callstacks;
 
 
 //------------------------------------------------------------------------------
+void internal_lua_initialise(lua_state&, bool lua_interpreter=false);
+void internal_lua_revoke(lua_state&);
 void clink_lua_initialise(lua_state&, bool lua_interpreter=false);
 void os_lua_initialise(lua_state&);
 void io_lua_initialise(lua_state&);
@@ -272,6 +274,7 @@ void lua_state::initialise(lua_state_flags flags)
     lua_state& self = *this;
 
     // Initialize API namespaces.
+    internal_lua_initialise(self, interpreter);
     clink_lua_initialise(self, interpreter);
     os_lua_initialise(self);
     io_lua_initialise(self);
@@ -394,6 +397,8 @@ bool lua_state::do_file(const char* path)
 //------------------------------------------------------------------------------
 bool lua_state::push_named_function(lua_State* L, const char* func_name, str_base* e)
 {
+    const int32 top = lua_gettop(L);
+
     bool first = true;
     str_iter part;
     str_tokeniser name_parts(func_name, ".");
@@ -424,16 +429,26 @@ report_error:
                     }
                     (*e) << "\n";
                 }
+                assert(top + 1 == lua_gettop(L));
                 return false;
             }
             else if (!lua_istable(L, -1))
             {
+                lua_pop(L, 1);
+                lua_pushnil(L);
                 error = "'%s' is not a table";
                 goto report_error;
             }
 
             lua_pushlstring(L, part.get_pointer(), part.length());
             lua_rawget(L, -2);
+
+            // Move the result and pop extra so this always leaves only one
+            // value on the stack.
+            assert(top + 2 == lua_gettop(L));
+            lua_insert(L, -2);
+            lua_pop(L, 1);
+            assert(top + 1 == lua_gettop(L));
 
             global.clear();
             global.concat(func_name, int32(part.get_pointer() - func_name + part.length()));
@@ -442,13 +457,16 @@ report_error:
 
     if (first || !lua_isfunction(L, -1))
     {
-        lua_pop(L, 1);
+        if (!first)
+            lua_pop(L, 1);
+        lua_pushnil(L);
         error = "not a function";
         goto report_error;
     }
 
     if (e)
         e->clear();
+    assert(top + 1 == lua_gettop(L));
     return true;
 }
 
@@ -591,14 +609,9 @@ void dump_lua_stack(lua_State* L, int32 pos)
 //------------------------------------------------------------------------------
 void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
 {
-#ifdef DEBUG
-    const int32 top = lua_gettop(L);
-#endif
+    save_stack_top ss(L);
 
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_activate_clinkprompt_module");
-    lua_rawget(L, -2);
-    if (!lua_isnil(L, -1))
+    if (push_named_function(L, "clink._internal._activate_clinkprompt_module"))
     {
         if (module)
             lua_pushstring(L, module);
@@ -610,9 +623,6 @@ void lua_state::activate_clinkprompt_module(lua_State* L, const char* module)
             puts(err);
         }
     }
-    lua_pop(L, 2);
-
-    assert(lua_gettop(L) == top);
 }
 
 //------------------------------------------------------------------------------
@@ -621,25 +631,13 @@ void lua_state::load_colortheme_in_memory(lua_State* L, const char* theme)
     if (!theme || !*theme)
         return;
 
-#ifdef DEBUG
-    const int32 top = lua_gettop(L);
-#endif
+    save_stack_top ss(L);
 
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_load_colortheme_in_memory");
-    lua_rawget(L, -2);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-    }
-    else
+    if (lua_state::push_named_function(L, "clink._internal._load_colortheme_in_memory"))
     {
         lua_pushstring(L, theme);
         pcall(L, 1, 0);
     }
-    lua_pop(L, 1);
-
-    assert(lua_gettop(L) == top);
 }
 
 //------------------------------------------------------------------------------
@@ -671,6 +669,8 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
 
     // Push the global _send_event function.
     lua_getglobal(L, "clink");
+    lua_pushliteral(L, "_internal");
+    lua_rawget(L, -2);
     lua_pushstring(L, event_mechanism);
     lua_rawget(L, -2);
     if (lua_isnil(L, -1))
@@ -679,8 +679,8 @@ bool lua_state::send_event_internal(lua_State* L, const char* event_name, const 
         lua_pop(L, nargs);
         return false;
     }
-    lua_insert(L, -2);
-    lua_pop(L, 1);
+    lua_insert(L, -3);
+    lua_pop(L, 2);
 
     // Push the event name.
     lua_pushstring(L, event_name);
@@ -848,9 +848,7 @@ bool lua_state::get_command_word(line_state& line, str_base& command_word, bool&
     file.clear();
 
     // Call to Lua to calculate prefix length.
-    lua_getglobal(L, "clink");
-    lua_pushliteral(L, "_get_command_word");
-    lua_rawget(L, -2);
+    lua_state::push_named_function(L, "clink._internal._get_command_word");
 
     line_state_lua line_lua(line);
     line_lua.push(L);

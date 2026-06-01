@@ -1,6 +1,8 @@
 -- Copyright (c) 2020 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- Used by `clink.print()` to suppress the usual trailing newline.  The table
 -- address is unique, thus `clink.print()` can test for equality.
@@ -49,7 +51,7 @@ end
 --------------------------------------------------------------------------------
 -- This reports a compatibility message.
 local remind_how_to_disable = true
-function clink._compat_warning(message, suffix)
+function internal._compat_warning(message, suffix)
     local where = _get_maybe_fileline(2) -- 2 gets the caller's file and line.
     message = message or ""
     suffix = suffix or ""
@@ -76,7 +78,7 @@ end
 --------------------------------------------------------------------------------
 -- This returns true if short_src begins with "~clink~\\", which means it's an
 -- internal Clink script.
-function clink._is_internal_script(short_src)
+function internal._is_internal_script(short_src)
     return string.find(short_src, "^~clink~[/\\]") and true or nil
 end
 
@@ -169,16 +171,16 @@ function os.globdirs(pattern, extrainfo, flags)
     local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
-        return os._globdirs(pattern, extrainfo, flags)
-    elseif clink._is_coroutine_canceled(c) then
+        return internal._globdirs(pattern, extrainfo, flags)
+    elseif internal._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
         local t = {}
-        local g = os._makedirglobber(pattern, extrainfo, flags)
+        local g = internal._makedirglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 t = {}
                 break
             end
@@ -198,16 +200,16 @@ function os.globfiles(pattern, extrainfo, flags)
     local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
-        return os._globfiles(pattern, extrainfo, flags)
-    elseif clink._is_coroutine_canceled(c) then
+        return internal._globfiles(pattern, extrainfo, flags)
+    elseif internal._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
         local t = {}
-        local g = os._makefileglobber(pattern, extrainfo, flags)
+        local g = internal._makefileglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 t = {}
                 break
             end
@@ -343,7 +345,7 @@ function os.globmatch(pattern, extrainfo, flags)
                 coroutine.yield()
                 last_yield = os.clock()
             end
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 return true
             end
         end
@@ -395,7 +397,7 @@ function os.globmatch(pattern, extrainfo, flags)
 
         -- Enumerate directories and files.
         local t = {}
-        local globber = os._makefileglobber(wild, extrainfo, flags)
+        local globber = internal._makefileglobber(wild, extrainfo, flags)
         while globber:next(t) do
             if test_yield_bail(true) then
                 globber:close()

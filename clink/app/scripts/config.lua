@@ -1,6 +1,8 @@
 -- Copyright (c) 2024 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 -- luacheck: globals git
 
 --------------------------------------------------------------------------------
@@ -112,7 +114,7 @@ local function get_theme_files(name, ext)
     add_dirs_from_var(dirs, os.getenv("CLINK_THEMES_DIR"), false)
     add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
     add_dirs_from_var(dirs, os.getenv("=clink.profile"), true)
-    add_dirs_from_var(dirs, clink._get_scripts_path(), true)
+    add_dirs_from_var(dirs, internal._get_scripts_path(), true)
 
     local list = {}
     local indexed = {}
@@ -280,13 +282,13 @@ function clink.applytheme(file, clearall, no_save)
     end
 
     -- FUTURE: what about match coloring rules?
-    clink._add_clear_colors(ini, clearall, false)
+    internal._add_clear_colors(ini, clearall, false)
     settings._overlay(ini, no_save and true or nil)
     return ini
 end
 
 --------------------------------------------------------------------------------
-function clink._load_colortheme_in_memory(theme)
+function clink._internal._load_colortheme_in_memory(theme)
     if type(theme) == "string" then
         theme = theme:gsub('"', ''):gsub('%s+$', '')
         if theme == "" then
@@ -295,13 +297,13 @@ function clink._load_colortheme_in_memory(theme)
         theme = clink.readtheme(theme)
     end
     if type(theme) == "table" then
-        clink._add_clear_colors(theme)
+        internal._add_clear_colors(theme)
         settings._overlay(theme, true--[[in_memory_only]])
     end
 end
 
 --------------------------------------------------------------------------------
-function clink._add_clear_colors(ini, all, rules)
+function internal._add_clear_colors(ini, all, rules)
     local has = {}
     for _,t in ipairs(ini) do
         if t.name then
@@ -322,25 +324,25 @@ function clink._add_clear_colors(ini, all, rules)
 end
 
 --------------------------------------------------------------------------------
-function clink._clear_colors(all, rules)
+function internal._clear_colors(all, rules)
     local ini = {}
-    clink._add_clear_colors(ini, all, rules)
+    internal._add_clear_colors(ini, all, rules)
     settings._overlay(ini)
 end
 
 --------------------------------------------------------------------------------
-function clink._show_prompt_demo(module)
+function internal._show_prompt_demo(module)
     clink.print("\x1b[m", NONL)
 
-    local m = clink._activate_clinkprompt_module(module)
+    local m = clink._internal._activate_clinkprompt_module(module)
 
     if type(m) == "string" then
         print(m)
     elseif type(m) ~= "table" or not m.demo then
         local simulated_cursor = "\x1b[0;7m \x1b[m"
-        local left = clink._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
-        local right = clink._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
-        left, right = clink._filter_prompt(left, right, "", 1)
+        local left = internal._expand_prompt_codes(os.getenv("PROMPT") or "$p$g")
+        local right = internal._expand_prompt_codes(os.getenv("CLINK_RPROMPT") or "", true)
+        left, right = clink._internal._filter_prompt(left, right, "", 1)
         left = (left or "")..simulated_cursor
         right = right or ""
         local left_width = console.cellcount(left:gsub("^.*\n", ""))
@@ -355,12 +357,12 @@ function clink._show_prompt_demo(module)
         m.demo()
     end
 
-    clink._activate_clinkprompt_module(nil)
+    clink._internal._activate_clinkprompt_module(nil)
 
     clink.print("\x1b[m\x1b[K", NONL)
 end
 
 --------------------------------------------------------------------------------
-function clink._get_clinkprompt_wrapping_module()
+function internal._get_clinkprompt_wrapping_module()
     return clinkprompt_wrapping_module
 end

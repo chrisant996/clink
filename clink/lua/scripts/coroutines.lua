@@ -1,6 +1,8 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 -- luacheck: max line length 150
 
 --------------------------------------------------------------------------------
@@ -18,7 +20,7 @@ local _pending_on_main = nil            -- Funcs to run when control returns to 
 local _throttle_interval = nil          -- Whether to throttle long-running coroutines.
 
 local _main_perthread_state = {}
-clink.co_state = _main_perthread_state
+internal.co_state = _main_perthread_state
 
 local print = clink.print
 
@@ -155,7 +157,7 @@ end
 
 --------------------------------------------------------------------------------
 local function cancel_coroutine(message)
-    clink._cancel_coroutine()
+    internal._cancel_coroutine()
     error((message or "").."canceling popenyield; coroutine is orphaned")
 end
 
@@ -226,7 +228,7 @@ local function is_entry_ready(entry, now)
 end
 
 --------------------------------------------------------------------------------
-function clink._after_coroutines(func)
+function internal._after_coroutines(func)
     if type(func) ~= "function" then
         error("bad argument #1 (function expected)")
     end
@@ -234,12 +236,12 @@ function clink._after_coroutines(func)
 end
 
 --------------------------------------------------------------------------------
-function clink._has_coroutines()
+function clink._internal._has_coroutines()
     return _coroutines_resumable
 end
 
 --------------------------------------------------------------------------------
-function clink._wait_duration()
+function clink._internal._wait_duration()
     if _coroutines_resumable then
         local target
         local now = os.clock()
@@ -264,12 +266,12 @@ function clink._wait_duration()
 end
 
 --------------------------------------------------------------------------------
-function clink._set_coroutine_context(context)
+function internal._set_coroutine_context(context)
     _coroutine_context = context
 end
 
 --------------------------------------------------------------------------------
-function clink._set_coroutine_asyncyield(asyncyield)
+function clink._internal._set_coroutine_asyncyield(asyncyield)
     local t = coroutine.running()
     local entry = _coroutines[t]
     if t and entry then
@@ -279,7 +281,7 @@ end
 
 --------------------------------------------------------------------------------
 local _coroutines_fallback_state = {}
-function clink._resume_coroutines()
+function clink._internal._resume_coroutines()
     if not _coroutines_resumable then
         return
     end
@@ -289,7 +291,7 @@ function clink._resume_coroutines()
     -- Prepare.
     _coroutines_resumable = false
     _coroutines_fallback_state = {}
-    clink._set_coroutine_context(nil)
+    internal._set_coroutine_context(nil)
 
     -- Remove dead/obsolete coroutines.  Must remove old gen coroutines first,
     -- since removing them may free up new gen coroutines to be resumable.
@@ -322,7 +324,7 @@ function clink._resume_coroutines()
                     entry.throttleclock = now
                 end
                 entry.resumed = entry.resumed + 1
-                clink._set_coroutine_context(entry.context)
+                internal._set_coroutine_context(entry.context)
                 local ok, ret
                 if entry.isprompt or entry.isgenerator then
                     ok, ret = coroutine.resume(c, true--[[async]])
@@ -359,7 +361,7 @@ function clink._resume_coroutines()
 
     -- Cleanup.
     _coroutines_fallback_state = {}
-    clink._set_coroutine_context(nil)
+    internal._set_coroutine_context(nil)
     for _,c in ipairs(remove) do
         clink.removecoroutine(c)
     end
@@ -386,14 +388,14 @@ function clink._resume_coroutines()
 end
 
 --------------------------------------------------------------------------------
-function clink._finish_coroutine(c)
+function internal._finish_coroutine(c)
     while true do
         local status = coroutine.status(c)
         if not status or status == "dead" then
             break
         end
 
-        local duration = clink._wait_duration()
+        local duration = clink._internal._wait_duration()
         if duration and duration > 0 then
             local entry = _coroutines[c]
             if entry.yield_category then
@@ -406,12 +408,12 @@ function clink._finish_coroutine(c)
 
         -- Must run all coroutines:  there could be inter-dependencies, and the
         -- target coroutine may be blocking on another coroutine's yieldguard.
-        clink._resume_coroutines()
+        clink._internal._resume_coroutines()
     end
 end
 
 --------------------------------------------------------------------------------
-function clink._cancel_coroutine(c)
+function internal._cancel_coroutine(c)
     if not c then
         c = coroutine.running()
     end
@@ -424,13 +426,13 @@ function clink._cancel_coroutine(c)
 end
 
 --------------------------------------------------------------------------------
-function clink._is_coroutine_canceled(c)
+function internal._is_coroutine_canceled(c)
     local entry = _coroutines[c]
     return entry and entry.canceled
 end
 
 --------------------------------------------------------------------------------
-function clink._keep_coroutine_events(c)
+function internal._keep_coroutine_events(c)
     local entry = _coroutines[c]
     if entry then
         entry.keepevents = true
@@ -496,7 +498,7 @@ local function spairs(t, order)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_coroutines()
+function clink._internal._diag_coroutines()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
     local red = "\x1b[31m"          -- Red.
@@ -587,7 +589,7 @@ function clink._diag_coroutines()
             print("  generation", (mixed_gen and yellow or norm).."gen ".._coroutine_generation..norm)
         end
         print("  resumable", _coroutines_resumable)
-        print("  wait_duration", clink._wait_duration())
+        print("  wait_duration", clink._internal._wait_duration())
         for category, cyg in spairs(_coroutine_yieldguard) do
             local yg = cyg.yieldguard
             print("  "..category)
@@ -631,12 +633,12 @@ local function restore_coroutine_state(entry, thread)
         old_state.rl_state = rl_state
         rl_state = state.rl_state
         if not entry.keepevents then
-            old_state.events = clink._set_coroutine_events(state.events)
+            old_state.events = internal._set_coroutine_events(state.events)
         end
     end
 
-    old_state.global_modes = clink._save_global_modes()
-    clink._restore_global_modes(state.global_modes)
+    old_state.global_modes = internal._save_global_modes()
+    internal._restore_global_modes(state.global_modes)
 
     entry.old_state = old_state
 end
@@ -663,15 +665,15 @@ local function save_coroutine_state(entry, thread)
         if old_state then
             rl_state = old_state.rl_state
             if not entry.keepevents then
-                state.events = clink._set_coroutine_events(old_state.events)
+                state.events = internal._set_coroutine_events(old_state.events)
             end
         end
     end
 
     -- When not old_state then this is a new coroutine.
-    state.global_modes = clink._save_global_modes(not old_state--[[new_coroutine]]);
+    state.global_modes = internal._save_global_modes(not old_state--[[new_coroutine]]);
     if old_state then
-        clink._restore_global_modes(old_state.global_modes)
+        internal._restore_global_modes(old_state.global_modes)
     end
 
     entry.old_state = nil
@@ -906,7 +908,7 @@ function io.popenyield(command, mode)
     if not ismain then
         -- Prompt coroutines may not run async under certain conditions.
         if is_prompt_coroutine(c) then
-            can_async = settings.get("prompt.async") and not clink.istransientpromptfilter()
+            can_async = settings.get("prompt.async") and not internal.istransientpromptfilter()
         else
             can_async = true
         end
@@ -918,12 +920,12 @@ function io.popenyield(command, mode)
             set_coroutine_queued(true)
             while _coroutine_yieldguard[category] do
                 coroutine.yield()
-                if clink._is_coroutine_canceled(c) then
+                if internal._is_coroutine_canceled(c) then
                     break
                 end
             end
             set_coroutine_queued(false)
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 return io.open("nul")
             end
         end
@@ -1018,12 +1020,12 @@ os.execute = function (command)
         set_coroutine_queued(true)
         while _coroutine_yieldguard[category] do
             coroutine.yield()
-            if clink._is_coroutine_canceled(c) then
+            if internal._is_coroutine_canceled(c) then
                 break
             end
         end
         set_coroutine_queued(false)
-        if clink._is_coroutine_canceled(c) then
+        if internal._is_coroutine_canceled(c) then
             return nil, "exit", -1, "canceled"
         end
     end
@@ -1109,7 +1111,7 @@ function coroutine.create(func) -- luacheck: ignore 122
 
     -- Wake up idle processing.
     _coroutines_resumable = true
-    clink.kick_idle()
+    internal.kick_idle()
     return thread
 end
 
@@ -1119,8 +1121,8 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
     local entry = _coroutines[co]
     restore_coroutine_state(entry, co)
 
-    local old_co_state = clink.co_state
-    clink.co_state = entry.co_state
+    local old_co_state = internal.co_state
+    internal.co_state = entry.co_state
 
     local clock = os.clock()
     local tresumed = table.pack(orig_coroutine_resume(co, ...))
@@ -1135,7 +1137,7 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         end
     end
 
-    clink.co_state = old_co_state
+    internal.co_state = old_co_state
     save_coroutine_state(entry, co)
 
     if _pending_on_main then

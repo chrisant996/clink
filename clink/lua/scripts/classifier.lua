@@ -1,6 +1,8 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 --------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, classifier).
 
@@ -17,16 +19,21 @@ end
 
 --------------------------------------------------------------------------------
 -- This global variable tracks which classifier function, if any, stopped the
--- most recent classify pass.  It's useful for diagnostic purposes; the file and
--- line number can be retrieved by:
---      local info = debug.getinfo(clink.classifier_stopped, 'S')
---      print("file: "..info.short_src)
---      print("line: "..info.linedefined)
-clink.classifier_stopped = nil
+-- most recent classify pass.
+internal._classifier_stopped = nil
 local function classifier_onbeginedit()
-    clink.classifier_stopped = nil
+    internal._classifier_stopped = nil
 end
 clink.onbeginedit(classifier_onbeginedit)
+
+--------------------------------------------------------------------------------
+function clink._internal.get_who_stopped_classifier()
+    if internal._classifier_stopped then
+        local info = debug.getinfo(internal._classifier_stopped, 'S')
+        return info.short_src, info.linedefined -- file, line
+    end
+end
+
 
 
 --------------------------------------------------------------------------------
@@ -71,9 +78,10 @@ end
 
 --------------------------------------------------------------------------------
 -- Receives a table of line_state_lua/lua_word_classifications pairs.
-function clink._classify(commands, test)
+local num_stops = 0
+function clink._internal._classify(commands, test)
     local impl = function ()
-        clink.classifier_stopped = nil
+        internal._classifier_stopped = nil
         elapsed_this_pass = 0
 
         for _, classifier in ipairs(_classifiers) do
@@ -84,7 +92,27 @@ function clink._classify(commands, test)
                 log_cost(tick, classifier)
                 if ret == true then
                     -- Remember the classifier function that stopped.
-                    clink.classifier_stopped = classifier.classify
+                    internal._classifier_stopped = classifier.classify
+                    local dbgmode = (os.getenv("CLINK_DEBUG_CLASSIFIER_STOPPED") or
+                            (clink.DEBUG and os.getenv("DEBUG_CLASSIFIER_STOPPED")) or
+                            nil)
+                    if dbgmode then
+                        local dbgmode = string.explode(dbgmode, ";, ")
+                        local who_stopped, line = clink._internal.get_who_stopped_classifier()
+                        local src = string.format("%s:%s", who_stopped or "unknown", tostring(line) or "unknown")
+                        local msg = string.format("classifiers stopped by %s", src)
+                        local row = tonumber(dbgmode[1]) or -1
+                        local sleep = (tonumber(dbgmode[2]) or 0) / 1000
+                        if row < 1 then
+                            clink.debugprint(msg)
+                        else
+                            num_stops = num_stops + 1
+                            clink.print(string.format("\x1b[s\x1b[%uH\x1b[K%s [%u]\x1b[u", row, msg, num_stops), NONL)
+                        end
+                        if sleep > 0 then
+                            os.sleep(sleep)
+                        end
+                    end
                     return true
                 end
             end
@@ -139,7 +167,7 @@ local function pad_string(s, len)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_classifiers(arg)
+function clink._internal._diag_classifiers(arg)
     if arg == 0 then
         return
     end
@@ -159,7 +187,7 @@ function clink._diag_classifiers(arg)
     for _,classifier in ipairs (_classifiers) do
         if classifier.classify then
             local info = debug.getinfo(classifier.classify, 'S')
-            if not clink._is_internal_script(info.short_src) then
+            if not internal._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 table.insert(t, { src=src, cost=classifier.cost })
                 if longest < #src then

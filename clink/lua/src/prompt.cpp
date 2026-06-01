@@ -430,12 +430,9 @@ bool prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     int32 top = lua_gettop(state);
 
     // Call Lua to filter prompt
-    lua_getglobal(state, "clink");
-    if (transient)
-        lua_pushliteral(state, "_filter_transient_prompt");
-    else
-        lua_pushliteral(state, "_filter_prompt");
-    lua_rawget(state, -2);
+    m_lua.push_named_function(state, transient ?
+        "clink._internal._filter_transient_prompt" :
+        "clink._internal._filter_prompt");
 
     lua_pushstring(state, in);
     lua_pushstring(state, rin);

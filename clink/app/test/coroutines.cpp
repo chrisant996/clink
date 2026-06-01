@@ -126,7 +126,7 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_wait_duration_nil()\
-            return clink._wait_duration() == nil\
+            return clink._internal._wait_duration() == nil\
         end\
         \
         local function str_rpad(s, width, pad)\
@@ -150,7 +150,7 @@ TEST_CASE("Lua coroutines.")
             print_var('_ran', _ran)\
             print_var('_command', _command)\
             print_var('_gen', _gen)\
-            clink._diag_coroutines()\
+            clink._internal._diag_coroutines()\
         end\
         \
         local function verify_true(value, diag_func)\
@@ -162,31 +162,31 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_resume_coroutines()\
-            local dur = clink._wait_duration()\
-            if clink._has_coroutines() then\
-                clink._resume_coroutines()\
+            local dur = clink._internal._wait_duration()\
+            if clink._internal._has_coroutines() then\
+                clink._internal._resume_coroutines()\
                 return true\
             end\
             report_internals()\
         end\
         \
         function verify_notready_1aaa()\
-            local dur = clink._wait_duration()\
+            local dur = clink._internal._wait_duration()\
             return verify_true(not _yieldguard:ready() and _command == '1aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3aaa()\
-            local dur = clink._wait_duration()\
+            local dur = clink._internal._wait_duration()\
             return verify_true(not _yieldguard:ready() and _command == '3aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3bbb()\
-            local dur = clink._wait_duration()\
+            local dur = clink._internal._wait_duration()\
             return verify_true(not _yieldguard:ready() and _command == '3bbb', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3ccc()\
-            local dur = clink._wait_duration()\
+            local dur = clink._internal._wait_duration()\
             return verify_true(not _yieldguard:ready() and _command == '3ccc', function () print_var('dur', dur) end)\
         end\
         \
@@ -215,7 +215,7 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_no_coroutines()\
-            if clink._has_coroutines() ~= true then\
+            if clink._internal._has_coroutines() ~= true then\
                 return true\
             end\
             report_internals()\
@@ -370,7 +370,7 @@ TEST_CASE("Lua coroutines.")
             if diag_func then\
                 diag_func()\
             end\
-            clink._diag_coroutines()\
+            clink._internal._diag_coroutines()\
         end\
         \
         local function report_CO()\
@@ -417,14 +417,14 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         local function co_func()\
-            clink.co_state.argmatcher_line_states = { 77 }\
+            import_internal.co_state.argmatcher_line_states = { 77 }\
             CO_actual.cwd = os.getcwd()\
             CO_actual.rs = rl_state[1]\
-            CO_actual.als = clink.co_state.argmatcher_line_states[1]\
+            CO_actual.als = import_internal.co_state.argmatcher_line_states[1]\
         end\
         \
         rl_state = { 11 }\
-        clink.co_state.argmatcher_line_states = { 12 }\
+        import_internal.co_state.argmatcher_line_states = { 12 }\
         \
         CO_expected.cwd = os.getcwd()\
         CO_expected.rs = 11\
@@ -435,7 +435,7 @@ TEST_CASE("Lua coroutines.")
         \
         os.chdir('dir1')\
         rl_state = { 33 }\
-        clink.co_state.argmatcher_line_states = { 34 }\
+        import_internal.co_state.argmatcher_line_states = { 34 }\
         \
         MN_expected.cwd = os.getcwd()\
         MN_expected.rs = 33\
@@ -448,7 +448,7 @@ TEST_CASE("Lua coroutines.")
         \
         MN_actual.cwd = os.getcwd()\
         MN_actual.rs = rl_state[1]\
-        MN_actual.als = clink.co_state.argmatcher_line_states[1]\
+        MN_actual.als = import_internal.co_state.argmatcher_line_states[1]\
         ";
 
         REQUIRE_LUA_DO_STRING(lua, script);

@@ -57,9 +57,7 @@ nosuggest:
     str_compare_scope compare(scope, g_fuzzy_accent.get());
 
     // Call Lua to filter prompt
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_suggest");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._suggest");
 
     os::cwd_restorer cwd;
 

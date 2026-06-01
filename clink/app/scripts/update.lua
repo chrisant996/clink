@@ -1,6 +1,8 @@
 -- Copyright (c) 2022 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+local internal = import_internal -- luacheck: no global
+
 local github_repo = "chrisant996/clink"
 local tag_filename = "clink_updater_tag"
 local clink_log_for_details = " (see clink.log for details)."
@@ -154,7 +156,7 @@ end
 
 local function get_installation_type()
     if not this_install_type then
-        this_install_type, this_install_key = clink._get_installation_type()
+        this_install_type, this_install_key = internal._get_installation_type()
     end
 
     -- This sets this_install_type to the actual installation type.  This
@@ -234,7 +236,7 @@ local function unzip(zip, out)
         return nil, log_info("output directory '" .. tostring(out) .. "' does not exist.")
     end
 
-    local result, err = clink._shell_unzip(zip, out)
+    local result, err = internal._shell_unzip(zip, out)
     if not result then
         -- Delete the zip file; it might have been damaged, and re-downloading
         -- it might be necessary.
@@ -604,7 +606,7 @@ local function is_update_ready(force, no_verify)
     end
 
     -- Skip the update if the user said to.
-    local skip, range = clink._is_skip_update(cloud_tag)
+    local skip, range = internal._is_skip_update(cloud_tag)
     if skip then
         log_info("no update available; " .. cloud_tag .. " is available but user chose to skip through " .. range .. ".") -- luacheck: no max line length
         return "", "no update available."
@@ -629,7 +631,7 @@ local function prepare_to_update(elevated, cloud_tag)
     -- When elevated, assume the mutex is already acquired by the non-elevated
     -- caller.  Otherwise deadlock is possible if multiple Clink instances are
     -- waiting for the mutex.
-    if not elevated and not clink._acquire_updater_mutex() then
+    if not elevated and not internal._acquire_updater_mutex() then
         return
     end
 
@@ -657,7 +659,7 @@ local function apply_zip_update(elevated, zip_file, no_verify)
         print("Verifying the digital signature of the zip file...")
         log_info("verifying digital signature of " .. zip_file .. ".")
         local catalog = replace_extension(zip_file, "cat")
-        local verified, vmsg = os._verify_from_catalog(zip_file, catalog)
+        local verified, vmsg = internal._verify_from_catalog(zip_file, catalog)
         if not verified then
             -- Deleting the zip file allows the next update attempt to
             -- download a new copy of the file, in case it got corrupted.
@@ -725,7 +727,7 @@ local function apply_zip_update(elevated, zip_file, no_verify)
     -- Update installed version.
     if this_install_type == "exe" and this_install_key then
         print("Updating registry keys...")
-        clink._set_install_version(this_install_key, version_from_tag(cloud_tag));
+        internal._set_install_version(this_install_key, version_from_tag(cloud_tag));
     end
 
     -- Cleanup.
@@ -750,7 +752,7 @@ local function run_exe_installer(elevated, setup_exe, no_verify)
     if not no_verify then
         print("Verifying the digital signature of the Clink setup program...")
         log_info("verifying digital signature of '" .. setup_exe .. "'.")
-        local verified, msg = os._win_verify_trust(setup_exe)
+        local verified, msg = internal._win_verify_trust(setup_exe)
         if not verified then
             return nil, msg
         end
@@ -889,15 +891,15 @@ local function report_if_update_available(manual, redirected)
             end
             print_update_message(nil, redirected, "Clink " .. version_from_tag(cloud_tag) .. " needs to be updated again to install the themes directory.") -- luacheck: no max line length
             print("- To apply the update, run 'clink update'.")
-            clink.printreleasesurl("- ")
+            clink._internal.printreleasesurl("- ")
             if not manual then
                 maybe_trigger_update(update_file)
             end
             return true
         end
         if is_rhs_version_newer(local_tag, cloud_tag) and
-                not clink._is_skip_update(cloud_tag) and
-                not clink._is_snoozed_update() then
+                not internal._is_skip_update(cloud_tag) and
+                not internal._is_snoozed_update() then
             if manual and need_lf then
                 print("")
             end
@@ -906,7 +908,7 @@ local function report_if_update_available(manual, redirected)
             if not manual then
                 print("- To stop checking for updates, run 'clink set clink.autoupdate off'.")
             end
-            clink.printreleasesurl("- ")
+            clink._internal.printreleasesurl("- ")
             if not manual then
                 maybe_trigger_update(update_file)
             end
@@ -941,7 +943,7 @@ clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
 local function do_prompt(tag)
-    local action = clink._show_update_prompt(version_from_tag(tag))
+    local action = internal._show_update_prompt(version_from_tag(tag))
     if not action then
         return -1
     elseif action == "update" then
@@ -952,15 +954,15 @@ local function do_prompt(tag)
 end
 
 --------------------------------------------------------------------------------
-function clink.printreleasesurl(tag)
+function clink._internal.printreleasesurl(tag)
     tag = tag or "\n"
     print(tag .. "To view the release notes, visit the Releases page:")
     print(string.format("  https://github.com/%s/releases", github_repo))
 end
 
 --------------------------------------------------------------------------------
-function clink._shell_unzip(zip, dest)
-    local ay, obj = clink._unzip_internal(zip, dest)
+function internal._shell_unzip(zip, dest)
+    local ay, obj = internal._unzip_internal(zip, dest)
     if obj then
         if ay then
             while not ay:ready() do
@@ -976,7 +978,7 @@ end
 --      ok  = Status; -1 elevate, 0 failure, 1 success.
 --      msg = Message to be displayed.
 -- Returning 1 by itself suppresses any further messages (e.g. "canceled").
-function clink.updatenow(elevated, force_prompt, redirected, no_verify)
+function clink._internal.updatenow(elevated, force_prompt, redirected, no_verify)
     latest_cloud_tag = nil
 
     local update_file, err = is_update_ready(true, no_verify)
@@ -1002,7 +1004,7 @@ function clink.updatenow(elevated, force_prompt, redirected, no_verify)
     end
 
     if force_prompt then
-        if not clink._acquire_updater_mutex() then
+        if not internal._acquire_updater_mutex() then
             return nil
         end
 
@@ -1046,11 +1048,11 @@ function clink.updatenow(elevated, force_prompt, redirected, no_verify)
 end
 
 --------------------------------------------------------------------------------
-function clink.checkupdate(redirected)
+function clink._internal.checkupdate(redirected)
     need_lf = nil
     local can, err = can_check_for_update(true)
     if can then
-        clink._reset_update_keys()
+        internal._reset_update_keys()
         is_update_ready(true)
         if report_if_update_available(true) then
             return true

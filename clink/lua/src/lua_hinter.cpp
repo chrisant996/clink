@@ -121,9 +121,7 @@ nohint:
     save_stack_top ss(state);
 
     // Call Lua to get hint
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_gethint");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._gethint");
 
     line_state_lua line_lua(line);
     line_lua.push(state);
