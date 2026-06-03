@@ -1282,8 +1282,26 @@ int32 clink_select_complete(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_toggle_suggestion_list(int32 count, int32 invoking_key)
 {
-    extern bool toggle_suggestion_list(editor_module::result& result);
-    if (!g_result || !toggle_suggestion_list(*g_result))
+    extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
+    if (!g_result || !toggle_suggestion_list(*g_result, -1/*toggles on/off*/))
+        rl_ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_show_suggestion_list(int32 count, int32 invoking_key)
+{
+    extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
+    if (!g_result || !toggle_suggestion_list(*g_result, true/*turns on*/))
+        rl_ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_cancel_suggestion_list(int32 count, int32 invoking_key)
+{
+    extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
+    if (!g_result || !toggle_suggestion_list(*g_result, false/*turns off*/))
         rl_ding();
     return 0;
 }

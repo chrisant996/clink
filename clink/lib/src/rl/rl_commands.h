@@ -79,6 +79,8 @@ int32   clink_select_complete(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 int32   clink_toggle_suggestion_list(int32 count, int32 invoking_key);
+int32   clink_show_suggestion_list(int32 count, int32 invoking_key);
+int32   clink_cancel_suggestion_list(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 bool    cua_clear_selection();

@@ -25,7 +25,7 @@ public:
                     suggestionlist_impl(input_dispatcher& dispatcher);
 
     void            allow(bool allow);
-    bool            toggle(editor_module::result& result);
+    bool            toggle(editor_module::result& result, int8 mode=-1);
     bool            point_within(int32 in) const;
     uint32          get_height() const;
     void            clear_index(bool force=false);

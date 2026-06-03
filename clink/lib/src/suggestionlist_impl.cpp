@@ -206,7 +206,7 @@ void suggestionlist_impl::enable(editor_module::result& result)
 }
 
 //------------------------------------------------------------------------------
-bool suggestionlist_impl::toggle(editor_module::result& result)
+bool suggestionlist_impl::toggle(editor_module::result& result, int8 mode)
 {
     assert(m_buffer);
     if (m_disabled || !m_buffer)
@@ -214,10 +214,14 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
 
     if (is_active_even_if_hidden())
     {
+        if (mode == 1)
+            return false;
         cancel(result);
     }
     else
     {
+        if (mode == 0)
+            return false;
         lock_against_suggestions(false);
         enable(result);
     }
@@ -1521,12 +1525,16 @@ void suggestionlist_impl::force_redisplay_suggestion_list()
 
 
 //------------------------------------------------------------------------------
-bool toggle_suggestion_list(editor_module::result& result)
+// The mode values are:
+//  -1  = toggle on/off
+//  0   = turn off
+//  1   = turn on
+bool toggle_suggestion_list(editor_module::result& result, int8 mode=-1)
 {
     if (!s_suggestionlist)
         return false;
 
-    return s_suggestionlist->toggle(result);
+    return s_suggestionlist->toggle(result, mode);
 }
 
 //------------------------------------------------------------------------------

@@ -421,6 +421,7 @@ void init_readline_funmap()
 {
     clink_add_funmap_entry("clink-accept-suggested-line", clink_accept_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line and accept the input line");
     clink_add_funmap_entry("clink-backward-bigword", rl_vi_bWord, keycat_cursor, "Move back to the start of the current or previous space delimited word");
+    clink_add_funmap_entry("clink-cancel-suggestion-list", clink_cancel_suggestion_list, keycat_misc, "Turn off suggestion list mode");
     clink_add_funmap_entry("clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen");
     clink_add_funmap_entry("clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard");
     clink_add_funmap_entry("clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard");
@@ -464,6 +465,7 @@ void init_readline_funmap()
     clink_add_funmap_entry("clink-shift-space", clink_shift_space, keycat_misc, "Invoke the normal Space key binding, so that Shift-Space behaves the same as Space");
     clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions:  0=neither, 1=categories, 2=descriptions, 3=both (default).  Add 4 to include unbound commands");
     clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
+    clink_add_funmap_entry("clink-show-suggestion-list", clink_show_suggestion_list, keycat_misc, "Turn on suggestion list mode");
     clink_add_funmap_entry("clink-toggle-slashes", clink_toggle_slashes, keycat_misc, "Toggle between forward and backslashes in the word at the cursor point, or in the Nth word if a numeric argument is provided");
     clink_add_funmap_entry("clink-toggle-suggestion-list", clink_toggle_suggestion_list, keycat_misc, "Toggle suggestion list mode on or off");
     clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory");
