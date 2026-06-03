@@ -227,7 +227,6 @@ bool suggestionlist_impl::toggle(editor_module::result& result)
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::point_within(int32 in) const
 {
-    // return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
     return false;
 }
 
@@ -1036,7 +1035,7 @@ void suggestionlist_impl::update_display()
     coalesce.end();
     COORD cursor;
     m_printer->get_cursor_pos(cursor.X, cursor.Y);
-    m_mouse_offset = cursor.Y + 2/*to top item*/;
+    m_mouse_offset = cursor.Y + !!m_input_hints + 2/*to top item*/;
     resync.resync();
 
     // Restore cursor.
