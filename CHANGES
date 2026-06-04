@@ -4,8 +4,9 @@
 
 #### v1.9.26
 
-- Updated documentation to be clear that the `autosuggest.strategy` setting is a list of strategy names separated by spaces (other punctuation are not separators).
+- Added new bindable commands `clink-show-suggestion-list` and `clink-cancel-suggestion-list`, for more specific control than `clink-toggle-suggestion-list`.
 - Added the console codepage to `clink info` and `clink-diagnostics` output.
+- Updated documentation to be clear that the `autosuggest.strategy` setting is a list of strategy names separated by spaces (other punctuation are not separators).
 - Fixed the "User scripts and history" checkbox in the uninstaller so it correctly deletes them when checked (regression introduced in v0.2, in 2012).
 - Fixed the `clink.debugprint()` Lua API to handle UTF8 appropriately.
 - Fixed off-by-one row when clicking the mouse in the suggestion list when the `suggestionlist.hide_hints` setting is false.
