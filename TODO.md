@@ -9,27 +9,34 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Add tracking for what is the highest Clink version that's been run.
-  - Next run after an update can do post-update work (but must be very careful because of concurrency!).
-  - Updater can show message about important post-update information (such as breaking changes).
 - Issues with scrolling jitter:
   - Disable (defer) prompt refreshes while the prompt is scrolled out of view, in conhost?
   - So that mouse wheel scrolling can work despite animated prompts?
+- Add tracking for what is the highest Clink version that's been run?
+  - Next run after an update can do post-update work (but must be very careful because of concurrency!).
+  - Updater can show message about important post-update information (such as breaking changes).
+  - Some new `clink notice` command could re-show the current notice messages.
+- Add a Lua function to return whether the suggestion list is active?
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
-- Make a documentation section that lists all the CLINK environment variables.
-- Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
-  - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
-  - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths.
-- `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
-- `str_iter_impl<>::next` doesn't handle UTF8 decoding correctly in cases of invalid UTF8.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
+  - It might be overall better to just write my own input line editor.
+  - There are many reasons to want an independent implementation of an input line editor that doesn't use global variables for everything.
+  - But if I write my own input line editor, I want it to be under the MIT License, not GPL3.  So a "clean room" process would be necessary, and I would have to completely avoid Clink and Readline source code for at least a month before starting on the separate input line editor, and then continue to avoid Clink and Readline until the separate input line editor is complete (or wait another month after any time that I had to make some fix in Clink or Readline).
+  - And I would want it to support all the Readline commands, but a clean room implementation would probably have at least a few places where the independent implementations don't quite entirely work the same as the Readline versions, and I'm not sure whether that would be acceptable.
 
 ## Low Priority
+- Is there something that can be done to accommodate executable coloring in the input line for remote drives?  [#876](https://github.com/chrisant996/clink/issues/876)
 - If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by the "More?" prompt or a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's not the main input line prompt.  But there's no way for Clink to inject input into ReadConsoleW.  Maybe provide a custom simple input editor?
   - For now, the "More?" prompt case returns the queued characters **and appends a newline**.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them **and a newline is added, causing the command to be accepted prematurely**.
   - For now, the confirmation prompt case returns the queued characters and then falls back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.
 - Measure width of sixel sequences?  But _only_ in prompt strings.  There are several edge cases, and some non-trivial escape sequences to handle.
+- `ecma48_terminal_out::build_pending` looks like it might not quite handle UTF8 decoding correctly, especially in cases of invalid UTF8.
+- `str_iter_impl<>::next` doesn't handle UTF8 decoding correctly in cases of invalid UTF8.
+- Make a documentation section that lists all the CLINK environment variables.
+- Windows 11 build 26100 supposedly has surrogate pair support (and emoji support) in the conhost terminal:  use the `wcwidth-verifier` project to generate updated metrics for Windows 11 build 26100 and higher.
+  - It sort of has surrogate pair support, but the console thinks most are width 1 even though they render as wider than width 1, so it doesn't seem right/ready yet.
+  - Terminal 1.22 and 1.24 Preview have a bunch of glyphs that render as different widths.
 - Add a way for inserting a match to reposition the cursor to a specific point within the inserted match (e.g. to facilitate supporting the "{cursor}" feature from withfig/autocomplete).
   - That's a little awkward for `clink-select-complete`, but it could wait until `Enter` to set the cursor position.
   - Let the caller use a "magic" character in the match to indicate where to set the cursor?
