@@ -97,12 +97,12 @@ function clink._internal._classify(commands, test)
                             (clink.DEBUG and os.getenv("DEBUG_CLASSIFIER_STOPPED")) or
                             nil)
                     if dbgmode then
-                        local dbgmode = string.explode(dbgmode, ";, ")
+                        local params = string.explode(dbgmode, ";, ")
                         local who_stopped, line = clink._internal.get_who_stopped_classifier()
                         local src = string.format("%s:%s", who_stopped or "unknown", tostring(line) or "unknown")
                         local msg = string.format("classifiers stopped by %s", src)
-                        local row = tonumber(dbgmode[1]) or -1
-                        local sleep = (tonumber(dbgmode[2]) or 0) / 1000
+                        local row = tonumber(params[1]) or -1
+                        local sleep = (tonumber(params[2]) or 0) / 1000
                         if row < 1 then
                             clink.debugprint(msg)
                         else

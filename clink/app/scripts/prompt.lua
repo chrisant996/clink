@@ -252,7 +252,13 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
 
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
-        ret = (leading or "") .. internal._expand_prompt_codes(pre) .. (trailing or ret) .. internal._expand_prompt_codes(suf)
+        local pieces = {
+            (leading or ""),
+            internal._expand_prompt_codes(pre),
+            (trailing or ret),
+            internal._expand_prompt_codes(suf),
+        }
+        ret = table.concat(pieces)
     end
     if rret and rret ~= "" then
         rret = internal._expand_prompt_codes(rpre, true) .. rret .. internal._expand_prompt_codes(rsuf, true)

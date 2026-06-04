@@ -155,7 +155,8 @@ local function _add_event_callback(event, func)
         -- Some events are added before internal._get_clinkprompt_wrapping_module
         -- is available, but they are internal events and can never be inside
         -- a clinkprompt module, so the module should be nil anyway.
-        local wrapping_module = internal._get_clinkprompt_wrapping_module and internal._get_clinkprompt_wrapping_module()
+        local wrapping_module = (internal._get_clinkprompt_wrapping_module and
+                                 internal._get_clinkprompt_wrapping_module())
         -- Add entry.
         local entry = { func=func }
         entry._clinkprompt_module = wrapping_module

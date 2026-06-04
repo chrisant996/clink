@@ -680,7 +680,7 @@ function clink._internal._diag_generators(arg)
     end
 
     local bold = "\x1b[1m"          -- Bold (bright).
-    local italic = "\x1b[3m"        -- Italics.
+    local italics = "\x1b[3m"       -- Italics.
     local norm = "\x1b[m"           -- Normal.
     local print = clink.print
 
