@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Stop polluting the Lua namespace with internal Clink stuff.
 
 ## Normal Priority
 - Add tracking for what is the highest Clink version that's been run.
