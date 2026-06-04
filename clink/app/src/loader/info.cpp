@@ -247,6 +247,7 @@ int32 clink_info(int32 argc, char** argv)
     printf("%-*s : %s\n", spacing, "system", s.c_str());
 
     const DWORD cpid = GetACP();
+    const DWORD chcp = GetConsoleCP();
     const DWORD kbid = LOWORD(GetKeyboardLayout(0));
     WCHAR wide_layout_name[KL_NAMELENGTH * 2];
     if (!GetKeyboardLayoutNameW(wide_layout_name))
@@ -254,6 +255,7 @@ int32 clink_info(int32 argc, char** argv)
     str<> layout_name(wide_layout_name);
 
     printf("%-*s : %u\n", spacing, "codepage", cpid);
+    printf("%-*s : %u\n", spacing, "console codepage", chcp);
     printf("%-*s : %u\n", spacing, "keyboard langid", kbid);
     s.clear();
     s.format("%-*s : %s\n", spacing, "keyboard layout", layout_name.c_str());

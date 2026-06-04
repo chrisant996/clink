@@ -2806,12 +2806,16 @@ static void do_clink_diagnostics(bool include_settings=false)
     // Language info.
 
     const DWORD cpid = GetACP();
-    if (has_explicit_nonzero_arg || cpid != 1252)
+    const DWORD chcp = GetConsoleCP();
+    if (has_explicit_nonzero_arg || cpid != 1252 || chcp != 437)
     {
         print_heading("language");
 
         t.format("%u", cpid);
         print_value("codepage", t.c_str());
+
+        t.format("%u", chcp);
+        print_value("console codepage", t.c_str());
 
         const DWORD kbid = LOWORD(GetKeyboardLayout(0));
         t.format("%u", kbid);
