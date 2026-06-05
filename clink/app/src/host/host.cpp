@@ -1302,7 +1302,7 @@ force_reload_lua:
     {
         // If the line is a "cd -" or "chdir -" command, rewrite the line to
         // invoke the CD command to change to the directory.
-        intercepted = intercept_directory(out.c_str(), &out, true/*only_cd_chdir*/);
+        intercepted = intercept_directory(out.c_str(), &out, intercept_mode::only_cd_chdir);
         if (intercepted != intercept_result::none)
         {
             if (intercepted == intercept_result::prev_dir)

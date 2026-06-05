@@ -130,28 +130,35 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
 }
 
 //------------------------------------------------------------------------------
-static bool search_for_executable(const char* _word, const char* cwd, str_base& out)
+static recognition search_for_executable(const char* _word, const char* cwd, str_base& out)
 {
     // Bail out early if it's obviously not going to succeed.
     if (strlen(_word) >= MAX_PATH)
-        return false;
+        return recognition::unrecognized;
 
 // TODO: dynamically load NeedCurrentDirectoryForExePathW.
     wstr<32> word(_word);
     const bool need_cwd = !!NeedCurrentDirectoryForExePathW(word.c_str());
     const bool need_path = !rl_last_path_separator(_word);
+    recognition fallback = recognition::unrecognized;
 
     // Make list of paths to search.
     str<> tmp;
     str<> paths;
+    bool is_cwd = false;
     if (path::is_rooted(_word))
     {
         path::get_directory(_word, paths);
+        if (os::is_remote(_word))
+            fallback = recognition::unknown;
     }
     else
     {
         if (need_cwd)
+        {
             paths = cwd;
+            is_cwd = true;
+        }
         if (need_path && os::get_env("PATH", tmp))
         {
             if (paths.length() > 0)
@@ -163,7 +170,7 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
     str<> full;
     str<280> token;
     str_tokeniser tokens(paths.c_str(), ";");
-    while (tokens.next(token))
+    for (; tokens.next(token); is_cwd = false)
     {
         token.trim();
         if (token.empty())
@@ -181,16 +188,21 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
             drive[1] = ':';
             drive[2] = '\\';
             drive[3] = '\0';
-            if (os::get_drive_type(drive) < os::drive_type_removable)
+            const int32 drive_type = os::get_drive_type(drive);
+            if (drive_type < os::drive_type_removable)
+            {
+                if (is_cwd && drive_type == os::drive_type_remote)
+                    fallback = recognition::unknown;
                 continue;
+            }
         }
 
         // Try PATHEXT extensions.
         if (search_for_extension(full, _word, out))
-            return true;
+            return recognition::executable;
     }
 
-    return false;
+    return fallback;
 }
 
 //------------------------------------------------------------------------------
@@ -630,9 +642,7 @@ void recognizer::proc(recognizer* r)
 
             // Search for executable file.
             str<> found;
-            recognition result = recognition::unrecognized;
-            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found))
-                result = recognition::executable;
+            recognition result = search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found);
 
             // Store result.
             r->store(entry.m_key.c_str(), found.c_str(), result);
@@ -739,8 +749,12 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         return recognition::unknown;
 
     // Check for directory intercepts (-, ..., ...., dir\, and so on).
-    if (line && *line && intercept_directory(line) != intercept_result::none)
-        return recognition::navigate;
+    if (line && *line)
+    {
+        const auto result = intercept_directory(line, nullptr, intercept_mode::no_remote);
+        if (result != intercept_result::none)
+            return recognition::navigate;
+    }
 
     // Check for drive letter.
     if (word[0] && word[1] == ':' && !word[2])
@@ -773,9 +787,27 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (strchr(word, '*') || strchr(word, '?'))
         return recognition::unrecognized;
 
-    // Queue for background thread processing.
+    // If the current directory is remote, then report unknown instead of
+    // unrecognized.
     str<> cwd;
     os::get_current_dir(cwd);
+    assert(!path::is_unc(word)); // Already short-circuited earlier.
+    if (cached == recognition::unrecognized && cwd.length() > 2 && cwd.c_str()[1] == ':')
+    {
+        char drive[4];
+        drive[0] = cwd.c_str()[0];
+        drive[1] = ':';
+        drive[2] = '\\';
+        drive[3] = '\0';
+        if (os::get_drive_type(drive) == os::drive_type_remote)
+        {
+            const bool absolute = (word[0] && word[1] == ':');
+            if (!absolute)
+                cached = recognition::unknown;
+        }
+    }
+
+    // Queue for background thread processing.
     if (!s_recognizer.enqueue(orig_word, word, cwd.c_str(), &cached))
         return recognition::unknown;
 

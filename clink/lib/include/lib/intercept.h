@@ -14,5 +14,13 @@ enum class intercept_result : uint8
 };
 
 //------------------------------------------------------------------------------
-intercept_result intercept_directory(const char* line, str_base* out=nullptr, bool only_cd_chdir=false);
+enum class intercept_mode : uint8
+{
+    normal,
+    only_cd_chdir,
+    no_remote,                  // Avoids network IO for remote paths.
+};
+
+//------------------------------------------------------------------------------
+intercept_result intercept_directory(const char* line, str_base* out=nullptr, intercept_mode mode=intercept_mode::normal);
 void make_cd_command(const char* dir, str_base& out);

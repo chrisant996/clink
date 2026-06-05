@@ -96,6 +96,7 @@ bool    set_alias(const char* name, const char* command);
 bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
 bool    get_full_path_name(const char* path, str_base& out, uint32 len=-1);
+bool    is_remote(const char* path, bool path_is_full=false);
 bool    get_net_connection_name(const char* path, str_base& out);
 double  clock();
 time_t  filetime_to_time_t(const FILETIME& ft);

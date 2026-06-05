@@ -188,13 +188,13 @@ static bool is_cd_dash(const char* line, bool only_cd_chdir)
 }
 
 //------------------------------------------------------------------------------
-intercept_result intercept_directory(const char* line, str_base* out, bool only_cd_chdir)
+intercept_result intercept_directory(const char* line, str_base* out, const intercept_mode mode)
 {
     // Check for '-' (etc) to change to previous directory.
-    if (is_cd_dash(line, only_cd_chdir))
+    if (is_cd_dash(line, (mode == intercept_mode::only_cd_chdir)))
         return intercept_result::prev_dir;
 
-    if (only_cd_chdir)
+    if (mode == intercept_mode::only_cd_chdir)
         return intercept_result::none;
 
     // Parse the input for a single token.
@@ -216,7 +216,8 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
             break;
         }
     }
-    if (num_dots >= 2)
+    const bool is_dots = (num_dots >= 2);
+    if (is_dots)
     {
         tmp.clear();
         while (num_dots > 1)
@@ -250,8 +251,14 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
 
     path::tilde_expand(tmp);
 
-    if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
-        return intercept_result::none;
+    if (!is_dots)
+    {
+        if (mode == intercept_mode::no_remote && os::is_remote(tmp.c_str()))
+            return intercept_result::none;
+
+        if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
+            return intercept_result::none;
+    }
 
     // Normalize to system path separator, since `cd /d "/foo/"` fails because
     // the `/d` flag disables `cd` accepting forward slashes in paths.

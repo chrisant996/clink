@@ -1106,6 +1106,33 @@ bool get_full_path_name(const char* _path, str_base& out, uint32 len)
 }
 
 //------------------------------------------------------------------------------
+bool is_remote(const char* path, bool path_is_full)
+{
+    if (path && *path)
+    {
+        str<> full;
+        if (!path_is_full)
+        {
+            if (!os::get_full_path_name(path, full))
+                return false;
+            path = full.c_str();
+        }
+
+        if (path::is_unc(path))
+            return true;
+
+        char drive[4];
+        drive[0] = path[0];
+        drive[1] = ':';
+        drive[2] = '\\';
+        drive[3] = '\0';
+        if (os::get_drive_type(drive) == os::drive_type_remote)
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 bool get_net_connection_name(const char* path, str_base& out)
 {
     errno = 0;
