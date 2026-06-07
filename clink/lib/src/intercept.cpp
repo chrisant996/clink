@@ -254,7 +254,16 @@ intercept_result intercept_directory(const char* line, str_base* out, const inte
     if (!is_dots)
     {
         if (mode == intercept_mode::no_remote && os::is_remote(tmp.c_str()))
-            return intercept_result::none;
+        {
+            const char* drive = tmp.c_str() + path::past_ssqs(tmp.c_str());
+            if (drive[0] && drive[1] == ':')
+                return intercept_result::none;
+            str<16> tmp;
+            os::get_env("CLINK_NO_REMOTE_COLORING", tmp);
+            const bool no_remote_cwd = (atoi(tmp.c_str()) > 0);
+            if (no_remote_cwd)
+                return intercept_result::none;
+        }
 
         if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
             return intercept_result::none;

@@ -1122,7 +1122,7 @@ bool is_remote(const char* path, bool path_is_full)
             return true;
 
         char drive[4];
-        drive[0] = path[0];
+        drive[0] = path[path::past_ssqs(path)];
         drive[1] = ':';
         drive[2] = '\\';
         drive[3] = '\0';

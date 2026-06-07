@@ -55,157 +55,6 @@ static bool has_file_association(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static bool file_exists(const char* full, str_base& out)
-{
-    if (os::get_path_type(full) == os::path_type_file)
-    {
-        os::get_full_path_name(full, out);
-        return true;
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
-static bool search_for_extension(str_base& full, const char* word, str_base& out)
-{
-    path::append(full, "");
-    const uint32 trunc = full.length();
-
-    path::append(full, word);
-    if (has_file_association(full.c_str()))
-    {
-        if (file_exists(full.c_str(), out))
-            return true;
-    }
-
-    str<> pathext;
-    if (!os::get_env("pathext", pathext))
-        return false;
-
-    str_tokeniser tokens(pathext.c_str(), ";");
-    const char *start;
-    int32 length;
-
-    const char* ext = path::get_extension(word);
-    if (ext && str_icmp(ext, ".LNK") == 0 && file_exists(full.c_str(), out))
-        return true;
-
-    str<16> token_ext;
-    while (str_token token = tokens.next(start, length))
-    {
-        if (ext)
-        {
-            token_ext.clear();
-            token_ext.concat(start, length);
-            if (token_ext.iequals(ext))
-            {
-                full.truncate(trunc);
-                path::append(full, word);
-                if (file_exists(full.c_str(), out))
-                    return true;
-            }
-        }
-
-        full.truncate(trunc);
-        path::append(full, word);
-        full.concat(start, length);
-        if (file_exists(full.c_str(), out))
-            return true;
-    }
-
-// REVIEW:  Would it be useful to add this?  It was an experiment to try to
-// query the OS whether .LNK files are executable, but it doesn't recognize
-// them.  This runs only in the recognizer's background thread, so performance
-// and possible network access aren't necessarily a problem, although they
-// could of course potentially stall the recognizer.
-#ifdef USE_SHFETFILEINFOW_IN_RECOGNIZER
-    wstr<> wfull(full.c_str());
-    SHFILEINFOW fi = {};
-    const uint32 x = uint32(SHGetFileInfoW(wfull.c_str(), FILE_ATTRIBUTE_NORMAL, &fi, sizeof(fi), SHGFI_EXETYPE));
-    if (x != 0 && file_exists(full.c_str(), out))
-        return true;
-#endif
-
-    return false;
-}
-
-//------------------------------------------------------------------------------
-static recognition search_for_executable(const char* _word, const char* cwd, str_base& out)
-{
-    // Bail out early if it's obviously not going to succeed.
-    if (strlen(_word) >= MAX_PATH)
-        return recognition::unrecognized;
-
-// TODO: dynamically load NeedCurrentDirectoryForExePathW.
-    wstr<32> word(_word);
-    const bool need_cwd = !!NeedCurrentDirectoryForExePathW(word.c_str());
-    const bool need_path = !rl_last_path_separator(_word);
-    recognition fallback = recognition::unrecognized;
-
-    // Make list of paths to search.
-    str<> tmp;
-    str<> paths;
-    bool is_cwd = false;
-    if (path::is_rooted(_word))
-    {
-        path::get_directory(_word, paths);
-        if (os::is_remote(_word))
-            fallback = recognition::unknown;
-    }
-    else
-    {
-        if (need_cwd)
-        {
-            paths = cwd;
-            is_cwd = true;
-        }
-        if (need_path && os::get_env("PATH", tmp))
-        {
-            if (paths.length() > 0)
-                paths.concat(";", 1);
-            paths.concat(tmp.c_str(), tmp.length());
-        }
-    }
-
-    str<> full;
-    str<280> token;
-    str_tokeniser tokens(paths.c_str(), ";");
-    for (; tokens.next(token); is_cwd = false)
-    {
-        token.trim();
-        if (token.empty())
-            continue;
-
-        // Get full path name.
-        path::join(cwd, token.c_str(), tmp);
-        if (!os::get_full_path_name(tmp.c_str(), full, tmp.length()))
-            continue;
-
-        // Skip drives that are unknown, invalid, or remote.
-        {
-            char drive[4];
-            drive[0] = full.c_str()[0];
-            drive[1] = ':';
-            drive[2] = '\\';
-            drive[3] = '\0';
-            const int32 drive_type = os::get_drive_type(drive);
-            if (drive_type < os::drive_type_removable)
-            {
-                if (is_cwd && drive_type == os::drive_type_remote)
-                    fallback = recognition::unknown;
-                continue;
-            }
-        }
-
-        // Try PATHEXT extensions.
-        if (search_for_extension(full, _word, out))
-            return recognition::executable;
-    }
-
-    return fallback;
-}
-
-//------------------------------------------------------------------------------
 static bool s_immediate = false;
 void set_noasync_recognizer()
 {
@@ -257,6 +106,9 @@ private:
     bool                    dequeue(entry& entry);
     bool                    set_result_available(bool available);
     void                    notify_ready(bool available);
+    static bool             file_exists(const char* full, str_base& out);
+    static bool             search_for_extension(str_base& full, const char* word, str_base& out);
+    static recognition      search_for_executable(const entry& entry, str_base& out);
     static void             proc(recognizer* r);
 
 private:
@@ -612,6 +464,172 @@ void recognizer::shutdown()
 }
 
 //------------------------------------------------------------------------------
+bool recognizer::file_exists(const char* full, str_base& out)
+{
+    if (os::get_path_type(full) == os::path_type_file)
+    {
+        os::get_full_path_name(full, out);
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::search_for_extension(str_base& full, const char* word, str_base& out)
+{
+    path::append(full, "");
+    const uint32 trunc = full.length();
+
+    path::append(full, word);
+    if (has_file_association(full.c_str()))
+    {
+        if (file_exists(full.c_str(), out))
+            return true;
+    }
+
+    str<> pathext;
+    if (!os::get_env("pathext", pathext))
+        return false;
+
+    str_tokeniser tokens(pathext.c_str(), ";");
+    const char *start;
+    int32 length;
+
+    const char* ext = path::get_extension(word);
+    if (ext && str_icmp(ext, ".LNK") == 0 && file_exists(full.c_str(), out))
+        return true;
+
+    str<16> token_ext;
+    while (str_token token = tokens.next(start, length))
+    {
+        if (ext)
+        {
+            token_ext.clear();
+            token_ext.concat(start, length);
+            if (token_ext.iequals(ext))
+            {
+                full.truncate(trunc);
+                path::append(full, word);
+                if (file_exists(full.c_str(), out))
+                    return true;
+            }
+        }
+
+        full.truncate(trunc);
+        path::append(full, word);
+        full.concat(start, length);
+        if (file_exists(full.c_str(), out))
+            return true;
+    }
+
+// REVIEW:  Would it be useful to add this?  It was an experiment to try to
+// query the OS whether .LNK files are executable, but it doesn't recognize
+// them.  This runs only in the recognizer's background thread, so performance
+// and possible network access aren't necessarily a problem, although they
+// could of course potentially stall the recognizer.
+#ifdef USE_SHFETFILEINFOW_IN_RECOGNIZER
+    wstr<> wfull(full.c_str());
+    SHFILEINFOW fi = {};
+    const uint32 x = uint32(SHGetFileInfoW(wfull.c_str(), FILE_ATTRIBUTE_NORMAL, &fi, sizeof(fi), SHGFI_EXETYPE));
+    if (x != 0 && file_exists(full.c_str(), out))
+        return true;
+#endif
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+recognition recognizer::search_for_executable(const entry& entry, str_base& out)
+{
+    const char* _word = entry.m_word.c_str();
+    const char* cwd = entry.m_cwd.c_str();
+
+    // Bail out early if it's obviously not going to succeed.
+    if (strlen(_word) >= MAX_PATH)
+        return recognition::unrecognized;
+
+// TODO: dynamically load NeedCurrentDirectoryForExePathW.
+    wstr<32> word(_word);
+    const bool need_cwd = !!NeedCurrentDirectoryForExePathW(word.c_str());
+    const bool need_path = !rl_last_path_separator(_word);
+    recognition fallback = recognition::unrecognized;
+
+    // Make list of paths to search.
+    str<> tmp;
+    str<> paths;
+    bool is_cwd = false;
+    if (path::is_rooted(_word))
+    {
+        path::get_directory(_word, paths);
+        if (os::is_remote(_word))
+            fallback = recognition::unknown;
+    }
+    else
+    {
+        if (need_cwd)
+        {
+            paths = cwd;
+            is_cwd = true;
+        }
+        if (need_path && os::get_env("PATH", tmp))
+        {
+            if (paths.length() > 0)
+                paths.concat(";", 1);
+            paths.concat(tmp.c_str(), tmp.length());
+        }
+    }
+
+    str<> full;
+    str<280> token;
+    str_tokeniser tokens(paths.c_str(), ";");
+    int8 no_remote_cwd = -1;
+    for (; tokens.next(token); is_cwd = false)
+    {
+        token.trim();
+        if (token.empty())
+            continue;
+
+        // Get full path name.
+        path::join(cwd, token.c_str(), tmp);
+        if (!os::get_full_path_name(tmp.c_str(), full, tmp.length()))
+            continue;
+
+        // Skip drives that are unknown or invalid.
+        bool remote = false;
+        {
+            char drive[4];
+            drive[0] = full.c_str()[path::past_ssqs(full.c_str())];
+            drive[1] = ':';
+            drive[2] = '\\';
+            drive[3] = '\0';
+            const int32 drive_type = os::get_drive_type(drive);
+            if (drive_type < os::drive_type_remote)
+                continue;
+            if (drive_type == os::drive_type_remote)
+            {
+                if (!is_cwd)
+                    continue;
+                fallback = recognition::unknown;
+                if (no_remote_cwd < 0)
+                {
+                    str<16> tmp;
+                    os::get_env("CLINK_NO_REMOTE_COLORING", tmp);
+                    no_remote_cwd = (atoi(tmp.c_str()) > 0);
+                }
+                if (no_remote_cwd)
+                    continue;
+            }
+        }
+
+        // Try PATHEXT extensions.
+        if (search_for_extension(full, _word, out))
+            return recognition::executable;
+    }
+
+    return fallback;
+}
+
+//------------------------------------------------------------------------------
 void recognizer::proc(recognizer* r)
 {
     CoInitialize(0);
@@ -642,7 +660,7 @@ void recognizer::proc(recognizer* r)
 
             // Search for executable file.
             str<> found;
-            recognition result = search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found);
+            recognition result = r->search_for_executable(entry, found);
 
             // Store result.
             r->store(entry.m_key.c_str(), found.c_str(), result);
@@ -795,13 +813,14 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (cached == recognition::unrecognized && cwd.length() > 2 && cwd.c_str()[1] == ':')
     {
         char drive[4];
-        drive[0] = cwd.c_str()[0];
+        drive[0] = cwd.c_str()[path::past_ssqs(cwd.c_str())];
         drive[1] = ':';
         drive[2] = '\\';
         drive[3] = '\0';
         if (os::get_drive_type(drive) == os::drive_type_remote)
         {
-            const bool absolute = (word[0] && word[1] == ':');
+            const char* word_drive = word + path::past_ssqs(word);
+            const bool absolute = (word_drive[0] && word_drive[1] == ':');
             if (!absolute)
                 cached = recognition::unknown;
         }
