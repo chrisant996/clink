@@ -2964,6 +2964,8 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 <tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
 </table></code></pre>
 
+> **Note:** To avoid potential hangs or performance problems, command word coloring does not check remote drives.  However, if the current directory is on a remote drive then relative paths may still color recognized executable files even from the remote drive.  To disable that and never allow checking remote drives you can `set CLINK_NO_REMOTE_COLORING=1`.
+
 <a name="inputcolor_redir"></a>
 
 ### Coloring Command Separators and Redirection
