@@ -6,7 +6,9 @@
 
 - Added new bindable commands `clink-show-suggestion-list` and `clink-cancel-suggestion-list`, for more specific control than `clink-toggle-suggestion-list`.
 - Added the console codepage to `clink info` and `clink-diagnostics` output.
-- Changed to disable executable coloring for relative paths/files when the current directory is on a remote drive, instead of coloring them as "unrecognized".
+- Changed how coloring the command word works with remote paths/files:
+  - Disable coloring the command word with absolute remote paths/files, instead of coloring it as "unrecognized".
+  - Allow coloring the command word with relative remote paths/files, i.e. when the current directory is a remote drive, instead of coloring it as "unrecognized" (this can be disabled by setting the `CLINK_NO_REMOTE_COLORING` environment variable to a positive integer such as `1`).
 - Updated documentation to be clear that the `autosuggest.strategy` setting is a list of strategy names separated by spaces (other punctuation are not separators).
 - Fixed the "User scripts and history" checkbox in the uninstaller so it correctly deletes them when checked (regression introduced in v0.2, in 2012).
 - Fixed the `clink.debugprint()` Lua API to handle UTF8 appropriately.
