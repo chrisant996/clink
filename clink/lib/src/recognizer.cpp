@@ -36,6 +36,20 @@ extern setting_color g_color_unrecognized;
 extern setting_color g_color_executable;
 
 //------------------------------------------------------------------------------
+static bool is_absolute_drive(const char* path)
+{
+    if (path::is_unc(path))
+        return true;
+
+    path += path::past_ssqs(path);
+
+    if (path[0] && path[1] == ':')
+        return true;
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static bool has_file_association(const char* name)
 {
     const char* ext = path::get_extension(name);
@@ -805,12 +819,18 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (strchr(word, '*') || strchr(word, '?'))
         return recognition::unrecognized;
 
-    // If the current directory is remote, then report unknown instead of
+    // If an absolute path to a remote directory, or if a relative path and
+    // the current directory is remote, then report unknown instead of
     // unrecognized.
     str<> cwd;
     os::get_current_dir(cwd);
     assert(!path::is_unc(word)); // Already short-circuited earlier.
-    if (cached == recognition::unrecognized && cwd.length() > 2 && cwd.c_str()[1] == ':')
+    if (is_absolute_drive(word))
+    {
+        if (os::is_remote(word))
+            cached = recognition::unknown;
+    }
+    else if (cached == recognition::unrecognized && cwd.length() > 2 && cwd.c_str()[1] == ':')
     {
         char drive[4];
         drive[0] = cwd.c_str()[path::past_ssqs(cwd.c_str())];
