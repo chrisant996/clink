@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.25</title>
+<title>Clink v1.9.26</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.25</div>
+                <div id="title">Clink v1.9.26</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1569,7 +1569,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#autosuggest_strategy"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_strategy"></a><code>autosuggest.strategy</code></td>
 <td align="center"><code>match_prev_cmd history completion</code></td>
-<td>This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  <code>history</code> chooses the most recent matching command from the history.  <code>completion</code> chooses the first of the matching completions.  <code>match_prev_cmd</code> chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the <a href="#history_dupe_mode"><code>history.dupe_mode</code></a> setting is <code>add</code>.</td>
+<td>This determines how suggestions are chosen.  The suggestion generators are tried in the order listed (separated by spaces), until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  <code>history</code> chooses the most recent matching command from the history.  <code>completion</code> chooses the first of the matching completions.  <code>match_prev_cmd</code> chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the <a href="#history_dupe_mode"><code>history.dupe_mode</code></a> setting is <code>add</code>.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#clink_autostart"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_autostart"></a><code>clink.autostart</code></td>
@@ -3836,6 +3836,11 @@ $endif              # end clink-only section
 <td>Move back to the start of the current or previous space delimited word.</td>
 </tr>
 <tr>
+<td><a class="wlink" href="#rlcmd-clink-cancel-suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-cancel-suggestion-list"></a><code>clink-cancel-suggestion-list</code></td>
+<td align="center"></td>
+<td>Turn off the <a href="#suggestion-list">suggestion list</a>.</td>
+</tr>
+<tr>
 <td><a class="wlink" href="#rlcmd-clink-complete-numbers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-complete-numbers"></a><code>clink-complete-numbers</code></td>
 <td align="center"></td>
 <td>Like <a href="#rlcmd-complete"><code>complete</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
@@ -4066,6 +4071,11 @@ $endif              # end clink-only section
 <td>Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).  Add 4 to include unbound commands.</td>
 </tr>
 <tr>
+<td><a class="wlink" href="#rlcmd-clink-show-suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-show-suggestion-list"></a><code>clink-show-suggestion-list</code></td>
+<td align="center"></td>
+<td>Turn on the <a href="#suggestion-list">suggestion list</a>.</td>
+</tr>
+<tr>
 <td><a class="wlink" href="#rlcmd-clink-toggle-slashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-toggle-slashes"></a><code>clink-toggle-slashes</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>/</kbd></td>
 <td>Toggle between forward and backslashes in the word at the cursor point, or toggle in the <em>n</em>-th word if a numeric argument is provided via the <a href="#rlcmd-digit-argument"><code>digit-argument</code></a> keys.</td>
@@ -4073,7 +4083,7 @@ $endif              # end clink-only section
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-toggle-suggestion-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-toggle-suggestion-list"></a><code>clink-toggle-suggestion-list</code></td>
 <td align="center"><kbd>F2</kbd></td>
-<td>Toggle the suggestion list mode on/off.  When the suggestion list mode is enabled and <a href="#autosuggest-enable"><code>autosuggest.enable</code></a> is enabled, then suggestions are shown in a list.  When the suggestion list is displayed, it responds to some keys:  use <kbd>Up</kbd> and <kbd>Down</kbd> to select a suggestion and apply it to the current input line, or use <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd> to temporarily hide the suggestion list and allow using the normal key bindings for <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
+<td>Toggle the <a href="#suggestion-list">suggestion list</a> on/off.  When the suggestion list is enabled and <a href="#autosuggest-enable"><code>autosuggest.enable</code></a> is enabled, then suggestions are shown in a list.  When the suggestion list is displayed, it responds to some keys:  use <kbd>Up</kbd> and <kbd>Down</kbd> to select a suggestion and apply it to the current input line, or use <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>g</kbd> to temporarily hide the suggestion list and allow using the normal key bindings for <kbd>Up</kbd> and <kbd>Down</kbd>.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-up-directory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-up-directory"></a><code>clink-up-directory</code></td>
@@ -5506,6 +5516,9 @@ end
 <tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
 </table></code></pre>
 
+<blockquote>
+<p><strong>Note:</strong> To avoid potential hangs or performance problems, command word coloring does not check remote drives.  However, if the current directory is on a remote drive then relative paths may still color recognized executable files even from the remote drive.  To disable that and never allow checking remote drives you can <code>set CLINK_NO_REMOTE_COLORING=1</code>.</p>
+</blockquote>
 <p><a name="inputcolor_redir"></a></p>
 <h3 id="coloring-command-separators-and-redirection"><a class="wlink" href="#inputcolor_redir"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Coloring Command Separators and Redirection <span class="uplinks"><a href="#classifywords">up</a> <a href="#toc">top</a></span></h3>
 <p>Command separators and redirection are colored accordingly:</p>
@@ -9372,6 +9385,22 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1926"><a class="wlink" href="#v1926"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.26 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new bindable commands <code>clink-show-suggestion-list</code> and <code>clink-cancel-suggestion-list</code>, for more specific control than <code>clink-toggle-suggestion-list</code>.</li>
+<li>Added the console codepage to <code>clink info</code> and <code>clink-diagnostics</code> output.</li>
+<li>Changed how coloring the command word works with remote paths/files:<ul>
+<li>Disable coloring the command word with absolute remote paths/files, instead of coloring it as &quot;unrecognized&quot;.</li>
+<li>Allow coloring the command word with relative remote paths/files, i.e. when the current directory is a remote drive, instead of coloring it as &quot;unrecognized&quot; (this can be disabled by setting the <code>CLINK_NO_REMOTE_COLORING</code> environment variable to a positive integer such as <code>1</code>).</li>
+</ul>
+</li>
+<li>Updated documentation to be clear that the <code>autosuggest.strategy</code> setting is a list of strategy names separated by spaces (other punctuation are not separators).</li>
+<li>Fixed the &quot;User scripts and history&quot; checkbox in the uninstaller so it correctly deletes them when checked (regression introduced in v0.2, in 2012).</li>
+<li>Fixed the <code>clink.debugprint()</code> Lua API to handle UTF8 appropriately.</li>
+<li>Fixed off-by-one row when clicking the mouse in the suggestion list when the <code>suggestionlist.hide_hints</code> setting is false.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/875">#875</a>; crash on HTTP error partway through checking for an update.</li>
+<li>Internal changes to remove internal Clink Lua functions and data from the visible namespace.</li>
+</ul>
 <h4 id="v1925"><a class="wlink" href="#v1925"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.25 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new <code>suggestionlist.autooff</code> setting to optionally automatically disable the suggestion list after each use (ended by <kbd>Esc</kbd> or <kbd>Enter</kbd>).</li>
