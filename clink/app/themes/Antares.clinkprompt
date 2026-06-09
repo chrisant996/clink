@@ -232,7 +232,7 @@ function ant:antares_update_git_status()
 
     local git_status=clink.promptcoroutine(function()
         local status=git.getstatus()
-        detached = detached or status.detached
+        detached = detached or (status and status.detached)
         local tag
         if detached then
             local git_tag=command(git.makecommand("tag --points-at=HEAD"), true)

@@ -212,7 +212,9 @@ local function git_func()
         last_gitstatus = status
     else
         local branch = git.getbranch(nil, true--[[fast]])
-        if branch == ".invalid" then
+        if not branch then
+            return
+        elseif branch == ".invalid" then
             branch = "Loading..." -- Compensate for git reftable.
         end
         status = last_gitstatus or { branch=branch }

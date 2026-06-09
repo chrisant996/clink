@@ -150,7 +150,7 @@ local function bureau_git_prompt()
 
     -- check git information
     local gitinfo=bureau_git_info()
-    if gitinfo == "" then
+    if gitinfo == nil or gitinfo == "" then
         return ""
     end
 
