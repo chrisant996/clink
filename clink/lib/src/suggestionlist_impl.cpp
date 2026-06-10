@@ -103,12 +103,17 @@ setting_bool g_suggestionlist_hide_hints(
     "setting are suppressed while using the suggestion list.",
     true);
 
+constexpr int32 c_max_width_lower_bound = 72;
+constexpr int32 c_default_max_width = 100;
 static setting_int g_suggestionlist_max_width(
     "suggestionlist.max_width",
     "Max width for the suggestion list",
-    "The maximum width in columns for the suggestion list.  When this is 0,\n"
-    "the limit is the terminal width.",
-    100);
+    "The maximum width in columns for the suggestion list.\n"
+    "When this is 0 or negative, the only limit is the terminal width.\n"
+    "When this is 72 or greater, the suggestion list uses up to this value\n"
+    "or the terminal width, whichever is smaller.\n"
+    "Otherwise, it uses up to 72 or the terminal width, whichever is smaller.",
+    c_default_max_width);
 
 extern setting_bool g_autosuggest_enable;
 extern setting_int g_clink_scroll_offset;
@@ -763,7 +768,7 @@ void suggestionlist_impl::update_layout(bool refreshing_display)
     m_max_width = m_screen_cols - reserve_cols;
     const int32 max_width = g_suggestionlist_max_width.get();
     if (max_width > 0)
-        m_max_width = min<>(m_max_width, max_width);
+        m_max_width = min<>(m_max_width, max<>(max_width, c_max_width_lower_bound));
 
     // If the number of visible rows shrinks, then make that the new max
     // number of visible rows.  This happens when applying the selected
