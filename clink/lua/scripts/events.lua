@@ -130,6 +130,32 @@ function clink._internal._send_event_cancelable_string_inout(event, string)
 end
 
 --------------------------------------------------------------------------------
+-- Sends the onhistory event to all registered callback handlers for it.  If
+-- any handler returns false then stop (returning nil does not stop).  If any
+-- handler returns a string, use that as the new line to be saved to history
+-- (and all subsequent callback handlers receive it as the line parameter).
+function clink._internal._send_event_cancelable_override_string(event, string)
+    local callbacks = internal._event_callbacks[event]
+    if callbacks ~= nil then
+        for _, c in ipairs_active(callbacks) do
+            if c.func then
+                local tick = os.clock()
+                local result = c.func(string)
+                log_cost(tick, c)
+                if result == false then
+                    -- Cancel.
+                    return false
+                elseif type(result) == "string" then
+                    -- Override the string.
+                    string = result
+                end
+            end
+        end
+    end
+    return string
+end
+
+--------------------------------------------------------------------------------
 function clink._internal._has_event_callbacks(event)
     local callbacks = internal._event_callbacks[event];
     if callbacks ~= nil then
@@ -271,14 +297,40 @@ end
 --- -ver:   1.5.13
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when an input line has
---- been accepted and is about to be added to history.  The function receives a
---- string argument containing the input text from the edit prompt.  The
---- function can return false to cancel adding the line to history (if it
---- returns false then no further onhistory handlers will run for that line).
+--- been accepted and is about to be added to history.
+---
+--- The registered handler function receives a string argument containing the
+--- input text from the edit prompt.  The function can return false to cancel
+--- adding the line to history (if it returns false then no further onhistory
+--- handlers will run for that line).
+---
+--- In Clink v1.9.27 and newer, if the registered handler function returns a
+--- string then the string overrides what will be added to history.
 ---
 --- <strong>Note:</strong>  The onhistory handler functions are not called by
 --- <code><a href="#rlcmd-add-history">add-history</a></code> or the
 --- <code>clink history</code> command.
+--- -show:  local test_patterns = {
+--- -show:      "[-/]pass",
+--- -show:      "[-/]pwd",
+--- -show:  }
+--- -show:
+--- -show:  local norm = "\x1b[m"
+--- -show:  local italic = "\x1b[3m"
+--- -show:  local color = "\x1b[31m"
+--- -show:
+--- -show:  local function test_input(line)
+--- -show:      line = line:lower()
+--- -show:      for _, pat in ipairs(test_patterns) do
+--- -show:          if line:find(pat) then
+--- -show:              -- Cancel adding the line to persisted history.
+--- -show:              clink.print(italic..color.."Command line is blocked from history."..norm)
+--- -show:              return false
+--- -show:          end
+--- -show:      end
+--- -show:  end
+--- -show:
+--- -show:  clink.onhistory(test_input)
 function clink.onhistory(func)
     _add_event_callback("onhistory", func)
 end

@@ -323,6 +323,12 @@ bool host_lua::send_oninputlinechanged_event(const char* line)
 }
 
 //------------------------------------------------------------------------------
+bool host_lua::send_onhistory_event(const char* line, str_base& override_add)
+{
+    return m_state.send_onhistory_event(line, override_add);
+}
+
+//------------------------------------------------------------------------------
 bool host_lua::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     return m_state.call_lua_rl_global_function(func_name, line);

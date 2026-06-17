@@ -1282,19 +1282,22 @@ force_reload_lua:
             }
         }
 
-        // Let Lua scripts suppress adding the line to history.
+        // Let Lua scripts suppress adding the line to history or modify what
+        // gets added to history.
+        const char* what_to_add = out.c_str();
+        str_moveable override_add;
         if (add_history && history && send_event)
         {
             lua_state& state = lua;
             assert_stack_top ast_onhistory(state.get_state());
-            lua_pushlstring(state.get_state(), out.c_str(), out.length());
-            add_history = !lua.send_event_cancelable("onhistory", 1);
+            add_history = !lua.send_onhistory_event(out.c_str(), override_add);
+            what_to_add = override_add.c_str();
         }
 
         // Add the line to the history.
         assert(history);
         if (add_history && history)
-            history->add(out.c_str());
+            history->add(what_to_add);
         break;
     }
 

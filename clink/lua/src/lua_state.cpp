@@ -837,6 +837,24 @@ bool lua_state::send_oninputlinechanged_event(const char* line)
 }
 
 //------------------------------------------------------------------------------
+bool lua_state::send_onhistory_event(const char* line, str_base& override_add)
+{
+    lua_State* L = get_state();
+
+    lua_pushstring(L, line);
+    if (!send_event_internal(L, "onhistory", "_send_event_cancelable_override_string", 1, 1))
+        return false;
+
+    const bool canceled = (lua_isboolean(L, -1) && !lua_toboolean(L, -1));
+    if (lua_isstring(L, -1))
+        override_add = lua_tostring(L, -1);
+
+    lua_pop(L, 1);
+    return canceled;
+
+}
+
+//------------------------------------------------------------------------------
 bool lua_state::get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file)
 {
     lua_State* L = get_state();
