@@ -12,6 +12,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Issues with scrolling jitter:
   - Disable (defer) prompt refreshes while the prompt is scrolled out of view, in conhost?
   - So that mouse wheel scrolling can work despite animated prompts?
+  - Harder than it looks:  too many things (incl. public Lua APIs) expect that the prompt and input line are updated immediately, so it would be necessary to prevent prompt refiltering, which also means there would still be race conditions where it refiltered and then scrolled and then the display will get scrolled.
+  - Maybe it could also save the scroll position and restore it after redisplay?
 - Add tracking for what is the highest Clink version that's been run?
   - Next run after an update can do post-update work (but must be very careful because of concurrency!).
   - Updater can show message about important post-update information (such as breaking changes).
