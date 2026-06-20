@@ -6,6 +6,7 @@
 
 - Added new `suggestionlist.max_width` setting to override the default width of the suggestion list.
 - Changed [clink.onhistory()](#clink.onhistory) to let the handler function return a string to override what is saved to history.
+- Fixed scrolling jitter while trying to scroll the legacy conhost terminal while Lua scripts are trying to refresh the prompt in the background (e.g. async prompt filtering or animated prompts); refreshing the prompt is paused while the legacy conhost terminal is scrolled, and resumes after the prompt and input line are fully visible again.
 - Fixed [#879](https://github.com/chrisant996/clink/issues/879); `prompt filter failed` in a directory with empty `.git` subdirectory.
 
 #### v1.9.26
