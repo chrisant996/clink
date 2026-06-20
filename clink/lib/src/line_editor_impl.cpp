@@ -344,6 +344,8 @@ void line_editor_impl::begin_line()
 
     rl_before_display_function = ::before_display_readline;
 
+    defer_refilter(false);
+
     editor_module::context context = get_context();
     for (auto module : m_modules)
         module->on_begin_line(context);

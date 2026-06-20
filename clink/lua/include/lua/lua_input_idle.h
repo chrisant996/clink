@@ -17,6 +17,7 @@ public:
     void            reset() override;
     uint32          get_timeout() override;
     uint32          get_wait_events(void** events, size_t max) override;
+    void            do_deferred_refilter_prompt() override;
     void            on_wait_event(uint32 index) override;
     void            on_idle() override;
 

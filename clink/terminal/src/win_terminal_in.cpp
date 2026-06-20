@@ -1165,9 +1165,13 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         const bool m_doit;
     } _cs(cursor_visibility);
 
-    // Conhost restarts the cursor blink when writing to the console. It restarts
-    // hidden which means that if you type faster than the blink the cursor turns
-    // invisible. Fortunately, moving the cursor restarts the blink on visible.
+    // Conhost restarts the cursor blink when writing to the console.  It
+    // restarts hidden which means that if you type faster than the blink the
+    // cursor turns invisible.  Fortunately, moving the cursor restarts the
+    // blink on visible.  But only set the cursor position if the cursor is
+    // visible (otherwise it isn't blinking in the first place) and if the
+    // terminal isn't scrolled (setting the cursor position can accidentally
+    // override the scroll position).
     if (cursor_visibility && !is_scroll_mode())
     {
         CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -1193,20 +1197,22 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
         while (true)
         {
+            // When conhost is scrolled, then clink.refilterprompt() gets
+            // deferred.  This is where the deferred refilter may happen.
+            if (callback)
+                callback->do_deferred_refilter_prompt();
+
+            // Get handles to wait on.
             uint32 count = 1;
             HANDLE handles[5] = { m_stdin };
-
             if (s_interrupt)
                 handles[count++] = s_interrupt;
-
             const uint32 index_callback_events = count;
             const uint32 num_callback_events = callback ? callback->get_wait_events(handles + count, sizeof_array(handles) - count) : 0;
             count += num_callback_events;
-
             assert(count <= sizeof_array(handles));
 
-            fix_console_input_mode();
-
+            // Calculate the timeout duration to use.
             DWORD timeout = callback ? callback->get_timeout() : INFINITE;
             if (_timeout != INFINITE)
             {
@@ -1218,6 +1224,8 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                     timeout = 0;
             }
 
+            // Wait for input.
+            fix_console_input_mode();
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
 
             deduce_scroll_mode(m_stdout);

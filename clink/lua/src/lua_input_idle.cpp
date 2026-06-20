@@ -10,6 +10,7 @@
 #include <core/base.h>
 #include <lib/reclassify.h>
 #include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
 #include <lib/display_readline.h>
 
 #include <assert.h>
@@ -116,6 +117,18 @@ uint32 lua_input_idle::get_timeout()
         }
     }
 
+    // While prompt refiltering is deferred, influence the timeout to wake
+    // periodically to allow noticing when the terminal is no longer scrolled,
+    // so that the refilter can happen.
+    if (is_refilter_deferred())
+    {
+        // The timeout needs to be large enough to let the CPU sleep, but
+        // small enough that the prompt doesn't feel "stuck" when the user
+        // eventually scrolls the terminal so the prompt and input line are
+        // fully in view again.
+        timeout = min(timeout, DWORD(1500));
+    }
+
     return timeout;
 }
 
@@ -145,6 +158,17 @@ uint32 lua_input_idle::get_wait_events(void** events, size_t max)
 }
 
 //------------------------------------------------------------------------------
+void lua_input_idle::do_deferred_refilter_prompt()
+{
+    if (!is_refilter_deferred())
+        return;
+    if (is_terminal_scrolled())
+        return;
+
+    host_filter_prompt();
+}
+
+//------------------------------------------------------------------------------
 void lua_input_idle::on_wait_event(uint32 index)
 {
     if (index == uint32(-1))                assert(false);
@@ -169,7 +193,8 @@ void lua_input_idle::on_idle()
         {
             s_terminal_resized = 0;
             clear_to_end_of_screen_on_next_display();
-            host_filter_prompt();
+            if (!is_refilter_deferred())
+                host_filter_prompt();
         }
     }
     else

@@ -17,6 +17,12 @@
 #include <core/os.h>
 #include <core/debugheap.h>
 
+extern "C" {
+#include <readline/readline.h>
+#include <readline/rldefs.h>
+#include <readline/rlprivate.h>
+}
+
 //------------------------------------------------------------------------------
 static line_editor_impl* s_editor = nullptr;
 static host_callbacks* s_callbacks = nullptr;
@@ -275,7 +281,28 @@ void host_filter_prompt()
         return;
     }
 
+    // If the prompt is saved, then first restore it.  This can be called
+    // while a prompt is saved and rl_message() has added a message.  E.g.
+    // history-search-backward then a letter then forward-search-history with
+    // the clink-flex-prompt {modmark} detects that the modmark has changed
+    // and calls clink.refilterprompt() while a message is active.
+    const int32 was_saved = rl_is_prompt_saved();
+    if (was_saved)
+    {
+        rl_restore_prompt();
+    }
+
+    // Filter the prompt.
     s_callbacks->filter_prompt();
+
+    // If the prompt was saved, now save it again and reapply any message.
+    // This makes sure that the eventual rl_restore_prompt() restores to the
+    // updated prompt, instead of restoring to the older original prompt.
+    if (was_saved)
+    {
+        rl_save_prompt();
+        rl_reapply_message();
+    }
 }
 
 //------------------------------------------------------------------------------

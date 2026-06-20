@@ -12,6 +12,7 @@
 #include <core/base.h>
 #include <core/debugheap.h>
 #include <terminal/printer.h>
+#include <terminal/scroll.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/wcwidth.h>
 
@@ -306,4 +307,48 @@ void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
 
         clear();
     }
+}
+
+
+
+//------------------------------------------------------------------------------
+static bool s_refilter_deferred = false;
+
+//------------------------------------------------------------------------------
+bool is_terminal_scrolled()
+{
+    // Temporary code to allow disabling this if it causes a problem...
+    {
+        str<> value;
+        if (os::get_env("CLINK_NO_DEFER_REFILTER", value) && atoi(value.c_str()) != 0)
+            return false;;
+    }
+
+    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    deduce_scroll_mode(hout);
+    if (!is_scroll_mode())
+        return false;
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(hout, &csbi))
+        return false;
+
+    // Consider the terminal to be scrolled if the prompt isn't fully visible
+    // or the input line isn't fully visible.
+    const DWORD top_y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+    const DWORD bot_y = top_y + _rl_vis_botlin;
+    return csbi.srWindow.Top > top_y || csbi.srWindow.Bottom < bot_y;
+}
+
+//------------------------------------------------------------------------------
+bool is_refilter_deferred()
+{
+    return s_refilter_deferred;
+}
+
+//------------------------------------------------------------------------------
+bool defer_refilter(bool defer)
+{
+    s_refilter_deferred = defer;
+    return s_refilter_deferred;
 }

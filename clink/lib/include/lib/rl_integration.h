@@ -50,6 +50,11 @@ bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool f
 bool    rl_has_queued_input();
 
 //------------------------------------------------------------------------------
+bool    is_terminal_scrolled();
+bool    is_refilter_deferred();
+bool    defer_refilter(bool defer);
+
+//------------------------------------------------------------------------------
 void    signal_terminal_resized();
 void    set_refilter_after_resize(bool refilter);
 
