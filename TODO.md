@@ -28,7 +28,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - And I would want it to support all the Readline commands, but a clean room implementation would probably have at least a few places where the independent implementations don't quite entirely work the same as the Readline versions, and I'm not sure whether that would be acceptable.
 
 ## Low Priority
-- Is there something that can be done to accommodate executable coloring in the input line for remote drives?  [#876](https://github.com/chrisant996/clink/issues/876)
 - If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by the "More?" prompt or a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's not the main input line prompt.  But there's no way for Clink to inject input into ReadConsoleW.  Maybe provide a custom simple input editor?
   - For now, the "More?" prompt case returns the queued characters **and appends a newline**.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them **and a newline is added, causing the command to be accepted prematurely**.
   - For now, the confirmation prompt case returns the queued characters and then falls back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.
