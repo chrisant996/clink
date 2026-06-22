@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.28
+
+- Fixed a case where `clink-select-complete` could accidentally wrap long matches with descriptions instead of truncating them.
+
 #### v1.9.27
 
 - Added new `suggestionlist.max_width` setting to override the default width of the suggestion list.
