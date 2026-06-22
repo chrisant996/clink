@@ -264,6 +264,7 @@ cant_activate:
         assert(!m_expanded);
         assert(!m_clear_display);
         m_init_desc_below = true;
+        m_require_desc_below = false;
         m_any_displayed = false;
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
@@ -421,6 +422,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_screen_rows = context.printer.get_rows();
     m_desc_below = false;
     m_init_desc_below = true;
+    m_require_desc_below = false;
     update_layout();
 }
 
@@ -439,6 +441,7 @@ void selectcomplete_impl::on_end_line()
     m_anchor = -1;
     m_desc_below = false;
     m_init_desc_below = true;
+    m_require_desc_below = false;
     m_can_prompt = true;
     m_clear_display = false;
     m_ignore_scroll_offset = false;
@@ -922,7 +925,7 @@ append_not_dup:
         break;
 
     case bind_id_selectcomplete_f1:
-        if (m_matches.has_descriptions())
+        if (m_matches.has_descriptions() && !m_require_desc_below)
         {
             const int32 delta = get_match_row(m_index) - m_top;
 
@@ -938,6 +941,10 @@ append_not_dup:
 
             m_clear_display = true;
             update_display();
+        }
+        else
+        {
+            rl_ding();
         }
         break;
 
@@ -1354,6 +1361,20 @@ force_desc_below:
         rollback<int32> rcpdl(_rl_completion_prefix_display_length, 0);
         m_widths = calculate_columns(m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
+    }
+
+#ifdef SHOW_VERT_SCROLLBARS
+    const int32 reserve_cols = 3;   // Can't determine m_vert_scroll_car yet, so assume true.
+#else
+    const int32 reserve_cols = 1;
+#endif
+    assertimplies(m_matches.get_match_count(), m_widths.num_columns() > 0);
+    if (m_matches.get_match_count() &&
+        m_widths.max_match_len(0) >= m_screen_cols - reserve_cols)
+    {
+        m_require_desc_below = true;
+        m_init_desc_below = false;
+        m_desc_below = true;
     }
 
     const int32 cols_that_fit = m_widths.num_columns();
@@ -1798,6 +1819,8 @@ void selectcomplete_impl::update_display()
                 static const char c_footer[] = "\x1b[7mF1\x1b[27m-InlineDescs";
                 int32 footer_cols = cell_count(c_footer);
                 if (footer_cols + 2 > m_screen_cols / 2)
+                    footer_cols = 0;
+                else if (m_require_desc_below)
                     footer_cols = 0;
 
                 const int32 fit_cols = m_screen_cols - 1 - (footer_cols ? footer_cols + 2 : 0);
