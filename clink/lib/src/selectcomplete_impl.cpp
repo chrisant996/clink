@@ -1377,7 +1377,8 @@ force_desc_below:
         m_desc_below = true;
     }
 
-    const int32 cols_that_fit = m_widths.num_columns();
+    const bool inline_descriptions = !m_desc_below && m_matches.has_descriptions();
+    const int32 cols_that_fit = (!inline_descriptions || m_widths.m_right_justify) ? m_widths.num_columns() : 1;
     m_match_cols = max<int32>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
     m_ignore_scroll_offset = false;
