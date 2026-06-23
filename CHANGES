@@ -5,6 +5,7 @@
 #### v1.9.28
 
 - Fixed a case where `clink-select-complete` could accidentally wrap long matches with descriptions instead of truncating them.
+- Fixed a case where `clink-select-complete` could get confused about how many matches it meant to print per line when showing descriptions inline (especially when using a wide terminal window).
 
 #### v1.9.27
 
