@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.26</title>
+<title>Clink v1.9.28</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.26</div>
+                <div id="title">Clink v1.9.28</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -2150,6 +2150,11 @@ $endif
 <td align="center"><a class="wlink" href="#suggestionlist_hide_hints"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_hide_hints"></a><code>suggestionlist.hide_hints</code></td>
 <td align="center">True</td>
 <td>When this is true, the input hints controlled by the <a href="#comment_row_show_hints"><code>comment_row.show_hints</code></a> setting are suppressed while using the suggestion list.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#suggestionlist_max_width"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_max_width"></a><code>suggestionlist.max_width</code></td>
+<td align="center"><code>100</code></td>
+<td>The maximum width in columns for the suggestion list.  When this is 0 or negative, the only limit is the terminal width.  When this is 72 or greater, the suggestion list uses up to this value or the terminal width, whichever is smaller.  Otherwise, it uses up to 72 or the terminal width, whichever is smaller.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#suggestionlist_num_history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="suggestionlist_num_history"></a><code>suggestionlist.num_history</code></td>
@@ -7974,7 +7979,27 @@ end</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.onfiltermatches" class="name"><a class="wlink" href="#clink.onfiltermatches"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onfiltermatches</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.1.41</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="clink.onhistory" class="name"><a class="wlink" href="#clink.onhistory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onhistory</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.5.13</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when an input line has been accepted and is about to be added to history.  The function receives a string argument containing the input text from the edit prompt.  The function can return false to cancel adding the line to history (if it returns false then no further onhistory handlers will run for that line).</p><p class="desc"> <strong>Note:</strong>  The onhistory handler functions are not called by <code><a href="#rlcmd-add-history">add-history</a></code> or the <code>clink history</code> command.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="clink.onhistory" class="name"><a class="wlink" href="#clink.onhistory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.onhistory</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> func</span>:function ) : nil<br/><div class="version">v 1.5.13</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when an input line has been accepted and is about to be added to history.</p><p class="desc"> The registered handler function receives a string argument containing the input text from the edit prompt.  The function can return false to cancel adding the line to history (if it returns false then no further onhistory handlers will run for that line).</p><p class="desc"> In Clink v1.9.27 and newer, if the registered handler function returns a string then the string overrides what will be added to history.</p><p class="desc"> <strong>Note:</strong>  The onhistory handler functions are not called by <code><a href="#rlcmd-add-history">add-history</a></code> or the <code>clink history</code> command.</p><pre class="language-lua"><code>local test_patterns = {
+    "[-/]pass",
+    "[-/]pwd",
+}
+
+local norm = "\x1b[m"
+local italic = "\x1b[3m"
+local color = "\x1b[31m"
+
+local function test_input(line)
+    line = line:lower()
+    for _, pat in ipairs(test_patterns) do
+        if line:find(pat) then
+            -- Cancel adding the line to persisted history.
+            clink.print(italic..color.."Command line is blocked from history."..norm)
+            return false
+        end
+    end
+end
+
+clink.onhistory(test_input)</code></pre></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="clink.oninject" class="name"><a class="wlink" href="#clink.oninject"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>clink.oninject</span> <span class="uplinks"><a href="#clink">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
 
@@ -9385,6 +9410,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1928"><a class="wlink" href="#v1928"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.28 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Fixed a case where <code>clink-select-complete</code> could accidentally wrap long matches with descriptions instead of truncating them.</li>
+<li>Fixed a case where <code>clink-select-complete</code> could get confused about how many matches it meant to print per line when showing descriptions inline (especially when using a wide terminal window).</li>
+</ul>
+<h4 id="v1927"><a class="wlink" href="#v1927"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.27 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new <code>suggestionlist.max_width</code> setting to override the default width of the suggestion list.</li>
+<li>Changed <a href="#clink.onhistory">clink.onhistory()</a> to let the handler function return a string to override what is saved to history.</li>
+<li>Fixed scrolling jitter while trying to scroll the legacy conhost terminal while Lua scripts are trying to refresh the prompt in the background (e.g. async prompt filtering or animated prompts); refreshing the prompt is paused while the legacy conhost terminal is scrolled, and resumes after the prompt and input line are fully visible again.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/879">#879</a>; <code>prompt filter failed</code> in a directory with empty <code>.git</code> subdirectory.</li>
+</ul>
 <h4 id="v1926"><a class="wlink" href="#v1926"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.26 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Added new bindable commands <code>clink-show-suggestion-list</code> and <code>clink-cancel-suggestion-list</code>, for more specific control than <code>clink-toggle-suggestion-list</code>.</li>
