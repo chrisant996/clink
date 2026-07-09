@@ -4,7 +4,8 @@
 
 #### v1.9.29
 
-- Add new Lua APIs to query Readline's kill-ring (see [rl.getkillringcount()](#rl.getkillringcount) and etc).
+- Added new Lua APIs to query Readline's kill-ring (see [rl.getkillringcount()](#rl.getkillringcount) and etc).
+- Changed `oh-my-posh.clinkprompt` to work around an issue where in error cases oh-my-posh can accidentally emit a `bash` script instead of a Lua script.
 
 #### v1.9.28
 
