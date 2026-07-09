@@ -836,7 +836,6 @@ int32 get_key_bindings(lua_State* state)
 /// -show:  -- or for example '"luafunc:my_macro_function"' or '"some macro text"'
 /// -show:  local info = rl.getcommandbindings(command)
 /// -show:  if info then
-/// -show:      local info = rl.getcommandbindings(command)
 /// -show:      print("Info for '"..command.."':")
 /// -show:      print("Description is:  "..info.desc)
 /// -show:      print("Category is:     "..info.category)
