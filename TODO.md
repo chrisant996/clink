@@ -7,8 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- Too much flicker when input hint is present during prompt animation.
 
 ## Normal Priority
+- Popup list isn't aligning columns nicely in `Alt-5``Alt-Ctrl-Shift-H` list.
 - Add tracking for what is the highest Clink version that's been run?
   - Next run after an update can do post-update work (but must be very careful because of concurrency!).
   - Updater can show message about important post-update information (such as breaking changes).
