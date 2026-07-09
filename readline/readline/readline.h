@@ -210,6 +210,11 @@ extern int rl_yank_pop (int, int);
 extern int rl_yank_nth_arg (int, int);
 extern int rl_yank_last_arg (int, int);
 extern int rl_bracketed_paste_begin (int, int);
+/* begin_clink_change */
+extern int rl_get_kill_ring_count (void);
+extern int rl_get_kill_ring_index (void);
+extern const char *rl_get_kill_ring_string (int index);
+/* end_clink_change */
 /* Not available unless _WIN32 is defined. */
 #if defined (_WIN32)
 extern int rl_paste_from_clipboard (int, int);

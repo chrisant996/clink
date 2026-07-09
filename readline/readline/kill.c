@@ -885,6 +885,28 @@ _rl_bracketed_read_mbstring (char *mb, int mlen)
   return c;
 }
 
+/* begin_clink_change */
+int
+rl_get_kill_ring_count (void)
+{
+  return rl_kill_ring_length;
+}
+
+int
+rl_get_kill_ring_index (void)
+{
+  return rl_kill_index;
+}
+
+const char*
+rl_get_kill_ring_string (int index)
+{
+  if (index < 0 || index >= rl_kill_ring_length)
+    return 0;
+  return rl_kill_ring[index];
+}
+/* end_clink_change */
+
 /* A special paste command for Windows users. */
 #if defined (_WIN32)
 #define WIN32_LEAN_AND_MEAN

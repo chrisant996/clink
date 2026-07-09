@@ -1463,6 +1463,49 @@ static int32 get_inputrc_file_name(lua_State* state)
     return 2;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.getkillringcount
+/// -ver:   1.9.28
+/// -ret:   integer
+/// Returns the number of strings in Readline's kill-ring.
+static int32 get_kill_ring_count(lua_State* L)
+{
+    lua_pushinteger(L, rl_get_kill_ring_count());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.getkillringindex
+/// -ver:   1.9.28
+/// -ret:   integer
+/// Returns the current index in Readline's kill-ring.
+static int32 get_kill_ring_index(lua_State* L)
+{
+    lua_pushinteger(L, rl_get_kill_ring_index() + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.getkillringstring
+/// -ver:   1.9.28
+/// -arg:   index:integer
+/// -ret:   string|nil
+/// Returns the text from the specified index in the kill-ring.
+static int32 get_kill_ring_string(lua_State* L)
+{
+    const auto _index = checkinteger(L, 1);
+    if (!_index.isnum())
+        return 0;
+    const int32 index = _index - 1;
+
+    const char* s = rl_get_kill_ring_string(index);
+    if (!s)
+        return 0;
+
+    lua_pushstring(L, s);
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1497,6 +1540,9 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 1, "translatekey",            &translate_key },
         { 1, "bracketpromptcodes",      &bracket_prompt_codes },
         { 1, "getinputrcfilename",      &get_inputrc_file_name },
+        { 0, "getkillringcount",        &get_kill_ring_count },
+        { 0, "getkillringindex",        &get_kill_ring_index },
+        { 0, "getkillringstring",       &get_kill_ring_string },
     };
 
     lua_State* state = lua.get_state();
