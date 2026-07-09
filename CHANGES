@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.29
+
+- Add new Lua APIs to query Readline's kill-ring (see [rl.getkillringcount()](#rl.getkillringcount) and etc).
+
 #### v1.9.28
 
 - Fixed a case where `clink-select-complete` could accidentally wrap long matches with descriptions instead of truncating them.
