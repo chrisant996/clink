@@ -114,6 +114,11 @@ else
                                "end", themefile)
     end
 
+    local malformed_error = script:match('^echo "(.*)"$')
+    if malformed_error then
+        return "Error running oh-my-posh; "..malformed_error
+    end
+
     local func, msg = load(script)
     if not func then
         local err = "Error trying to load oh-my-posh Lua script:\n"
