@@ -1506,6 +1506,30 @@ static int32 get_kill_ring_string(lua_State* L)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.getkillringstrings
+/// -ver:   1.9.28
+/// -ret:   table
+/// Returns a table containing the kill-ring strings.
+static int32 get_kill_ring_strings(lua_State* L)
+{
+    const int32 count = rl_get_kill_ring_count();
+
+    lua_createtable(L, count, 0);
+
+    for (int32 i = 0;;)
+    {
+        const char* s = rl_get_kill_ring_string(i++);
+        if (!s)
+            break;
+
+        lua_pushstring(L, s);
+        lua_rawseti(L, -2, i);
+    }
+
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1543,6 +1567,7 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0, "getkillringcount",        &get_kill_ring_count },
         { 0, "getkillringindex",        &get_kill_ring_index },
         { 0, "getkillringstring",       &get_kill_ring_string },
+        { 0, "getkillringstrings",      &get_kill_ring_strings },
     };
 
     lua_State* state = lua.get_state();
