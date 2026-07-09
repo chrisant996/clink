@@ -63,7 +63,7 @@ end
 --  http://tsa.starfieldtech.com
 --  http://timestamp.entrust.net/TSS/RFC3161sha2TS
 --  http://tsa.swisssign.net
-local cert_name = "Open Source Developer, Christopher Antos"
+local cert_name = "Open Source Developer Christopher Antos"
 --local timestamp_service = "http://timestamp.digicert.com"
 local timestamp_service = "http://time.certum.pl"
 local sign_command = string.format(' sign /n "%s" /fd sha256 /td sha256 /tr %s ', cert_name, timestamp_service)
