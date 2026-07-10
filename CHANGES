@@ -7,6 +7,7 @@
 - Added new Lua APIs to query Readline's kill-ring (see [rl.getkillringcount()](#rl.getkillringcount) and etc).
 - Changed `oh-my-posh.clinkprompt` to work around an issue where in error cases oh-my-posh can accidentally emit a `bash` script instead of a Lua script.
 - Fixed how popup lists distributed column widths when fitting them into the terminal width; they were meant to be distributed evenly but were accidentally skewed.
+- Fixed macro text limit in `rl.getkeybindings()`; it was being limited as though the `clink-help` command was invoked, but the Lua function should use a different limit.
 - Fixed display of prompt lines that contain an embedded EL (Erase in Line) escape sequence; appending an EL to a line that already contains an EL is unnecessary and can accidentally erase a background color intentionally applied by the line.
 - Fixed [#883](https://github.com/chrisant996/clink/issues/883); the FTSC `133;D` code was emitted too early and contained a mismatched exit code.
 
