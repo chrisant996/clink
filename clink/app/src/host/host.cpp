@@ -720,8 +720,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
 {
     assert(!m_prompt); // Reentrancy not supported!
 
-    reset_display_readline();
-
     const app_context* app = app_context::get();
     bool reset = app->update_env();
 
@@ -930,6 +928,13 @@ force_reload_lua:
     if (send_event)
     {
         adjust_prompt_spacing();
+
+        // This is the earliest moment that resetting the Readline display can
+        // be performed accurately, for two reasons:  (1) it prints the FTSC
+        // code, which needs the exit code (the last errorlevel), which was
+        // determined just a few lines earlier and (2) adjusting the prompt
+        // spacing can change which line the FTSC code is printed on.
+        reset_display_readline();
 
         // Remind if logging is on.
         {
