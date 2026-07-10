@@ -8,7 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Too much flicker when input hint is present during prompt animation.
-- On a given prompt line, do not append an implicit ERASE IN LINE if the line contains an explicit ERASE IN LINE.
 
 ## Normal Priority
 - Popup list isn't aligning columns nicely in `Alt-5``Alt-Ctrl-Shift-H` list.
