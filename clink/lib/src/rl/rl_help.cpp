@@ -1326,7 +1326,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     uint32 longest_key[keycat_MAX] = {};
     uint32 longest_func[keycat_MAX] = {};
     uint32 desc_pad = show_descriptions ? 1 : 0;
-    const uint32 macro_limit = _rl_screenwidth * 4 / 10;
+    const uint32 macro_limit = out ? 64 : (_rl_screenwidth * 4 / 10);
     for (int32 i = 1; i < offset; ++i)
     {
         const Keyentry& entry = collector[i];
