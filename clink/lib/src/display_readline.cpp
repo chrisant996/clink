@@ -159,6 +159,20 @@ static HANDLE is_horizpos_workaround_needed()
 }
 
 //------------------------------------------------------------------------------
+static bool has_erase_in_line(const char* text, uint32 len)
+{
+    ecma48_state state;
+    ecma48_iter iter(text, state, len);
+    ecma48_code::csi<32> csi;
+    while (const ecma48_code& code = iter.next())
+    {
+        if (code.decode_csi(csi) && csi.final == 'K')
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static void clear_to_end_of_screen()
 {
     static const char* const termcap_cd = tgetstr("cd", nullptr);
@@ -1717,6 +1731,8 @@ int32 display_manager::write_with_clear(FILE* stream, const char* text, int leng
                 erase_in_line = false;
             else
                 erase_length -= mc.get_column();
+            if (eol && erase_in_line && has_erase_in_line(text, length))
+                erase_in_line = false;
             rl_fwrite_function(stream, text, length);
             text += length;
             remaining -= length;
