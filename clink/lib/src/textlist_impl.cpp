@@ -488,12 +488,15 @@ int32 textlist_impl::addl_columns::calc_widths(int32 available)
             {
                 if (divisor)
                 {
-                    for (int32 col = _countof(m_layout_width); col--;)
+                    for (int32 col = 0; col < _countof(m_layout_width); ++col)
                     {
                         if (pending[col])
                         {
                             m_layout_width[col] = available / divisor;
                             available -= threshold;
+                            --divisor;
+                            if (!divisor)
+                                break;
                         }
                     }
                 }
