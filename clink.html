@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.28</title>
+<title>Clink v1.9.29</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.28</div>
+                <div id="title">Clink v1.9.29</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -8874,7 +8874,7 @@ parent,child = path.toparent("\\\\foo\\bar\\dir\\") -- returns "\\\\foo\\bar", "
 
 </div><div class="group">
 <h5 id="rl" class="group_name"><a class="wlink" href="#rl"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>rl. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
-<table class="grouplist"><tr><td><a href="#rl.bracketpromptcodes">bracketpromptcodes</a></td><td><a href="#rl.gethistorycount">gethistorycount</a></td><td><a href="#rl.getpromptinfo">getpromptinfo</a></td><td><a href="#rl.isvariabletrue">isvariabletrue</a></td></tr><tr><td><a href="#rl.collapsetilde">collapsetilde</a></td><td><a href="#rl.gethistoryitems">gethistoryitems</a></td><td><a href="#rl.getvariable">getvariable</a></td><td><a href="#rl.needquotes">needquotes</a></td></tr><tr><td><a href="#rl.describemacro">describemacro</a></td><td><a href="#rl.getinputrcfilename">getinputrcfilename</a></td><td><a href="#rl.insertmode">insertmode</a></td><td><a href="#rl.setbinding">setbinding</a></td></tr><tr><td><a href="#rl.expandtilde">expandtilde</a></td><td><a href="#rl.getkeybindings">getkeybindings</a></td><td><a href="#rl.invokecommand">invokecommand</a></td><td><a href="#rl.setmatches">setmatches</a></td></tr><tr><td><a href="#rl.getbinding">getbinding</a></td><td><a href="#rl.getlastcommand">getlastcommand</a></td><td><a href="#rl.islineequal">islineequal</a></td><td><a href="#rl.setvariable">setvariable</a></td></tr><tr><td><a href="#rl.getcommandbindings">getcommandbindings</a></td><td><a href="#rl.getmatchcolor">getmatchcolor</a></td><td><a href="#rl.ismodifiedline">ismodifiedline</a></td><td><a href="#rl.translatekey">translatekey</a></td></tr></table>
+<table class="grouplist"><tr><td><a href="#rl.bracketpromptcodes">bracketpromptcodes</a></td><td><a href="#rl.gethistoryitems">gethistoryitems</a></td><td><a href="#rl.getlastcommand">getlastcommand</a></td><td><a href="#rl.ismodifiedline">ismodifiedline</a></td></tr><tr><td><a href="#rl.collapsetilde">collapsetilde</a></td><td><a href="#rl.getinputrcfilename">getinputrcfilename</a></td><td><a href="#rl.getmatchcolor">getmatchcolor</a></td><td><a href="#rl.isvariabletrue">isvariabletrue</a></td></tr><tr><td><a href="#rl.describemacro">describemacro</a></td><td><a href="#rl.getkeybindings">getkeybindings</a></td><td><a href="#rl.getpromptinfo">getpromptinfo</a></td><td><a href="#rl.needquotes">needquotes</a></td></tr><tr><td><a href="#rl.expandtilde">expandtilde</a></td><td><a href="#rl.getkillringcount">getkillringcount</a></td><td><a href="#rl.getvariable">getvariable</a></td><td><a href="#rl.setbinding">setbinding</a></td></tr><tr><td><a href="#rl.getbinding">getbinding</a></td><td><a href="#rl.getkillringindex">getkillringindex</a></td><td><a href="#rl.insertmode">insertmode</a></td><td><a href="#rl.setmatches">setmatches</a></td></tr><tr><td><a href="#rl.getcommandbindings">getcommandbindings</a></td><td><a href="#rl.getkillringstring">getkillringstring</a></td><td><a href="#rl.invokecommand">invokecommand</a></td><td><a href="#rl.setvariable">setvariable</a></td></tr><tr><td><a href="#rl.gethistorycount">gethistorycount</a></td><td><a href="#rl.getkillringstrings">getkillringstrings</a></td><td><a href="#rl.islineequal">islineequal</a></td><td><a href="#rl.translatekey">translatekey</a></td></tr></table>
 <div class="function"><div class="header"> <div id="rl.bracketpromptcodes" class="name"><a class="wlink" href="#rl.bracketpromptcodes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.bracketpromptcodes</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> prompt</span>:string ) :  string<br/><div class="version">v 1.6.1</div></div></div><div class="body"><p class="desc">Certain Readline configuration variables need for ANSI escape codes to be bracketed with <code>\1</code> and <code>\2</code>.  This function returns the <span class="arg">prompt</span> string with that bracketing applied.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="rl.collapsetilde" class="name"><a class="wlink" href="#rl.collapsetilde"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.collapsetilde</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">force</span>:boolean] ) : string<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.</p><pre class="language-lua"><code>rl.collapsetilde("C:\\Users\\yourusername\\Documents")
@@ -8933,7 +8933,6 @@ end</code></pre></div></div><hr/>
 -- or for example '"luafunc:my_macro_function"' or '"some macro text"'
 local info = rl.getcommandbindings(command)
 if info then
-    local info = rl.getcommandbindings(command)
     print("Info for '"..command.."':")
     print("Description is:  "..info.desc)
     print("Category is:     "..info.category)
@@ -8985,6 +8984,14 @@ end</code></pre></div></div><hr/>
         rl.invokecommand(binding)
     end
 end</code></pre></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="rl.getkillringcount" class="name"><a class="wlink" href="#rl.getkillringcount"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.getkillringcount</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() :  integer<br/><div class="version">v 1.9.28</div></div></div><div class="body"><p class="desc">Returns the number of strings in Readline's kill-ring.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="rl.getkillringindex" class="name"><a class="wlink" href="#rl.getkillringindex"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.getkillringindex</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() :  integer<br/><div class="version">v 1.9.28</div></div></div><div class="body"><p class="desc">Returns the current index in Readline's kill-ring.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="rl.getkillringstring" class="name"><a class="wlink" href="#rl.getkillringstring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.getkillringstring</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> index</span>:integer ) :  string|nil<br/><div class="version">v 1.9.28</div></div></div><div class="body"><p class="desc">Returns the text from the specified index in the kill-ring.</p></div></div><hr/>
+
+<div class="function"><div class="header"> <div id="rl.getkillringstrings" class="name"><a class="wlink" href="#rl.getkillringstrings"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.getkillringstrings</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() :  table<br/><div class="version">v 1.9.28</div></div></div><div class="body"><p class="desc">Returns a table containing the kill-ring strings.</p></div></div><hr/>
 
 <div class="function"><div class="header"> <div id="rl.getlastcommand" class="name"><a class="wlink" href="#rl.getlastcommand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>rl.getlastcommand</span> <span class="uplinks"><a href="#rl">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">() :  string, function<br/><div class="version">v 1.1.40</div></div></div><div class="body"><p class="desc">Returns two values: <ul> <li>The name of the last Readline command invoked by a key binding. <li>The name of the last Lua function invoked by a key binding. </ul></p><p class="desc"> If the last key binding invoked a Lua function, then the first return value is an empty string unless the Lua function used <a href="#rl.invokecommand">rl.invokecommand()</a> to also internally invoke a Readline command. If the last key binding did not invoke a Lua function, then the second return value is an empty string.</p><pre class="language-lua"><code>local last_rl_func, last_lua_func = rl.getlastcommand()</code></pre></div></div><hr/>
 
@@ -9410,6 +9417,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1929"><a class="wlink" href="#v1929"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.29 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new Lua APIs to query Readline&#39;s kill-ring (see <a href="#rl.getkillringcount">rl.getkillringcount()</a> and etc).</li>
+<li>Changed <code>oh-my-posh.clinkprompt</code> to work around an issue where in error cases oh-my-posh can accidentally emit a <code>bash</code> script instead of a Lua script.</li>
+<li>Fixed how popup lists distributed column widths when fitting them into the terminal width; they were meant to be distributed evenly but were accidentally skewed.</li>
+<li>Fixed macro text limit in <code>rl.getkeybindings()</code>; it was being limited as though the <code>clink-help</code> command was invoked, but the Lua function should use a different limit.</li>
+<li>Fixed display of prompt lines that contain an embedded EL (Erase in Line) escape sequence; appending an EL to a line that already contains an EL is unnecessary and can accidentally erase a background color intentionally applied by the line.</li>
+<li>Fixed flickering input hint line during prompt animation (e.g. clink-flex-prompt&#39;s animation during asynchronous prompt filtering).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/883">#883</a>; the FTSC <code>133;D</code> code was emitted too early and contained a mismatched exit code.</li>
+</ul>
 <h4 id="v1928"><a class="wlink" href="#v1928"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.28 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed a case where <code>clink-select-complete</code> could accidentally wrap long matches with descriptions instead of truncating them.</li>
