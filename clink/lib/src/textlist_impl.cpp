@@ -488,15 +488,25 @@ int32 textlist_impl::addl_columns::calc_widths(int32 available)
             {
                 if (divisor)
                 {
-                    for (int32 col = 0; col < _countof(m_layout_width); ++col)
+                    for (int32 col = _countof(m_layout_width); col--;)
                     {
                         if (pending[col])
                         {
-                            m_layout_width[col] = available / divisor;
-                            available -= threshold;
-                            --divisor;
+                            // Using threshold accumulates all rounding errors
+                            // into column 0.  Or using available/(divisor--)
+                            // each time could distribute the rounding errors
+                            // across the columns.
+#ifdef ADDL_COLUMNS_DISTRIBUTE_ROUNDING_ERRORS
+                            const int32 col_width = available / (divisor--);
+#else
+                            const int32 col_width = threshold;
+#endif
+                            m_layout_width[col] = col_width;
+                            available -= col_width;
+#ifdef ADDL_COLUMNS_DISTRIBUTE_ROUNDING_ERRORS
                             if (!divisor)
                                 break;
+#endif
                         }
                     }
                 }
