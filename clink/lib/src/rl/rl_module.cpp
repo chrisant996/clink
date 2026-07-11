@@ -2613,8 +2613,9 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
         was_visible = show_cursor(false);
         lock_cursor(true);
 
-        // Erase comment row if present.
-        clear_comment_row();
+        // Erase comment row if present and transient prompt.
+        if (transient)
+            clear_comment_row();
 
         // Count the number of lines the prompt takes to display.
         int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
