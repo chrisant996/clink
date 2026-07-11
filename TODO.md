@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Too much flicker when input hint is present during prompt animation; see the `clear_comment_row()` call inside `rl_module::set_prompt()`.
 
 ## Normal Priority
 - Add tracking for what is the highest Clink version that's been run?
