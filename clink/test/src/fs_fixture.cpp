@@ -34,6 +34,17 @@ bool unlink_with_retry(const char* name)
 }
 
 //------------------------------------------------------------------------------
+bool remove_dir_with_retry(const char* name)
+{
+    for (uint16 attempts = 3; attempts--; Sleep(50))
+    {
+        if (os::remove_dir(name))
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 fs_fixture::fs_fixture(const char** fs)
 {
     os::get_env("tmp", m_root);
@@ -91,7 +102,7 @@ void fs_fixture::clean(const char* path)
             REQUIRE(unlink_with_retry(file.c_str()));
     }
 
-    REQUIRE(os::remove_dir(path));
+    REQUIRE(remove_dir_with_retry(path));
 }
 
 //------------------------------------------------------------------------------
