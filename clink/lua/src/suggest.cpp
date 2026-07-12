@@ -31,6 +31,17 @@ extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 
 //------------------------------------------------------------------------------
+static bool is_empty_or_spaces(const char* s)
+{
+    for (; *s; ++s)
+    {
+        if (*s != ' ')
+            return false;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 suggester::suggester(lua_state& lua)
 : m_lua(lua)
 {
@@ -41,7 +52,7 @@ bool suggester::suggest(const line_states& lines, matches* matches, int32 matche
 {
     const line_state& line = lines.back();
 
-    if (!line.get_length())
+    if (is_empty_or_spaces(line.get_line()))
     {
 nosuggest:
         set_suggestions("", 0, nullptr);
