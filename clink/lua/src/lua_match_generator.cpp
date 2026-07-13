@@ -472,6 +472,11 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
             const char* match = nullptr;
             match_type type = match_type::none;
 
+            // Filtering matches looks only at the match itself, and decides
+            // whether to keep or discard the existing matches -- it literally
+            // is about only filtering, not changing the matches.  If changing
+            // the matches is desired, that that's possible via other means,
+            // such as the ondisplaymatches event.
             if (lua_istable(state, -1))
             {
                 lua_pushliteral(state, "match");
@@ -479,15 +484,6 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
                 if (lua_isstring(state, -1))
                     match = lua_tostring(state, -1);
                 lua_pop(state, 1);
-
-// Filtering matches lets the filter specify colors, so ignore the type.
-#if 0
-                lua_pushliteral(state, "type");
-                lua_rawget(state, -2);
-                if (lua_isstring(state, -1))
-                    type = to_match_type(lua_tostring(state, -1));
-                lua_pop(state, 1);
-#endif
             }
             else
             {
