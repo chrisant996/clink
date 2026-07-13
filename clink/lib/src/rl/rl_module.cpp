@@ -1184,15 +1184,6 @@ extern "C" void free_match_list_hook(char** matches)
 }
 
 //------------------------------------------------------------------------------
-static int32 complete_fncmp(const char *convfn, int32 convlen, const char *filename, int32 filename_len)
-{
-    // We let the OS handle wildcards, so not much to do here.  And we ignore
-    // _rl_completion_case_fold because (1) this is Windows and (2) the
-    // alternative is to write our own wildcard matching implementation.
-    return 1;
-}
-
-//------------------------------------------------------------------------------
 static void adjust_completion_defaults()
 {
     if (!s_matches || !g_rl_buffer)
