@@ -424,9 +424,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
         return false;
 
     // Get ready to call the filter function.
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_send_onfiltermatches_event");
-    lua_rawget(state, -2);
+    lua_state::push_named_function(state, "clink._internal._send_onfiltermatches_event");
     if (lua_isnil(state, -1))
         return false;
 

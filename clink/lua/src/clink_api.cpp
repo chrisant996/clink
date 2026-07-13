@@ -1510,7 +1510,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 
     lua_setglobal(state, "clink");
 
-    // And the clink._internal namespace.
+    // Add the clink._internal namespace.
 
     lua_getglobal(state, "clink");
     lua_pushliteral(state, "_internal");
