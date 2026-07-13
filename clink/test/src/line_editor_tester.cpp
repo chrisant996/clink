@@ -186,7 +186,6 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
         inner_desc = *desc;
 
     m_printer = new printer(m_terminal_out);
-
     m_printer_context = new printer_context(&m_terminal_out, m_printer);
 
     inner_desc.input = &m_terminal_in;
@@ -200,8 +199,8 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 //------------------------------------------------------------------------------
 line_editor_tester::~line_editor_tester()
 {
-    delete m_printer_context;
     line_editor_destroy(m_editor);
+    delete m_printer_context;
     delete m_printer;
 }
 
