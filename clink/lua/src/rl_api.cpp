@@ -1465,7 +1465,7 @@ static int32 get_inputrc_file_name(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getkillringcount
-/// -ver:   1.9.28
+/// -ver:   1.9.29
 /// -ret:   integer
 /// Returns the number of strings in Readline's kill-ring.
 static int32 get_kill_ring_count(lua_State* L)
@@ -1476,7 +1476,7 @@ static int32 get_kill_ring_count(lua_State* L)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getkillringindex
-/// -ver:   1.9.28
+/// -ver:   1.9.29
 /// -ret:   integer
 /// Returns the current index in Readline's kill-ring.
 static int32 get_kill_ring_index(lua_State* L)
@@ -1487,7 +1487,7 @@ static int32 get_kill_ring_index(lua_State* L)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getkillringstring
-/// -ver:   1.9.28
+/// -ver:   1.9.29
 /// -arg:   index:integer
 /// -ret:   string|nil
 /// Returns the text from the specified index in the kill-ring.
@@ -1508,7 +1508,7 @@ static int32 get_kill_ring_string(lua_State* L)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getkillringstrings
-/// -ver:   1.9.28
+/// -ver:   1.9.29
 /// -ret:   table
 /// Returns a table containing the kill-ring strings.
 static int32 get_kill_ring_strings(lua_State* L)
