@@ -4,6 +4,7 @@
 
 #### v1.9.30
 
+- Added new Lua API [rl.issuggestionlistactive()](#rl.issuggestionlistactive) which returns whether the suggestion list is currently active.
 - Fixed to not show suggestions if the input line contains only space characters.
 - Fixed `clink.onfiltermatches()` events (regression introduced in v1.9.26).
 
