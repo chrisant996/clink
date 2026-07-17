@@ -9,11 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Add tracking for what is the highest Clink version that's been run?
-  - Next run after an update can do post-update work (but must be very careful because of concurrency!).
-  - Updater can show message about important post-update information (such as breaking changes).
-  - Some new `clink notice` command could re-show the current notice messages.
-- Add a Lua function to return whether the suggestion list is active?
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
@@ -23,6 +18,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - And I would want it to support all the Readline commands, but a clean room implementation would probably have at least a few places where the independent implementations don't quite entirely work the same as the Readline versions, and I'm not sure whether that would be acceptable.
 
 ## Low Priority
+- Add tracking for what is the highest Clink version that's been run?
+  - Next run after an update can do post-update work (but must be very careful because of concurrency!).
+  - Updater can show message about important post-update information (such as breaking changes).
+  - Some new `clink notice` command could re-show the current notice messages.
+  - But how to prevent doing post-update work after the first install?  Especially when installed by extracting from a .zip file?
 - If `clink_paste` pastes multiple lines but the last one isn't terminated by a line ending and it ends up needing to be handled by the "More?" prompt or a confirmation prompt (e.g. Yes/No/All), then it falls apart.  Clink can't use Readline because it's not the main input line prompt.  But there's no way for Clink to inject input into ReadConsoleW.  Maybe provide a custom simple input editor?
   - For now, the "More?" prompt case returns the queued characters **and appends a newline**.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them **and a newline is added, causing the command to be accepted prematurely**.
   - For now, the confirmation prompt case returns the queued characters and then falls back to ReadConsoleW.  Unlike Conhost's implementation, the user never sees the queued characters and cannot edit them.
