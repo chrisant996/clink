@@ -1530,6 +1530,24 @@ static int32 get_kill_ring_strings(lua_State* L)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.issuggestionlistactive
+/// -ver:   1.9.30
+/// -ret:   boolean, boolean
+/// Returns two boolean values:
+/// <ol>
+/// <li>True if the suggestion list is active, otherwise false.</li>
+/// <li>True if the suggestion list is active but hidden, otherwise false.</li>
+/// </ol>
+static int32 api_is_suggestion_list_active(lua_State* L)
+{
+    const bool active = is_suggestion_list_active(false/*even_if_hidden*/);
+    const bool even_if_hidden = is_suggestion_list_active(true/*even_if_hidden*/);
+    lua_pushboolean(L, even_if_hidden);
+    lua_pushboolean(L, !active && even_if_hidden);
+    return 2;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1568,6 +1586,7 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0, "getkillringindex",        &get_kill_ring_index },
         { 0, "getkillringstring",       &get_kill_ring_string },
         { 0, "getkillringstrings",      &get_kill_ring_strings },
+        { 0, "issuggestionlistactive",  &api_is_suggestion_list_active },
     };
 
     lua_State* state = lua.get_state();
