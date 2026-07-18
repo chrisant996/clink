@@ -20,6 +20,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Low Priority
 - Maybe add some way for Lua to add bars above the prompt, and make the bars automatically disappear when the prompt ends (regardless whether `prompt.transient` is enabled)?
   - Maybe three places:  above the prompt, below the prompt, and at the bottom of the screen?
+  - Need a way to signal to refilter a specific bar (which can lead to hiding it, changing it, or showing it).
 - Add tracking for what is the highest Clink version that's been run?
   - Next run after an update can do post-update work (but must be very careful because of concurrency!).
   - Updater can show message about important post-update information (such as breaking changes).
