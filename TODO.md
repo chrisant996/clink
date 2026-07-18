@@ -9,8 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Maybe add some way for Lua to add bars above the prompt, and make the bars automatically disappear when the prompt ends (regardless whether `prompt.transient` is enabled)?
-  - Maybe three places:  above the prompt, below the prompt, and at the bottom of the screen?
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
@@ -20,6 +18,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - And I would want it to support all the Readline commands, but a clean room implementation would probably have at least a few places where the independent implementations don't quite entirely work the same as the Readline versions, and I'm not sure whether that would be acceptable.
 
 ## Low Priority
+- Maybe add some way for Lua to add bars above the prompt, and make the bars automatically disappear when the prompt ends (regardless whether `prompt.transient` is enabled)?
+  - Maybe three places:  above the prompt, below the prompt, and at the bottom of the screen?
 - Add tracking for what is the highest Clink version that's been run?
   - Next run after an update can do post-update work (but must be very careful because of concurrency!).
   - Updater can show message about important post-update information (such as breaking changes).
