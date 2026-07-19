@@ -39,6 +39,13 @@
 #define INCLUDE_MATCH_COLORING_RULES
 
 //------------------------------------------------------------------------------
+// Define to include Detours support.
+// The ARM64 implementation of follow_jump() doesn't support ARM64 yet.
+#if defined(_M_X64) || defined(_M_IX86)
+#define INCLUDE_DETOURS 1
+#endif
+
+//------------------------------------------------------------------------------
 // Define to make the horizontal scroll markers be 2 characters wide, instead
 // of 1 character wide.  These are the "<" and ">" markers displayed when the
 // input line exceeds the allotted screen area for the input line.

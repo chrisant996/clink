@@ -538,7 +538,9 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
         { "help",               no_argument,        nullptr, 'h' },
         // Undocumented flags.
         { "autorun",            no_argument,        nullptr, '_' },
+#if INCLUDE_DETOURS
         { "detours",            no_argument,        nullptr, '^' },
+#endif
         { "forcehost",          no_argument,        nullptr, '|' },
         { "no-pause-threads",   no_argument,        nullptr, '\\' },
         { nullptr, 0, nullptr, 0 }
@@ -587,7 +589,9 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
         case 'd': target_pid = atoi(optarg);    break;
         case 'q': app_desc.quiet = true;        break;
         case 'l': app_desc.log = false;         break;
+#if INCLUDE_DETOURS
         case '^': app_desc.detours = true;      break;
+#endif
         case '|': app_desc.force = true;        break;
         case '_': ret = 0; is_autorun = true;   break;
         case '\\': no_pause_threads = true;     break;

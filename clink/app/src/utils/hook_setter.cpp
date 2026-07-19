@@ -9,7 +9,10 @@
 #include <core/os.h>
 #include <process/pe.h>
 #include <process/vm.h>
+
+#if INCLUDE_DETOURS
 #include <detours.h>
+#endif
 
 #if 0
 // For future reference:  This is the signature for import library entries,
@@ -54,9 +57,6 @@ static void* follow_jump(void* addr)
         dest = *(void**)(t + 6 + *imm);
 #elif defined(_M_IX86)
         // dest = disp32
-        dest = (void*)(intptr_t)(*imm);
-#elif defined(_M_ARM64)
-        // FIXME: just a copy / paste from above
         dest = (void*)(intptr_t)(*imm);
 #else
 #error Processor not supported.
@@ -161,51 +161,56 @@ void hook_iat(hookptrptr_t import, hookptr_t hook)
 //------------------------------------------------------------------------------
 hook_setter::hook_setter()
 {
-    LONG err = NOERROR;
-
+#if INCLUDE_DETOURS
     // Start a detour transaction.
-    if (!err)
-        err = DetourTransactionBegin();
-
+    const LONG err = DetourTransactionBegin();
     if (err)
     {
         LOG("Unable to start hook transaction (error %u).", err);
         return;
     }
 
-    LOG(">>> Started hook transaction.");
     m_pending = true;
+#endif
+
+    LOG(">>> Started hook transaction.");
 }
 
 //------------------------------------------------------------------------------
 hook_setter::~hook_setter()
 {
+#if INCLUDE_DETOURS
     if (m_pending)
     {
         LOG("<<< Hook transaction aborted.");
         DetourTransactionAbort();
     }
+#endif
 }
 
 //------------------------------------------------------------------------------
 bool hook_setter::commit()
 {
     const int32 count = m_desc_count;
+    LONG err = NOERROR;
 
+#if INCLUDE_DETOURS
     m_pending = false;
+#endif
     m_desc_count = 0;
 
     // REVIEW: suspend threads?  Currently this relies on CMD being essentially
     // single threaded.
 
-    // Apply and Detours hooks.
-    LONG err = DetourTransactionCommit();
+#if INCLUDE_DETOURS
+    // Apply any Detours hooks.
+    err = DetourTransactionCommit();
     if (err)
     {
-nope:
         LOG("<<< Unable to commit hooks (error %u).", err);
         return false;
     }
+#endif
 
     // Apply any IAT hooks.
     int32 failed = 0;
@@ -222,7 +227,10 @@ nope:
         }
     }
     if (failed)
-        goto nope;
+    {
+        LOG("<<< Unable to commit hooks (error %u).", err);
+        return false;
+    }
 
     LOG("<<< Hook transaction committed.");
 
@@ -243,12 +251,12 @@ bool hook_setter::attach_internal(hook_type type, const char* module, const char
         return false;
     }
 
-    assertimplies(!required, type == iat);
-
     if (type == iat)
         return attach_iat(module, name, hook, original, required);
+#if INCLUDE_DETOURS
     else if (type == detour)
         return attach_detour(module, name, hook, original);
+#endif
     else
         return false;
 }
@@ -266,63 +274,12 @@ bool hook_setter::detach_internal(hook_type type, const char* module, const char
 
     if (type == iat)
         return detach_iat(module, name, original, hook);
+#if INCLUDE_DETOURS
     else if (type == detour)
         return detach_detour(original, hook);
+#endif
     else
         return false;
-}
-
-//------------------------------------------------------------------------------
-bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
-{
-    LOG("Attempting to detour %s in %s with %p.", name, module, hook);
-    HMODULE hModule = GetModuleHandleA(module);
-    if (!hModule)
-    {
-        LOG("Unable to load %s.", module);
-        return false;
-    }
-
-    PBYTE pbCode = (PBYTE)GetProcAddress(hModule, name);
-    if (!pbCode)
-    {
-        LOG("Unable to find %s in %s.", name, module);
-        return false;
-    }
-
-    // Get the target pointer to hook.
-    void* replace = follow_jump(pbCode);
-    if (!replace)
-    {
-        LOG("Unable to get target address.");
-        return false;
-    }
-
-    hook_desc& desc = m_descs[m_desc_count++];
-    desc.type = detour;
-    desc.replace = replace;
-    desc.base = nullptr;
-    desc.module = module;
-    desc.name = name;
-    desc.hook = hook;
-    desc.required = true;
-
-    // Hook the target pointer.  For Detours desc.replace is a pointer to the
-    // function to hook.
-    PDETOUR_TRAMPOLINE trampoline;
-    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, nullptr, nullptr);
-    if (err != NOERROR)
-    {
-        LOG("Unable to detour %s (error %u).", name, err);
-        m_desc_count--;
-        return false;
-    }
-
-    // Return the trampoline in original.
-    if (original)
-        *original = hookptr_t(trampoline);
-
-    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -359,22 +316,6 @@ bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hoo
     desc.name = name;
     desc.hook = hook;
     desc.required = required;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-bool hook_setter::detach_detour(hookptrptr_t original, hookptr_t hook)
-{
-    LOG("Attempting to detach detour %p.", hook);
-
-    // Unhook the target pointer.
-    LONG err = DetourDetach((PVOID*)original, (PVOID)hook);
-    if (err != NOERROR)
-    {
-        LOG("Unable to detach detour %p (error %u).", hook, err);
-        return false;
-    }
-
     return true;
 }
 
@@ -443,3 +384,76 @@ bool hook_setter::commit_iat(const hook_desc& desc)
 
     return true;
 }
+
+//------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
+bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
+{
+    LOG("Attempting to detour %s in %s with %p.", name, module, hook);
+    HMODULE hModule = GetModuleHandleA(module);
+    if (!hModule)
+    {
+        LOG("Unable to load %s.", module);
+        return false;
+    }
+
+    PBYTE pbCode = (PBYTE)GetProcAddress(hModule, name);
+    if (!pbCode)
+    {
+        LOG("Unable to find %s in %s.", name, module);
+        return false;
+    }
+
+    // Get the target pointer to hook.
+    void* replace = follow_jump(pbCode);
+    if (!replace)
+    {
+        LOG("Unable to get target address.");
+        return false;
+    }
+
+    hook_desc& desc = m_descs[m_desc_count++];
+    desc.type = detour;
+    desc.replace = replace;
+    desc.base = nullptr;
+    desc.module = module;
+    desc.name = name;
+    desc.hook = hook;
+    desc.required = true;
+
+    // Hook the target pointer.  For Detours desc.replace is a pointer to the
+    // function to hook.
+    PDETOUR_TRAMPOLINE trampoline;
+    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, nullptr, nullptr);
+    if (err != NOERROR)
+    {
+        LOG("Unable to detour %s (error %u).", name, err);
+        m_desc_count--;
+        return false;
+    }
+
+    // Return the trampoline in original.
+    if (original)
+        *original = hookptr_t(trampoline);
+
+    return true;
+}
+#endif
+
+//------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
+bool hook_setter::detach_detour(hookptrptr_t original, hookptr_t hook)
+{
+    LOG("Attempting to detach detour %p.", hook);
+
+    // Unhook the target pointer.
+    LONG err = DetourDetach((PVOID*)original, (PVOID)hook);
+    if (err != NOERROR)
+    {
+        LOG("Unable to detach detour %p (error %u).", hook, err);
+        return false;
+    }
+
+    return true;
+}
+#endif

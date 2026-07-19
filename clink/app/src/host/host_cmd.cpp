@@ -44,12 +44,14 @@ using func_SetConsoleTitleW_t = BOOL (WINAPI*)(LPCWSTR lpConsoleTitle);
 static func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
 static func_SetEnvironmentStringsW __Real_SetEnvironmentStringsW = SetEnvironmentStringsW;
 static func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
-static func_WriteConsoleW_t __Detoured_WriteConsoleW = WriteConsoleW; // For debug.log_terminal setting.
-static func_WriteFile_t __Detoured_WriteFile = WriteFile; // For debug.log_terminal setting.
 static func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
 static func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
 static func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
+#if INCLUDE_DETOURS
+static func_WriteConsoleW_t __Detoured_WriteConsoleW = WriteConsoleW; // For debug.log_terminal setting.
+static func_WriteFile_t __Detoured_WriteFile = WriteFile; // For debug.log_terminal setting.
 static bool s_detoured_write_console = false;
+#endif
 static int32 s_in_read_console = 0;
 static DWORD s_main_thread = 0;
 
@@ -79,14 +81,18 @@ static setting_str g_admin_title_prefix(
 
 
 //------------------------------------------------------------------------------
-static hook_type get_hook_type()
+static hook_type get_default_hook_type()
 {
-    static hook_type s_hook_type = app_context::get()->is_detours() ? detour : iat;
+    static const hook_type s_hook_type =
+#if INCLUDE_DETOURS
+        app_context::get()->is_detours() ? detour :
+#endif
+        iat;
     return s_hook_type;
 }
-static const char* get_kernel_module()
+static const char* get_default_kernel_module()
 {
-    return (get_hook_type() == iat) ? nullptr : "kernel32.dll";
+    return (get_default_hook_type() == iat) ? nullptr : "kernel32.dll";
 }
 
 
@@ -279,6 +285,7 @@ int32 host_cmd::validate()
 }
 
 //------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
 static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWORD to_write, LPDWORD written, LPVOID reserved)
 {
     if (GetCurrentThreadId() == s_main_thread &&
@@ -330,8 +337,10 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
 
     return __Detoured_WriteConsoleW(handle, _chars, to_write, written, reserved);
 }
+#endif
 
 //------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
 static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD to_write, LPDWORD written, LPOVERLAPPED overlapped)
 {
     if (GetCurrentThreadId() == s_main_thread &&
@@ -362,8 +371,10 @@ static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD 
 
     return __Detoured_WriteFile(handle, _buffer, to_write, written, overlapped);
 }
+#endif
 
 //------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
 static void maybe_detour_write_console()
 {
     if (s_detoured_write_console || !g_debug_log_terminal.get())
@@ -371,7 +382,7 @@ static void maybe_detour_write_console()
 
     s_detoured_write_console = true;
 
-    if (get_hook_type() != iat)
+    if (get_default_hook_type() != iat)
         return;
 
     hook_setter hooks;
@@ -379,6 +390,7 @@ static void maybe_detour_write_console()
     hooks.attach(detour, "kernel32.dll", "WriteFile", &write_file_logging, &__Detoured_WriteFile);
     hooks.commit();
 }
+#endif
 
 //------------------------------------------------------------------------------
 bool host_cmd::initialise()
@@ -386,8 +398,8 @@ bool host_cmd::initialise()
     after_signal_hook_fn = host_cleanup_after_signal;
 
     hook_setter hooks;
-    hook_type type = get_hook_type();
-    const char* module = get_kernel_module();
+    hook_type type = get_default_hook_type();
+    const char* module = get_default_kernel_module();
 
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
@@ -410,7 +422,9 @@ bool host_cmd::initialise()
     if (!hooks.commit())
         return false;
 
+#if INCLUDE_DETOURS
     maybe_detour_write_console();
+#endif
     return true;
 }
 
@@ -513,8 +527,10 @@ void host_cmd::add_aliases(bool force)
 //------------------------------------------------------------------------------
 void host_cmd::edit_line(wchar_t* chars, int32 max_chars, bool edit)
 {
+#if INCLUDE_DETOURS
     // If debug.log_terminal is set, ensure detour for logging is installed.
     maybe_detour_write_console();
+#endif
 
     // Exiting a nested CMD will remove the aliases, so re-add them if missing.
     // But don't overwrite them if they already exist: let the user override
@@ -978,7 +994,7 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
         s_initialised_system = true;
 
         hook_setter unhook;
-        unhook.detach(get_hook_type(), get_kernel_module(), "GetEnvironmentVariableW", &__Real_GetEnvironmentVariableW, get_env_var);
+        unhook.detach(get_default_hook_type(), get_default_kernel_module(), "GetEnvironmentVariableW", &__Real_GetEnvironmentVariableW, get_env_var);
         unhook.commit();
 
         host_cmd::get()->initialise_system();
@@ -1101,8 +1117,8 @@ bool host_cmd::initialise_system()
     s_main_thread = GetCurrentThreadId();
 
     {
-        hook_type type = get_hook_type();
-        const char* module = get_kernel_module();
+        hook_type type = get_default_hook_type();
+        const char* module = get_default_kernel_module();
 
         hook_setter hooks;
 

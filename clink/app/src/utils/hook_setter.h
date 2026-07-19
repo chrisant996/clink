@@ -3,8 +3,15 @@
 
 #pragma once
 
+#include <core/base.h>
+
 //------------------------------------------------------------------------------
-enum hook_type { iat, detour };
+enum hook_type {
+    iat
+#if INCLUDE_DETOURS
+    , detour
+#endif
+};
 class str_base;
 typedef void (__stdcall* hookptr_t)();
 typedef hookptr_t* hookptrptr_t;
@@ -43,17 +50,21 @@ private:
     bool                        attach_internal(hook_type type, const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required);
     bool                        detach_internal(hook_type type, const char* module, const char* name, hookptrptr_t original, hookptr_t hook);
 
-    bool                        attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
     bool                        attach_iat(const char* module, const char* name, hookptr_t hook, hookptrptr_t original, bool required);
-    bool                        detach_detour(hookptrptr_t original, hookptr_t hook);
     bool                        detach_iat(const char* module, const char* name, hookptrptr_t original, hookptr_t hook);
-
     bool                        commit_iat(const hook_desc& desc);
+
+#if INCLUDE_DETOURS
+    bool                        attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
+    bool                        detach_detour(hookptrptr_t original, hookptr_t hook);
+#endif
 
 private:
     hook_desc                   m_descs[5];
     int32                       m_desc_count = 0;
+#if INCLUDE_DETOURS
     bool                        m_pending = false;
+#endif
 };
 
 //------------------------------------------------------------------------------
