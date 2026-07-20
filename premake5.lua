@@ -352,13 +352,15 @@ project("lua52")
 --------------------------------------------------------------------------------
 project("detours")
     kind("staticlib")
-    files("detours/*.cpp")
-    removefiles("detours/disolarm.cpp")
-    removefiles("detours/disolarm64.cpp")
-    removefiles("detours/disolia64.cpp")
-    removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
 
-    filter "action:gmake"
+    filter {"architecture:not aarch64"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
+        files("detours/*.cpp")
+        removefiles("detours/disolarm.cpp")
+        removefiles("detours/disolarm64.cpp")
+        removefiles("detours/disolia64.cpp")
+        removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
+
+    filter {"architecture:not aarch64", "action:gmake"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         buildoptions("-Wno-multichar")
@@ -512,7 +514,6 @@ clink_lib("clink_app_common")
     includedirs("clink/lua/include")
     includedirs("clink/process/include")
     includedirs("clink/terminal/include")
-    includedirs("detours")
     includedirs("getopt")
     includedirs("lua/src")
     includedirs("readline")
@@ -521,6 +522,9 @@ clink_lib("clink_app_common")
     files("clink/app/scripts/**")
     excludes("clink/app/src/dll/main.cpp")
     excludes("clink/app/src/loader/main.cpp")
+
+    filter {cfg, "architecture:not aarch64"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
+        includedirs("detours")
 
     filter "action:vs*"
         pchheader("pch.h")
@@ -545,7 +549,6 @@ clink_dll("clink_app_dll")
     links("clink_process")
     -- links("clink_thunk")
     links("clink_terminal")
-    links("detours")
     links("getopt")
     links("wildmatch")
     links("lua")
@@ -556,6 +559,9 @@ clink_dll("clink_app_dll")
     files("clink/app/src/dll/main.cpp")
     files("clink/app/src/version.rc")
     files("clink/app/src/manifest.rc")
+
+    filter {cfg, "architecture:not aarch64"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
+        links("detours")
 
     filter "action:vs*"
         links("dbghelp")
@@ -616,7 +622,6 @@ clink_exe("clink_test")
     links("clink_process")
     -- links("clink_thunk")
     links("clink_terminal")
-    links("detours")
     links("wildmatch")
     links("lua")
     links("readline")
@@ -645,6 +650,9 @@ clink_exe("clink_test")
     files("wildmatch/tests/*.cpp")
 
     exceptionhandling("on")
+
+    filter {cfg, "architecture:not aarch64"} -- BUGBUG: premake 5.0.0-beta8 broke "arm64" here.
+        links("detours")
 
     filter "action:vs*"
         pchheader("pch.h")

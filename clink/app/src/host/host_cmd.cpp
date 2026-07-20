@@ -81,23 +81,6 @@ static setting_str g_admin_title_prefix(
 
 
 //------------------------------------------------------------------------------
-static hook_type get_default_hook_type()
-{
-    static const hook_type s_hook_type =
-#if INCLUDE_DETOURS
-        app_context::get()->is_detours() ? detour :
-#endif
-        iat;
-    return s_hook_type;
-}
-static const char* get_default_kernel_module()
-{
-    return (get_default_hook_type() == iat) ? nullptr : "kernel32.dll";
-}
-
-
-
-//------------------------------------------------------------------------------
 static bool get_mui_string(int32 id, wstr_base& out)
 {
     DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_IGNORE_INSERTS;
@@ -382,9 +365,6 @@ static void maybe_detour_write_console()
 
     s_detoured_write_console = true;
 
-    if (get_default_hook_type() != iat)
-        return;
-
     hook_setter hooks;
     hooks.attach(detour, "kernel32.dll", "WriteConsoleW", &write_console_logging, &__Detoured_WriteConsoleW);
     hooks.attach(detour, "kernel32.dll", "WriteFile", &write_file_logging, &__Detoured_WriteFile);
@@ -398,17 +378,15 @@ bool host_cmd::initialise()
     after_signal_hook_fn = host_cleanup_after_signal;
 
     hook_setter hooks;
-    hook_type type = get_default_hook_type();
-    const char* module = get_default_kernel_module();
 
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
     tag_prompt();
-    if (!hooks.attach(type, module, "SetEnvironmentVariableW", &host_cmd::set_env_var, &__Real_SetEnvironmentVariableW))
+    if (!hooks.attach(iat, nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var, &__Real_SetEnvironmentVariableW))
         return false;
-    if (!hooks.attach(type, module, "SetEnvironmentStringsW", &host_cmd::set_env_strs, &__Real_SetEnvironmentStringsW))
+    if (!hooks.attach(iat, nullptr, "SetEnvironmentStringsW", &host_cmd::set_env_strs, &__Real_SetEnvironmentStringsW))
         return false;
-    if (!hooks.attach(type, module, "WriteConsoleW", &host_cmd::write_console, &__Real_WriteConsoleW))
+    if (!hooks.attach(iat, nullptr, "WriteConsoleW", &host_cmd::write_console, &__Real_WriteConsoleW))
         return false;
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
@@ -416,7 +394,7 @@ bool host_cmd::initialise()
     // prompt string the first time after a SET command sets an environment
     // variable, so it's a reliable spot to hook regardless how injection is
     // initiated (AutoRun, command line, etc).
-    if (!hooks.attach(type, module, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
+    if (!hooks.attach(iat, nullptr, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
         return false;
 
     if (!hooks.commit())
@@ -994,7 +972,7 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
         s_initialised_system = true;
 
         hook_setter unhook;
-        unhook.detach(get_default_hook_type(), get_default_kernel_module(), "GetEnvironmentVariableW", &__Real_GetEnvironmentVariableW, get_env_var);
+        unhook.detach(iat, nullptr, "GetEnvironmentVariableW", &__Real_GetEnvironmentVariableW, get_env_var);
         unhook.commit();
 
         host_cmd::get()->initialise_system();
@@ -1117,17 +1095,14 @@ bool host_cmd::initialise_system()
     s_main_thread = GetCurrentThreadId();
 
     {
-        hook_type type = get_default_hook_type();
-        const char* module = get_default_kernel_module();
-
         hook_setter hooks;
 
         // ReadConsoleW is required.
-        hooks.attach(type, module, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
+        hooks.attach(iat, nullptr, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
 
         // Hook SetConsoleTitleW in order to replace the "Administrator: "
         // prefix, but ignore failure since it's just a minor convenience.
-        hooks.attach(type, module, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW, false/*required*/);
+        hooks.attach(iat, nullptr, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW, false/*required*/);
 
         if (!hooks.commit())
             return false;

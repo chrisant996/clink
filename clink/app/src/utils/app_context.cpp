@@ -196,14 +196,6 @@ bool app_context::is_quiet() const
 }
 
 //------------------------------------------------------------------------------
-#if INCLUDE_DETOURS
-bool app_context::is_detours() const
-{
-    return m_desc.detours;
-}
-#endif
-
-//------------------------------------------------------------------------------
 void app_context::get_binaries_dir(str_base& out) const
 {
     out = m_binaries.c_str();
