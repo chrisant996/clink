@@ -31,6 +31,7 @@ static bool use_verbose_hook_logging()
 }
 
 //------------------------------------------------------------------------------
+#if INCLUDE_DETOURS
 static void* follow_jump(void* addr)
 {
     uint8* t = (uint8*)addr;
@@ -66,6 +67,7 @@ static void* follow_jump(void* addr)
     LOG("Following jump to %p", dest);
     return dest;
 }
+#endif
 
 //------------------------------------------------------------------------------
 static void write_addr(hookptr_t* where, hookptr_t to_write)
