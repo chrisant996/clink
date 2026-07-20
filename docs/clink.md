@@ -1896,7 +1896,10 @@ Key | Description
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
-<kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.  Use the [clink.popup_delete_direction](#clink_popup_delete_direction) setting to set whether repeated deletions delete upwards or downwards.
+<kbd>Ctrl</kbd>-<kbd>C</kbd>|Copy the selected item to the clipboard.
+<kbd>PgUp</kbd>/<kbd>PgDn</kbd>|Scroll the list up/down.
+<kbd>Home</kbd>/<kbd>End</kbd>|Scroll to the top/bottom of the list.
+<kbd>Del</kbd> or <kbd>Ctrl</kbd>-<kbd>D</kbd>|In a command history popup, <kbd>Del</kbd> or <kbd>Ctrl</kbd>-<kbd>D</kbd> deletes the selected history entry.  Use the [clink.popup_delete_direction](#clink_popup_delete_direction) setting to set whether repeated deletions delete upwards or downwards.
 <kbd>Left</kbd>/<kbd>Right</kbd>|Scroll horizontally if possible.
 <kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd>|Scroll faster horizontally if possible.
 <kbd>Ctrl</kbd>-<kbd>Home</kbd>/<kbd>End</kbd>|Scroll horizontally to far left/right if possible.
@@ -1908,8 +1911,8 @@ Key | Description
 Typing|Typing does an incremental search.
 <kbd>F1</kbd>|Open this help topic in the default web browser.
 <kbd>F3</kbd>|Go to the next match.
-<kbd>Ctrl</kbd>-<kbd>L</kbd>|Go to the next match.
 <kbd>Shift</kbd>-<kbd>F3</kbd>|Go to the previous match.
+<kbd>Ctrl</kbd>-<kbd>L</kbd>|Go to the next match.
 <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd>|Go to the previous match.
 <kbd>F4</kbd>|Toggle the search mode between "find" and "filter".  When the search mode is filter, typing filters the list instead of doing an incremental search (only in v1.6.13 and higher).  Use the [clink.popup_search_mode](#clink_popup_search_mode) setting to set the default search mode.
 
