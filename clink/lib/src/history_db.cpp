@@ -51,6 +51,13 @@ static setting_int g_max_history(
     10000);
 };
 
+static setting_int g_minimum_length(
+    "history.minimum_length",
+    "Skip adding lines shorter than this",
+    "The minimum length of a line that will be added to the history. Any line\n"
+    "shorter than this value will not be added to the history.",
+    0);
+
 static setting_bool g_ignore_space(
     "history.ignore_space",
     "Skip adding lines prefixed with whitespace",
@@ -1765,6 +1772,11 @@ bool history_db::add(const char* line, time_t* out_timestamp)
     // Ignore empty and/or whitespace prefixed lines?
     if (!line[0] || (g_ignore_space.get() && (line[0] == ' ' || line[0] == '\t')))
         return false;
+
+    // Ignore short lines
+    if (strlen(line) < g_minimum_length.get())
+        return false;
+
 
     // Handle duplicates.
     switch (g_dupe_mode.get())
