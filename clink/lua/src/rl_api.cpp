@@ -1112,8 +1112,9 @@ static int32 get_history_count(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl.gethistoryitems
 /// -ver:   1.3.18
-/// -ret:   start:integer
-/// -ret:   end:integer
+/// -arg:   start:integer
+/// -arg:   end:integer
+/// -ret:   table
 /// Returns a table of history items.
 ///
 /// The first history item is 1, and the last history item is
@@ -1416,7 +1417,7 @@ static int32 bracket_prompt_codes(lua_State* state)
 /// any.  Also returns the path and file name of the default Readline init file,
 /// if any is present.
 ///
-/// See [Init File](#init-file) for more info.
+/// See <a href="#init-file">Init File</a> for more info.
 static int32 get_inputrc_file_name(lua_State* state)
 {
     static bool s_initialised = !lua_state::is_interpreter();
