@@ -7,8 +7,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- [ ] Update the Feature Highlights section at https://chrisant996.github.io/clink/.
 
 ## Normal Priority
+- Maybe add a `clink.onafterdispatch()` function to call an event handler after every input dispatch?  To catch dispatches within a command, to update during a nested dispatch loop in commands like `reverse-search-history`.
+  - But it could be very risky/destabilizing to allow arbitrary execution inside editor commands.
+  - Is it really safe to allow `clink.refilterprompt()` inside a nested dispatch loop?  The whole purpose is to allow that case.
+  - Or maybe having a native Lua API for showing bars might make the event callbacks safer -- but probably the Clink Lua API extensions would need a way to disable certain functions inside a nested dispatch loop, and that would create a fragile perpetual tax to keep function disablement accurate as Clink Lua API extensions evolve.
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 - Review the REVIEW: comments about always/sometimes/never leaking an undo list.
