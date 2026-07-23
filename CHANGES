@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.31
+
+- Added new Lua API [rl.gethistoryindex()](#rl.gethistoryindex) which returns the current interactive history index, if any.
+
 #### v1.9.30
 
 - Added new Lua API [rl.issuggestionlistactive()](#rl.issuggestionlistactive) which returns whether the suggestion list is currently active.
