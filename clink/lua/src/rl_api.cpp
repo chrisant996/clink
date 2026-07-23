@@ -1110,6 +1110,27 @@ static int32 get_history_count(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  rl.gethistoryindex
+/// -ver:   1.9.31
+/// -ret:   integer|nil
+/// Returns the index of the current interactive history item, or nil:
+///
+/// While navigating through history items, the input line editor shows a
+/// history item, and this function returns the index of the history item,
+/// from 1 to <a href="#rl.gethistorycount">rl.gethistorycount()</a>.
+///
+/// While entering a new command line there is no current interactive history
+/// item, and this function returns nil.
+static int32 get_history_index(lua_State* state)
+{
+    if (history_offset < 0 || history_offset >= history_length)
+        lua_pushnil(state);
+    else
+        lua_pushinteger(state, history_offset + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl.gethistoryitems
 /// -ver:   1.3.18
 /// -arg:   start:integer
@@ -1576,6 +1597,7 @@ void rl_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0, "ismodifiedline",          &is_modified_line },
         { 1, "getmatchcolor",           &get_match_color },
         { 0, "gethistorycount",         &get_history_count },
+        { 0, "gethistoryindex",         &get_history_index },
         { 0, "gethistoryitems",         &get_history_items },
         { 0, "describemacro",           &describe_macro },
         { 1, "needquotes",              &need_quotes },
