@@ -115,6 +115,8 @@
     }
 
     table {
+        display: table;
+
         th,
         td {
             padding: 0px;
@@ -166,7 +168,6 @@ kbd {
 }
 
 .console {
-    display: table;
     border: none;
     color: #c0c0c0;
     background-color: transparent;
