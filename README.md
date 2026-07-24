@@ -20,12 +20,38 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 
 <p><b>Auto-Suggestions</b></p>
 
-<p>Clink offers suggestions as you type based on history, files, and completions.</p>
-
+<p>Clink offers suggestions as you type based on history and completions.</p>
+<!-- INLINE MODE ---
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
 <p>Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).</p>
+--- INLINE MODE --->
+
+<span id="animated-auto-suggest-preview">
+<pre style="border-radius:initial;border:initial;background-color:black"><code data-highlighted="yes" class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\re</span><span class="cursor">_</span></span></td></tr>
+<tr><td><em><span class="color_sugg_markup">&lt;-/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) completion(2)&gt;</span></em></td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\repos\reference\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;1/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;<span class="color_sugg_markup">history(1)</span> completion(2)&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</span></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\Recovery\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;2/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(1/2)</span>&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_default">C:\dir&gt;<span class="color_argmatcher">cd</span>&nbsp;<span class="color_input">\repos\</span><span class="cursor">_</span></span></td></tr>
+<tr style="display:none"><td><em><span class="color_sugg_markup">&lt;3/3&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_sugg_dim">&lt;history(1) <span class="color_sugg_markup">completion(2/2)</span>&gt;</span></em></td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> <span class="color_sugg_highlight">cd \re</span>pos\reference\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">history</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\Re</span>covery\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</td></tr>
+<tr style="display:none"><td><span class="color_sugg_selected"><span class="color_sugg_markup">&gt;</span> cd <span class="color_sugg_highlight">\re</span>pos\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="color_sugg_markup">completion</span>]</span></td></tr>
+</table></code></pre>
+</span>
 
 </div>
 <div class="promo_block">
@@ -48,7 +74,7 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 <ul>
 <li><kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.</li>
 <li><kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.</li>
-<li><kbd>F7</kbd> show a popup list of selectable history entries.</li>
+<li><kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> show a popup list of selectable history entries.</li>
 <li><kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.</li>
 </ul>
 
@@ -57,7 +83,7 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 
 <p><b>Scriptable Prompt and Colored Input</b></p>
 
-<p>You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!</p>
+<p>You can customize the prompt dynamically with Lua scripts, or choose from several included custom prompts.</p>
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#0087ff">C:\repos\clink</span> <span style="color:#888">git</span> <span style="color:#ff0">main</span><span style="color:#888">-></span><span style="color:#ff0">origin *3</span> <span style="color:#f33">!1</span>
 <span style="color:#0f0">></span> <span class="color_argmatcher">git</span> <span class="color_arg">merge</span> <span class="color_flag">--help</span><span class="cursor">_</span></span>
@@ -72,7 +98,7 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 
 <p><b>Command Line Editing Improvements</b></p>
 
-<p>Clink supercharges the command line with new input editing commands and configurable key bindings.</p>
+<p>Clink supercharges the command line with new input editing commands and configurable key bindings.  For example,</p>
 
 <ul>
 <li><kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.</li>
@@ -88,6 +114,8 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 <p><b>Convenience</b></p>
 
 <p>Optional auto-answering of the "Terminate batch job?" prompt.</p>
+
+<p>Enhanced doskey expansion even after <code>&amp;</code> and <code>|</code>.</p>
 
 <p>Directory shortcuts:</p>
 <ul>
