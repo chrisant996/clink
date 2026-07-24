@@ -113,6 +113,14 @@
         padding: 2rem 1rem;
         font-size: 1rem;
     }
+
+    table {
+        th,
+        td {
+            padding: 0px;
+            border: none;
+        }
+    }
 }
 
 kbd {
@@ -158,6 +166,7 @@ kbd {
 }
 
 .console {
+    display: table;
     border: none;
     color: #c0c0c0;
     background-color: transparent;
