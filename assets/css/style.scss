@@ -168,6 +168,7 @@ kbd {
 }
 
 .console {
+    display: table;
     border: none;
     color: #c0c0c0;
     background-color: transparent;
@@ -192,6 +193,11 @@ kbd {
 .color_suggestion { color: #808080 }
 .color_unexpected { color: #c0c0c0 }
 .color_unrecognized { color: #ff5f5f }
+.color_comment_row { color: #00ffff; background-color: #000080; }
+.color_sugg_dim { color: #6c6c6c; }
+.color_sugg_markup { color: #fdae1f; }
+.color_sugg_highlight { color: #5fffff; }
+.color_sugg_selected { background-color: #444444; }
 
 .cursor {
     animation: blinker 1s steps(1, end) infinite;
