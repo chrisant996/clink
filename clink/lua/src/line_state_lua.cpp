@@ -24,7 +24,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getrangeoffset",         &get_range_offset },
     { "getrangelength",         &get_range_length },
     // UNDOCUMENTED; internal use only.
-    { "_shift",                 &shift },
+    { "_shift_command_start",   &shift_command_start },
     { "_reset_shift",           &reset_shift },
     { "_break_word",            &break_word },
     { "_unbreak_word",          &unbreak_word },
@@ -268,13 +268,19 @@ int32 line_state_lua::get_command_offset(lua_State* state)
 /// -show:  line_state:getcommandwordindex() == 2
 int32 line_state_lua::get_command_word_index(lua_State* state)
 {
-    uint32 index = m_line->get_command_word_index();
+    uint32 index;
     if (m_shift)
     {
         const auto& words = m_line->get_words();
         const uint32 count = m_line->get_word_count();
+        index = m_shift;
         while (index < count && words[index].is_redir_arg)
             index++;
+        index -= m_shift;
+    }
+    else
+    {
+        index = m_line->get_command_word_index();
     }
 
     lua_pushinteger(state, index + 1);
@@ -494,7 +500,7 @@ int32 line_state_lua::get_range_length(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int32 line_state_lua::shift(lua_State* state)
+int32 line_state_lua::shift_command_start(lua_State* state)
 {
     uint32 num = optinteger(state, LUA_SELF + 1, 0);
 

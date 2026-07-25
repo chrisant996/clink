@@ -215,6 +215,7 @@ TEST_CASE("Lua advanced arg parsers")
         const char* script = "\
             clink.argmatcher('sudo'):addflags('-x', '/x'):chaincommand()\
             clink.argmatcher('gsudo'):addflags('-y', '/y'):chaincommand()\
+            clink.argmatcher('i'):addarg(clink.dirmatches):chaincommand('doskey')\
             clink.argmatcher('plerg'):addflags('-l', '-m', '-n', '/l', '/m', '/n'):addarg('aaa', 'zzz'):nofiles()\
             clink.argmatcher('cd'):addflags('/d'):addarg(clink.dirmatches):nofiles()\
         ";
@@ -327,6 +328,19 @@ TEST_CASE("Lua advanced arg parsers")
         SECTION("No expand doskey")
         {
             // TODO: Ensure breaking `foo/` into `foo` and `/` doesn't allow expanding a doskey alias `foo`.
+        }
+
+        SECTION("Expand doskey in chained command")
+        {
+            REQUIRE(doskey.add_alias("xyz", "plerg $*") == true);
+
+            tester.set_input("i nest xyz ");
+            tester.set_expected_matches("aaa", "zzz");
+            tester.run();
+
+            tester.set_input(">out i nest xyz ");
+            tester.set_expected_matches("aaa", "zzz");
+            tester.run();
         }
     }
 

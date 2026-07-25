@@ -36,7 +36,7 @@ protected:
     int32               get_end_word_offset(lua_State* state);
     int32               get_range_offset(lua_State* state);
     int32               get_range_length(lua_State* state);
-    int32               shift(lua_State* state);
+    int32               shift_command_start(lua_State* state);
     int32               reset_shift(lua_State* state);
     int32               break_word(lua_State* state);
     int32               unbreak_word(lua_State* state);
