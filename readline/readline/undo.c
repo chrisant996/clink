@@ -61,6 +61,12 @@ int _rl_undo_group_level = 0;
 /* The current undo list for THE_LINE. */
 UNDO_LIST *rl_undo_list = (UNDO_LIST *)NULL;
 
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+extern rl_on_free_undo_list_func_t *rl_on_free_undo_list_func = 0;
+#endif
+/* end_clink_change */
+
 /* **************************************************************** */
 /*								    */
 /*			Undo, and Undoing			    */
@@ -106,6 +112,13 @@ void
 _rl_free_undo_list (UNDO_LIST *ul)
 {
   UNDO_LIST *release;
+
+/* begin_clink_change */
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+  if (rl_on_free_undo_list_func)
+    rl_on_free_undo_list_func (ul);
+#endif
+/* end_clink_change */
 
   while (ul)
     {

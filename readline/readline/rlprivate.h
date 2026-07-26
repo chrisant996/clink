@@ -470,6 +470,9 @@ extern int _rl_nsearch_callback (_rl_search_cxt *);
 extern int _rl_nsearch_cleanup (_rl_search_cxt *, int);
 extern int _rl_nsearch_sigcleanup (_rl_search_cxt *, int);
 /* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+extern UNDO_LIST *_rl_get_saved_search_undo_list (void);
+#endif
 extern void adjust_history_search_pos (int);
 extern int rl_get_history_search_pos (void);
 extern int rl_get_history_search_flags (void);
@@ -531,6 +534,11 @@ extern void _rl_rscxt_dispose (_rl_readstr_cxt *, int);
 extern void _rl_free_saved_readstr_line (void);
 extern void _rl_unsave_saved_readstr_line (void);
 extern _rl_readstr_cxt *_rl_readstr_init (int, int);
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+extern UNDO_LIST *_rl_get_saved_readstr_undo_list (void);
+#endif
+/* end_clink_change */
 extern int _rl_readstr_cleanup (_rl_readstr_cxt *, int);
 extern int _rl_readstr_sigcleanup (_rl_readstr_cxt *, int);
 extern void _rl_readstr_restore (_rl_readstr_cxt *);
@@ -735,6 +743,11 @@ extern _rl_readstr_cxt *_rl_rscxt;
 /* undo.c */
 extern int _rl_doing_an_undo;
 extern int _rl_undo_group_level;
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+extern rl_on_free_undo_list_func_t *rl_on_free_undo_list_func;
+#endif
+/* end_clink_change */
 
 /* vi_mode.c */
 extern int _rl_vi_last_command;

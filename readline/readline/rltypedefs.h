@@ -90,6 +90,8 @@ typedef int rl_macro_hook_func_t (const char* macro);
 struct undo_list;
 typedef struct undo_list UNDO_LIST;
 typedef int rl_can_concat_undo_hook_func_t (UNDO_LIST* undo, const char* string);
+/* Type for function to examine UNDO_LIST before freeing it */
+typedef void rl_on_free_undo_list_func_t (UNDO_LIST* undo);
 /* end_clink_change */
 
 /* Input function type */

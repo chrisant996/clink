@@ -2165,6 +2165,18 @@ _rl_readstr_init (int pchar, int flags)
   return cxt;
 }
 
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+UNDO_LIST *
+_rl_get_saved_readstr_undo_list (void)
+{
+  if (_rl_saved_line_for_readstr)
+    return (UNDO_LIST *)_rl_saved_line_for_readstr->data;
+  return ((UNDO_LIST *)NULL);
+}
+#endif
+/* end_clink_change */
+
 int
 _rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)
 {

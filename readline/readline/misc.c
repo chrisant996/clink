@@ -604,6 +604,11 @@ rl_clear_history (void)
 	  hent->data = 0;
 	}
       _rl_free_history_entry (hent);
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+      hlist[i] = 0;
+#endif
+/* end_clink_change */
     }
 
   history_offset = history_length = 0;

@@ -387,6 +387,18 @@ _rl_nsearch_sigcleanup (_rl_search_cxt *cxt, int r)
   return (_rl_nsearch_cleanup (cxt, r));
 }
 
+/* begin_clink_change */
+#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
+UNDO_LIST *
+_rl_get_saved_search_undo_list (void)
+{
+  if (_rl_saved_line_for_search)
+    return (UNDO_LIST *)_rl_saved_line_for_search->data;
+  return ((UNDO_LIST *)NULL);
+}
+#endif
+/* end_clink_change */
+
 /* Process just-read character C according to search context CXT.  Return -1
    if the caller should abort the search, 0 if we should break out of the
    loop, and 1 if we should continue to read characters. */

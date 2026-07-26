@@ -1726,6 +1726,39 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 }
 
 //------------------------------------------------------------------------------
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+static bool undo_list_root_is_interior(UNDO_LIST* undo, UNDO_LIST* root)
+{
+    if (root)
+    {
+        for (undo = undo ? undo->next : nullptr; undo; undo = undo->next)
+            if (undo == root)
+                return true;
+    }
+    return false;
+}
+
+static void assert_no_undo_list_interior_roots(UNDO_LIST* undo)
+{
+    if (!undo)
+        return;
+
+    assert(!undo_list_root_is_interior(undo, rl_undo_list));
+
+    HIST_ENTRY** const history = history_list();
+    for (int32 i = 0; history && i < history_length; i++)
+        if (history[i])
+            assert(!undo_list_root_is_interior(undo, (UNDO_LIST*)history[i]->data));
+
+    if (_rl_saved_line_for_history)
+        assert(!undo_list_root_is_interior(undo, (UNDO_LIST*)_rl_saved_line_for_history->data));
+
+    assert(!undo_list_root_is_interior(undo, _rl_get_saved_search_undo_list()));
+    assert(!undo_list_root_is_interior(undo, _rl_get_saved_readstr_undo_list()));
+}
+#endif
+
+//------------------------------------------------------------------------------
 static void init_readline_hooks()
 {
     static bool s_first_time = true;
@@ -1820,6 +1853,10 @@ static void init_readline_hooks()
     rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
     rl_sort_completion_matches = 0; // We'll handle sorting.
 
+    // Undo list heap diagnostics.
+#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
+    rl_on_free_undo_list_func = assert_no_undo_list_interior_roots;
+#endif
 }
 
 //------------------------------------------------------------------------------
