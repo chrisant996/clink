@@ -15,11 +15,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Or maybe having a native Lua API for showing bars might make the event callbacks safer -- but probably the Clink Lua API extensions would need a way to disable certain functions inside a nested dispatch loop, and that would create a fragile perpetual tax to keep function disablement accurate as Clink Lua API extensions evolve.
 - Readline's order of precedence in `rl_read_key` is Clink, pending, macro, pushed, stdin -- but why wouldn't pushed be the highest precedence?
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
-- Review the REVIEW: comments about always/sometimes/never leaking an undo list.
-  - It might be overall better to just write my own input line editor.
-  - There are many reasons to want an independent implementation of an input line editor that doesn't use global variables for everything.
-  - But if I write my own input line editor, I want it to be under the MIT License, not GPL3.  So a "clean room" process would be necessary, and I would have to completely avoid Clink and Readline source code for at least a month before starting on the separate input line editor, and then continue to avoid Clink and Readline until the separate input line editor is complete (or wait another month after any time that I had to make some fix in Clink or Readline).
-  - And I would want it to support all the Readline commands, but a clean room implementation would probably have at least a few places where the independent implementations don't quite entirely work the same as the Readline versions, and I'm not sure whether that would be acceptable.
 
 ## Low Priority
 - Maybe add some way for Lua to add bars above the prompt, and make the bars automatically disappear when the prompt ends (regardless whether `prompt.transient` is enabled)?
@@ -49,9 +44,22 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Event handler enhancements:
   - Allow setting an optional `priority` when registering event handlers?  So that scripts can control the precedence of `onbeginedit`, `onendedit`, and so on.
   - Allow adding a ONE-TIME event handler which automatically removes itself upon firing?  And `clink-diagnostics` would need to show any ONE-TIME event handlers until the next beginedit.
-    - Watch out for back-compat:  Consider making _new API functions_ for adding one-time event handlers.  Adding an optional parameter is dangerous because a script author could use it without taking steps to ensure backward compatibility, and then potentially significant malfunctions could occur.  And anyway, probably only a small number of events would actually need support for one-time handlers (maybe even only `onbeginedit`).
+    - Watch out for back-compat:  Consider making _new API functions_ for adding one-time event handlers.  Adding an optional parameter is dangerous because a script author could intentionally use it without taking steps to ensure backward compatibility, or accidentally use it by passing the return value(s!) from an inline call to a function returns multiple values -- either way, potentially significant malfunctions could occur.  And anyway, probably only a small number of events would actually need support for one-time handlers.
+  - Maybe make the `clink.onbeginedit()` etc functions return a token that can be used to adjust the priority or remove the event handler?
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
+
+## Custom alternative to Readline
+- Readline uses global variables for everything, making it effectively impossible to have nested input calls (e.g. a popup window with an embedded text box, while the outer input line call is still pending).
+- It's very difficult to extend Readline while still trying to stay in sync with the official Readline repo, especially since Readline is primarily for Linux and has several challenges with use in native Win32 programs (i.e. that don't use gcc, cygwin, MSYS2, etc).
+- If I write my own input editor, I want it to be under the MIT License, not GPL3.  I've had AI map out a clean room process that could be used to ensure and demonstrate that there is no copying of protected expression.
+- Some specific design points:
+  - The core input editor could implement basic bindable commands, and have an extensibility model where the host can add custom commands.
+  - The host could potentially choose to implement some custom commands as wrappers around Readline functions, and the host could temporarily set up internal Readline state before calling Readline functions, and tear down internal Readline state after the Readline function returns -- that's independent from the input editor itself.
+  - A sample function signature could be `typedef bool (*custom_command_t)(editor_context& context, const char* name)`, which is clearly a generic extensibility mechanism that's necessary for any custom commands a host wants to implement, regardless of their implementation details.
+  - Must use the same names for bindable commands, but with independent implementations.
+  - Ideally try to support cross-platform compatibility, or at least have an abstraction layer for platform differences, even if I don't personally implement multiple platform implementations.
+- A good first proof-of-concept host would be the List-Redux project (https://github.com/chrisant996/list-redux), instead of Clink.  The List-Redux project has some layout needs beyond what Clink needs, in addition to broad overlap in shared needs, but it doesn't need many built-in editor commands.
 
 ## Extra Low Priority
 - Option for the installer to add the Clink directory to the system PATH?  **WARNING:**  The main problem is about All Users...
