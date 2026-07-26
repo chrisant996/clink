@@ -388,8 +388,8 @@ end
 --- <ul>
 --- <li>When true this uses the fast method of reading the ".git/HEAD" file.
 --- <li>When omitted or false this invokes git.exe to get the current branch.
---- <li>Clink v1.9.3 always behave as though <span class="arg">fast</span> is
---- true.
+--- <li>Clink v1.9.3 and lower always behave as though
+--- <span class="arg">fast</span> is true.
 --- <li>In a git repo with a
 --- <a href="https://git-scm.com/docs/reftable">reftable</a>, the fast method
 --- is unable to get the current branch, and simply returns ".invalid".
