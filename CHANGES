@@ -5,6 +5,7 @@
 #### v1.9.31
 
 - Added new Lua API [rl.gethistoryindex()](#rl.gethistoryindex) which returns the current interactive history index, if any.
+- Fixed `git.isgitdir()` and `git.getgitdir()` to not get confused by the empty .git directories that the Codex app leaves scattered around (due to a bug in Codex that's currently tracked by a large number of open issues).
 - Fixed `:chaincommand("doskey")` to be able to expand doskey aliases (regression introduced in v1.6.18).
 - Fixed an undo list memory management bug in `clink-reset-line` that could leak memory (regression introduced in v1.8.0).
 
