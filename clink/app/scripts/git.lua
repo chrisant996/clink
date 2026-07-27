@@ -293,9 +293,9 @@ function git.isgitdir(dir)
     end
 
     -- Return if it's a git dir.
-    local gitdir = has_dir(dir, ".git")
+    local gitdir = has_file(dir, ".git\\HEAD")
     if gitdir then
-        gitdir = path.normalise(gitdir)
+        gitdir = path.normalise(path.join(dir, ".git"))
         return gitdir, gitdir, dir
     end
 
@@ -313,7 +313,9 @@ function git.isgitdir(dir)
         -- If no worktree, check if submodule inside a repo.
         if not wks then
             wks = scan_upwards(dir, function (x)
-                return has_dir(x, ".git")
+                if has_file(x, ".git\\HEAD") then
+                    return path.normalise(path.join(x, ".git"))
+                end
             end)
             if not wks then
                 -- No worktree and not nested inside a repo, so give up!
