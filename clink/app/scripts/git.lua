@@ -50,21 +50,21 @@ local function join_into_absolute(parent, child)
     return path.join(parent, child)
 end
 
+--[[
 -- Function that takes (dir, subdir) and returns "dir\subdir" if the subdir
 -- exists, otherwise it returns nil.
 local function has_dir(dir, subdir)
     local test = path.join(dir, subdir)
     return os.isdir(test) and test or nil
 end
+--]]
 
---[[
 -- Function that takes (dir, file) and returns "dir\file" if the file exists,
 -- otherwise it returns nil.
 local function has_file(dir, file)
     local test = path.join(dir, file)
     return os.isfile(test) and test or nil
 end
---]]
 
 -- Function that walks up from dir, looking for scan_for in each directory.
 -- Starting with dir (or cwd if dir is nil), this invokes scan_func(dir), which
