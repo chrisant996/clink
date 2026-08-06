@@ -28,7 +28,7 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 
 You can install Clink by running the setup EXE file from the [releases page](https://github.com/chrisant996/clink/releases).
 
-Or by using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and running `winget install clink`.
+Or by using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and running `winget install --id chrisant996.Clink -e`.
 
 Or by using [scoop](https://scoop.sh/) and running `scoop install clink`.
 
