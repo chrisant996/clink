@@ -7,6 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
+- `wcwidth_iter` does not handle combining marks correctly, e.g. `ô̈` (`"o\xcc\x82\xcc\x88"`).
+  - Is there a way to reliably (even mostly reliably) differentiate invalid or standalone combining marks versus well-formed usage?
+  - wcwidth-verifier may need adjustments.
+  - The `combining_mark_width_scope cmwidth(1);` inside `wcwidth_iter::next()` breaks well-formed combining marks usage, as a side effect of its attempt to handle standalone combining marks.
 
 ## Normal Priority
 - Maybe add a `clink.onafterdispatch()` function to call an event handler after every input dispatch?  To catch dispatches within a command, to update during a nested dispatch loop in commands like `reverse-search-history`.
