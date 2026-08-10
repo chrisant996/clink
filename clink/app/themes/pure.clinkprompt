@@ -298,7 +298,7 @@ local function virtualenv_func()
         text = venvp
     end
     if text then
-        return text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        return text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", ""):gsub("\\+$", ""):gsub("^.*\\", "")
     end
 end
 
