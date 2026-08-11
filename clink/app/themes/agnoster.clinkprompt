@@ -441,8 +441,15 @@ function ag.prompt_status()
 end
 
 -- Display current virtual environment
+local function take_the_tail(text)
+    if text then
+        text = text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        local _, child = path.toparent(text) -- Get base name of dir where possible.
+        return child ~= "" and child or text
+    end
+end
 function ag.prompt_virtualenv()
-    local text = os.getenv('VIRTUAL_ENV')
+    local text = take_the_tail(os.getenv('VIRTUAL_ENV'))
     if text then
         ag.prompt_segment(ag.cyan, ag.PRIMARY_FG, ' '..text..' ')
     end

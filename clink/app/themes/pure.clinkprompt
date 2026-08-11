@@ -130,6 +130,14 @@ local function sgr(code)
     return "\x1b["..(code or "").."m"
 end
 
+local function take_the_tail(text)
+    if text then
+        text = text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        local _, child = path.toparent(text) -- Get base name of dir where possible.
+        return child ~= "" and child or text
+    end
+end
+
 local need_update = true
 local function update_config()
     local default_colors = os.getenv("PURE_USE_TERMINAL_COLORS") and default_colors_terminal or default_colors_custom
@@ -298,7 +306,7 @@ local function virtualenv_func()
         text = venvp
     end
     if text then
-        return text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        return take_the_tail(text)
     end
 end
 

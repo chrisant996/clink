@@ -121,6 +121,13 @@ end
 local function iif(expr, iftrue, iffalse)
     if expr then return iftrue else return iffalse end
 end
+local function take_the_tail(text)
+    if text then
+        text = text:gsub("\t\r\n", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        local _, child = path.toparent(text) -- Get base name of dir where possible.
+        return child ~= "" and child or text
+    end
+end
 
 local headline_git_branch, headline_git_status, _headline_part, ellipsify, sum, evalcmd
 local has24bitcolor = string.find(" winterminal wezterm winconsolev2 ", " "..clink.getansihost().." ") and true or false
@@ -137,7 +144,7 @@ HEADLINE=HEADLINE or {}
 
 -- Info sources (these must be functions that return a string to be shown)
 HEADLINE.USER_CMD=HEADLINE.USER_CMD or function() local u=os.getenv('USERNAME') return (u ~= os.getenv('DEFAULT_USER')) and u or '' end
-HEADLINE.HOST_CMD=HEADLINE.HOST_CMD or function() return (os.getenv('VIRTUAL_ENV') or os.getenv('COMPUTERNAME') or ''):gsub('%..*$', '') end
+HEADLINE.HOST_CMD=HEADLINE.HOST_CMD or function() return (take_the_tail(os.getenv('VIRTUAL_ENV')) or os.getenv('COMPUTERNAME') or ''):gsub('%..*$', '') end
 HEADLINE.PATH_CMD=HEADLINE.PATH_CMD or function() return rl.collapsetilde(os.getcwd()) or '' end
 HEADLINE.GIT_BRANCH_CMD=HEADLINE.GIT_BRANCH_CMD or function() return headline_git_branch() or '' end
 HEADLINE.GIT_STATUS_CMD=HEADLINE.GIT_STATUS_CMD or function() return headline_git_status() or '' end
