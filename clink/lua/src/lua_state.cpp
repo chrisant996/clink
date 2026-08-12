@@ -481,7 +481,7 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     BOOL has_modeIn = GetConsoleMode(hIn, &modeIn);
     BOOL has_modeOut = GetConsoleMode(hOut, &modeOut);
-    if (has_modeIn)
+    if (has_modeIn && !is_interpreter())
         modeIn = cleanup_console_input_mode(modeIn);
 
     // Calculate stack position for message handler.
