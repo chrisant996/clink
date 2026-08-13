@@ -152,11 +152,11 @@ Clink is distributed under the terms of the GNU General Public License v3.0.
 
 ### Star History
 
-<a href="https://star-history.com/#chrisant996/clink&mridgers/clink&Date">
+<a href="https://star-history.dera.page/#chrisant996/clink&mridgers/clink&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date" />
+    <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=chrisant996/clink%2Cmridgers/clink&type=Date" />
   </picture>
 </a>
 
