@@ -278,6 +278,10 @@ int32 interpreter(int32 argc, char** argv)
     extern void init_standalone_textlist(terminal& term);
     init_standalone_textlist(term);
 
+    // Issue #898 -- the standalone interpreter needs to respond to Ctrl-C.
+    // Must go before lua_state ctor, because that modifies the input mode.
+    use_processed_input(true);
+
     int32 status = LUA_OK;
     lua_state_flags flags = lua_state_flags::interpreter;
     if (ignore_env)

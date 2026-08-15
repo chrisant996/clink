@@ -24,6 +24,7 @@ extern "C" const char* get_popup_header_colors(const char* preferred=nullptr);
 extern "C" const char* get_popup_footer_colors(const char* preferred=nullptr);
 extern "C" const char* get_popup_select_colors(const char* preferred=nullptr);
 extern "C" const char* get_popup_selectdesc_colors(const char* preferred=nullptr);
+extern "C" void use_processed_input(int32 processed);
 extern "C" DWORD cleanup_console_input_mode(DWORD mode);
 extern "C" void use_host_input_mode(HANDLE h, DWORD current_mode);
 extern "C" void use_clink_input_mode(HANDLE h);

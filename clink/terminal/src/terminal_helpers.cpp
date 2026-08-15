@@ -483,6 +483,13 @@ extern "C" HANDLE get_std_handle(DWORD n)
 //------------------------------------------------------------------------------
 static DWORD s_host_input_mode = -1;
 static DWORD s_clink_input_mode = -1;
+static bool s_use_processed_input = false;
+
+//------------------------------------------------------------------------------
+extern "C" void use_processed_input(int32 processed)
+{
+    s_use_processed_input = !!processed;
+}
 
 //------------------------------------------------------------------------------
 static void save_host_input_mode(DWORD mode)
@@ -505,7 +512,8 @@ extern "C" DWORD cleanup_console_input_mode(DWORD mode)
     // ENABLE_PROCESSED_INPUT can happen when Lua code uses io.popen():lines()
     // and returns without finishing reading the output, or uses os.execute() in
     // a coroutine.
-    mode &= ~ENABLE_PROCESSED_INPUT;
+    if (!s_use_processed_input)
+        mode &= ~ENABLE_PROCESSED_INPUT;
 
     // ENABLE_VIRTUAL_TERMINAL_INPUT can happen when console programs change
     // the input mode and either doesn't clean it up before exiting or continues
