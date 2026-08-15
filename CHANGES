@@ -5,6 +5,7 @@
 #### v1.9.32
 
 - Fixed agnoster, Headline, and pure custom prompts to show just the base directory name for the Python virtual env.
+- Fixed `rl.gethistoryindex()` during the `onbeginedit` callback and the first prompt filter per input line.
 
 #### v1.9.31
 
