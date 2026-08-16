@@ -40,7 +40,7 @@ str_moveable::~str_moveable()
 #endif
 
 //------------------------------------------------------------------------------
-str_moveable& str_moveable::operator = (str_moveable&& s)
+str_moveable& str_moveable::operator = (str_moveable&& s) noexcept
 {
     if (s.owns_ptr())
     {
@@ -100,7 +100,7 @@ wstr_moveable::~wstr_moveable()
 #endif
 
 //------------------------------------------------------------------------------
-wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
+wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s) noexcept
 {
     if (s.owns_ptr())
     {

@@ -82,9 +82,9 @@ public:
     void                operator = (const str_impl&) = delete;
 
 protected:
-                        str_impl(str_impl&&);
+                        str_impl(str_impl&&) noexcept;
     void                set_growable(bool state=true);
-    str_impl&           operator = (str_impl&&);
+    str_impl&           operator = (str_impl&&) noexcept;
     bool                owns_ptr() const;
     void                reset_not_owned(TYPE* data, uint32 size);
     void                free_data();
@@ -122,7 +122,7 @@ str_impl<TYPE>::~str_impl()
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-str_impl<TYPE>::str_impl(str_impl&& s)
+str_impl<TYPE>::str_impl(str_impl&& s) noexcept
 {
     *this = std::move(s);
 }
@@ -531,7 +531,7 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s)
+str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s) noexcept
 {
     assert(s.m_owns_ptr); // Otherwise our m_data will point into s.
 
@@ -601,7 +601,7 @@ public:
     str_base&           operator = (str_base&& rhs)       = delete;
 
 protected:
-                        str_base(str_base&&)              = default;
+                        str_base(str_base&&) noexcept     = default;
 };
 
 class wstr_base : public str_impl<wchar_t>
@@ -618,7 +618,7 @@ public:
     wstr_base&          operator = (wstr_base&& rhs)      = delete;
 
 protected:
-                        wstr_base(wstr_base&&)            = default;
+                        wstr_base(wstr_base&&) noexcept   = default;
 };
 
 
@@ -631,10 +631,10 @@ public:
                 str() : str_base(m_data, COUNT)     { clear(); set_growable(GROWABLE); }
     explicit    str(const char* value) : str()      { copy(value); }
     explicit    str(const wchar_t* value) : str()   { from_utf16(value); }
-                str(str<COUNT, GROWABLE>&& rhs) : str() { *this = std::move(rhs); };
+                str(str<COUNT, GROWABLE>&& rhs) noexcept : str() { *this = std::move(rhs); };
                 str(const str&) = delete;
     using       str_base::operator =;
-    str<COUNT, GROWABLE>& operator = (str<COUNT, GROWABLE>&&);
+    str<COUNT, GROWABLE>& operator = (str<COUNT, GROWABLE>&&) noexcept;
 
 private:
     char        m_data[COUNT];
@@ -647,17 +647,17 @@ public:
                 wstr() : wstr_base(m_data, COUNT)   { clear(); set_growable(GROWABLE); }
     explicit    wstr(const wchar_t* value) : wstr() { copy(value); }
     explicit    wstr(const char* value) : wstr()    { from_utf8(value); }
-                wstr(wstr<COUNT, GROWABLE>&& rhs) : wstr() { *this = std::move(rhs); };
+                wstr(wstr<COUNT, GROWABLE>&& rhs) noexcept : wstr() { *this = std::move(rhs); };
                 wstr(const wstr&) = delete;
     using       wstr_base::operator =;
-    wstr<COUNT, GROWABLE>& operator = (wstr<COUNT, GROWABLE>&&);
+    wstr<COUNT, GROWABLE>& operator = (wstr<COUNT, GROWABLE>&&) noexcept;
 
 private:
     wchar_t     m_data[COUNT];
 };
 
 template <int32 COUNT, bool GROWABLE>
-str<COUNT, GROWABLE>& str<COUNT, GROWABLE>::operator = (str<COUNT, GROWABLE>&& rhs)
+str<COUNT, GROWABLE>& str<COUNT, GROWABLE>::operator = (str<COUNT, GROWABLE>&& rhs) noexcept
 {
     assert(&rhs != this);
     assert(GROWABLE == is_growable());
@@ -680,7 +680,7 @@ str<COUNT, GROWABLE>& str<COUNT, GROWABLE>::operator = (str<COUNT, GROWABLE>&& r
 }
 
 template <int32 COUNT, bool GROWABLE>
-wstr<COUNT, GROWABLE>& wstr<COUNT, GROWABLE>::operator = (wstr<COUNT, GROWABLE>&& rhs)
+wstr<COUNT, GROWABLE>& wstr<COUNT, GROWABLE>::operator = (wstr<COUNT, GROWABLE>&& rhs) noexcept
 {
     assert(&rhs != this);
     assert(GROWABLE == is_growable());
@@ -712,12 +712,12 @@ public:
     explicit    str_moveable(const char* value) : str_moveable()    { copy(value); }
     explicit    str_moveable(const wchar_t* value) : str_moveable() { from_utf16(value); }
                 str_moveable(const str_moveable&) = delete; // (Did you forget const& in a for range loop?)
-                str_moveable(str_moveable&& s) : str_moveable()     { *this = std::move(s); }
+                str_moveable(str_moveable&& s) noexcept : str_moveable() { *this = std::move(s); }
 #ifdef DEBUG
                 ~str_moveable();
 #endif
     using       str_base::operator =;
-    str_moveable& operator = (str_moveable&&);
+    str_moveable& operator = (str_moveable&&) noexcept;
 
     char*       detach();
     void        free();
@@ -733,12 +733,12 @@ public:
     explicit    wstr_moveable(const wchar_t* value) : wstr_moveable() { copy(value); }
     explicit    wstr_moveable(const char* value) : wstr_moveable()  { from_utf8(value); }
                 wstr_moveable(const wstr_moveable&) = delete; // (Did you forget const& in a for range loop?)
-                wstr_moveable(wstr_moveable&& s) : wstr_moveable()  { *this = std::move(s); }
+                wstr_moveable(wstr_moveable&& s) noexcept : wstr_moveable() { *this = std::move(s); }
 #ifdef DEBUG
                 ~wstr_moveable();
 #endif
     using       wstr_base::operator =;
-    wstr_moveable& operator = (wstr_moveable&&);
+    wstr_moveable& operator = (wstr_moveable&&) noexcept;
 
     wchar_t*    detach();
     void        free();
