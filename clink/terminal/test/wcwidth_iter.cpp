@@ -31,18 +31,11 @@ TEST_CASE("wcwidth_iter")
             { 4,    L"abcd" },
             { 5,    L"abcd" },
             { 5,    L"ÀΘЙ≋☑" },
-#if 0
-// TODO: What column width is actually used on Win10 and on Win8.1?
-            { 1,    L"✔️" },
-            { 2,    L"✔️ " },
-            { 2,    L"✔️x" },
-            { 3,    L"y✔️x" },
-#else
+// TODO: What column width is used on Win10?
             { 2,    L"✔️" },
             { 3,    L"✔️ " },
             { 3,    L"✔️x" },
             { 4,    L"y✔️x" },
-#endif
             { 2,    L"✔️", true },
             { 3,    L"✔️ ", true },
             { 3,    L"✔️x", true },
@@ -73,14 +66,16 @@ TEST_CASE("wcwidth_iter")
             while (iter.next())
                 cols += iter.character_wcwidth_onectrl();
 
-            REQUIRE(t.cols == cols, [&] () {
+            auto callback = [&] () {
                 DWORD written;
                 WCHAR buffer[128];
                 swprintf_s(buffer, _countof(buffer),
                         L"   index:  %u\n     str:  \"%s\"\n    cols:  %u\nexpected:  %u",
                         index, t.str, cols, t.cols);
                 WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, DWORD(wcslen(buffer)), &written, nullptr);
-            });
+            };
+
+            REQUIRE(t.cols == cols, callback);
 
             ++index;
         }

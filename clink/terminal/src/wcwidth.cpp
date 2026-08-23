@@ -75,6 +75,7 @@
 extern bool g_color_emoji;
 
 static int32 s_combining_mark_width = 0;
+static int32 s_fe0f_width = 0; // Must be 0 normally, so that Readline can find grapheme boundaries.
 static bool s_only_ucs2 = false;
 static bool s_win10 = false;
 static bool s_win11 = false;
@@ -230,7 +231,7 @@ static int32 mk_wcwidth(char32_t ucs)
 
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, combining, _countof(combining) - 1))
-    return s_combining_mark_width;
+    return (ucs == 0xfe0f) ? s_fe0f_width : s_combining_mark_width;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
   if (ucs < 0x1100)
@@ -469,15 +470,18 @@ wcswidth_t *wcswidth = mk_wcswidth;
 } // extern "C"
 #endif
 
-combining_mark_width_scope::combining_mark_width_scope(int32 width)
-: m_old(s_combining_mark_width)
+combining_mark_width_scope::combining_mark_width_scope(combining_mark_width_mode mode)
+: m_old_combining_mark_width(s_combining_mark_width)
+, m_old_fe0f_width(s_fe0f_width)
 {
-    s_combining_mark_width = width;
+    s_combining_mark_width = (mode == mode_normal && s_only_ucs2) ? 1 : 0;
+    s_fe0f_width = (mode == mode_normal) ? 1 : 0;
 }
 
 combining_mark_width_scope::~combining_mark_width_scope()
 {
-    s_combining_mark_width = m_old;
+    s_combining_mark_width = m_old_combining_mark_width;
+    s_fe0f_width = m_old_fe0f_width;
 }
 
 void detect_ucs2_limitation(bool force)
@@ -534,6 +538,16 @@ bool is_emoji(char32_t ucs)
 {
     assert(g_color_emoji);
     return !!bisearch(ucs, emojis, _countof(emojis) - 1);
+}
+
+/*
+ * This returns whether UCS2 limitations are in effect.  Some terminals and/or
+ * OS versions only support UCS2 and also don't combine combining marks how
+ * the Unicode standard expects.
+ */
+bool is_only_ucs2()
+{
+    return s_only_ucs2;
 }
 
 #include <core/settings.h>

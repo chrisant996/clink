@@ -15,15 +15,18 @@ extern "C" void reset_cached_font();
 bool is_variant_selector(char32_t ucs);
 bool is_possible_unqualified_half_width(char32_t ucs);
 bool is_emoji(char32_t ucs);
+bool is_only_ucs2();
 
 //------------------------------------------------------------------------------
 class combining_mark_width_scope
 {
 public:
-    combining_mark_width_scope(int32 width);
+    enum combining_mark_width_mode { mode_normal, mode_emoji };
+    combining_mark_width_scope(combining_mark_width_mode mode);
     ~combining_mark_width_scope();
 private:
-    const int32 m_old;
+    const int32 m_old_combining_mark_width;
+    const int32 m_old_fe0f_width;
 };
 
 //------------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 
 - Fixed agnoster, Headline, and pure custom prompts to show just the base directory name for the Python virtual env.
 - Fixed `rl.gethistoryindex()` during the `onbeginedit` callback and the first prompt filter per input line.
+- Fixed width calculation for combining marks such as diacritics; there's no fully reliable way to predict how a terminal will render combining marks, but Clink tries to accommodate different OS versions and console configuration modes and grapheme combinations to predict as closely as possible.
 
 #### v1.9.31
 

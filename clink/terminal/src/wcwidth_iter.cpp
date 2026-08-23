@@ -87,10 +87,11 @@ char32_t wcwidth_iter::next()
     m_chr_end = m_iter.get_pointer();
     m_next = m_iter.next();
 
-    // In the Windows console subsystem, combining marks actually have a
-    // column width of 1, not 0 as the original wcwidth implementation
-    // expected.
-    combining_mark_width_scope cmwidth(1);
+    // In the Windows console subsystem, combining marks may have a column
+    // width of 0 or 1, depending on the OS version and what codepoints
+    // precede the combining mark (esp. when a combining mark or variant
+    // selector is the first codepoint in a terminal row).
+    combining_mark_width_scope cmwidth(combining_mark_width_scope::mode_normal);
 
     m_chr_wcwidth = wcwidth(c);
     if (m_chr_wcwidth < 0)
@@ -173,8 +174,8 @@ emoji_sequence:
 //------------------------------------------------------------------------------
 void wcwidth_iter::consume_emoji_sequence()
 {
-    // Within emoji sequences, combining marks have zero width.
-    combining_mark_width_scope cmwidth(0);
+    // Within emoji sequences, combining marks always have zero width.
+    combining_mark_width_scope cmwidth(combining_mark_width_scope::mode_emoji);
 
     while (m_next)
     {
