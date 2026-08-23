@@ -10,6 +10,7 @@
 #include <lua/lua_task_manager.h>
 #include <rl/rl_commands.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/wcwidth.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -74,6 +75,7 @@ int32 main(int32 argc, char** argv)
     os::set_shellname(L"clink_test_harness");
     set_noasync_recognizer();
     set_test_harness();
+    reset_wcwidths();
 
     extern bool g_direct_lua_fwrite;
     g_direct_lua_fwrite = true; // Otherwise Lua print() is swallowed by test_terminal_out.

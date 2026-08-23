@@ -1,0 +1,2 @@
+// Manifest; needed for OS version check to be able to detect UCS2 limitation.
+1 24 "clink_manifest.xml"
