@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Verify `test/wcwidth_iter.cpp` width tests for combining marks on Win8, Win10, and Win11.
 
 ## Normal Priority
 - Maybe add a `clink.onafterdispatch()` function to call an event handler after every input dispatch?  To catch dispatches within a command, to update during a nested dispatch loop in commands like `reverse-search-history`.
