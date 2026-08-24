@@ -5,6 +5,7 @@ set __ME=%~dp0
 set __CPU=x64
 set __FLAVOR=debug
 set __FLAGS=
+set __TEST=
 
 :arg
 if x%1x == x?x goto :usage
@@ -36,13 +37,21 @@ if x%2x == x--releasex goto:oopsflag
 if x%2x == x/shipx goto:oopsflag
 if x%2x == x--shipx goto:oopsflag
 
-if "%__FLAGS%" == "" echo %__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe%__FLAGS% %1 %2 %3
-%__DBG% %__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe%__FLAGS% %1 %2 %3
+if exist "%__ME%.build\vs2019\bin\%__FLAVOR%\clink_test_%__CPU%.exe" set __TEST=%__ME%.build\vs2019\bin\%__FLAVOR%\clink_test_%__CPU%.exe
+if exist "%__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe" set __TEST=%__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe
+if "%__TEST%" == "" goto no_exe
+
+if "%__FLAGS%" == "" echo %__DBG% %__TEST%%__FLAGS% %1 %2 %3
+%__DBG% %__TEST%%__FLAGS% %1 %2 %3
 goto :eof
 
 :nextarg
 shift
 goto :arg
+
+:no_exe
+echo Unable to find clink_test_%__CPU%.exe.
+goto :eof
 
 :oopsflag
 echo Options in wrong order; %2 belongs before %1.
