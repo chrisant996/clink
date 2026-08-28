@@ -1396,9 +1396,12 @@ void cua_after_command(bool force_clear)
         s_map.emplace(cua_forward_char);
         s_map.emplace(cua_backward_word);
         s_map.emplace(cua_forward_word);
+        s_map.emplace(cua_backward_bigword);
+        s_map.emplace(cua_forward_bigword);
         s_map.emplace(cua_beg_of_line);
         s_map.emplace(cua_end_of_line);
         s_map.emplace(cua_select_all);
+        s_map.emplace(cua_select_word);
         s_map.emplace(cua_copy);
         s_map.emplace(cua_cut);
         s_map.emplace(clink_selectall_conhost);
