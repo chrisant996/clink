@@ -5,6 +5,7 @@
 #### v1.9.33
 
 - Fixed the `cua-select-word`, `cua-backward-bigword`, and `cua-forward-bigword` commands so they don't immediately clear the selection.
+- Fixed [#903](https://github.com/chrisant996/clink/issues/903); command word matches that contain `/` need quoting, for example when the `match.translate_slashes` setting is `slashes`.
 
 #### v1.9.32
 
