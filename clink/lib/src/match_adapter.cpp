@@ -443,6 +443,13 @@ bool match_adapter::is_command_word() const
     if (m_filtered_matches)
         return m_filtered_matches->is_command_word();
     if (m_alt_matches && m_alt_matches[0])
+        // This cannot safely check the rl_command_word_completion global
+        // variable, because it's possible for multiple different match sets
+        // to exist concurrently, and the global variable cannot accurately
+        // differentiate between them.  The lookup function is expected to run
+        // in near-constant time because it only loops over the concurrent
+        // lookaside tables, each of which uses an unordered set for the
+        // match lookup.
         return lookup_match_is_command_word(m_alt_matches[0]);
     return false;
 }
