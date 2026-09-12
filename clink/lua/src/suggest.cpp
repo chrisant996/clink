@@ -93,7 +93,7 @@ nosuggest:
     }
     else
     {
-        std::shared_ptr<match_builder_toolkit> toolkit = make_match_builder_toolkit(matches_generation_id, line.get_end_word_offset());
+        std::shared_ptr<match_builder_toolkit> toolkit = make_match_builder_toolkit(matches_generation_id, line);
 
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.

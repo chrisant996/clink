@@ -87,6 +87,7 @@ public:
     virtual bool            get_force_quoting() const override;
     virtual int32           get_word_break_position() const override;
     virtual bool            has_descriptions() const override;
+    virtual bool            is_command_word() const override;
     virtual bool            is_volatile() const override;
     virtual bool            match_display_filter(const char* needle, char** matches, ::matches* out, display_filter_flags flags, bool* old_filtering=nullptr) const override;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
@@ -127,6 +128,7 @@ private:
     void                    set_matches_are_files(bool files);
     void                    set_no_sort();
     void                    set_has_descriptions();
+    void                    set_command_word();
     void                    set_volatile();
     void                    set_input_line(const char* text, int32 generation_id);
     bool                    is_from_current_input_line();
@@ -163,6 +165,7 @@ private:
     bool                    m_force_quoting = false;
     bool                    m_regen_blocked = false;
     bool                    m_nosort = false;
+    bool                    m_command_word = false;
     bool                    m_volatile = false;
     char                    m_sep = '\0';
     int32                   m_completion_type = 0;

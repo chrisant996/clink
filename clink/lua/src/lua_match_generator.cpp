@@ -58,6 +58,9 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
     lua_State* state = get_state();
     save_stack_top ss(state);
 
+    if (lines.back().get_command_word_index() + 1 == lines.back().get_word_count())
+        builder.set_command_word();
+
     // Call to Lua to generate matches.
     lua_state::push_named_function(state, "clink._internal._generate");
 

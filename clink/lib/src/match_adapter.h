@@ -41,6 +41,7 @@ public:
     bool            use_display(uint32 index, match_type type, bool append) const;
 
     bool            is_fully_qualify() const;
+    bool            is_command_word() const;
     bool            is_display_filtered() const;
     bool            is_alt_matches() const;
     bool            is_initialized() const;

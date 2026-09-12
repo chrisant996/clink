@@ -392,6 +392,8 @@ uint8 match_adapter::get_match_flags(uint32 index) const
     }
     if (matches->get_match_append_display(index))
         flags |= MATCH_FLAG_APPEND_DISPLAY;
+    if (is_command_word())
+        flags |= MATCH_FLAG_COMMAND_WORD;
     return flags;
 }
 
@@ -431,6 +433,18 @@ bool match_adapter::use_display(uint32 index, match_type type, bool append) cons
 bool match_adapter::is_fully_qualify() const
 {
     return m_matches && m_matches->is_fully_qualify();
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::is_command_word() const
+{
+    if (m_matches)
+        return m_matches->is_command_word();
+    if (m_filtered_matches)
+        return m_filtered_matches->is_command_word();
+    if (m_alt_matches && m_alt_matches[0])
+        return lookup_match_is_command_word(m_alt_matches[0]);
+    return false;
 }
 
 //------------------------------------------------------------------------------

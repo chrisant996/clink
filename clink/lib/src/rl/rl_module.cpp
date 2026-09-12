@@ -1509,13 +1509,13 @@ stop:
     {
         // Note that this can further adjust an expanded abbreviated path
         // using it to override the match line state.
-        omls.fully_qualify(start, end, tmp);
+        omls.fully_qualify(start, end, tmp, s_matches->is_command_word());
         override = true;
     }
     else if (override)
     {
         // This applies an expanded abbreviated path.
-        omls.override(start, end, tmp.c_str());
+        omls.override(start, end, tmp.c_str(), s_matches->is_command_word());
     }
 
     // Perform completion again after overriding match line state.
@@ -1555,6 +1555,12 @@ stop:
         end_prefix = (char*)text + 2;
     int32 len_prefix = end_prefix ? end_prefix - text : 0;
 
+    // The command_word status is about the word index for which matches were
+    // generated, not about the individual matches.  Either every match will
+    // include the flag or every match will omit the flag.  If any match has
+    // the flag, then the matches_lookaside table marks itself accordingly.
+    const uint8 base_flags = (s_matches->is_command_word() ? MATCH_FLAG_COMMAND_WORD : 0);
+
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
     str<32> lcd;
@@ -1589,7 +1595,9 @@ stop:
         // display_match_list_internal, matches_lookaside, and
         // match_display_filter.
 
-        uint8 flags = 0;
+        uint8 flags = base_flags;
+        // if (s_matches->is_command_word())
+        //     flags |= MATCH_FLAG_COMMAND_WORD;
         if (iter.get_match_append_display())
             flags |= MATCH_FLAG_APPEND_DISPLAY;
 
@@ -1803,6 +1811,7 @@ static void init_readline_hooks()
 
     // Match completion.
     rl_lookup_match_type = lookup_match_type;
+    rl_lookup_match_is_command_word = lookup_match_is_command_word;
     rl_override_match_append = override_match_append;
     rl_free_match_list_hook = free_match_list_hook;
     rl_ignore_some_completions_function = host_filter_matches;

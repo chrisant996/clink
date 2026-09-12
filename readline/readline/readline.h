@@ -774,6 +774,7 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \
 					 ((x) & MATCH_TYPE_MASK) <= MATCH_TYPE_LINK)
 extern rl_iccpfunc_t *rl_lookup_match_type;
+extern rl_iccpfunc_t *rl_lookup_match_is_command_word;
 /* Function to call to give the host a chance to override
    rl_completion_append_character, rl_completion_suppress_append,
    and rl_filename_completion_desired for the specified match. */

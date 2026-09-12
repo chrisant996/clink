@@ -1167,14 +1167,14 @@ stop:
         // using it to override the match line state.
         if (needle != tmp.c_str())
             tmp = needle;
-        omls.fully_qualify(m_anchor, m_anchor + m_needle.length(), tmp);
+        omls.fully_qualify(m_anchor, m_anchor + m_needle.length(), tmp, m_matches.is_command_word());
         needle = tmp.c_str();
         override = true;
     }
     else if (override)
     {
         // This applies an expanded abbreviated path.
-        omls.override(m_anchor, m_anchor + m_needle.length(), needle);
+        omls.override(m_anchor, m_anchor + m_needle.length(), needle, m_matches.is_command_word());
     }
 
     // Perform completion again after overriding match line state.
@@ -1902,14 +1902,10 @@ void selectcomplete_impl::insert_needle()
     const char* match = m_needle.c_str();
 
     char qs[2] = {};
-    if (match &&
-        !rl_completion_found_quote &&
-        rl_completer_quote_characters &&
-        rl_completer_quote_characters[0] &&
-        rl_need_match_quoting(match))
+    if (match)
     {
-        qs[0] = rl_completer_quote_characters[0];
-        m_quoted = true;
+        qs[0] = need_leading_quote(match, m_matches.is_command_word());
+        m_quoted = !!qs[0];
     }
 
     m_buffer->begin_undo_group();
@@ -1945,14 +1941,10 @@ void selectcomplete_impl::insert_match(int32 final)
     uint8 flags = m_matches.get_match_flags(m_index);
 
     char qs[2] = {};
-    if (match &&
-        !rl_completion_found_quote &&
-        rl_completer_quote_characters &&
-        rl_completer_quote_characters[0] &&
-        rl_need_match_quoting(match))
+    if (match)
     {
-        qs[0] = rl_completer_quote_characters[0];
-        m_quoted = true;
+        qs[0] = need_leading_quote(match, m_matches.is_command_word());
+        m_quoted = !!qs[0];
     }
 
     m_buffer->begin_undo_group();

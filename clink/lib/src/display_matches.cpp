@@ -1187,9 +1187,9 @@ void rl_display_match_list(char **matches, int len, int max)
 }
 
 //------------------------------------------------------------------------------
-void override_match_line_state::override(int32 start, int32 end, const char* needle)
+void override_match_line_state::override(int32 start, int32 end, const char* needle, bool command_word)
 {
-    override(start, end, needle, need_leading_quote(needle));
+    override(start, end, needle, need_leading_quote(needle, command_word));
 }
 
 //------------------------------------------------------------------------------
@@ -1207,7 +1207,7 @@ void override_match_line_state::override(int32 start, int32 end, const char* nee
 }
 
 //------------------------------------------------------------------------------
-void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& needle)
+void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& needle, bool command_word)
 {
     str<280> tmp;
 
@@ -1236,16 +1236,17 @@ void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& 
 
     needle.clear();
     needle.concat(tmp.c_str(), tmp.length());
-    override(start, end, needle.c_str());
+    override(start, end, needle.c_str(), command_word);
 }
 
 //------------------------------------------------------------------------------
-char need_leading_quote(const char* match)
+char need_leading_quote(const char* match, bool command_word)
 {
     if (!rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        rl_need_match_quoting(match))
+        (rl_need_match_quoting(match) ||
+         (command_word && strchr(match, '/'))))
     {
         return rl_completer_quote_characters[0];
     }

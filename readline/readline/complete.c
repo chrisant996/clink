@@ -540,6 +540,7 @@ const char *_rl_command_color = 0;
 const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 rl_iccpfunc_t *rl_lookup_match_type = 0;
+rl_iccpfunc_t *rl_lookup_match_is_command_word = 0;
 rl_vccpfunc_t *rl_override_match_append = 0;
 static int no_compute_lcd = 0;
 static int quote_lcd = 0;
@@ -2574,7 +2575,11 @@ make_quoted_replacement (char *match, int mtype, char *qc)
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
 			//: 0;
       const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
-      should_quote = rl_full_quoting_desired || force_quoting || rl_need_match_quoting (quotable_match);
+      should_quote = rl_full_quoting_desired || force_quoting ||
+		     rl_need_match_quoting (quotable_match) ||
+		     (rl_lookup_match_is_command_word &&
+		      rl_lookup_match_is_command_word (match) &&
+		      strchr (quotable_match, '/'));
       /* clink: This can clear should_quote, so another "if" is necessary. */
     }
 

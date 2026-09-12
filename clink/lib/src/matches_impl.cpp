@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "line_state.h"
 #include "matches_impl.h"
 #include "match_generator.h"
 #include "match_pipeline.h"
@@ -329,6 +330,12 @@ void match_builder::set_has_descriptions()
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_command_word()
+{
+    return ((matches_impl&)m_matches).set_command_word();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_volatile()
 {
     return ((matches_impl&)m_matches).set_volatile();
@@ -387,7 +394,7 @@ void match_builder::set_matches_are_files(bool files)
 class match_builder_toolkit_impl : public match_builder_toolkit
 {
 public:
-                            match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset);
+                            match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset, bool command_word);
                             ~match_builder_toolkit_impl();
     int32                   get_generation_id() const override { return m_generation_id; }
     matches*                get_matches() const override { return m_matches; }
@@ -401,7 +408,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-match_builder_toolkit_impl::match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset)
+match_builder_toolkit_impl::match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset, bool command_word)
 : m_generation_id(generation_id)
 {
     matches_impl* matches = new matches_impl();
@@ -409,6 +416,8 @@ match_builder_toolkit_impl::match_builder_toolkit_impl(int32 generation_id, uint
 
     m_matches = matches;
     m_builder = new match_builder(*matches);
+    if (command_word)
+        m_builder->set_command_word();
 }
 
 //------------------------------------------------------------------------------
@@ -425,9 +434,11 @@ void match_builder_toolkit_impl::clear()
 }
 
 //------------------------------------------------------------------------------
-std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, uint32 end_word_offset)
+std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, const line_state& line)
 {
-    return std::make_shared<match_builder_toolkit_impl>(generation_id, end_word_offset);
+    const auto end_word_offset = line.get_end_word_offset();
+    const bool command_word = (line.get_command_word_index() + 1 == line.get_word_count());
+    return std::make_shared<match_builder_toolkit_impl>(generation_id, end_word_offset, command_word);
 }
 
 
@@ -878,6 +889,18 @@ bool matches_impl::has_descriptions() const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::is_command_word() const
+{
+    // The match.translate_slashes setting can make directory matches use
+    // forward slashes.  But CMD treats `foo/` in the command word position as
+    // two words:  a `foo` command and a `/` switch character starting an
+    // argument.  Quoting lets CMD interpret the `/` as a path separator.
+    // Keeping track of whether the matches are for the command word position
+    // facilitates quoting as `"foo/` when appropriate.
+    return m_command_word;
+}
+
+//------------------------------------------------------------------------------
 bool matches_impl::is_volatile() const
 {
     return m_volatile;
@@ -941,6 +964,7 @@ void matches_impl::reset()
     m_force_quoting = false;
     m_regen_blocked = false;
     m_nosort = false;
+    m_command_word = false;
     m_volatile = false;
     m_sep = '\0';
     m_completion_type = 0;
@@ -973,6 +997,7 @@ void matches_impl::transfer(matches_impl& from)
     m_force_quoting = from.m_force_quoting;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
+    m_command_word = from.m_command_word;
     m_volatile = from.m_volatile;
     m_sep = from.m_sep;
     m_completion_type = from.m_completion_type;
@@ -1021,6 +1046,7 @@ void matches_impl::copy(const matches_impl& from)
     m_force_quoting = from.m_force_quoting;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
+    m_command_word = from.m_command_word;
     m_volatile = from.m_volatile;
     m_sep = from.m_sep;
     m_completion_type = from.m_completion_type;
@@ -1117,6 +1143,12 @@ void matches_impl::set_no_sort()
 void matches_impl::set_has_descriptions()
 {
     m_has_descriptions = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_command_word()
+{
+    m_command_word = true;
 }
 
 //------------------------------------------------------------------------------

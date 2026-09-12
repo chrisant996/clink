@@ -116,11 +116,13 @@ public:
                             ~matches_lookaside();
     bool                    associated(char** matches) const;
     const match_extra*      find(const char* match) const;
+    bool                    is_command_word(const char* match) const;
 private:
     bool                    add(const char* match);
     char**                  m_matches;
     match_extra_map         m_map;
     linear_allocator        m_allocator;
+    bool                    m_command_word;
 };
 
 //------------------------------------------------------------------------------
@@ -130,6 +132,7 @@ static std::list<matches_lookaside*> s_lookasides;
 matches_lookaside::matches_lookaside(char** matches)
 : m_matches(matches)
 , m_allocator(8192)
+, m_command_word(false)
 {
     assert(matches);
     if (matches[1]) // Ignore lcd (the [0] entry); list is always >= 2 entries.
@@ -157,6 +160,12 @@ const match_extra* matches_lookaside::find(const char* match) const
 }
 
 //------------------------------------------------------------------------------
+bool matches_lookaside::is_command_word(const char* match) const
+{
+    return m_command_word && (match == m_matches[0] || find(match));
+}
+
+//------------------------------------------------------------------------------
 bool matches_lookaside::add(const char* match)
 {
     if (!match)
@@ -173,6 +182,8 @@ bool matches_lookaside::add(const char* match)
     extra->type = static_cast<match_type>(lo_type | (hi_type << 8));
     extra->append_char = match[len++];
     extra->flags = uint8(match[len++]);
+    if (extra->flags & MATCH_FLAG_COMMAND_WORD)
+        m_command_word = true;
 #ifdef DEBUG
     const bool is_magic = (strnicmp(match + len, ":LA:", 4) == 0);
     assert(is_magic);
@@ -274,6 +285,19 @@ extern "C" int32 lookup_match_type(const char* match)
 {
     match_details details = lookup_match(match);
     return int32(details.get_type());
+}
+
+//------------------------------------------------------------------------------
+extern "C" int32 lookup_match_is_command_word(const char* match)
+{
+    // Lookup for the command word flag has to work even for LCD matches, but
+    // they aren't packed entries so they need special compensation.
+    if (s_match == match)
+        return !!(s_extra.flags & MATCH_FLAG_COMMAND_WORD);
+    for (auto iter : s_lookasides)
+        if (iter->is_command_word(match))
+            return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------

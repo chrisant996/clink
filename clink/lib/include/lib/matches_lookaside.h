@@ -50,6 +50,7 @@ bool pack_match(char* buffer, size_t packed_size,
                 char append_char, uint8 flags);
 
 extern "C" int32 lookup_match_type(const char* match);
+extern "C" int32 lookup_match_is_command_word(const char* match);
 extern "C" void override_match_append(const char* match);
 #ifdef DEBUG
 extern "C" int32 has_matches_lookaside(char** matches);

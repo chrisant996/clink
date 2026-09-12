@@ -10,6 +10,7 @@
 #include <assert.h>
 
 class str_base;
+class line_state;
 
 //------------------------------------------------------------------------------
 typedef unsigned short match_type_intrinsic;
@@ -207,6 +208,7 @@ public:
     virtual bool            get_force_quoting() const = 0;
     virtual int32           get_word_break_position() const = 0;
     virtual bool            has_descriptions() const = 0;
+    virtual bool            is_command_word() const = 0;
     virtual bool            is_volatile() const = 0;
     virtual bool            match_display_filter(const char* needle, char** matches, ::matches* out, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const = 0;
@@ -263,6 +265,7 @@ public:
     void                    set_fully_qualify(bool fully_qualify=true);
     void                    set_no_sort();
     void                    set_has_descriptions();
+    void                    set_command_word();
     void                    set_volatile();
 
     void                    set_deprecated_mode();
@@ -289,5 +292,5 @@ public:
 };
 
 //------------------------------------------------------------------------------
-std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, uint32 end_word_offset);
+std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, const line_state& line);
 bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id);

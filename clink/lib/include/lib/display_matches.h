@@ -36,6 +36,7 @@ int32 __fnwidth(const char* string);
 #define MATCH_FLAG_APPEND_DISPLAY       0x01
 #define MATCH_FLAG_HAS_SUPPRESS_APPEND  0x02
 #define MATCH_FLAG_SUPPRESS_APPEND      0x04
+#define MATCH_FLAG_COMMAND_WORD         0x08
 
 // For display_matches, the matches array must contain specially formatted
 // match entries:
@@ -57,11 +58,11 @@ class override_match_line_state
 public:
     override_match_line_state() { assert(!is_line_state_overridden()); }
     ~override_match_line_state() { override_line_state(nullptr, nullptr, 0); }
-    void override(int32 start, int32 end, const char* needle);
+    void override(int32 start, int32 end, const char* needle, bool command_word);
     void override(int32 start, int32 end, const char* needle, char quote_char);
-    void fully_qualify(int32 start, int32 end, str_base& needle);
+    void fully_qualify(int32 start, int32 end, str_base& needle, bool command_word);
 private:
     str_moveable m_line;
 };
 
-char need_leading_quote(const char* match);
+char need_leading_quote(const char* match, bool command_word);
