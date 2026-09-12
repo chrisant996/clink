@@ -67,6 +67,8 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
     rl_filename_completion_desired = iter.is_filename_completion_desired();
     rl_filename_display_desired = iter.is_filename_display_desired();
 
+    rl_command_word_completion = matches->is_command_word();
+
     if (!rl_filename_completion_desired && !matches->get_force_quoting())
         rl_filename_quoting_desired = 0;
 
@@ -76,6 +78,7 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
         printf("count = %d\n", count);
         printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
         printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
+        printf("command word = %d\n", rl_command_word_completion);
         printf("get word break position = %d\n", matches->get_word_break_position());
         printf("is suppress append = %d\n", matches->is_suppress_append());
         printf("get append character = %u\n", uint8(matches->get_append_character()));

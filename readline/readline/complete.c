@@ -438,6 +438,10 @@ int rl_filename_completion_desired = 0;
    This is ALWAYS zero on entry, and can only be changed within a
    completion entry finder function. */
 int rl_filename_display_desired = 0;
+/* Non-zero means that the results of the matches are from a command word
+   position in the input line.  On Windows, command words need quoting if they
+   contain a forward slash '/' but do not begin with '/'. */
+int rl_command_word_completion = 0;
 /* end_clink_change */
 
 /* Non-zero means that the results of the matches are to be quoted using
@@ -456,7 +460,8 @@ int rl_full_quoting_desired = 0;
 /* begin_clink_change PRIVATE */
   /* On Windows, quoting is also needed for non-filename completion, so
    * rl_filename_completion_desired isn't a criterion, and instead
-   * rl_need_match_quoting(match) says whether quoting is desired. */
+   * rl_need_match_quoting(match, quotable_match) says whether quoting is
+   * desired. */
 #if 0
 /* end_clink_change PRIVATE */
 #define QUOTING_DESIRED() \
@@ -540,7 +545,6 @@ const char *_rl_command_color = 0;
 const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 rl_iccpfunc_t *rl_lookup_match_type = 0;
-rl_iccpfunc_t *rl_lookup_match_is_command_word = 0;
 rl_vccpfunc_t *rl_override_match_append = 0;
 static int no_compute_lcd = 0;
 static int quote_lcd = 0;
@@ -700,6 +704,7 @@ set_completion_defaults (int what_to_do)
   rl_filename_completion_desired = 0;
 /* begin_clink_change */
   rl_filename_display_desired = 0;
+  rl_command_word_completion = 0;
 /* end_clink_change */
   rl_filename_quoting_desired = 1;
   rl_full_quoting_desired = 0;
@@ -1917,17 +1922,25 @@ remove_duplicate_matches (char **matches)
 
 /* begin_clink_change PRIVATE */
 int
-rl_need_match_quoting (const char *match)
+rl_need_match_quoting (const char *match, const char* quotable_match)
 {
 #if !defined (_WIN32)
   // On Windows, quoting is also needed for non-filename completion.
   if (!rl_filename_completion_desired)
     return 0;
 #endif
-
-  return (rl_filename_quoting_desired &&
-	  rl_filename_quote_characters &&
-	  _rl_strpbrk (match, rl_filename_quote_characters) != 0);
+  if (!quotable_match)
+    quotable_match = match;
+  if (rl_filename_quoting_desired &&
+      rl_filename_quote_characters &&
+      _rl_strpbrk (quotable_match, rl_filename_quote_characters) != 0)
+    return 1;
+  if (rl_command_word_completion &&
+      match &&
+      match[0] != '/' &&
+      strchr (quotable_match, '/'))
+    return 1;
+  return 0;
 }
 /* end_clink_change PRIVATE */
 
@@ -1971,7 +1984,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 /* begin_clink_change PRIVATE */
   if (test_for_quoting && matches > 1)
     {
-      any_need_quoting = rl_need_match_quoting (match_list[1]);
+      any_need_quoting = rl_need_match_quoting (match_list[1], 0);
       if (any_need_quoting)
 	test_for_quoting = 0;
     }
@@ -2046,7 +2059,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 /* begin_clink_change PRIVATE */
       if (test_for_quoting)
 	{
-	  any_need_quoting = rl_need_match_quoting (match_list[i+1]);
+	  any_need_quoting = rl_need_match_quoting (match_list[i+1], 0);
 	  if (any_need_quoting)
 	    test_for_quoting = 0;
 	}
@@ -2129,7 +2142,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	  for (i = 1; i <= matches; i++)
 	    {
 	      c1[0] = match_list[i][low];
-	      if (c1[0] && rl_need_match_quoting (c1))
+	      if (c1[0] && rl_need_match_quoting (match_list[i], c1))
 		{
 		  quote_lcd = 1;
 		  break;
@@ -2576,10 +2589,7 @@ make_quoted_replacement (char *match, int mtype, char *qc)
 			//: 0;
       const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
       should_quote = rl_full_quoting_desired || force_quoting ||
-		     rl_need_match_quoting (quotable_match) ||
-		     (rl_lookup_match_is_command_word &&
-		      rl_lookup_match_is_command_word (match) &&
-		      strchr (quotable_match, '/'));
+		     rl_need_match_quoting (match, quotable_match);
       /* clink: This can clear should_quote, so another "if" is necessary. */
     }
 

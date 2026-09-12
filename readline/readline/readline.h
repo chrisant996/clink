@@ -571,7 +571,7 @@ extern char *rl_last_path_separator (const char *string);
 /* end_clink_change */
 
 /* begin_clink_change PRIVATE */
-extern int rl_need_match_quoting (const char *match);
+extern int rl_need_match_quoting (const char *match, const char *quotable_match);
 /* end_clink_change PRIVATE */
 
 #if 0
@@ -774,7 +774,6 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \
 					 ((x) & MATCH_TYPE_MASK) <= MATCH_TYPE_LINK)
 extern rl_iccpfunc_t *rl_lookup_match_type;
-extern rl_iccpfunc_t *rl_lookup_match_is_command_word;
 /* Function to call to give the host a chance to override
    rl_completion_append_character, rl_completion_suppress_append,
    and rl_filename_completion_desired for the specified match. */
@@ -1013,6 +1012,10 @@ extern int rl_filename_completion_desired;
    This is ALWAYS zero on entry, and can only be changed within a
    completion entry finder function. */
 extern int rl_filename_display_desired;
+/* Non-zero means that the results of the matches are from a command word
+   position in the input line.  On Windows, command words need quoting if they
+   contain a forward slash '/' but do not begin with '/'. */
+extern int rl_command_word_completion;
 /* end_clink_change */
 
 /* Non-zero means that the results of the matches are to be quoted using

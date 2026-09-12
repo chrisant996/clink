@@ -1811,7 +1811,6 @@ static void init_readline_hooks()
 
     // Match completion.
     rl_lookup_match_type = lookup_match_type;
-    rl_lookup_match_is_command_word = lookup_match_is_command_word;
     rl_override_match_append = override_match_append;
     rl_free_match_list_hook = free_match_list_hook;
     rl_ignore_some_completions_function = host_filter_matches;

@@ -1245,8 +1245,8 @@ char need_leading_quote(const char* match, bool command_word)
     if (!rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        (rl_need_match_quoting(match) ||
-         (command_word && strchr(match, '/'))))
+        (rl_need_match_quoting(nullptr, match) ||
+         (command_word && match[0] != '/' && strchr(match, '/'))))
     {
         return rl_completer_quote_characters[0];
     }
