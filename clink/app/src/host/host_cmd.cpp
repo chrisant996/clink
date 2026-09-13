@@ -276,6 +276,8 @@ static BOOL WINAPI write_console_logging(HANDLE handle, const void* _chars, DWOR
         s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
         !suppress_implicit_write_console_logging::is_suppressed())
     {
+        suppress_implicit_write_console_logging nolog;
+
         const char* context = nullptr;
         if (handle == get_std_handle(STD_OUTPUT_HANDLE))
             context = "CONOUT";
@@ -331,6 +333,8 @@ static BOOL WINAPI write_file_logging(HANDLE handle, const void* _buffer, DWORD 
         s_in_read_console && // Only intercept Clink writes, which only happen inside read_console().
         !suppress_implicit_write_console_logging::is_suppressed())
     {
+        suppress_implicit_write_console_logging nolog;
+
         const char* context = nullptr;
         if (handle == get_std_handle(STD_OUTPUT_HANDLE))
             context = "FILESTDOUT";
