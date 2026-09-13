@@ -31,45 +31,6 @@ static bool use_verbose_hook_logging()
 }
 
 //------------------------------------------------------------------------------
-#if INCLUDE_DETOURS
-static void* follow_jump(void* addr)
-{
-    uint8* t = (uint8*)addr;
-
-    // Check the opcode.
-    if ((t[0] & 0xf0) == 0x40) // REX prefix.
-        ++t;
-
-    if (t[0] != 0xff)
-        return addr;
-
-    // Check the opcode extension from the modr/m byte.
-    if ((t[1] & 070) != 040)
-        return addr;
-
-    int32* imm = (int32*)(t + 2);
-
-    void* dest = addr;
-    switch (t[1] & 007)
-    {
-    case 5:
-#if defined(_M_X64)
-        // dest = [rip + disp32]
-        dest = *(void**)(t + 6 + *imm);
-#elif defined(_M_IX86)
-        // dest = disp32
-        dest = (void*)(intptr_t)(*imm);
-#else
-#error Processor not supported.
-#endif
-    }
-
-    LOG("Following jump to %p", dest);
-    return dest;
-}
-#endif
-
-//------------------------------------------------------------------------------
 static void write_addr(hookptr_t* where, hookptr_t to_write)
 {
     vm vm;
@@ -391,7 +352,7 @@ bool hook_setter::commit_iat(const hook_desc& desc)
 #if INCLUDE_DETOURS
 bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
 {
-    LOG("Attempting to detour %s in %s with %p.", name, module, hook);
+    LOG("Attempting to detour %s!%s with %p.", module, name, hook);
     HMODULE hModule = GetModuleHandleA(module);
     if (!hModule)
     {
@@ -407,7 +368,7 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
     }
 
     // Get the target pointer to hook.
-    void* replace = follow_jump(pbCode);
+    void* replace = pbCode;
     if (!replace)
     {
         LOG("Unable to get target address.");
@@ -426,13 +387,18 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
     // Hook the target pointer.  For Detours desc.replace is a pointer to the
     // function to hook.
     PDETOUR_TRAMPOLINE trampoline;
-    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, nullptr, nullptr);
+    PVOID real_target;
+    PVOID real_detour;
+    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, &real_target, &real_detour);
     if (err != NOERROR)
     {
         LOG("Unable to detour %s (error %u).", name, err);
         m_desc_count--;
         return false;
     }
+
+    LOG("Detoured %s!%s: export=%p, real target=%p, detour=%p, trampoline=%p.",
+        module, name, pbCode, real_target, real_detour, trampoline);
 
     // Return the trampoline in original.
     if (original)
