@@ -165,6 +165,7 @@ void lua_input_idle::do_deferred_refilter_prompt()
     if (is_terminal_scrolled())
         return;
 
+    defer_refilter(false);
     host_filter_prompt();
 }
 
