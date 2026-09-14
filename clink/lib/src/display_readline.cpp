@@ -1345,6 +1345,7 @@ static str_moveable s_buf;
 
 //------------------------------------------------------------------------------
 display_accumulator::display_accumulator()
+: m_active(false)
 {
     assert(rl_fwrite_function);
     assert(rl_fflush_function);
