@@ -100,6 +100,7 @@ extern bool is_test_harness();
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
+static int32 s_defer_old_botlin = -1;
 static bool s_ever_input_hint = false;
 static bool s_transient_prompt_context = false;
 bool g_display_manager_no_comment_row = false;
@@ -1569,6 +1570,7 @@ void display_manager::clear()
 {
     assert(!s_defer_clear_lines);
     assert(!s_defer_erase_extra_lines);
+    assert(s_defer_old_botlin < 0);
 
     m_next.clear();
     m_curr.clear();
@@ -2070,10 +2072,16 @@ void display_manager::display()
 #define _rl_cr              __not_safe__
 #define _rl_crlf            __not_safe__
 
+    // rl_forced_update_display() calls rl_on_new_line(), which resets
+    // _rl_vis_botlin before invoking Clink's redisplay function.  When Clink
+    // has deferred a prompt/input redraw, use the saved height of the display
+    // that is still physically present so surplus rows can be erased.
+    const int32 old_botlin = s_defer_old_botlin >= 0 ? s_defer_old_botlin : _rl_vis_botlin;
+    s_defer_old_botlin = -1;
+
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
     bool can_show_rprompt = false;
-    const int32 old_botlin = _rl_vis_botlin;
     bool clear_suggestion_list = false;
     if (need_update)
     {
@@ -3093,6 +3101,11 @@ int32 count_prompt_lines(const char* prompt_prefix)
 //------------------------------------------------------------------------------
 void defer_clear_lines(uint32 prompt_lines, bool transient)
 {
+    // Retain the first snapshot if more than one operation is deferred before
+    // redisplay; it describes the display that is currently on the screen.
+    if (!transient && s_defer_old_botlin < 0)
+        s_defer_old_botlin = _rl_vis_botlin;
+
     str<16> up;
     if (prompt_lines > 0)
         up.format("\r\x1b[%uA", prompt_lines);
