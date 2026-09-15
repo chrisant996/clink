@@ -10,7 +10,7 @@ when completing the first word of a line.]])
 
 settings.add("exec.path", true, "Match executables in PATH",
 [[Completes executables found in the directories specified in the PATH
-environment system variable.  (See exec.enable)]])
+environment variable.  (See exec.enable)]])
 
 settings.add("exec.aliases", true, "Include aliases",
 [[Include doskey aliases as matches.  (See exec.enable)]])
@@ -21,6 +21,11 @@ settings.add("exec.commands", true, "Include CMD commands",
 settings.add("exec.cwd", true, "Match executables in current directory",
 [[Include executables in the current directory.  This is implicit if the word
 being completed is a relative path.  (See exec.enable)]])
+
+settings.add("exec.cwd_first", false, "Sort matches from current dir first",
+[[When enabled, matches from the current directory are listed first, followed by
+the other matches (such as doskey aliases, cmd commands, files found along the
+PATH environment variable, etc).]])
 
 settings.add("exec.dirs", true, "Include directories",
 [[Include directories relative to the current working directory as matches.
@@ -40,7 +45,7 @@ settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 and will do normal files matching instead.  (See exec.enable)]])
 
 --------------------------------------------------------------------------------
-local function add_commands(line_state, match_builder, chained)
+local function add_commands(out, line_state, chained)
     -- Cmd commands cannot be quoted.
     local word_info = line_state:getwordinfo(line_state:getwordcount())
     if word_info.quoted then
@@ -62,7 +67,7 @@ local function add_commands(line_state, match_builder, chained)
         return
     end
 
-    match_builder:addmatches(internal._get_cmd_commands(), "cmd")
+    out:addmatches(internal._get_cmd_commands(), "cmd")
 end
 
 --------------------------------------------------------------------------------
@@ -78,12 +83,46 @@ local function get_environment_paths()
 end
 
 --------------------------------------------------------------------------------
+local function comparator(a, b)
+    return string.comparematches(a.match, a.type, b.match, b.type)
+end
+
+--------------------------------------------------------------------------------
 local exec_generator = clink.generator(50)
 
 local function exec_matches(line_state, match_builder, chained, no_aliases)
     -- If executable matching is disabled do nothing.
     if not settings.get("exec.enable") then
         return false
+    end
+
+    -- Optionally sort matches from the current directory ahead of other
+    -- matches.  That's accomplished by collecting matches into two buckets
+    -- and then sorting the buckets separately.
+    local cwd_first = settings.get("exec.cwd_first")
+    local dots = match_builder
+    local first = match_builder
+    local second = match_builder
+    if cwd_first then
+        first = {}
+        second = {}
+        function first:addmatch(m)
+            table.insert(self, m)
+        end
+        function first:addmatches(matches, t)
+            for _, m in ipairs(matches) do
+                if type(m) ~= "table" then
+                    m = { match=m }
+                end
+                if not m.type then
+                    m.type = t
+                end
+                table.insert(self, m)
+            end
+        end
+        second.addmatch = first.addmatch
+        second.addmatches = first.addmatches
+        dots = first
     end
 
     -- Special cases for "~", ".", and "..".
@@ -95,27 +134,31 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
         -- as the first word in a command line.
         -- See https://github.com/chrisant996/clink/issues/111.
         if endword == "." then
-            match_builder:addmatch({ match = ".\\", type = "dir" })
+            dots:addmatch({ match=".\\", type="dir" })
         end
-        match_builder:addmatch({ match = "..\\", type = "dir" })
+        dots:addmatch({ match="..\\", type="dir" })
     end
 
     -- If enabled, lines prefixed with whitespace disable executable matching.
     if settings.get("exec.space_prefix") then
+        local disable
         if chained then
             local info = line_state:getwordinfo(line_state:getwordcount())
             if info then
                 local offset = info.offset - (info.quoted and 2 or 1)
                 local prefix = line_state:getline():sub(offset - 1, offset)
-                if prefix:match("[ \t][ \t]") then
-                    return false
-                end
+                disable = prefix:match("[ \t][ \t]")
             end
         else
             local offset = line_state:getcommandoffset()
-            if line_state:getline():sub(offset, offset):find("[ \t]") then
-                return false
+            disable = line_state:getline():sub(offset, offset):find("[ \t]")
+        end
+        if disable then
+            -- Be sure to add the dots if they were deferred.
+            if cwd_first then
+                match_builder:addmatches(dots)
             end
+            return false
         end
     end
 
@@ -130,7 +173,7 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
         -- Add console aliases as matches.
         if not no_aliases and settings.get("exec.aliases") then
             local aliases = os.getaliases()
-            match_builder:addmatches(aliases, "alias")
+            second:addmatches(aliases, "alias")
         end
 
         -- Add environment's PATH variable as paths to search.
@@ -150,7 +193,7 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
 
     local _, ismain = coroutine.running()
 
-    local add_files = function(pattern, rooted, only_files)
+    local add_files = function(out, pattern, rooted, only_files)
         local any_added = false
         if ismain or os.getdrivetype(pattern) ~= "remote" then
             -- Use clink.filematches[exact] instead of a custom os.globfiles
@@ -164,7 +207,8 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
                     if not rooted then
                         m.match = m.match:match("[^/\\]*[/\\]?$")
                     end
-                    any_added = match_builder:addmatch(m) or any_added
+                    out:addmatch(m)
+                    any_added = true
                 end
             end
         end
@@ -172,7 +216,7 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
     end
 
     local associations = {}
-    local add_files_by_association = function(pattern, rooted, include_associations)
+    local add_files_by_association = function(out, pattern, rooted, include_associations) -- luacheck: no unused
         local any_added = false
         if ismain or os.getdrivetype(pattern) ~= "remote" then
             local matches = clink.filematchesexact(pattern)
@@ -187,8 +231,10 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
                     if has then
                         if not rooted then
                             m.match = m.match:match("[^/\\]*[/\\]?$")
+                            m.description = m.description and m.description..", PATH" or "PATH"
                         end
-                        any_added = match_builder:addmatch(m) or any_added
+                        out:addmatch(m)
+                        any_added = true
                     end
                 end
             end
@@ -200,13 +246,13 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
 
     -- Include commands.
     if settings.get("exec.commands") then
-        add_commands(line_state, match_builder, chained)
+        add_commands(second, line_state, chained)
     end
 
     -- Include files.
     if settings.get("exec.files") then
         match_cwd = false
-        added = add_files(endword.."*", true) or added
+        added = add_files(first, endword.."*", true) or added
     end
 
     -- Search 'paths' for files ending in executable extensions (and/or
@@ -217,18 +263,27 @@ local function exec_matches(line_state, match_builder, chained, no_aliases)
     end
     local include_associations = settings.get("exec.associations")
     for _, dir in ipairs(paths) do
-        added = add_files_by_association(dir.."*", false, include_associations) or added
+        added = add_files_by_association(second, dir.."*", false, include_associations) or added
     end
 
     -- Should we also consider the path referenced by 'text'?
     if match_cwd then
         -- Pass true because these need to include the base path.
-        added = add_files_by_association(endword.."*", true, include_associations) or added
+        added = add_files_by_association(first, endword.."*", true, include_associations) or added
     end
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        match_builder:addmatches(clink.dirmatchesexact(endword.."*"))
+        first:addmatches(clink.dirmatchesexact(endword.."*"))
+    end
+
+    -- Sort each group of matches separately, if requested.
+    if cwd_first then
+        table.sort(first, comparator)
+        table.sort(second, comparator)
+        match_builder:setnosort(true)
+        match_builder:addmatches(first)
+        match_builder:addmatches(second)
     end
 
     return true
