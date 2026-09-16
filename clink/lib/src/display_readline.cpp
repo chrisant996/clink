@@ -100,7 +100,6 @@ extern bool is_test_harness();
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
-static int32 s_defer_old_botlin = -1;
 static bool s_ever_input_hint = false;
 static bool s_transient_prompt_context = false;
 bool g_display_manager_no_comment_row = false;
@@ -1570,7 +1569,6 @@ void display_manager::clear()
 {
     assert(!s_defer_clear_lines);
     assert(!s_defer_erase_extra_lines);
-    assert(s_defer_old_botlin < 0);
 
     m_next.clear();
     m_curr.clear();
@@ -1921,6 +1919,7 @@ void display_manager::display()
     forced_display |= (m_last_prompt_line_width < 0 ||
                        modmark != m_last_modmark ||
                        !m_last_prompt_line.equals(prompt));
+    bool invalidate_display = forced_display;
 
     // Calculate ending row and column, accounting for wrapping (including
     // double width characters that don't fit).
@@ -2027,8 +2026,8 @@ void display_manager::display()
                 rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
         }
 
-        if (forced_display || (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM))
-            m_curr.clear();
+        if (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM)
+            invalidate_display = true;
 
         rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
 
@@ -2072,16 +2071,10 @@ void display_manager::display()
 #define _rl_cr              __not_safe__
 #define _rl_crlf            __not_safe__
 
-    // rl_forced_update_display() calls rl_on_new_line(), which resets
-    // _rl_vis_botlin before invoking Clink's redisplay function.  When Clink
-    // has deferred a prompt/input redraw, use the saved height of the display
-    // that is still physically present so surplus rows can be erased.
-    const int32 old_botlin = s_defer_old_botlin >= 0 ? s_defer_old_botlin : _rl_vis_botlin;
-    s_defer_old_botlin = -1;
-
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
     bool can_show_rprompt = false;
+    const int32 old_botlin = _rl_vis_botlin;
     bool clear_suggestion_list = false;
     if (need_update)
     {
@@ -2105,7 +2098,8 @@ void display_manager::display()
             if (rows++ > new_botlin)
                 break;
 
-            auto o = s_defer_erase_extra_lines ? nullptr : m_curr.get(i - m_top + old_top);
+            const bool ignore_curr = (invalidate_display || s_defer_erase_extra_lines);
+            auto o = ignore_curr ? nullptr : m_curr.get(i - m_top + old_top);
             update_line(i, o, d, _rl_rprompt_shown_len > 0);
         }
 
@@ -2197,7 +2191,8 @@ void display_manager::display()
         }
     }
 
-    if (m_curr.has_comment_row() != next->has_comment_row() ||
+    if (invalidate_display ||
+        m_curr.has_comment_row() != next->has_comment_row() ||
         strcmp(m_curr.get_comment_row(), next->get_comment_row()) ||
         new_botlin != old_botlin)
     {
@@ -2286,7 +2281,9 @@ void display_manager::display()
 
     // Display the right side prompt if it's not shown, or if it's shown but
     // has changed.
-    if (can_show_rprompt && (!_rl_rprompt_shown_len || !m_last_rprompt.equals(rl_rprompt)))
+    if (can_show_rprompt && (invalidate_display ||
+                             !_rl_rprompt_shown_len ||
+                             !m_last_rprompt.equals(rl_rprompt)))
         print_rprompt(rl_rprompt);
 
     // Move cursor to the rl_point position.
@@ -2320,11 +2317,9 @@ void display_manager::display()
 
     if (is_suggestion_list_active(false/*even_if_hidden*/))
     {
-        if (old_botlin != _rl_vis_botlin)
+        if (invalidate_display || old_botlin != _rl_vis_botlin)
             clear_suggestion_list = true;
         coalesce.end(); // Because suggestionlist_impl uses m_printer directly.
-        if (forced_display)
-            force_redisplay_suggestion_list();
         update_suggestion_list_display(clear_suggestion_list);
     }
 
@@ -3101,11 +3096,6 @@ int32 count_prompt_lines(const char* prompt_prefix)
 //------------------------------------------------------------------------------
 void defer_clear_lines(uint32 prompt_lines, bool transient)
 {
-    // Retain the first snapshot if more than one operation is deferred before
-    // redisplay; it describes the display that is currently on the screen.
-    if (!transient && s_defer_old_botlin < 0)
-        s_defer_old_botlin = _rl_vis_botlin;
-
     str<16> up;
     if (prompt_lines > 0)
         up.format("\r\x1b[%uA", prompt_lines);
@@ -3313,6 +3303,13 @@ void maybe_redisplay_readline()
         (*rl_redisplay_function)();
         assert(!_rl_want_redisplay);
     }
+}
+
+//------------------------------------------------------------------------------
+void force_redisplay_readline()
+{
+    rl_set_forced_display(true);
+    (*rl_redisplay_function)();
 }
 
 //------------------------------------------------------------------------------

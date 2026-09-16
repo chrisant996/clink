@@ -2706,7 +2706,7 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
             // gets reset.
             transient_prompt_context tpc(transient);
 
-            rl_forced_update_display();
+            force_redisplay_readline();
         }
 
         lock_cursor(false);

@@ -1530,12 +1530,6 @@ void suggestionlist_impl::hide_suggestion_list()
     update_layout();
 }
 
-//------------------------------------------------------------------------------
-void suggestionlist_impl::force_redisplay_suggestion_list()
-{
-    m_force_display = true;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -1644,13 +1638,4 @@ void hide_suggestion_list()
         return;
 
     s_suggestionlist->hide_suggestion_list();
-}
-
-//------------------------------------------------------------------------------
-void force_redisplay_suggestion_list()
-{
-    if (!s_suggestionlist)
-        return;
-
-    s_suggestionlist->force_redisplay_suggestion_list();
 }

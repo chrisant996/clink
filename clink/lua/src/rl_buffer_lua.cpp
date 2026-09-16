@@ -280,7 +280,7 @@ int32 rl_buffer_lua::refresh_line(lua_State* state)
     // input buffer display, and rl_buffer:refreshline() is used to fix the
     // display after that.  So it has to do a full redraw instead of a normal
     // optimized redraw.
-    rl_forced_update_display();
+    force_redisplay_readline();
     return 0;
 }
 
