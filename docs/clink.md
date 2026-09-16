@@ -4000,7 +4000,19 @@ Here are some popular scripts that show off what can be done with Clink.
 
 ### clink-completions
 
-The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.
+The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) collection of scripts provides completions for many programs, including:
+
+
+- Package managers: **winget**, **Scoop**, **Chocolatey**, **npm**, **Yarn**, **pnpm**, **pip**, and **Pipenv**
+- Version control and collaboration: **Git**, **GitHub CLI**, and **Gitk**
+- Containers and orchestration: **Docker**, **kubectl**, and **OpenShift CLI**
+- Build and development tools: **MSBuild**, **Make**, **NMake**, **Rust**, **.NET**, and **Angular CLI**
+- Remote access and networking: **SSH**, **curl**, **OpenSSL**, and **ping**
+- Android development: **ADB**, **Fastboot**, and **scrcpy**
+- Search and text-processing tools: **ripgrep**, **grep**, **sed**, **fd**, **bat**, and **less**
+- Windows utilities: **Robocopy**, **Xcopy**, **Reg**, **Signtool**, **Windows Terminal**, and **gsudo**
+- Development environments and infrastructure: **Visual Studio Code**, **Vagrant**, and **Cordova**
+- _And more..._
 
 ### clink-flex-prompt
 
@@ -4014,15 +4026,18 @@ The [clink-fzf](https://github.com/chrisant996/clink-fzf) script integrates the 
 
 ### clink-gizmos
 
-The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of scripts has several handy scripts such as:
+The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of scripts has several handy scripts for things such as:
 
-- Argmatchers for `msbuild`, `findstr`, `robocopy`, `xcopy`, `doskey`, `premake5`, and more.
-- Scripts to auto-generate argmatchers for commands by parsing their help text.
+- Shell integration for VSCode embedded terminal windows.
 - Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.
-- The `i.lua` script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.
+- Optionally add icons to completions.
+- Optionally automatically restore the last current working directory when starting a new Clink session.
+- Interactive persistent history list of recent current working directories.
 - The `fzf.lua` script from [clink-fzf](https://github.com/chrisant996/clink-fzf) for integrating the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
+- The `i.lua` script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.
+- Optionally extend Clink's `git` Lua APIs to also support Mercurial or Subversion.
 - The `luaexec.lua` script which has various features handy for Clink Lua script authors.
-- And more.
+- _And more..._
 
 ### clink-themes
 
@@ -4039,6 +4054,14 @@ Windows programs generally don't need to worry about terminal support.  But the 
 Clink's keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use `clink echo` to find key sequences for specific inputs.
 
 Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the [`terminal.emulation`](#terminal_emulation) setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
+
+<table class="linkmenu">
+<tr><td><a href="#override-terminal-detection">Override Terminal Detection</a></td><td>How to override Clink's automatic terminal detection.</td></tr>
+<tr><td><a href="#key-binding-quirks">Key Binding Quirks</a></td><td>Read this if you see <code>[A</code> or <code>[B</code> or similar cryptic characters show up.</td></tr>
+<tr><td><a href="#cursor-style">Cursor Style</a></td><td>How to customize cursor styles in Clink.</td></tr>
+<tr><td><a href="#color-emojis">Color Emojis</a></td><td>Caveats about Unicode standards for color emojis.</td></tr>
+<tr><td><a href="#using-ansicon">Using ANSICON</a></td><td>Tips for coexisting with ANSICON on old versions of Windows.</td></tr>
+</table>
 
 ### Override Terminal Detection
 
@@ -4118,6 +4141,18 @@ Clink's emoji width predictions work best on Windows 11 with Windows Terminal 1.
 Clink has no way to know for sure how different combinations of OS / font / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes significant improvements for rendering color emojis, but there are still some edge cases that aren't fully implemented yet.  (When using older version of Windows Terminal then you should expect some emoji sequences to render incorrectly, and there's nothing Clink can do to work around that.)
 
 If you encounter problems with emoji characters, first check whether the latest OS version and/or the latest terminal program version solves some of the problems.  If the problems persist, you can [open a new issue](https://github.com/chrisant996/clink/issues/new) in the Clink repo.  Please be sure to share details and specific steps for how to reproduce the problem, so that it's possible for someone to try to help.
+
+### Using ANSICON
+
+[ANSICON](https://github.com/adoxa/ansicon) provides ANSI escape sequences for Windows console programs on Windows 2000 through Windows 8.1 (it provides much the same functionality as `ANSI.SYS` does for MS-DOS).
+
+Windows 10 and newer include built-in support for ANSI escape sequences, making ANSICON unnecessary except on older versions of Windows.  ANSICON is an abandoned project, but it still works on Windows 2000 through Windows 8.1.
+
+Clink doesn't need ANSICON even on old versions of Windows because Clink includes its own internal terminal emulator.  But if you're using ANSICON for other programs, then here are some tips for getting ANSICON to coexist successfully with Clink:
+
+- Use Clink's built-in terminal emulation; it's much higher performance than ANSICON, and more functional.
+- Use `set ANSICON_WRAP=cmd` _before_ ANSICON is loaded, otherwise ANSICON gets confused and screws up wrapping at the terminal edge inside Clink (especially noticable with the `bureau` prompt).
+- Do not use `debug.log_terminal`=`true` and `terminal.emulation`=`native` together while ANSICON is loaded; ANSICON isn't compatible with Clink's terminal logging hooks, and ANSICON goes into a death spiral.
 
 ## How Clink Works
 
