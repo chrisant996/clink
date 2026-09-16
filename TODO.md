@@ -17,10 +17,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way for `io.popen`, `io.popenyield`, `os.execute`, etc to run without a console window.  `clink.execute` exists, but has quirks and doesn't support yielding.  This is a problem for any match generators that want to run Powershell, because Powershell insists on changing the window title.  Either they have to accept asynchronous window title changes, or they block until the Powershell command finishes.  For example, the `pid_complete.lua` module is impacted by this.
 
 ## Low Priority
-- Add documentation for coexisting with ANSICON:
-  - Use Clink's built-in terminal emulation; it's much higher performance than ANSICON, and more functional.
-  - Use `set ANSICON_WRAP=cmd` _before_ ANSICON is loaded, otherwise ANSICON gets confused and screws up wrapping at the terminal edge (especially noticable with the `bureau` prompt).
-  - Do not use `debug.log_terminal`=`true` and `terminal.emulation`=`native` together while ANSICON is loaded; ANSICON isn't compatible with Clink's terminal logging hooks, and ANSICON goes into a death spiral.
 - Maybe add some way for Lua to add bars above the prompt, and make the bars automatically disappear when the prompt ends (regardless whether `prompt.transient` is enabled)?
   - Maybe three places:  above the prompt, below the prompt, and at the bottom of the screen?
   - Need a way to signal to refilter a specific bar (which can lead to hiding it, changing it, or showing it).
