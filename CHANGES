@@ -5,6 +5,8 @@
 #### v1.9.34
 
 - Added new `exec.cwd_first` setting (off by default) to make Executable Completions list files from the current directory before other files ([#794](https://github.com/chrisant996/clink/issues/794)).
+- Updated the `clink-diagnostics` bindable command to automatically include performance cost details if classifiers, prompts, hinters, or events exceed a small threshold.  When automatically showing the cost details, it filters entries with zero costs.  Use a numeric argument to include more diagnostic details (e.g. type <kbd>Alt</kbd>-<kbd>1</kbd> or <kbd>Alt</kbd>-<kbd>2</kbd> or etc before invoking the `clink-diagnostics` command).
+- Fixed the "small cost threshold" for classifiers and hinters in `clink-diagnostics` (it was 1000x more sensitive than intended).
 - Fixed another rare edge case where a Lua script could potentially make Clink miss clearing part of the input display area.
 
 #### v1.9.33
