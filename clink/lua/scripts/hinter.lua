@@ -142,6 +142,8 @@ function clink._internal._diag_hinters(arg)
         return
     end
 
+    local filter = not arg
+
     local bold = "\x1b[1m"          -- Bold (bright).
     local header = "\x1b[36m"       -- Cyan.
     local norm = "\x1b[m"           -- Normal.
@@ -149,38 +151,46 @@ function clink._internal._diag_hinters(arg)
     local any_cost
     local t = {}
     local longest = 24
+    local filtered_out = 0
     for _,hinter in ipairs (_hinters) do
         if hinter.gethint then
             local info = debug.getinfo(hinter.gethint, 'S')
             if not internal._is_internal_script(info.short_src) then
-                local src = info.short_src..":"..info.linedefined
-                table.insert(t, { src=src, cost=hinter.cost })
-                if longest < #src then
-                    longest = #src
-                end
-                if not any_cost and hinter.cost then
-                    any_cost = true
+                if not filter or (hinter.cost and hinter.cost.peak >= 1) then
+                    local src = info.short_src..":"..info.linedefined
+                    table.insert(t, { src=src, cost=hinter.cost })
+                    if longest < #src then
+                        longest = #src
+                    end
+                    if not any_cost and hinter.cost then
+                        any_cost = true
+                    end
+                else
+                    filtered_out = filtered_out + 1
                 end
             end
         end
     end
 
-    if t[1] then
-        if any_cost then
-            clink.print(string.format("%s%s%s     %slast    avg     peak%s",
-                    bold, pad_string("hinters:", longest + 2), norm,
-                    header, norm))
+    if any_cost then
+        clink.print(string.format("%s%s%s     %slast    avg     peak%s",
+                bold, pad_string("hinters:", longest + 2), norm,
+                header, norm))
+    else
+        clink.print(bold.."hinters:"..norm)
+    end
+    for _,entry in ipairs (t) do
+        if entry.cost then
+            clink.print(string.format("  %s  %4u ms %4u ms %4u ms",
+                    pad_string(entry.src, longest),
+                    entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
         else
-            clink.print(bold.."hinters:"..norm)
+            clink.print(string.format("  %s", entry.src))
         end
-        for _,entry in ipairs (t) do
-            if entry.cost then
-                clink.print(string.format("  %s  %4u ms %4u ms %4u ms",
-                        pad_string(entry.src, longest),
-                        entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
-            else
-                clink.print(string.format("  %s", entry.src))
-            end
-        end
+    end
+    if filtered_out > 0 then
+        print("  (filtered "..filtered_out.." with zero costs)")
+    elseif not t[1] then
+        print("  no hinters registered")
     end
 end

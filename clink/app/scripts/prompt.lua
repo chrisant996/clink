@@ -67,6 +67,8 @@ end
 
 
 --------------------------------------------------------------------------------
+local elapsed_this_pass = 0
+local force_diag_prompts
 local function log_cost(tick, filter, func_name)
     local elapsed = (os.clock() - tick) * 1000
     local tname = "cost"..func_name
@@ -82,6 +84,8 @@ local function log_cost(tick, filter, func_name)
     if cost.peak < elapsed then
         cost.peak = elapsed
     end
+
+    elapsed_this_pass = elapsed_this_pass + elapsed
 end
 
 --------------------------------------------------------------------------------
@@ -135,6 +139,8 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt) -- luacheck: ignore 432
         local filtered, onwards
+        elapsed_this_pass = 0
+
         for _, filter in ipairs_active(prompt_filters) do
             set_current_prompt_filter(filter)
 
@@ -202,6 +208,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     set_current_prompt_filter(nil)
     local ok, ret, rret = xpcall(impl, _error_handler_ret, prompt, rprompt)
     set_current_prompt_filter(nil)
+
+    if elapsed_this_pass > 250 then
+        force_diag_prompts = true
+    end
 
     rl_state = old_rl_state
 
@@ -367,7 +377,8 @@ local function max_len(a, b)
 end
 
 --------------------------------------------------------------------------------
-local function collect_filter_src(t, type)
+local filtered_out
+local function collect_filter_src(t, type, filter)
     local tsub = {}
     t[type] = tsub
 
@@ -381,20 +392,25 @@ local function collect_filter_src(t, type)
         if func then
             local info = debug.getinfo(func, 'S')
             if not internal._is_internal_script(info.short_src) then
-                local src = info.short_src..":"..info.linedefined
                 local cost = prompt["cost"..type]
-                table.insert(tsub, { src=src, cost=cost })
-                if longest < #src then
-                    longest = #src
-                end
-                if not any_cost and cost then
-                    any_cost = true
+                if not filter or (cost and cost.peak >= 1) then
+                    local src = info.short_src..":"..info.linedefined
+                    table.insert(tsub, { src=src, cost=cost })
+                    if longest < #src then
+                        longest = #src
+                    end
+                    if not any_cost and cost then
+                        any_cost = true
+                    end
+                else
+                    filtered_out = filtered_out + 1
                 end
             end
         end
     end
     tsub.any_cost = any_cost
     t.longest = max_len(t.longest, longest)
+    return tsub[1] and true or nil
 end
 
 --------------------------------------------------------------------------------
@@ -418,7 +434,6 @@ local function print_filter_src(t, type)
                 clink.print(string.format("        %s", entry.src))
             end
         end
-        return true
     end
 end
 
@@ -449,25 +464,31 @@ function clink._internal._diag_prompts(arg)
     end
 
     arg = (arg and arg >= 1)
-    if not arg and not settings.get("lua.debug") then
+    if not arg and not settings.get("lua.debug") and not force_diag_prompts then
         return
     end
+
+    local filter = not arg
 
     clink.print(bold.."prompt filters:"..norm)
 
     local t = {}
-    collect_filter_src(t, "filter")
-    collect_filter_src(t, "rightfilter")
-    collect_filter_src(t, "transientfilter")
-    collect_filter_src(t, "transientrightfilter")
-
     local any = false
-    any = print_filter_src(t, "filter") or any
-    any = print_filter_src(t, "rightfilter") or any
-    any = print_filter_src(t, "transientfilter") or any
-    any = print_filter_src(t, "transientrightfilter") or any
+    filtered_out = 0
+    any = collect_filter_src(t, "filter", filter) or any
+    any = collect_filter_src(t, "rightfilter", filter) or any
+    any = collect_filter_src(t, "transientfilter", filter) or any
+    any = collect_filter_src(t, "transientrightfilter", filter) or any
 
-    if not any then
+    if any then
+        print_filter_src(t, "filter")
+        print_filter_src(t, "rightfilter")
+        print_filter_src(t, "transientfilter")
+        print_filter_src(t, "transientrightfilter")
+    end
+    if filtered_out > 0 then
+        clink.print("  (filtered "..filtered_out.." with zero costs)")
+    elseif not any then
         clink.print("  no prompt filters registered")
     end
 end

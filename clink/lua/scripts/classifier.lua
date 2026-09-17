@@ -176,37 +176,44 @@ function clink._internal._diag_classifiers(arg)
         return
     end
 
+    local filter = not arg
+
     local bold = "\x1b[1m"          -- Bold (bright).
     local header = "\x1b[36m"       -- Cyan.
     local norm = "\x1b[m"           -- Normal.
 
     local any_cost
+    local filtered_out = 0
     local t = {}
     local longest = 24
     for _,classifier in ipairs (_classifiers) do
         if classifier.classify then
             local info = debug.getinfo(classifier.classify, 'S')
             if not internal._is_internal_script(info.short_src) then
-                local src = info.short_src..":"..info.linedefined
-                table.insert(t, { src=src, cost=classifier.cost })
-                if longest < #src then
-                    longest = #src
-                end
-                if not any_cost and classifier.cost then
-                    any_cost = true
+                if not filter or (classifier.cost and classifier.cost.peak >= 1) then
+                    local src = info.short_src..":"..info.linedefined
+                    table.insert(t, { src=src, cost=classifier.cost })
+                    if longest < #src then
+                        longest = #src
+                    end
+                    if not any_cost and classifier.cost then
+                        any_cost = true
+                    end
+                else
+                    filtered_out = filtered_out + 1
                 end
             end
         end
     end
 
+    if any_cost then
+        clink.print(string.format("%s%s%s     %slast    avg     peak%s",
+                bold, pad_string("classifiers:", longest + 2), norm,
+                header, norm))
+    else
+        clink.print(bold.."classifiers:"..norm)
+    end
     if t[1] then
-        if any_cost then
-            clink.print(string.format("%s%s%s     %slast    avg     peak%s",
-                    bold, pad_string("classifiers:", longest + 2), norm,
-                    header, norm))
-        else
-            clink.print(bold.."classifiers:"..norm)
-        end
         for _,entry in ipairs (t) do
             if entry.cost then
                 clink.print(string.format("  %s  %4u ms %4u ms %4u ms",
@@ -216,5 +223,10 @@ function clink._internal._diag_classifiers(arg)
                 clink.print(string.format("  %s", entry.src))
             end
         end
+    end
+    if filtered_out > 0 then
+        print("  (filtered "..filtered_out.." with zero costs)")
+    elseif not t[1] then
+        print("  no classifiers registered")
     end
 end

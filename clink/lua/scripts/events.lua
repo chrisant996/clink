@@ -14,7 +14,17 @@ local header = "\x1b[36m"               -- Cyan.
 local norm = "\x1b[m"                   -- Normal.
 
 --------------------------------------------------------------------------------
-local function log_cost(tick, c)
+-- Cost threshold for automatic diagnostic display is 100 ms except where
+-- overridden by the thresholds table.
+local thresholds = {
+    oncommand = 10,
+    oninputlinechanged = 10,
+    onaftercommand = 10,
+}
+
+--------------------------------------------------------------------------------
+local force_diag_events
+local function log_cost(tick, c, event)
     local elapsed = (os.clock() - tick) * 1000
     local cost = c.cost
     if not cost then
@@ -27,6 +37,10 @@ local function log_cost(tick, c)
     cost.num = cost.num + 1
     if cost.peak < elapsed then
         cost.peak = elapsed
+    end
+
+    if event and elapsed >= (thresholds[event] or 100) then
+        force_diag_events = true
     end
 end
 
@@ -59,7 +73,7 @@ function clink._internal._send_event(event, ...)
             if c.func then
                 local tick = os.clock()
                 c.func(...)
-                log_cost(tick, c)
+                log_cost(tick, c, event)
             end
         end
     end
@@ -75,7 +89,7 @@ function clink._internal._send_event_string_out(event, ...)
             if c.func then
                 local tick = os.clock()
                 local s = c.func(...)
-                log_cost(tick, c)
+                log_cost(tick, c, event)
                 if type(s) == "string" then
                     return s
                 end
@@ -95,7 +109,7 @@ function clink._internal._send_event_cancelable(event, ...)
             if c.func then
                 local tick = os.clock()
                 local cancel = (c.func(...) == false)
-                log_cost(tick, c)
+                log_cost(tick, c, event)
                 if cancel then
                     return false
                 end
@@ -116,7 +130,7 @@ function clink._internal._send_event_cancelable_string_inout(event, string)
             if c.func then
                 local tick = os.clock()
                 local s,continue = c.func(string)
-                log_cost(tick, c)
+                log_cost(tick, c, event)
                 if s then
                     string = s
                 end
@@ -141,7 +155,7 @@ function clink._internal._send_event_cancelable_override_string(event, string)
             if c.func then
                 local tick = os.clock()
                 local result = c.func(string)
-                log_cost(tick, c)
+                log_cost(tick, c, event)
                 if result == false then
                     -- Cancel.
                     return false
@@ -401,7 +415,7 @@ function clink._internal._send_ondisplaymatches_event(matches, popup)
         if c and c.func then
             local tick = os.clock()
             local ret = c.func(matches, popup)
-            log_cost(tick, c)
+            log_cost(tick, c, "ondisplaymatches")
             return ret
         end
     end
@@ -484,7 +498,7 @@ function clink._internal._send_onfiltermatches_event(matches, completion_type, f
             if c and c.func then
                 local tick = os.clock()
                 local m = c.func(matches, completion_type, filename_completion_desired)
-                log_cost(tick, c)
+                log_cost(tick, c, "onfiltermatches")
                 if m ~= nil then
                     matches = m
                     ret = matches
@@ -527,7 +541,8 @@ local function max_len(a, b)
 end
 
 --------------------------------------------------------------------------------
-local function collect_event_src(t, event)
+local filtered_out
+local function collect_event_src(t, event, filter)
     local callbacks = internal._event_callbacks[event]
     if not callbacks[1] then
         return
@@ -543,16 +558,20 @@ local function collect_event_src(t, event)
         if c.func then
             local info = debug.getinfo(c.func, 'S')
             if not internal._is_internal_script(info.short_src) then
-                local src = info.short_src..":"..info.linedefined
-                local entry = { src=src, cost=c.cost }
-                table.insert(tsub, entry)
-                if longest < #src then
-                    longest = #src
+                if not filter or (c.cost and c.cost.peak >= 1) then
+                    local src = info.short_src..":"..info.linedefined
+                    local entry = { src=src, cost=c.cost }
+                    table.insert(tsub, entry)
+                    if longest < #src then
+                        longest = #src
+                    end
+                    if not any_cost and entry.cost then
+                        any_cost = true
+                    end
+                    any_events = true
+                else
+                    filtered_out = filtered_out + 1
                 end
-                if not any_cost and entry.cost then
-                    any_cost = true
-                end
-                any_events = true
             end
         end
     end
@@ -593,9 +612,11 @@ function clink._internal._diag_events(arg)
     end
 
     arg = (arg and arg >= 1)
-    if not arg and not settings.get("lua.debug") then
+    if not arg and not settings.get("lua.debug") and not force_diag_events then
         return
     end
+
+    local filter = not arg
 
     local sorted_events = {}
     for event_name in pairs(internal._event_callbacks) do
@@ -605,8 +626,9 @@ function clink._internal._diag_events(arg)
 
     local t = {}
     local any_events
+    filtered_out = 0
     for _,event_name in ipairs(sorted_events) do
-        any_events = collect_event_src(t, event_name) or any_events
+        any_events = collect_event_src(t, event_name, filter) or any_events
     end
 
     clink.print(bold.."events:"..norm)
@@ -614,7 +636,10 @@ function clink._internal._diag_events(arg)
         for _,event_name in ipairs(sorted_events) do
             print_event_src(t, event_name)
         end
-    else
+    end
+    if filtered_out > 0 then
+        print("  (filtered "..filtered_out.." with zero costs)")
+    elseif not filter and not any_events then
         print("  no event callbacks registered")
     end
 end
