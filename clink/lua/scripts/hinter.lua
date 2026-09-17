@@ -84,16 +84,15 @@ function clink._internal._gethint(line_state)
             besthint = besthint:gsub("[\r\n]", " ")
         end
 
-        if elapsed_this_pass > 0.010 then
-            force_diag_hinters = true
-        end
-
         return besthint, bestpos
     end
 
     prepare()
 
     local ok, ret, pos = xpcall(impl, _error_handler_ret)
+    if elapsed_this_pass > 10 then
+        force_diag_hinters = true
+    end
     if not ok then
         print("")
         print("hinter failed:")

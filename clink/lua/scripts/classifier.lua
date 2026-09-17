@@ -118,16 +118,15 @@ function clink._internal._classify(commands, test)
             end
         end
 
-        if elapsed_this_pass > 0.010 then
-            force_diag_classifiers = true
-        end
-
         return false
     end
 
     prepare()
 
     local ok, ret = xpcall(impl, _error_handler_ret)
+    if elapsed_this_pass > 10 then
+        force_diag_classifiers = true
+    end
     if not ok then
         print("")
         print("word classifier failed:")
