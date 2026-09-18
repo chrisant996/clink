@@ -67,7 +67,7 @@ nosuggest:
     int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
     str_compare_scope compare(scope, g_fuzzy_accent.get());
 
-    // Call Lua to filter prompt
+    // Call Lua to generate suggestions.
     lua_state::push_named_function(state, "clink._internal._suggest");
 
     os::cwd_restorer cwd;
