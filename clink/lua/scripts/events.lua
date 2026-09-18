@@ -23,6 +23,7 @@ local thresholds = {
 }
 
 --------------------------------------------------------------------------------
+local elapsed_this_event
 local force_diag_events
 local function log_cost(tick, c, event)
     local elapsed = (os.clock() - tick) * 1000
@@ -39,9 +40,7 @@ local function log_cost(tick, c, event)
         cost.peak = elapsed
     end
 
-    if event and elapsed >= (thresholds[event] or 100) then
-        force_diag_events = true
-    end
+    elapsed_this_event = elapsed_this_event + elapsed
 end
 
 --------------------------------------------------------------------------------
@@ -65,10 +64,18 @@ local function ipairs_active(list)
 end
 
 --------------------------------------------------------------------------------
+local function finish_event(event)
+    if elapsed_this_event > (thresholds[event] or 100) then
+        force_diag_events = true
+    end
+end
+
+--------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it.
 function clink._internal._send_event(event, ...)
     local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
+        elapsed_this_event = 0
         for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
@@ -76,6 +83,7 @@ function clink._internal._send_event(event, ...)
                 log_cost(tick, c, event)
             end
         end
+        finish_event(event)
     end
 end
 
@@ -85,16 +93,19 @@ end
 function clink._internal._send_event_string_out(event, ...)
     local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
+        elapsed_this_event = 0
         for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 local s = c.func(...)
                 log_cost(tick, c, event)
                 if type(s) == "string" then
+                    finish_event(event)
                     return s
                 end
             end
         end
+        finish_event(event)
     end
     return nil
 end
@@ -105,16 +116,19 @@ end
 function clink._internal._send_event_cancelable(event, ...)
     local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
+        elapsed_this_event = 0
         for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
                 local cancel = (c.func(...) == false)
                 log_cost(tick, c, event)
                 if cancel then
+                    finish_event(event)
                     return false
                 end
             end
         end
+        finish_event(event)
     end
 end
 
@@ -126,6 +140,7 @@ end
 function clink._internal._send_event_cancelable_string_inout(event, string)
     local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
+        elapsed_this_event = 0
         for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
@@ -139,7 +154,8 @@ function clink._internal._send_event_cancelable_string_inout(event, string)
                 end
             end
         end
-        return string;
+        finish_event(event)
+        return string
     end
 end
 
@@ -151,6 +167,7 @@ end
 function clink._internal._send_event_cancelable_override_string(event, string)
     local callbacks = internal._event_callbacks[event]
     if callbacks ~= nil then
+        elapsed_this_event = 0
         for _, c in ipairs_active(callbacks) do
             if c.func then
                 local tick = os.clock()
@@ -158,6 +175,7 @@ function clink._internal._send_event_cancelable_override_string(event, string)
                 log_cost(tick, c, event)
                 if result == false then
                     -- Cancel.
+                    finish_event(event)
                     return false
                 elseif type(result) == "string" then
                     -- Override the string.
@@ -165,6 +183,7 @@ function clink._internal._send_event_cancelable_override_string(event, string)
                 end
             end
         end
+        finish_event(event)
     end
     return string
 end
@@ -413,6 +432,7 @@ function clink._internal._send_ondisplaymatches_event(matches, popup)
     if callbacks ~= nil then
         local c = callbacks[1]
         if c and c.func then
+            elapsed_this_event = 0
             local tick = os.clock()
             local ret = c.func(matches, popup)
             log_cost(tick, c, "ondisplaymatches")
@@ -496,6 +516,7 @@ function clink._internal._send_onfiltermatches_event(matches, completion_type, f
     if callbacks ~= nil then
         for _, c in ipairs_active(callbacks) do
             if c and c.func then
+                elapsed_this_event = 0
                 local tick = os.clock()
                 local m = c.func(matches, completion_type, filename_completion_desired)
                 log_cost(tick, c, "onfiltermatches")
