@@ -189,6 +189,9 @@ static int32 do_tib()
 
     std::shared_ptr<custom_input_box> tib = std::make_shared<custom_input_box>();
 
+    const auto bindings = tib::make_default_key_table(true/*numeric_argument*/);
+    tib->set_bindings(bindings);
+
     tib::binding_resolver resolver;                         // Required.
     resolver.add_target(tib);                               // Required.
 
