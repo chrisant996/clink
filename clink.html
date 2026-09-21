@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.33</title>
+<title>Clink v1.9.34</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.33</div>
+                <div id="title">Clink v1.9.34</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -1915,6 +1915,11 @@ $endif
 <td align="center"><a class="wlink" href="#exec_cwd"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_cwd"></a><code>exec.cwd</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if <a href="#exec_files"><code>exec.files</code></a> is true.)</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#exec_cwd_first"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_cwd_first"></a><code>exec.cwd_first</code></td>
+<td align="center">False</td>
+<td>When enabled, matches from the current directory are listed first, followed by the other matches (such as doskey aliases, cmd commands, files found along the PATH environment variable, etc).</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#exec_dirs"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_dirs"></a><code>exec.dirs</code></td>
@@ -7430,22 +7435,37 @@ or edit, the word or words selected from the history event.</p>
 <h2 id="popular-scripts"><a class="wlink" href="#popular-scripts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Popular Scripts <span class="uplinks"><a href="#miscellaneous">up</a> <a href="#toc">top</a></span></h2>
 <p>Here are some popular scripts that show off what can be done with Clink.</p>
 <h3 id="clink-completions"><a class="wlink" href="#clink-completions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink-completions <span class="uplinks"><a href="#popular-scripts">up</a> <a href="#toc">top</a></span></h3>
-<p>The <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.</p>
+<p>The <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> collection of scripts provides completions for many programs, including:</p>
+<ul>
+<li>Package managers: <strong>winget</strong>, <strong>Scoop</strong>, <strong>Chocolatey</strong>, <strong>npm</strong>, <strong>Yarn</strong>, <strong>pnpm</strong>, <strong>pip</strong>, and <strong>Pipenv</strong></li>
+<li>Version control and collaboration: <strong>Git</strong>, <strong>GitHub CLI</strong>, and <strong>Gitk</strong></li>
+<li>Containers and orchestration: <strong>Docker</strong>, <strong>kubectl</strong>, and <strong>OpenShift CLI</strong></li>
+<li>Build and development tools: <strong>MSBuild</strong>, <strong>Make</strong>, <strong>NMake</strong>, <strong>Rust</strong>, <strong>.NET</strong>, and <strong>Angular CLI</strong></li>
+<li>Remote access and networking: <strong>SSH</strong>, <strong>curl</strong>, <strong>OpenSSL</strong>, and <strong>ping</strong></li>
+<li>Android development: <strong>ADB</strong>, <strong>Fastboot</strong>, and <strong>scrcpy</strong></li>
+<li>Search and text-processing tools: <strong>ripgrep</strong>, <strong>grep</strong>, <strong>sed</strong>, <strong>fd</strong>, <strong>bat</strong>, and <strong>less</strong></li>
+<li>Windows utilities: <strong>Robocopy</strong>, <strong>Xcopy</strong>, <strong>Reg</strong>, <strong>Signtool</strong>, <strong>Windows Terminal</strong>, and <strong>gsudo</strong></li>
+<li>Development environments and infrastructure: <strong>Visual Studio Code</strong>, <strong>Vagrant</strong>, and <strong>Cordova</strong></li>
+<li><em>And more...</em></li>
+</ul>
 <h3 id="clink-flex-prompt"><a class="wlink" href="#clink-flex-prompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink-flex-prompt <span class="uplinks"><a href="#popular-scripts">up</a> <a href="#toc">top</a></span></h3>
 <p>The <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a> script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It&#39;s extensible so you can add your own segments.</p>
 <p>It also takes advantage of Clink&#39;s <a href="#asyncpromptfiltering">asynchronous prompt refresh</a> to make prompts show up instantly, even in large git repos, for example.</p>
 <h3 id="clink-fzf"><a class="wlink" href="#clink-fzf"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink-fzf <span class="uplinks"><a href="#popular-scripts">up</a> <a href="#toc">top</a></span></h3>
 <p>The <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a> script integrates the popular <a href="https://github.com/junegunn/fzf">fzf</a> &quot;fuzzy finder&quot; tool with Clink.</p>
 <h3 id="clink-gizmos"><a class="wlink" href="#clink-gizmos"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink-gizmos <span class="uplinks"><a href="#popular-scripts">up</a> <a href="#toc">top</a></span></h3>
-<p>The <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> collection of scripts has several handy scripts such as:</p>
+<p>The <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> collection of scripts has several handy scripts for things such as:</p>
 <ul>
-<li>Argmatchers for <code>msbuild</code>, <code>findstr</code>, <code>robocopy</code>, <code>xcopy</code>, <code>doskey</code>, <code>premake5</code>, and more.</li>
-<li>Scripts to auto-generate argmatchers for commands by parsing their help text.</li>
+<li>Shell integration for VSCode embedded terminal windows.</li>
 <li>Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.</li>
-<li>The <code>i.lua</code> script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.</li>
+<li>Optionally add icons to completions.</li>
+<li>Optionally automatically restore the last current working directory when starting a new Clink session.</li>
+<li>Interactive persistent history list of recent current working directories.</li>
 <li>The <code>fzf.lua</code> script from <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a> for integrating the popular <a href="https://github.com/junegunn/fzf">fzf</a> &quot;fuzzy finder&quot; tool with Clink.</li>
+<li>The <code>i.lua</code> script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.</li>
+<li>Optionally extend Clink&#39;s <code>git</code> Lua APIs to also support Mercurial or Subversion.</li>
 <li>The <code>luaexec.lua</code> script which has various features handy for Clink Lua script authors.</li>
-<li>And more.</li>
+<li><em>And more...</em></li>
 </ul>
 <h3 id="clink-themes"><a class="wlink" href="#clink-themes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>clink-themes <span class="uplinks"><a href="#popular-scripts">up</a> <a href="#toc">top</a></span></h3>
 <p>The <a href="https://github.com/chrisant996/clink-themes">clink-themes</a> repository contains some <a href="#color-themes">color themes</a> and <a href="#custom-prompts">custom prompts</a> which can be used with Clink.  If you have one you want to share, this can be a good place to share it.</p>
@@ -7455,6 +7475,14 @@ or edit, the word or words selected from the history event.</p>
 <p>Windows programs generally don&#39;t need to worry about terminal support.  But the Readline library used by Clink comes from Unix, where there are many different kinds of terminals, and the library requires certain kinds of terminal support.</p>
 <p>Clink&#39;s keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use <code>clink echo</code> to find key sequences for specific inputs.</p>
 <p>Clink&#39;s terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the <a href="#terminal_emulation"><code>terminal.emulation</code></a> setting is <code>emulate</code>, or when <code>auto</code> and Clink is running on an older version of Windows that doesn&#39;t support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.</p>
+<table class="linkmenu">
+<tr><td><a href="#override-terminal-detection">Override Terminal Detection</a></td><td>How to override Clink's automatic terminal detection.</td></tr>
+<tr><td><a href="#key-binding-quirks">Key Binding Quirks</a></td><td>Read this if you see <code>[A</code> or <code>[B</code> or similar cryptic characters show up.</td></tr>
+<tr><td><a href="#cursor-style">Cursor Style</a></td><td>How to customize cursor styles in Clink.</td></tr>
+<tr><td><a href="#color-emojis">Color Emojis</a></td><td>Caveats about Unicode standards for color emojis.</td></tr>
+<tr><td><a href="#using-ansicon">Using ANSICON</a></td><td>Tips for coexisting with ANSICON on old versions of Windows.</td></tr>
+</table>
+
 <h3 id="override-terminal-detection"><a class="wlink" href="#override-terminal-detection"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Override Terminal Detection <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
 <p>The <code>%CLINK_ANSI_HOST%</code> environment variable overrides any detected terminal host and causes the <a href="#terminal_emulation"><code>terminal.emulation</code></a> setting to be ignored.</p>
 <p>Set it to any of the following:</p>
@@ -7538,6 +7566,15 @@ set CLINK_TERM_VS=\e[?12l
 <p>Clink&#39;s emoji width predictions work best on Windows 11 with Windows Terminal 1.22 or newer.  All of the actual rendering is done by the terminal program.  Applications have to make assumptions and predictions about how Unicode characters will end up being rendered by terminal programs.  It involves a lot of guesswork.</p>
 <p>Clink has no way to know for sure how different combinations of OS / font / graphics library / Windows Terminal versions will affect how different emoji characters will actually get rendered.  Clink also has no way to know for sure how different complex joined emoji sequences or malformed/invalid/nonsensical emoji sequences will end up getting rendered in a terminal program.  Windows Terminal 1.22 includes significant improvements for rendering color emojis, but there are still some edge cases that aren&#39;t fully implemented yet.  (When using older version of Windows Terminal then you should expect some emoji sequences to render incorrectly, and there&#39;s nothing Clink can do to work around that.)</p>
 <p>If you encounter problems with emoji characters, first check whether the latest OS version and/or the latest terminal program version solves some of the problems.  If the problems persist, you can <a href="https://github.com/chrisant996/clink/issues/new">open a new issue</a> in the Clink repo.  Please be sure to share details and specific steps for how to reproduce the problem, so that it&#39;s possible for someone to try to help.</p>
+<h3 id="using-ansicon"><a class="wlink" href="#using-ansicon"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Using ANSICON <span class="uplinks"><a href="#terminal-support">up</a> <a href="#toc">top</a></span></h3>
+<p><a href="https://github.com/adoxa/ansicon">ANSICON</a> provides ANSI escape sequences for Windows console programs on Windows 2000 through Windows 8.1 (it provides much the same functionality as <code>ANSI.SYS</code> does for MS-DOS).</p>
+<p>Windows 10 and newer include built-in support for ANSI escape sequences, making ANSICON unnecessary except on older versions of Windows.  ANSICON is an abandoned project, but it still works on Windows 2000 through Windows 8.1.</p>
+<p>Clink doesn&#39;t need ANSICON even on old versions of Windows because Clink includes its own internal terminal emulator.  But if you&#39;re using ANSICON for other programs, then here are some tips for getting ANSICON to coexist successfully with Clink:</p>
+<ul>
+<li>Use Clink&#39;s built-in terminal emulation; it&#39;s much higher performance than ANSICON, and more functional.</li>
+<li>Use <code>set ANSICON_WRAP=cmd</code> <em>before</em> ANSICON is loaded, otherwise ANSICON gets confused and screws up wrapping at the terminal edge inside Clink (especially noticable with the <code>bureau</code> prompt).</li>
+<li>Do not use <code>debug.log_terminal</code>=<code>true</code> and <code>terminal.emulation</code>=<code>native</code> together while ANSICON is loaded; ANSICON isn&#39;t compatible with Clink&#39;s terminal logging hooks, and ANSICON goes into a death spiral.</li>
+</ul>
 <h2 id="how-clink-works"><a class="wlink" href="#how-clink-works"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>How Clink Works <span class="uplinks"><a href="#miscellaneous">up</a> <a href="#toc">top</a></span></h2>
 <p>The <code>clink inject</code> command checks whether the parent process is supported and injects a DLL.</p>
 <p>The DLL takes over printing the prompt and reading command line input from the user.</p>
@@ -9433,6 +9470,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1934"><a class="wlink" href="#v1934"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.34 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Added new <code>exec.cwd_first</code> setting (off by default) to make Executable Completions list files from the current directory before other files (<a href="https://github.com/chrisant996/clink/issues/794">#794</a>).</li>
+<li>Updated the <code>clink-diagnostics</code> bindable command to automatically include performance cost details if classifiers, prompts, hinters, or events exceed a small threshold.  When automatically showing the cost details, it filters entries with zero costs.  Use a numeric argument to include more diagnostic details (e.g. type <kbd>Alt</kbd>-<kbd>1</kbd> or <kbd>Alt</kbd>-<kbd>2</kbd> or etc before invoking the <code>clink-diagnostics</code> command).</li>
+<li>Fixed the &quot;small cost threshold&quot; for classifiers and hinters in <code>clink-diagnostics</code> (it was 1000x more sensitive than intended).</li>
+<li>Fixed another rare edge case where a Lua script could potentially make Clink miss clearing part of the input display area.</li>
+</ul>
 <h4 id="v1933"><a class="wlink" href="#v1933"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.33 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Fixed the <code>cua-select-word</code>, <code>cua-backward-bigword</code>, and <code>cua-forward-bigword</code> commands so they don&#39;t immediately clear the selection.</li>
