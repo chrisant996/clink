@@ -1,0 +1,33 @@
+local args = {...}
+
+require("arghelper")
+
+local borders = clink.argmatcher():addarg({"light", "padding", "bar-padding", "first-line", "none"})
+local lefttext = clink.argmatcher():addarg({fromhistory=true})
+local righttext = clink.argmatcher():addarg({fromhistory=true})
+local origin = clink.argmatcher():addarg({fromhistory=true})
+local height = clink.argmatcher():addarg({fromhistory=true})
+local mousemode = clink.argmatcher():addarg({nosort=true, "none", "vt200", "drag", "any"})
+local encmode = clink.argmatcher():addarg({"default", "sgr"})
+
+clink.argmatcher(args[1])
+:_addexflags({
+    { "--single",                       "Single line input mode (default)" },
+    { "--multiline",                    "Multiple line input mode (max height 3 rows)" },
+    { "--fixed",                        "Fixed height input mode (default)" },
+    { "--variable",                     "Variable height input mode (implies --multiline)" },
+    { "--full-width",                   "Use the full terminal width (default is 40)" },
+    { "--no-border",                    "No border (default; same as '--border none')" },
+    { "--border"..borders, " STYLE",    "Use border style" },
+    { "--left"..lefttext, " TEXT",      "Display TEXT at the left of the first line" },
+    { "--right"..righttext, " TEXT",    "Display TEXT at the right of the first line" },
+    { "--origin"..origin, " X",         "Set origin X coordinate (1-based)" },
+    { "--height"..height, " ROWS",      "Set max height to ROWS (default is 3)" },
+    { "--rainbow",                      "Apply rainbow colors to words" },
+    { "--show-keys",                    "Show input key sequences" },
+    { "--custom-vt",                    "Use custom VT input driver (always on Win8.1 and lower)" },
+    { "--mouse"..mousemode, " MODE",    "Mouse VT input mode" },
+    { "--enc"..encmode, " MODE",        "Mouse VT encoding mode" },
+    { "--show-stats",                   "Show statistics about display manager" },
+    { "--suggest",                      "Show suggestions based on words present" },
+})

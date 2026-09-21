@@ -645,10 +645,11 @@ local drawtest = clink.argmatcher()
 local testbed = clink.argmatcher()
 :addflags(
     "-d", "--hook",
+    "-t", "--tib",
     "-s" .. dir_matcher, "--scripts" .. dir_matcher,
     "-p" .. dir_matcher, "--profile" .. dir_matcher,
     "-h", "--help", "-?")
-:hideflags("-d", "-s", "-p", "-h", "-?")
+:hideflags("-d", "-t", "-s", "-p", "-h", "-?")
 :nofiles()
 
 --------------------------------------------------------------------------------

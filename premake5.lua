@@ -220,8 +220,9 @@ workspace("clink")
     staticruntime("on")
     symbols("on")
     exceptionhandling("off")
-    defines("HAVE_CONFIG_H")
-    defines("HANDLE_MULTIBYTE")
+    defines("HAVE_CONFIG_H")            -- for Readline
+    defines("HANDLE_MULTIBYTE")         -- for Readline
+    defines("TIB_CONFIG_H")             -- for tib
 
     if asan then
         defines("USE_ASAN")
@@ -302,6 +303,18 @@ project("readline")
         filter {"debug", "action:vs*"}
             buildoptions("/fsanitize=address")
     end
+
+--------------------------------------------------------------------------------
+project("tib")
+    language("c++")
+    kind("staticlib")
+    includedirs("clink/core/include")
+    includedirs("clink/core/include/core")
+    includedirs("clink/terminal/include")
+    includedirs("clink/terminal/include/terminal")
+    includedirs("tib")                  -- for TIB_CONFIG_H and tib_config.h
+    includedirs("tib/include")
+    files("tib/tib/*.cpp")
 
 --------------------------------------------------------------------------------
 project("getopt")
@@ -508,15 +521,19 @@ clink_lib("clink_process")
 clink_lib("clink_app_common")
     includedirs("clink/app/src")
     includedirs("clink/core/include")
+    includedirs("clink/core/include/core")          -- so tib files can find wcwidth.h
     includedirs("clink/lib/include")
     includedirs("clink/lua/include")
     includedirs("clink/process/include")
     includedirs("clink/terminal/include")
+    includedirs("clink/terminal/include/terminal")  -- so tib files can find wcwidth.h
     includedirs("detours")
     includedirs("getopt")
     includedirs("lua/src")
     includedirs("readline")
     includedirs("readline/compat")
+    includedirs("tib")                  -- for TIB_CONFIG_H and tib_config.h
+    includedirs("tib/include")
     files("clink/app/src/**")
     files("clink/app/scripts/**")
     excludes("clink/app/src/dll/main.cpp")
@@ -550,6 +567,7 @@ clink_dll("clink_app_dll")
     links("wildmatch")
     links("lua")
     links("readline")
+    links("tib")
     links("version")
     links("shlwapi")
     links("rpcrt4")
