@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 typedef int32 wcwidth_t (char32_t);
 extern "C" wcwidth_t *wcwidth;
+extern bool g_color_emoji;
 extern void detect_ucs2_limitation(bool force=false);
 extern "C" void reset_wcwidths();
 extern "C" int32 test_ambiguous_width_char(char32_t ucs, str_iter* iter);
@@ -37,8 +38,8 @@ extern "C" uint32 clink_wcswidth_expandctrl(const char* s, uint32 len);
 class wcwidth_iter
 {
 public:
-    explicit        wcwidth_iter(const char* s, int32 len=-1);
-    explicit        wcwidth_iter(const str_impl<char>& s, int32 len=-1);
+    explicit        wcwidth_iter(const char* s, size_t len=-1);
+    explicit        wcwidth_iter(const str_impl<char>& s, size_t len=-1);
                     wcwidth_iter(const wcwidth_iter& i);
     char32_t        next();
     void            unnext();

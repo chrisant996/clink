@@ -8,8 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <utility>
-
 #include <assert.h>
+
+#include "base.h"
 
 class str_base;
 class wstr_base;

@@ -33,7 +33,7 @@ extern "C" uint32 clink_wcswidth_expandctrl(const char* s, uint32 len)
 
 
 //------------------------------------------------------------------------------
-wcwidth_iter::wcwidth_iter(const char* s, int32 len)
+wcwidth_iter::wcwidth_iter(const char* s, size_t len)
 : m_iter(s, len)
 {
     m_chr_ptr = m_chr_end = m_iter.get_pointer();
@@ -41,7 +41,7 @@ wcwidth_iter::wcwidth_iter(const char* s, int32 len)
 }
 
 //------------------------------------------------------------------------------
-wcwidth_iter::wcwidth_iter(const str_impl<char>& s, int32 len)
+wcwidth_iter::wcwidth_iter(const str_impl<char>& s, size_t len)
 : m_iter(s, len)
 {
     m_chr_ptr = m_chr_end = m_iter.get_pointer();
@@ -98,7 +98,6 @@ char32_t wcwidth_iter::next()
         return c;
 
     // Try to parse emoji sequences.
-    extern bool g_color_emoji;
     if (g_color_emoji && m_chr_wcwidth)
     {
         // Check for a country flag sequence.

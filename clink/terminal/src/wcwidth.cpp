@@ -72,8 +72,6 @@
 #include "wcwidth.h"
 #include "terminal_helpers.h"
 
-extern bool g_color_emoji;
-
 static int32 s_combining_mark_width = 0;
 static int32 s_fe0f_width = 0; // Must be 0 normally, so that Readline can find grapheme boundaries.
 static bool s_only_ucs2 = false;
