@@ -95,7 +95,7 @@ public:
 protected:
     cstring             m_text;
     selection_state     m_selection;
-    uint32_t            m_change_counter = 0;
+    uint32_t            m_change_counter = 1;
 };
 
 } // namespace tib
