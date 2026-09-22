@@ -1274,7 +1274,7 @@ static int32 send_terminal_request(lua_State* state)
         return 0;
 
     str_moveable out;
-    if (!in->send_terminal_request(request, prefix, final, timeout, timeout, out))
+    if (!in->send_terminal_request(request, prefix, final, out, timeout, timeout))
         return 0;
 
     lua_pushlstring(state, out.c_str(), out.length());

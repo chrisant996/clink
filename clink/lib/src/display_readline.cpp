@@ -36,6 +36,7 @@
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/printer.h>
@@ -1340,12 +1341,12 @@ COORD measure_readline_display(const char* prompt, const char* buffer, uint32 le
 void (*display_accumulator::s_saved_fwrite)(FILE*, const char*, int32) = nullptr;
 void (*display_accumulator::s_saved_fflush)(FILE*) = nullptr;
 bool display_accumulator::s_active = false;
+bool display_accumulator::s_synchronize_output = false;
 int32 display_accumulator::s_nested = 0;
 static str_moveable s_buf;
 
 //------------------------------------------------------------------------------
 display_accumulator::display_accumulator()
-: m_active(false)
 {
     assert(rl_fwrite_function);
     assert(rl_fflush_function);
@@ -1355,6 +1356,7 @@ display_accumulator::display_accumulator()
         assert(!s_saved_fwrite);
         assert(!s_saved_fflush);
         assert(!s_active);
+        assert(!s_synchronize_output);
         assert(s_buf.empty());
         s_saved_fwrite = rl_fwrite_function;
         s_saved_fflush = rl_fflush_function;
@@ -1378,6 +1380,8 @@ display_accumulator::display_accumulator()
             if (atoi(value.c_str()) != 0)
                 return;
         }
+
+        s_synchronize_output = terminal_has_synchronize_output();
     }
     else
     {
@@ -1390,6 +1394,9 @@ display_accumulator::display_accumulator()
 
     rl_fwrite_function = fwrite_proc;
     rl_fflush_function = fflush_proc;
+
+    if (s_nested == 1 && s_synchronize_output)
+        s_buf.concat("\x1b[2026h");
 }
 
 //------------------------------------------------------------------------------
@@ -1412,6 +1419,7 @@ void display_accumulator::end()
             s_saved_fwrite = nullptr;
             s_saved_fflush = nullptr;
             s_active = false;
+            s_synchronize_output = false;
         }
         assert(s_nested >= 0);
     }
@@ -1421,13 +1429,25 @@ void display_accumulator::end()
 void display_accumulator::flush()
 {
     assertimplies(!s_active, s_buf.empty());
-    if (s_active && !s_buf.empty())
+    if (s_active)
     {
         assert(s_saved_fwrite);
         assert(s_saved_fflush);
-        s_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
-        s_saved_fflush(_rl_out_stream);
-        s_buf.clear();
+        if (s_synchronize_output)
+        {
+            if (s_buf.equals("\x1b[2026h"))
+                s_buf.clear();
+            else
+                s_buf.concat("\x1b[2026l");
+        }
+        if (!s_buf.empty())
+        {
+            s_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
+            s_saved_fflush(_rl_out_stream);
+            s_buf.clear();
+        }
+        if (s_nested > 0 && s_synchronize_output)
+            s_buf.concat("\x1b[2026h");
     }
 }
 

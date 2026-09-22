@@ -103,6 +103,7 @@ public:
                     display_accumulator();
                     ~display_accumulator();
     void            end();
+    bool            synchronized_output() const { return s_synchronize_output; }
     static void     flush();
 private:
     static void     fwrite_proc(FILE*, const char*, int32);
@@ -111,7 +112,8 @@ private:
     static void (*s_saved_fflush)(FILE*);
     static int32    s_nested;
     static bool     s_active;
-    bool            m_active;
+    static bool     s_synchronize_output;
+    bool            m_active = false;
 };
 
 //------------------------------------------------------------------------------
