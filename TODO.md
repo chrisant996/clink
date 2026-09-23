@@ -7,10 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery Issue
 
 ## High Priority
-- Use Synchronize Output.
-  - Convert `textlist_impl` to use Synchronize Output (and maybe use `display_accumulator`).
-  - Convert `selectcomplete_impl` to use Synchronize Output (and maybe use `display_accumulator`).
-  - Try not hiding/showing the cursor in `display_readline` when Synchronize Output is available.  The cursor is currently mostly hidden and only shown while waiting for input, which is kind of the opposite model from what's needed for fully taking advantage of Synchronize Output.
+- I want to use Synchronize Output to avoid cursor flickering.  But Clink currently hides the cursor in general, and only shows it while waiting for input.  To use Synchronize Output it would be necessary to leave the cursor visible and only hide it when printing text that isn't inside a Synchronize Output scope.
 
 ## Normal Priority
 - Maybe add a `clink.onafterdispatch()` function to call an event handler after every input dispatch?  To catch dispatches within a command, to update during a nested dispatch loop in commands like `reverse-search-history`.
