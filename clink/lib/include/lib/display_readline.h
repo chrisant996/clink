@@ -117,6 +117,27 @@ private:
 };
 
 //------------------------------------------------------------------------------
+extern FILE* const thunk_null_stream;
+extern FILE* const thunk_in_stream;
+extern FILE* const thunk_out_stream;
+void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
+void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
+void terminal_fflush_thunk(FILE* stream);
+void init_rl_terminal_thunks();
+void clink_write(const char* chars, int32 char_count);
+void clink_flush();
+
+//------------------------------------------------------------------------------
+class terminal_fwrite_context
+{
+public:
+    terminal_fwrite_context(const char* ctx);
+    ~terminal_fwrite_context();
+private:
+    const char* const m_old;
+};
+
+//------------------------------------------------------------------------------
 // Transient prompt context.
 class transient_prompt_context
 {

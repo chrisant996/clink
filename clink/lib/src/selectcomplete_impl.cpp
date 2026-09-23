@@ -1474,12 +1474,9 @@ void selectcomplete_impl::update_display()
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(h, &csbi);
-        COORD restore = csbi.dwCursorPosition;
-        const int32 vpos = _rl_last_v_pos;
-        const int32 cpos = _rl_last_c_pos;
+        resync_rl_cursor_pos resync(m_printer, true);
+
+        display_accumulator coalesce;
 
         // Move cursor after the input line.
         _rl_move_vert(_rl_vis_botlin);
@@ -1564,7 +1561,7 @@ void selectcomplete_impl::update_display()
 
                 if (m_clear_display && row == 0)
                 {
-                    m_printer->print("\x1b[m\x1b[J");
+                    clink_write("\x1b[m\x1b[J", 6);
                     m_comment_row_displayed = false;
                     m_prev_displayed = -1;
                     m_clear_display = false;
@@ -1779,7 +1776,7 @@ void selectcomplete_impl::update_display()
                     flush_tmpbuf();
 
                     // Clear to end of line.
-                    m_printer->print("\x1b[m\x1b[K");
+                    clink_write("\x1b[m\x1b[K", 6);
                 }
             }
 
@@ -1800,7 +1797,7 @@ void selectcomplete_impl::update_display()
                     {
                         tmp.format("\x1b[%smrows %u to %u of %u\x1b[m\x1b[K", g_color_comment_row.get(), m_top + 1, m_top + m_visible_rows, m_match_rows);
                     }
-                    m_printer->print(tmp.c_str(), tmp.length());
+                    clink_write(tmp.c_str(), tmp.length());
                     m_comment_row_displayed = true;
                 }
             }
@@ -1813,7 +1810,7 @@ void selectcomplete_impl::update_display()
             if (m_desc_below && m_matches.has_descriptions())
             {
                 rl_crlf();
-                m_printer->print("\x1b[m\x1b[J");
+                clink_write("\x1b[m\x1b[J", 6);
                 rl_crlf();
                 up += 2;
 
@@ -1834,16 +1831,16 @@ void selectcomplete_impl::update_display()
                         ellipsify(desc, fit_cols, s, false);
                 }
 
-                m_printer->print(description_color, description_color_len);
-                m_printer->print(s.c_str(), s.length());
+                clink_write(description_color, description_color_len);
+                clink_write(s.c_str(), s.length());
                 if (footer_cols)
                 {
                     s.format("\x1b[%uG", m_screen_cols - footer_cols);
-                    m_printer->print(description_color, description_color_len);
-                    m_printer->print(s.c_str(), s.length());
-                    m_printer->print(c_footer);
+                    clink_write(description_color, description_color_len);
+                    clink_write(s.c_str(), s.length());
+                    clink_write(c_footer, _countof(c_footer) - 1);
                 }
-                m_printer->print("\x1b[m");
+                clink_write("\x1b[m", 3);
             }
         }
         else
@@ -1853,7 +1850,7 @@ void selectcomplete_impl::update_display()
                 // Move cursor to next line, then clear to end of screen.
                 rl_crlf();
                 up++;
-                m_printer->print("\x1b[m\x1b[J");
+                clink_write("\x1b[m\x1b[J", 6);
             }
             m_prev_displayed = -1;
             m_any_displayed = false;
@@ -1873,15 +1870,14 @@ void selectcomplete_impl::update_display()
         {
             str<16> s;
             s.format("\x1b[%dA", up);
-            m_printer->print(s.c_str(), s.length());
+            clink_write(s.c_str(), s.length());
         }
-        GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
-        _rl_move_vert(vpos);
-        _rl_last_c_pos = cpos;
-        GetConsoleScreenBufferInfo(h, &csbi);
-        restore.Y = csbi.dwCursorPosition.Y;
-        SetConsoleCursorPosition(h, restore);
+        clink_flush();
+        coalesce.end();
+        COORD cursor;
+        m_printer->get_cursor_pos(cursor.X, cursor.Y);
+        m_mouse_offset = cursor.Y + 1/*to top item*/;
+        resync.resync();
     }
 }
 

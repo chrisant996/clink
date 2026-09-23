@@ -68,9 +68,6 @@ extern int _rl_default_init_file_optional_set;
 }
 
 //------------------------------------------------------------------------------
-static FILE*        null_stream = (FILE*)1;
-static FILE*        in_stream = (FILE*)2;
-static FILE*        out_stream = (FILE*)3;
 const int32 RL_RESET_STATES = ~(RL_STATE_INITIALIZED|       // NOT these...
                                 RL_STATE_TERMPREPPED|
                                 RL_STATE_MACROINPUT|
@@ -102,8 +99,6 @@ const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|   // All of these...
                                       RL_STATE_READSTR);
 
 extern "C" {
-extern void         (*rl_fwrite_function)(FILE*, const char*, int);
-extern void         (*rl_fflush_function)(FILE*);
 extern char*        _rl_comment_begin;
 extern int          _rl_convert_meta_chars_to_ascii;
 extern int          _rl_output_meta_chars;
@@ -330,11 +325,6 @@ setting_bool g_prompt_async(
     "Enables asynchronous prompt refresh",
     true);
 
-static setting_bool g_rl_hide_stderr(
-    "readline.hide_stderr",
-    "Suppress stderr from the Readline library",
-    false);
-
 setting_enum g_default_bindings(
     "clink.default_bindings",
     "Selects default key bindings",
@@ -345,9 +335,6 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_debug_log_terminal;
-#ifdef _MSC_VER
-extern setting_bool g_debug_log_output_callstacks;
-#endif
 extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
@@ -581,7 +568,7 @@ extern "C" void terminal_begin_command()
     str<> s;
     if (make_ftsc("133;C", s))
     {
-        rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
+        clink_write(s.c_str(), s.length());
         s_in_command_output = true;
     }
 }
@@ -599,13 +586,13 @@ extern "C" void terminal_end_command()
     // Emit the shell integration code.
     str<> s;
     if (make_ftsc("133;D", s))
-        rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
+        clink_write(s.c_str(), s.length());
 }
 
 //------------------------------------------------------------------------------
-static int32 terminal_getc_thunk(FILE* stream)
+int32 terminal_getc_thunk(FILE* stream)
 {
-    if (stream == in_stream)
+    if (stream == thunk_in_stream)
     {
         assert(s_direct_input);
         if (rl_has_clink_input())
@@ -622,7 +609,7 @@ static int32 terminal_getc_thunk(FILE* stream)
         }
     }
 
-    if (stream == null_stream)
+    if (stream == thunk_null_stream)
         return 0;
 
     assert(false);
@@ -630,101 +617,7 @@ static int32 terminal_getc_thunk(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
-{
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
-        {
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-        }
-        else
-        {
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
-    }
-
-    assert(false);
-    fwrite(chars, char_count, 1, stream);
-}
-
-//------------------------------------------------------------------------------
-static int32 s_puts_face = 0;
-static void terminal_log_fwrite(FILE* stream, const char* chars, int32 char_count)
-{
-    suppress_implicit_write_console_logging nolog;
-
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
-        LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
-#ifdef _MSC_VER
-        if (g_debug_log_output_callstacks.get())
-        {
-            char stk[8192];
-            format_callstack(2, 20, stk, sizeof(stk), false);
-            LOG("%s", stk);
-        }
-#endif
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
-        {
-            LOGCURSORPOS(h);
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-        }
-        else
-        {
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
-    }
-
-    assert(false);
-    LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
-    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
-    fwrite(chars, char_count, 1, stream);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_log_read_key(int c, const char* _src)
+void terminal_log_read_key(int c, const char* _src)
 {
     str<16> src;
     if (_src)
@@ -734,13 +627,6 @@ static void terminal_log_read_key(int c, const char* _src)
         LOG("INPUT 0x%02x \"%c\"%s", c, c, src.c_str());
     else
         LOG("INPUT 0x%02x%s", c, src.c_str());
-}
-
-//------------------------------------------------------------------------------
-static void terminal_fflush_thunk(FILE* stream)
-{
-    if (stream != out_stream && stream != null_stream)
-        fflush(stream);
 }
 
 
@@ -949,9 +835,8 @@ static void puts_face_func(const char* s, const char* face, int32 n)
     if (cur_face != FACE_NORMAL)
         out << c_normal;
 
-    ++s_puts_face;
-    rl_fwrite_function(_rl_out_stream, out.c_str(), out.length());
-    --s_puts_face;
+    terminal_fwrite_context ctx("PUTSFACE");
+    clink_write(out.c_str(), out.length());
 }
 
 
@@ -1771,22 +1656,11 @@ static void init_readline_hooks()
 {
     static bool s_first_time = true;
 
-    // These hooks must be set even before calling rl_initialize(), because it
-    // can invoke e.g. rl_fwrite_function which needs to intercept some escape
-    // sequences even during initialization.
-    //
+    // The Readline terminal hooks must be set even before calling
+    // rl_initialize(), because it can invoke e.g. rl_fwrite_function which
+    // needs to intercept some escape sequences even during initialization.
     // And reset these for each input line because of g_debug_log_terminal.
-    rl_getc_function = terminal_getc_thunk;
-    rl_fwrite_function = terminal_fwrite_thunk;
-    rl_log_read_key_hook = nullptr;
-    if (g_debug_log_terminal.get())
-    {
-        rl_fwrite_function = terminal_log_fwrite;
-        rl_log_read_key_hook = terminal_log_read_key;
-    }
-    rl_fflush_function = terminal_fflush_thunk;
-    rl_instream = in_stream;
-    rl_outstream = out_stream;
+    init_rl_terminal_thunks();
 
     if (!s_first_time)
         return;
@@ -2753,8 +2627,6 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
-    const bool log_terminal = g_debug_log_terminal.get();
-
     s_build_suggestion_hint = true;
 
     m_old_int = signal(SIGINT, clink_sighandler);
@@ -2773,9 +2645,9 @@ void rl_module::on_begin_line(const context& context)
     // it now.
     refresh_terminal_size();
 
-    // Reset the fwrite function so logging changes can take effect immediately.
-    rl_fwrite_function = log_terminal ? terminal_log_fwrite : terminal_fwrite_thunk;
-    rl_log_read_key_hook = log_terminal ? terminal_log_read_key : nullptr;
+    // Reset the Readline fwrite/etc functions so logging changes can take
+    // effect immediately.
+    init_rl_terminal_thunks();
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up

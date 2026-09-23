@@ -120,11 +120,19 @@ setting_bool g_history_show_preview(
     "preview of the expanded result below the input line.",
     true);
 
+static setting_bool g_rl_hide_stderr(
+    "readline.hide_stderr",
+    "Suppress stderr from the Readline library",
+    false);
+
 extern setting_bool g_debug_log_terminal;
 extern setting_bool g_history_autoexpand;
 extern setting_enum g_expand_mode;
 extern setting_color g_color_comment_row;
 extern setting_bool g_suggestionlist_hide_hints;
+#ifdef _MSC_VER
+extern setting_bool g_debug_log_output_callstacks;
+#endif
 
 //------------------------------------------------------------------------------
 #ifdef REPORT_REDISPLAY
@@ -1339,7 +1347,6 @@ COORD measure_readline_display(const char* prompt, const char* buffer, uint32 le
 
 //------------------------------------------------------------------------------
 void (*display_accumulator::s_saved_fwrite)(FILE*, const char*, int32) = nullptr;
-void (*display_accumulator::s_saved_fflush)(FILE*) = nullptr;
 bool display_accumulator::s_active = false;
 bool display_accumulator::s_synchronize_output = false;
 int32 display_accumulator::s_nested = 0;
@@ -1354,12 +1361,10 @@ display_accumulator::display_accumulator()
     if (!s_nested)
     {
         assert(!s_saved_fwrite);
-        assert(!s_saved_fflush);
         assert(!s_active);
         assert(!s_synchronize_output);
         assert(s_buf.empty());
         s_saved_fwrite = rl_fwrite_function;
-        s_saved_fflush = rl_fflush_function;
     }
 
     ++s_nested;
@@ -1393,7 +1398,6 @@ display_accumulator::display_accumulator()
     m_active = true;
 
     rl_fwrite_function = fwrite_proc;
-    rl_fflush_function = fflush_proc;
 
     if (s_nested == 1 && s_synchronize_output)
         s_buf.concat("\x1b[2026h");
@@ -1415,9 +1419,7 @@ void display_accumulator::end()
         {
             flush();
             rl_fwrite_function = s_saved_fwrite;
-            rl_fflush_function = s_saved_fflush;
             s_saved_fwrite = nullptr;
-            s_saved_fflush = nullptr;
             s_active = false;
             s_synchronize_output = false;
         }
@@ -1429,10 +1431,12 @@ void display_accumulator::end()
 void display_accumulator::flush()
 {
     assertimplies(!s_active, s_buf.empty());
-    if (s_active)
+    static int32 s_in_flush = 0;
+    if (s_active && s_in_flush <= 0)
     {
         assert(s_saved_fwrite);
-        assert(s_saved_fflush);
+        ++s_in_flush;
+        assert(s_in_flush <= 3);
         if (s_synchronize_output)
         {
             if (s_buf.equals("\x1b[2026h"))
@@ -1443,11 +1447,12 @@ void display_accumulator::flush()
         if (!s_buf.empty())
         {
             s_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
-            s_saved_fflush(_rl_out_stream);
             s_buf.clear();
         }
         if (s_nested > 0 && s_synchronize_output)
             s_buf.concat("\x1b[2026h");
+        assert(s_in_flush > 0);
+        --s_in_flush;
     }
 }
 
@@ -1460,9 +1465,163 @@ void display_accumulator::fwrite_proc(FILE* out, const char* text, int32 len)
 }
 
 //------------------------------------------------------------------------------
-void display_accumulator::fflush_proc(FILE*)
+FILE* const thunk_null_stream = (FILE*)1;
+FILE* const thunk_in_stream = (FILE*)2;
+FILE* const thunk_out_stream = (FILE*)3;
+
+//------------------------------------------------------------------------------
+void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
 {
-    // No-op, since the destructor automatically flushes.
+    if (stream == thunk_out_stream)
+    {
+        assert(g_printer);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == thunk_null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        display_accumulator::flush();
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+static const char* s_log_fwrite_context = 0;
+void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
+{
+    suppress_implicit_write_console_logging nolog;
+
+    if (stream == thunk_out_stream)
+    {
+        assert(g_printer);
+        LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
+        const char* ctx = s_log_fwrite_context ? s_log_fwrite_context : "RL_OUTSTREAM";
+        LOG("%s \"%.*s\", %d", ctx, char_count, chars, char_count);
+#ifdef _MSC_VER
+        if (g_debug_log_output_callstacks.get())
+        {
+            char stk[8192];
+            format_callstack(2, 20, stk, sizeof(stk), false);
+            LOG("%s", stk);
+        }
+#endif
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == thunk_null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        display_accumulator::flush();
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            LOGCURSORPOS(h);
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
+    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+void terminal_fflush_thunk(FILE* stream)
+{
+    static int32 s_depth = 0;
+    if (stream != thunk_out_stream && stream != thunk_null_stream)
+    {
+        ++s_depth;
+        assert(s_depth < 5);
+        display_accumulator::flush();
+#pragma push_macro("fflush")
+#undef fflush // Break out of the BUILD_READLINE cycle that defines fflush.
+        fflush(stream);
+#pragma pop_macro("fflush")
+        --s_depth;
+    }
+}
+
+//------------------------------------------------------------------------------
+extern int32 terminal_getc_thunk(FILE* stream);
+extern void terminal_log_read_key(int c, const char* _src);
+void init_rl_terminal_thunks()
+{
+    const bool log = g_debug_log_terminal.get();
+    rl_getc_function = terminal_getc_thunk;
+    rl_log_read_key_hook = log ? terminal_log_read_key : nullptr;
+    rl_fwrite_function = log ? terminal_log_fwrite_thunk : terminal_fwrite_thunk;
+    rl_fflush_function = terminal_fflush_thunk;
+    rl_instream = thunk_in_stream;
+    rl_outstream = thunk_out_stream;
+}
+
+//------------------------------------------------------------------------------
+void clink_write(const char* chars, int32 char_count)
+{
+    rl_fwrite_function(thunk_out_stream, chars, char_count);
+}
+
+//------------------------------------------------------------------------------
+void clink_flush()
+{
+    rl_fflush_function(thunk_out_stream);
+}
+
+//------------------------------------------------------------------------------
+terminal_fwrite_context::terminal_fwrite_context(const char* ctx)
+: m_old(s_log_fwrite_context)
+{
+    s_log_fwrite_context = ctx;
+}
+
+//------------------------------------------------------------------------------
+terminal_fwrite_context::~terminal_fwrite_context()
+{
+    s_log_fwrite_context = m_old;
 }
 
 
