@@ -34,6 +34,7 @@
 #include <core/log.h>
 #include <core/settings.h>
 #include <core/debugheap.h>
+#include <core/callstack.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
@@ -43,10 +44,6 @@
 #include <terminal/scroll.h>
 
 #include <memory>
-
-#ifdef REPORT_REDISPLAY
-#include "core/callstack.h"
-#endif
 
 extern "C" {
 

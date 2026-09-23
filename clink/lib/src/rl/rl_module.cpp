@@ -33,7 +33,6 @@
 #include <core/settings.h>
 #include <core/log.h>
 #include <core/debugheap.h>
-#include <core/callstack.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/printer.h>
