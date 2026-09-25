@@ -32,7 +32,11 @@ static int32_t s_term_began = 0;
 
 #ifdef _WIN32
 #ifdef DEBUG
-static const DWORD c_idMainThread = GetCurrentThreadId();
+DWORD GetMainThreadId()
+{
+    static const DWORD c_idMainThread = GetCurrentThreadId();
+    return c_idMainThread;
+}
 #endif
 #endif
 
@@ -220,7 +224,7 @@ void term_begin()
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -254,7 +258,7 @@ void term_end()
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -299,7 +303,7 @@ int32_t term_in()
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -332,7 +336,7 @@ int32_t term_in_peek()
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -374,7 +378,7 @@ bool term_in_avail(const DWORD _timeout)
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -394,7 +398,7 @@ bool term_push_input(const char* text, size_t len)
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -406,7 +410,7 @@ bool term_push_macro_text(const char* text, size_t len)
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
@@ -429,7 +433,7 @@ bool enable_mouse_input(mouse_input_mode mode, bool sgr_encoding)
 {
 #ifdef _WIN32
 #ifdef DEBUG
-    assert(c_idMainThread == GetCurrentThreadId());
+    assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
 
