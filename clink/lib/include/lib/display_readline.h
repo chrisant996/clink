@@ -62,36 +62,36 @@ struct prompt_problem_details
 int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
 
 //------------------------------------------------------------------------------
-#define FACE_INVALID        ((char)1)
-#define FACE_SPACE          ' '
-#define FACE_NORMAL         '0'
-#define FACE_STANDOUT       '1'
+constexpr char FACE_INVALID         = ((char)1);
+constexpr char FACE_SPACE           = ' ';
+constexpr char FACE_NORMAL          = '0';
+constexpr char FACE_STANDOUT        = '1';
 
 // WARNING:  PRE-DEFINED FACE IDS MUST BE IN 1..127; THE RANGE 128..255 IS FOR
 // CUSTOM LUA CLASSIFICATION FACE IDS.
 
-#define FACE_INPUT          '2'
-#define FACE_MODMARK        '*'
-#define FACE_MESSAGE        '('
-#define FACE_SCROLL         '<'
-#define FACE_SELECTION      '#'
-#define FACE_HISTEXPAND1    '!'
-#define FACE_HISTEXPAND2    '?'
-#define FACE_SUGGESTION     '-'
+constexpr char FACE_INPUT           = '2';
+constexpr char FACE_MODMARK         = '*';
+constexpr char FACE_MESSAGE         = '(';
+constexpr char FACE_SCROLL          = '<';
+constexpr char FACE_SELECTION       = '#';
+constexpr char FACE_HISTEXPAND1     = '!';
+constexpr char FACE_HISTEXPAND2     = '?';
+constexpr char FACE_SUGGESTION      = '-';
 #ifdef USE_SUGGESTION_HINT_INLINE
-#define FACE_SUGGESTIONKEY  char(0x1a)  // In OEM 437 codepage, 0x1a is a right-arrow character.
-#define FACE_SUGGESTIONLINK char(0x15)  // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
+constexpr char FACE_SUGGESTIONKEY   = char(0x1a); // In OEM 437 codepage, 0x1a is a right-arrow character.
+constexpr char FACE_SUGGESTIONLINK  = char(0x15); // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
 #endif
 
-#define FACE_OTHER          'o'
-#define FACE_UNRECOGNIZED   'u'
-#define FACE_EXECUTABLE     'x'
-#define FACE_COMMAND        'c'
-#define FACE_ALIAS          'd'
-#define FACE_ARGMATCHER     'm'
-#define FACE_ARGUMENT       'a'
-#define FACE_FLAG           'f'
-#define FACE_NONE           'n'
+constexpr char FACE_OTHER           = 'o';
+constexpr char FACE_UNRECOGNIZED    = 'u';
+constexpr char FACE_EXECUTABLE      = 'x';
+constexpr char FACE_COMMAND         = 'c';
+constexpr char FACE_ALIAS           = 'd';
+constexpr char FACE_ARGMATCHER      = 'm';
+constexpr char FACE_ARGUMENT        = 'a';
+constexpr char FACE_FLAG            = 'f';
+constexpr char FACE_NONE            = 'n';
 
 //------------------------------------------------------------------------------
 // The display_accumulator can be disabled:
