@@ -250,7 +250,7 @@ public:
 
 protected:
                         // Methods on the tib::editor_callbacks interface.
-    void                provide_faces(const tib::input_buffer& buffer, tib::cstring& faces);
+    void                provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
 };
 
 custom_input_box::custom_input_box()

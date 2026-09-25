@@ -32,7 +32,7 @@ struct editor_command
 
 textpos_t pos_mover(const char* s, const size_t _len, textpos_t& pos, const bool forward, const uint8_t word);
 
-struct editor_callbacks : public std::enable_shared_from_this<editor_callbacks>
+struct editor_callbacks
 {
     virtual void        provide_faces(const input_buffer& buffer, cstring& faces) {}
 };
@@ -59,7 +59,9 @@ struct undo_entry
     undo_entry*         m_next = nullptr;
 };
 
-class editor_context : public input_buffer, public dispatcher_target
+class editor_context
+    : public dispatcher_target // enable_shared_from_this
+    , public input_buffer
 {
 public:
                         ~editor_context();
