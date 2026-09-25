@@ -20,8 +20,8 @@ public:
     virtual line_buffer_fingerprint get_fingerprint(bool include_cursor=true) const override;
     virtual uint32          set_cursor(uint32 pos) override;
     virtual void            set_selection(uint32 anchor, uint32 pos) override;
-    virtual bool            insert(const char* text) override;
-    virtual bool            remove(uint32 from, uint32 to) override;
+    virtual void            insert(const char* text) override;
+    virtual void            remove(uint32 from, uint32 to) override;
     virtual void            draw() override;
     virtual void            redraw() override;
     virtual void            set_need_draw() override;

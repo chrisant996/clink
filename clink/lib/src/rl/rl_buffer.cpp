@@ -145,26 +145,25 @@ void rl_buffer::set_selection(uint32 anchor, uint32 pos)
 }
 
 //------------------------------------------------------------------------------
-bool rl_buffer::insert(const char* text)
+void rl_buffer::insert(const char* text)
 {
     assert(m_attached);
     assert(!m_override_line);
     if (m_override_line)
-        return false;
-    return (_rl_want_redisplay = (text[rl_insert_text(text)] == '\0'));
+        return;
+    _rl_want_redisplay = (text[rl_insert_text(text)] == '\0');
 }
 
 //------------------------------------------------------------------------------
-bool rl_buffer::remove(uint32 from, uint32 to)
+void rl_buffer::remove(uint32 from, uint32 to)
 {
     assert(m_attached);
     assert(!m_override_line);
     if (m_override_line)
-        return false;
+        return;
     to = min(to, get_length());
     _rl_want_redisplay = !!rl_delete_text(from, to);
     set_cursor(get_cursor());
-    return !!_rl_want_redisplay;
 }
 
 //------------------------------------------------------------------------------

@@ -44,8 +44,8 @@ public:
     virtual line_buffer_fingerprint get_fingerprint(bool include_cursor=true) const = 0;
     virtual uint32          set_cursor(uint32 pos) = 0;
     virtual void            set_selection(uint32 anchor, uint32 pos) = 0;
-    virtual bool            insert(const char* text) = 0;
-    virtual bool            remove(uint32 from, uint32 to) = 0;
+    virtual void            insert(const char* text) = 0;
+    virtual void            remove(uint32 from, uint32 to) = 0;
     virtual void            begin_undo_group() = 0;
     virtual void            end_undo_group() = 0;
     virtual bool            undo() = 0;
