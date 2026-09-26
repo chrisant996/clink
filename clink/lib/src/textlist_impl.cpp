@@ -8,6 +8,7 @@
 #include "editor_module.h"
 #include "bind_resolver.h"
 #include "line_buffer.h"
+#include "display_readline.h"
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
@@ -1584,14 +1585,16 @@ void textlist_impl::update_display()
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        resync_rl_cursor_pos resync(m_printer);
+        resync_rl_cursor_pos resync(m_printer, true);
         int32 up = 0;
+
+        display_accumulator coalesce;
 
         // Move cursor to next line.  I.e. the list goes immediately below the
         // cursor line and may overlay some lines of input.
         if (!s_standalone || resync.get_cursor_x() > 0)
         {
-            m_printer->print("\n");
+            clink_write("\n", 1);
             up++;
         }
 
@@ -1740,7 +1743,7 @@ void textlist_impl::update_display()
                 line << "\xe2\x94\x90" << "\x1b[m";                     // ┐
                 if (clear_eol && _rl_term_clreol)
                     line << _rl_term_clreol;
-                m_printer->print(line.c_str(), line.length());
+                clink_write(line.c_str(), line.length());
             }
 
 #ifdef SHOW_VERT_SCROLLBARS
@@ -1855,7 +1858,7 @@ void textlist_impl::update_display()
                     line << "\x1b[m";
                     if (clear_eol && _rl_term_clreol)
                         line << _rl_term_clreol;
-                    m_printer->print(line.c_str(), line.length());
+                    clink_write(line.c_str(), line.length());
                 }
             }
 
@@ -1871,18 +1874,18 @@ void textlist_impl::update_display()
                 line << "\xe2\x94\x98" << "\x1b[m";                     // ┘
                 if (clear_eol && _rl_term_clreol)
                     line << _rl_term_clreol;
-                m_printer->print(line.c_str(), line.length());
+                clink_write(line.c_str(), line.length());
             }
 
             if (m_force_clear)
-                m_printer->print("\x1b[m\x1b[J");
+                clink_write("\x1b[m\x1b[J", 6);
 
             m_prev_displayed = m_index;
         }
         else
         {
             // Clear to end of screen.
-            m_printer->print("\x1b[m\x1b[J");
+            clink_write("\x1b[m\x1b[J", 6);
 
             m_prev_displayed = -1;
         }
@@ -1894,8 +1897,10 @@ void textlist_impl::update_display()
         if (up > 0)
         {
             s.format("\x1b[%dA", up);
-            m_printer->print(s.c_str(), s.length());
+            clink_write(s.c_str(), s.length());
         }
+        clink_flush();
+        coalesce.end();
         COORD cursor;
         m_printer->get_cursor_pos(cursor.X, cursor.Y);
         m_mouse_offset = cursor.Y + 1/*to top item*/;

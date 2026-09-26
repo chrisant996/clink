@@ -39,8 +39,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/colors.h>
 extern int _rl_last_v_pos;
-extern void (*rl_fwrite_function)(FILE*, const char*, int);
-extern void (*rl_fflush_function)(FILE*);
 };
 
 
@@ -911,10 +909,10 @@ void suggestionlist_impl::update_display()
                 concat_spaces(tmp, spaces);
             }
         }
-        rl_fwrite_function(_rl_out_stream, left.c_str(), left.length());
-        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-        rl_fwrite_function(_rl_out_stream, right.c_str(), right.length());
-        rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[K", 6);
+        clink_write(left.c_str(), left.length());
+        clink_write(tmp.c_str(), tmp.length());
+        clink_write(right.c_str(), right.length());
+        clink_write("\x1b[m\x1b[K", 6);
 
         // Can't update top until after m_displayed_rows is known, so that the
         // scroll offset can be accounted for accurately in all cases.
@@ -964,16 +962,16 @@ void suggestionlist_impl::update_display()
                     make_suggestion_list_string(i, tmp, m_max_width - used_width);
                 else
                     tmp.clear();
-                rl_fwrite_function(_rl_out_stream, left.c_str(), left.length());
-                rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-                rl_fwrite_function(_rl_out_stream, right.c_str(), right.length());
+                clink_write(left.c_str(), left.length());
+                clink_write(tmp.c_str(), tmp.length());
+                clink_write(right.c_str(), right.length());
 
 #ifdef SHOW_VERT_SCROLLBARS
                 draw_scrollbar_char(screen_row, car_top);
 #endif // SHOW_VERT_SCROLLBARS
 
                 // Clear to end of line.
-                rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[K", 6);
+                clink_write("\x1b[m\x1b[K", 6);
 
                 // Draw or remove tooltip if needed.
                 if (selected)
@@ -998,17 +996,17 @@ void suggestionlist_impl::update_display()
                         tmp.clear();
                         concat_spaces(tmp, indent_width);
                         tmp << m_tooltip_color;
-                        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+                        clink_write(tmp.c_str(), tmp.length());
                         const int32 tooltip_width = ellipsify(s.m_tooltip.c_str(), m_max_width - indent_width, tmp, false);
                         tmp << norm;
                         const int32 spaces = m_max_width - (indent_width + tooltip_width);
                         if (spaces > 0)
                             concat_spaces(tmp, spaces);
-                        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+                        clink_write(tmp.c_str(), tmp.length());
 #ifdef SHOW_VERT_SCROLLBARS
                         draw_scrollbar_char(screen_row, car_top);
 #endif // SHOW_VERT_SCROLLBARS
-                        rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[K", 6);
+                        clink_write("\x1b[m\x1b[K", 6);
                     }
                     else
                     {
@@ -1021,7 +1019,7 @@ void suggestionlist_impl::update_display()
         }
 
         if (clear_display || (was_tooltip >= 0 && tooltip < 0))
-            rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[J", 6);
+            clink_write("\x1b[m\x1b[J", 6);
 
         assert(!m_clear_display);
         m_prev_displayed = m_index;
@@ -1037,7 +1035,7 @@ void suggestionlist_impl::update_display()
             // Move cursor to next line, then clear to end of screen.
             rl_crlf();
             up++;
-            rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[J", 6);
+            clink_write("\x1b[m\x1b[J", 6);
         }
         notify_cleared();
     }
@@ -1047,9 +1045,9 @@ void suggestionlist_impl::update_display()
     if (up > 0)
     {
         s.format("\x1b[%dA", up);
-        rl_fwrite_function(_rl_out_stream, s.c_str(), s.length());
+        clink_write(s.c_str(), s.length());
     }
-    rl_fflush_function(_rl_out_stream);
+    clink_flush();
     coalesce.end();
     COORD cursor;
     m_printer->get_cursor_pos(cursor.X, cursor.Y);
@@ -1079,14 +1077,14 @@ void suggestionlist_impl::draw_scrollbar_char(int32 row, int32 car_top)
         {
             // Space was reserved by update_layout().
             tmp.format("%s \x1b[0;90m%s", norm, car);
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+            clink_write(tmp.c_str(), tmp.length());
         }
 #ifdef USE_FULL_SCROLLBAR
         else
         {
             // Space was reserved by update_layout().
             tmp.format("%s \x1b[0;90m\xe2\x94\x82", norm);// │
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), 1, tmp.lengt);
+            clink_write(tmp.c_str(), 1, tmp.lengt);
         }
 #endif
     }

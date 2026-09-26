@@ -474,7 +474,10 @@ void recognizer::shutdown()
         thread->join();
 
     if (m_event)
+    {
         CloseHandle(m_event);
+        m_event = nullptr;
+    }
 }
 
 //------------------------------------------------------------------------------

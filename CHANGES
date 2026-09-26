@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.9.35
+
+- Improved terminal display updates by using DECSET Synchronize Output when available, for displaying the prompt, the input line, the suggestions list, popup lists, and `clink-select-complete`.
+- Added an optimization for display updates in `clink-select-complete` and popup lists.
+
 #### v1.9.34
 
 - Added new `exec.cwd_first` setting (off by default) to make Executable Completions list files from the current directory before other files ([#794](https://github.com/chrisant996/clink/issues/794)).

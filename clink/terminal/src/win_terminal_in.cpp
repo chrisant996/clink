@@ -818,18 +818,17 @@ static bool is_matching_response(const str_base& input, const char* prefix, cons
 }
 
 //------------------------------------------------------------------------------
-// In the pattern string, use '0' by itself as a wildcard meaning "one or more
-// digits".  E.g. "2027" in the pattern matches "2027", but "0" in the pattern
-// matches any contiguous run of digits.
+// Pass the request string, the prefix of the expected response, and the final
+// character of the expected response.
 //
 // Example usage:
 //
 //      puts("waiting 2 seconds ... type some stuff ...");
 //      Sleep(2000);
 //      str<> response;
-//      if (send_terminal_request("\x1b[?2027$p", "\x1b[?2027;0$y", response))
+//      if (send_terminal_request("\x1b[?2027$p", "\x1b[?2027;", "y", response))
 //          printf("ESC%s\n", response.c_str() + 1);
-bool win_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, uint32 timeout1, uint32 timeout2, str_base& out)
+bool win_terminal_in::send_terminal_request(const char* request, const char* prefix, const char* final, str_base& out, uint32 timeout1, uint32 timeout2)
 {
     assert(m_stdin);
     assert(m_stdout);

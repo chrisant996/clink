@@ -103,6 +103,7 @@ public:
                     display_accumulator();
                     ~display_accumulator();
     void            end();
+    bool            synchronized_output() const { return s_synchronize_output; }
     static void     flush();
 private:
     static void     fwrite_proc(FILE*, const char*, int32);
@@ -111,7 +112,29 @@ private:
     static void (*s_saved_fflush)(FILE*);
     static int32    s_nested;
     static bool     s_active;
-    bool            m_active;
+    static bool     s_synchronize_output;
+    bool            m_active = false;
+};
+
+//------------------------------------------------------------------------------
+extern FILE* const thunk_null_stream;
+extern FILE* const thunk_in_stream;
+extern FILE* const thunk_out_stream;
+void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
+void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
+void terminal_fflush_thunk(FILE* stream);
+void init_rl_terminal_thunks();
+void clink_write(const char* chars, int32 char_count);
+void clink_flush();
+
+//------------------------------------------------------------------------------
+class terminal_fwrite_context
+{
+public:
+    terminal_fwrite_context(const char* ctx);
+    ~terminal_fwrite_context();
+private:
+    const char* const m_old;
 };
 
 //------------------------------------------------------------------------------

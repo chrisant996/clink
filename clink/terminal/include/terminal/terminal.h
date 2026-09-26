@@ -19,6 +19,8 @@ struct terminal
 //------------------------------------------------------------------------------
 terminal            terminal_create(screen_buffer* screen=nullptr, bool cursor_visibility=true);
 void                terminal_destroy(const terminal& terminal);
+void                terminal_discover_config(terminal_in* in);
+bool                terminal_has_synchronize_output();
 
 //------------------------------------------------------------------------------
 const char*         find_key_name(const char* keyseq, int32& len, int32& eqclass, int32& order);

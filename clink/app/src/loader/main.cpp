@@ -78,6 +78,16 @@ __declspec(dllexport) void __stdcall testbed_hook_loop()
             __streq(buffer, L"exit\n") ||
             __streq(buffer, L"exit\r\n"))
             break;
+
+        // Simulate the CRLF that CMD emits after running a command.
+        const WCHAR* p = buffer;
+        while (num && (*p == ' ' || *p == '\r' || *p == '\n'))
+        {
+            ++p;
+            --num;
+        }
+        if (num && *p)
+            WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), L"\r\n", 2, &num, nullptr);
     }
 }
 }

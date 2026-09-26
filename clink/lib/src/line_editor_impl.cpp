@@ -33,6 +33,7 @@
 #include <core/str_tokeniser.h>
 #include <core/settings.h>
 #include <core/log.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
@@ -324,6 +325,13 @@ void line_editor_impl::begin_line()
     m_desc.input->begin();
     m_desc.output->begin();
     m_buffer.begin_line();
+
+    static bool s_discover_terminal = true;
+    if (s_discover_terminal)
+    {
+        s_discover_terminal = false;
+        terminal_discover_config(m_desc.input);
+    }
 
     m_prev_generate.clear();
     m_prev_plain = false;
