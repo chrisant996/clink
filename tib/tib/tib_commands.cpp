@@ -899,7 +899,7 @@ std::shared_ptr<key_table_list> make_default_key_table(bool numeric_argument)
     {
         for (char seq[3] = { '\033', '0', 0 }; seq[1] <= '9'; ++seq[1])
             t->add(seq, binding_target_func("digit-argument"));
-        t->add("-", binding_target_func("digit-argument"));
+        t->add("\033-", binding_target_func("digit-argument"));
     }
 
     auto tables = std::make_shared<key_table_list>();
