@@ -304,11 +304,6 @@ void editor_context::set_color_table(std::shared_ptr<const color_table> colors)
     m_display.set_color_table(colors);
 }
 
-void editor_context::set_face_defs(const face_definitions* face_defs)
-{
-    m_display.init_faces(face_defs);
-}
-
 void editor_context::set_empty_face(char face)
 {
     m_style.empty_face = face;

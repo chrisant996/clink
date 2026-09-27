@@ -82,7 +82,6 @@ constexpr char FACE_SCROLLER    = 0x1d;
 constexpr char FACE_SUGGESTION  = 0x1c;
 constexpr char FACE_EMPTY       = 0;
 struct editor_callbacks;
-typedef std::map<char, cstring> face_definitions;
 
 // REVIEW: allow runtime configuration of the horz scroll indicator width?
 constexpr uint16_t c_horz_scroll_indicator_chars = 1;
@@ -211,7 +210,6 @@ public:
     void                init_layout(const layout_info* layout);
     void                init_buffer(const input_buffer* buffer);
     void                init_style(const style_info* style);
-    void                init_faces(const face_definitions* face_defs);
     void                init_callbacks(editor_callbacks* callbacks);
 
     coord               get_origin() const { return m_origin; }
@@ -284,7 +282,6 @@ private:
     const layout_info*  m_layout = nullptr;         // Borrowed.
     const input_buffer* m_buffer = nullptr;         // Borrowed.
     const style_info*   m_style = nullptr;          // Borrowed.
-    const face_definitions* m_face_defs = nullptr;  // Borrowed.
     editor_callbacks*   m_callbacks = nullptr;      // Borrowed.
     coord               m_origin = { -1, -1 };
     coord               m_term_size;

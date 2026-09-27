@@ -461,12 +461,6 @@ void display_manager::init_style(const style_info* style)
     invalidate_border();
 }
 
-void display_manager::init_faces(const face_definitions* face_defs)
-{
-    m_face_defs = face_defs;
-    force_redisplay();
-}
-
 void display_manager::init_callbacks(editor_callbacks* callbacks)
 {
     m_callbacks = callbacks;
@@ -1774,23 +1768,21 @@ void display_manager::move_to_column(coord& cursor, uint16_t x, uint16_t inner_o
 
 const char* display_manager::get_face_def(char face) const
 {
-    if (!m_face_defs)
+    if (m_callbacks)
     {
-default_colors:
-        switch (face)
-        {
-        case FACE_SELECTION:    return m_colors->get_color(tib::color_element::input_selection);
-        case FACE_MARK:         return m_colors->get_color(tib::color_element::input_mark);
-        case FACE_SCROLLER:     return m_colors->get_color(tib::color_element::input_scroller);
-        }
-        return m_colors->get_color(tib::color_element::base);
+        const auto def = m_callbacks->get_face_def(face);
+        if (def)
+            return def;
     }
 
-    const auto def = m_face_defs->find(face);
-    if (def == m_face_defs->end())
-        goto default_colors;
+    switch (face)
+    {
+    case FACE_SELECTION:    return m_colors->get_color(tib::color_element::input_selection);
+    case FACE_MARK:         return m_colors->get_color(tib::color_element::input_mark);
+    case FACE_SCROLLER:     return m_colors->get_color(tib::color_element::input_scroller);
+    }
 
-    return def->second.c_str();
+    return m_colors->get_color(tib::color_element::base);
 }
 
 bool display_manager::build(display_lines& out)

@@ -248,9 +248,15 @@ public:
                         ~custom_input_box() = default;
                         custom_input_box();
 
+    void                set_face_defs(std::map<char, tib::cstring>&& face_defs);
+
 protected:
                         // Methods on the tib::editor_callbacks interface.
     void                provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
+    const char*         get_face_def(char face) override;
+
+private:
+    std::map<char, tib::cstring> m_face_defs;
 };
 
 custom_input_box::custom_input_box()
@@ -260,6 +266,11 @@ custom_input_box::custom_input_box()
 }
 
 #pragma region Example customizations.
+void custom_input_box::set_face_defs(std::map<char, tib::cstring>&& face_defs)
+{
+    m_face_defs = std::move(face_defs);
+}
+
 struct color_t
 {
     uint8_t r;
@@ -305,6 +316,14 @@ void custom_input_box::provide_faces(const tib::input_buffer& buffer, tib::cstri
             }
         }
     }
+}
+
+const char* custom_input_box::get_face_def(char face)
+{
+    const auto def = m_face_defs.find(face);
+    if (def != m_face_defs.end())
+        return def->second.c_str();
+    return nullptr;
 }
 
 void join_colors(tib::cstring& s, std::shared_ptr<tib::color_table>& colors, tib::color_element a, const char* b)
@@ -411,7 +430,7 @@ int main(int argc, const char** argv)
     colors->set_color(tib::color_element::input_scroller, "0;7;36");
     colors->set_color(tib::color_element::suggestion, "0;90");
 
-    tib::face_definitions face_defs;
+    std::map<char, tib::cstring> face_defs;
     face_defs.emplace(FACE_CTRL, "0;36;44");
 
     const tib::border_definition* border = nullptr;
@@ -709,7 +728,7 @@ no_border:
     }
 
     tib->set_color_table(colors);
-    tib->set_face_defs(&face_defs);
+    tib->set_face_defs(std::move(face_defs));
     tib->set_border(border);
     tib->set_left_text(left_text.c_str(), left_width);
     tib->set_right_text(right_text.c_str(), right_width);

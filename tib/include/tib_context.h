@@ -35,6 +35,7 @@ textpos_t pos_mover(const char* s, const size_t _len, textpos_t& pos, const bool
 struct editor_callbacks
 {
     virtual void        provide_faces(const input_buffer& buffer, cstring& faces) {}
+    virtual const char* get_face_def(char face) { return nullptr; }
 };
 
 struct editor_quirks
@@ -93,7 +94,6 @@ public:
     void                set_callbacks(editor_callbacks* callbacks);
     std::shared_ptr<const color_table> get_color_table() const;
     void                set_color_table(std::shared_ptr<const color_table> colors);
-    void                set_face_defs(const face_definitions* face_defs);
     void                set_empty_face(char face);
     const editor_quirks& get_quirks() const noexcept { return m_quirks; }
     void                set_quirks(const editor_quirks& quirks) noexcept { m_quirks = quirks; }
