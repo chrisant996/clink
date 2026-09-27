@@ -260,6 +260,7 @@ void editor_context::initialize(const char* text, size_t len)
     m_selection.set_mark(0);
     m_selection.set_mark_active(false);
     m_auto_deactivate_mark = true;
+    m_text.clear();
     insert_text(text, len);
     m_selection.clear_dirty();
     m_display.clear_scroll_offsets();
