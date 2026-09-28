@@ -21,8 +21,6 @@
 #include <utils/usage.h>
 #include <getopt.h>
 
-#include <tib.h>
-
 extern "C" {
 #include <readline/history.h>
 #include <readline/readline.h>
@@ -169,56 +167,6 @@ static void init_readline_testbed()
 }
 
 //------------------------------------------------------------------------------
-static int32 do_tib()
-{
-    tib::cstring v;
-    if (tib::getenv("TIB_NO_COALESCE_OUTPUT", v) && !v.empty())
-    {
-        tib::g_coalesce_output = !(atoi(v.c_str()) > 0);
-        tib::g_show_hide_cursor = !(atoi(v.c_str()) > 0);
-    }
-    if (tib::getenv("TIB_SHOW_STATISTICS", v) && !v.empty())
-    {
-        if (atoi(v.c_str()) > 0)
-            tib::show_display_manager_statistics(true);
-    }
-
-    typedef tib::input_box custom_input_box;
-
-    tib::term_begin();
-
-    std::shared_ptr<custom_input_box> tib = std::make_shared<custom_input_box>();
-
-    const auto bindings = tib::make_default_key_table(true/*numeric_argument*/);
-    tib->set_bindings(bindings);
-
-    tib::binding_resolver resolver;                         // Required.
-    resolver.add_target(tib);                               // Required.
-
-    while (!tib->done())                                    // Required.
-    {
-        tib->display();                                     // Required.
-
-        const int32_t c = tib::term_in();                   // Required.
-        if (c < 0 || c == tib::c_input_terminal_eof)
-            break;
-
-        auto resolved = resolver.step(c);                   // Required.
-
-        // An ambiguous sequence contains a complete fallback, but can still
-        // become a longer binding.  The host owns this timeout policy.
-        if (resolved.ambiguous() && !tib::term_in_avail(500))
-            resolved = resolver.resolve_pending();
-
-        resolved.dispatch();                                // Required.
-    }
-
-    tib->clear_additional_lines();
-    tib->end_display_lf();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static int32 editline()
 {
     str_compare_scope _(str_compare_scope::relaxed, false/*fuzzy_accent*/);
@@ -310,7 +258,6 @@ int32 testbed(int32 argc, char** argv)
 
     static const struct option options[] = {
         { "hook",        no_argument,        nullptr, 'd' },
-        { "tib",         no_argument,        nullptr, 't' },
         { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
         { "help",        no_argument,        nullptr, 'h' },
@@ -319,7 +266,6 @@ int32 testbed(int32 argc, char** argv)
 
     static const char* const help[] = {
         "-d, --hook",           "Hook and use ReadConsoleW.",
-        "-t, --tib",            "Test terminal-input-box in Clink.",
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies an alternative path for profile data.",
         "-h, --help",           "Shows this help text.",
@@ -328,7 +274,6 @@ int32 testbed(int32 argc, char** argv)
 
     // Parse arguments
     bool hook = false;
-    bool test_tib = false;
     app_context::desc app_desc;
     int32 i;
     int32 ret = 1;
@@ -360,10 +305,6 @@ int32 testbed(int32 argc, char** argv)
             hook = true;
             break;
 
-        case 't':
-            test_tib = true;
-            break;
-
         case '?':
         case 'h':
             ret = 0;
@@ -381,11 +322,7 @@ int32 testbed(int32 argc, char** argv)
         }
     }
 
-    if (test_tib)
-    {
-        ret = do_tib();
-    }
-    else if (hook)
+    if (hook)
     {
         app_desc.id = GetCurrentProcessId();
         app_desc.force = true; // Skip the usual cmd.exe check.
