@@ -108,6 +108,7 @@ public:
     void                begin_display();
     void                invalidate();
     void                invalidate_border();
+    bool                is_displayed() const;
     void                display();
     void                force_redisplay();
     void                move_to_caret_position();

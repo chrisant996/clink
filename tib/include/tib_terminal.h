@@ -9,6 +9,8 @@
 
 namespace tib {
 
+extern bool g_coalesce_output;
+
 // Use some invalid UTF8 bytes for special meanings.
 constexpr uint8_t c_input_terminal_reserved_begin   = 0xfa;
 //                                                  = 0xfa;
@@ -96,5 +98,48 @@ private:
     cstring             m_tmp_utf8;
 #endif
 };
+
+class display_accumulator
+{
+    friend void term_out(const char*, size_t);
+public:
+                        ~display_accumulator();
+                        display_accumulator();
+    void                end();
+    static void         synchronize_output(bool sync) { s_can_synchronize_output = sync; }
+    static bool         active() { return s_active; }
+    static bool         synchronized_output() { return s_synchronized_output; }
+    static void         flush();
+private:
+    static void         append(const char* s, size_t len);
+private:
+    static int32_t      s_nested;
+    static bool         s_can_synchronize_output;
+    static bool         s_active;
+    static bool         s_synchronized_output;
+};
+
+#ifdef _WIN32
+// When the Windows legacy console window's visible area is a subset of the
+// console width, then the visible area can jitter around or can accidentally
+// clip the region that gets cleared by CSI K (Erase in Line, aka EL).  The
+// technique encapsulated in preserve_window_horiz_scroll_position minimizes
+// the amount of jitter.
+class preserve_window_horiz_scroll_position
+{
+public:
+                        preserve_window_horiz_scroll_position(HANDLE h);
+                        ~preserve_window_horiz_scroll_position();
+    static void         set_clreol_is_safe(bool safe) { s_safe_clreol_when_horiz_scrolled = safe; }
+    static bool         can_use_clreol() { return !s_h || s_safe_clreol_when_horiz_scrolled; }
+private:
+    static bool         s_safe_clreol_when_horiz_scrolled;
+    static int32_t      s_nested;
+    static HANDLE       s_h;
+    static CONSOLE_SCREEN_BUFFER_INFO s_window;
+};
+
+HANDLE is_horizpos_workaround_needed();
+#endif
 
 } // namespace tib

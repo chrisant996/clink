@@ -446,6 +446,11 @@ void editor_context::invalidate_border()
     m_display.invalidate_border();
 }
 
+bool editor_context::is_displayed() const
+{
+    return m_display.is_displayed();
+}
+
 void editor_context::display()
 {
     m_display.display();

@@ -143,7 +143,7 @@ public:
 
 static tib::cstring s_display_output;
 
-class display_test_fixture
+class display_test_fixture : public tib::editor_callbacks
 {
 public:
     display_test_fixture(uint16_t max_width=10, bool horiz_scroll_markers=false,
@@ -163,6 +163,7 @@ public:
         m_display.init_layout(&m_layout);
         m_display.init_buffer(&m_buffer);
         m_display.init_style(&m_style);
+        m_display.init_callbacks(this);
         m_display.set_origin(origin_x, 1);
     }
 
@@ -180,8 +181,17 @@ public:
         return any_updates;
     }
 
+    const char* get_face_def(char face) override
+    {
+        const auto def = m_face_defs.find(face);
+        if (def != m_face_defs.end())
+            return def->second.c_str();
+        return nullptr;
+    }
+
     display_test_buffer m_buffer;
     tib::display_manager m_display;
+    std::map<char, tib::cstring> m_face_defs;
 
 private:
     test_output_stream  m_output;
@@ -561,9 +571,7 @@ TEST_CASE("Display suggestion text")
     SECTION("Is rendered after input with the suggestion face")
     {
         display_test_fixture fixture(10, false, 3, true);
-        tib::face_definitions faces;
-        faces[tib::FACE_SUGGESTION] = "35";
-        fixture.m_display.init_faces(&faces);
+        fixture.m_face_defs.emplace(tib::FACE_SUGGESTION, "35");
         fixture.m_display.set_suggestion_text("def", 3);
         fixture.m_buffer.set_text("abc", 3);
 

@@ -19,7 +19,6 @@ class wcwidth_iter;
 
 namespace tib {
 
-extern bool g_coalesce_output;
 extern bool g_show_hide_cursor;
 
 struct border_definition
@@ -244,6 +243,7 @@ public:
     void                begin_display();
     void                invalidate() { m_invalidated = true; }
     void                invalidate_border() { m_border_dirty = true; }
+    bool                is_displayed() const;
     bool                display();
     void                force_redisplay();
     void                move_to_end_of_display();
@@ -266,8 +266,6 @@ private:
     void                outputf(const char* format, ...);
     void                output_color(const char* color);
     void                output_spaces(size_t n);
-    void                maybe_flush();
-    void                do_flush();
 
     bool                is_initialized() const;
 
@@ -304,9 +302,6 @@ private:
     textpos_t           m_hwheel_exclusion_caret = 0;
     uint32_t            m_hwheel_exclusion_change_counter = 0;
     coord               m_relative_cursor = { -1, -1 };
-
-    cstring             m_accumulator;
-    bool                m_coalesce_output = false;
 
 #ifdef _WIN32
     HANDLE              m_horizpos_workaround = 0;

@@ -13,6 +13,8 @@
 
 namespace tib {
 
+bool g_coalesce_output = true;
+
 hook_new_terminal_in_func_t hook_new_terminal_in = nullptr;
 hook_new_terminal_out_func_t hook_new_terminal_out = nullptr;
 
@@ -450,7 +452,11 @@ void term_out(const char* s, size_t len)
         return;
 
     len = resolve_auto_length(len, s);
-    s_terminal_out->write(s, len);
+
+    if (display_accumulator::active())
+        display_accumulator::append(s, len);
+    else
+        s_terminal_out->write(s, len);
 }
 
 void ding()
@@ -458,5 +464,158 @@ void ding()
     if (s_terminal_out)
         s_terminal_out->ding();
 }
+
+int32_t display_accumulator::s_nested = 0;
+bool display_accumulator::s_can_synchronize_output = false;
+bool display_accumulator::s_active = false;
+bool display_accumulator::s_synchronized_output = false;
+static tib::cstring s_acc;
+
+display_accumulator::display_accumulator()
+{
+    if (!s_nested)
+    {
+        assert(!s_active);
+        assert(!s_synchronized_output);
+        assert(s_acc.empty());
+    }
+
+    ++s_nested;
+
+    if (s_nested == 1)
+    {
+        if (!g_coalesce_output)
+            return;
+
+        s_synchronized_output = s_can_synchronize_output;
+        s_active = true;
+
+        if (s_synchronized_output)
+            s_acc.append("\x1b[2026h");
+    }
+}
+
+display_accumulator::~display_accumulator()
+{
+    if (s_active && s_nested == 1)
+        end();
+
+    --s_nested;
+}
+
+void display_accumulator::end()
+{
+    if (s_active)
+    {
+        flush();
+        s_active = false;
+        s_synchronized_output = false;
+    }
+}
+
+void display_accumulator::flush()
+{
+    assert(implies(!s_active, s_acc.empty()));
+    static int32_t s_in_flush = 0;
+    if (s_active && s_in_flush <= 0)
+    {
+        ++s_in_flush;
+        assert(s_in_flush <= 3);
+        if (s_synchronized_output)
+        {
+            if (s_acc.equals("\x1b[2026h"))
+                s_acc.clear();
+            else
+                s_acc.append("\x1b[2026l");
+        }
+        if (!s_acc.empty())
+        {
+            s_active = false;
+            term_out(s_acc.c_str(), s_acc.length());
+            s_acc.clear();
+            s_active = true;
+        }
+        if (s_nested > 0 && s_synchronized_output)
+            s_acc.append("\x1b[2026h");
+        assert(s_in_flush > 0);
+        --s_in_flush;
+    }
+}
+
+void display_accumulator::append(const char* s, size_t len)
+{
+    s_acc.append(s, len);
+}
+
+#ifdef _WIN32
+// In some versions of Windows, the legacy console doesn't handle CSI K
+// correctly when the visible area is not the full console width.
+bool preserve_window_horiz_scroll_position::s_safe_clreol_when_horiz_scrolled = false;
+int32_t preserve_window_horiz_scroll_position::s_nested = 0;
+HANDLE preserve_window_horiz_scroll_position::s_h = nullptr;
+CONSOLE_SCREEN_BUFFER_INFO preserve_window_horiz_scroll_position::s_window;
+
+preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HANDLE h)
+{
+    assert(implies(!s_nested, !s_h));
+    ++s_nested;
+    if (!s_h && h)
+    {
+        s_h = h;
+        display_accumulator::flush();
+        GetConsoleScreenBufferInfo(s_h, &s_window);
+    }
+}
+
+preserve_window_horiz_scroll_position::~preserve_window_horiz_scroll_position()
+{
+    assert(s_nested > 0);
+    if (s_h)
+    {
+        display_accumulator::flush();
+        CONSOLE_SCREEN_BUFFER_INFO cursor;
+        GetConsoleScreenBufferInfo(s_h, &cursor);
+        if (cursor.srWindow.Right - cursor.srWindow.Left == s_window.srWindow.Right - s_window.srWindow.Left &&
+            cursor.srWindow.Bottom - cursor.srWindow.Top == s_window.srWindow.Bottom - s_window.srWindow.Top &&
+            cursor.srWindow.Left != s_window.srWindow.Left &&
+            cursor.dwCursorPosition.Y >= s_window.srWindow.Top &&
+            cursor.dwCursorPosition.Y <= s_window.srWindow.Bottom)
+        {
+            // Only restore the horizontal scroll position.  If the vertical
+            // scroll position is also restored, then this interferes with
+            // text output scrolling the terminal vertically when it goes past
+            // the bottom of the visible window.
+            const SHORT currentLeft = cursor.srWindow.Left;
+            SHORT delta = 0;
+            cursor.srWindow.Left = s_window.srWindow.Left;
+            cursor.srWindow.Right = s_window.srWindow.Right;
+            if (cursor.dwCursorPosition.X < cursor.srWindow.Left)
+                delta = cursor.dwCursorPosition.X - cursor.srWindow.Left;
+            else if (cursor.dwCursorPosition.X > cursor.srWindow.Right)
+                delta = cursor.dwCursorPosition.X - cursor.srWindow.Right;
+            cursor.srWindow.Left += delta;
+            cursor.srWindow.Right += delta;
+            if (cursor.srWindow.Left != currentLeft)
+                SetConsoleWindowInfo(s_h, true, &cursor.srWindow);
+        }
+    }
+    --s_nested;
+    if (!s_nested)
+        s_h = nullptr;
+}
+
+HANDLE is_horizpos_workaround_needed()
+{
+    if (is_test_harness())
+        return nullptr;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(h, &csbi))
+        return nullptr;
+    if (csbi.srWindow.Left == 0 && csbi.srWindow.Right == csbi.dwSize.X - 1)
+        return nullptr;
+    return h;
+}
+#endif
 
 } // namespace tib

@@ -16,7 +16,6 @@
 
 namespace tib {
 
-bool g_coalesce_output = true;
 bool g_show_hide_cursor = true;
 
 static bool s_show_statistics = false;
@@ -103,95 +102,6 @@ static void display_statistics()
 #define DISPLAY_STATISTICS() do { if (s_show_statistics) display_statistics(); } while (false)
 
 #ifdef _WIN32
-// When the Windows legacy console window's visible area is a subset of the
-// console width, then the visible area can jitter around or can accidentally
-// clip the region that gets cleared by CSI K (Erase in Line, aka EL).  The
-// technique encapsulated in preserve_window_horiz_scroll_position minimizes
-// the amount of jitter.
-class preserve_window_horiz_scroll_position
-{
-public:
-                        preserve_window_horiz_scroll_position(HANDLE h, display_manager* mgr);
-                        ~preserve_window_horiz_scroll_position();
-private:
-    static int32_t      s_nested;
-    static bool         s_saved_can_use_clreol;
-    static HANDLE       s_h;
-    static display_manager* s_mgr;
-    static CONSOLE_SCREEN_BUFFER_INFO s_window;
-};
-
-static bool s_can_use_clreol = true;
-
-int32_t preserve_window_horiz_scroll_position::s_nested = 0;
-bool preserve_window_horiz_scroll_position::s_saved_can_use_clreol = true;
-HANDLE preserve_window_horiz_scroll_position::s_h = nullptr;
-display_manager* preserve_window_horiz_scroll_position::s_mgr = nullptr;
-CONSOLE_SCREEN_BUFFER_INFO preserve_window_horiz_scroll_position::s_window;
-
-preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HANDLE h, display_manager* mgr)
-{
-    assert(implies(!s_nested, !s_h));
-    ++s_nested;
-    if (!s_h && h)
-    {
-        s_saved_can_use_clreol = s_can_use_clreol;
-        // TODO: have a global setting to always allow clreol (e.g. Clink's
-        // internal terminal emulator implementation of CSI K doesn't have the
-        // clipping issue).
-        s_can_use_clreol = false;
-
-        s_h = h;
-        s_mgr = mgr;
-        s_mgr->do_flush();
-        GetConsoleScreenBufferInfo(s_h, &s_window);
-    }
-}
-
-preserve_window_horiz_scroll_position::~preserve_window_horiz_scroll_position()
-{
-    assert(s_nested > 0);
-    if (s_h)
-    {
-        s_mgr->do_flush();
-        CONSOLE_SCREEN_BUFFER_INFO cursor;
-        GetConsoleScreenBufferInfo(s_h, &cursor);
-        if (cursor.srWindow.Right - cursor.srWindow.Left == s_window.srWindow.Right - s_window.srWindow.Left &&
-            cursor.srWindow.Bottom - cursor.srWindow.Top == s_window.srWindow.Bottom - s_window.srWindow.Top &&
-            cursor.srWindow.Left != s_window.srWindow.Left &&
-            cursor.dwCursorPosition.Y >= s_window.srWindow.Top &&
-            cursor.dwCursorPosition.Y <= s_window.srWindow.Bottom)
-        {
-            // Only restore the horizontal scroll position.  If the vertical
-            // scroll position is also restored, then this interferes with
-            // text output scrolling the terminal vertically when it goes past
-            // the bottom of the visible window.
-            const SHORT currentLeft = cursor.srWindow.Left;
-            SHORT delta = 0;
-            cursor.srWindow.Left = s_window.srWindow.Left;
-            cursor.srWindow.Right = s_window.srWindow.Right;
-            if (cursor.dwCursorPosition.X < cursor.srWindow.Left)
-                delta = cursor.dwCursorPosition.X - cursor.srWindow.Left;
-            else if (cursor.dwCursorPosition.X > cursor.srWindow.Right)
-                delta = cursor.dwCursorPosition.X - cursor.srWindow.Right;
-            cursor.srWindow.Left += delta;
-            cursor.srWindow.Right += delta;
-            if (cursor.srWindow.Left != currentLeft)
-                SetConsoleWindowInfo(s_h, true, &cursor.srWindow);
-        }
-    }
-    --s_nested;
-    if (!s_nested)
-    {
-        if (s_h)
-            s_can_use_clreol = s_saved_can_use_clreol;
-        s_saved_can_use_clreol = true;
-
-        s_h = nullptr;
-        s_mgr = nullptr;
-    }
-}
-
 bool is_autowrap_bug_present()
 {
 #pragma warning(push)
@@ -1019,11 +929,18 @@ void display_manager::ensure_left()
 
 void display_manager::begin_display()
 {
+    memset(&s_build, 0, sizeof(s_build));
+    memset(&s_display, 0, sizeof(s_display));
     m_displayed.clear();
     m_relative_cursor = { -1, 0 };
     m_display_ended = false;
     force_redisplay();
     invalidate_border();
+}
+
+bool display_manager::is_displayed() const
+{
+    return is_initialized() && !m_display_ended && m_displayed.m_change_counter;
 }
 
 bool display_manager::display()
@@ -1241,10 +1158,9 @@ bool display_manager::display_internal(display_lines& lines)
         m_border_dirty = true;
 
     init_horizpos_workaround();
-    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround, this);
+    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
 
-    m_accumulator.clear();
-    m_coalesce_output = g_coalesce_output;
+    display_accumulator coalesce;
 
 #ifdef _WIN32
     m_pending_wrap = false;
@@ -1611,12 +1527,6 @@ bool display_manager::display_internal(display_lines& lines)
     m_pending_wrap_display = nullptr;
 #endif
 
-    if (m_coalesce_output)
-    {
-        m_coalesce_output = false;
-        maybe_flush();
-    }
-
     ++s_display.action;
 
     m_top = lines.m_top;
@@ -1700,7 +1610,7 @@ void display_manager::move_to_row(coord& cursor, uint16_t y, uint16_t inner_offs
         return;
 
 #ifdef _WIN32
-    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround, this);
+    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
 #endif
 
     if (y < cursor.y)
@@ -1745,13 +1655,13 @@ void display_manager::move_to_column(coord& cursor, uint16_t x, uint16_t inner_o
 #ifdef _WIN32
     if (m_horizpos_workaround)
     {
-        do_flush();
+        display_accumulator::flush();
 
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(m_horizpos_workaround, &csbi);
         csbi.dwCursorPosition.X = term_x - 1;
 
-        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround, this);
+        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
         SetConsoleCursorPosition(m_horizpos_workaround, csbi.dwCursorPosition);
     }
     else
@@ -2353,8 +2263,7 @@ void display_manager::output(const char* s, size_t len)
     m_pending_wrap = false;
 #endif
 
-    m_accumulator.append(s, len);
-    maybe_flush();
+    term_out(s, len);
 }
 
 void display_manager::outputf(const char* format, ...)
@@ -2364,11 +2273,13 @@ void display_manager::outputf(const char* format, ...)
     m_pending_wrap = false;
 #endif
 
+    cstring s;
+
     va_list args;
     va_start(args, format);
 
-    m_accumulator.printfv(format, args);
-    maybe_flush();
+    s.printfv(format, args);
+    term_out(s.c_str(), s.length());
 
     va_end(args);
 }
@@ -2376,8 +2287,9 @@ void display_manager::outputf(const char* format, ...)
 void display_manager::output_color(const char* sgr_params)
 {
     // Printing VT color codes does not affect wrapping.
-    m_accumulator.append_color(sgr_params);
-    maybe_flush();
+    cstring s;
+    s.append_color(sgr_params);
+    term_out(s.c_str(), s.length());
 }
 
 void display_manager::output_spaces(size_t n)
@@ -2387,16 +2299,12 @@ void display_manager::output_spaces(size_t n)
     m_pending_wrap = false;
 #endif
 
-    m_accumulator.append_spaces(n);
-    maybe_flush();
-}
-
-void display_manager::maybe_flush()
-{
-    if (m_coalesce_output)
-        return;
-
-    do_flush();
+    if (n > 0)
+    {
+        cstring s;
+        s.append_spaces(n);
+        term_out(s.c_str(), s.length());
+    }
 }
 
 bool display_manager::is_initialized() const
@@ -2404,26 +2312,7 @@ bool display_manager::is_initialized() const
     return m_layout && m_buffer;
 }
 
-void display_manager::do_flush()
-{
-    term_out(m_accumulator.c_str(), m_accumulator.length());
-    m_accumulator.clear();
-}
-
 #ifdef _WIN32
-static HANDLE is_horizpos_workaround_needed()
-{
-    if (is_test_harness())
-        return nullptr;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
-        return nullptr;
-    if (csbi.srWindow.Left == 0 && csbi.srWindow.Right == csbi.dwSize.X - 1)
-        return nullptr;
-    return h;
-}
-
 void display_manager::init_horizpos_workaround()
 {
     assert(is_initialized());
@@ -2517,22 +2406,20 @@ void display_manager::finish_pending_wrap(coord& cursor)
 }
 #endif // _WIN32
 
-#ifdef _WIN32
 void display_manager::clr_to_eol(int32_t spaces)
 {
     if (spaces <= 0)
         return;
 
-    if (s_can_use_clreol)
-        output(term_erase_to_eol());
-    else
+#ifdef _WIN32
+    if (!preserve_window_horiz_scroll_position::can_use_clreol())
+    {
         output_spaces(spaces);
-}
-#else
-void display_manager::clr_to_eol(int32_t /*spaces*/)
-{
+        return;
+    }
+#endif
+
     output(term_erase_to_eol());
 }
-#endif
 
 } // namespace tib
