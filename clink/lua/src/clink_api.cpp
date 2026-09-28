@@ -42,15 +42,16 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <tib.h>
+
 #include <share.h>
 #include <mutex>
 
 
 
 //------------------------------------------------------------------------------
-static bool s_test_harness = false;
-void set_test_harness() { s_test_harness = true; }
-bool is_test_harness() { return s_test_harness; }
+void set_test_harness() { tib::set_test_harness(); }
+bool is_test_harness() { return tib::is_test_harness(); }
 
 
 
@@ -1495,7 +1496,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
     lua_pushstring(state, AS_STR(CLINK_COMMIT));
     lua_rawset(state, -3);
 
-    if (s_test_harness)
+    if (is_test_harness())
     {
         lua_pushliteral(state, "_is_test_harness");
         lua_pushboolean(state, true);
