@@ -31,6 +31,7 @@ static macro_playback* s_macro_playback = nullptr;
 static terminal_in* s_terminal_in = nullptr;
 static terminal_out* s_terminal_out = nullptr;
 static int32_t s_term_began = 0;
+static bool s_term_zombie = false;
 
 #ifdef _WIN32
 #ifdef DEBUG
@@ -294,10 +295,17 @@ void term_sigint()
     }
 }
 
+#ifdef _WIN32
+void term_sigclose()
+{
+    s_term_zombie = true;
+}
+#endif
+
 class auto_term_end
 {
 public:
-    ~auto_term_end() { term_sigint(); }
+    ~auto_term_end() { if (!s_term_zombie) term_sigint(); }
 };
 static auto_term_end s_auto_term_end;
 

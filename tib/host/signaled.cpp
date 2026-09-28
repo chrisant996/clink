@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "maybe_windows.h"
 #include "tib_host.h"
+#include "tib_terminal.h"
 
 static bool s_signaled = false;
 
@@ -75,11 +76,18 @@ void auto_terminal_init::restore()
 #ifdef _WIN32
 BOOL auto_terminal_init::BreakHandler(DWORD CtrlType)
 {
-    if (CtrlType == CTRL_C_EVENT || CtrlType == CTRL_BREAK_EVENT)
+    switch (CtrlType)
     {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
         // Do not terminate on Ctrl-C or Ctrl-Break.
         s_signaled = true;
         return true;
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        term_sigclose();
+        return false;
     }
     return false;
 }

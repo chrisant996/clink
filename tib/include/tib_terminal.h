@@ -49,6 +49,9 @@ extern hook_new_terminal_out_func_t hook_new_terminal_out;
 void term_begin();
 void term_end();
 void term_sigint();
+#ifdef _WIN32
+void term_sigclose();
+#endif
 
 int32_t term_in();
 int32_t term_in_peek();
