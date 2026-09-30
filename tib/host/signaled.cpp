@@ -86,7 +86,7 @@ BOOL auto_terminal_init::BreakHandler(DWORD CtrlType)
     case CTRL_CLOSE_EVENT:
     case CTRL_LOGOFF_EVENT:
     case CTRL_SHUTDOWN_EVENT:
-        term_sigclose();
+        tib::term_sigclose();
         return false;
     }
     return false;

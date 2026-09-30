@@ -486,6 +486,7 @@ display_accumulator::display_accumulator()
         assert(!s_active);
         assert(!s_synchronized_output);
         assert(s_acc.empty());
+        s_acc.empty();
     }
 
     ++s_nested;
@@ -505,10 +506,15 @@ display_accumulator::display_accumulator()
 
 display_accumulator::~display_accumulator()
 {
-    if (s_active && s_nested == 1)
-        end();
-
     --s_nested;
+
+    if (s_active && s_nested == 0)
+    {
+        end();
+        assert(!s_active);
+        assert(!s_synchronized_output);
+        assert(s_acc.empty());
+    }
 }
 
 void display_accumulator::end()
