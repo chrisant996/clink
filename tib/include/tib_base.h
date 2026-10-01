@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <limits>
 
+#include <maybe_windows.h>
+
 #ifdef TIB_CONFIG_H
 #include <tib_config.h>
 #endif
