@@ -125,18 +125,6 @@ public:
     void                del_line();
     bool                transpose(uint8_t word=0);
 
-    void                clear_selection();
-    bool                set_caret(textpos_t caret);
-    bool                set_selection(textpos_t anchor, textpos_t caret);
-    bool                extend_selection(textpos_t pos, uint8_t word=0);
-    void                get_range_at_click(textpos_t pos, uint8_t word, textpos_t& begin, textpos_t& end);
-    bool                select_word(bool bigword=false);
-    void                reset_word_anchor() { m_selection.reset_word_anchor(); }
-
-    textpos_t           get_mark() const { return m_selection.get_mark(); }
-    bool                set_mark(textpos_t mark);
-    bool                is_mark_active() const { return m_selection.is_mark_active(); }
-    bool                set_mark_active(bool active=true);
     void                clear_auto_deactivate_mark();
     bool                exchange_caret_and_mark();
 
@@ -212,7 +200,6 @@ private:
     void                init_undo();
     void                clear_undo_internal();
     void                unlink_endo_entry(undo_entry* p);
-    void                inc_change_counter();
     void                begin_undo_group(bool merge);
     void                insert_raw_char(char c);
     void                clear_overwrite_input();

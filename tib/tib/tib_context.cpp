@@ -210,6 +210,7 @@ editor_context::editor_context()
     ensure_commands();
 
     init_undo();
+    init_display(&m_display);
     m_display.init_buffer(this);
     m_display.init_layout(&m_layout);
     m_display.init_style(&m_style);
@@ -433,6 +434,7 @@ int32_t editor_context::go(void* cookie)
 
 void editor_context::begin_display()
 {
+    inc_change_counter();
     m_display.begin_display();
 }
 
@@ -484,75 +486,75 @@ void editor_context::end_display_lf()
 void editor_context::begin_of_input(bool select)
 {
     if (!select)
-        m_selection.set_caret(0);
-    else if (!m_selection.has_selection())
-        m_selection.set_selection(m_selection.get_caret(), 0);
+        set_caret(0);
+    else if (!has_selection())
+        set_selection(get_caret(), 0);
     else
-        m_selection.set_selection(m_selection.get_anchor(), 0);
+        set_selection(get_anchor(), 0);
 
     m_display.clear_scroll_offsets();
 
     if (!select)
-        m_selection.reset_word_anchor();
+        reset_word_anchor();
 }
 
 void editor_context::end_of_input(bool select)
 {
     if (!select)
-        m_selection.set_caret(textpos_t(m_text.length()));
-    else if (!m_selection.has_selection())
-        m_selection.set_selection(m_selection.get_caret(), textpos_t(m_text.length()));
+        set_caret(textpos_t(m_text.length()));
+    else if (!has_selection())
+        set_selection(get_caret(), textpos_t(m_text.length()));
     else
-        m_selection.set_selection(m_selection.get_anchor(), textpos_t(m_text.length()));
+        set_selection(get_anchor(), textpos_t(m_text.length()));
 
     if (!select)
-        m_selection.reset_word_anchor();
+        reset_word_anchor();
 }
 
 bool editor_context::move_left(uint8_t word, bool select)
 {
     bool moved = false;
-    if (!select && m_selection.has_selection())
+    if (!select && has_selection())
     {
-        m_selection.set_caret(m_selection.get_sel_begin());
+        set_caret(get_sel_begin());
         moved = true;
     }
-    else if (m_selection.get_caret() > 0)
+    else if (get_caret() > 0)
     {
-        textpos_t caret = m_selection.get_caret();
-        textpos_t anchor = m_selection.get_anchor();
+        textpos_t caret = get_caret();
+        textpos_t anchor = get_anchor();
         pos_mover(m_text.c_str(), m_text.length(), caret, false/*forward*/, word);
-        moved = m_selection.set_selection(select ? anchor : caret, caret);
+        moved = set_selection(select ? anchor : caret, caret);
     }
     if (!select)
-        m_selection.reset_word_anchor();
+        reset_word_anchor();
     return moved;
 }
 
 bool editor_context::move_right(uint8_t word, bool select)
 {
     bool moved = false;
-    if (!select && m_selection.has_selection())
+    if (!select && has_selection())
     {
-        m_selection.set_caret(m_selection.get_sel_end());
+        set_caret(get_sel_end());
         moved = true;
     }
-    else if (size_t(m_selection.get_caret()) < m_text.length())
+    else if (size_t(get_caret()) < m_text.length())
     {
-        textpos_t caret = m_selection.get_caret();
-        textpos_t anchor = m_selection.get_anchor();
+        textpos_t caret = get_caret();
+        textpos_t anchor = get_anchor();
         pos_mover(m_text.c_str(), m_text.length(), caret, true/*forward*/, word);
-        moved = m_selection.set_selection(select ? anchor : caret, caret);
+        moved = set_selection(select ? anchor : caret, caret);
     }
     if (!select)
-        m_selection.reset_word_anchor();
+        reset_word_anchor();
     return moved;
 }
 
 bool editor_context::backspace(uint8_t word)
 {
-    m_selection.reset_word_anchor();
-    if (!m_selection.has_selection() && m_selection.get_caret() <= 0)
+    reset_word_anchor();
+    if (!has_selection() && get_caret() <= 0)
         return false;
 
     begin_undo_group();
@@ -560,15 +562,15 @@ bool editor_context::backspace(uint8_t word)
     if (!elide_selected_text())
     {
 #ifdef DEBUG
-        const textpos_t old_pos = m_selection.get_caret();
+        const textpos_t old_pos = get_caret();
 #endif
-        textpos_t caret = m_selection.get_caret();
+        textpos_t caret = get_caret();
         const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), caret, false/*forward*/, word);
-        m_selection.set_caret(caret);
+        set_caret(caret);
 #ifdef DEBUG
-        assert(old_pos == m_selection.get_caret() + moved);
+        assert(old_pos == get_caret() + moved);
 #endif
-        remove_text(m_selection.get_caret(), m_selection.get_caret() + moved);
+        remove_text(get_caret(), get_caret() + moved);
     }
 
     end_undo_group();
@@ -577,18 +579,18 @@ bool editor_context::backspace(uint8_t word)
 
 bool editor_context::del(uint8_t word)
 {
-    m_selection.reset_word_anchor();
-    if (!m_selection.has_selection() && m_selection.get_caret() >= textpos_t(m_text.length()))
+    reset_word_anchor();
+    if (!has_selection() && get_caret() >= textpos_t(m_text.length()))
         return false;
 
     begin_undo_group();
 
     if (!elide_selected_text())
     {
-        textpos_t del_pos = m_selection.get_caret();
+        textpos_t del_pos = get_caret();
         const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), del_pos, true/*forward*/, word);
-        m_selection.set_caret(del_pos - moved);
-        remove_text(m_selection.get_caret(), m_selection.get_caret() + moved);
+        set_caret(del_pos - moved);
+        remove_text(get_caret(), get_caret() + moved);
     }
 
     end_undo_group();
@@ -603,113 +605,6 @@ void editor_context::del_line()
     assert(!get_mark());
     assert(!get_text().length());
     assert(!get_selection_state().get_anchor());
-}
-
-void editor_context::clear_selection()
-{
-    m_selection.clear_selection();
-}
-
-bool editor_context::set_caret(textpos_t caret)
-{
-    return m_selection.set_caret(caret);
-}
-
-bool editor_context::set_selection(textpos_t anchor, textpos_t caret)
-{
-    if (!m_selection.set_selection(anchor, caret))
-        return false;
-    m_selection.reset_word_anchor();
-    return true;
-}
-
-bool editor_context::extend_selection(textpos_t pos, uint8_t word)
-{
-    textpos_t begin;
-    textpos_t end;
-    get_range_at_click(pos, word, begin, end);
-
-    textpos_t apply_begin;
-    textpos_t apply_end;
-    if (begin < m_selection.get_word_anchor_begin())
-    {
-        apply_begin = m_selection.get_word_anchor_end();
-        apply_end = begin;
-    }
-    else if (end > m_selection.get_word_anchor_end())
-    {
-        apply_begin = m_selection.get_word_anchor_begin();
-        apply_end = end;
-    }
-    else
-    {
-        apply_begin = m_selection.get_word_anchor_begin();
-        apply_end = m_selection.get_word_anchor_end();
-    }
-
-    return m_selection.set_selection(apply_begin, apply_end);
-}
-
-void editor_context::get_range_at_click(textpos_t pos, uint8_t word, textpos_t& begin, textpos_t& end)
-{
-    const textpos_t orig_pos = pos;
-
-    // Look forward (for a word).
-    pos_mover(m_text.c_str(), m_text.length(), pos, true/*forward*/, word);
-    end = pos;
-    pos_mover(m_text.c_str(), m_text.length(), pos, false/*forward*/, word);
-    const textpos_t high_mid = pos;
-
-    // Look backward (for a word).
-    pos_mover(m_text.c_str(), m_text.length(), pos, false/*forward*/, word);
-    begin = pos;
-    pos_mover(m_text.c_str(), m_text.length(), pos, true/*forward*/, word);
-    const textpos_t low_mid = pos;
-
-    if (high_mid <= orig_pos)
-    {
-        begin = high_mid;
-    }
-    else if (low_mid > orig_pos)
-    {
-        end = low_mid;
-    }
-    else
-    {
-        // The position is in between (two words); select the text between.
-        begin = low_mid;
-        end = high_mid;
-    }
-}
-
-bool editor_context::select_word(bool bigword)
-{
-    textpos_t begin;
-    textpos_t end;
-
-    const uint8_t word = bigword ? 2 : 1;
-    get_range_at_click(m_selection.get_caret(), word, begin, end);
-
-    return set_selection(begin, end);
-}
-
-bool editor_context::set_mark(textpos_t mark)
-{
-    if (mark < 0 || size_t(mark) > get_text().length())
-        return false;
-    if (!m_selection.set_mark(mark))
-        return false;
-    if (m_selection.is_mark_active())
-        m_display.invalidate();
-    return true;
-}
-
-bool editor_context::set_mark_active(bool active)
-{
-    if (!m_selection.set_mark_active(active))
-        return false;
-    m_display.invalidate();
-    return true;
 }
 
 void editor_context::clear_auto_deactivate_mark()
@@ -1080,12 +975,12 @@ bool editor_context::universal_argument()
 
 bool editor_context::scroll_horizontally(int32_t columns, int32_t cursor_column, bool exclude_auto_scroll)
 {
-    return m_display.scroll_horizontally(columns, cursor_column, m_selection, exclude_auto_scroll);
+    return m_display.scroll_horizontally(columns, cursor_column, *this, exclude_auto_scroll);
 }
 
 bool editor_context::move_caret_vertically(int32_t rows, int32_t cursor_column, bool select)
 {
-    return m_display.move_caret_vertically(rows, cursor_column, m_selection, select);
+    return m_display.move_caret_vertically(rows, cursor_column, *this, select);
 }
 
 bool editor_context::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos, screen_scroll_info* scroll)
@@ -1095,7 +990,7 @@ bool editor_context::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos,
 
 bool editor_context::set_caret_from_screen(uint32_t x, uint32_t y, uint32_t drag_scroll_chars, bool word_drag)
 {
-    return m_display.set_caret_from_screen(x, y, m_selection, drag_scroll_chars, word_drag);
+    return m_display.set_caret_from_screen(x, y, *this, drag_scroll_chars, word_drag);
 }
 
 void editor_context::suppress_auto_horizontal_scroll()
@@ -1361,13 +1256,6 @@ void editor_context::clear_undo_internal()
 void editor_context::unlink_endo_entry(undo_entry* p)
 {
     p->unlink(m_undo_head, m_undo_tail);
-}
-
-void editor_context::inc_change_counter()
-{
-    ++m_change_counter;
-    if (!m_change_counter)
-        ++m_change_counter;
 }
 
 void editor_context::begin_undo_group()

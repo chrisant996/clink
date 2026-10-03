@@ -517,7 +517,7 @@ void display_manager::set_scroll_offsets(textpos_t left, uint32_t top)
     m_hwheel_exclusion = false;
 }
 
-bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column, selection_state& selection, bool exclude_auto_scroll)
+bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column, input_buffer& buffer, bool exclude_auto_scroll)
 {
     if (!columns || get_effective_max_size().y != 1)
         return false;
@@ -589,11 +589,11 @@ bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column
         screen_column += width;
     }
 
-    const bool changed = left != m_left || caret != selection.get_caret();
+    const bool changed = left != m_left || caret != buffer.get_caret();
     m_left = left;
-    selection.set_caret(caret);
+    buffer.set_caret(caret);
     if (exclude_auto_scroll)
-        suppress_auto_horizontal_scroll(selection);
+        suppress_auto_horizontal_scroll(buffer.get_selection_state());
     return changed;
 }
 
@@ -608,7 +608,7 @@ void display_manager::suppress_auto_horizontal_scroll(const selection_state& sel
     m_hwheel_exclusion_change_counter = m_buffer->get_change_counter();
 }
 
-bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column, selection_state& selection, bool select)
+bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column, input_buffer& buffer, bool select)
 {
     const coord max_size = get_effective_max_size();
     if (!rows || max_size.y <= 1 || !m_displayed.m_change_counter)
@@ -706,11 +706,11 @@ bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column,
         screen_column += width;
     }
 
-    const bool changed = caret != selection.get_caret();
+    const bool changed = caret != buffer.get_caret();
     if (select)
-        selection.set_selection(selection.get_anchor(), caret);
+        buffer.set_selection(buffer.get_anchor(), caret);
     else
-        selection.set_caret(caret);
+        buffer.set_caret(caret);
     return changed;
 }
 
@@ -843,12 +843,12 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
     return true;
 }
 
-bool display_manager::set_caret_from_screen(uint32_t x, uint32_t y, selection_state& selection, uint32_t drag_scroll_chars, bool word_drag)
+bool display_manager::set_caret_from_screen(uint32_t x, uint32_t y, input_buffer& buffer, uint32_t drag_scroll_chars, bool word_drag)
 {
     textpos_t pos;
     if (!get_pos_from_screen(x, y, pos))
         return false;
-    selection.set_caret(pos);
+    buffer.set_caret(pos);
     return true;
 }
 

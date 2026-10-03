@@ -113,20 +113,10 @@ public:
     {
         m_text.set(text);
         if (anchor < 0)
-            m_selection.set_caret(caret);
+            set_caret(caret);
         else
-            m_selection.set_selection(anchor, caret);
-        ++m_change_counter;
-    }
-
-    void set_selection(tib::textpos_t anchor, tib::textpos_t caret)
-    {
-        m_selection.set_selection(anchor, caret);
-    }
-
-    tib::selection_state& get_selection_state_out()
-    {
-        return m_selection;
+            set_selection(anchor, caret);
+        inc_change_counter();
     }
 };
 
@@ -670,13 +660,13 @@ TEST_CASE("Display vertical caret movement")
     const int32_t cursor_column = fixture.m_display.get_relative_cursor().x;
     fixture.m_display.invalidate();
     REQUIRE(fixture.m_display.move_caret_vertically(
-                1, cursor_column, fixture.m_buffer.get_selection_state_out(), true/*select*/));
+                1, cursor_column, fixture.m_buffer, true/*select*/));
     REQUIRE(fixture.m_buffer.get_selection_state().get_anchor() == 0);
     REQUIRE(fixture.m_buffer.get_selection_state().get_caret() == 5);
 
     REQUIRE(fixture.m_display.display() == true);
     REQUIRE(fixture.m_display.move_caret_vertically(
-                -1, cursor_column, fixture.m_buffer.get_selection_state_out()));
+                -1, cursor_column, fixture.m_buffer));
     REQUIRE(fixture.m_buffer.get_selection_state().get_anchor() == 1);
     REQUIRE(fixture.m_buffer.get_selection_state().get_caret() == 1);
 }
