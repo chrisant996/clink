@@ -70,7 +70,7 @@ public:
 
     void                initialize(const char* text=nullptr, size_t len=c_auto_length);
     void                reset_state() noexcept;
-    bool                done() const noexcept { return m_done; }
+    bool                is_done() const noexcept { return m_done; }
     void                set_done() noexcept { m_done = true; }
 
     void                set_max_length(uint32_t m) { m_max_length = static_cast<textpos_t>(min<uint32_t>(m, int16_max)); }

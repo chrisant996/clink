@@ -855,7 +855,7 @@ no_border:
     tib::binding_resolver resolver;                         // Required.
     resolver.add_target(tib);                               // Required.
 
-    while (!tib->done())                                    // Required.
+    while (!tib->is_done())                                    // Required.
     {
                 /*Custom*/  add_feedback_to_display();
 

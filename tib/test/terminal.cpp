@@ -40,7 +40,7 @@ TEST_CASE("End display preserves input and requires a fresh begin_display")
     REQUIRE(count_crlf(output) == 1);
     REQUIRE(box.get_text() == "abc");
     REQUIRE(box.get_selection_state().get_caret() == 1);
-    REQUIRE(!box.done());
+    REQUIRE(!box.is_done());
     REQUIRE(box.get_extent().y == 0);
     output.clear();
     box.end_display_lf();

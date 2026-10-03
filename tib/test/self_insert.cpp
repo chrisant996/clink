@@ -110,14 +110,14 @@ TEST_CASE("Quoted insert")
         auto resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::quoted_insert);
         REQUIRE(resolved.dispatch());
-        REQUIRE(!input->done());
+        REQUIRE(!input->is_done());
         REQUIRE(input->get_text() == "\r");
 
         resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.binding_target->is_func_name("accept-line"));
         REQUIRE(resolved.dispatch());
-        REQUIRE(input->done());
+        REQUIRE(input->is_done());
     }
 
     SECTION("Does not invoke an abort binding")
@@ -276,11 +276,11 @@ TEST_CASE("Quoted insert")
         REQUIRE(resolved.dispatcher_target.lock() == input);
         REQUIRE(input->get_text().empty());
         REQUIRE(other->get_text().empty());
-        REQUIRE(!other->done());
+        REQUIRE(!other->is_done());
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_text() == "x");
         REQUIRE(other->get_text().empty());
-        REQUIRE(!other->done());
+        REQUIRE(!other->is_done());
     }
 }
 
@@ -574,7 +574,7 @@ TEST_CASE("Uppercase Alt input resolves in the same key table")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::miss);
         REQUIRE(resolved.sequence == "X");
         REQUIRE(!resolved.binding_target);
-        REQUIRE(!input->done());
+        REQUIRE(!input->is_done());
     }
 }
 
