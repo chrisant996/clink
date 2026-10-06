@@ -14,10 +14,8 @@ class win_screen_buffer
 {
 public:
     virtual         ~win_screen_buffer() override;
-    virtual void    open() override;
     virtual void    begin() override;
     virtual void    end() override;
-    virtual void    close() override;
     virtual void    write(const char* data, int32 length) override;
     virtual void    flush() override;
     virtual int32   get_columns() const override;

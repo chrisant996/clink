@@ -333,18 +333,6 @@ extern int rl_vi_eword (int, int);
 /*								    */
 /* **************************************************************** */
 
-/* Readline functions. */
-/* Read a line of input.  Prompt with PROMPT.  A NULL PROMPT means none. */
-extern char *readline (const char *);
-
-extern int rl_set_prompt (const char *);
-extern int rl_expand_prompt (char *);
-/* begin_clink_change */
-extern const char *rl_get_local_prompt (void);
-extern const char *rl_get_local_prompt_prefix (void);
-extern const char *rl_get_message_buffer (void);
-/* end_clink_change */
-
 extern int rl_initialize (void);
 
 /* Undocumented; unused by readline */
@@ -439,19 +427,11 @@ extern int rl_end_undo_group (void);
 extern int rl_modifying (int, int);
 
 /* Functions for redisplay. */
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-extern void rl_redisplay (void);
-#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
-extern int rl_on_new_line (void);
-extern int rl_on_new_line_with_prompt (void);
 extern int rl_forced_update_display (void);
 extern int rl_clear_visible_line (void);
 extern int rl_clear_message (void);
 extern int rl_reset_line_state (void);
 extern int rl_crlf (void);
-/* begin_clink_change */
-extern int rl_get_prompt_prefix_visible (void);
-/* end_clink_change */
 
 /* Functions to manage the mark and region, especially the notion of an
    active mark and an active region. */
@@ -467,19 +447,9 @@ extern void rl_message (const char *, ...)  __attribute__((__format__ (printf, 1
 extern void rl_message_append (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
 /* end_clink_change */
 
-extern int rl_show_char (int);
-
 /* Undocumented in texinfo manual. */
 extern int rl_character_len (int, int);
 extern void rl_redraw_prompt_last_line (void);
-
-/* Save and restore internal prompt redisplay information. */
-extern void rl_save_prompt (void);
-extern void rl_restore_prompt (void);
-/* begin_clink_change */
-extern int rl_is_prompt_saved (void);
-extern void rl_reapply_message (void);
-/* end_clink_change */
 
 /* Modifying text. */
 extern void rl_replace_line (const char *, int);
@@ -489,8 +459,6 @@ extern int rl_kill_text (int, int);
 extern char *rl_copy_text (int, int);
 
 /* Terminal and tty mode management. */
-extern void rl_prep_terminal (int);
-extern void rl_deprep_terminal (void);
 extern void rl_tty_set_default_bindings (Keymap);
 extern void rl_tty_unset_default_bindings (Keymap);
 
@@ -624,14 +592,6 @@ extern int rl_insert_mode;
    whatever was in argv[0].  It is used when parsing conditionals. */
 extern const char *rl_readline_name;
 
-/* The prompt readline uses.  This is set from the argument to
-   readline (), and should not be assigned to directly. */
-extern char *rl_prompt;
-
-/* The prompt string that is actually displayed by rl_redisplay.  Public so
-   applications can more easily supply their own redisplay functions. */
-extern char *rl_display_prompt;
-
 /* The line buffer that is in use. */
 extern char *rl_line_buffer;
 
@@ -680,15 +640,6 @@ extern FILE *rl_outstream;
    screen dimensions. */
 extern int rl_prefer_env_winsize;
 
-/* If non-zero, then this is the address of a function to call just
-   before readline_internal () prints the first prompt. */
-extern rl_hook_func_t *rl_startup_hook;
-
-/* If non-zero, this is the address of a function to call just before
-   readline_internal_setup () returns and readline_internal starts
-   reading input characters. */
-extern rl_hook_func_t *rl_pre_input_hook;
-      
 /* The address of a function to call periodically while Readline is
    awaiting character input, or NULL, for no event handling. */
 extern rl_hook_func_t *rl_event_hook;
@@ -706,13 +657,6 @@ extern rl_hook_func_t *rl_input_available_hook;
 /* Called before the input buffer is changed. */
 enum buffer_change_event { CHG_INSERT, CHG_DELETE, CHG_REPLACE, CHG_REPLACEEMPTY };
 extern rl_vintfunc_t *rl_buffer_changing_hook;
-/* Called when an event occurs that is relevant for a host that implements a
-   text selection model where typing can replace the selection. The function is
-   called with one argument, an enum indicating the type of selection event.
-   The function can return zero to allow the command to continue, or return
-   non-zero to stop further processing. */
-enum selection_event { SEL_BEFORE_INSERTCHAR, SEL_AFTER_INSERTCHAR, SEL_BEFORE_DELETE };
-extern rl_intfunc_t *rl_selection_event_hook;
 /* Called to check whether to concatenate new input with last undo entry. */
 extern rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook;
 /* end_clink_change */
@@ -795,15 +739,7 @@ extern rl_voidfunc_t *rl_before_display_function;
 extern const char *_rl_display_modmark_color;
 extern const char *_rl_display_horizscroll_color;
 extern const char *_rl_display_message_color;
-extern char _rl_face_modmark;
-extern char _rl_face_horizscroll;
-extern char _rl_face_message;
-extern rl_get_face_func_t *rl_get_face_func;
-extern rl_puts_face_func_t *rl_puts_face_func;
 /* end_clink_change */
-
-extern rl_vintfunc_t *rl_prep_term_function;
-extern rl_voidfunc_t *rl_deprep_term_function;
 
 extern rl_macro_print_func_t *rl_macro_display_hook;
 
@@ -1136,14 +1072,6 @@ extern rl_read_key_hook_func_t *rl_read_key_hook;
    programmatically. */
 extern rl_log_read_key_hook_func_t *rl_log_read_key_hook;
 /* end_clink_change */
-
-/* Applications can set this to non-zero to have readline's signal handlers
-   installed during the entire duration of reading a complete line, as in
-   readline-6.2.  This should be used with care, because it can result in
-   readline receiving signals and not handling them until it's called again
-   via rl_callback_read_char, thereby stealing them from the application.
-   By default, signal handlers are only active while readline is active. */   
-extern int rl_persistent_signal_handlers;
 
 /* Input error; can be returned by (*rl_getc_function) if readline is reading
    a top-level command (RL_ISSTATE (RL_STATE_READCMD)). */

@@ -32,7 +32,6 @@
 #include <lua/lua_state.h>
 #include <lua/prompt.h>
 #include <lua/suggest.h>
-#include <terminal/printer.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
@@ -433,11 +432,13 @@ host::host(const char* name)
     const bool cursor_visibility = true;
 #endif
 
-    m_terminal = terminal_create(nullptr, cursor_visibility);
-    m_printer = new printer(*m_terminal.out);
+    assert(!tib_terminal_bridge::get());
+    init_terminal();
+    tib_terminal_bridge* term = tib_terminal_bridge::get();
+    assert(term);
 
     assert(!get_lua_terminal_input());
-    set_lua_terminal(m_terminal.in, m_terminal.out);
+    set_lua_terminal(term->get_in(), term->get_out());
 }
 
 //------------------------------------------------------------------------------
@@ -448,10 +449,15 @@ host::~host()
     delete m_prompt_filter;
     delete m_suggester;
     delete m_lua;
-    delete m_printer;
 
     set_lua_terminal(nullptr, nullptr);
-    terminal_destroy(m_terminal);
+
+    if (!tib::is_term_sigclose())
+    {
+        assert(tib_terminal_bridge::get());
+        uninit_terminal();
+        assert(!tib_terminal_bridge::get());
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -671,15 +677,9 @@ bool host::get_command_word(line_state& line, str_base& command_word, bool& quot
 }
 
 //------------------------------------------------------------------------------
-std::unique_ptr<printer_context> host::make_printer_context()
-{
-    return std::make_unique<printer_context>(m_terminal.out, m_printer);
-}
-
-//------------------------------------------------------------------------------
 void host::adjust_prompt_spacing()
 {
-    assert(g_printer);
+    assert(g_terminal);
 
     static_assert(MAX == prompt_spacing::MAX, "ambiguous symbol");
     const int32 _spacing = s_prompt_spacing.get();
@@ -692,14 +692,14 @@ void host::adjust_prompt_spacing()
         // but CMD causes blank lines more often than zsh does.  So to achieve
         // a similar effect it's necessary to actively consume blank lines.
         COORD cursor;
-        if (g_printer->get_cursor_pos(cursor.X, cursor.Y))
+        if (g_terminal->get_cursor_pos(cursor.X, cursor.Y))
         {
-            const int32 top = g_printer->get_top();
+            const int32 top = g_terminal->get_out()->get_top();
             str<> text;
             int32 y = cursor.Y;
             while (y > 0)
             {
-                if (!g_printer->get_line_text(y - 1, text))
+                if (!g_terminal->get_out()->get_line_text(y - 1, text))
                     break;
                 if (!text.empty())
                     break;
@@ -883,15 +883,30 @@ force_reload_lua:
 
     struct terminal_inout_scope
     {
-        ~terminal_inout_scope() { if (in) in->end(false); }
-        void begin(terminal_in* in) { this->in = in; in->begin(); }
-        terminal_in* in = nullptr;
+        ~terminal_inout_scope()
+        {
+            if (m_began)
+            {
+                assert(g_terminal);
+                if (g_terminal)
+                    g_terminal->end(false);
+                m_began = false;
+            }
+        }
+        void begin()
+        {
+            m_began = true;
+            if (tib_terminal_bridge::get())
+                tib_terminal_bridge::get()->begin();
+        }
+    private:
+        bool m_began = false;
     } terminal_inout_scope;
 
     // The win_terminal_in needs to be initialized in case a Lua script wants
     // to send a terminal request code.
     if (init_scripts || send_event)
-        terminal_inout_scope.begin(m_terminal.in);
+        terminal_inout_scope.begin();
 
     // Load scripts.
     if (init_scripts)
@@ -948,7 +963,7 @@ force_reload_lua:
                     s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
                             "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
                             "\n", g_debug_log_terminal.get_name());
-                    g_printer->print(s.c_str(), s.length());
+                    clink_write(s.c_str(), s.length());
                 }
                 if (g_debug_log_prompt.get())
                 {
@@ -956,7 +971,7 @@ force_reload_lua:
                     s.format("\x1b[93mreminder: Clink is logging prompt strings.\x1b[m\n"
                             "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
                             "\n", g_debug_log_prompt.get_name());
-                    g_printer->print(s.c_str(), s.length());
+                    clink_write(s.c_str(), s.length());
                 }
             }
         }
@@ -1070,7 +1085,7 @@ force_reload_lua:
     }
 
     // Filter the prompt.  Unless processing a multiline doskey macro.
-    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, this);
+    line_editor::desc desc(this);
     initialise_editor_desc(desc);
     if (init_prompt)
     {
@@ -1105,8 +1120,9 @@ force_reload_lua:
             s_autostart_display = std::make_unique<autostart_display>();
             s_autostart_display->save();
 
-            m_terminal.out->begin();
-            m_terminal.out->end();
+            // REVIEW:  I don't remember why it needs to begin/end...
+            g_terminal->get_out()->begin();
+            g_terminal->get_out()->end();
             out = autostart.c_str();
             resolved = true;
             ret = true;
@@ -1136,8 +1152,9 @@ force_reload_lua:
             m_suppress_title = true; // Block CMD from showing these commands in the title bar.
             dbg_ignore_since_snapshot(snapshot, "command queued by get errorlevel");
 
-            m_terminal.out->begin();
-            m_terminal.out->end();
+            // REVIEW:  I don't remember why it needs to begin/end...
+            g_terminal->get_out()->begin();
+            g_terminal->get_out()->end();
 
 #ifdef CAPTURE_PUSHD_STACK
             bool wrote = false;

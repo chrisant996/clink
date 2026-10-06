@@ -314,6 +314,7 @@ _rl_nsearch_init (int dir, int pchar)
      finish reading the search string. */
   rl_undo_list = 0;
 
+// TODO-TIB: can't use rl_line_buffer.
   /* Use the line buffer to read the search string. */
   rl_line_buffer[0] = 0;
   rl_end = rl_point = 0;
@@ -326,7 +327,6 @@ _rl_nsearch_init (int dir, int pchar)
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : ':');
-  cxt->sflags |= SF_FREEPMT;
 /* begin_clink_change */
   //rl_message ("%s", p);
   rl_message_append ("%s", p);
@@ -364,9 +364,6 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 /* end_clink_change */
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  if (cxt->sflags & SF_FREEPMT)
-    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
-  cxt->sflags &= ~SF_FREEPMT;
   rl_clear_message ();
   _rl_fix_point (1);
 
@@ -381,9 +378,6 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 int
 _rl_nsearch_sigcleanup (_rl_search_cxt *cxt, int r)
 {
-  if (cxt->sflags & SF_FREEPMT)
-    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
-  cxt->sflags &= ~SF_FREEPMT;
   return (_rl_nsearch_cleanup (cxt, r));
 }
 
@@ -523,9 +517,6 @@ _rl_nsearch_dosearch (_rl_search_cxt *cxt)
 	{
 	  _rl_unsave_saved_search_line ();	/* XXX */
 	  rl_ding ();
-	  if (cxt->sflags & SF_FREEPMT)
-	    rl_restore_prompt ();
-	  cxt->sflags &= ~SF_FREEPMT;
 	  RL_UNSETSTATE (RL_STATE_NSEARCH);
 	  return -1;
 	}
@@ -545,10 +536,6 @@ _rl_nsearch_dosearch (_rl_search_cxt *cxt)
       rl_line_buffer[rl_point = rl_end = 0] = '\0';
 #endif
     }
-
-  if (cxt->sflags & SF_FREEPMT)
-    rl_restore_prompt ();
-  cxt->sflags &= ~SF_FREEPMT;
 
   /* We are finished using the line buffer to read the search string, restore
      the original contents without doing a redisplay. */

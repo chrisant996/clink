@@ -15,7 +15,6 @@
 #include <terminal/terminal.h>
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 
 extern "C" {
 #include <lua.h>
@@ -149,7 +148,7 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt, boo
             str<> colored_msg(ok ? "\x1b[0;1;32m" : "\x1b[m");
             colored_msg << tmp;
             colored_msg << "\x1b[m\n";
-            g_printer->print(colored_msg.c_str(), colored_msg.length());
+            g_terminal->write(colored_msg.c_str(), colored_msg.length());
         }
         else
         {
@@ -202,16 +201,14 @@ int32 update(int32 argc, char** argv)
         nullptr
     };
 
-    terminal term = terminal_create();
-    printer printer(*term.out);
-    printer_context printer_context(term.out, &printer);
+    init_terminal();
+    terminal_context tc;
 
     // Parse arguments
     DWORD target_pid = 0;
     app_context::desc app_desc;
     int32 i;
     int32 ret = 1;
-    bool is_autorun = false;
     bool do_nothing = false;
     bool force_prompt = false;
     bool no_verify = false;

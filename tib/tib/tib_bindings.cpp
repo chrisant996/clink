@@ -183,7 +183,7 @@ bool binding_target::operator==(const binding_target& t) const noexcept
     case binding_type::func:
         if (!m_text != !t.m_text)
             return false;
-        if (m_text && t.m_text && strcmp(m_text, t.m_text) != 0)
+        if (m_text && t.m_text && stricmp(m_text, t.m_text) != 0)
             return false;
         break;
     case binding_type::macro:
@@ -203,7 +203,7 @@ bool binding_target::operator==(const binding_target& t) const noexcept
 
 bool binding_target::is_func_name(const char* name) const noexcept
 {
-    return (name && m_type == binding_type::func && m_text && strcmp(name, m_text) == 0);
+    return (name && m_type == binding_type::func && m_text && stricmp(name, m_text) == 0);
 }
 
 void binding_target::clear() noexcept
@@ -397,6 +397,13 @@ resolved_binding::operator bool()
             outcome == dispatch_outcome::quoted_insert);
 }
 
+bool resolved_binding::is_func_name(const char* name) const
+{
+    return (outcome == dispatch_outcome::match &&
+            binding_target &&
+            binding_target->is_func_name(name));
+}
+
 bool resolved_binding::dispatch()
 {
     const bool self_insert = (outcome == dispatch_outcome::self_insert);
@@ -478,6 +485,7 @@ void binding_resolver::add_target(std::weak_ptr<dispatcher_target> target)
 
 void binding_resolver::reset()
 {
+    m_state->quoted_insert_target.reset();
     m_sequence.clear();
 }
 
@@ -486,7 +494,6 @@ resolved_binding binding_resolver::step(uint8_t c)
     if (!m_state->quoted_insert_target.expired())
     {
         const std::weak_ptr<dispatcher_target> weak = m_state->quoted_insert_target;
-        m_state->quoted_insert_target.reset();
         reset();
 
         resolved_binding resolved(m_state);
@@ -506,7 +513,32 @@ resolved_binding binding_resolver::resolve_pending()
     return resolve(true);
 }
 
-resolved_binding binding_resolver::resolve(bool force)
+bool binding_resolver::quoted_insert_pending() const
+{
+    return !m_state->quoted_insert_target.expired();
+}
+
+bool binding_resolver::accepts(const char* sequence, size_t len) const
+{
+    if (!len)
+        return false;
+    if (quoted_insert_pending())
+        return true;
+
+    binding_resolver probe;
+    probe.m_registrants = m_registrants;
+    probe.m_sequence = m_sequence;
+    for (size_t i = 0; i < len; ++i)
+    {
+        probe.m_sequence.append(sequence + i, 1);
+        auto resolved = probe.resolve(false, true);
+        if (resolved.outcome == dispatch_outcome::miss || resolved.m_replay.length())
+            return false;
+    }
+    return true;
+}
+
+resolved_binding binding_resolver::resolve(bool force, bool probe)
 {
     constexpr uint32_t c_max_binding_retries = 1;
 
@@ -587,7 +619,7 @@ retry_sequence:
 retry_target:
         const step_state saved_state = state;
 
-        const auto bindings_list = target->get_bindings();
+        const auto bindings_list = (probe && retry_count) ? target->probe_bindings_on_miss() : target->get_bindings();
         if (!bindings_list)
             continue;
 
@@ -740,7 +772,9 @@ retry_target:
         // Invoke the callback only when neither condition is true among the
         // dispatcher targets examined so far; this also preserves the rule
         // that an earlier target's partial match suppresses later callbacks.
-        if (!state.is_prefix && !state.best.length && target->on_binding_miss(m_sequence, c))
+        if (!state.is_prefix && !state.best.length &&
+            (probe ? (!retry_count && !!target->probe_bindings_on_miss()) :
+                     target->on_binding_miss(m_sequence, c)))
         {
             state = saved_state;
             if (++retry_count <= c_max_binding_retries)
@@ -786,7 +820,7 @@ retry_target:
         return resolved;
     }
 
-    if (m_sequence.length() > 1 && (c & 0xc0) != 0x80)
+    if (!probe && m_sequence.length() > 1 && (c & 0xc0) != 0x80)
     {
         // Discard the sequence before c and try again.
         reset();

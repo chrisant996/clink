@@ -11,7 +11,6 @@
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <getopt.h>
 #include "version.h"
 
@@ -269,14 +268,12 @@ int32 interpreter(int32 argc, char** argv)
 
     settings::load(nullptr);
 
-    terminal term = terminal_create(nullptr, false/*cursor_visibility*/);
-    printer printer(*term.out);
-    printer_context prt(term.out, &printer);
-    term.in->begin();
-    set_lua_terminal(term.in, term.out);
+    init_terminal(false/*cursor_visibility*/);
+    terminal_context tc;
+    set_lua_terminal(g_terminal->get_in(), g_terminal->get_out());
 
-    extern void init_standalone_textlist(terminal& term);
-    init_standalone_textlist(term);
+    extern void init_standalone_textlist();
+    init_standalone_textlist();
 
     // Issue #898 -- the standalone interpreter needs to respond to Ctrl-C.
     // Must go before lua_state ctor, because that modifies the input mode.
@@ -355,7 +352,6 @@ int32 interpreter(int32 argc, char** argv)
         }
     }
 
-    term.in->end();
     set_lua_terminal(nullptr, nullptr);
 
     return ret;

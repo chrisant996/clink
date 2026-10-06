@@ -26,7 +26,6 @@
 #include <core/str_iter.h>
 #include <core/auto_closure.h>
 #include <rl/rl_commands.h>
-#include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>
 #include <terminal/terminal_helpers.h>
@@ -38,7 +37,6 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/colors.h>
-extern int _rl_last_v_pos;
 };
 
 
@@ -318,10 +316,11 @@ static void make_color_sequence(const setting_color& color, str_base& out, int32
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_begin_line(const context& context)
 {
+    assert(g_terminal);
     assert(!s_suggestionlist);
     s_suggestionlist = this;
     m_buffer = &context.buffer;
-    m_printer = &context.printer;
+    m_terminal = g_terminal;
     m_force_display = false;
     m_clear_display = false;
     m_applied = false;
@@ -338,8 +337,8 @@ void suggestionlist_impl::on_begin_line(const context& context)
     make_color_sequence(s_color_suggestionlist_selected, m_selected_color, -1);
     make_color_sequence(g_color_description, m_tooltip_color);
 
-    m_screen_cols = context.printer.get_columns();
-    m_screen_rows = context.printer.get_rows();
+    m_screen_cols = m_terminal->get_columns();
+    m_screen_rows = m_terminal->get_rows();
     update_layout();
 }
 
@@ -348,7 +347,7 @@ void suggestionlist_impl::on_end_line()
 {
     s_suggestionlist = nullptr;
     m_buffer = nullptr;
-    m_printer = nullptr;
+    m_terminal = nullptr;
     m_force_display = false;
     m_clear_display = false;
     m_applied = false;
@@ -372,7 +371,7 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         // disable the suggestion list.
         m_first_input = false;
         assert(m_buffer);
-        assert(m_printer);
+        assert(m_terminal);
         assert(m_bind_group >= 0);
         if (s_suggestionlist_autooff.get())
         {
@@ -736,7 +735,7 @@ void suggestionlist_impl::update_layout(bool refreshing_display)
                      !g_suggestionlist_hide_hints.get() &&
                      g_comment_row_show_hints.get());
 
-    const int32 input_height = (_rl_vis_botlin + 1 + m_input_hints);
+    const int32 input_height = get_input_height();
     const int32 header_row = 1;
     const int32 tooltip_row = 1;
     int32 available_rows = m_screen_rows - input_height - header_row - tooltip_row;
@@ -850,22 +849,23 @@ void suggestionlist_impl::update_display()
 #endif
 
     // Hide cursor.
-    const bool was_visible = show_cursor(false);
+    const bool nested_coalesce = tib::display_accumulator::active();
+    const bool was_visible = !nested_coalesce && show_cursor(false);
 
     // Remember the cursor position so it can be restored later to stay
     // consistent with Readline's view of the world.
-    resync_rl_cursor_pos resync(m_printer, true/*use_rl_fwrite*/);
+    resync_rl_cursor_pos resync;
 
-    display_accumulator coalesce;
+    tib::display_accumulator coalesce;
 
-    // Move cursor after the input line.
-    _rl_move_vert(_rl_vis_botlin);
+    // Move cursor to bottom of the input line area.
+    g_tib->move_to_end_of_display(true);
 
     // Make room for input hints.
     int32 up = 0;
     if (m_input_hints)
     {
-        rl_crlf();
+        clink_write("\n", 1);
         up++;
     }
 
@@ -876,7 +876,7 @@ void suggestionlist_impl::update_display()
         const int32 rows = min<>(m_visible_rows, m_count);
         m_displayed_rows = rows;
 
-        rl_crlf();
+        clink_write("\r\n", 2);
         up++;
 
         const bool clear_display = m_clear_display;
@@ -935,7 +935,7 @@ void suggestionlist_impl::update_display()
             if (i >= m_count)
                 break;
 
-            rl_crlf();
+            clink_write("\r\n", 2);
             ++up;
 
             // Print entry.
@@ -990,7 +990,7 @@ void suggestionlist_impl::update_display()
                         assert(m_any_displayed.size() >= screen_row);
 
                         tooltip = m_index;
-                        rl_crlf();
+                        clink_write("\r\n", 2);
                         ++up;
                         const int32 indent_width = 4;
                         tmp.clear();
@@ -1033,7 +1033,7 @@ void suggestionlist_impl::update_display()
         if (!m_any_displayed.empty())
         {
             // Move cursor to next line, then clear to end of screen.
-            rl_crlf();
+            clink_write("\r\n", 2);
             up++;
             clink_write("\x1b[m\x1b[J", 6);
         }
@@ -1047,15 +1047,18 @@ void suggestionlist_impl::update_display()
         s.format("\x1b[%dA", up);
         clink_write(s.c_str(), s.length());
     }
-    clink_flush();
-    coalesce.end();
-    COORD cursor;
-    m_printer->get_cursor_pos(cursor.X, cursor.Y);
-    m_mouse_offset = cursor.Y + !!m_input_hints + 2/*to top item*/;
     resync.resync();
 
+    coalesce.flush();   // Must flush otherwise get_cursor_pos() is wrong.
+    coalesce.end();     // Must end before show_cursor().
+
+    COORD cursor;
+    m_terminal->get_cursor_pos(cursor.X, cursor.Y);
+    m_mouse_offset = cursor.Y + !!m_input_hints + 2/*to top item*/;
+
     // Restore cursor.
-    show_cursor(was_visible);
+    if (!nested_coalesce)
+        show_cursor(was_visible);
 }
 
 //------------------------------------------------------------------------------
@@ -1332,8 +1335,6 @@ void suggestionlist_impl::apply_suggestion(int32 index)
         assert(!is_locked_against_suggestions());
     }
 
-    const int32 old_botlin = _rl_vis_botlin;
-
     if (index >= 0 && index < m_suggestions.size())
     {
         const suggestion& suggestion = m_suggestions[index];
@@ -1349,9 +1350,8 @@ void suggestionlist_impl::apply_suggestion(int32 index)
 
     m_buffer->draw();
 
-    // NOTE:  This doesn't need to clear the screen or update layout and
-    // display when _rl_vis_botlin changes, because display_manager (inside
-    // the draw() call above) calls update_suggestion_list to redisplay it.
+    // NOTE:  The display_readline() call inside the draw() call automatically
+    // clears and/or redraws the suggestion list as needed.
 }
 
 //------------------------------------------------------------------------------
@@ -1456,13 +1456,13 @@ bool suggestionlist_impl::remove_history_index(int32 history_index)
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active() const
 {
-    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer && !m_hide;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_terminal && !m_hide;
 }
 
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active_even_if_hidden() const
 {
-    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_terminal;
 }
 
 //------------------------------------------------------------------------------

@@ -15,8 +15,8 @@
 #include <core/str_iter.h>
 #include <lib/doskey.h>
 #include <lib/clink_ctrlevent.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <process/process.h>
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
@@ -2278,12 +2278,12 @@ int32 get_screen_info_impl(lua_State* state, bool back_compat)
 
     if (is_test_harness())
     {
-        assert(g_printer);
-        if (!g_printer)
+        assert(g_terminal);
+        if (!g_terminal)
             return 0;
-        values[0] = values[2] = g_printer->get_columns();
-        values[1] = values[3] = g_printer->get_rows();
-        g_printer->get_cursor_pos(cursor.X, cursor.Y);
+        values[0] = values[2] = g_terminal->get_columns();
+        values[1] = values[3] = g_terminal->get_rows();
+        g_terminal->get_cursor_pos(cursor.X, cursor.Y);
     }
     else
     {

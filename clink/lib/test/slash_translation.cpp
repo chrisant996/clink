@@ -53,7 +53,7 @@ TEST_CASE("Slash translation")
         std::unique_ptr<line_editor_tester> _tester;
         if (cmd_pass)
         {
-            line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+            line_editor::desc desc(nullptr);
             desc.command_tokeniser = &command_tokeniser;
             desc.word_tokeniser = &word_tokeniser;
             _tester = std::make_unique<line_editor_tester>(desc, nullptr, nullptr);

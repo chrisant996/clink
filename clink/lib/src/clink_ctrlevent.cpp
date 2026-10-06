@@ -6,6 +6,8 @@
 
 #include <terminal/terminal.h>
 
+#include <tib.h>
+
 #include <signal.h>
 #include <assert.h>
 
@@ -28,13 +30,14 @@ void clink_set_signaled(int32 sig)
 //------------------------------------------------------------------------------
 static BOOL WINAPI clink_ctrlevent_handler(DWORD ctrl_type)
 {
-    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT)
+    switch (ctrl_type)
     {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
         clink_signal = (ctrl_type == CTRL_C_EVENT) ? SIGINT : SIGBREAK;
         interrupt_input();
-    }
-    else if (ctrl_type == CTRL_CLOSE_EVENT)
-    {
+        return false;
+    case CTRL_CLOSE_EVENT:
         // Issue 296 reported that on some computers the addition of signal
         // handling caused the OS to show a dialog box because CMD takes too
         // long to exit.  I have no idea how the signal handler could cause
@@ -58,6 +61,13 @@ static BOOL WINAPI clink_ctrlevent_handler(DWORD ctrl_type)
         // So, by removing the SIGBREAK handler, it should remove the TRUE vs
         // FALSE difference and restore the previous behavior.
         signal(SIGBREAK, nullptr);
+#ifdef _WIN32
+        __fallthrough;
+#endif
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        tib::term_sigclose();
+        return false;
     }
     return false;
 }

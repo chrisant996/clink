@@ -429,7 +429,6 @@ static bool parse_ansi_handler(const char* env, ansi_handler& out)
 //------------------------------------------------------------------------------
 win_screen_buffer::~win_screen_buffer()
 {
-    close();
     free(m_attrs);
     free(m_chars);
 }
@@ -445,23 +444,15 @@ void win_screen_buffer::override_handle()
     {
         rollback<uint16> rb(m_ready, 0);
         m_handle = nullptr;
-        open();
         begin();
     }
-}
-
-//------------------------------------------------------------------------------
-void win_screen_buffer::open()
-{
-    assert(!m_handle);
-    m_handle = get_std_handle(STD_OUTPUT_HANDLE);
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::begin()
 {
     if (!m_handle)
-        open();
+        m_handle = get_std_handle(STD_OUTPUT_HANDLE);
 
     m_ready++;
     if (m_ready > 1)
@@ -720,14 +711,9 @@ void win_screen_buffer::end()
         {
             SetConsoleTextAttribute(m_handle, m_default_attr);
             SetConsoleMode(m_handle, m_prev_mode);
+            m_handle = nullptr;
         }
     }
-}
-
-//------------------------------------------------------------------------------
-void win_screen_buffer::close()
-{
-    m_handle = nullptr;
 }
 
 //------------------------------------------------------------------------------

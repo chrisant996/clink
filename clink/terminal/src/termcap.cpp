@@ -12,6 +12,8 @@
 #include <core/settings.h>
 #include <core/os.h>
 
+#include <tib_display.h>
+
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -40,7 +42,10 @@ static bool is_cursor_blink_code(const wchar_t* chars)
 //------------------------------------------------------------------------------
 extern "C" int32 show_cursor(int32 visible)
 {
+    assert(!tib::display_accumulator::active());
+
     HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+    wstr<16> tmp;
 
     if (visible)
     {
@@ -65,15 +70,18 @@ extern "C" int32 show_cursor(int32 visible)
         const wchar_t c = str[0];
         if (c == '\x1b')
         {
-            DWORD dw;
-            WriteConsoleW(h, str, len, &dw, nullptr);
-
             // If the termcap string is not a blink code, proceed to the common
             // show/hide logic to ensure the cursor is visible.  If the termcap
             // string is a blink code, proceed to the default show logic to set
             // both the style and visibility as usual.
             if (!is_cursor_blink_code(str))
+            {
+                tmp.concat(str, len);
                 goto common;
+            }
+
+            DWORD dw;
+            WriteConsoleW(h, str, len, &dw, nullptr);
         }
 
         // Set cursor style and visibility using default console APIs.  This
@@ -88,7 +96,8 @@ common:
     {
         DWORD dw;
         const int32 was_visible = cursor_style(h, -1, -1);
-        WriteConsoleW(h, visible ? L"\u001b[?25h" : L"\u001b[?25l", 6, &dw, nullptr);
+        tmp.concat(visible ? L"\u001b[?25h" : L"\u001b[?25l", 6);
+        WriteConsoleW(h, tmp.c_str(), tmp.length(), &dw, nullptr);
         return was_visible;
     }
 

@@ -33,7 +33,6 @@
 #include <lib/slash_translation.h>
 #include <lib/host_callbacks.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
 
 #include <shellapi.h>

@@ -5,13 +5,10 @@
 
 #include <core/os.h> // Prevent S_IFLNK macro redefinition.
 
-extern "C" {
-#include <compat/config.h>
-#include <readline/readline.h> // For rl_command_func_t.
-}
+#include <tib.h>
 
 //------------------------------------------------------------------------------
-void    init_readline_funmap();
+void    init_editor_commands();
 
 //------------------------------------------------------------------------------
 void    reset_command_states();
@@ -22,18 +19,20 @@ int32   host_add_history(int32, const char* line, const char** out_timestamp=nul
 int32   host_remove_history(int32 rl_history_index, const char* line);
 
 //------------------------------------------------------------------------------
-int32   show_rl_help(int32, int32);
-int32   show_rl_help_raw(int32, int32);
-int32   clink_dump_functions(int32, int32);
-int32   clink_dump_macros(int32, int32);
-int32   clink_what_is(int32, int32);
+int32_t show_rl_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t show_rl_help_raw(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
-int32   clink_reload(int32, int32);
-int32   clink_reset_line(int32, int32);
-int32   clink_exit(int32 count, int32 invoking_key);
-int32   clink_ctrl_c(int32 count, int32 invoking_key);
-int32   clink_paste(int32 count, int32 invoking_key);
+int32   clink_newline(int32 count, int32 invoking_key); // TODO-TIB: temporary placeholder.
+int32_t clink_accept_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_reload(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_reset_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_exit(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_ctrl_c(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_paste(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   clink_copy_line(int32 count, int32 invoking_key);
 int32   clink_copy_word(int32 count, int32 invoking_key);
 int32   clink_copy_cwd(int32 count, int32 invoking_key);
@@ -59,7 +58,7 @@ int32   clink_scroll_bottom(int32 count, int32 invoking_key);
 //------------------------------------------------------------------------------
 int32   clink_find_conhost(int32 count, int32 invoking_key);
 int32   clink_mark_conhost(int32 count, int32 invoking_key);
-int32   clink_selectall_conhost(int32 count, int32 invoking_key);
+int32_t clink_selectall_conhost(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
 int32   clink_popup_directories(int32 count, int32 invoking_key);
@@ -75,45 +74,28 @@ int32   clink_popup_show_help(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 bool    point_in_select_complete(int32 in);
-int32   clink_select_complete(int32 count, int32 invoking_key);
+int32_t clink_select_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
-int32   clink_toggle_suggestion_list(int32 count, int32 invoking_key);
-int32   clink_show_suggestion_list(int32 count, int32 invoking_key);
-int32   clink_cancel_suggestion_list(int32 count, int32 invoking_key);
+int32_t clink_toggle_suggestion_list(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_show_suggestion_list(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_cancel_suggestion_list(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
-bool    cua_clear_selection();
-bool    cua_set_selection(int32 anchor, int32 point);
-int32   cua_get_anchor();
-bool    cua_point_in_selection(int32 in);
-int32   cua_selection_event_hook(int32 event);
-void    cua_after_command(bool force_clear=false);
-int32   cua_previous_screen_line(int32 count, int32 invoking_key);
-int32   cua_next_screen_line(int32 count, int32 invoking_key);
-int32   cua_backward_char(int32 count, int32 invoking_key);
-int32   cua_forward_char(int32 count, int32 invoking_key);
-int32   cua_backward_word(int32 count, int32 invoking_key);
-int32   cua_forward_word(int32 count, int32 invoking_key);
-int32   cua_forward_bigword(int32 count, int32 invoking_key);
-int32   cua_backward_bigword(int32 count, int32 invoking_key);
-int32   cua_select_word(int32 count, int32 invoking_key);
-int32   cua_beg_of_line(int32 count, int32 invoking_key);
-int32   cua_end_of_line(int32 count, int32 invoking_key);
-int32   cua_select_all(int32 count, int32 invoking_key);
-int32   cua_copy(int32 count, int32 invoking_key);
-int32   cua_cut(int32 count, int32 invoking_key);
+int32_t cua_forward_char(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
-int32   clink_forward_bigword(int32 count, int32 invoking_key);
-int32   clink_forward_word(int32 count, int32 invoking_key);
-int32   clink_forward_char(int32 count, int32 invoking_key);
+int32_t clink_forward_bigword(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_forward_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_forward_char(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+#if 0
 int32   clink_forward_byte(int32 count, int32 invoking_key);
-int32   clink_end_of_line(int32 count, int32 invoking_key);
-int32   clink_insert_suggested_full_word(int32 count, int32 invoking_key);
-int32   clink_insert_suggested_line(int32 count, int32 invoking_key);
-int32   clink_insert_suggested_word(int32 count, int32 invoking_key);
-int32   clink_accept_suggested_line(int32 count, int32 invoking_key);
+#endif
+int32_t clink_end_of_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_insert_suggested_full_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_insert_suggested_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_insert_suggested_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_accept_suggested_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   clink_popup_history(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
@@ -127,6 +109,11 @@ int32   win_f9(int32 count, int32 invoking_key);
 bool    win_fn_callback_pending();
 
 //------------------------------------------------------------------------------
+// Readline compatibility.
+int32_t clear_display(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clear_screen(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+
+//------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?
 bool    is_literal_wild();      // Avoid appending star in alternative_matches()?
 int32   glob_complete_word(int32 count, int32 invoking_key);
@@ -138,5 +125,5 @@ int32   edit_and_execute_command(int32 count, int32 invoking_key);
 int32   magic_space(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
-int32   clink_diagnostics(int32 count, int32 invoking_key);
-int32   clink_diagnostics_output(int32 count, int32 invoking_key);
+int32_t clink_diagnostics(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_diagnostics_output(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;

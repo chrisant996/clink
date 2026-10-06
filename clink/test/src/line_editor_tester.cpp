@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "line_editor_tester.h"
-#include "terminal/printer.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -181,16 +180,16 @@ line_editor_tester::line_editor_tester(const line_editor::desc& _desc, const cha
 void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 {
     // Create a line editor.
-    line_editor::desc inner_desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor::desc inner_desc(nullptr);
     if (desc != nullptr)
         inner_desc = *desc;
 
-    m_printer = new printer(m_terminal_out);
-    m_printer_context = new printer_context(&m_terminal_out, m_printer);
+    assert(!g_terminal);
+    init_terminal(&m_terminal_in, &m_terminal_out);
+    tib_terminal_bridge::get()->begin();
+    assert(g_terminal);
 
-    inner_desc.input = &m_terminal_in;
-    inner_desc.output = &m_terminal_out;
-    inner_desc.printer = m_printer;
+    g_tib = std::make_shared<tib::input_box>();
 
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
@@ -200,8 +199,10 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 line_editor_tester::~line_editor_tester()
 {
     line_editor_destroy(m_editor);
-    delete m_printer_context;
-    delete m_printer;
+
+    g_tib = nullptr;
+
+    uninit_terminal();
 }
 
 //------------------------------------------------------------------------------
@@ -561,7 +562,7 @@ bool line_editor_tester::get_line(str_base& line)
         return false;
 
     if (line.empty())
-        line = rl_line_buffer;
+        line = g_tib->get_text().c_str();
     return true;
 }
 

@@ -16,7 +16,6 @@
 #include <lua/lua_task_manager.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <utils/app_context.h>
 #include <utils/usage.h>
 #include <getopt.h>
@@ -29,7 +28,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern void init_readline_funmap();
+extern void init_editor_commands();
 
 //------------------------------------------------------------------------------
 typedef const char* two_strings[2];
@@ -45,7 +44,6 @@ static void init_readline_testbed()
     // Install signal handlers so that Readline doesn't trigger process exit
     // in response to Ctrl+C or Ctrl+Break.
     rl_catch_signals = 1;
-    _rl_echoctl = 1;
     _rl_intr_char = CTRL('C');
 
     // Override some defaults.
@@ -178,19 +176,18 @@ static int32 editline()
     app_context::get()->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
 
-    terminal term = terminal_create();
-    printer printer(*term.out);
-    printer_context prt(term.out, &printer);
+    init_terminal();
+    terminal_context tc;
     console_config cc;
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
-    line_editor::desc desc = { term.in, term.out, &printer, nullptr };
+    line_editor::desc desc = { nullptr };
     line_editor* editor = line_editor_create(desc);
     editor->set_generator(lua_generator);
 
-    init_readline_funmap();
+    init_editor_commands();
     init_readline_testbed();
 
     std::vector<str_moveable> history_list;

@@ -61,8 +61,7 @@ private:
 
     test_terminal_in            m_terminal_in;
     test_terminal_out           m_terminal_out;
-    printer*                    m_printer;
-    printer_context*            m_printer_context = nullptr;
+    terminal_context*           m_terminal_context = nullptr;
     collector_tokeniser*        m_command_tokeniser = nullptr;
     collector_tokeniser*        m_word_tokeniser = nullptr;
     clipboard_tester            m_clipboard_tester;

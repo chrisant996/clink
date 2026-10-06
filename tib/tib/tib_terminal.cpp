@@ -30,6 +30,7 @@ static macro_playback* s_macro_playback = nullptr;
 
 static terminal_in* s_terminal_in = nullptr;
 static terminal_out* s_terminal_out = nullptr;
+static terminal_out* s_terminal_old_out = nullptr;
 static int32_t s_term_began = 0;
 static bool s_term_zombie = false;
 
@@ -236,6 +237,7 @@ void term_begin()
     {
         assert(!s_terminal_in);
         assert(!s_terminal_out);
+        assert(!s_terminal_old_out);
         s_term_began = 0;
     }
 
@@ -250,6 +252,7 @@ void term_begin()
 
         assert(!s_terminal_in);
         assert(!s_terminal_out);
+        assert(!s_terminal_old_out);
         s_terminal_in = hook_new_terminal_in ? hook_new_terminal_in(s_pushed) : new_basic_terminal_in(s_pushed);
         s_terminal_out = hook_new_terminal_out ? hook_new_terminal_out() : new_basic_terminal_out();
     }
@@ -271,11 +274,21 @@ void term_end()
 
     if (s_term_began == 1)
     {
+        display_accumulator coalesce;
+
         term_out(c_show_cursor);
         // FUTURE: cursor shape.
         term_out("\x1b[m");
 
         enable_mouse_input(mouse_input_mode::none, false);
+
+        term_clear_input();
+
+        // Flush before nulling the globals.
+        coalesce.flush();
+
+        if (s_terminal_old_out)
+            term_redirect(nullptr);
 
         delete s_terminal_in;
         s_terminal_in = nullptr;
@@ -284,6 +297,26 @@ void term_end()
     }
 
     --s_term_began;
+}
+
+bool term_redirect(terminal_out* redirect)
+{
+    if (s_terminal_out)
+    {
+        if (s_terminal_old_out && !redirect)
+        {
+            s_terminal_out = s_terminal_old_out;
+            s_terminal_old_out = nullptr;
+            return true;
+        }
+        else if (!s_terminal_old_out && redirect)
+        {
+            s_terminal_old_out = s_terminal_out;
+            s_terminal_out = redirect;
+            return true;
+        }
+    }
+    return false;
 }
 
 void term_sigint()
@@ -299,6 +332,11 @@ void term_sigint()
 void term_sigclose()
 {
     s_term_zombie = true;
+}
+
+bool is_term_sigclose()
+{
+    return s_term_zombie;
 }
 #endif
 
@@ -375,6 +413,10 @@ int32_t term_in_peek()
 
     assert(!s_macro_playback);
 
+    int32_t peeked;
+    if (s_terminal_in->peek(peeked))
+        return peeked;
+
     const int32_t c = term_in();
     if (c < 0)
         return c;
@@ -402,6 +444,22 @@ bool term_in_avail(const DWORD _timeout)
         return true;
 
     return s_terminal_in->avail(_timeout);
+}
+
+bool term_has_queued_input()
+{
+    return !s_pushed.empty() || s_macro_playback;
+}
+
+void term_clear_input()
+{
+    s_pushed.clear();
+    while (s_macro_playback)
+    {
+        macro_playback* old = s_macro_playback;
+        s_macro_playback = old->m_next;
+        delete old;
+    }
 }
 
 bool term_push_input(const char* text, size_t len)
@@ -489,6 +547,7 @@ display_accumulator::display_accumulator()
         s_acc.empty();
     }
 
+    assert(m_active);
     ++s_nested;
 
     if (s_nested == 1)
@@ -506,18 +565,27 @@ display_accumulator::display_accumulator()
 
 display_accumulator::~display_accumulator()
 {
+    end();
+}
+
+void display_accumulator::end()
+{
+    if (!m_active)
+        return;
+
+    m_active = false;
     --s_nested;
 
     if (s_active && s_nested == 0)
     {
-        end();
+        cancel();
         assert(!s_active);
         assert(!s_synchronized_output);
         assert(s_acc.empty());
     }
 }
 
-void display_accumulator::end()
+void display_accumulator::cancel()
 {
     if (s_active)
     {
@@ -529,7 +597,12 @@ void display_accumulator::end()
 
 void display_accumulator::flush()
 {
-    assert(implies(!s_active, s_acc.empty()));
+    if (!s_active)
+    {
+        assert(implies(!s_active, s_acc.empty()));
+        return;
+    }
+
     static int32_t s_in_flush = 0;
     if (s_active && s_in_flush <= 0)
     {

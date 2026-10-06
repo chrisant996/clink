@@ -450,25 +450,6 @@ _rl_sigwinch_resize_terminal (void)
 {
   _rl_get_screen_size (fileno (rl_instream), 1);
 }
-	
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-void
-rl_resize_terminal (void)
-{
-  int width, height;
-
-  width = _rl_screenwidth;
-  height = _rl_screenheight;
-  _rl_get_screen_size (fileno (rl_instream), 1);
-  if (_rl_echoing_p && (width != _rl_screenwidth || height != _rl_screenheight))
-    {
-      if (CUSTOM_REDISPLAY_FUNC ())
-	rl_forced_update_display ();
-      else if (RL_ISSTATE(RL_STATE_REDISPLAYING) == 0)
-	_rl_redisplay_after_sigwinch ();
-    }
-}
-#endif
 
 struct _tc_string {
      const char * const tc_var;
@@ -898,8 +879,6 @@ _rl_cr (void)
 int
 rl_ding (void)
 {
-  if (_rl_echoing_p)
-    {
       switch (_rl_bell_preference)
         {
 	case NO_BELL:
@@ -922,8 +901,6 @@ rl_ding (void)
 	  break;
         }
       return (0);
-    }
-  return (-1);
 }
 
 /* **************************************************************** */

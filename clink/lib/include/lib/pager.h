@@ -5,14 +5,12 @@
 
 #include "editor_module.h"
 
-class printer;
-
 //------------------------------------------------------------------------------
 class pager
 {
 public:
-    virtual void    start_pager(printer& printer) = 0;
-    virtual bool    on_print_lines(printer& printer, int32 lines) = 0;
+    virtual void    start_pager() = 0;
+    virtual bool    on_print_lines(int32 lines) = 0;
 };
 
 //------------------------------------------------------------------------------

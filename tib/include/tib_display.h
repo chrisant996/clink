@@ -21,6 +21,12 @@ namespace tib {
 
 extern bool g_show_hide_cursor;
 
+#ifdef DEBUG
+extern bool g_can_optimize_display_lines;
+#else
+constexpr bool g_can_optimize_display_lines = true;
+#endif
+
 struct border_definition
 {
 #if 0
@@ -246,14 +252,15 @@ public:
     bool                is_displayed() const;
     bool                display();
     void                force_redisplay();
-    void                move_to_end_of_display();
-    void                move_to_caret_position();
+    void                move_to_origin(bool force_left_edge=false);
+    void                move_to_end_of_display(bool cr=false);
+    void                move_to_caret_position(bool force_column=false);
     void                erase_display();
     void                end_display_lf();
 
 private:
-    void                move_to_row(coord& cursor, uint16_t y, uint16_t inner_offset);
-    void                move_to_column(coord& cursor, uint16_t x, uint16_t inner_offset);
+    void                move_to_row(coord& cursor, int16_t y, uint16_t inner_offset);
+    void                move_to_column(coord& cursor, int16_t x, uint16_t inner_offset, bool force=false);
     void                print_text_with_faces(coord& cursor, const char* text, const char* faces, size_t len);
     const char*         get_face_def(char face) const;
     bool                try_update_caret_only();
@@ -297,6 +304,7 @@ private:
     bool                m_border_dirty = false;
     bool                m_invalidated = false;
     bool                m_force_redisplay = false;
+    bool                m_any_output = false;
     bool                m_hwheel_exclusion = false;
     textpos_t           m_hwheel_exclusion_left = 0;
     textpos_t           m_hwheel_exclusion_caret = 0;

@@ -11,8 +11,9 @@
 
 #include <core/base.h>
 #include <core/debugheap.h>
-#include <terminal/printer.h>
+#include <terminal/ecma48_iter.h>
 #include <terminal/scroll.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/wcwidth.h>
 
@@ -24,8 +25,15 @@ extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 }
 
+#include <tib.h>
+#include <tib_glue.hpp>
+
 //------------------------------------------------------------------------------
 extern editor_module::result* g_result;
+std::shared_ptr<tib::input_box> g_tib;
+str_moveable g_prompt_prefix;
+str_moveable g_prompt;
+str_moveable g_rprompt;
 static bool s_force_reload_scripts = false;
 
 //------------------------------------------------------------------------------
@@ -130,7 +138,9 @@ void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
     if (func || force_when_null)
     {
         rl_last_func = func;
+#ifdef TIB_TODO
         cua_after_command();
+#endif
     }
 }
 
@@ -184,7 +194,9 @@ int32 macro_hook_func(const char* macro)
             debug_show_console_mode();
     }
 
+#ifdef TIB_TODO
     cua_after_command(!is_luafunc/*force_clear*/);
+#endif
 
     return is_luafunc;
 }
@@ -198,21 +210,25 @@ void last_func_hook_func(int32 dispatched)
         s_has_override_rl_last_func = false;
     }
 
+#ifdef TIB_TODO
     cua_after_command();
+#endif
     s_last_luafunc.clear();
 
     if (!dispatched)
         return;
 
-    if (s_prev_inputline.length() != rl_end || memcmp(s_prev_inputline.c_str(), rl_line_buffer, rl_end))
+    const tib::cstring input_line = g_tib->get_text();
+    const tib::textpos_t end = input_line.length();
+    if (s_prev_inputline.length() != end || memcmp(s_prev_inputline.c_str(), input_line.c_str(), end))
     {
         s_prev_inputline.clear();
-        s_prev_inputline.concat(rl_line_buffer, rl_end);
+        s_prev_inputline.concat(input_line.c_str(), end);
         host_send_oninputlinechanged_event(s_prev_inputline.c_str());
     }
 
     host_send_event("onaftercommand");
-    maybe_redisplay_readline();
+    display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -243,32 +259,29 @@ void clear_pending_lastfunc()
 //------------------------------------------------------------------------------
 bool rl_has_queued_input()
 {
+#ifdef TIB_TODO
     assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
     assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
     return ((RL_ISSTATE(RL_STATE_INPUTPENDING)) ||
             (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()) ||
             _rl_pushed_input_available());
+#else
+    return tib::term_in_avail(0);
+#endif
 }
 
 
 
 //------------------------------------------------------------------------------
-resync_rl_cursor_pos::resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite)
-    : m_printer(printer ? printer : g_printer)
-    , m_use_rl_fwrite(use_rl_fwrite)
-    , m_vpos(_rl_last_v_pos)
-    , m_cpos(_rl_last_c_pos)
+resync_rl_cursor_pos::resync_rl_cursor_pos()
+    : m_resync(!!g_terminal)
+    , m_vpos(get_relative_cursor_row())
+    , m_cpos(get_relative_cursor_column())
 {
-    assert(m_printer);
-    if (m_printer)
-    {
-        int16 unused;
-        if (!m_printer->get_cursor_pos(m_cursor_x, unused))
-        {
-            assert(false);
-            m_printer = nullptr;
-        }
-    }
+    assert(g_tib);
+    assert(g_terminal);
+    if (m_resync)
+        m_cursor_x = g_tib->get_origin().x + m_cpos;
 }
 
 //------------------------------------------------------------------------------
@@ -280,33 +293,18 @@ resync_rl_cursor_pos::~resync_rl_cursor_pos()
 //------------------------------------------------------------------------------
 void resync_rl_cursor_pos::clear()
 {
-    m_printer = nullptr;
+    m_resync = false;
 }
 
 //------------------------------------------------------------------------------
 void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
 {
-    if (m_printer)
+    if (m_resync)
     {
         if (update_rl_last_pos)
-        {
-            assert(m_vpos == _rl_last_v_pos);
-            assert(m_cpos == _rl_last_c_pos);
-            _rl_move_vert(m_vpos);
-            _rl_last_c_pos = m_cpos;
-        }
-
-        str<> tmp;
-        tmp.format("\x1b[%uG", m_cursor_x + 1);
-        if (m_use_rl_fwrite)
-        {
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-            rl_fflush_function(_rl_out_stream);
-        }
+            move_to_caret_position(true/*force_column*/);
         else
-        {
-            m_printer->print(tmp.c_str(), tmp.length());
-        }
+            clink_write(tib::term_col(m_cursor_x));
 
         clear();
     }
@@ -338,8 +336,8 @@ bool is_terminal_scrolled()
 
     // Consider the terminal to be scrolled if the prompt isn't fully visible
     // or the input line isn't fully visible.
-    const DWORD top_y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-    const DWORD bot_y = top_y + _rl_vis_botlin;
+    const DWORD top_y = csbi.dwCursorPosition.Y - get_relative_cursor_row();
+    const DWORD bot_y = top_y + (g_tib ? g_tib->get_extent().y : 0);
     return csbi.srWindow.Top > top_y || csbi.srWindow.Bottom < bot_y;
 }
 

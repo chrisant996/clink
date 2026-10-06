@@ -80,7 +80,6 @@ int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 /* begin_clink_change */
 int _rl_reading_for_typeahead = 0;
 rl_vintfunc_t *rl_buffer_changing_hook = 0;
-rl_intfunc_t *rl_selection_event_hook = 0;
 rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook = 0;
 int _rl_readstr_pchar = 0;
 /* end_clink_change */
@@ -612,7 +611,6 @@ int
 rl_refresh_line (int ignore1, int ignore2)
 {
   _rl_refresh_line ();
-  rl_display_fixed = 1;
   return 0;
 }
 
@@ -634,7 +632,6 @@ rl_clear_screen (int count, int key)
   _rl_clear_screen (0);		/* calls termcap function to clear screen */
   rl_keep_mark_active ();
   rl_forced_update_display ();
-  rl_display_fixed = 1;
 
   return 0;
 }
@@ -644,7 +641,6 @@ rl_clear_display (int count, int key)
 {
   _rl_clear_screen (1);		/* calls termcap function to clear screen and scrollback buffer */
   rl_forced_update_display ();
-  rl_display_fixed = 1;
 
   return 0;
 }
@@ -1022,17 +1018,7 @@ rl_insert (int count, int c)
   const DWORD batch_timeout = 50;
 /* end_clink_change */
 
-/* begin_clink_change */
-  if (rl_selection_event_hook)
-    rl_selection_event_hook (SEL_BEFORE_INSERTCHAR);
-/* end_clink_change */
   r = (rl_insert_mode == RL_IM_INSERT) ? _rl_insert_char (count, c) : _rl_overwrite_char (count, c);
-/* begin_clink_change */
-  if (rl_selection_event_hook)
-    rl_selection_event_hook (SEL_AFTER_INSERTCHAR);
-  assert (!_rl_reading_for_typeahead);
-  _rl_reading_for_typeahead = _rl_optimize_typeahead;
-/* end_clink_change */
 
   /* XXX -- attempt to batch-insert pending input that maps to self-insert */
   x = 0;
@@ -1050,15 +1036,7 @@ rl_insert (int count, int c)
 	 _rl_keymap[(unsigned char)n].type == ISFUNC &&
 	 _rl_keymap[(unsigned char)n].function == rl_insert)
     {
-/* begin_clink_change */
-      if (rl_selection_event_hook)
-	rl_selection_event_hook (SEL_BEFORE_INSERTCHAR);
-/* end_clink_change */
       r = (rl_insert_mode == RL_IM_INSERT) ? _rl_insert_char (1, n) : _rl_overwrite_char (1, n);
-/* begin_clink_change */
-      if (rl_selection_event_hook)
-	rl_selection_event_hook (SEL_AFTER_INSERTCHAR);
-/* end_clink_change */
       /* _rl_insert_char keeps its own set of pending characters to compose a
 	 complete multibyte character, and only returns 1 if it sees a character
 	 that's part of a multibyte character but too short to complete one.  We
@@ -1237,6 +1215,7 @@ rl_tab_insert (int count, int key)
 int
 rl_newline (int count, int key)
 {
+#ifdef TIB_TODO
   if (rl_mark_active_p ())
     {
       rl_deactivate_mark ();
@@ -1265,8 +1244,8 @@ rl_newline (int count, int key)
   if (rl_erase_empty_line && rl_point == 0 && rl_end == 0)
     return 0;
 
-  if (_rl_echoing_p)
-    _rl_update_final ();
+  _rl_update_final ();
+#endif
   return 0;
 }
 
@@ -1331,11 +1310,6 @@ rl_rubout (int count, int key)
   if (count < 0)
     return (rl_delete (-count, key));
 
-/* begin_clink_change */
-  if (rl_selection_event_hook && rl_selection_event_hook (SEL_BEFORE_DELETE))
-    return 0;
-/* end_clink_change */
-
   if (!rl_point)
     {
       rl_ding ();
@@ -1374,16 +1348,6 @@ _rl_rubout_char (int count, int key)
     {
       c = rl_line_buffer[--rl_point];
       rl_delete_text (rl_point, orig_point);
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-      /* The erase-at-end-of-line hack is of questionable merit now. */
-      if (rl_point == rl_end && ISPRINT ((unsigned char)c) && _rl_last_c_pos && _rl_last_v_pos == 0)
-	{
-	  int l;
-	  l = rl_character_len (c, rl_point);
-	  if (_rl_last_c_pos >= l)
-	    _rl_erase_at_end_of_line (l);
-	}
-#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
     }
   else
     {
@@ -1400,11 +1364,6 @@ int
 rl_delete (int count, int key)
 {
   int xpoint;
-
-/* begin_clink_change */
-  if (rl_selection_event_hook && rl_selection_event_hook (SEL_BEFORE_DELETE))
-    return 0;
-/* end_clink_change */
 
   if (count < 0)
     return (_rl_rubout_char (-count, key));
@@ -1441,11 +1400,6 @@ rl_delete (int count, int key)
 int
 rl_rubout_or_delete (int count, int key)
 {
-/* begin_clink_change */
-  if (rl_selection_event_hook && rl_selection_event_hook (SEL_BEFORE_DELETE))
-    return 0;
-/* end_clink_change */
-
   if (rl_end != 0 && rl_point == rl_end)
     return (_rl_rubout_char (count, key));
   else
@@ -2138,6 +2092,7 @@ _rl_readstr_init (int pchar, int flags)
   _rl_saved_line_for_readstr = _rl_alloc_saved_line ();
   rl_undo_list = 0;
 
+// TODO-TIB: can't use rl_line_buffer.
   rl_line_buffer[0] = 0;
   rl_end = rl_point = 0;
 
@@ -2147,7 +2102,6 @@ _rl_readstr_init (int pchar, int flags)
 /* end_clink_change */
 
   p = _rl_make_prompt_for_search (pchar ? pchar : '@');
-  cxt->flags |= READSTR_FREEPMT;
 /* begin_clink_change */
   //rl_message ("%s", p);
   rl_message_append ("%s", p);
@@ -2194,9 +2148,6 @@ _rl_readstr_restore (_rl_readstr_cxt *cxt)
   _rl_unsave_saved_readstr_line ();	/* restores rl_undo_list */
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  if (cxt->flags & READSTR_FREEPMT)
-    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
-  cxt->flags &= ~READSTR_FREEPMT;
   rl_clear_message ();
   _rl_fix_point (1);
 }
@@ -2204,9 +2155,6 @@ _rl_readstr_restore (_rl_readstr_cxt *cxt)
 int
 _rl_readstr_sigcleanup (_rl_readstr_cxt *cxt, int r)
 {
-  if (cxt->flags & READSTR_FREEPMT)
-    rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
-  cxt->flags &= ~READSTR_FREEPMT;
   return (_rl_readstr_cleanup (cxt, r));
 }
   
@@ -2414,7 +2362,6 @@ _rl_display_cmdname_matches (char **matches)
   rl_filename_completion_desired = old;
 
   rl_forced_update_display ();
-  rl_display_fixed = 1;
 }
 
 static int

@@ -43,7 +43,7 @@ void delim_module::on_matches_changed(const context& context, const line_state& 
 //------------------------------------------------------------------------------
 TEST_CASE("editor")
 {
-    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr);
     //desc.word_delims = " =";
     line_editor_tester tester(desc, nullptr, " =");
 

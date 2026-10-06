@@ -11,6 +11,7 @@
 #include "scroll_helper.h"
 
 #include <core/str.h>
+#include <terminal/terminal.h>
 
 class printer;
 enum class mouse_input_type : uint8;
@@ -60,7 +61,7 @@ private:
     const matches*  m_init_matches = nullptr;
     match_adapter   m_matches;
     matches_impl    m_data;
-    printer*        m_printer = nullptr;
+    tib_terminal_bridge* m_terminal;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
     int32           m_delimiter = 0;

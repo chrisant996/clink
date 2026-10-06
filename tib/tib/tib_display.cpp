@@ -18,6 +18,10 @@ namespace tib {
 
 bool g_show_hide_cursor = true;
 
+#ifdef DEBUG
+bool g_can_optimize_display_lines = true;
+#endif
+
 static bool s_show_statistics = false;
 
 constexpr uint16_t c_right_text_padding = 2;
@@ -946,6 +950,7 @@ bool display_manager::is_displayed() const
 bool display_manager::display()
 {
     ++s_display.total;
+    m_any_output = false;
 
     assert(is_initialized());
     if (!is_initialized())
@@ -1039,6 +1044,7 @@ void display_manager::print_text_with_faces(coord& cursor, const char* t, const 
 bool display_manager::try_update_caret_only()
 {
     if (m_invalidated ||
+        m_force_redisplay ||
         !m_displayed.m_change_counter ||
         m_buffer->get_change_counter() != m_displayed.m_change_counter ||
         m_displayed.m_anchor != m_displayed.m_pos ||
@@ -1224,9 +1230,9 @@ bool display_manager::display_internal(display_lines& lines)
         ++s_display.row_total;
 
 #ifdef _WIN32
-        const bool can_optimize = !m_horizpos_workaround;
+        const bool can_optimize = g_can_optimize_display_lines && !m_horizpos_workaround;
 #else
-        const bool can_optimize = true;
+        const bool can_optimize = g_can_optimize_display_lines;
 #endif
 
         // Does the new line exactly match the previously displayed line?
@@ -1518,7 +1524,13 @@ bool display_manager::display_internal(display_lines& lines)
     move_to_row(cursor, lines.m_cursor.y, lines.m_inner_offset.y);
     move_to_column(cursor, lines.m_cursor.x, lines.m_inner_offset.x);
 
-    output_color("");
+    // Don't emit this unless there was some other output.  This lets the
+    // display_accumulator completely suppress operations that would consist
+    // only of the Synchronize Output codes.  And this can also reduce the
+    // logging spew if a host logging all output.
+    if (m_any_output)
+        output_color("");
+
     if (g_show_hide_cursor)
         output(c_show_cursor);
 
@@ -1556,16 +1568,11 @@ void display_manager::end_display_lf()
     if (m_display_ended)
         return;
 
-    display();
-
     // A final row used only for the caret already supplies the line break.
     if (m_displayed.m_phantom_last_row)
         --m_displayed.m_extent.y;
 
-    // TODO: coalesce...  (maybe even nested coalesce around display()).
-    move_to_end_of_display();
-    move_to_column(m_relative_cursor, 0, 0);
-    // do_flush();
+    move_to_end_of_display(true);
 
     m_displayed.clear();
     m_relative_cursor = { -1, 0 };
@@ -1578,26 +1585,34 @@ void display_manager::end_display_lf()
 
     // Completed output belongs to the terminal until begin_display().
     m_display_ended = true;
+    output("\n");
 }
 
-void display_manager::move_to_end_of_display()
+void display_manager::move_to_origin(bool force_left_edge)
+{
+    const uint16_t x = force_left_edge ? (0 - m_origin.x) : 0;
+    move_to_row(m_relative_cursor, 0, 0);
+    move_to_column(m_relative_cursor, x, 0);
+}
+
+void display_manager::move_to_end_of_display(bool cr)
 {
     if (m_displayed.m_extent.y > 0)
-    {
-        move_to_row(m_relative_cursor, m_displayed.m_extent.y, 0);
-    }
+        move_to_row(m_relative_cursor, m_displayed.m_extent.y - 1, 0);
+    if (cr)
+        move_to_column(m_relative_cursor, (0 - m_origin.x), 0);
 }
 
-void display_manager::move_to_caret_position()
+void display_manager::move_to_caret_position(bool force_column)
 {
     if (m_displayed.m_extent.y > 0)
     {
         move_to_row(m_relative_cursor, m_displayed.m_cursor.y, m_displayed.m_inner_offset.y);
-        move_to_column(m_relative_cursor, m_displayed.m_cursor.x, m_displayed.m_inner_offset.x);
+        move_to_column(m_relative_cursor, m_displayed.m_cursor.x, m_displayed.m_inner_offset.x, force_column);
     }
 }
 
-void display_manager::move_to_row(coord& cursor, uint16_t y, uint16_t inner_offset)
+void display_manager::move_to_row(coord& cursor, int16_t y, uint16_t inner_offset)
 {
 #ifdef _WIN32
     if (m_pending_wrap)
@@ -1642,7 +1657,7 @@ void display_manager::move_to_row(coord& cursor, uint16_t y, uint16_t inner_offs
     cursor.y = y;
 }
 
-void display_manager::move_to_column(coord& cursor, uint16_t x, uint16_t inner_offset)
+void display_manager::move_to_column(coord& cursor, int16_t x, uint16_t inner_offset, bool force)
 {
 #ifdef _WIN32
     if (m_pending_wrap)
@@ -1650,6 +1665,10 @@ void display_manager::move_to_column(coord& cursor, uint16_t x, uint16_t inner_o
 #endif
 
     x += inner_offset;
+
+    if (x == cursor.x && !force)
+        return;
+
     const uint16_t term_x = m_origin.x + x;
 
 #ifdef _WIN32
@@ -2263,7 +2282,11 @@ void display_manager::output(const char* s, size_t len)
     m_pending_wrap = false;
 #endif
 
-    term_out(s, len);
+    if (len)
+    {
+        term_out(s, len);
+        m_any_output = true;
+    }
 }
 
 void display_manager::outputf(const char* format, ...)
@@ -2279,7 +2302,11 @@ void display_manager::outputf(const char* format, ...)
     va_start(args, format);
 
     s.printfv(format, args);
-    term_out(s.c_str(), s.length());
+    if (s.length())
+    {
+        term_out(s.c_str(), s.length());
+        m_any_output = true;
+    }
 
     va_end(args);
 }
@@ -2290,6 +2317,7 @@ void display_manager::output_color(const char* sgr_params)
     cstring s;
     s.append_color(sgr_params);
     term_out(s.c_str(), s.length());
+    m_any_output = true;
 }
 
 void display_manager::output_spaces(size_t n)
@@ -2304,6 +2332,7 @@ void display_manager::output_spaces(size_t n)
         cstring s;
         s.append_spaces(n);
         term_out(s.c_str(), s.length());
+        m_any_output = true;
     }
 }
 

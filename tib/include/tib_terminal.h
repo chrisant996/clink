@@ -30,6 +30,9 @@ public:
     virtual             ~terminal_in() = default;
     virtual int32_t     read() noexcept = 0;
     virtual bool        avail(uint32_t timeout=0) noexcept = 0;
+    // Return true when the driver implements non-consuming lookahead.
+    // Unlike the byte pushback fallback, this can preserve host events.
+    virtual bool        peek(int32_t& value) noexcept { return false; }
     virtual bool        enable_mouse_input(mouse_input_mode mode, bool sgr_encoding) noexcept { return false; }
 };
 
@@ -48,14 +51,18 @@ extern hook_new_terminal_out_func_t hook_new_terminal_out;
 
 void term_begin();
 void term_end();
+bool term_redirect(terminal_out* redirect); // Only one at a time.
 void term_sigint();
 #ifdef _WIN32
 void term_sigclose();
+bool is_term_sigclose();
 #endif
 
 int32_t term_in();
 int32_t term_in_peek();
 bool term_in_avail(DWORD timeout=0);
+bool term_has_queued_input();
+void term_clear_input();
 // Prepend text to the highest-priority pushed-input queue.
 bool term_push_input(const char* text, size_t len=-1);
 bool term_push_macro_text(const char* text, size_t len=-1);
@@ -77,6 +84,13 @@ public:
                         pushed_input(const pushed_input&) = delete;
     pushed_input&       operator=(const pushed_input&) = delete;
     bool                empty() const noexcept { return !m_count; }
+    void                clear() noexcept
+    {
+        m_head = m_count = 0;
+#ifdef _WIN32
+        m_high_surrogate = 0;
+#endif
+    }
     bool                push(uint8_t c) noexcept;
     bool                push(const char* text, size_t len=c_auto_length) noexcept;
     bool                push_front(const char* text, size_t len) noexcept;
@@ -109,6 +123,7 @@ public:
                         ~display_accumulator();
                         display_accumulator();
     void                end();
+    void                cancel();
     static void         synchronize_output(bool sync) { s_can_synchronize_output = sync; }
     static bool         active() { return s_active; }
     static bool         synchronized_output() { return s_synchronized_output; }
@@ -120,6 +135,7 @@ private:
     static bool         s_can_synchronize_output;
     static bool         s_active;
     static bool         s_synchronized_output;
+    bool                m_active = true;
 };
 
 #ifdef _WIN32

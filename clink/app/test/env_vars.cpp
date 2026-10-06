@@ -32,7 +32,7 @@ TEST_CASE("Env. vars")
     lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, env);
 
-    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr);
     line_editor_tester tester(desc, nullptr, " =");
     tester.get_editor()->set_generator(lua_generator);
 

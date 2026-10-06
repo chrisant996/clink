@@ -46,6 +46,9 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <tib.h>
+#include <compat/tib_glue.hpp>
+
 //------------------------------------------------------------------------------
 setting_bool g_comment_row_show_hints(
     "comment_row.show_hints",
@@ -73,6 +76,7 @@ inline char get_closing_quote(const char* quote_pair)
 }
 
 //------------------------------------------------------------------------------
+#ifdef TIB_TODO
 static bool rl_vi_insert_mode_esc_special_case(int32 key)
 {
     // This mirrors the conditions in the #if defined (VI_MODE) block in
@@ -94,15 +98,14 @@ static bool rl_vi_insert_mode_esc_special_case(int32 key)
 
     return false;
 }
+#endif
 
 
 
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
-    if (desc.input == nullptr) return nullptr;
-    if (desc.output == nullptr) return nullptr;
-    if (desc.printer == nullptr) return nullptr;
+    if (!g_terminal) return nullptr;
 
     return new line_editor_impl(desc);
 }
@@ -110,6 +113,7 @@ line_editor* line_editor_create(const line_editor::desc& desc)
 //------------------------------------------------------------------------------
 void line_editor_destroy(line_editor* editor)
 {
+    assert(g_terminal); // Promote symmetry from callers.
     delete editor;
 }
 
@@ -148,7 +152,6 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
 
     // Counteract auto-suggestion, but restore it afterwards.
     char* p = const_cast<char*>(buffer.get_buffer());
-    rollback<char> rb(p[buffer.get_length()], '\0');
 
     {
         // The history expansion library can have side effects on the global
@@ -234,9 +237,7 @@ static bool is_endword_tilde(const line_state& line)
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
-, m_module(desc.input)
 , m_collector(desc.command_tokeniser, desc.word_tokeniser, desc.get_quote_pair())
-, m_printer(*desc.printer)
 , m_pager(*this)
 , m_selectcomplete(*this)
 , m_textlist(*this)
@@ -248,7 +249,12 @@ line_editor_impl::line_editor_impl(const desc& desc)
     add_module(m_textlist);
     add_module(m_suggestionlist);
 
-    key_tester* old_tester = desc.input->set_key_tester(this);
+    assert(g_terminal);
+
+    g_tib->set_callbacks(this);
+    g_terminal->add_target(g_tib->weak_from_this());
+
+    key_tester* old_tester = g_terminal->get_in()->set_key_tester(this);
     assert(!old_tester);
 }
 
@@ -259,7 +265,11 @@ line_editor_impl::~line_editor_impl()
     if (check_flag(flag_editing))
         end_line();
 
-    m_desc.input->set_key_tester(nullptr);
+    g_tib->set_callbacks(nullptr);
+
+    assert(g_terminal);
+    if (g_terminal)
+        g_terminal->get_in()->set_key_tester(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -322,16 +332,21 @@ void line_editor_impl::begin_line()
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
-    m_desc.input->begin();
-    m_desc.output->begin();
+    assert(tib_terminal_bridge::get());
+    tib_terminal_bridge::get()->begin();
+    m_terminal = g_terminal;
+    assert(m_terminal);
+
+    g_tib->set_callbacks(this);
     m_buffer.begin_line();
 
     static bool s_discover_terminal = true;
     if (s_discover_terminal)
     {
         s_discover_terminal = false;
-        terminal_discover_config(m_desc.input);
+        terminal_discover_config(m_terminal->get_in());
     }
+    init_display_accumulator();
 
     m_prev_generate.clear();
     m_prev_plain = false;
@@ -369,9 +384,11 @@ void line_editor_impl::end_line()
 
     rl_before_display_function = nullptr;
 
+    m_bind_resolver.set_group(m_binder.get_group()); // TODO-TIB: why?
     m_buffer.end_line();
-    m_desc.output->end();
-    m_desc.input->end();
+    g_tib->set_callbacks(nullptr);
+    m_terminal->end();
+    m_terminal = nullptr;
 
     m_words.clear();
     m_command_line_states.clear();
@@ -462,15 +479,13 @@ bool line_editor_impl::edit(str_base& out, bool edit)
     {
         // Update first so the init state goes through.
         while (update())
-        {
-            if (!rl_has_queued_input())
-                m_desc.input->select(m_idle);
-        }
+            wait_for_input(m_idle);
     }
     else
     {
         update();
-        rl_newline(0, 0);
+// TODO-TIB: how to reach this, to test it?
+        clink_newline(0, 0);
     }
 
     return get_line(out);
@@ -813,8 +828,7 @@ void line_editor_impl::dispatch(int32 bind_group)
 
     do
     {
-        if (!rl_has_queued_input())
-            m_desc.input->select();
+        wait_for_input();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -830,14 +844,14 @@ void line_editor_impl::dispatch(int32 bind_group)
 bool line_editor_impl::available(uint32 timeout)
 {
     assert(check_flag(flag_init));
-    return m_desc.input->available(timeout);
+    return tib::term_in_avail(timeout);
 }
 
 //------------------------------------------------------------------------------
 uint8 line_editor_impl::peek()
 {
     assert(check_flag(flag_init));
-    const int32 c = m_desc.input->peek();
+    const int32 c = tib::term_in_peek();
     assert(c < 0xf8);
     return (c < 0) ? 0 : uint8(c);
 }
@@ -845,12 +859,12 @@ uint8 line_editor_impl::peek()
 //------------------------------------------------------------------------------
 bool line_editor_impl::is_bound(const char* seq, int32 len)
 {
-    // Check if clink has a binding; these override Readline.
+    // Check if clink has a binding; these override tib.
     int32 bound = m_bind_resolver.is_bound(seq, len);
     if (bound != 0)
         return (bound > 0);
 
-    // Check if Readline has a binding.
+    // Check if tib has a binding.
     return m_module.is_bound(seq, len);
 }
 
@@ -893,19 +907,18 @@ bool line_editor_impl::update_input()
         m_bind_resolver.set_group(bind_group);
     }
 
-    int32 key;
-    if (rl_has_queued_input())
-    {
-        key = rl_read_key();
-    }
-    else
-    {
-        key = m_desc.input->read();
+    assert(!m_module.is_done());
 
+    int32 key;
+    {
+        key = tib::term_in();
+
+// TODO-TIB: the special keys...
         if (key == terminal_in::input_terminal_resize)
         {
-            int32 columns = m_desc.output->get_columns();
-            int32 rows = m_desc.output->get_rows();
+            assert(g_terminal);
+            int32 columns = g_terminal->get_out()->get_columns();
+            int32 rows = g_terminal->get_out()->get_rows();
             editor_module::context context = get_context();
             for (auto* module : m_modules)
                 module->on_terminal_resize(columns, rows, context);
@@ -947,15 +960,18 @@ bool line_editor_impl::update_input()
     dbg_printf_row(-1, "bind_resolver:  group '%s' (%d), key 0x%02x ('%c'), multikey %s",
         group_name.c_str(), m_bind_resolver.get_group(),
         key, (key < 32) ? '.' : key,
-        RL_ISSTATE(RL_STATE_MULTIKEY) ? "true" : "false");
+        m_module.pending_input() ? "true" : "false");
 #endif
 #endif
 
     // `quoted-insert` should always behave as though the key resolved a
-    // binding, to ensure that Readline gets to handle the key (even Esc).
+    // binding, to ensure that tib gets to handle the key (even Esc).
     if (!m_bind_resolver.step(key) &&
-        !rl_is_insert_next_callback_pending() &&
-        !rl_vi_insert_mode_esc_special_case(key))
+        !m_module.quoted_insert_pending()
+#ifdef TIB_TODO
+        && !rl_vi_insert_mode_esc_special_case(key)
+#endif
+        )
         return false;
 
     struct result_impl : public editor_module::result
@@ -1068,7 +1084,7 @@ command_line_states line_editor_impl::collect_command_line_states()
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-static void print_words(printer& printer, int32 row, bool after_break, const words& words, const rl_buffer& buffer)
+static void print_words(tib_terminal_bridge& terminal, int32 row, bool after_break, const words& words, const rl_buffer& buffer)
 {
     str<> tmp;
     if (words.size() > 0)
@@ -1077,22 +1093,22 @@ static void print_words(printer& printer, int32 row, bool after_break, const wor
         int32 i_word = 1;
         const char* tag = after_break ? "after word break info:  " : "collected words:        ";
         tmp.format("\x1b[s\x1b[%dH%s", row, tag);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
         for (auto const& w : words)
         {
             tmp.format("\x1b[90m%u\x1b[m", i_word);
-            printer.print(tmp.c_str(), tmp.length());
+            terminal.write(tmp.c_str(), tmp.length());
 
             const char* q = w.quoted ? "\"" : "";
             const char* color = "37";
             if (w.command_word)
             {
                 command = true;
-                printer.print("!");
+                terminal.write("!");
             }
             if (w.is_redir_arg)
             {
-                printer.print(">");
+                terminal.write(">");
                 color = "33";
             }
             if (command && !w.is_redir_arg)
@@ -1103,17 +1119,17 @@ static void print_words(printer& printer, int32 row, bool after_break, const wor
             if (after_break && i_word == words.size())
                 color = "35";
             tmp.format("%s\x1b[0;%s;7m%.*s\x1b[m%s ", q, color, w.length, buffer.get_buffer() + w.offset, q);
-            printer.print(tmp.c_str(), tmp.length());
+            terminal.write(tmp.c_str(), tmp.length());
             i_word++;
         }
-        printer.print("\x1b[K\x1b[u");
+        terminal.write("\x1b[K\x1b[u");
     }
     else if (!after_break)
     {
         tmp.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", row);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
         tmp.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", row + 1);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
     }
 }
 #endif
@@ -1142,7 +1158,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     str<> tmp2;
     if (dbg_row > 0)
     {
-        print_words(m_printer, dbg_row, false, words, m_buffer);
+        print_words(*m_terminal, dbg_row, false, words, m_buffer);
     }
 #endif
 
@@ -1163,7 +1179,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
         if (dbg_row > 0)
         {
             auto const& after_break_words = command_line_states.get_linestate(m_buffer).get_words();
-            print_words(m_printer, dbg_row + 1, true, after_break_words, m_buffer);
+            print_words(*m_terminal, dbg_row + 1, true, after_break_words, m_buffer);
         }
 #endif
 
@@ -1180,17 +1196,25 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::provide_faces(const tib::input_buffer& buffer, tib::cstring& faces)
+{
+    m_module.provide_faces(buffer, faces);
+}
+
+//------------------------------------------------------------------------------
+const char* line_editor_impl::get_face_def(char face)
+{
+    return m_module.get_face_def(face);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::before_display_readline()
 {
     if (!is_display_readline_initialized())
         return;
 
-    // Temporarily strip off suggestions.
-    rollback<int32> rb_end(rl_end);
-    if (g_suggestion_offset >= 0)
-        rl_end = g_suggestion_offset;
-
     // Skip parsing if the line buffer hasn't changed.
+// TODO-TIB: special states.
     const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
     const bool plain_changed = (m_prev_plain != plain);
     const bool buffer_changed = (plain_changed || !m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()));
@@ -1468,10 +1492,10 @@ line_states line_editor_impl::get_linestates() const
 //------------------------------------------------------------------------------
 editor_module::context line_editor_impl::get_context() const
 {
-    auto& pter = const_cast<printer&>(m_printer);
+    assert(g_terminal);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, m_desc.rprompt, pter, pger, buffer, m_matches, m_classifications, m_input_hint };
+    return { m_desc.prompt, m_desc.rprompt, pger, buffer, m_matches, m_classifications, m_input_hint };
 }
 
 //------------------------------------------------------------------------------
@@ -1505,7 +1529,8 @@ bool line_editor_impl::maybe_handle_signal()
     }
     else
     {
-        const int32 sig = clink_maybe_handle_signal();
+// TODO-TIB: wait, what?
+        const int32 sig = clink_is_signaled();
         if (!sig)
             return false;
 
@@ -1514,8 +1539,15 @@ bool line_editor_impl::maybe_handle_signal()
         m_signaled = true;
 #endif
 
-        if (m_desc.input->peek() == terminal_in::input_abort)
-            m_desc.input->read();
+// TODO-TIB: hmm...
+        clink_set_signaled(0);
+        rl_signal_event_hook = nullptr;
+        if (tib::term_in_peek() == terminal_in::input_abort)
+            tib::term_in();
+
+        // TODO-TIB: wait what?  Why?  This is a change in behavior.
+        m_terminal->reset_bindings();
+        tib::term_clear_input();
 
         for (auto* module : m_modules)
             module->on_signal(sig);
@@ -1608,6 +1640,7 @@ void line_editor_impl::update_internal(bool force)
 
     if (!force)
     {
+// TODO-TIB: special states.
         // Optimization:  While in the middle of reading a key sequence, this
         // can be skipped because it's redundant:  this will get called again
         // when the key sequence is finished.  For example, in a key sequence
@@ -1694,9 +1727,10 @@ void line_editor_impl::update_internal(bool force)
     // Should we collect suggestions?
     try_suggest();
 
+// TODO-TIB: too aggressive now; Readline's _rl_want_redisplay optimization has been lost.
     // In case a new argmatcher got registered during the oncommand event.
     // Wait until after try_suggest in case that already did a redisplay.
-    maybe_redisplay_readline();
+    display_readline();
 
     // Must defer updating m_prev_generate since the old value is still needed
     // for deciding whether to sort/select, after deciding whether to generate.
@@ -1715,7 +1749,9 @@ void line_editor_impl::try_suggest()
     rollback<bool> guard(m_in_try_suggest, true);
 #endif
 
-    if (!g_autosuggest_enable.get())
+    assert(g_tib);
+    assert(g_terminal);
+    if (!g_autosuggest_enable.get() || !g_tib || !g_terminal)
         return;
 
     // This prevents generating suggestions while navigating in the suggestion
@@ -1729,7 +1765,7 @@ void line_editor_impl::try_suggest()
     // NOTE:  It's important to check rl_done first, to avoid dequeuing
     // console input that isn't for the current input line.  This ensures the
     // "More?" prompt receives all appropriate input.
-    if (rl_done || _rl_pushed_input_available() || _rl_input_queued(0))
+    if (g_tib->is_done() || g_terminal->available(0))
         return;
 
     const line_states& lines = m_command_line_states.get_linestates(m_buffer);
@@ -1825,4 +1861,24 @@ void line_editor_impl::clear_input_hint_timeout()
 const input_hint* line_editor_impl::get_input_hint() const
 {
     return &m_input_hint;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::wait_for_input(input_idle* idle)
+{
+    assert(!m_module.is_done());
+
+    if (m_terminal->wait_for_input(idle))
+    {
+        // The terminal host has already resolved and dispatched the binding.
+        // Observe this editor's target separately from that shared machinery.
+// TODO-TIB: why is the terminal host dispatching anything?  This seems wrong.
+        if (g_tib->is_done())
+        {
+            assert(false);
+            m_module.accept_line();
+        }
+        else
+            m_buffer.draw();
+    }
 }

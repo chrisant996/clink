@@ -1108,7 +1108,6 @@ _rl_vi_arg_dispatch (int c)
     }
   else
     {
-      rl_restore_prompt ();
       rl_clear_message ();
       rl_stuff_char (key);
       return 0;		/* done */

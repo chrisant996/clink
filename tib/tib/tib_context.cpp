@@ -463,14 +463,19 @@ void editor_context::force_redisplay()
     m_display.force_redisplay();
 }
 
-void editor_context::move_to_end_of_display()
+void editor_context::move_to_origin(bool force_left_edge)
 {
-    m_display.move_to_end_of_display();
+    m_display.move_to_origin(force_left_edge);
 }
 
-void editor_context::move_to_caret_position()
+void editor_context::move_to_caret_position(bool force_column)
 {
-    m_display.move_to_caret_position();
+    m_display.move_to_caret_position(force_column);
+}
+
+void editor_context::move_to_end_of_display(bool cr)
+{
+    m_display.move_to_end_of_display(cr);
 }
 
 void editor_context::erase_display()
@@ -1015,7 +1020,7 @@ void editor_context::clear_overwrite_input()
 
 void editor_context::apply_message_text()
 {
-    if (has_numeric_argument())
+    if (has_numeric_argument() && (m_numflags & (NUMFLAG_ARGUMENT_MODE|NUMFLAG_UNIVERSAL_MODE)))
     {
         static const char c_normal[] = "\x1b[m";
         cstring msg;
@@ -1524,6 +1529,11 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
         m_auto_deactivate_mark = true;
 
     return ret;
+}
+
+std::shared_ptr<const key_table_list> editor_context::probe_bindings_on_miss() const
+{
+    return (m_numflags & NUMFLAG_ARGUMENT_MODE) ? get_base_bindings() : nullptr;
 }
 
 bool editor_context::on_binding_miss(const cstring&, int32_t) noexcept

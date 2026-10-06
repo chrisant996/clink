@@ -36,9 +36,7 @@ static int32 clink_event_hook()
         rl_echo_signal_char(SIGBREAK);
     }
 
-    _rl_move_vert(_rl_vis_botlin);
-    rl_crlf();
-    _rl_last_c_pos = 0;
+    move_to_end_of_display(true);
 
     if (after_signal_hook_fn)
         after_signal_hook_fn();

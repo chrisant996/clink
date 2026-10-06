@@ -4,6 +4,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # IMPROVEMENTS
 
+## TIB
+
+- Need an equivalent of `_rl_want_redisplay` to completely no-op display calls when false.
+- Need to swap `\x08` and `\x7f` again, oops.
+- `rl_last_func_hook_func` and `rl_last_func`.
+- `_rl_show_mode_in_prompt` and emacs and vi modes.
+- VI mode.
+
 ## Mystery Issue
 
 ## High Priority

@@ -214,7 +214,7 @@ int32_t del_char_right(editor_context& ctx, int32_t key, const char* name, const
     }, UNDO_GROUP);
 }
 
-int32_t del_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_line(editor_context& ctx, int32_t, const char*, const binding_params*) noexcept
 {
     ctx.del_line();
     return 0;
@@ -320,6 +320,20 @@ int32_t cua_forward_char(editor_context& ctx, int32_t key, const char* name, con
     return do_with_numeric_argument(ctx, key, name, params, cua_backward_char, [&]() {
         return ctx.move_right(false/*word*/, true/*select*/);
     });
+}
+
+int32_t cua_backward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    return do_with_numeric_argument(ctx, key, name, params, cua_forward_bigword, [&]() {
+        return ctx.move_left(2/*bigword*/, true/*select*/);
+    }, false/*ding*/);
+}
+
+int32_t cua_forward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    return do_with_numeric_argument(ctx, key, name, params, cua_backward_bigword, [&]() {
+        return ctx.move_right(2/*bigword*/, true/*select*/);
+    }, false/*ding*/);
 }
 
 int32_t cua_backward_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
@@ -972,9 +986,13 @@ void editor_context::ensure_commands()
         return;
 
     for (const auto& command : c_commands)
-        s_commands.emplace_back(command);
+        s_commands.emplace(command.name, command.func);
+}
 
-    s_unsorted_commands = true;
+void editor_context::clear_all_commands()
+{
+    s_commands.clear();
+    s_command_names.clear();
 }
 
 void editor_context::register_command(const char* name, editor_command_func_t func)
@@ -983,48 +1001,26 @@ void editor_context::register_command(const char* name, editor_command_func_t fu
     if (!name)
         return;
 
-    const auto found = std::lower_bound(s_commands.begin(), s_commands.end(), name, [](const editor_command& candidate, const char* name) {
-        const int comparison = strcmp(candidate.name, name);
-        return comparison < 0;
-    });
+    const auto found = s_commands.find(name);
 
-    if (found != s_commands.end() && strcmp(found->name, name) == 0)
+    if (found != s_commands.end() && strcmp(found->first, name) == 0)
     {
         if (func)
-            found->func = func;
+            found->second = func;
         else
             s_commands.erase(found);
     }
     else
     {
         s_command_names.emplace_back(name);
-
-        editor_command command;
-        command.name = s_command_names.back().c_str();
-        command.func = func;
-
-        s_commands.insert(found, std::move(command));
-        s_unsorted_commands = true;
+        name = s_command_names.back().c_str();
+        s_commands.emplace(name, func);
     }
 }
 
-const std::vector<editor_command>& editor_context::get_registered_commands()
+const std::map<const char*, editor_command_func_t, editor_context::stricmp_less>& editor_context::get_registered_commands()
 {
-    ensure_commands_sorted();
     return s_commands;
-}
-
-void editor_context::ensure_commands_sorted()
-{
-    if (!s_unsorted_commands)
-        return;
-
-    std::sort(s_commands.begin(), s_commands.end(), [](const editor_command& a, const editor_command& b) {
-        const int comparison = strcmp(a.name, b.name);
-        return comparison < 0;
-    });
-
-    s_unsorted_commands = false;
 }
 
 editor_command_func_t editor_context::lookup_command(const char* name)
@@ -1032,22 +1028,16 @@ editor_command_func_t editor_context::lookup_command(const char* name)
     if (!name)
         return nullptr;
 
-    ensure_commands_sorted();
+    const auto found = s_commands.find(name);
 
-    const auto found = std::lower_bound(s_commands.begin(), s_commands.end(), name, [](const editor_command& candidate, const char* name) {
-        const int comparison = strcmp(candidate.name, name);
-        return comparison < 0;
-    });
-
-    if (found == s_commands.end() || strcmp(found->name, name) != 0)
+    if (found == s_commands.end() || stricmp(found->first, name) != 0)
         return nullptr;
 
-    return found->func;
+    return found->second;
 }
 
-std::vector<editor_command> editor_context::s_commands;
 std::vector<cstring> editor_context::s_command_names;
-bool editor_context::s_unsorted_commands = false;
+std::map<const char*, editor_command_func_t, editor_context::stricmp_less> editor_context::s_commands;
 
 //------------------------------------------------------------------------------
 

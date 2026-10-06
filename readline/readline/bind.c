@@ -150,29 +150,6 @@ rl_bind_key (int key, rl_command_func_t *function)
   if (key < 0 || key > largest_char)
     return (key);
 
-  /* Want to make this a multi-character key sequence with an ESC prefix */
-  if (META_CHAR (key) && _rl_convert_meta_chars_to_ascii)
-    {
-      if (_rl_keymap[ESC].type == ISKMAP)
-	{
-	  Keymap escmap;
-
-	  escmap = FUNCTION_TO_KEYMAP (_rl_keymap, ESC);
-	  key = UNMETA (key);
-	  escmap[key].type = ISFUNC;
-	  escmap[key].function = function;
-	  return (0);
-	}
-
-      /* Otherwise, let's just let rl_generic_bind handle the key sequence.
-	 We start it off with ESC here and let the code below add the rest
-	 of the sequence. */
-      keyseq[0] = ESC;
-      l = 1;
-      key = UNMETA(key);
-      goto bind_keyseq;
-    }
-
   /* If it's bound to a function or macro, just overwrite.  Otherwise we have
      to treat it as a key sequence so rl_generic_bind handles shadow keymaps
      for us.  If we are binding '\' or \C-@ (NUL) make sure to escape it so
@@ -187,7 +164,6 @@ rl_bind_key (int key, rl_command_func_t *function)
   else
     {
       l = 0;
-bind_keyseq:
       if (key == '\\')
 	{
 	  keyseq[l++] = '\\';
@@ -632,20 +608,7 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 /* end_clink_change */
 	}
 
-      /* If convert-meta is turned on, convert a meta char to a key sequence */
-      if (META_CHAR (c) && _rl_convert_meta_chars_to_ascii)
-	{
-	  int x = UNMETA (c);
-	  if (x)
-	    {
-	      array[l++] = ESC;	/* ESC is meta-prefix */
-	      array[l++] = x;
-	    }
-	  else
-	    array[l++] = c;	/* just do the best we can without sticking a NUL in there. */
-	}
-      else
-	array[l++] = (c);
+      array[l++] = (c);
 
       has_meta = 0;
 
@@ -815,24 +778,6 @@ _rl_function_of_keyseq_internal (const char *keyseq, size_t len, Keymap map, int
   for (i = 0; keyseq && i < len; i++)
     {
       unsigned char ic = keyseq[i];
-
-      if (META_CHAR (ic) && _rl_convert_meta_chars_to_ascii)
-	{
-	  if (map[ESC].type == ISKMAP)
-	    {
-	      map = FUNCTION_TO_KEYMAP (map, ESC);
-	      ic = UNMETA (ic);
-	    }
-	  /* XXX - should we just return NULL here, since this obviously
-	     doesn't match? */
-	  else
-	    {
-	      if (type)
-		*type = map[ESC].type;
-
-	      return (map[ESC].function);
-	    }
-	}
 
       if (map[ic].type == ISKMAP)
 	{
@@ -2114,9 +2059,9 @@ static const struct {
 /* end_clink_change */
   { "completion-ignore-case",	&_rl_completion_case_fold,	0 },
   { "completion-map-case",	&_rl_completion_case_map,	0 },
-  { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
+//   { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
   { "disable-completion",	&rl_inhibit_completion,		0 },
-  { "echo-control-characters",	&_rl_echo_control_chars,	0 },
+//   { "echo-control-characters",	&_rl_echo_control_chars,	0 },
   { "enable-active-region",	&_rl_enable_active_region,	0 },
   { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	V_SPECIAL },
   { "enable-keypad",		&_rl_enable_keypad,		0 },
@@ -2127,7 +2072,7 @@ static const struct {
 /* end_clink_change */
   { "history-preserve-point",	&_rl_history_preserve_point,	0 },
   { "horizontal-scroll-mode",	&_rl_horizontal_scroll_mode,	0 },
-  { "input-meta",		&_rl_meta_flag,			0 },
+//   { "input-meta",		&_rl_meta_flag,			0 },
   { "mark-directories",		&_rl_complete_mark_directories,	0 },
   { "mark-modified-lines",	&_rl_mark_modified_lines,	0 },
   { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },
@@ -2136,8 +2081,8 @@ static const struct {
 /* begin_clink_change */
   { "menu-complete-wraparound",	&_rl_menu_complete_wraparound, 0 },
 /* end_clink_change */
-  { "meta-flag",		&_rl_meta_flag,			0 },
-  { "output-meta",		&_rl_output_meta_chars,		0 },
+//   { "meta-flag",		&_rl_meta_flag,			0 },
+//   { "output-meta",		&_rl_output_meta_chars,		0 },
   { "page-completions",		&_rl_page_completions,		0 },
   { "prefer-visible-bell",	&_rl_prefer_visible_bell,	V_SPECIAL },
   { "print-completions-horizontally", &_rl_print_completions_horizontally, 0 },

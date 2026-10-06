@@ -88,8 +88,6 @@ extern int errno;
 static char *readline_internal (void);
 static void readline_initialize_everything (void);
 
-static void run_startup_hooks (void);
-
 static void bind_arrow_keys_internal (Keymap);
 static void bind_arrow_keys (void);
 
@@ -187,35 +185,8 @@ FILE *_rl_in_stream, *_rl_out_stream;
 FILE *rl_instream = (FILE *)NULL;
 FILE *rl_outstream = (FILE *)NULL;
 
-/* Non-zero means echo characters as they are read.  Defaults to no echo;
-   set to 1 if there is a controlling terminal, we can get its attributes,
-   and the attributes include `echo'.  Look at rltty.c:prepare_terminal_settings
-   for the code that sets it. */
-int _rl_echoing_p = 0;
-
-/* Current prompt. */
-char *rl_prompt = (char *)NULL;
-int rl_visible_prompt_length = 0;
-
-/* Set to non-zero by calling application if it has already printed rl_prompt
-   and does not want readline to do it the first time. */
-int rl_already_prompted = 0;
-
 /* The number of characters read in order to type this complete command. */
 int rl_key_sequence_length = 0;
-
-/* If non-zero, then this is the address of a function to call just
-   before readline_internal_setup () prints the first prompt. */
-rl_hook_func_t *rl_startup_hook = (rl_hook_func_t *)NULL;
-
-/* Any readline function can set this and have it run just before the user's
-   rl_startup_hook. */
-rl_hook_func_t *_rl_internal_startup_hook = (rl_hook_func_t *)NULL;
-
-/* If non-zero, this is the address of a function to call just before
-   readline_internal_setup () returns and readline_internal starts
-   reading input characters. */
-rl_hook_func_t *rl_pre_input_hook = (rl_hook_func_t *)NULL;
 
 /* What we use internally.  You should always refer to RL_LINE_BUFFER. */
 static char *the_line;
@@ -306,15 +277,6 @@ int _rl_keyseq_timeout = 500;
    parser directives. */
 unsigned char _rl_parsing_conditionalized_out = 0;
 
-/* Non-zero means to convert characters with the meta bit set to
-   escape-prefixed characters so we can indirect through
-   emacs_meta_keymap or vi_escape_keymap. */
-int _rl_convert_meta_chars_to_ascii = 1;
-
-/* Non-zero means to output characters with the meta bit set directly
-   rather than as a meta-prefixed escape sequence. */
-int _rl_output_meta_chars = 0;
-
 /* Non-zero means to look at the termios special characters and bind
    them to equivalent readline functions at startup. */
 int _rl_bind_stty_chars = 1;
@@ -323,10 +285,6 @@ int _rl_bind_stty_chars = 1;
    whenever rl_done is set and readline returns) and revert each line to
    its initial state. */
 int _rl_revert_all_at_newline = 0;
-
-/* Non-zero means to honor the termios ECHOCTL bit and echo control
-   characters corresponding to keyboard-generated signals. */
-int _rl_echo_control_chars = 1;
 
 /* Non-zero means to prefix the displayed prompt with a character indicating
    the editing mode: @ for emacs, : for vi-command, + for vi-insert. */
@@ -343,89 +301,6 @@ int _rl_enable_active_region = BRACKETED_PASTE_DEFAULT;
 /*			Top Level Functions			    */
 /*								    */
 /* **************************************************************** */
-
-/* Non-zero means treat 0200 bit in terminal input as Meta bit. */
-int _rl_meta_flag = 0;	/* Forward declaration */
-
-/* Set up the prompt and expand it.  Called from readline() and
-   rl_callback_handler_install (). */
-int
-rl_set_prompt (const char *prompt)
-{
-  FREE (rl_prompt);
-  rl_prompt = prompt ? savestring (prompt) : (char *)NULL;
-  rl_display_prompt = rl_prompt ? rl_prompt : "";
-
-  rl_visible_prompt_length = rl_expand_prompt (rl_prompt);
-  return 0;
-}
-  
-/* Read a line of input.  Prompt with PROMPT.  An empty PROMPT means
-   none.  A return value of NULL means that EOF was encountered. */
-char *
-readline (const char *prompt)
-{
-  char *value;
-#if 0
-  int in_callback;
-#endif
-
-  /* If we are at EOF return a NULL string. */
-  if (rl_pending_input == EOF)
-    {
-      rl_clear_pending_input ();
-      return ((char *)NULL);
-    }
-
-#if 0
-  /* If readline() is called after installing a callback handler, temporarily
-     turn off the callback state to avoid ensuing messiness.  Patch supplied
-     by the gdb folks.  XXX -- disabled.  This can be fooled and readline
-     left in a strange state by a poorly-timed longjmp. */
-  if (in_callback = RL_ISSTATE (RL_STATE_CALLBACK))
-    RL_UNSETSTATE (RL_STATE_CALLBACK);
-#endif
-
-  rl_set_prompt (prompt);
-
-  rl_initialize ();
-  if (rl_prep_term_function)
-    (*rl_prep_term_function) (_rl_meta_flag);
-
-#if defined (HANDLE_SIGNALS)
-  rl_set_signals ();
-#endif
-
-  value = readline_internal ();
-  if (rl_deprep_term_function)
-    (*rl_deprep_term_function) ();
-
-#if defined (HANDLE_SIGNALS)
-  rl_clear_signals ();
-#endif
-
-#if 0
-  if (in_callback)
-    RL_SETSTATE (RL_STATE_CALLBACK);
-#endif
-
-#if HAVE_DECL_AUDIT_USER_TTY && defined (HAVE_LIBAUDIT_H) && defined (ENABLE_TTY_AUDIT_SUPPORT)
-  if (value)
-    _rl_audit_tty (value);
-#endif
-
-  return (value);
-}
-
-static void
-run_startup_hooks (void)
-{
-  if (rl_startup_hook)
-    (*rl_startup_hook) ();
-
-  if (_rl_internal_startup_hook)
-    (*_rl_internal_startup_hook) ();
-}
 
 #if defined (READLINE_CALLBACKS)
 #  define STATIC_CALLBACK
@@ -446,8 +321,6 @@ readline_internal_setup (void)
   if (_rl_enable_meta & RL_ISSTATE (RL_STATE_TERMPREPPED))
     _rl_enable_meta_key ();
 
-  run_startup_hooks ();
-
   rl_deactivate_mark ();
 
 #if defined (VI_MODE)
@@ -457,33 +330,6 @@ readline_internal_setup (void)
 #endif /* VI_MODE */
     if (_rl_show_mode_in_prompt)
       _rl_reset_prompt ();
-
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-  /* If we're not echoing, we still want to at least print a prompt, because
-     rl_redisplay will not do it for us.  If the calling application has a
-     custom redisplay function, though, let that function handle it. */
-  if (_rl_echoing_p == 0 && rl_redisplay_function == rl_redisplay)
-    {
-      if (rl_prompt && rl_already_prompted == 0)
-	{
-	  nprompt = _rl_strip_prompt (rl_prompt);
-	  fprintf (_rl_out_stream, "%s", nprompt);
-	  fflush (_rl_out_stream);
-	  xfree (nprompt);
-	}
-    }
-  else
-#endif
-    {
-      if (rl_prompt && rl_already_prompted)
-	rl_on_new_line_with_prompt ();
-      else
-	rl_on_new_line ();
-      (*rl_redisplay_function) ();
-    }
-
-  if (rl_pre_input_hook)
-    (*rl_pre_input_hook) ();
 
   RL_CHECK_SIGNALS ();
 }
@@ -814,8 +660,7 @@ readline_internal_charloop (void)
 #endif /* READLINE_CALLBACKS */
 
 /* Read a line of input from the global rl_instream, doing output on
-   the global rl_outstream.
-   If rl_prompt is non-null, then that is our prompt. */
+   the global rl_outstream. */
 static char *
 readline_internal (void)
 {
@@ -959,23 +804,6 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 #if defined (READLINE_CALLBACKS)
   _rl_keyseq_cxt *cxt;
 #endif
-
-  if (META_CHAR (key) && _rl_convert_meta_chars_to_ascii)
-    {
-      if (map[ESC].type == ISKMAP)
-	{
-	  if (RL_ISSTATE (RL_STATE_MACRODEF))
-	    _rl_add_macro_char (ESC);
-	  RESIZE_KEYSEQ_BUFFER ();
-	  rl_executing_keyseq[rl_key_sequence_length++] = ESC;
-	  map = FUNCTION_TO_KEYMAP (map, ESC);
-	  key = UNMETA (key);
-	  return (_rl_dispatch (key, map));
-	}
-      else
-	rl_ding ();
-      return 0;
-    }
 
   if (RL_ISSTATE (RL_STATE_MACRODEF))
     _rl_add_macro_char (key);
@@ -1317,11 +1145,6 @@ rl_initialize (void)
       rl_initialized++;
       RL_SETSTATE(RL_STATE_INITIALIZED);
     }
-  else
-    _rl_reset_locale ();	/* check current locale and set locale variables */
-
-  /* Initialize the current line information. */
-  _rl_init_line_state ();
 
   /* We aren't done yet.  We haven't even gotten started yet! */
   rl_done = 0;
@@ -1355,48 +1178,10 @@ rl_initialize (void)
   return 0;
 }
 
-#if 0
-#if defined (__EMX__)
-static void
-_emx_build_environ (void)
-{
-  TIB *tibp;
-  PIB *pibp;
-  char *t, **tp;
-  int c;
-
-  DosGetInfoBlocks (&tibp, &pibp);
-  t = pibp->pib_pchenv;
-  for (c = 1; *t; c++)
-    t += strlen (t) + 1;
-  tp = environ = (char **)xmalloc ((c + 1) * sizeof (char *));
-  t = pibp->pib_pchenv;
-  while (*t)
-    {
-      *tp++ = t;
-      t += strlen (t) + 1;
-    }
-  *tp = 0;
-}
-#endif /* __EMX__ */
-#endif
-
 /* Initialize the entire state of the world. */
 static void
 readline_initialize_everything (void)
 {
-#if 0
-#if defined (__EMX__)
-  if (environ == 0)
-    _emx_build_environ ();
-#endif
-#endif
-
-#if 0
-  /* Find out if we are running in Emacs -- UNUSED. */
-  running_in_emacs = sh_get_env_value ("EMACS") != (char *)0;
-#endif
-
   /* Set up input and output if they are not already set up. */
   if (!rl_instream)
     rl_instream = stdin;
@@ -1410,46 +1195,12 @@ readline_initialize_everything (void)
   _rl_in_stream = rl_instream;
   _rl_out_stream = rl_outstream;
 
-  /* Allocate data structures. */
-  if (rl_line_buffer == 0)
-    rl_line_buffer = (char *)xmalloc (rl_line_buffer_len = DEFAULT_BUFFER_SIZE);
-
-  /* Initialize the terminal interface. */
-  if (rl_terminal_name == 0)
-    rl_terminal_name = sh_get_env_value ("TERM");
-  _rl_init_terminal_io (rl_terminal_name);
-
-  /* Bind tty characters to readline functions. */
-  readline_default_bindings ();
-
   /* Initialize the function names. */
   rl_initialize_funmap ();
-
-  /* Decide whether we should automatically go into eight-bit mode. */
-  _rl_init_eightbit ();
-      
-/* begin_clink_change
- * Don't load here; Clink needs to be in control of the inputrc search.
- * Also, loading here happened after Lua was loaded, which interfered with Lua
- * scripts suppressing the *-mode-string config variables.
- */
-  /* Read in the init file. */
-  //rl_read_init_file ((char *)NULL);
-/* end_clink_change */
-
-  /* XXX */
-  if (_rl_horizontal_scroll_mode && _rl_term_autowrap)
-    {
-      _rl_screenwidth--;
-      _rl_screenchars -= _rl_screenheight;
-    }
 
   /* Override the effect of any `set keymap' assignments in the
      inputrc file. */
   rl_set_keymap_from_edit_mode ();
-
-  /* Try to bind a common arrow key prefix, if not already bound. */
-  bind_arrow_keys ();
 
   /* Bind the bracketed paste prefix assuming that the user will enable
      it on terminals that support it. */
@@ -1611,99 +1362,6 @@ bind_bracketed_paste_prefix (void)
 /*		Saving and Restoring Readline's state		    */
 /*								    */
 /* **************************************************************** */
-
-/* begin_clink_change
- * Don't use these; they don't save/restore everything. */
-#if 0
-/* end_clink_change */
-int
-rl_save_state (struct readline_state *sp)
-{
-  if (sp == 0)
-    return -1;
-
-  sp->point = rl_point;
-  sp->end = rl_end;
-  sp->mark = rl_mark;
-  sp->buffer = rl_line_buffer;
-  sp->buflen = rl_line_buffer_len;
-  sp->ul = rl_undo_list;
-  sp->prompt = rl_prompt;
-
-  sp->rlstate = rl_readline_state;
-  sp->done = rl_done;
-  sp->kmap = _rl_keymap;
-
-  sp->lastfunc = rl_last_func;
-  sp->insmode = rl_insert_mode;
-  sp->edmode = rl_editing_mode;
-  sp->kseq = rl_executing_keyseq;
-  sp->kseqlen = rl_key_sequence_length;
-  sp->inf = rl_instream;
-  sp->outf = rl_outstream;
-  sp->pendingin = rl_pending_input;
-  sp->macro = rl_executing_macro;
-
-  sp->catchsigs = rl_catch_signals;
-  sp->catchsigwinch = rl_catch_sigwinch;
-
-  sp->entryfunc = rl_completion_entry_function;
-  sp->menuentryfunc = rl_menu_completion_entry_function;
-  sp->ignorefunc = rl_ignore_some_completions_function;
-  sp->attemptfunc = rl_attempted_completion_function;
-  sp->wordbreakchars = rl_completer_word_break_characters;
-
-  return (0);
-}
-
-int
-rl_restore_state (struct readline_state *sp)
-{
-  if (sp == 0)
-    return -1;
-
-  rl_point = sp->point;
-  rl_end = sp->end;
-  rl_mark = sp->mark;
-  the_line = rl_line_buffer = sp->buffer;
-  rl_line_buffer_len = sp->buflen;
-  rl_undo_list = sp->ul;
-  rl_prompt = sp->prompt;
-
-  rl_readline_state = sp->rlstate;
-  rl_done = sp->done;
-  _rl_keymap = sp->kmap;
-
-  rl_last_func = sp->lastfunc;
-/* begin_clink_change */
-  if (rl_last_func_hook_func)
-    rl_last_func_hook_func (0);
-/* end_clink_change */
-  rl_insert_mode = sp->insmode;
-  rl_editing_mode = sp->edmode;
-  rl_executing_keyseq = sp->kseq;
-  rl_key_sequence_length = sp->kseqlen;
-  rl_instream = sp->inf;
-  rl_outstream = sp->outf;
-  rl_pending_input = sp->pendingin;
-  rl_executing_macro = sp->macro;
-
-  rl_catch_signals = sp->catchsigs;
-  rl_catch_sigwinch = sp->catchsigwinch;
-
-  rl_completion_entry_function = sp->entryfunc;
-  rl_menu_completion_entry_function = sp->menuentryfunc;
-  rl_ignore_some_completions_function = sp->ignorefunc;
-  rl_attempted_completion_function = sp->attemptfunc;
-  rl_completer_word_break_characters = sp->wordbreakchars;
-
-  rl_deactivate_mark ();
-
-  return (0);
-}
-/* begin_clink_change */
-#endif
-/* end_clink_change */
 
 /* Functions to manage the string that is the current key sequence. */
 

@@ -3,9 +3,9 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "lib/display_readline.h"
 #include "terminal/scroll.h"
 #include "terminal/screen_buffer.h" // for set_console_title
-#include "terminal/printer.h"
 #include "terminal/find_line.h"
 #include "terminal/ecma48_iter.h"
 #include "terminal/wcwidth.h"
@@ -24,7 +24,6 @@
 
 extern "C" {
 #include <readline/readline.h>
-extern "C" int _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------
@@ -64,7 +63,7 @@ static int16 GetConsoleNumLines()
     // the Readline input line.  That may contain some of the prompt text, if
     // the prompt text is more than one line.
     COORD cursor;
-    if (!g_printer)
+    if (!g_terminal)
     {
         assert(!is_test_harness());
         CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -75,9 +74,10 @@ static int16 GetConsoleNumLines()
     }
     else
     {
-        g_printer->get_cursor_pos(cursor.X, cursor.Y);
+        g_terminal->get_cursor_pos(cursor.X, cursor.Y);
     }
-    cursor.Y -= _rl_last_v_pos;
+// TODO-TIB: test this.
+    cursor.Y -= get_relative_cursor_row();
     return cursor.Y + 1;
 }
 
@@ -255,7 +255,7 @@ int32 explode_ansi(lua_State* state)
 static int32 get_width(lua_State* state)
 {
     int32 width;
-    if (!g_printer)
+    if (!g_terminal)
     {
         assert(!is_test_harness());
         CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -266,7 +266,7 @@ static int32 get_width(lua_State* state)
     }
     else
     {
-        width = g_printer->get_columns();
+        width = g_terminal->get_columns();
     }
 
     lua_pushinteger(state, width);
@@ -281,7 +281,7 @@ static int32 get_width(lua_State* state)
 static int32 get_height(lua_State* state)
 {
     int32 height;
-    if (!g_printer)
+    if (!g_terminal)
     {
         assert(!is_test_harness());
         CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -292,7 +292,7 @@ static int32 get_height(lua_State* state)
     }
     else
     {
-        height = g_printer->get_rows();
+        height = g_terminal->get_rows();
     }
 
     lua_pushinteger(state, height);
@@ -321,21 +321,13 @@ static int32 get_num_lines(lua_State* state)
 /// Returns the current top line (scroll position) in the console screen buffer.
 static int32 get_top(lua_State* state)
 {
-    int32 top;
-    if (!g_printer)
-    {
-        assert(!is_test_harness());
-        CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-        HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
-        if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-            return 0;
-        top = csbiInfo.srWindow.Top;
-    }
-    else
-    {
-        top = g_printer->get_top();
-    }
+    assert(!is_test_harness());
+    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+    HANDLE h = get_std_handle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+        return 0;
 
+    const int32 top = csbiInfo.srWindow.Top;
     lua_pushinteger(state, top + 1);
     return 1;
 }
@@ -351,7 +343,7 @@ static int32 get_top(lua_State* state)
 static int32 get_cursor_pos(lua_State* state)
 {
     COORD cursor;
-    if (!g_printer)
+    if (!g_terminal)
     {
         assert(!is_test_harness());
         CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -362,7 +354,7 @@ static int32 get_cursor_pos(lua_State* state)
     }
     else
     {
-        g_printer->get_cursor_pos(cursor.X, cursor.Y);
+        g_terminal->get_cursor_pos(cursor.X, cursor.Y);
     }
 
     lua_pushinteger(state, cursor.X + 1);
@@ -381,7 +373,7 @@ static int32 get_cursor_pos(lua_State* state)
 /// Any trailing whitespace is stripped before returning the text.
 static int32 get_line_text(lua_State* state)
 {
-    if (!g_printer)
+    if (!g_terminal)
         return 0;
 
     const auto _line = checkinteger(state, 1);
@@ -397,7 +389,7 @@ static int32 get_line_text(lua_State* state)
     line = max<int32>(line, 0);
 
     str_moveable out;
-    if (!g_printer->get_line_text(line, out))
+    if (!g_terminal->get_out()->get_line_text(line, out))
         return 0;
 
     lua_pushlstring(state, out.c_str(), out.length());
@@ -487,7 +479,7 @@ static int32 set_title(lua_State* state)
 /// default text color.
 static int32 is_line_default_color(lua_State* state)
 {
-    if (!g_printer)
+    if (!g_terminal)
         return 0;
 
     const auto _line = checkinteger(state, 1);
@@ -502,7 +494,7 @@ static int32 is_line_default_color(lua_State* state)
     line = min<int32>(line, num_lines - 1);
     line = max<int32>(line, 0);
 
-    int32 result = g_printer->is_line_default_color(line);
+    int32 result = g_terminal->get_out()->is_line_default_color(line);
 
     if (result < 0)
         return 0;
@@ -554,7 +546,7 @@ static int32 is_line_default_color(lua_State* state)
 /// </table>
 static int32 line_has_color(lua_State* state)
 {
-    if (!g_printer)
+    if (!g_terminal)
         return 0;
 
     const auto _line = checkinteger(state, 1);
@@ -586,7 +578,7 @@ static int32 line_has_color(lua_State* state)
     if (lua_isnumber(state, 2))
     {
         BYTE attr = BYTE(lua_tointeger(state, 2));
-        result = g_printer->line_has_color(line, &attr, 1, mask);
+        result = g_terminal->get_out()->line_has_color(line, &attr, 1, mask);
     }
     else
     {
@@ -606,7 +598,7 @@ static int32 line_has_color(lua_State* state)
 
             lua_pop(state, 1);
         }
-        result = g_printer->line_has_color(line, attrs, num_attrs, mask);
+        result = g_terminal->get_out()->line_has_color(line, attrs, num_attrs, mask);
     }
 
     if (result < 0)
@@ -618,7 +610,7 @@ static int32 line_has_color(lua_State* state)
 
 static int32 find_line(lua_State* state, int32 direction)
 {
-    if (!g_printer)
+    if (!g_terminal)
         return 0;
 
     int32 arg = 1;
@@ -709,7 +701,7 @@ static int32 find_line(lua_State* state, int32 direction)
         }
     }
 
-    int32 line_found = g_printer->find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
+    int32 line_found = g_terminal->get_out()->find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
 
     lua_pushinteger(state, line_found + 1);
     return 1;

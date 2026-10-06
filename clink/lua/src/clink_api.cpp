@@ -33,7 +33,6 @@
 #include <lib/slash_translation.h>
 #include <lib/host_callbacks.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
 #include <shellapi.h>
 
@@ -144,16 +143,9 @@ static int32 clink_print(lua_State* state)
         out.concat(s, int32(l));
     }
 
-    if (g_printer)
-    {
-        if (nl)
-            out.concat("\n");
-        g_printer->print(out.c_str(), out.length());
-    }
-    else
-    {
-        printf("%s%s", out.c_str(), nl ? "\n" : "");
-    }
+    if (nl)
+        out.concat("\n");
+    clink_write(out.c_str(), out.length());
 
     if (err)
         return luaL_error(state, LUA_QL("tostring") " must return a string to " LUA_QL("print"));

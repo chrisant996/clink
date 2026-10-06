@@ -220,8 +220,6 @@ rl_display_search (char *search_string, int flags, int where)
       strcpy (message + msglen, search_string);
       msglen += searchlen;
     }
-  else
-    _rl_optimize_redisplay ();
 
   strcpy (message + msglen, "': ");
 
@@ -275,8 +273,6 @@ _rl_isearch_init (int direction)
   /* The line where we start the search. */
   cxt->history_pos = cxt->save_line;
 
-  rl_save_prompt ();
-
   /* Initialize search parameters. */
   cxt->search_string = (char *)xmalloc (cxt->search_string_size = 128);
   cxt->search_string[cxt->search_string_index = 0] = '\0';
@@ -301,8 +297,6 @@ _rl_isearch_fini (_rl_search_cxt *cxt)
 {
   /* First put back the original state. */
   rl_replace_line (cxt->lines[cxt->save_line], 0);
-
-  rl_restore_prompt ();
 
   /* Save the search string for possible later use. */
   FREE (last_isearch_string);
@@ -338,7 +332,6 @@ _rl_isearch_fini (_rl_search_cxt *cxt)
   _rl_fix_point (0);
   rl_deactivate_mark ();
 
-/*  _rl_optimize_redisplay (); */
   rl_clear_message ();
 }
 
@@ -669,7 +662,6 @@ opcode_dispatch:
       rl_point = cxt->save_point;
       rl_mark = cxt->save_mark;
       rl_deactivate_mark ();
-      rl_restore_prompt();
       rl_clear_message ();
 
       _rl_fix_point (1);	/* in case save_line and save_point are out of sync */

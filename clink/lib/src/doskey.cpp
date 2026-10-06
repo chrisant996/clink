@@ -12,7 +12,6 @@
 #include <core/str_tokeniser.h>
 #include <core/debugheap.h>
 
-#include "terminal/printer.h"
 #include "terminal/terminal_helpers.h"
 
 //------------------------------------------------------------------------------
@@ -351,13 +350,13 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
 #ifdef DEBUG_RESOLVEIMPL
     int32 dbg_row = 0;
     str<> tmp;
-    if (g_printer)
+    if (g_terminal)
     {
         dbg_row++;
         tmp.format("\x1b[s\x1b[%dH\x1b[K", dbg_row);
-        g_printer->print(tmp.c_str(), tmp.length());
+        g_terminal->print(tmp.c_str(), tmp.length());
         if (point_arg == 0 && point_ofs < 0)
-            g_printer->print("before arg1 \t");
+            g_terminal->print("before arg1 \t");
     }
 #endif
 
@@ -466,20 +465,20 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
         else
             point_ofs_star = *point - int32(out_len + args.front()->ptr - command.get_pointer());
 #ifdef DEBUG_RESOLVEIMPL
-        if (g_printer)
+        if (g_terminal)
         {
             tmp.format("size\t%d\targ begin\t%d\targ end\t%d\tparg\t%d\tin_cmd\t%d\tofs_star %d\t", int32(args.size()), int32(out_len + args.front()->ptr - command.get_pointer()), int32(out_len + args.back()->ptr - command.get_pointer() + args.back()->length), point_arg, point_arg_star, point_ofs_star);
-            g_printer->print(tmp.c_str(), tmp.length());
+            g_terminal->print(tmp.c_str(), tmp.length());
         }
 #endif
     }
 
 #ifdef DEBUG_RESOLVEIMPL
-    if (g_printer)
+    if (g_terminal)
     {
         dbg_row++;
         tmp.format("\x1b[%dH\x1b[K", dbg_row);
-        g_printer->print(tmp.c_str(), tmp.length());
+        g_terminal->print(tmp.c_str(), tmp.length());
     }
 #endif
 
@@ -540,7 +539,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
                 if (point_arg_star || point_arg >= 0)
                 {
 #ifdef DEBUG_RESOLVEIMPL
-                    if (g_printer)
+                    if (g_terminal)
                     {
                         if (point)
                         {
@@ -548,7 +547,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
                                 tmp.format("STAR:\tTlen\t%d\t", stream.trimmed_length());
                             else
                                 tmp.format("STAR:\tslen\t%d\tofs\t%d\t", stream.length(), point_ofs_star);
-                            g_printer->print(tmp.c_str(), tmp.length());
+                            g_terminal->print(tmp.c_str(), tmp.length());
                         }
                     }
 #endif
@@ -564,10 +563,10 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
                 if (c == point_arg && point_arg >= 0 && point_ofs >= 0)
                 {
 #ifdef DEBUG_RESOLVEIMPL
-                    if (g_printer && point)
+                    if (g_terminal && point)
                     {
                         tmp.format("ARG%d:\tslen\t%d\tofs\t%d\t", c + 1, stream.length(), point_ofs);
-                        g_printer->print(tmp.c_str(), tmp.length());
+                        g_terminal->print(tmp.c_str(), tmp.length());
                     }
 #endif
                     *point = stream.length() + point_ofs;
@@ -576,10 +575,10 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
                 else if (last_arg_resolved + 1 == point_arg && point_arg >= 0 && point_ofs < 0)
                 {
 #ifdef DEBUG_RESOLVEIMPL
-                    if (g_printer && point)
+                    if (g_terminal && point)
                     {
                         tmp.format("ARG%d:\tTlen\t%d\t\t\t", c + 1, stream.trimmed_length());
-                        g_printer->print(tmp.c_str(), tmp.length());
+                        g_terminal->print(tmp.c_str(), tmp.length());
                     }
 #endif
                     *point = stream.trimmed_length();
@@ -608,10 +607,10 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
     if (point)
     {
 #ifdef DEBUG_RESOLVEIMPL
-        if (g_printer)
+        if (g_terminal)
         {
             tmp.format("END:\tTlen\t%d\t", stream.trimmed_length());
-            g_printer->print(tmp.c_str(), tmp.length());
+            g_terminal->print(tmp.c_str(), tmp.length());
         }
 #endif
         *point = max<int32>(out_len, stream.trimmed_length());
@@ -625,8 +624,8 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
     }
 
 #ifdef DEBUG_RESOLVEIMPL
-    if (g_printer)
-        g_printer->print("\x1b[u");
+    if (g_terminal)
+        g_terminal->print("\x1b[u");
 #endif
 
     return true;

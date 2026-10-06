@@ -5,15 +5,28 @@
 
 #include <core/base.h>
 
+#include <tib.h>
+
 class matches;
 class matches_iter;
 typedef int rl_command_func_t (int, int);
 class printer;
+class input_idle;
+class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
 // Readline is based around global variables and global functions, which
 // doesn't mesh well with object oriented design.  The following global
 // functions help bridge that gap.
+
+//------------------------------------------------------------------------------
+extern std::shared_ptr<tib::input_box> g_tib;
+extern str_moveable g_prompt_prefix;
+extern str_moveable g_prompt;
+extern str_moveable g_rprompt;
+
+//------------------------------------------------------------------------------
+#define clink_write tib::term_out
 
 //------------------------------------------------------------------------------
 bool    is_force_reload_scripts();
@@ -25,9 +38,7 @@ void    update_rl_modes_from_matches(const matches* matches, const matches_iter&
 
 //------------------------------------------------------------------------------
 const char* get_last_prompt();
-
-//------------------------------------------------------------------------------
-void    increment_line_generation_id();
+void init_prompt(const str_base& prompt, const str_base& rprompt);
 
 //------------------------------------------------------------------------------
 void    set_prev_inputline(const char* line, uint32 length=-1);
@@ -47,6 +58,9 @@ void    clear_macro_descriptions();
 bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort);
 
 //------------------------------------------------------------------------------
+tib::resolved_binding lookup_keyseq(tib::editor_context& ctx, const char* keyseq, size_t len=tib::c_auto_length);
+
+//------------------------------------------------------------------------------
 bool    rl_has_queued_input();
 
 //------------------------------------------------------------------------------
@@ -62,15 +76,19 @@ void    set_refilter_after_resize(bool refilter);
 class resync_rl_cursor_pos
 {
 public:
-                resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite=false);
+                resync_rl_cursor_pos();
                 ~resync_rl_cursor_pos();
     void        clear();
     void        resync(bool update_rl_last_pos=true);
     int16       get_cursor_x() const { return m_cursor_x; }
 private:
-    printer*    m_printer;
+    bool        m_resync;
     int16       m_cursor_x;
-    const bool  m_use_rl_fwrite;
     const int32 m_vpos;
     const int32 m_cpos;
 };
+
+//------------------------------------------------------------------------------
+#undef RUBOUT
+constexpr uint8 RUBOUT = 0x7f;
+

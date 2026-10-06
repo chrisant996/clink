@@ -10,7 +10,7 @@
 #include <core/os.h>
 #include <core/str_unordered_set.h>
 #include <core/debugheap.h>
-#include <terminal/printer.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 
 #include <readline/readline.h>
@@ -165,7 +165,7 @@ void task_manager::diagnostics()
 
     s.clear();
     s.format("%sasync tasks:%s\n", bold, norm);
-    g_printer->print(s.c_str(), s.length());
+    g_terminal->write(s.c_str(), s.length());
 
     for (auto iter : m_map)
     {
@@ -182,7 +182,7 @@ void task_manager::diagnostics()
             s.format("  %p:%s  %snil%s  %s\n", ref, states.c_str(), dark, norm, iter.second->m_src.c_str());
         else
             s.format("  %p:%s  %s%d%s  %s\n", iter.second.get(), states.c_str(), pending ? bold : dark, ref, norm, iter.second->m_src.c_str());
-        g_printer->print(s.c_str(), s.length());
+        g_terminal->write(s.c_str(), s.length());
     }
 }
 

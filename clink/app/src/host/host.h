@@ -20,7 +20,8 @@ class host_lua;
 class prompt_filter;
 class hinter;
 class suggester;
-class printer_context;
+class terminal_context;
+class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
 class host : public host_callbacks
@@ -50,7 +51,6 @@ public:
     bool            get_command_word(line_state& line, str_base& command_word, bool& quoted, recognition& recog, str_base& file) override;
 
 protected:
-    std::unique_ptr<printer_context> make_printer_context();
     void            adjust_prompt_spacing();
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit=true);
     bool            dequeue_line(wstr_base& out, dequeue_flags& flags);
@@ -67,8 +67,6 @@ private:
 private:
     const char*     m_name;
     doskey          m_doskey;
-    terminal        m_terminal;
-    printer*        m_printer;
     host_lua*       m_lua = nullptr;
     prompt_filter*  m_prompt_filter = nullptr;
     suggester*      m_suggester = nullptr;

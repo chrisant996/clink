@@ -25,9 +25,16 @@
 
 #include <core/array.h>
 #include <core/str.h>
-#include <terminal/printer.h>
+
+#include <tib.h>
 
 enum class reclassify_reason : uint8;
+class line_editor_tib_callbacks;
+class tib_terminal_bridge;
+
+namespace tib {
+class input_box;
+}
 
 //------------------------------------------------------------------------------
 class prev_buffer
@@ -49,6 +56,7 @@ private:
 class line_editor_impl
     : public line_editor
     , public input_dispatcher
+    , public tib::editor_callbacks
     , public key_tester
 {
 public:
@@ -75,6 +83,10 @@ public:
     virtual void        dispatch(int32 bind_group) override;
     virtual bool        available(uint32 timeout) override;
     virtual uint8       peek() override;
+
+    // tib::editor_callbacks
+    virtual void        provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
+    virtual const char* get_face_def(char face) override;
 
     // key_tester
     virtual bool        is_bound(const char* seq, int32 len) override;
@@ -115,8 +127,7 @@ private:
         flag_generate       = 1 << 2,
         flag_restrict       = 1 << 3,
         flag_select         = 1 << 4,
-        flag_done           = 1 << 5,
-        flag_eof            = 1 << 6,
+        flag_eof            = 1 << 5,
     };
 
     struct key_t
@@ -140,6 +151,7 @@ private:
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal(bool force=false);
     bool                update_input();
+    void                wait_for_input(input_idle* idle=nullptr);
     module::context     get_context() const;
     line_state          get_linestate() const;
     line_states         get_linestates() const;
@@ -153,6 +165,7 @@ private:
                                     bool compare_cursor);
 
     desc                m_desc;
+    tib_terminal_bridge* m_terminal = nullptr;
     rl_module           m_module;
     rl_buffer           m_buffer;
     word_collector      m_collector;
@@ -167,7 +180,6 @@ private:
     word_classifications m_classifications;
     matches_impl        m_regen_matches;
     matches_impl        m_matches;
-    printer&            m_printer;
     pager_impl          m_pager;
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;

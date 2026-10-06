@@ -133,7 +133,9 @@ private:
     int8_t              m_can_self_insert = -1;
 };
 
-typedef std::vector<std::shared_ptr<key_table>> key_table_list;
+class key_table_list : public std::vector<std::shared_ptr<key_table>>, public std::enable_shared_from_this<key_table_list>
+{
+};
 
 enum class dispatch_outcome
 {
@@ -155,6 +157,10 @@ public:
     std::shared_ptr<const key_table_list> get_bindings() const;
     void                set_bindings(std::shared_ptr<const key_table_list> bindings);
     void                override_bindings(std::shared_ptr<const key_table_list> bindings);
+    // Tables a stateful target would switch to on a miss, without making
+    // that transition during the host's key-recognition probe.
+    virtual std::shared_ptr<const key_table_list> probe_bindings_on_miss() const { return nullptr; }
+    std::shared_ptr<const key_table_list> get_base_bindings() const { return m_bindings; }
 
     // The binding_resolver::step() produces a resolved_binding in three cases:
     //
@@ -193,6 +199,7 @@ struct resolved_binding
                         // True when the pending sequence contains a complete
                         // fallback and remains a prefix of a longer binding.
     bool                ambiguous() const { return more() && m_ambiguous; }
+    bool                is_func_name(const char* name) const;
     bool                dispatch();
 
     cstring             sequence;
@@ -224,9 +231,13 @@ public:
                         // Commit the longest complete binding in the pending
                         // sequence, normally after an ambiguity timeout.
     resolved_binding    resolve_pending();
+    bool                pending() const { return !m_sequence.empty(); }
+    bool                quoted_insert_pending() const;
+    // Probe without dispatching, changing targets, or consuming the prefix.
+    bool                accepts(const char* sequence, size_t len) const;
 
 private:
-    resolved_binding    resolve(bool force);
+    resolved_binding    resolve(bool force, bool probe=false);
 
     std::vector<std::weak_ptr<dispatcher_target>> m_registrants;
     cstring             m_sequence;

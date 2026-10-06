@@ -30,7 +30,6 @@
 #include <core/str_iter.h>
 #include <core/auto_closure.h>
 #include <rl/rl_commands.h>
-#include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>
 
@@ -45,7 +44,6 @@ int __append_to_match(char* text, int orig_start, int delimiter, int quote_char,
 char* __printable_part(char* text);
 void __set_completion_defaults(int what_to_do);
 int __get_y_or_n(int for_pager);
-extern int _rl_last_v_pos;
 };
 
 extern bool is_test_harness();
@@ -288,20 +286,20 @@ cant_activate:
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        resync_rl_cursor_pos resync(m_printer);
+        resync_rl_cursor_pos resync;
 
         // Move cursor after the input line.
-        _rl_move_vert(_rl_vis_botlin);
-        rl_crlf();
+        move_to_end_of_display(true);
+        clink_write("\n", 1);
 
         // Show prompt.
         if (_rl_pager_color)
             _rl_print_pager_color();
         str<> prompt;
         prompt.format("Display all %d possibilities? (y or n)", m_matches.get_match_count());
-        m_printer->print(prompt.c_str(), prompt.length());
+        clink_write(prompt.c_str(), prompt.length());
         if (_rl_pager_color)
-            m_printer->print("\x1b[m");
+            clink_write("\x1b[m");
 
         // Wait for input.
         bool yes = __get_y_or_n(0) > 0;
@@ -311,9 +309,9 @@ cant_activate:
         // the line.
         str<16> tmp;
         for (int32 up = 1 + ((prompt.length() - 1) / m_screen_cols); up > 0; --up)
-            m_printer->print("\r\x1b[K\x1b[A");
+            clink_write("\r\x1b[K\x1b[A");
         resync.resync();
-        // Now the cursor is back to _rl_vis_botlin and _rl_last_c_pos.
+        // Now the cursor is back to the original position.
 
         if (!yes)
         {
@@ -398,13 +396,14 @@ void selectcomplete_impl::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void selectcomplete_impl::on_begin_line(const context& context)
 {
+    assert(g_terminal);
     assert(!s_selectcomplete);
     s_selectcomplete = this;
     m_buffer = &context.buffer;
     m_init_matches = &context.matches;
     m_matches.set_matches(m_init_matches);
     m_data.clear();
-    m_printer = &context.printer;
+    m_terminal = g_terminal;
     m_anchor = -1;
     m_any_displayed = false;
     m_comment_row_displayed = false;
@@ -418,8 +417,8 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_prev_input_id = 0;
 #endif
 
-    m_screen_cols = context.printer.get_columns();
-    m_screen_rows = context.printer.get_rows();
+    m_screen_cols = m_terminal->get_columns();
+    m_screen_rows = m_terminal->get_rows();
     m_desc_below = false;
     m_init_desc_below = true;
     m_require_desc_below = false;
@@ -437,7 +436,7 @@ void selectcomplete_impl::on_end_line()
     m_init_matches = nullptr;
     m_matches.set_matches(nullptr);
     m_data.clear();
-    m_printer = nullptr;
+    m_terminal = nullptr;
     m_anchor = -1;
     m_desc_below = false;
     m_init_desc_below = true;
@@ -1396,7 +1395,7 @@ force_desc_below:
     }
 
     // +3 for quotes and append character (e.g. space).
-    const int32 input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
+    const int32 input_height = get_input_height() + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
     m_visible_rows = m_screen_rows - input_height;
     m_visible_rows -= min<int32>(2, m_screen_rows / 10);
 
@@ -1474,12 +1473,12 @@ void selectcomplete_impl::update_display()
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        resync_rl_cursor_pos resync(m_printer, true);
+        resync_rl_cursor_pos resync;
 
-        display_accumulator coalesce;
+        tib::display_accumulator coalesce;
 
         // Move cursor after the input line.
-        _rl_move_vert(_rl_vis_botlin);
+        move_to_end_of_display(false);
 
 #ifdef SHOW_DISPLAY_GENERATION
         static char s_chGen = '0';
@@ -1556,7 +1555,7 @@ void selectcomplete_impl::update_display()
                 if (i >= count)
                     break;
 
-                rl_crlf();
+                clink_write("\r\n", 2);
                 up++;
 
                 if (m_clear_display && row == 0)
@@ -1872,10 +1871,9 @@ void selectcomplete_impl::update_display()
             s.format("\x1b[%dA", up);
             clink_write(s.c_str(), s.length());
         }
-        clink_flush();
         coalesce.end();
         COORD cursor;
-        m_printer->get_cursor_pos(cursor.X, cursor.Y);
+        m_terminal->get_cursor_pos(cursor.X, cursor.Y);
         m_mouse_offset = cursor.Y + 1/*to top item*/;
         resync.resync();
     }
@@ -2056,19 +2054,14 @@ void selectcomplete_impl::insert_match(int32 final)
     update_len(needle_len);
     m_inserted = true;
 
-    const int32 botlin = _rl_vis_botlin;
+    const int32 input_height = get_input_height();
     m_buffer->draw();
-    if (botlin != _rl_vis_botlin)
+    if (input_height != get_input_height())
     {
-        // Coax the cursor to the end of the input line.
-        const int32 cursor = m_buffer->get_cursor();
-        m_buffer->set_cursor(m_buffer->get_length());
-        m_buffer->set_need_draw();
-        m_buffer->draw();
+        move_to_end_of_display(true);
         // Clear to end of screen.
-        m_printer->print("\x1b[J");
+        clink_write("\n\x1b[J", 4);
         // Restore cursor position.
-        m_buffer->set_cursor(cursor);
         m_buffer->set_need_draw();
         m_buffer->draw();
         // Update layout.
@@ -2125,7 +2118,7 @@ void selectcomplete_impl::reset_top()
 //------------------------------------------------------------------------------
 bool selectcomplete_impl::is_active() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_printer && m_anchor >= 0 && m_point >= m_anchor;
+    return m_prev_bind_group >= 0 && m_buffer && m_terminal && m_anchor >= 0 && m_point >= m_anchor;
 }
 
 //------------------------------------------------------------------------------

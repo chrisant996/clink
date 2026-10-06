@@ -63,7 +63,7 @@ class suggestion_manager
 {
 public:
     bool            more() const;
-    bool            get_visible(str_base& out, bool* includes_hint=nullptr) const;
+    bool            get_visible(str_base& out) const;
     bool            has_suggestion() const;
     void            clear(bool redraw=true);
     bool            can_suggest(const line_state& line);
@@ -104,6 +104,4 @@ bool get_suggestions(suggestions& out);
 bool insert_suggestion(suggestion_action action);
 bool pause_suggestions(bool pause);
 
-#ifdef USE_SUGGESTION_HINT_INLINE
 bool can_show_suggestion_hint();
-#endif

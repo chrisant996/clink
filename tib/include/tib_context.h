@@ -111,8 +111,9 @@ public:
     bool                is_displayed() const;
     void                display();
     void                force_redisplay();
-    void                move_to_caret_position();
-    void                move_to_end_of_display();
+    void                move_to_origin(bool force_left_edge=false);
+    void                move_to_caret_position(bool force_column=false);
+    void                move_to_end_of_display(bool cr=false);
     void                erase_display();
     void                end_display_lf();
 
@@ -183,14 +184,25 @@ public:
     void                dump_undo_stack();
 #endif
 
+    struct stricmp_less
+    {
+        using is_transparent = void;
+        bool operator()(const char* lhs, const char* rhs) const
+        {
+            return stricmp(lhs, rhs) < 0;
+        }
+    };
+
     static void         ensure_commands();
+    static void         clear_all_commands();
     static void         register_command(const char* name, editor_command_func_t func);
-    static const std::vector<editor_command>& get_registered_commands();
+    static const std::map<const char*, editor_command_func_t, stricmp_less>& get_registered_commands();
     static editor_command_func_t lookup_command(const char* name);
 
                         // Methods on the tib::dispatcher_target interface.
     int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept override;
     bool                on_binding_miss(const cstring& sequence, int32_t key) noexcept override;
+    std::shared_ptr<const key_table_list> probe_bindings_on_miss() const override;
 
 protected:
     bool                get_allow_optimized_self_insert() const { return m_allow_optimized_self_insert; }
@@ -205,8 +217,6 @@ private:
     void                clear_overwrite_input();
     void                apply_message_text();
     void                apply_override_bindings();
-
-    static void         ensure_commands_sorted();
 
 private:
     struct cstring_less
@@ -269,9 +279,8 @@ private:
 #endif
 
     // Commands.
-    static std::vector<editor_command> s_commands;
     static std::vector<cstring> s_command_names;
-    static bool         s_unsorted_commands;
+    static std::map<const char*, editor_command_func_t, stricmp_less> s_commands;
 };
 
 } // namespace tib

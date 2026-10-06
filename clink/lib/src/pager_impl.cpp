@@ -14,7 +14,7 @@
 #include <core/settings.h>
 #include <core/str_iter.h>
 #include <core/auto_closure.h>
-#include <terminal/printer.h>
+#include <terminal/terminal.h>
 
 setting_color g_color_interact(
     "color.interact",
@@ -84,14 +84,16 @@ void pager_impl::on_need_input(int32& bind_group)
 //------------------------------------------------------------------------------
 void pager_impl::on_input(const input& input, result& result, const context& context)
 {
+    assert(g_terminal);
+
     add_to_rl_macro(input);
 
     switch (input.id)
     {
-    case bind_id_pager_help:        context.printer.print("\r\x1b[K"); print_pager_prompt(true/*help*/); result.loop(); break;
-    case bind_id_pager_page:        set_limit(context.printer, page); break;
-    case bind_id_pager_halfpage:    set_limit(context.printer, half_page); break;
-    case bind_id_pager_line:        set_limit(context.printer, line); break;
+    case bind_id_pager_help:        g_terminal->write("\r\x1b[K"); print_pager_prompt(true/*help*/); result.loop(); break;
+    case bind_id_pager_page:        set_limit(page); break;
+    case bind_id_pager_halfpage:    set_limit(half_page); break;
+    case bind_id_pager_line:        set_limit(line); break;
     case bind_id_pager_stop:        m_max = -1; break;
     case bind_id_catchall:          result.loop(); break;
     }
@@ -113,14 +115,16 @@ void pager_impl::on_signal(int32 sig)
 }
 
 //------------------------------------------------------------------------------
-void pager_impl::start_pager(printer& printer)
+void pager_impl::start_pager()
 {
-    set_limit(printer, first_page);
+    set_limit(first_page);
 }
 
 //------------------------------------------------------------------------------
-bool pager_impl::on_print_lines(printer& printer, int32 lines)
+bool pager_impl::on_print_lines(int32 lines)
 {
+    assert(g_terminal);
+
     if (m_max < 0)
     {
         m_max = 0;
@@ -144,19 +148,22 @@ bool pager_impl::on_print_lines(printer& printer, int32 lines)
         return false;
     }
 
-    printer.print("\x1b[1K\r");
+    g_terminal->write("\x1b[1K\r");
     return m_max >= 0;
 }
 
 //------------------------------------------------------------------------------
-void pager_impl::set_limit(printer& printer, pager_amount amount)
+void pager_impl::set_limit(pager_amount amount)
 {
+    assert(g_terminal);
+
+    const int32 rows = (g_terminal ? g_terminal->get_rows() : 25);
     switch (amount)
     {
     case unlimited:     m_max = 0; break;
     case line:          m_max = 1; break;
-    case half_page:     m_max = max<int32>(printer.get_rows() / 2, 0); break;
-    case page:          m_max = max<int32>(printer.get_rows() - 2, 0); break;
-    case first_page:    m_max = max<int32>(printer.get_rows() - 1, 0); break;
+    case half_page:     m_max = max<int32>(rows / 2, 0); break;
+    case page:          m_max = max<int32>(rows - 2, 0); break;
+    case first_page:    m_max = max<int32>(rows - 1, 0); break;
     }
 }

@@ -7,10 +7,8 @@
 
 #include <core/base.h>
 
-//------------------------------------------------------------------------------
-class printer;
+class terminal_in;
 class terminal_out;
-extern printer* g_printer;
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_locked_cursor();
@@ -65,16 +63,11 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class printer_context
+class terminal_context
 {
 public:
-    printer_context(terminal_out* terminal, printer* printer);
-    printer_context(const printer_context&) = delete;
-    ~printer_context();
-
-private:
-    terminal_out* const m_terminal;
-    rollback<printer*> m_rb_printer;
+                    terminal_context();
+                    ~terminal_context();
 };
 
 //------------------------------------------------------------------------------
@@ -99,4 +92,15 @@ public:
     suppress_implicit_write_console_logging();
     ~suppress_implicit_write_console_logging();
     static bool is_suppressed();
+};
+
+//------------------------------------------------------------------------------
+class terminal_fwrite_context
+{
+public:
+    terminal_fwrite_context(const char* ctx);
+    ~terminal_fwrite_context();
+    static const char* get_context();
+private:
+    const char* const m_old;
 };

@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "printer.h"
+#include "terminal.h"
 #include "terminal_out.h"
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
@@ -21,7 +21,6 @@ extern bool is_test_harness();
 
 //------------------------------------------------------------------------------
 extern bool g_enhanced_cursor;
-printer* g_printer = nullptr;
 bool g_accept_mouse_input = false;
 
 //------------------------------------------------------------------------------
@@ -794,8 +793,8 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 #endif
     if (atoi(value.c_str()) != 0)
     {
-        assert(g_printer);
-        if (g_printer)
+        assert(g_terminal);
+        if (g_terminal)
         {
             DWORD mode = 0;
             HANDLE hOut = get_std_handle(STD_OUTPUT_HANDLE);
@@ -803,8 +802,8 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
                 return;
 
             COORD cursor;
-            const int32 columns = g_printer->get_columns();
-            g_printer->get_cursor_pos(cursor.X, cursor.Y);
+            const int32 columns = g_terminal->get_columns();
+            g_terminal->get_cursor_pos(cursor.X, cursor.Y);
 
             const int32 row = atoi(value.c_str());
             const char* color = (row > 0) ? ";7" : ";7;90";
@@ -814,7 +813,7 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
                 value.format("\x1b[s\x1b[%uH\x1b[K", row);
             else if (cursor.X > 0)
                 value = "\n";
-            else if (!g_printer->get_line_text(cursor.Y, tmp) || tmp.length())
+            else if (!g_terminal->get_out()->get_line_text(cursor.Y, tmp) || tmp.length())
                 value = "\n";
 
             tag = (row < 0) ? tag : nullptr;
@@ -855,7 +854,7 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
             else
                 value.concat("\n");
 
-            g_printer->print(value.c_str(), value.length());
+            g_terminal->write(value.c_str(), value.length());
         }
     }
 }
@@ -863,22 +862,20 @@ void debug_show_console_mode(const DWORD* prev_mode, const char* tag)
 
 
 //------------------------------------------------------------------------------
-printer_context::printer_context(terminal_out* terminal, printer* printer)
-: m_terminal(terminal)
-, m_rb_printer(g_printer)
+terminal_context::terminal_context()
 {
-    m_terminal->open();
-    m_terminal->begin();
-
-    assert(!g_printer);
-    g_printer = printer;
+    assert(tib_terminal_bridge::get());
+    tib_terminal_bridge::get()->begin();
+    assert(g_terminal);
 }
 
 //------------------------------------------------------------------------------
-printer_context::~printer_context()
+terminal_context::~terminal_context()
 {
-    m_terminal->end();
-    m_terminal->close();
+    assert(tib_terminal_bridge::get());
+    assert(g_terminal);
+    if (tib_terminal_bridge::get())
+        tib_terminal_bridge::get()->end();
 }
 
 
@@ -888,3 +885,25 @@ static thread_local int32 s_supersede_logging = 0;
 suppress_implicit_write_console_logging::suppress_implicit_write_console_logging() { ++s_supersede_logging; }
 suppress_implicit_write_console_logging::~suppress_implicit_write_console_logging() { --s_supersede_logging; }
 bool suppress_implicit_write_console_logging::is_suppressed() { return s_supersede_logging > 0; }
+
+
+
+//------------------------------------------------------------------------------
+static const char* s_log_fwrite_context = 0;
+terminal_fwrite_context::terminal_fwrite_context(const char* ctx)
+: m_old(s_log_fwrite_context)
+{
+    s_log_fwrite_context = ctx;
+}
+
+//------------------------------------------------------------------------------
+terminal_fwrite_context::~terminal_fwrite_context()
+{
+    s_log_fwrite_context = m_old;
+}
+
+//------------------------------------------------------------------------------
+const char* terminal_fwrite_context::get_context()
+{
+    return s_log_fwrite_context;
+}

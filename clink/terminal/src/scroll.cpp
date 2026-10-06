@@ -125,8 +125,5 @@ int32 ScrollConsoleRelative(HANDLE h, int32 direction, SCRMODE mode)
         !SetConsoleWindowInfo(h, TRUE/*fAbsolute*/,  &srWindow))
         return 0;
 
-    // Tell printer so it can work around a problem with WriteConsoleW.
-    set_scrolled_screen_buffer();
-
     return srWindow.Top - csbiInfo.srWindow.Top;
 }
