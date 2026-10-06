@@ -58,11 +58,6 @@ extern "C" {
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
-extern int32 _rl_get_inserted_char(void);
-extern char* tgetstr(const char*, char**);
-extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
-extern char* tgoto(const char* base, int32 x, int32 y);
-extern Keymap _rl_dispatching_keymap;
 extern int _rl_default_init_file_optional_set;
 }
 
@@ -1388,7 +1383,7 @@ stop:
                 g_rl_buffer->end_undo_group();
                 // Force the menu-complete family of commands to regenerate
                 // matches, otherwise they'll have no matches.
-                override_rl_last_func(nullptr, true/*force_when_null*/);
+                override_last_command(nullptr, true/*force_when_null*/);
                 return nullptr;
             }
             else
@@ -1628,28 +1623,15 @@ void load_user_inputrc(const char* state_dir, bool no_user)
 }
 
 //------------------------------------------------------------------------------
-static void bind_keyseq(const char* keyseq, const char* target, const std::shared_ptr<tib::key_table>& t)
+static void bind_keyseq_translated(const char* keys, int32 keys_len, const char* target, const std::shared_ptr<tib::key_table>& t)
 {
-    assert(keyseq && *keyseq);
-
 #ifdef TIB_TODO // For now it's accepted that non-existent commands are in the lists.
     assert(tib::editor_context::lookup_command(target));
 #endif
-    if (target && !tib::editor_context::lookup_command(target))
+    if (target &&
+        !is_luafunc_command(target) &&
+        !tib::editor_context::lookup_command(target))
         return;
-
-    const size_t need = 1 + (2 * strlen(keyseq));
-    char* keys = (char*)malloc(need);
-    if (!keys)
-        return;
-
-    int32 keys_len;
-    if (rl_translate_keyseq(keyseq, keys, &keys_len))
-    {
-        assert(false);
-        free(keys);
-        return;
-    }
 
     if (!target || !*target)
     {
@@ -1665,6 +1647,27 @@ static void bind_keyseq(const char* keyseq, const char* target, const std::share
     {
         t->add(keys, keys_len, tib::binding_target_func(target));
     }
+}
+
+//------------------------------------------------------------------------------
+static void bind_keyseq(const char* keyseq, const char* target, const std::shared_ptr<tib::key_table>& t)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    bind_keyseq_translated(keys, keys_len, target, t);
 
     free(keys);
 }
@@ -1675,6 +1678,27 @@ static void bind_keyseq_list(const two_strings* list, const std::shared_ptr<tib:
 {
     for (int32 i = 0; list[i][0]; ++i)
         bind_keyseq(list[i][0], list[i][1], t);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target)
+{
+    assert(s_emacs_standard_bindings);
+    if (!s_emacs_standard_bindings)
+        return;
+
+    if (!is_macro)
+    {
+        bind_keyseq_translated(keys, keys_len, target, s_emacs_standard_bindings->at(0));
+    }
+    else if (strnicmp(target, "luafunc:", 8) == 0)
+    {
+        s_emacs_standard_bindings->at(0)->add(keys, keys_len, tib::binding_target_func(target));
+    }
+    else
+    {
+        s_emacs_standard_bindings->at(0)->add(keys, keys_len, tib::binding_target_macro(target));
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1752,10 +1776,6 @@ static void init_readline_hooks()
 
     // Match display.
     rl_is_exec_func = is_exec_ext;
-
-    // Macro hooks (for "luafunc:" support).
-    rl_macro_hook_func = macro_hook_func;
-    rl_last_func_hook_func = last_func_hook_func;
 
     // Recognize both / and \\ as path separators, and normalize to \\.
     rl_backslash_path_sep = 1;
@@ -2077,7 +2097,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\C-e",          "end-of-line" },            // Ctrl-E
         { "\\C-f",          "forward-char" },           // Ctrl-F
         { "\\C-g",          "abort" },                  // Ctrl-G
-        // { "\\C-h",          "del-word-left" },          // VT sends 0x08 for Ctrl-Backspace.
+        // { "\\C-h",          "backward-kill-word" },     // VT sends 0x08 for Ctrl-Backspace.
         { "\\C-h",          "backward-delete-char" },   // Clink sends 0x08 for Backspace.
         { "\\C-i",          "complete" },               // Ctrl-I / TAB
         { "\\C-j",          "accept-line" },            // Ctrl-J
@@ -2097,8 +2117,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\C-y",          "yank" },                   // Ctrl-Y
         { "\\C-]",          "character-search" },       // Ctrl-]
         { "\\C-_",          "undo" },                   // Ctrl-_
-        // { "\x7f",           "del-char-left" },          // RUBOUT / VT sends 0x7F for Backspace.
-        { "\x7f",           "del-word-left" },          // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
+        // { "\x7f",           "backward-delete-char" },   // RUBOUT / VT sends 0x7F for Backspace.
+        { "\x7f",           "backward-kill-word" },     // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
 
         // META KEY SEQUENCES
         { "\\M-\\C-g",      "abort" },                  // Alt-Ctrl-G

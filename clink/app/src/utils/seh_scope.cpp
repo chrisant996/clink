@@ -9,6 +9,10 @@
 #include <core/str.h>
 #include <terminal/terminal_helpers.h>
 
+namespace tib {
+void term_sigclose();
+}
+
 //------------------------------------------------------------------------------
 static thread_local int32 s_filter = 0;
 
@@ -45,6 +49,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs("\n!!!", stderr);
     fputs("\n!!! Writing core dump", stderr);
     fputs("\n!!! ", stderr);
+
+    tib::term_sigclose();
 
     DWORD dummy;
     HANDLE h = GetStdHandle(STD_ERROR_HANDLE);

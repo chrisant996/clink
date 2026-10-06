@@ -80,8 +80,6 @@ typedef char rl_adjcmpwrd_func_t (char qc, int *fp, int *dp);
 typedef int rl_compare_lcd_func_t (const char *, const char *);
 /* Type for postprocessing the lcd hook function */
 typedef void rl_postprocess_lcd_func_t (char *, const char *);
-/* Type for function to process macros */
-typedef int rl_macro_hook_func_t (const char* macro);
 /* Type for function to check whether to concat undo entries */
 struct undo_list;
 typedef struct undo_list UNDO_LIST;

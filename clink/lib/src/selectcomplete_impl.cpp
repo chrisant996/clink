@@ -238,7 +238,8 @@ bail_out:
         allow_suggestion_list(1);
         // Override rl_last_func so the "display all" prompt can be shown
         // again after answering 'n' to it once.
-        override_rl_last_func(_rl_null_function);
+// TODO-TIB: test this; it might need an actual placeholder command name.
+        override_last_command(nullptr, true);
         return false;
     }
 
@@ -1048,7 +1049,7 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
     m_prev_bind_group = -1;
 
     if (!can_reactivate)
-        override_rl_last_func(nullptr, true/*force_when_null*/);
+        override_last_command(nullptr, true/*force_when_null*/);
 
     pause_suggestions(false);
     allow_suggestion_list(1);
@@ -1138,7 +1139,7 @@ stop:
                 m_buffer->end_undo_group();
                 // Force the menu-complete family of commands to regenerate
                 // matches, otherwise they'll have no matches.
-                override_rl_last_func(nullptr, true/*force_when_null*/);
+                override_last_command(nullptr, true/*force_when_null*/);
                 // Since there are no matches, selectcomplete will be canceled
                 // after returning.
                 return;

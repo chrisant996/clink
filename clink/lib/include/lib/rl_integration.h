@@ -43,12 +43,13 @@ void init_prompt(const str_base& prompt, const str_base& rprompt);
 //------------------------------------------------------------------------------
 void    set_prev_inputline(const char* line, uint32 length=-1);
 void    set_pending_luafunc(const char* macro);
-void    override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
+void    override_last_command(const char* name, bool force_when_null=false);
 const char* get_last_luafunc();
-void*   get_effective_last_func();
+const char* get_effective_last_command();
 uint32  get_last_func_override_counter();
-int32   macro_hook_func(const char* macro);
-void    last_func_hook_func(int32 dispatched);
+bool    is_luafunc_command(const char* name, str_base* out=nullptr);
+bool    luafunc_hook_func(const char* name);
+void    last_command_hook_func(int32 dispatched);
 void    apply_pending_lastfunc();
 void    clear_pending_lastfunc();
 

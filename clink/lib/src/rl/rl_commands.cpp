@@ -21,6 +21,7 @@
 #include "line_editor_integration.h"
 #include "suggestions.h"
 #include "line_queue.h"
+#include "kill_ring.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -1295,18 +1296,21 @@ int32_t cua_forward_char(tib::editor_context& ctx, int32_t key, const char* name
     int32_t count = ctx.get_numeric_argument();
     if (count != 0)
     {
+        bool sugg = false;
 another_word:
         if (insert_suggestion(suggestion_action::insert_next_full_word))
         {
+            sugg = true;
             count--;
             if (count > 0)
                 goto another_word;
             return 0;
         }
+        if (sugg)
         return 0;
     }
 
-    return tib::forward_char(ctx, key, name, params);
+    return tib::cua_forward_char(ctx, key, name, params);
 }
 
 
@@ -1317,13 +1321,16 @@ int32_t clink_forward_word(tib::editor_context& ctx, int32_t key, const char* na
     int32_t count = ctx.get_numeric_argument();
     if (count != 0)
     {
+        bool sugg = false;
 another_word:
         if (insert_suggestion(suggestion_action::insert_next_word))
         {
+            sugg = true;
             count--;
             if (count > 0)
                 goto another_word;
         }
+        if (sugg)
         return 0;
     }
 
@@ -1336,13 +1343,16 @@ int32_t clink_forward_bigword(tib::editor_context& ctx, int32_t key, const char*
     int32_t count = ctx.get_numeric_argument();
     if (count != 0)
     {
+        bool sugg = false;
 another_word:
         if (insert_suggestion(suggestion_action::insert_next_full_word))
         {
+            sugg = true;
             count--;
             if (count > 0)
                 goto another_word;
         }
+        if (sugg)
         return 0;
     }
 
@@ -2087,6 +2097,62 @@ bool win_fn_callback_pending()
 }
 
 
+
+//------------------------------------------------------------------------------
+int32_t backward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const auto line = ctx.get_text();
+
+    if (ctx.has_selection())
+    {
+        add_to_kill_ring(line.c_str() + ctx.get_sel_begin(), ctx.get_sel_end() - ctx.get_sel_begin());
+        ctx.del();
+        return 0;
+    }
+
+    const tib::textpos_t c1 = ctx.get_caret();
+
+    tib::do_with_numeric_argument(ctx, key, name, params, tib::forward_word, [&]() {
+        return ctx.move_left(true);
+    }, tib::NO_DING);
+
+    const tib::textpos_t c2 = ctx.get_caret();
+
+    const tib::textpos_t start = min(c1, c2);
+    const tib::textpos_t end = max(c1, c2);
+
+    add_to_kill_ring(line.c_str() + start, end - start);
+    ctx.remove_text(start, end);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t forward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const auto line = ctx.get_text();
+
+    if (ctx.has_selection())
+    {
+        add_to_kill_ring(line.c_str() + ctx.get_sel_begin(), ctx.get_sel_end() - ctx.get_sel_begin());
+        ctx.del();
+        return 0;
+    }
+
+    const tib::textpos_t c1 = ctx.get_caret();
+
+    tib::do_with_numeric_argument(ctx, key, name, params, tib::backward_word, [&]() {
+        return ctx.move_right(true);
+    }, tib::NO_DING);
+
+    const tib::textpos_t c2 = ctx.get_caret();
+
+    const tib::textpos_t start = min(c1, c2);
+    const tib::textpos_t end = max(c1, c2);
+
+    add_to_kill_ring(line.c_str() + start, end - start);
+    ctx.remove_text(start, end);
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 int32_t clear_display(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept

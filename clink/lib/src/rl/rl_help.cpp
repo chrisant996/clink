@@ -243,7 +243,7 @@ static const func_desc c_func_descriptions[] =
     { "backward-char", tib::backward_char, keycat_cursor, "Move back a character" },
     { "backward-delete-char", tib::del_char_left, keycat_basic, "Delete the character behind the cursor point.  A numeric argument means to kill the characters instead of deleting them" },
     // { "backward-kill-line", rl_backward_kill_line, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
-    // { "backward-kill-word", rl_backward_kill_word, keycat_basic, "Kill the word behind the cursor point.  Word boundaries are the same as 'backward-word'" },
+    { "backward-kill-word", backward_kill_word, keycat_basic, "Kill the word behind the cursor point.  Word boundaries are the same as 'backward-word'" },
     { "backward-word", tib::backward_word, keycat_cursor, "Move back to the start of the current or previous word" },
     // { "beginning-of-history", rl_beginning_of_history, keycat_history, "Move to the first line in the history" },
     { "beginning-of-line", tib::begin_of_line, keycat_basic, "Move to the start of the current line" },
@@ -296,7 +296,7 @@ static const func_desc c_func_descriptions[] =
     // { "kill-whole-line", rl_kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
     // { "kill-line", rl_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
     // { "kill-region", rl_kill_region, keycat_killyank, "Kill the text in the current marked region" },
-    // { "kill-word", rl_kill_word, keycat_basic, "Kill from the cursor point to the end of the current word, or if between words, to the end of the next word.  Word boundaries are the same as 'forward-word'" },
+    { "kill-word", forward_kill_word, keycat_basic, "Kill from the cursor point to the end of the current word, or if between words, to the end of the next word.  Word boundaries are the same as 'forward-word'" },
     // { "menu-complete", rl_menu_complete, keycat_completion, "Replace the completion word with the common prefix.  Repeated execution steps through the possible completions" },
     // { "menu-complete-backward", rl_backward_menu_complete, keycat_completion, "Like 'menu-complete' but in reverse" },
     // { "next-history", rl_get_next_history, keycat_history, "Move 'forward' through the history list, fetching the next command" },
@@ -840,7 +840,20 @@ static Keyentry* collect_keymap(
             char *macro = nullptr;
 
             if (b.target.get_type() == tib::binding_type::func)
+            {
+                if (is_luafunc_command(b.target.get_text()))
+                {
+                    name = b.target.get_text();
+                    desc = lookup_macro_description(name);
+                }
+                else
+                {
                 name = get_function_info(b.target.get_text(), &desc, &cat);
+                }
+                assert(name);
+                if (!name)
+                    continue;
+            }
 
             if (*offset >= *max)
             {
@@ -998,8 +1011,8 @@ static Keyentry* collect_functions(
         const char* name = e.func_name;
         if (name)
             seen_name.emplace(name);
-        if (e.macro_text && _strnicmp(e.macro_text, "luafunc:", 8) == 0)
-            seen_name.emplace(e.macro_text);
+        if (is_luafunc_command(e.func_name))
+            seen_name.emplace(e.func_name);
     }
 
 #if defined (VI_MODE)
@@ -1060,7 +1073,7 @@ static Keyentry* collect_functions(
     for (auto& macro_desc : s_macro_descriptions)
     {
         // Only add macro functions.
-        if (_strnicmp(macro_desc.first, "luafunc:", 8) != 0)
+        if (!is_luafunc_command(macro_desc.first))
             continue;
 
         // Only add a macro function if it hasn't been seen yet.
@@ -1081,7 +1094,7 @@ static Keyentry* collect_functions(
         memset(&out, 0, sizeof(out));
         out.sort = MAKELONG(999, 999);
         out.key_name = (char*)calloc(1, 1);
-        out.macro_text = copystring(macro_desc.first);
+        out.func_name = copystring(macro_desc.first);
         out.func_desc = macro_desc.second.c_str();
         out.cat = categories ? keycat_macros : keycat_none;
 
@@ -1165,20 +1178,19 @@ static int32 __cdecl cmp_sort_collector_func(const void* pv1, const void* pv2)
     int32 cmp;
 
     // Sort functions, then luafunc: macros, then macros.
-    assertimplies(p1->func_name, *p1->func_name);
-    assertimplies(p2->func_name, *p2->func_name);
-    const bool lf1 = (p1->macro_text && _strnicmp(p1->macro_text, "luafunc:", 8) == 0);
-    const bool lf2 = (p2->macro_text && _strnicmp(p2->macro_text, "luafunc:", 8) == 0);
-    const int32 o1 = (p1->func_name ? 0 : (lf1 ? 1 : 2));
-    const int32 o2 = (p2->func_name ? 0 : (lf2 ? 1 : 2));
+    const char* func1 = p1->func_name;
+    const char* func2 = p2->func_name;
+    assertimplies(func1, *func1);
+    assertimplies(func2, *func2);
+    const bool lf1 = (func1 && is_luafunc_command(func1));
+    const bool lf2 = (func2 && is_luafunc_command(func2));
+    const int32 o1 = (lf1 ? 1 : (func1 ? 0 : 2));
+    const int32 o2 = (lf2 ? 1 : (func2 ? 0 : 2));
     cmp = o1 - o2;
     if (cmp)
         return cmp;
 
     // Sort by function name (folding case).
-    assert(!!p1->func_name == !!p2->func_name);
-    const char* func1 = (p1->func_name ? p1->func_name : (lf1 ? p1->macro_text : nullptr));
-    const char* func2 = (p2->func_name ? p2->func_name : (lf2 ? p2->macro_text : nullptr));
     assert(!!func1 == !!func2);
     if (func1)
     {
@@ -1537,8 +1549,11 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
 
                 // Key binding.
                 if (entry.func_name)
-                    str << entry.func_name;
-                if (entry.macro_text)
+                {
+                    const char* quote = is_luafunc_command(entry.func_name) ? "\"" : "";
+                    str << quote << entry.func_name << quote;
+                }
+                else if (entry.macro_text)
                 {
                     str << "\"";
                     append_key_macro(str, entry.macro_text, macro_limit);
@@ -1689,7 +1704,7 @@ int32_t show_rl_help_raw(tib::editor_context& ctx, int32_t key, const char* name
 //------------------------------------------------------------------------------
 static bool is_macro_entry(const Keyentry* entry)
 {
-    return (!entry->func_name && entry->macro_text && _strnicmp(entry->macro_text, "luafunc:", 8) != 0);
+    return (!entry->func_name && entry->macro_text);
 }
 
 //------------------------------------------------------------------------------
@@ -1739,7 +1754,7 @@ static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros)
             }
 
             const char* name = entry->func_name ? entry->func_name : entry->macro_text;
-            const char* quote = entry->func_name ? "" : "\"";
+            const char* quote = (!entry->func_name || is_luafunc_command(entry->func_name)) ? "\"" : "";
             if (!explicit_arg && macros)
             {
                 line.format("%s outputs %s\n", entry->key_name, entry->macro_text ? entry->macro_text : "");
@@ -1980,9 +1995,22 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             {
                 const char* desc = nullptr;
                 name = target.get_text();
-                if (!get_function_info(name, &desc, nullptr) || !desc || !*desc)
-                    desc = nullptr;
-                if (name)
+                const bool is_luafunc = is_luafunc_command(name);
+                if (is_luafunc)
+                {
+                    desc = lookup_macro_description(name);
+                }
+                else
+                {
+                    const char* real_name = get_function_info(name, &desc, nullptr);
+                    if (real_name)
+                        name = real_name;
+                    if (!real_name || !desc || !*desc)
+                        desc = nullptr;
+                }
+                if (is_luafunc)
+                    s << "\"" << name << "\"";
+                else if (name)
                     s << "\x1b[0;1m" << name << "\x1b[m";
                 else
                     s << "unknown command";
@@ -1992,13 +2020,10 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             else if (target.get_type() == tib::binding_type::macro)
             {
                 char* macro = _rl_untranslate_macro_value((char*)target.get_text(), 0);
-                const char* desc = lookup_macro_description(macro);
                 if (macro)
                     s << "\"" << macro << "\"";
                 else
                     s << "unknown macro";
-                if (desc)
-                    s << " -- " << desc;
                 free(macro);
             }
             else

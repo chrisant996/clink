@@ -224,11 +224,6 @@ rl_command_func_t *_rl_executing_func;
 /* Keymap we're currently using to dispatch. */
 Keymap _rl_dispatching_keymap;
 
-/* begin_clink_change */
-rl_macro_hook_func_t *rl_macro_hook_func = (rl_macro_hook_func_t *)NULL;
-rl_vintfunc_t *rl_last_func_hook_func = (rl_vintfunc_t *)NULL;
-/* end_clink_change */
-
 /* Non-zero means to erase entire line, including prompt, on empty input lines. */
 int rl_erase_empty_line = 0;
 
@@ -854,10 +849,6 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 #endif
 	    {
 	      rl_last_func = map[key].function;
-/* begin_clink_change */
-	      if (rl_last_func_hook_func)
-		rl_last_func_hook_func (1);
-/* end_clink_change */
 	    }
 
 	  RL_CHECK_SIGNALS ();
@@ -1017,10 +1008,12 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	{
 	  rl_executing_keyseq[rl_key_sequence_length] = '\0';
 /* begin_clink_change */
+#ifdef TIB_TODO
 	  rl_executing_keymap = map;
 	  rl_executing_key = key;
 	  if (rl_macro_hook_func && rl_macro_hook_func ((const char *)map[key].function))
 	    return 0;
+#endif
 /* end_clink_change */
 	  macro = savestring ((char *)map[key].function);
 	  _rl_with_macro_input (macro);
@@ -1159,10 +1152,6 @@ rl_initialize (void)
 
   /* No such function typed yet. */
   rl_last_func = (rl_command_func_t *)NULL;
-/* begin_clink_change */
-  if (rl_last_func_hook_func)
-    rl_last_func_hook_func (0);
-/* end_clink_change */
 
   /* Parsing of key-bindings begins in an enabled state. */
   _rl_parsing_conditionalized_out = 0;

@@ -122,6 +122,19 @@ static int _rl_prefer_visible_bell = 1;
 #define OPSTART(c)	((c) == '=' || (c) == '!' || (c) == '<' || (c) == '>')
 #define CMPSTART(c)	((c) == '=' || (c) == '!')
 
+static const char*
+rl_get_name_of_function (rl_command_func_t *func)
+{
+  register int i;
+
+  rl_initialize_funmap ();
+
+  for (i = 0; funmap[i]; i++)
+    if (func == funmap[i]->function)
+      return (funmap[i]->name);
+  return 0;
+}
+
 /* **************************************************************** */
 /*								    */
 /*			Binding keys				    */
@@ -258,18 +271,6 @@ rl_unbind_function_in_map (rl_command_func_t *func, Keymap map)
   return rval;
 }
 
-/* Unbind all keys bound to COMMAND, which is a bindable command name, in MAP */
-int
-rl_unbind_command_in_map (const char *command, Keymap map)
-{
-  rl_command_func_t *func;
-
-  func = rl_named_function (command);
-  if (func == 0)
-    return 0;
-  return (rl_unbind_function_in_map (func, map));
-}
-
 /* Bind the key sequence represented by the string KEYSEQ to
    FUNCTION, starting in the current keymap.  This makes new
    keymaps as necessary. */
@@ -284,13 +285,6 @@ rl_bind_keyseq (const char *keyseq, rl_command_func_t *function)
    place to do bindings is in MAP. */
 int
 rl_bind_keyseq_in_map (const char *keyseq, rl_command_func_t *function, Keymap map)
-{
-  return (rl_generic_bind (ISFUNC, keyseq, (char *)function, map));
-}
-
-/* Backwards compatibility; equivalent to rl_bind_keyseq_in_map() */
-int
-rl_set_key (const char *keyseq, rl_command_func_t *function, Keymap map)
 {
   return (rl_generic_bind (ISFUNC, keyseq, (char *)function, map));
 }
@@ -334,6 +328,8 @@ rl_bind_keyseq_if_unbound (const char *keyseq, rl_command_func_t *default_func)
 {
   return (rl_bind_keyseq_if_unbound_in_map (keyseq, default_func, _rl_keymap));
 }
+
+extern void clink_bind_translated (int is_macro, const char* keys, int keys_len, const char* data);
 
 /* Bind the key sequence represented by the string KEYSEQ to
    the string of characters MACRO.  This makes new keymaps as
@@ -390,100 +386,20 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
       return -1;
     }
 
+#ifdef TIB_TODO
   prevmap = map;
   prevkey = keys[0];
+#endif
 
-  /* Bind keys, making new keymaps as necessary. */
-  for (i = 0; i < keys_len; i++)
+  if (type == ISMACR)
     {
-      unsigned char uc = keys[i];
-
-      if (i > 0)
-	prevkey = ic;
-
-      ic = uc;
-      if (ic < 0 || ic >= KEYMAP_SIZE)
-        {
-          xfree (keys);
-	  return -1;
-        }
-
-      /* We rely on rl_translate_keyseq to do convert meta-chars to key
-	 sequences with the meta prefix (ESC). */
-
-      if ((i + 1) < keys_len)
-	{
-	  if (map[ic].type != ISKMAP)
-	    {
-	      /* We allow subsequences of keys.  If a keymap is being
-		 created that will `shadow' an existing function or macro
-		 key binding, we save that keybinding into the ANYOTHERKEY
-		 index in the new map.  The dispatch code will look there
-		 to find the function to execute if the subsequence is not
-		 matched.  ANYOTHERKEY was chosen to be greater than
-		 UCHAR_MAX. */
-	      k = map[ic];
-
-	      map[ic].type = ISKMAP;
-	      map[ic].function = KEYMAP_TO_FUNCTION (rl_make_bare_keymap());
-	    }
-	  prevmap = map;
-	  map = FUNCTION_TO_KEYMAP (map, ic);
-	  /* The dispatch code will return this function if no matching
-	     key sequence is found in the keymap.  This (with a little
-	     help from the dispatch code in readline.c) allows `a' to be
-	     mapped to something, `abc' to be mapped to something else,
-	     and the function bound  to `a' to be executed when the user
-	     types `abx', leaving `bx' in the input queue. */
-	  if (k.function && ((k.type == ISFUNC && k.function != rl_do_lowercase_version) || k.type == ISMACR))
-	    {
-	      map[ANYOTHERKEY] = k;
-	      k.function = 0;
-	    }
-	}
-      else
-	{
-	  if (map[ic].type == ISKMAP)
-	    {
-	      prevmap = map;
-	      map = FUNCTION_TO_KEYMAP (map, ic);
-	      ic = ANYOTHERKEY;
-	      /* If we're trying to override a keymap with a null function
-		 (e.g., trying to unbind it), we can't use a null pointer
-		 here because that's indistinguishable from having not been
-		 overridden.  We use a special bindable function that does
-		 nothing. */
-	      if (type == ISFUNC && data == 0)
-		data = (char *)_rl_null_function;
-	    }
-	  if (map[ic].type == ISMACR)
-	    xfree ((char *)map[ic].function);
-
-	  map[ic].function = KEYMAP_TO_FUNCTION (data);
-	  map[ic].type = type;
-	}
-
-      rl_binding_keymap = map;
-
+      clink_bind_translated(1, keys, keys_len, data);
     }
-
-  /* If we unbound a key (type == ISFUNC, data == 0), and the prev keymap
-     points to the keymap where we unbound the key (sanity check), and the
-     current binding keymap is empty (rl_empty_keymap() returns non-zero),
-     and the binding keymap has ANYOTHERKEY set with type == ISFUNC
-     (overridden function), delete the now-empty keymap, take the previously-
-     overridden function and remove the override. */
-  /* Right now, this only works one level back. */
-  if (type == ISFUNC && data == 0 &&
-      prevmap[prevkey].type == ISKMAP &&
-      (FUNCTION_TO_KEYMAP(prevmap, prevkey) == rl_binding_keymap) &&
-      rl_binding_keymap[ANYOTHERKEY].type == ISFUNC &&
-      rl_empty_keymap (rl_binding_keymap))
+  else
     {
-      prevmap[prevkey].type = rl_binding_keymap[ANYOTHERKEY].type;
-      prevmap[prevkey].function = rl_binding_keymap[ANYOTHERKEY].function;
-      rl_discard_keymap (rl_binding_keymap);
-      rl_binding_keymap = prevmap;
+      const char* name = rl_get_name_of_function((rl_command_func_t *) data);
+      if (name)
+        clink_bind_translated(0, keys, keys_len, name);
     }
 
   xfree (keys);

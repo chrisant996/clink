@@ -62,10 +62,7 @@ static int16_t cursor_column_continuation(editor_context& ctx, const char* comma
     return int16_t(cursor_column);
 }
 
-constexpr uint8_t NO_DING               = 1 << 0;
-constexpr uint8_t UNDO_GROUP            = 1 << 1;
-
-static int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags=0) noexcept
+int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags) noexcept
 {
     int32_t n = ctx.get_numeric_argument();
     if (inverted && n < 0)

@@ -8,9 +8,24 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 - Need an equivalent of `_rl_want_redisplay` to completely no-op display calls when false.
 - Need to swap `\x08` and `\x7f` again, oops.
-- `rl_last_func_hook_func` and `rl_last_func`.
-- `_rl_show_mode_in_prompt` and emacs and vi modes.
+- Internal states, for specialized behaviors that used to rely on RL_STATE flags.
+- Command groups:
+  - [ ] Kill ring.
+  - [ ] Completion.
+  - [ ] History.
+  - [ ] Miscellaneous.
+- Suggestions:
+  - [ ] Inline suggestions.
+  - [ ] Suggestion usage hint.
+  - [ ] Suggestion list (requires history commands to be working).
+- `clink-select-complete`:
+  - [ ] Activate.
+  - [ ] Overlay key bindings.
+- Popup lists in general.
+- Luafunc commands.
+  - [x] Invoke luafunc commands.
 - VI mode.
+- `_rl_show_mode_in_prompt` and emacs and vi modes.
 
 ## Mystery Issue
 

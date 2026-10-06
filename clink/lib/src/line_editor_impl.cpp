@@ -1208,6 +1208,18 @@ const char* line_editor_impl::get_face_def(char face)
 }
 
 //------------------------------------------------------------------------------
+bool line_editor_impl::on_dispatch(const char* name)
+{
+    return luafunc_hook_func(name);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::on_dispatched(const char* name)
+{
+    last_command_hook_func(!!name);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::before_display_readline()
 {
     if (!is_display_readline_initialized())

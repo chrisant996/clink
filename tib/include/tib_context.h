@@ -36,6 +36,8 @@ struct editor_callbacks
 {
     virtual void        provide_faces(const input_buffer& buffer, cstring& faces) {}
     virtual const char* get_face_def(char face) { return nullptr; }
+    virtual bool        on_dispatch(const char* name) { return false; }
+    virtual void        on_dispatched(const char* name) {}
 };
 
 struct editor_quirks
@@ -254,6 +256,7 @@ private:
     uint32_t            m_overwrite_input_navigation_counter = 0;
     cstring             m_last_command;
     std::map<cstring, cstring, cstring_less> m_named_values;
+    bool                m_in_on_dispatched = false;
 
     // Numeric argument.
     uint8_t             m_numflags = 0;

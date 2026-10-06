@@ -7,8 +7,16 @@
 
 #include "tib_base.h"
 #include "tib_bindings.h"
+#include "tib_context.h"
+
+#include <functional>
 
 namespace tib {
+
+// Flags for do_with_numeric_argument:
+constexpr uint8_t NO_DING               = 1 << 0;
+constexpr uint8_t UNDO_GROUP            = 1 << 1;
+int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags=0) noexcept;
 
 int32_t abort(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t accept_line(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;

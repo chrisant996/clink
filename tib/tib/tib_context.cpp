@@ -284,9 +284,12 @@ void editor_context::reset_state() noexcept
 {
     m_can_drag = false;
     clear_overwrite_input();
-    m_last_command.clear();
     m_named_values.clear();
     clear_numeric_argument();
+
+    m_last_command.clear();
+    if (m_callbacks)
+        m_callbacks->on_dispatched(nullptr);
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -766,6 +769,13 @@ void editor_context::replace_from_history(const cstring& s, bool keep_undo)
 void editor_context::set_last_command(const char* name)
 {
     m_last_command.set(name);
+
+    if (m_callbacks && !m_in_on_dispatched)
+    {
+        m_in_on_dispatched = true;
+        m_callbacks->on_dispatched(name);
+        m_in_on_dispatched = false;
+    }
 }
 
 const char* editor_context::get_named_value(const char* name) const
@@ -1418,6 +1428,9 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
         case binding_type::func:
             {
                 const char* const name = binding->get_text();
+                if (m_callbacks && m_callbacks->on_dispatch(name))
+                    break;
+
                 editor_command_func_t func = lookup_command(name);
                 if (func)
                 {

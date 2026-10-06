@@ -18,6 +18,7 @@
 #include <lib/matches.h>
 #include <lib/match_colors.h>
 #include <lib/display_readline.h>
+#include <lib/kill_ring.h>
 #include "match_builder_lua.h"
 #include "prompt.h"
 
@@ -556,12 +557,12 @@ static int32 invoke_command(lua_State* state)
 
     if (*command == '"')
     {
-        str<> tmp(command + 1);
-        if (tmp.length() && tmp[tmp.length() - 1] == '"')
-            tmp.truncate(tmp.length() - 1);
-
-        if (!macro_hook_func(tmp.c_str()))
+        if (!luafunc_hook_func(command))
         {
+            str<> tmp(command + 1);
+            if (tmp.length() && tmp[tmp.length() - 1] == '"')
+                tmp.truncate(tmp.length() - 1);
+
             int32 len = 0;
             char* macro = static_cast<char*>(malloc(tmp.length() * 2 + 1));
             if (rl_translate_keyseq(tmp.c_str(), macro, &len))
@@ -569,18 +570,19 @@ static int32 invoke_command(lua_State* state)
                 free(macro);
                 return 0;
             }
-            _rl_with_macro_input(macro);
+            tib::term_push_macro_text(macro);
         }
 
         lua_pushinteger(state, true);
         return 1;
     }
 
+#ifdef TIB_TODO
     rl_command_func_t *func = rl_named_function(command);
     if (func == nullptr)
         return 0;
 
-    const auto last_func = get_effective_last_func();
+    const auto last_command = get_effective_last_command();
     const auto counter = get_last_func_override_counter();
 
     int32 isnum;
@@ -591,11 +593,21 @@ static int32 invoke_command(lua_State* state)
     // Set rl_last_func, unless the invoked command already set rl_last_func.
     // For example, clink-select-complete needs to override it if activation
     // fails, to ensure it can prompt the next time activation is attempted.
-    if (last_func == get_effective_last_func() && counter == get_last_func_override_counter())
-        override_rl_last_func(func);
+    if (counter == get_last_func_override_counter())
+    {
+        const auto effective_last = g_tib ? g_tib->get_last_command() : nullptr;
+        if ((!last_command && !effective_last) ||
+            (stricmp(last_command, effective_last) == 0))
+        {
+            override_last_command(func);
+        }
+    }
 
     lua_pushinteger(state, !err);
     return 1;
+#else
+    return 0;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1492,10 +1504,10 @@ static int32 get_inputrc_file_name(lua_State* state)
 /// -name:  rl.getkillringcount
 /// -ver:   1.9.29
 /// -ret:   integer
-/// Returns the number of strings in Readline's kill-ring.
+/// Returns the number of strings in the kill-ring.
 static int32 get_kill_ring_count(lua_State* L)
 {
-    lua_pushinteger(L, rl_get_kill_ring_count());
+    lua_pushinteger(L, get_kill_ring_count());
     return 1;
 }
 
@@ -1506,7 +1518,7 @@ static int32 get_kill_ring_count(lua_State* L)
 /// Returns the current index in Readline's kill-ring.
 static int32 get_kill_ring_index(lua_State* L)
 {
-    lua_pushinteger(L, rl_get_kill_ring_index() + 1);
+    lua_pushinteger(L, get_kill_ring_index() + 1);
     return 1;
 }
 
@@ -1523,7 +1535,7 @@ static int32 get_kill_ring_string(lua_State* L)
         return 0;
     const int32 index = _index - 1;
 
-    const char* s = rl_get_kill_ring_string(index);
+    const char* s = get_kill_ring_text(index);
     if (!s)
         return 0;
 
@@ -1538,13 +1550,13 @@ static int32 get_kill_ring_string(lua_State* L)
 /// Returns a table containing the kill-ring strings.
 static int32 get_kill_ring_strings(lua_State* L)
 {
-    const int32 count = rl_get_kill_ring_count();
+    const int32 count = get_kill_ring_count();
 
     lua_createtable(L, count, 0);
 
     for (int32 i = 0;;)
     {
-        const char* s = rl_get_kill_ring_string(i++);
+        const char* s = get_kill_ring_text(i++);
         if (!s)
             break;
 
