@@ -1157,7 +1157,7 @@ extern "C" int lua_fprintf(FILE* stream, const char* format, ...)
 #ifdef USE_MEMORY_TRACKING
 extern "C" DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 {
-    pv = dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak);
+    pv = dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak|memNoSizeCheck);
     if (pv)
     {
         dbgsetignore(pv);
