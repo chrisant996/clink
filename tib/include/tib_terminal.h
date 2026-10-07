@@ -13,29 +13,10 @@ extern bool g_coalesce_output;
 
 constexpr int16_t c_input_error         = -1;
 
-enum class input_event_sequence
-{
-    beginning_placeholder,
+constexpr int16_t c_input_eof           = 0x0100;
+constexpr int16_t c_input_resize        = 0x0200;
 
-    eof,
-    // abort,
-    resize,
-
-    MAX,
-    FIRST = beginning_placeholder + 1,
-    LAST = MAX - 1
-};
-
-#define CONSTANT_FROM_SEQUENCE(x) (int16_t(input_event_sequence::x) << 8)
-
-constexpr int16_t c_input_event_first   = CONSTANT_FROM_SEQUENCE(FIRST);
-constexpr int16_t c_input_event_last    = CONSTANT_FROM_SEQUENCE(LAST);
-
-constexpr int16_t c_input_eof           = CONSTANT_FROM_SEQUENCE(eof);
-// constexpr int16_t c_input_abort         = CONSTANT_FROM_SEQUENCE(abort);
-constexpr int16_t c_input_resize        = CONSTANT_FROM_SEQUENCE(resize);
-
-inline bool is_input_event(int32_t c) { return c_input_event_first <= c && c <= c_input_event_last; }
+inline bool is_input_event(int32_t c) { return (c & 0x00000f00) && !(c & 0xfffff0ff); }
 inline bool is_input_byte(int32_t c) { return !(c & 0xffffff00); }
 
 enum class mouse_input_mode { none, VT200, DRAG, ANY };
