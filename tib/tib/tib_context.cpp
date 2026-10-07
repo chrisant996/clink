@@ -8,6 +8,7 @@
 #include "tib.h"
 #include "wcwidth.h"
 #include <cctype>
+#include <chrono>
 #include <cwctype>
 #include <assert.h>
 
@@ -1507,11 +1508,13 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             // any further input from the terminal.
             if (!has_numeric_argument() && g_optimize_self_insert && m_allow_optimized_self_insert)
             {
+                // Yield to the editor periodically even when input keeps arriving.
+                const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
                 int32_t peek = term_in_peek();
                 if (is_self_insertable(peek))
                 {
                     cstring input(&c, 1);
-                    while (is_self_insertable(peek))
+                    while (is_self_insertable(peek) && std::chrono::steady_clock::now() < batch_deadline)
                     {
                         const int32_t cin = term_in();
                         assert(cin == peek);
