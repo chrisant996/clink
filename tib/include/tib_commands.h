@@ -7,8 +7,20 @@
 
 #include "tib_base.h"
 #include "tib_bindings.h"
+#include "tib_context.h"
+
+#include <functional>
 
 namespace tib {
+
+extern uint32_t g_add_to_kill_ring;
+
+// Flags for do_with_numeric_argument:
+constexpr uint8_t NO_DING               = 1 << 0;
+constexpr uint8_t UNDO_GROUP            = 1 << 1;
+constexpr uint8_t KILL_RING             = 1 << 2;
+constexpr uint8_t KILL_RING_MULTI       = 1 << 3;
+int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags=0) noexcept;
 
 int32_t abort(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t accept_line(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
@@ -26,6 +38,7 @@ int32_t screen_line_up(tib::editor_context& ctx, int32_t key, const char* name, 
 
 int32_t del_char_left(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t del_char_right(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t del_line(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t del_word_left(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t del_word_right(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t del_bigword_left(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
@@ -43,6 +56,8 @@ int32_t cua_begin_of_line(tib::editor_context& ctx, int32_t key, const char* nam
 int32_t cua_end_of_line(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t cua_backward_char(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t cua_forward_char(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t cua_backward_bigword(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t cua_forward_bigword(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t cua_backward_word(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t cua_forward_word(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t cua_screen_line_down(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;

@@ -48,9 +48,11 @@ extern hook_new_terminal_out_func_t hook_new_terminal_out;
 
 void term_begin();
 void term_end();
+bool term_redirect(terminal_out* redirect); // Only one at a time.
 void term_sigint();
 #ifdef _WIN32
 void term_sigclose();
+bool is_term_sigclose();
 #endif
 
 int32_t term_in();
@@ -109,6 +111,7 @@ public:
                         ~display_accumulator();
                         display_accumulator();
     void                end();
+    void                cancel();
     static void         synchronize_output(bool sync) { s_can_synchronize_output = sync; }
     static bool         active() { return s_active; }
     static bool         synchronized_output() { return s_synchronized_output; }
@@ -120,6 +123,7 @@ private:
     static bool         s_can_synchronize_output;
     static bool         s_active;
     static bool         s_synchronized_output;
+    bool                m_active = true;
 };
 
 #ifdef _WIN32

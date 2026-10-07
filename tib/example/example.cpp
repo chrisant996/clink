@@ -884,6 +884,8 @@ no_border:
         tib->clear_additional_lines();
 #pragma endregion // Show custom feedback.
 
+    tib->set_usage_text(nullptr, 0);
+    tib->set_suggestion_text(nullptr);
     tib->clear_additional_lines();
     tib->end_display_lf();
 

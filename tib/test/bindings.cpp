@@ -168,8 +168,7 @@ TEST_CASE("Key bindings")
                 REQUIRE(resolver.step('[').more());
                 auto resolved = resolver.step('A');
                 REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-                REQUIRE(resolved.binding_target);
-                REQUIRE(resolved.binding_target->is_func_name("command-one"));
+                REQUIRE(resolved.is_func_name("command-one"));
             }
 
             {
@@ -200,8 +199,7 @@ TEST_CASE("Key bindings")
                 REQUIRE(resolver.step('[').more());
                 auto resolved = resolver.step('A');
                 REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-                REQUIRE(resolved.binding_target);
-                REQUIRE(resolved.binding_target->is_func_name("command-one"));
+                REQUIRE(resolved.is_func_name("command-one"));
             }
 
             {
@@ -232,8 +230,7 @@ TEST_CASE("Key bindings")
                 REQUIRE(resolver.step('[').more());
                 auto resolved = resolver.step('A');
                 REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-                REQUIRE(resolved.binding_target);
-                REQUIRE(resolved.binding_target->is_func_name("command-override"));
+                REQUIRE(resolved.is_func_name("command-override"));
             }
 
             {
@@ -241,8 +238,7 @@ TEST_CASE("Key bindings")
                 REQUIRE(resolver.step('[').more());
                 auto resolved = resolver.step('B');
                 REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-                REQUIRE(resolved.binding_target);
-                REQUIRE(resolved.binding_target->is_func_name("command-two"));
+                REQUIRE(resolved.is_func_name("command-two"));
             }
         }
 
@@ -263,8 +259,7 @@ TEST_CASE("Key bindings")
                     REQUIRE(i + 1 == sequence_length || resolved.more());
                 }
                 REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-                REQUIRE(resolved.binding_target);
-                REQUIRE(resolved.binding_target->is_func_name(target));
+                REQUIRE(resolved.is_func_name(target));
                 REQUIRE(resolved.params.size() == expected_params.size());
 
                 size_t i = 0;
@@ -348,7 +343,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "abc");
         REQUIRE(resolved.key == 'c');
-        REQUIRE(resolved.binding_target->is_func_name("long"));
+        REQUIRE(resolved.is_func_name("long"));
     }
 
     SECTION("Mismatch replays the suffix")
@@ -365,7 +360,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "a");
         REQUIRE(resolved.key == 'a');
-        REQUIRE(resolved.binding_target->is_func_name("short"));
+        REQUIRE(resolved.is_func_name("short"));
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(tib::term_in() == 'x');
@@ -387,7 +382,7 @@ TEST_CASE("Shadowed key bindings")
         auto resolved = resolver.step('x');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "abc");
-        REQUIRE(resolved.binding_target->is_func_name("middle"));
+        REQUIRE(resolved.is_func_name("middle"));
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'd');
         REQUIRE(tib::term_in() == 'x');
@@ -406,7 +401,7 @@ TEST_CASE("Shadowed key bindings")
         auto resolved = resolver.resolve_pending();
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "a");
-        REQUIRE(resolved.binding_target->is_func_name("short"));
+        REQUIRE(resolved.is_func_name("short"));
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
     }
@@ -454,7 +449,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolver.step('b').ambiguous());
         auto resolved = resolver.step('x');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->get_type() == tib::binding_type::macro);
+        REQUIRE(resolved.binding_target.get_type() == tib::binding_type::macro);
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(tib::term_in() == 'x');
@@ -476,7 +471,7 @@ TEST_CASE("Shadowed key bindings")
         auto resolved = resolver.step('x');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "a12");
-        REQUIRE(resolved.binding_target->is_func_name("pattern"));
+        REQUIRE(resolved.is_func_name("pattern"));
         REQUIRE(resolved.params.size() == 1);
         REQUIRE(resolved.params[0] == "12");
         REQUIRE(resolved.dispatch());
@@ -501,7 +496,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolver.step('b').ambiguous());
         auto resolved = resolver.step('c');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("overlay"));
+        REQUIRE(resolved.is_func_name("overlay"));
     }
 
     SECTION("Lowercase-version binding can be a fallback")
@@ -519,7 +514,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "ax");
         REQUIRE(resolved.key == 'x');
-        REQUIRE(resolved.binding_target->is_func_name("lower"));
+        REQUIRE(resolved.is_func_name("lower"));
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'q');
     }
@@ -548,7 +543,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolver.step('b').ambiguous());
         auto resolved = resolver.step('x');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("short"));
+        REQUIRE(resolved.is_func_name("short"));
         REQUIRE(miss_target->get_miss_count() == 0);
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
@@ -842,8 +837,7 @@ PERF_CASE("PERF, resolve 1000 pathological shadowed sequences")
             REQUIRE(all_prefixes);
             REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
             REQUIRE(resolved.sequence == "a");
-            REQUIRE(resolved.binding_target);
-            REQUIRE(resolved.binding_target->is_func_name("short"));
+            REQUIRE(resolved.is_func_name("short"));
             ++num_resolved;
         }
 
@@ -865,7 +859,7 @@ PERF_CASE("PERF, resolve default commands 10000 times")
         {
             for (const auto& command : commands)
             {
-                REQUIRE(tib::editor_context::lookup_command(command.name) == command.func);
+                REQUIRE(tib::editor_context::lookup_command(command.first) == command.second);
                 ++num_resolved;
             }
         }

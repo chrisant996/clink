@@ -38,15 +38,16 @@ public:
                         binding_target(binding_type type, const char* text, size_t len=c_auto_length) noexcept;
                         binding_target(const binding_target& t) noexcept = default;
                         binding_target(binding_target&& t) noexcept = default;
+                        operator bool() const { return m_type != binding_type::none; }
     binding_target&     operator=(const binding_target& t) noexcept = default;
     binding_target&     operator=(binding_target&& t) noexcept = default;
     bool                operator==(const binding_target& t) const noexcept;
     bool                is_func_name(const char* name) const noexcept;
 
     binding_type        get_type() const noexcept { return m_type; }
-    const char*         get_text() const noexcept { return m_text; }
-    size_t              get_length() const noexcept { assert(m_type == binding_type::macro); return m_length; }
-    char                get_char() const noexcept { assert(m_type == binding_type::quoted_insert); return char(m_length); }
+    const char*         get_text() const noexcept { return m_text.c_str(); }
+    size_t              get_length() const noexcept { assert(m_type == binding_type::macro); return m_text.length(); }
+    char                get_char() const noexcept { assert(m_type == binding_type::quoted_insert); return *m_text.c_str(); }
 
     void                clear() noexcept;
     void                set_func(const char* name) noexcept;
@@ -56,28 +57,13 @@ public:
 
 protected:
     binding_type        m_type = binding_type::none;
-    const char*         m_text = nullptr;   // Borrowed, not owned.
-    size_t              m_length = 0;
+    cstring             m_text;
 };
 
 binding_target binding_target_func(const char* name);
 binding_target binding_target_macro(const char* text, size_t len=c_auto_length);
 binding_target binding_target_quoted_insert(char c);
 binding_target binding_target_lowercase_version();
-
-class binding_target_copy : public binding_target
-{
-public:
-                        ~binding_target_copy() = default;
-                        binding_target_copy() = default;
-                        binding_target_copy(const binding_target_copy& t) noexcept = default;
-                        binding_target_copy(const binding_target& t) noexcept;
-    binding_target_copy& operator=(const binding_target_copy& t) noexcept = default;
-    binding_target_copy& operator=(const binding_target& t) noexcept;
-
-private:
-    cstring             m_owned_text;
-};
 
 struct key_binding
 {
@@ -133,7 +119,9 @@ private:
     int8_t              m_can_self_insert = -1;
 };
 
-typedef std::vector<std::shared_ptr<key_table>> key_table_list;
+class key_table_list : public std::vector<std::shared_ptr<key_table>>, public std::enable_shared_from_this<key_table_list>
+{
+};
 
 enum class dispatch_outcome
 {
@@ -193,11 +181,12 @@ struct resolved_binding
                         // True when the pending sequence contains a complete
                         // fallback and remains a prefix of a longer binding.
     bool                ambiguous() const { return more() && m_ambiguous; }
+    bool                is_func_name(const char* name) const;
     bool                dispatch();
 
     cstring             sequence;
     int32_t             key = 0;
-    const binding_target* binding_target = nullptr; // REVIEW: binding_target_copy?
+    binding_target      binding_target;
     std::weak_ptr<dispatcher_target> dispatcher_target;
     dispatch_outcome    outcome = dispatch_outcome::miss;
     binding_params      params;

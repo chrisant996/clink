@@ -36,6 +36,8 @@ struct editor_callbacks
 {
     virtual void        provide_faces(const input_buffer& buffer, cstring& faces) {}
     virtual const char* get_face_def(char face) { return nullptr; }
+    virtual bool        on_dispatch(const char* name) { return false; }
+    virtual void        on_dispatched(const char* name) {}
 };
 
 struct editor_quirks
@@ -111,8 +113,9 @@ public:
     bool                is_displayed() const;
     void                display();
     void                force_redisplay();
-    void                move_to_caret_position();
-    void                move_to_end_of_display();
+    void                move_to_origin(bool force_left_edge=false);
+    void                move_to_caret_position(bool force_column=false);
+    void                move_to_end_of_display(bool cr=false);
     void                erase_display();
     void                end_display_lf();
 
@@ -183,9 +186,19 @@ public:
     void                dump_undo_stack();
 #endif
 
+    struct stricmp_less
+    {
+        using is_transparent = void;
+        bool operator()(const char* lhs, const char* rhs) const
+        {
+            return _stricmp(lhs, rhs) < 0;
+        }
+    };
+
     static void         ensure_commands();
+    static void         clear_all_commands();
     static void         register_command(const char* name, editor_command_func_t func);
-    static const std::vector<editor_command>& get_registered_commands();
+    static const std::map<const char*, editor_command_func_t, stricmp_less>& get_registered_commands();
     static editor_command_func_t lookup_command(const char* name);
 
                         // Methods on the tib::dispatcher_target interface.
@@ -205,8 +218,6 @@ private:
     void                clear_overwrite_input();
     void                apply_message_text();
     void                apply_override_bindings();
-
-    static void         ensure_commands_sorted();
 
 private:
     struct cstring_less
@@ -244,6 +255,7 @@ private:
     uint32_t            m_overwrite_input_navigation_counter = 0;
     cstring             m_last_command;
     std::map<cstring, cstring, cstring_less> m_named_values;
+    bool                m_in_on_dispatched = false;
 
     // Numeric argument.
     uint8_t             m_numflags = 0;
@@ -269,9 +281,8 @@ private:
 #endif
 
     // Commands.
-    static std::vector<editor_command> s_commands;
     static std::vector<cstring> s_command_names;
-    static bool         s_unsorted_commands;
+    static std::map<const char*, editor_command_func_t, stricmp_less> s_commands;
 };
 
 } // namespace tib

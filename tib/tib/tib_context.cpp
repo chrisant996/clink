@@ -284,9 +284,15 @@ void editor_context::reset_state() noexcept
 {
     m_can_drag = false;
     clear_overwrite_input();
-    m_last_command.clear();
     m_named_values.clear();
     clear_numeric_argument();
+
+    m_last_command.clear();
+    if (m_callbacks)
+        m_callbacks->on_dispatched(nullptr);
+
+    clear_was_kill_command();
+    g_add_to_kill_ring = 0;
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -463,14 +469,19 @@ void editor_context::force_redisplay()
     m_display.force_redisplay();
 }
 
-void editor_context::move_to_end_of_display()
+void editor_context::move_to_origin(bool force_left_edge)
 {
-    m_display.move_to_end_of_display();
+    m_display.move_to_origin(force_left_edge);
 }
 
-void editor_context::move_to_caret_position()
+void editor_context::move_to_caret_position(bool force_column)
 {
-    m_display.move_to_caret_position();
+    m_display.move_to_caret_position(force_column);
+}
+
+void editor_context::move_to_end_of_display(bool cr)
+{
+    m_display.move_to_end_of_display(cr);
 }
 
 void editor_context::erase_display()
@@ -570,6 +581,8 @@ bool editor_context::backspace(uint8_t word)
 #ifdef DEBUG
         assert(old_pos == get_caret() + moved);
 #endif
+        if (g_add_to_kill_ring)
+            add_to_kill_ring(false, m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -590,6 +603,8 @@ bool editor_context::del(uint8_t word)
         textpos_t del_pos = get_caret();
         const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), del_pos, true/*forward*/, word);
         set_caret(del_pos - moved);
+        if (g_add_to_kill_ring)
+            add_to_kill_ring(true, m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -599,6 +614,8 @@ bool editor_context::del(uint8_t word)
 
 void editor_context::del_line()
 {
+    if (g_add_to_kill_ring)
+        add_to_kill_ring(-1, m_text.c_str(), m_text.length());
     remove_text(0, -1);
 
     assert(!get_caret());
@@ -761,6 +778,13 @@ void editor_context::replace_from_history(const cstring& s, bool keep_undo)
 void editor_context::set_last_command(const char* name)
 {
     m_last_command.set(name);
+
+    if (m_callbacks && !m_in_on_dispatched)
+    {
+        m_in_on_dispatched = true;
+        m_callbacks->on_dispatched(name);
+        m_in_on_dispatched = false;
+    }
 }
 
 const char* editor_context::get_named_value(const char* name) const
@@ -1015,7 +1039,7 @@ void editor_context::clear_overwrite_input()
 
 void editor_context::apply_message_text()
 {
-    if (has_numeric_argument())
+    if (has_numeric_argument() && (m_numflags & (NUMFLAG_ARGUMENT_MODE|NUMFLAG_UNIVERSAL_MODE)))
     {
         static const char c_normal[] = "\x1b[m";
         cstring msg;
@@ -1406,13 +1430,18 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
 
     set_auto_clear_numeric_argument();
 
-    if (binding)
+    const auto was_kill_command = get_was_kill_command();
+
+    if (binding && *binding)
     {
         switch (binding->get_type())
         {
         case binding_type::func:
             {
                 const char* const name = binding->get_text();
+                if (m_callbacks && m_callbacks->on_dispatch(name))
+                    break;
+
                 editor_command_func_t func = lookup_command(name);
                 if (func)
                 {
@@ -1514,6 +1543,9 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             ding();
         }
     }
+
+    if (was_kill_command >= get_was_kill_command())
+        clear_was_kill_command();
 
     if (m_numflags & NUMFLAG_AUTO_CLEAR)
         clear_numeric_argument();

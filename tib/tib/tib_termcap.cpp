@@ -58,6 +58,10 @@ const char* term_erase_to_eol()
 
 const char* term_move_up(int32_t num_rows)
 {
+    if (num_rows == 0)
+        return "";
+    if (num_rows == 1)
+        return "\x1b[A";
     static cstring s_buffer;
     s_buffer.clear();
     s_buffer.printf("\x1b[%dA", num_rows);
@@ -66,6 +70,10 @@ const char* term_move_up(int32_t num_rows)
 
 const char* term_move_down(int32_t num_rows)
 {
+    if (num_rows == 0)
+        return "";
+    if (num_rows == 1)
+        return "\x1b[B";
     static cstring s_buffer;
     s_buffer.clear();
     s_buffer.printf("\x1b[%dB", num_rows);
