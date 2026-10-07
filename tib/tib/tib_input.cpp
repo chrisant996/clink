@@ -248,12 +248,12 @@ basic_terminal_in::basic_terminal_in(pushed_input& pushed)
 int32_t basic_terminal_in::read_redirected() noexcept
 {
     if (!m_hin || m_hin == INVALID_HANDLE_VALUE)
-        return c_input_terminal_eof;
+        return c_input_eof;
 
     uint8_t c;
     DWORD num_read = 0;
     if (!ReadFile(m_hin, &c, 1, &num_read, nullptr) || !num_read)
-        return c_input_terminal_eof;
+        return c_input_eof;
     return c;
 }
 #endif
@@ -271,7 +271,7 @@ int32_t basic_terminal_in::read() noexcept
     if (s_last_term_size != term_size)
     {
         s_last_term_size = term_size;
-        return uint8_t(c_input_terminal_resize);
+        return c_input_resize;
     }
 
 #ifdef _WIN32
@@ -284,7 +284,7 @@ again:
     cstring seq;
     INPUT_RECORD record;
     if (!ReadConsoleInputW(m_hin, &record, 1, &num_read) || 1 != num_read)
-        return -1;
+        return c_input_error;
     switch (record.EventType)
     {
     case KEY_EVENT:
@@ -314,7 +314,7 @@ again:
             if (s_last_term_size != term_size)
             {
                 s_last_term_size = term_size;
-                return c_input_terminal_resize;
+                return c_input_resize;
             }
         }
         goto again;
@@ -376,9 +376,11 @@ bool basic_terminal_in::avail(const uint32_t _timeout) noexcept
         // ahead and preserve it in the shared pushed-input queue.
         assert(m_pushed.empty());
         const int32_t c = read_redirected();
-        if (c < 0 || !m_pushed.push(uint8_t(c)))
+        if (c < 0)
             return false;
-        return true;
+        if (!is_input_byte(c) && !is_input_event(c))
+            return false;
+        return m_pushed.push(int16_t(c));
     }
 #endif
 
@@ -386,7 +388,7 @@ bool basic_terminal_in::avail(const uint32_t _timeout) noexcept
     if (s_last_term_size != term_size)
     {
         s_last_term_size = term_size;
-        m_pushed.push(c_input_terminal_resize);
+        m_pushed.push(c_input_resize);
         return true;
     }
 
@@ -452,7 +454,7 @@ bool basic_terminal_in::avail(const uint32_t _timeout) noexcept
 
         case WINDOW_BUFFER_SIZE_EVENT:
 #ifdef USE_READCONSOLEINPUT
-            if (m_pushed.push(c_input_terminal_resize))
+            if (m_pushed.push(c_input_resize))
                 ret = true;
 #else
             // REVIEW: can't really do anything with this unless term_in()

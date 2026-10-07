@@ -855,14 +855,14 @@ no_border:
     tib::binding_resolver resolver;                         // Required.
     resolver.add_target(tib);                               // Required.
 
-    while (!tib->is_done())                                    // Required.
+    while (!tib->is_done())                                 // Required.
     {
                 /*Custom*/  add_feedback_to_display();
 
         tib->display();                                     // Required.
 
         const int32_t c = tib::term_in();                   // Required.
-        if (c < 0 || c == tib::c_input_terminal_eof)
+        if (c < 0 || c == tib::c_input_eof)
             break;
 
                 /*Custom*/  update_sequence_before_step(c);

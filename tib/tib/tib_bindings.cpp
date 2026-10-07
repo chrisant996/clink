@@ -136,7 +136,7 @@ binding_target::binding_target(binding_type type, const char* text, size_t len) 
         break;
     case binding_type::quoted_insert:
         assert(len == 1);
-        assert(*text && uint8_t(*text) < c_input_terminal_reserved_begin);
+        assert(*text);
         set_quoted_insert(*text);
         break;
     case binding_type::lowercase_version:
@@ -223,7 +223,7 @@ void binding_target::set_macro(const char* text, size_t len) noexcept
 
 void binding_target::set_quoted_insert(char c) noexcept
 {
-    assert(c && uint8_t(c) < c_input_terminal_reserved_begin);
+    assert(c);
     m_type = binding_type::quoted_insert;
     m_text.append_char(c);
 }
@@ -768,12 +768,12 @@ retry_target:
 
 bool is_self_insertable(char c)
 {
-    return (c < 0 || c >= ' ') && !(uint8_t(c) == c_input_terminal_eof || uint8_t(c) == c_input_terminal_resize);
+    return (c < 0 || c >= ' ');
 }
 
 bool is_self_insertable(int32_t key)
 {
-    return (key >= ' ' && key <= 0xff && key != c_input_terminal_eof && key != c_input_terminal_resize);
+    return (key >= ' ' && key <= 0xff);
 }
 
 } // namespace tib

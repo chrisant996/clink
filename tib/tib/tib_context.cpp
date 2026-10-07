@@ -1473,7 +1473,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                 }
                 if (!ret)
                     m_quoted_insert_count = 0;
-                if (repeat > 0 && c && uint8_t(c) < c_input_terminal_reserved_begin)
+                if (repeat > 0 && c)
                 {
                     begin_undo_group();
                     while (repeat-- > 0)
