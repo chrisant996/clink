@@ -1253,11 +1253,12 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
                 // Callbacks may internally end up calling read_console() to
                 // check whether any input is available, which will push the
-                // peeked input into the buffer.  If any input arrives in the
-                // buffer, then we're done, even if it happened within a
-                // nested reentrant call.  Otherwise, for example, reentrant
-                // input breaks filter_unbound_input().
-                if (buffer_count != m_buffer_count)
+                // peeked input into the buffer.  A peek can queue a record
+                // without filling m_buffer.  Stop here so read() consumes
+                // that record before later input.  Otherwise, for example,
+                // reentrant input can break filter_unbound_input() or can
+                // result in reading input out of order.
+                if (buffer_count != m_buffer_count || !m_pending_records.empty())
                     return;
             }
 
