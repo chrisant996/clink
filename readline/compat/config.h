@@ -18,8 +18,8 @@
 #endif
 
 #if defined(BUILD_READLINE) && !defined(__cplusplus)
-#include "../../clink/core/include/core/bldopts.h"
-#include "../../clink/core/include/core/debugheap.h"
+#include <core/bldopts.h>
+#include <core/debugheap.h>
 #include <assert.h>
 #endif
 
