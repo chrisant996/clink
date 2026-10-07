@@ -1087,7 +1087,8 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
     {
     case KEY_EVENT:
         process_input(record.Event.KeyEvent, false/*peek*/);
-        filter_unbound_input(buffer_count);
+        if (!s_force_raw_esc)
+            filter_unbound_input(buffer_count);
         break;
 
     case MOUSE_EVENT:
