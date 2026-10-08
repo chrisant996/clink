@@ -1947,11 +1947,17 @@ void rl_postinit()
 }
 
 //------------------------------------------------------------------------------
-void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user)
+void initialise_readline(bool no_user)
 {
     // Can't give a more specific scope like "Readline initialization", because
     // realloc of some things will use "Readline" and assert on label change.
     dbg_ignore_scope(snapshot, "Readline");
+
+    int32 id;
+    host_context context;
+    host_get_app_context(id, context);
+    const char* const state_dir = context.profile.empty() ? nullptr : context.profile.c_str();
+    const char* const default_inputrc = context.default_inputrc.empty() ? nullptr : context.default_inputrc.c_str();
 
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output).
@@ -1998,7 +2004,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // rl_initialize() set some default key bindings AFTER it loaded the
         // inputrc file.  Those were interfering with suppressing the
         // *-mode-string config variables.
-        rl_readline_name = shell_name;
+        rl_readline_name = "clink";
         rl_initialize();
 
         rl_postinit();
