@@ -408,8 +408,13 @@ clink_lib("clink_lib")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_lua")
+    includedirs("clink/core/include/core")          -- for tib_config.h
+    includedirs("clink/terminal/include/terminal")  -- for tib's wcwidth.h
+    includedirs("tib")
+    includedirs("tib/include")
     includedirs("clink/lua/include/lua")
     includedirs("clink/core/include")
+    includedirs("clink/core/include/core")
     includedirs("clink/lib/include")
     includedirs("clink/process/include")
     includedirs("clink/terminal/include")
@@ -643,6 +648,7 @@ clink_exe("clink_test")
     links("wildmatch")
     links("lua")
     links("readline")
+    links("tib")
     links("shlwapi")
     links("rpcrt4")
     includedirs("clink/test/src")
