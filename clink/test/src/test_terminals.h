@@ -43,10 +43,8 @@ class test_terminal_out
     : public terminal_out
 {
 public:
-    virtual void    open() override {}
     virtual void    begin() override {}
     virtual void    end() override {}
-    virtual void    close() override {}
     virtual void    write(const char* chars, int32 length) override {}
     virtual void    flush() override {}
     virtual int32   get_columns() const override { return 80; }

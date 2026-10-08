@@ -15,10 +15,8 @@ class ecma48_terminal_out
 {
 public:
                         ecma48_terminal_out(screen_buffer& screen);
-    virtual void        open() override;
     virtual void        begin() override;
     virtual void        end() override;
-    virtual void        close() override;
     virtual void        override_handle() override;
     virtual void        write(const char* chars, int32 length) override;
     virtual void        flush() override;

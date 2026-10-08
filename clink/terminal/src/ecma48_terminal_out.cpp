@@ -45,13 +45,6 @@ void ecma48_terminal_out::override_handle()
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal_out::open()
-{
-    init_redirection();
-    m_screen.open();
-}
-
-//------------------------------------------------------------------------------
 void ecma48_terminal_out::begin()
 {
     init_redirection();
@@ -65,12 +58,6 @@ void ecma48_terminal_out::end()
 {
     m_screen.end();
     reset_pending();
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal_out::close()
-{
-    m_screen.close();
 }
 
 //------------------------------------------------------------------------------
