@@ -301,6 +301,7 @@ private:
     uint32_t            m_top = 0;                  // Vertical scroll top.
     textpos_t           m_left = 0;                 // Horizontal scroll left.
     bool                m_display_ended = false;
+    bool                m_final_display = false;
     bool                m_border_dirty = false;
     bool                m_invalidated = false;
     bool                m_force_redisplay = false;

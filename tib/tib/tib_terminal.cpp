@@ -47,13 +47,21 @@ DWORD GetMainThreadId()
 terminal_in* new_basic_terminal_in(pushed_input& pushed);
 terminal_out* new_basic_terminal_out();
 
+static void str_to_int16_memcpy(int16_t* dst, const char* src, size_t len)
+{
+    while (len--)
+        *(dst++) = uint8_t(*(src++));
+}
+
 pushed_input::~pushed_input() noexcept
 {
     tib_free(m_data);
 }
 
-bool pushed_input::push(uint8_t c) noexcept
+bool pushed_input::push(int16_t c) noexcept
 {
+    assert(is_input_byte(c) || is_input_event(c));
+
     if (m_high_surrogate && !push_invalid())
         return false;
 
@@ -75,9 +83,9 @@ bool pushed_input::push(const char* text, size_t len) noexcept
 
     const size_t offset = (m_head + m_count) % m_size;
     const size_t first = min(len, m_size - offset);
-    memcpy(m_data + offset, text, first);
+    str_to_int16_memcpy(m_data + offset, text, first);
     if (len > first)
-        memcpy(m_data, text + first, len - first);
+        str_to_int16_memcpy(m_data, text + first, len - first);
     m_count += len;
     return true;
 }
@@ -92,9 +100,9 @@ bool pushed_input::push_front(const char* text, size_t len) noexcept
     const size_t offset = len % m_size; // In case len == m_size.
     m_head = (m_head >= offset) ? m_head - offset : m_size - (offset - m_head);
     const size_t first = min(len, m_size - m_head);
-    memcpy(m_data + m_head, text, first);
+    str_to_int16_memcpy(m_data + m_head, text, first);
     if (len > first)
-        memcpy(m_data, text + first, len - first);
+        str_to_int16_memcpy(m_data, text + first, len - first);
     m_count += len;
     return true;
 }
@@ -126,7 +134,7 @@ push_utf8:
             if (!ensure_capacity(m_tmp_utf8.length()))
                 return false;
             for (size_t i = 0; i < m_tmp_utf8.length(); ++i)
-                push(m_tmp_utf8.c_str()[i]);
+                push(uint8_t(m_tmp_utf8.c_str()[i]));
             return true;
         }
 
@@ -170,14 +178,13 @@ bool pushed_input::push_invalid() noexcept
 int32_t pushed_input::peek() const noexcept
 {
     assert(!empty());
-    const uint8_t c = m_data[m_head];
-    return c;
+    return m_data[m_head];
 }
 
 int32_t pushed_input::read() noexcept
 {
     assert(!empty());
-    const uint8_t c = m_data[m_head];
+    const int16_t c = m_data[m_head];
     ++m_head;
     --m_count;
     m_head %= m_size;
@@ -207,15 +214,15 @@ bool pushed_input::ensure_capacity(size_t num) noexcept
     if (new_size < required)
         new_size = required;
 
-    uint8_t* const data = static_cast<uint8_t*>(tib_malloc(new_size));
+    int16_t* const data = static_cast<int16_t*>(tib_malloc(new_size * sizeof(*m_data)));
     if (!data)
         return false;
 
     const size_t first = min(m_count, m_size - m_head);
     if (first)
-        memcpy(data, m_data + m_head, first);
+        memcpy(data, m_data + m_head, first * sizeof(*m_data));
     if (m_count > first)
-        memcpy(data + first, m_data, m_count - first);
+        memcpy(data + first, m_data, (m_count - first) * sizeof(*m_data));
 
     tib_free(m_data);
     m_data = data;
@@ -281,8 +288,6 @@ void term_end()
         term_out("\x1b[m");
 
         enable_mouse_input(mouse_input_mode::none, false);
-
-        term_clear_input();
 
         // Flush before nulling the globals.
         coalesce.flush();
@@ -357,7 +362,7 @@ int32_t term_in()
 
     assert(s_term_began);
     if (!s_terminal_in)
-        return c_input_terminal_eof;
+        return c_input_eof;
 
     if (!s_pushed.empty())
         return s_pushed.read();
@@ -376,7 +381,7 @@ int32_t term_in()
     }
 
     const int32_t c = s_terminal_in->read();
-    assert(c < 0 || !(c & 0xffffff00));
+    assert(c < 0 || is_input_byte(c) || is_input_event(c));
     return c;
 }
 
@@ -390,7 +395,7 @@ int32_t term_in_peek()
 
     assert(s_term_began);
     if (!s_terminal_in)
-        return c_input_terminal_eof;
+        return c_input_eof;
 
     if (!s_pushed.empty())
         return s_pushed.peek();
@@ -403,7 +408,7 @@ int32_t term_in_peek()
     }
 
     if (!term_in_avail())
-        return -1;
+        return c_input_error;
 
     // term_in_avail() can queue multiple UTF8 bytes for one UTF16 input
     // character.  Return the head in place; reading and pushing it back would
@@ -420,7 +425,7 @@ int32_t term_in_peek()
     const int32_t c = term_in();
     if (c < 0)
         return c;
-    assert(!(c & 0xffffff00));
+    assert(is_input_byte(c) || is_input_event(c));
 
     s_pushed.push(uint8_t(c));
     return c;

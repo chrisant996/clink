@@ -65,7 +65,7 @@ static void invoke_quoted_insert(tib::binding_resolver& resolver)
 {
     auto resolved = resolver.step('\021');
     REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-    REQUIRE(resolved.binding_target->is_func_name("quoted-insert"));
+    REQUIRE(resolved.binding_target.is_func_name("quoted-insert"));
     REQUIRE(resolved.dispatch());
 }
 
@@ -115,7 +115,7 @@ TEST_CASE("Quoted insert")
 
         resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("accept-line"));
+        REQUIRE(resolved.binding_target.is_func_name("accept-line"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->is_done());
     }
@@ -134,7 +134,7 @@ TEST_CASE("Quoted insert")
 
         resolved = resolver.step('\007');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("abort"));
+        REQUIRE(resolved.binding_target.is_func_name("abort"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_text() == tib::cstring("\007", 1));
     }
@@ -152,7 +152,7 @@ TEST_CASE("Quoted insert")
 
         resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("accept-line"));
+        REQUIRE(resolved.binding_target.is_func_name("accept-line"));
     }
 
     SECTION("Negative numeric argument quotes the next N bytes")
@@ -172,7 +172,7 @@ TEST_CASE("Quoted insert")
 
         auto resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("accept-line"));
+        REQUIRE(resolved.binding_target.is_func_name("accept-line"));
     }
 
     SECTION("Proper negative digit argument quotes exactly N bytes")
@@ -186,7 +186,7 @@ TEST_CASE("Quoted insert")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
         resolved = resolver.step('-');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+        REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_numeric_argument() == -1);
 
@@ -194,7 +194,7 @@ TEST_CASE("Quoted insert")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
         resolved = resolver.step('2');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+        REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_numeric_argument() == -2);
 
@@ -209,7 +209,7 @@ TEST_CASE("Quoted insert")
 
         resolved = resolver.step('\x7f');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("del-char-left"));
+        REQUIRE(resolved.binding_target.is_func_name("del-char-left"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_text() == "\x7f");
     }
@@ -255,7 +255,7 @@ TEST_CASE("Quoted insert")
 
         auto resolved = resolver.step('\r');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("accept-line"));
+        REQUIRE(resolved.binding_target.is_func_name("accept-line"));
     }
 
     SECTION("Returns quoted input to the initiating target")
@@ -297,13 +297,13 @@ TEST_CASE("Digit argument uses a modal key table")
     REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
     resolved = resolver.step('0');
     REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-    REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+    REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
     REQUIRE(resolved.dispatch());
     REQUIRE(input->get_numeric_argument() == 0);
 
     resolved = resolver.step('1');
     REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-    REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+    REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
     REQUIRE(resolved.dispatch());
     REQUIRE(input->get_numeric_argument() == 1);
 
@@ -311,7 +311,7 @@ TEST_CASE("Digit argument uses a modal key table")
     REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
     resolved = resolver.step('2');
     REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-    REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+    REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
     REQUIRE(resolved.dispatch());
     REQUIRE(input->get_numeric_argument() == 12);
 
@@ -340,7 +340,7 @@ TEST_CASE("Universal argument uses a modal key table")
     {
         auto resolved = resolver.step('\025');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("universal-argument"));
+        REQUIRE(resolved.binding_target.is_func_name("universal-argument"));
         REQUIRE(resolved.dispatch());
     };
 
@@ -350,7 +350,7 @@ TEST_CASE("Universal argument uses a modal key table")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
         resolved = resolver.step(digit);
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+        REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
         REQUIRE(resolved.dispatch());
     };
 
@@ -377,7 +377,7 @@ TEST_CASE("Universal argument uses a modal key table")
                 break;
             auto resolved = resolver.step(c);
             REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-            REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+            REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
             REQUIRE(resolved.dispatch());
         }
         REQUIRE(input->get_numeric_argument() == 12);
@@ -411,7 +411,7 @@ TEST_CASE("Universal argument uses a modal key table")
 
         auto resolved = resolver.step('5');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+        REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_numeric_argument() == 5);
 
@@ -434,7 +434,7 @@ TEST_CASE("Universal argument uses a modal key table")
                 break;
             auto resolved = resolver.step(c);
             REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-            REQUIRE(resolved.binding_target->is_func_name("digit-argument"));
+            REQUIRE(resolved.binding_target.is_func_name("digit-argument"));
             REQUIRE(resolved.dispatch());
         }
         REQUIRE(input->get_numeric_argument() == -3);
@@ -486,7 +486,7 @@ TEST_CASE("Uppercase Alt input resolves in the same key table")
             REQUIRE(resolved.sequence.length() == 2);
             REQUIRE(resolved.sequence.c_str()[0] == '\x1b');
             REQUIRE(resolved.sequence.c_str()[1] == resolved.key);
-            REQUIRE(resolved.binding_target->is_func_name(test.command));
+            REQUIRE(resolved.binding_target.is_func_name(test.command));
         }
     }
 
@@ -499,7 +499,7 @@ TEST_CASE("Uppercase Alt input resolves in the same key table")
         auto resolved = resolver.step('C');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.sequence == "\x1b" "c");
-        REQUIRE(resolved.binding_target->is_func_name("capitalize"));
+        REQUIRE(resolved.binding_target.is_func_name("capitalize"));
         REQUIRE(resolved.dispatch());
         REQUIRE(input->get_text() == "Mixed");
         REQUIRE(input->get_dispatch_count() == 1);
@@ -514,7 +514,7 @@ TEST_CASE("Uppercase Alt input resolves in the same key table")
         REQUIRE(resolver.step('\x1b').more());
         auto resolved = resolver.step('T');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
-        REQUIRE(resolved.binding_target->is_func_name("transpose-words"));
+        REQUIRE(resolved.binding_target.is_func_name("transpose-words"));
         REQUIRE(input->has_numeric_argument());
         REQUIRE(resolved.dispatch());
         REQUIRE(!input->has_numeric_argument());
@@ -555,7 +555,7 @@ TEST_CASE("Uppercase Alt input resolves in the same key table")
         REQUIRE(resolved.sequence == "\x1b" "X");
         REQUIRE(resolved.key == 'X');
         REQUIRE(resolved.binding_target);
-        REQUIRE(resolved.binding_target->is_func_name("accept-line"));
+        REQUIRE(resolved.binding_target.is_func_name("accept-line"));
     }
 
     SECTION("Does not use a lowercase binding from another key table")

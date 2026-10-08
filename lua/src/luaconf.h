@@ -560,9 +560,9 @@ extern int lua_fprintf(FILE* stream, const char* format, ...);
  * Make Lua use Clink's debug heap.
  */
 #ifdef BUILD_LUA
-#   include "../../clink/core/include/core/bldopts.h"
+#   include <core/bldopts.h>
 #   ifdef USE_MEMORY_TRACKING
-#       include "../../clink/core/include/core/debugheap.h"
+#       include <core/debugheap.h>
 #       ifdef __cplusplus
 extern "C" {
 #       endif // __cplusplus

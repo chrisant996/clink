@@ -11,14 +11,13 @@ namespace tib {
 
 extern bool g_coalesce_output;
 
-// Use some invalid UTF8 bytes for special meanings.
-constexpr uint8_t c_input_terminal_reserved_begin   = 0xfa;
-//                                                  = 0xfa;
-//                                                  = 0xfb;
-//                                                  = 0xfc;
-constexpr uint8_t c_input_terminal_eof              = 0xfd;
-constexpr uint8_t c_input_terminal_resize           = 0xfe;
-// Do not use 0xff; it may be confused with errors. = 0xff;
+constexpr int16_t c_input_error         = -1;
+
+constexpr int16_t c_input_eof           = 0x0100;
+constexpr int16_t c_input_resize        = 0x0200;
+
+inline bool is_input_event(int32_t c) { return (c & 0x00000f00) && !(c & 0xfffff0ff); }
+inline bool is_input_byte(int32_t c) { return !(c & 0xffffff00); }
 
 enum class mouse_input_mode { none, VT200, DRAG, ANY };
 
@@ -84,14 +83,8 @@ public:
                         pushed_input(const pushed_input&) = delete;
     pushed_input&       operator=(const pushed_input&) = delete;
     bool                empty() const noexcept { return !m_count; }
-    void                clear() noexcept
-    {
-        m_head = m_count = 0;
-#ifdef _WIN32
-        m_high_surrogate = 0;
-#endif
-    }
-    bool                push(uint8_t c) noexcept;
+    size_t              size() const noexcept { return m_count; }
+    bool                push(int16_t c) noexcept;
     bool                push(const char* text, size_t len=c_auto_length) noexcept;
     bool                push_front(const char* text, size_t len) noexcept;
 #ifdef _WIN32
@@ -105,7 +98,7 @@ public:
 private:
     bool                ensure_capacity(size_t num) noexcept;
 
-    uint8_t*            m_data = nullptr;
+    int16_t*            m_data = nullptr;
     size_t              m_size = 0;
     size_t              m_head = 0;
     size_t              m_count = 0;

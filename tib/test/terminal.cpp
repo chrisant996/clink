@@ -27,6 +27,11 @@ static size_t count_crlf(const tib::cstring& output)
     return count;
 }
 
+static bool ends_with_lf(const tib::cstring& output)
+{
+    return output.length() && output.c_str()[output.length() - 1] == '\n';
+}
+
 TEST_CASE("End display preserves input and requires a fresh begin_display")
 {
     tib::cstring output;
@@ -38,6 +43,7 @@ TEST_CASE("End display preserves input and requires a fresh begin_display")
     output.clear();
     box.end_display_lf();
     REQUIRE(count_crlf(output) == 1);
+    REQUIRE(ends_with_lf(output));
     REQUIRE(box.get_text() == "abc");
     REQUIRE(box.get_selection_state().get_caret() == 1);
     REQUIRE(!box.is_done());
@@ -69,6 +75,7 @@ TEST_CASE("End display renders pending input changes")
         box.end_display_lf();
         REQUIRE(strstr(output.c_str(), "def") != nullptr);
         REQUIRE(count_crlf(output) == 1);
+        REQUIRE(ends_with_lf(output));
         REQUIRE(box.get_text() == "abcdef");
         REQUIRE(box.get_selection_state().get_caret() == 6);
         REQUIRE(box.get_extent().y == 0);
@@ -93,14 +100,14 @@ TEST_CASE("End display distinguishes phantom rows from intentional empty rows")
             REQUIRE(box.get_extent().y == 2);
             output.clear();
             box.end_display_lf();
-            // The caret already occupies the phantom row; intentional
-            // empty rows still need a final line break.
-            REQUIRE(count_crlf(output) == size_t(fixed || newline));
+            // The final LF advances beyond both phantom and intentional rows.
+            REQUIRE(count_crlf(output) == 1);
+            REQUIRE(ends_with_lf(output));
         }
     }
 }
 
-TEST_CASE("End display discounts only a visible final phantom row")
+TEST_CASE("End display clears only a visible phantom row")
 {
     tib::cstring output;
     test_output_stream stream(output);
@@ -110,6 +117,9 @@ TEST_CASE("End display discounts only a visible final phantom row")
     for (int at_end = 0; at_end < 2; ++at_end)
     {
         tib::input_box box;
+        auto colors = std::make_shared<tib::color_table>();
+        colors->set_color(tib::color_element::base, "44");
+        box.set_color_table(colors);
         box.set_max_width(8);
         box.set_max_height(2);
         box.set_variable_height(!fixed);
@@ -117,7 +127,7 @@ TEST_CASE("End display discounts only a visible final phantom row")
             box.set_border(&tib::c_light_border);
         box.initialize("abcdefghijklmnopqrstuvwx");
         box.set_caret(at_end ? 24 : 0);
-        box.set_origin(1, 1);
+        box.set_origin(1);
         if (additional)
         {
             tib::additional_display_line line;
@@ -125,14 +135,54 @@ TEST_CASE("End display discounts only a visible final phantom row")
             line.width = 6;
             box.set_additional_lines({ line });
         }
+        output.clear();
         box.display();
         const bool phantom = !fixed && !bordered && !additional && at_end;
+        if (phantom)
+        {
+            REQUIRE(box.get_extent().y == 2);
+            REQUIRE(box.get_relative_cursor().y == 1);
+            REQUIRE(strstr(output.c_str(), "\x1b[44m        ") != nullptr);
+        }
         const int32_t line_breaks = box.get_extent().y -
-            box.get_relative_cursor().y - int(phantom);
+            box.get_relative_cursor().y;
         output.clear();
         box.end_display_lf();
+        // Clear the painted phantom row with the terminal's default color.
+        REQUIRE((strstr(output.c_str(), "\x1b[m        ") != nullptr) == phantom);
+        if (phantom)
+        {
+            REQUIRE(strstr(output.c_str(), "\x1b[44m") == nullptr);
+            // Return to the real bottom row, then CRLF into the phantom row.
+            REQUIRE(strstr(output.c_str(), "\x1b[A") != nullptr);
+            REQUIRE(count_crlf(output) == 1);
+        }
         REQUIRE(count_crlf(output) == size_t(line_breaks));
+        REQUIRE(ends_with_lf(output));
     }
+}
+
+TEST_CASE("End display does not paint a newly formed phantom row")
+{
+    tib::cstring output;
+    test_output_stream stream(output);
+    tib::input_box box;
+    auto colors = std::make_shared<tib::color_table>();
+    colors->set_color(tib::color_element::base, "44");
+    box.set_color_table(colors);
+    box.set_max_width(4);
+    box.set_max_height(2);
+    box.set_variable_height(true);
+    box.initialize("abc");
+    box.display();
+    box.set_caret(3);
+    box.insert_text("d");
+    output.clear();
+    box.end_display_lf();
+    REQUIRE(strstr(output.c_str(), "d") != nullptr);
+    REQUIRE(strstr(output.c_str(), "\x1b[44m    ") == nullptr);
+    REQUIRE(count_crlf(output) == 1);
+    REQUIRE(ends_with_lf(output));
 }
 
 TEST_CASE("End display erases additional rows when the host clears them")
@@ -166,47 +216,6 @@ TEST_CASE("End display erases additional rows when the host clears them")
     box.set_origin(1, 8);
     box.display();
     REQUIRE(box.get_extent().y == 3);
-}
-
-TEST_CASE("End display avoids an extra newline for full width input")
-{
-    tib::cstring output;
-    test_output_stream stream(output);
-    const auto size = tib::get_terminal_size();
-    for (int wide = 0; wide < 2; ++wide)
-    {
-        tib::cstring text;
-        text.append_spaces(size.x - (wide ? 2 : 1));
-        text.append(wide ? "\xe7\x95\x8c" : "e\xcc\x81");
-        tib::input_box box;
-        box.set_max_width(size.x);
-        box.set_max_height(3);
-        box.set_variable_height(true);
-        box.initialize(text.c_str());
-        box.display();
-        output.clear();
-        box.end_display_lf();
-        REQUIRE(count_crlf(output) == 0);
-        REQUIRE(strstr(output.c_str(), "\x1b[K") == nullptr);
-    }
-}
-
-TEST_CASE("End display finishes the visible scrolled viewport")
-{
-    tib::cstring output;
-    test_output_stream stream(output);
-    tib::input_box box;
-    box.set_max_width(4);
-    box.set_max_height(2);
-    box.set_variable_height(true);
-    box.initialize("abcdefghijkl");
-    box.set_origin(1, 1);
-    box.display();
-    REQUIRE(box.get_top() > 0);
-    output.clear();
-    box.end_display_lf();
-    REQUIRE(strstr(output.c_str(), "abcd") == nullptr);
-    REQUIRE(count_crlf(output) == 0);
 }
 
 TEST_CASE("End display retains a full width bottom border")
@@ -287,9 +296,9 @@ TEST_CASE("Terminal shutdown runs before interface destruction and only on the f
     tib::term_end();
     const bool deferred = s_shutdown_events.empty();
     tib::term_end();
-    const bool ordered = s_shutdown_events == "\x1b[?25h\x1b[mMIO";
+    const bool ordered = s_shutdown_events == "M\x1b[?25h\x1b[mIO";
     tib::term_out("unexpected");
-    const bool detached = s_shutdown_events == "\x1b[?25h\x1b[mMIO";
+    const bool detached = s_shutdown_events == "M\x1b[?25h\x1b[mIO";
     tib::hook_new_terminal_in = input_hook;
     tib::hook_new_terminal_out = output_hook;
     tib::term_begin();

@@ -1568,9 +1568,10 @@ void display_manager::end_display_lf()
     if (m_display_ended)
         return;
 
-    // A final row used only for the caret already supplies the line break.
-    if (m_displayed.m_phantom_last_row)
-        --m_displayed.m_extent.y;
+    m_final_display = true;     // This removes any phantom row.
+    invalidate();
+    display();                  // Update the display one last time.
+    m_final_display = false;
 
     move_to_end_of_display(true);
 
@@ -2172,6 +2173,18 @@ again:
     tmp.m_extent.y += y_extent;
     tmp.m_additional_lines = m_additional_lines;
     tmp.m_extent.y += int32_t(tmp.m_additional_lines.size());
+
+    if (m_final_display && tmp.m_phantom_last_row)
+    {
+        // The final draw excludes the caret-only row.  The diff clears
+        // its previously painted background using the default color.
+        tmp.m_lines.pop_back();
+        tmp.m_rows.pop_back();
+        --tmp.m_extent.y;
+        --tmp.m_cursor.y;
+        tmp.m_cursor.x = 0;
+        tmp.m_phantom_last_row = false;
+    }
 
     assert(tmp.m_cursor.y >= 0);
     assert(size_t(tmp.m_cursor.y) < tmp.m_lines.size());

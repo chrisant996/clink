@@ -13,9 +13,13 @@
 
 namespace tib {
 
+extern uint32_t g_add_to_kill_ring;
+
 // Flags for do_with_numeric_argument:
 constexpr uint8_t NO_DING               = 1 << 0;
 constexpr uint8_t UNDO_GROUP            = 1 << 1;
+constexpr uint8_t KILL_RING             = 1 << 2;
+constexpr uint8_t KILL_RING_MULTI       = 1 << 3;
 int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags=0) noexcept;
 
 int32_t abort(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;

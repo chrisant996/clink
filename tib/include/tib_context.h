@@ -191,7 +191,7 @@ public:
         using is_transparent = void;
         bool operator()(const char* lhs, const char* rhs) const
         {
-            return stricmp(lhs, rhs) < 0;
+            return _stricmp(lhs, rhs) < 0;
         }
     };
 

@@ -8,6 +8,7 @@
 #include "tib.h"
 #include "wcwidth.h"
 #include <cctype>
+#include <chrono>
 #include <cwctype>
 #include <assert.h>
 
@@ -290,6 +291,9 @@ void editor_context::reset_state() noexcept
     m_last_command.clear();
     if (m_callbacks)
         m_callbacks->on_dispatched(nullptr);
+
+    clear_was_kill_command();
+    g_add_to_kill_ring = 0;
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -578,6 +582,8 @@ bool editor_context::backspace(uint8_t word)
 #ifdef DEBUG
         assert(old_pos == get_caret() + moved);
 #endif
+        if (g_add_to_kill_ring)
+            add_to_kill_ring(false, m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -598,6 +604,8 @@ bool editor_context::del(uint8_t word)
         textpos_t del_pos = get_caret();
         const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), del_pos, true/*forward*/, word);
         set_caret(del_pos - moved);
+        if (g_add_to_kill_ring)
+            add_to_kill_ring(true, m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -607,6 +615,8 @@ bool editor_context::del(uint8_t word)
 
 void editor_context::del_line()
 {
+    if (g_add_to_kill_ring)
+        add_to_kill_ring(-1, m_text.c_str(), m_text.length());
     remove_text(0, -1);
 
     assert(!get_caret());
@@ -1421,7 +1431,9 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
 
     set_auto_clear_numeric_argument();
 
-    if (binding)
+    const auto was_kill_command = get_was_kill_command();
+
+    if (binding && *binding)
     {
         switch (binding->get_type())
         {
@@ -1461,7 +1473,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                 }
                 if (!ret)
                     m_quoted_insert_count = 0;
-                if (repeat > 0 && c && uint8_t(c) < c_input_terminal_reserved_begin)
+                if (repeat > 0 && c)
                 {
                     begin_undo_group();
                     while (repeat-- > 0)
@@ -1496,11 +1508,13 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             // any further input from the terminal.
             if (!has_numeric_argument() && g_optimize_self_insert && m_allow_optimized_self_insert)
             {
+                // Yield to the editor periodically even when input keeps arriving.
+                const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
                 int32_t peek = term_in_peek();
                 if (is_self_insertable(peek))
                 {
                     cstring input(&c, 1);
-                    while (is_self_insertable(peek))
+                    while (is_self_insertable(peek) && std::chrono::steady_clock::now() < batch_deadline)
                     {
                         const int32_t cin = term_in();
                         assert(cin == peek);
@@ -1532,6 +1546,9 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             ding();
         }
     }
+
+    if (was_kill_command >= get_was_kill_command())
+        clear_was_kill_command();
 
     if (m_numflags & NUMFLAG_AUTO_CLEAR)
         clear_numeric_argument();

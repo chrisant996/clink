@@ -126,8 +126,7 @@ binding_target::binding_target(binding_type type, const char* text, size_t len) 
     {
     case binding_type::none:
         assert(m_type == binding_type::none);
-        assert(!m_text);
-        assert(!m_length);
+        assert(m_text.empty());
         break;
     case binding_type::func:
         set_func(text);
@@ -137,7 +136,7 @@ binding_target::binding_target(binding_type type, const char* text, size_t len) 
         break;
     case binding_type::quoted_insert:
         assert(len == 1);
-        assert(*text && uint8_t(*text) < c_input_terminal_reserved_begin);
+        assert(*text);
         set_quoted_insert(*text);
         break;
     case binding_type::lowercase_version:
@@ -181,17 +180,13 @@ bool binding_target::operator==(const binding_target& t) const noexcept
     case binding_type::lowercase_version:
         break;
     case binding_type::func:
-        if (!m_text != !t.m_text)
-            return false;
-        if (m_text && t.m_text && stricmp(m_text, t.m_text) != 0)
+        if (_stricmp(m_text.c_str(), t.m_text.c_str()) != 0)
             return false;
         break;
     case binding_type::macro:
-        if (!m_text != !t.m_text)
+        if (m_text.length() != t.m_text.length())
             return false;
-        if (m_length != t.m_length)
-            return false;
-        if (m_text && t.m_text && memcmp(m_text, t.m_text, m_length) != 0)
+        if (memcmp(m_text.c_str(), t.m_text.c_str(), m_text.length()) != 0)
             return false;
         break;
     default:
@@ -203,14 +198,13 @@ bool binding_target::operator==(const binding_target& t) const noexcept
 
 bool binding_target::is_func_name(const char* name) const noexcept
 {
-    return (name && m_type == binding_type::func && m_text && stricmp(name, m_text) == 0);
+    return (name && m_type == binding_type::func && _stricmp(name, m_text.c_str()) == 0);
 }
 
 void binding_target::clear() noexcept
 {
     m_type = binding_type::none;
     m_text = nullptr;
-    m_length = 0;
 }
 
 void binding_target::set_func(const char* name) noexcept
@@ -218,69 +212,25 @@ void binding_target::set_func(const char* name) noexcept
     assert(name);
     m_type = binding_type::func;
     m_text = name;
-    m_length = 0;
 }
 
 void binding_target::set_macro(const char* text, size_t len) noexcept
 {
     assert(text);
-    len = resolve_auto_length(len, text);
     m_type = binding_type::macro;
-    m_text = text;
-    m_length = len;
+    m_text.set(text, len);
 }
 
 void binding_target::set_quoted_insert(char c) noexcept
 {
-    assert(c && uint8_t(c) < c_input_terminal_reserved_begin);
+    assert(c);
     m_type = binding_type::quoted_insert;
-    m_text = nullptr;
-    m_length = uint8_t(c);
+    m_text.append_char(c);
 }
 
 void binding_target::set_lowercase_version() noexcept
 {
     m_type = binding_type::lowercase_version;
-    m_text = nullptr;
-    m_length = 0;
-}
-
-binding_target_copy::binding_target_copy(const binding_target& t) noexcept
-{
-    *this = t;
-}
-
-binding_target_copy& binding_target_copy::operator=(const binding_target& t) noexcept
-{
-    switch (t.get_type())
-    {
-    case binding_type::none:
-        m_owned_text.clear();
-        clear();
-        break;
-    case binding_type::func:
-        m_owned_text.set(t.get_text());
-        set_func(m_owned_text.c_str());
-        break;
-    case binding_type::macro:
-        m_owned_text.set(t.get_text(), t.get_length());
-        set_macro(m_owned_text.c_str(), m_owned_text.length());
-        break;
-    case binding_type::quoted_insert:
-        m_owned_text.clear();
-        set_quoted_insert(char(t.get_char()));
-        break;
-    case binding_type::lowercase_version:
-        m_owned_text.clear();
-        set_lowercase_version();
-        break;
-    default:
-        assert(false);
-        m_owned_text.clear();
-        clear();
-        break;
-    }
-    return *this;
 }
 
 key_table::~key_table()
@@ -400,8 +350,7 @@ resolved_binding::operator bool()
 bool resolved_binding::is_func_name(const char* name) const
 {
     return (outcome == dispatch_outcome::match &&
-            binding_target &&
-            binding_target->is_func_name(name));
+            binding_target.is_func_name(name));
 }
 
 bool resolved_binding::dispatch()
@@ -434,14 +383,14 @@ bool resolved_binding::dispatch()
             if (ctx)
             {
                 tib::binding_target quoted_target;
-                const tib::binding_target* target = binding_target;
+                const tib::binding_target* target = &binding_target;
                 if (quoted_insert)
                 {
                     quoted_target.set_quoted_insert(char(key));
                     target = &quoted_target;
                 }
 
-                assert(self_insert == !target);
+                assert(self_insert == (!target || !*target));
                 if (target && target->get_type() == binding_type::macro)
                     term_push_macro_text(target->get_text(), target->get_length());
                 else
@@ -810,7 +759,8 @@ retry_target:
         resolved_binding resolved(m_state);
         resolved.sequence = std::move(state.best.sequence);
         resolved.key = state.best.key;
-        resolved.binding_target = state.best.binding;
+        if (state.best.binding)
+            resolved.binding_target = *state.best.binding;
         resolved.dispatcher_target = state.best.dispatcher;
         resolved.params = std::move(state.best.params);
         resolved.outcome = state.best.self_insert ? dispatch_outcome::self_insert : dispatch_outcome::match;
@@ -845,12 +795,12 @@ retry_target:
 
 bool is_self_insertable(char c)
 {
-    return (c < 0 || c >= ' ') && !(uint8_t(c) == c_input_terminal_eof || uint8_t(c) == c_input_terminal_resize);
+    return (c < 0 || c >= ' ');
 }
 
 bool is_self_insertable(int32_t key)
 {
-    return (key >= ' ' && key <= 0xff && key != c_input_terminal_eof && key != c_input_terminal_resize);
+    return (key >= ' ' && key <= 0xff);
 }
 
 } // namespace tib
