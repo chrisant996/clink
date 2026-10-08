@@ -208,7 +208,7 @@ void tib_terminal_bridge::begin(bool can_hide_cursor)
                 LOG("INPUT tib.%s value=%d (0x%02x '%c') count=%zu", event, value, value, value, count);
         } : nullptr;
 
-        reset_bindings();
+        reset_dispatch();
     }
 
     if (m_in)
@@ -245,7 +245,7 @@ void tib_terminal_bridge::end(bool can_show_cursor)
 
     if (!m_began)
     {
-        reset_bindings();
+        reset_dispatch();
         set_chord(nullptr, 0);
 
         tib::hook_new_terminal_in = m_old_input_hook;
@@ -448,7 +448,7 @@ void tib_terminal_bridge::add_target(std::weak_ptr<tib::dispatcher_target> targe
     m_ambiguous = false;
 }
 
-void tib_terminal_bridge::reset_bindings()
+void tib_terminal_bridge::reset_dispatch()
 {
     m_resolver.reset();
     m_ambiguous = false;
@@ -458,14 +458,8 @@ bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
 {
     if (!len)
     {
-// LNope:
-#ifdef TIB_TODO
-        if (RL_ISSTATE (RL_STATE_MULTIKEY))
-        {
-            RL_UNSETSTATE(RL_STATE_MULTIKEY);
-            _rl_keyseq_chain_dispose();
-        }
-#endif
+nope:
+        reset_dispatch();
         ding();
         return false;
     }
@@ -524,18 +518,9 @@ bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
         return true;
 #endif
 
-#ifdef STRANGE_PROBING_CODE
-    if (len > 0 && m_resolver.accepts(seq, size_t(len)))
+    if (m_resolver.is_keyseq_recognized(seq, size_t(len)))
         return true;
-    reset_bindings();
-    tib::ding();
-    return false;
-#else
-    // TODO-TIB: clone the resolver and check whether seq,len is a miss.
-    // TODO-TIB: if not a miss, return true;
-    // TODO-TIB: if a miss, goto LNope;
-    return true;
-#endif
+    goto nope;
 }
 
 bool tib_terminal_bridge::pending_input() const

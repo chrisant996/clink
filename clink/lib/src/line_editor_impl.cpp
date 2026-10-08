@@ -1576,7 +1576,7 @@ bool line_editor_impl::maybe_handle_signal()
             tib::term_in();
 
         // TODO-TIB: wait what?  Why?  This is a change in behavior.
-        m_terminal->reset_bindings();
+        m_terminal->reset_dispatch();
 
         for (auto* module : m_modules)
             module->on_signal(sig);

@@ -78,11 +78,11 @@ public:
     // so the host can observe target completion and refresh its display.
     bool                wait_for_input(input_idle* idle=nullptr);
     void                add_target(std::weak_ptr<tib::dispatcher_target> target);
-    void                reset_bindings();
     bool                is_bound(const char* seq, int32 len);
     bool                pending_input() const;
     bool                quoted_insert_pending() const;
     void                dispatch(uint8 key);
+    void                reset_dispatch();
 
     void                set_chord(const char* keys, uint32 len);
     bool                has_chord() const { return m_chord_len != 0; }

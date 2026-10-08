@@ -318,8 +318,10 @@ void key_table::clear()
     m_bindings.clear();
 }
 
-std::shared_ptr<const key_table_list> dispatcher_target::get_bindings() const
+std::shared_ptr<const key_table_list> dispatcher_target::get_bindings(bool fallback_requested) const
 {
+    if (fallback_requested)
+        return (m_override_bindings && m_fall_back_on_miss) ? m_bindings : nullptr;
     if (m_override_bindings)
         return m_override_bindings;
     return m_bindings;
@@ -330,9 +332,10 @@ void dispatcher_target::set_bindings(std::shared_ptr<const key_table_list> bindi
     m_bindings = bindings;
 }
 
-void dispatcher_target::override_bindings(std::shared_ptr<const key_table_list> bindings)
+void dispatcher_target::override_bindings(std::shared_ptr<const key_table_list> bindings, bool fall_back_on_miss)
 {
     m_override_bindings = bindings;
+    m_fall_back_on_miss = bool(bindings) && fall_back_on_miss;
 }
 
 resolved_binding::resolved_binding(std::shared_ptr<binding_resolver_state> state)
@@ -355,6 +358,20 @@ bool resolved_binding::is_func_name(const char* name) const
 
 bool resolved_binding::dispatch()
 {
+    // Resolution defers override-to-fallback switches until dispatch, since
+    // dispatch might not happen at all (for example when probing with
+    // is_keyseq_recognized).  Finalize any deferred switches at the beginning
+    // of a dispatch.
+    if (!m_fallback_targets.empty())
+    {
+        for (auto& weak : m_fallback_targets)
+        {
+            if (auto target = weak.lock())
+                target->on_binding_fallback();
+        }
+        m_fallback_targets.clear();
+    }
+
     const bool self_insert = (outcome == dispatch_outcome::self_insert);
     const bool quoted_insert = (outcome == dispatch_outcome::quoted_insert);
     const bool literal_insert = self_insert || quoted_insert;
@@ -415,6 +432,15 @@ bool resolved_binding::dispatch()
     return false;
 }
 
+resolved_binding::probe_result resolved_binding::get_probe_result() const
+{
+    if (!m_fallback_targets.empty())
+        return probe_result::recognized;
+    if (outcome == dispatch_outcome::miss || !m_replay.empty())
+        return probe_result::unrecognized;
+    return probe_result::continue_input;
+}
+
 binding_resolver::binding_resolver()
     : m_state(std::make_shared<binding_resolver_state>())
 {
@@ -424,6 +450,7 @@ void binding_resolver::clear_targets()
 {
     m_registrants.clear();
     m_state->quoted_insert_target.reset();
+    m_fallback_targets.clear();
 }
 
 void binding_resolver::add_target(std::weak_ptr<dispatcher_target> target)
@@ -436,6 +463,7 @@ void binding_resolver::reset()
 {
     m_state->quoted_insert_target.reset();
     m_sequence.clear();
+    m_fallback_targets.clear();
 }
 
 resolved_binding binding_resolver::step(uint8_t c)
@@ -467,34 +495,34 @@ bool binding_resolver::quoted_insert_pending() const
     return !m_state->quoted_insert_target.expired();
 }
 
-#ifdef STRANGE_PROBING_CODE
-bool binding_resolver::accepts(const char* sequence, size_t len) const
+bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) const
 {
-    if (!len)
-        return false;
+    // The caller must respond to a quoted insert state on their own.
+    assert(!quoted_insert_pending());
     if (quoted_insert_pending())
-        return true;
+        return false;
 
+    // Clone a resolver, minus m_state so that this operation cannot perturb
+    // the real m_state.  This implies that the resolved_binding from step()
+    // is not properly dispatchable, which is ok since it isn't exposed.
     binding_resolver probe;
     probe.m_registrants = m_registrants;
     probe.m_sequence = m_sequence;
+    probe.m_fallback_targets = m_fallback_targets;
     for (size_t i = 0; i < len; ++i)
     {
-        probe.m_sequence.append(sequence + i, 1);
-        auto resolved = probe.resolve(false, true);
-        if (resolved.outcome == dispatch_outcome::miss || resolved.m_replay.length())
+        auto resolved = probe.step(uint8_t(sequence[i]));
+        const auto result = resolved.get_probe_result();
+        if (result == resolved_binding::probe_result::recognized)
+            return true;
+        if (result == resolved_binding::probe_result::unrecognized)
             return false;
     }
     return true;
 }
 
-resolved_binding binding_resolver::resolve(bool force, bool probe)
-#else
 resolved_binding binding_resolver::resolve(bool force)
-#endif
 {
-    constexpr uint32_t c_max_binding_retries = 1;
-
     // step() always appends a byte before resolving, but resolve_pending() is
     // public and may be called when no sequence is pending.  Besides defining
     // that case as a miss, this guard keeps the input[-1] access below safe.
@@ -509,8 +537,8 @@ resolved_binding binding_resolver::resolve(bool force)
         // Resolution cannot return the first complete match: it must retain
         // enough information to construct a resolved_binding after every
         // table has had a chance to provide a longer match or prefix.  The
-        // saved_state below copies this once per dispatcher target so an
-        // on_binding_miss() retry can discard candidates from stale bindings.
+        // saved_state below copies this once per dispatcher target so a
+        // fallback retry can discard candidates from the override bindings.
         struct candidate
         {
             size_t          length = 0;
@@ -568,15 +596,12 @@ retry_sequence:
         if (!target)
             continue;
 
-        uint32_t retry_count = 0;
 retry_target:
         const step_state saved_state = state;
 
-#ifdef STRANGE_PROBING_CODE
-        const auto bindings_list = (probe && retry_count) ? target->probe_bindings_on_miss() : target->get_bindings();
-#else
-        const auto bindings_list = target->get_bindings();
-#endif
+        const bool fell_back = std::find_if(m_fallback_targets.begin(), m_fallback_targets.end(),
+            [&](const std::weak_ptr<dispatcher_target>& item) { return item.lock() == target; }) != m_fallback_targets.end();
+        const auto bindings_list = target->get_bindings(fell_back);
         if (!bindings_list)
             continue;
 
@@ -591,8 +616,8 @@ retry_target:
 
             // Self-insert acts as an implicit one-byte binding for the first
             // input byte.  Record it as a complete fallback here so a longer
-            // binding can shadow it, and so later on_binding_miss() callbacks
-            // do not treat an ultimately self-insertable sequence as a miss.
+            // binding can shadow it, and so a fallback is not selected for
+            // an ultimately self-insertable sequence.
             // The can_self_insert bookkeeping above preserves the rule that
             // the highest-priority table which explicitly sets self-insert
             // policy decides whether this fallback is available.
@@ -726,21 +751,17 @@ retry_target:
 
         // A viable longer binding is not a miss, nor is input for which a
         // complete fallback (including self-insert) has already been found.
-        // Invoke the callback only when neither condition is true among the
-        // dispatcher targets examined so far; this also preserves the rule
-        // that an earlier target's partial match suppresses later callbacks.
-#ifdef STRANGE_PROBING_CODE
-        if (!state.is_prefix && !state.best.length &&
-            (probe ? (!retry_count && !!target->probe_bindings_on_miss()) :
-                     target->on_binding_miss(m_sequence, c)))
-#else
-        if (!state.is_prefix && !state.best.length && target->on_binding_miss(m_sequence, c))
-#endif
+        // A miss in an override can retry against fallback bindings.  Record
+        // the transition here, but tell the target only if and when the
+        // result is dispatched.
+        if (!state.is_prefix && !state.best.length && !fell_back &&
+            target->get_bindings(true))
         {
             state = saved_state;
-            if (++retry_count <= c_max_binding_retries)
-                goto retry_target;
-            assert(false && "dispatcher_target exceeded binding miss retry limit");
+            // target stays alive in this loop.  Recording it makes fell_back
+            // true on the retry, so this branch runs at most once per target.
+            m_fallback_targets.emplace_back(weak);
+            goto retry_target;
         }
     }
 
@@ -778,26 +799,25 @@ retry_target:
         resolved.outcome = state.best.self_insert ? dispatch_outcome::self_insert : dispatch_outcome::match;
         if (state.best.length < input_length)
             resolved.m_replay.set(input + state.best.length, input_length - state.best.length);
+        resolved.m_fallback_targets = std::move(m_fallback_targets);
         reset();
         return resolved;
     }
 
-#ifdef STRANGE_PROBING_CODE
-    if (!probe && m_sequence.length() > 1 && (c & 0xc0) != 0x80)
-#else
     if (m_sequence.length() > 1 && (c & 0xc0) != 0x80)
-#endif
     {
-        // Discard the sequence before c and try again.
-        reset();
+        // Discard the sequence before c and try again.  Keep any table
+        // fallback pending until a result is dispatched.
+        m_sequence.clear();
+        m_state->quoted_insert_target.reset();
         m_sequence.set(reinterpret_cast<const char*>(&c), 1);
-        // This is not a loop: the sequence is now only c and length 1, so the
-        // retry can't reach here again.
 #ifdef DEBUG
         assert(!retried_sequence);
         retried_sequence = true;
 #endif
         force = false;
+        // This is not a loop: the sequence is now only c and length 1, so the
+        // retry can't reach here again.
         goto retry_sequence;
     }
 
@@ -805,6 +825,7 @@ retry_target:
     resolved.sequence = m_sequence;
     resolved.key = c;
     resolved.outcome = dispatch_outcome::miss;
+    resolved.m_fallback_targets = std::move(m_fallback_targets);
     reset();
     return resolved;
 }

@@ -1065,7 +1065,7 @@ void editor_context::apply_override_bindings()
         bindings = (uni ? get_universal_argument_key_table() : get_digit_argument_key_table());
     }
 
-    override_bindings(bindings);
+    override_bindings(bindings, true);
 }
 
 void editor_context::insert_raw_char(char c)
@@ -1570,22 +1570,14 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
     return ret;
 }
 
-#ifdef STRANGE_PROBING_CODE
-std::shared_ptr<const key_table_list> editor_context::probe_bindings_on_miss() const
+void editor_context::on_binding_fallback() noexcept
 {
-    return (m_numflags & NUMFLAG_ARGUMENT_MODE) ? get_base_bindings() : nullptr;
-}
-#endif
-
-bool editor_context::on_binding_miss(const cstring&, int32_t) noexcept
-{
-    if (!(m_numflags & NUMFLAG_ARGUMENT_MODE))
-        return false;
-
-    m_numflags &= ~NUMFLAG_ARGUMENT_MODE;
-    apply_override_bindings();
-    apply_message_text();
-    return true;
+    if (m_numflags & NUMFLAG_ARGUMENT_MODE)
+    {
+        m_numflags &= ~NUMFLAG_ARGUMENT_MODE;
+        apply_override_bindings();
+        apply_message_text();
+    }
 }
 
 #ifdef DEBUG
