@@ -203,7 +203,7 @@ public:
 
                         // Methods on the tib::dispatcher_target interface.
     int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept override;
-    bool                on_binding_miss(const cstring& sequence, int32_t key) noexcept override;
+    void                on_binding_fallback() noexcept override;
 
 protected:
     bool                get_allow_optimized_self_insert() const { return m_allow_optimized_self_insert; }

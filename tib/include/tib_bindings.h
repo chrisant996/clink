@@ -140,9 +140,11 @@ struct binding_resolver_state;
 class dispatcher_target : public std::enable_shared_from_this<dispatcher_target>
 {
 public:
-    std::shared_ptr<const key_table_list> get_bindings() const;
+    // The fallback_requested argument allows probing potential fallback
+    // bindings after a miss in override bindings.
+    std::shared_ptr<const key_table_list> get_bindings(bool fallback_requested=false) const;
     void                set_bindings(std::shared_ptr<const key_table_list> bindings);
-    void                override_bindings(std::shared_ptr<const key_table_list> bindings);
+    void                override_bindings(std::shared_ptr<const key_table_list> bindings, bool fall_back_on_miss=false);
 
     // The binding_resolver::step() produces a resolved_binding in three cases:
     //
@@ -159,17 +161,14 @@ public:
     // insert i.e. as literal input not translated through key bindings.
     virtual int32_t     dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept = 0;
 
-    // Called when the current input sequence neither matches nor partially
-    // matches any key table from get_bindings(), and is not self-insertable
-    // by this dispatcher_target.  Returning true asks the binding_resolver to
-    // fetch the bindings again and retry the same input sequence against this
-    // dispatcher_target; the callback must first change the applicable state.
-    // Only one retry is allowed per input per dispatcher_target.
-    virtual bool        on_binding_miss(const cstring& sequence, int32_t key) noexcept { return false; }
+    // Called by resolved_binding::dispatch() when resolution used the
+    // fallback bindings after the override bindings missed.
+    virtual void        on_binding_fallback() noexcept {}
 
 private:
     std::shared_ptr<const key_table_list> m_bindings;
     std::shared_ptr<const key_table_list> m_override_bindings;
+    bool                m_fall_back_on_miss = false;
 };
 
 struct resolved_binding
@@ -193,10 +192,15 @@ struct resolved_binding
 
 private:
     friend class binding_resolver;
+    enum class probe_result { continue_input, recognized, unrecognized };
 
+    probe_result        get_probe_result() const;
+
+private:
     std::shared_ptr<binding_resolver_state> m_resolver_state;
     cstring             m_replay;
     bool                m_ambiguous = false;
+    std::vector<std::weak_ptr<tib::dispatcher_target>> m_fallback_targets;
 };
 
 class binding_resolver
@@ -213,6 +217,13 @@ public:
                         // Commit the longest complete binding in the pending
                         // sequence, normally after an ambiguity timeout.
     resolved_binding    resolve_pending();
+    bool                quoted_insert_pending() const;
+    bool                pending() const { return !m_sequence.empty(); }
+
+                        // This is for checking whether additional input will
+                        // trigger a miss, which is the primitive needed for
+                        // an incremental "is bound" operation.
+    bool                is_keyseq_recognized(const char* sequence, size_t len) const;
 
 private:
     resolved_binding    resolve(bool force);
@@ -220,6 +231,7 @@ private:
     std::vector<std::weak_ptr<dispatcher_target>> m_registrants;
     cstring             m_sequence;
     std::shared_ptr<binding_resolver_state> m_state;
+    std::vector<std::weak_ptr<dispatcher_target>> m_fallback_targets;
 };
 
 bool is_self_insertable(char c);

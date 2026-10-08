@@ -42,8 +42,10 @@ public:
 
 typedef terminal_in* (*hook_new_terminal_in_func_t)(pushed_input& pushed);
 typedef terminal_out* (*hook_new_terminal_out_func_t)();
+typedef void (*hook_input_trace_func_t)(const char* event, int32_t value, size_t count);
 extern hook_new_terminal_in_func_t hook_new_terminal_in;
 extern hook_new_terminal_out_func_t hook_new_terminal_out;
+extern hook_input_trace_func_t hook_input_trace;
 
 void term_begin();
 void term_end();

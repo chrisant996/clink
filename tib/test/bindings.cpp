@@ -96,23 +96,22 @@ TEST_CASE("Adding a key binding moves its sequence storage")
     REQUIRE(table.begin()->sequence.c_str() == sequence_storage);
 }
 
-class binding_miss_tester : public dispatcher_tester
+class binding_fallback_tester : public dispatcher_tester
 {
 public:
-    uint32_t            get_miss_count() const noexcept { return m_miss_count; }
-    bool                on_binding_miss(const tib::cstring&, int32_t) noexcept override;
+    uint32_t            get_fallback_count() const noexcept { return m_fallback_count; }
+    void                on_binding_fallback() noexcept override;
 
 private:
-    uint32_t            m_miss_count = 0;
+    uint32_t            m_fallback_count = 0;
 };
 
-bool binding_miss_tester::on_binding_miss(const tib::cstring&, int32_t) noexcept
+void binding_fallback_tester::on_binding_fallback() noexcept
 {
-    ++m_miss_count;
-    return false;
+    ++m_fallback_count;
 }
 
-TEST_CASE("Partial match suppresses later binding miss")
+TEST_CASE("Partial match suppresses later binding fallback")
 {
     auto prefix_table = std::make_shared<tib::key_table>();
     REQUIRE(prefix_table->add("ab", tib::binding_target_func("prefix-command")));
@@ -126,16 +125,79 @@ TEST_CASE("Partial match suppresses later binding miss")
     auto miss_tables = std::make_shared<tib::key_table_list>();
     miss_tables->emplace_back(std::move(miss_table));
 
-    auto miss_target = std::make_shared<binding_miss_tester>();
+    auto miss_target = std::make_shared<binding_fallback_tester>();
     miss_target->set_bindings(std::move(miss_tables));
+    miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
 
     tib::binding_resolver resolver;
     resolver.add_target(prefix_target);
     resolver.add_target(miss_target);
 
     const auto resolved = resolver.step('a');
-    REQUIRE(miss_target->get_miss_count() == 0);
+    REQUIRE(miss_target->get_fallback_count() == 0);
     REQUIRE(resolved.outcome == tib::dispatch_outcome::more);
+    auto complete = resolver.step('b');
+    REQUIRE(complete.is_func_name("prefix-command"));
+    REQUIRE(complete.dispatch());
+    REQUIRE(miss_target->get_fallback_count() == 0);
+}
+
+TEST_CASE("Binding fallback commits only on dispatch")
+{
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(base->add("ab", tib::binding_target_func("base-command")));
+    auto base_tables = std::make_shared<tib::key_table_list>();
+    base_tables->emplace_back(std::move(base));
+
+    auto argument = std::make_shared<tib::key_table>();
+    REQUIRE(argument->add("1", tib::binding_target_func("argument-digit")));
+    auto argument_tables = std::make_shared<tib::key_table_list>();
+    argument_tables->emplace_back(std::move(argument));
+
+    auto target = std::make_shared<binding_fallback_tester>();
+    target->set_bindings(std::move(base_tables));
+    target->override_bindings(std::move(argument_tables), true);
+
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+    REQUIRE(resolver.is_keyseq_recognized("ab", 2));
+    REQUIRE(resolver.is_keyseq_recognized("z", 1)); // Dispatch must commit the fallback.
+    REQUIRE(target->get_fallback_count() == 0);
+
+    REQUIRE(resolver.step('a').more());
+    REQUIRE(target->get_fallback_count() == 0);
+    auto resolved = resolver.step('b');
+    REQUIRE(resolved.is_func_name("base-command"));
+    REQUIRE(target->get_fallback_count() == 0);
+    REQUIRE(resolved.dispatch());
+    REQUIRE(target->get_fallback_count() == 1);
+    target->override_bindings(nullptr);
+    REQUIRE(!resolver.is_keyseq_recognized("z", 1));
+}
+
+TEST_CASE("Binding fallback is reported on a final miss")
+{
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(base->add("a", tib::binding_target_func("base-command")));
+    auto base_tables = std::make_shared<tib::key_table_list>();
+    base_tables->emplace_back(std::move(base));
+
+    auto argument = std::make_shared<tib::key_table>();
+    REQUIRE(argument->add("1", tib::binding_target_func("argument-digit")));
+    auto argument_tables = std::make_shared<tib::key_table_list>();
+    argument_tables->emplace_back(std::move(argument));
+
+    auto target = std::make_shared<binding_fallback_tester>();
+    target->set_bindings(std::move(base_tables));
+    target->override_bindings(std::move(argument_tables), true);
+
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+    auto resolved = resolver.step('z');
+    REQUIRE(resolved.outcome == tib::dispatch_outcome::miss);
+    REQUIRE(target->get_fallback_count() == 0);
+    REQUIRE(!resolved.dispatch());
+    REQUIRE(target->get_fallback_count() == 1);
 }
 
 TEST_CASE("Key bindings")
@@ -418,8 +480,9 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(add_binding(*miss_table, "z", "miss"));
         auto miss_tables = std::make_shared<tib::key_table_list>();
         miss_tables->emplace_back(std::move(miss_table));
-        auto miss_target = std::make_shared<binding_miss_tester>();
+        auto miss_target = std::make_shared<binding_fallback_tester>();
         miss_target->set_bindings(std::move(miss_tables));
+        miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
         resolver.add_target(miss_target);
 
         REQUIRE(resolver.step('a').ambiguous());
@@ -429,7 +492,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolved.sequence == "a");
         REQUIRE(resolved.key == 'a');
         REQUIRE(!resolved.binding_target);
-        REQUIRE(miss_target->get_miss_count() == 0);
+        REQUIRE(miss_target->get_fallback_count() == 0);
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(tib::term_in() == 'x');
@@ -519,7 +582,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(tib::term_in() == 'q');
     }
 
-    SECTION("Shadow fallback suppresses binding miss callbacks")
+    SECTION("Shadow fallback suppresses table fallback")
     {
         auto prefix_table = std::make_shared<tib::key_table>();
         REQUIRE(add_binding(*prefix_table, "a", "short"));
@@ -533,8 +596,9 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(add_binding(*miss_table, "z", "miss"));
         auto miss_tables = std::make_shared<tib::key_table_list>();
         miss_tables->emplace_back(std::move(miss_table));
-        auto miss_target = std::make_shared<binding_miss_tester>();
+        auto miss_target = std::make_shared<binding_fallback_tester>();
         miss_target->set_bindings(std::move(miss_tables));
+        miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
 
         tib::binding_resolver resolver;
         resolver.add_target(prefix_target);
@@ -544,7 +608,7 @@ TEST_CASE("Shadowed key bindings")
         auto resolved = resolver.step('x');
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.is_func_name("short"));
-        REQUIRE(miss_target->get_miss_count() == 0);
+        REQUIRE(miss_target->get_fallback_count() == 0);
         REQUIRE(resolved.dispatch());
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(tib::term_in() == 'x');

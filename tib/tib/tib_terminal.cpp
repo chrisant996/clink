@@ -17,6 +17,7 @@ bool g_coalesce_output = true;
 
 hook_new_terminal_in_func_t hook_new_terminal_in = nullptr;
 hook_new_terminal_out_func_t hook_new_terminal_out = nullptr;
+hook_input_trace_func_t hook_input_trace = nullptr;
 
 struct macro_playback
 {
@@ -365,12 +366,24 @@ int32_t term_in()
         return c_input_eof;
 
     if (!s_pushed.empty())
-        return s_pushed.read();
+    {
+        const int32_t c = s_pushed.read();
+        if (hook_input_trace)
+            hook_input_trace("read pushed", c, s_pushed.size());
+        return c;
+    }
 
     if (s_macro_playback)
     {
         assert(s_macro_playback->m_index < s_macro_playback->m_text.length());
         const char c = s_macro_playback->m_text.c_str()[s_macro_playback->m_index++];
+
+        if (hook_input_trace)
+        {
+            const size_t remaining = s_macro_playback->m_text.length() - s_macro_playback->m_index;
+            hook_input_trace("read macro", uint8_t(c), remaining);
+        }
+
         if (s_macro_playback->m_index >= s_macro_playback->m_text.length())
         {
             macro_playback* d = s_macro_playback;
@@ -382,6 +395,8 @@ int32_t term_in()
 
     const int32_t c = s_terminal_in->read();
     assert(c < 0 || is_input_byte(c) || is_input_event(c));
+    if (hook_input_trace)
+        hook_input_trace("read adapter", c, 0);
     return c;
 }
 
@@ -398,12 +413,19 @@ int32_t term_in_peek()
         return c_input_eof;
 
     if (!s_pushed.empty())
-        return s_pushed.peek();
+    {
+        const int32_t c = s_pushed.peek();
+        if (hook_input_trace)
+            hook_input_trace("peek pushed", c, s_pushed.size());
+        return c;
+    }
 
     if (s_macro_playback)
     {
         assert(s_macro_playback->m_index < s_macro_playback->m_text.length());
         const char c = s_macro_playback->m_text.c_str()[s_macro_playback->m_index];
+        if (hook_input_trace)
+            hook_input_trace("peek macro", uint8_t(c), s_macro_playback->m_text.length() - s_macro_playback->m_index);
         return uint8_t(c);
     }
 
@@ -414,7 +436,12 @@ int32_t term_in_peek()
     // character.  Return the head in place; reading and pushing it back would
     // rotate the queued bytes.
     if (!s_pushed.empty())
-        return s_pushed.peek();
+    {
+        const int32_t c = s_pushed.peek();
+        if (hook_input_trace)
+            hook_input_trace("peek pushed after avail", c, s_pushed.size());
+        return c;
+    }
 
     assert(!s_macro_playback);
 
@@ -423,7 +450,9 @@ int32_t term_in_peek()
         return c;
     assert(is_input_byte(c) || is_input_event(c));
 
-    s_pushed.push(uint8_t(c));
+    s_pushed.push(int16_t(c));
+    if (hook_input_trace)
+        hook_input_trace("peek fallback push", c, 1);
     return c;
 }
 
@@ -440,9 +469,17 @@ bool term_in_avail(const DWORD _timeout)
         return false;
 
     if (!s_pushed.empty())
+    {
+        if (hook_input_trace)
+            hook_input_trace("avail pushed", 1, s_pushed.size());
         return true;
+    }
     if (s_macro_playback)
+    {
+        if (hook_input_trace)
+            hook_input_trace("avail macro", 1, s_macro_playback->m_text.length() - s_macro_playback->m_index);
         return true;
+    }
 
     return s_terminal_in->avail(_timeout);
 }
@@ -456,7 +493,10 @@ bool term_push_input(const char* text, size_t len)
 #endif
 
     len = resolve_auto_length(len, text);
-    return s_pushed.push_front(text, len);
+    const bool pushed = s_pushed.push_front(text, len);
+    if (hook_input_trace && pushed && len)
+        hook_input_trace("push front", uint8_t(text[0]), len);
+    return pushed;
 }
 
 bool term_push_macro_text(const char* text, size_t len)
@@ -479,6 +519,8 @@ bool term_push_macro_text(const char* text, size_t len)
 
     m->m_next = s_macro_playback;
     s_macro_playback = m;
+    if (hook_input_trace)
+        hook_input_trace("push macro", m->m_text.length() ? uint8_t(m->m_text.c_str()[0]) : -1, m->m_text.length());
     return true;
 }
 
