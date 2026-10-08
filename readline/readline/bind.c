@@ -66,7 +66,6 @@ extern int errno;
 #include "xmalloc.h"
 
 /* Variables exported by this file. */
-Keymap rl_binding_keymap;
 
 /* begin_clink_change */
 const char *_rl_default_init_file = NULL;
@@ -122,6 +121,18 @@ static int _rl_prefer_visible_bell = 1;
 #define OPSTART(c)	((c) == '=' || (c) == '!' || (c) == '<' || (c) == '>')
 #define CMPSTART(c)	((c) == '=' || (c) == '!')
 
+static int
+rl_keymap_to_table (Keymap map)
+{
+  if (map == emacs_standard_keymap)
+    return 0;
+  if (map == vi_insertion_keymap)
+    return 1;
+  if (map == vi_movement_keymap)
+    return 2;
+  return -1;
+}
+
 static const char*
 rl_get_name_of_function (rl_command_func_t *func)
 {
@@ -141,270 +152,9 @@ rl_get_name_of_function (rl_command_func_t *func)
 /*								    */
 /* **************************************************************** */
 
-/* rl_add_defun (char *name, rl_command_func_t *function, int key)
-   Add NAME to the list of named functions.  Make FUNCTION be the function
-   that gets called.  If KEY is not -1, then bind it. */
-int
-rl_add_defun (const char *name, rl_command_func_t *function, int key)
-{
-  if (key != -1)
-    rl_bind_key (key, function);
-  rl_add_funmap_entry (name, function);
-  return 0;
-}
-
-/* Bind KEY to FUNCTION.  Returns non-zero if KEY is out of range. */
-int
-rl_bind_key (int key, rl_command_func_t *function)
-{
-  char keyseq[4];
-  int l;
-
-  if (key < 0 || key > largest_char)
-    return (key);
-
-  /* If it's bound to a function or macro, just overwrite.  Otherwise we have
-     to treat it as a key sequence so rl_generic_bind handles shadow keymaps
-     for us.  If we are binding '\' or \C-@ (NUL) make sure to escape it so
-     it makes it through the call to rl_translate_keyseq. */
-  if (_rl_keymap[key].type != ISKMAP)
-    {
-      if (_rl_keymap[key].type == ISMACR)
-	xfree ((char *)_rl_keymap[key].function);
-      _rl_keymap[key].type = ISFUNC;
-      _rl_keymap[key].function = function;
-    }
-  else
-    {
-      l = 0;
-      if (key == '\\')
-	{
-	  keyseq[l++] = '\\';
-	  keyseq[l++] = '\\';
-	}
-      else if (key == '\0')	  
-	{
-	  keyseq[l++] = '\\';
-	  keyseq[l++] = '0';
-	}
-      else
-	keyseq[l++] = key;
-      keyseq[l] = '\0';
-      rl_bind_keyseq (keyseq, function);
-    }
-  rl_binding_keymap = _rl_keymap;
-  return (0);
-}
-
-/* Bind KEY to FUNCTION in MAP.  Returns non-zero in case of invalid
-   KEY. */
-int
-rl_bind_key_in_map (int key, rl_command_func_t *function, Keymap map)
-{
-  int result;
-  Keymap oldmap;
-
-  oldmap = _rl_keymap;
-  _rl_keymap = map;
-  result = rl_bind_key (key, function);
-  _rl_keymap = oldmap;
-  return (result);
-}
-
-/* Bind key sequence KEYSEQ to DEFAULT_FUNC if KEYSEQ is unbound.  Right
-   now, this is always used to attempt to bind the arrow keys. */
-int
-rl_bind_key_if_unbound_in_map (int key, rl_command_func_t *default_func, Keymap kmap)
-{
-  char *keyseq;
-
-  keyseq = rl_untranslate_keyseq ((unsigned char)key);
-  return (rl_bind_keyseq_if_unbound_in_map (keyseq, default_func, kmap));
-}
-
-int
-rl_bind_key_if_unbound (int key, rl_command_func_t *default_func)
-{
-  char *keyseq;
-
-  keyseq = rl_untranslate_keyseq ((unsigned char)key);
-  return (rl_bind_keyseq_if_unbound_in_map (keyseq, default_func, _rl_keymap));
-}
-
-/* Make KEY do nothing in the currently selected keymap.
-   Returns non-zero in case of error.  This is not the same as self-insert;
-   this makes it a dead key. */
-int
-rl_unbind_key (int key)
-{
-  return (rl_bind_key (key, (rl_command_func_t *)NULL));
-}
-
-/* Make KEY do nothing in MAP. Returns non-zero in case of error. */
-int
-rl_unbind_key_in_map (int key, Keymap map)
-{
-  return (rl_bind_key_in_map (key, (rl_command_func_t *)NULL, map));
-}
-
-/* Unbind all keys bound to FUNCTION in MAP. */
-int
-rl_unbind_function_in_map (rl_command_func_t *func, Keymap map)
-{
-  register int i, rval;
-
-  for (i = rval = 0; i < KEYMAP_SIZE; i++)
-    {
-      if (map[i].type == ISFUNC && map[i].function == func)
-	{
-	  map[i].function = (rl_command_func_t *)NULL;
-	  rval = 1;
-	}
-      else if (map[i].type == ISKMAP)
-	{
-	  int r;
-	  r = rl_unbind_function_in_map (func, FUNCTION_TO_KEYMAP (map, i));
-	  if (r == 1)
-	    rval = 1;
-	}
-    }
-  return rval;
-}
-
-/* Bind the key sequence represented by the string KEYSEQ to
-   FUNCTION, starting in the current keymap.  This makes new
-   keymaps as necessary. */
-int
-rl_bind_keyseq (const char *keyseq, rl_command_func_t *function)
-{
-  return (rl_generic_bind (ISFUNC, keyseq, (char *)function, _rl_keymap));
-}
-
-/* Bind the key sequence represented by the string KEYSEQ to
-   FUNCTION.  This makes new keymaps as necessary.  The initial
-   place to do bindings is in MAP. */
-int
-rl_bind_keyseq_in_map (const char *keyseq, rl_command_func_t *function, Keymap map)
-{
-  return (rl_generic_bind (ISFUNC, keyseq, (char *)function, map));
-}
-
-/* Bind key sequence KEYSEQ to DEFAULT_FUNC if KEYSEQ is unbound.  Right
-   now, this is always used to attempt to bind the arrow keys, hence the
-   check for rl_vi_movement_mode. */
-int
-rl_bind_keyseq_if_unbound_in_map (const char *keyseq, rl_command_func_t *default_func, Keymap kmap)
-{
-  rl_command_func_t *func;
-  char *keys;
-  int keys_len;
-
-  if (keyseq)
-    {
-      /* Handle key sequences that require translations and `raw' ones that
-	 don't. This might be a problem with backslashes. */
-      keys = (char *)xmalloc (1 + (2 * strlen (keyseq)));
-      if (rl_translate_keyseq (keyseq, keys, &keys_len))
-	{
-	  xfree (keys);
-	  return -1;
-	}
-      func = rl_function_of_keyseq_len (keys, keys_len, kmap, (int *)NULL);
-      xfree (keys);
-#if defined (VI_MODE)
-      if (!func || func == rl_do_lowercase_version || func == rl_vi_movement_mode)
-#else
-      if (!func || func == rl_do_lowercase_version)
-#endif
-	return (rl_bind_keyseq_in_map (keyseq, default_func, kmap));
-      else
-	return 1;
-    }
-  return 0;
-}
-
-int
-rl_bind_keyseq_if_unbound (const char *keyseq, rl_command_func_t *default_func)
-{
-  return (rl_bind_keyseq_if_unbound_in_map (keyseq, default_func, _rl_keymap));
-}
-
-extern void clink_bind_translated (int is_macro, const char* keys, int keys_len, const char* data);
-
-/* Bind the key sequence represented by the string KEYSEQ to
-   the string of characters MACRO.  This makes new keymaps as
-   necessary.  The initial place to do bindings is in MAP. */
-int
-rl_macro_bind (const char *keyseq, const char *macro, Keymap map)
-{
-  char *macro_keys;
-  int macro_keys_len;
-
-  macro_keys = (char *)xmalloc ((2 * strlen (macro)) + 1);
-
-  if (rl_translate_keyseq (macro, macro_keys, &macro_keys_len))
-    {
-      xfree (macro_keys);
-      return -1;
-    }
-  rl_generic_bind (ISMACR, keyseq, macro_keys, map);
-  return 0;
-}
-
-/* Bind the key sequence represented by the string KEYSEQ to
-   the arbitrary pointer DATA.  TYPE says what kind of data is
-   pointed to by DATA, right now this can be a function (ISFUNC),
-   a macro (ISMACR), or a keymap (ISKMAP).  This makes new keymaps
-   as necessary.  The initial place to do bindings is in MAP. */
-int
-rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
-{
-  char *keys;
-  int keys_len, prevkey, ic;
-  register int i;
-  KEYMAP_ENTRY k;
-  Keymap prevmap;  
-
-  k.function = 0;
-
-  /* If no keys to bind to, exit right away. */
-  if (keyseq == 0 || *keyseq == 0)
-    {
-      if (type == ISMACR)
-	xfree (data);
-      return -1;
-    }
-
-  keys = (char *)xmalloc (1 + (2 * strlen (keyseq)));
-
-  /* Translate the ASCII representation of KEYSEQ into an array of
-     characters.  Stuff the characters into KEYS, and the length of
-     KEYS into KEYS_LEN. */
-  if (rl_translate_keyseq (keyseq, keys, &keys_len))
-    {
-      xfree (keys);
-      return -1;
-    }
-
-#ifdef TIB_TODO
-  prevmap = map;
-  prevkey = keys[0];
-#endif
-
-  if (type == ISMACR)
-    {
-      clink_bind_translated(1, keys, keys_len, data);
-    }
-  else
-    {
-      const char* name = rl_get_name_of_function((rl_command_func_t *) data);
-      if (name)
-        clink_bind_translated(0, keys, keys_len, name);
-    }
-
-  xfree (keys);
-  return 0;
-}
+extern void clink_bind (const char* keyseq, const char* name, int table);
+extern void clink_bind_macro (const char* keyseq, const char* macro, int table);
+extern void clink_bind_translated (int is_macro, const char* keys, int keys_len, const char* data, int table);
 
 /* Translate the ASCII representation of SEQ, stuffing the values into ARRAY,
    an array of characters.  LEN gets the final length of ARRAY.  Return
@@ -1790,10 +1540,10 @@ rl_parse_and_bind (char *string)
 	  if (j && funname[j - 1] == *funname)
 	    funname[j - 1] = '\0';
 
-	  rl_macro_bind (seq, &funname[1], _rl_keymap);
+	  clink_bind_macro (seq, &funname[1], rl_keymap_to_table (_rl_keymap));
 	}
       else
-	rl_bind_keyseq (seq, rl_named_function (funname));
+	clink_bind (seq, funname, rl_keymap_to_table (_rl_keymap));
 
       xfree (seq);
       return 0;
@@ -1858,9 +1608,10 @@ rl_parse_and_bind (char *string)
       if (fl && funname[fl - 1] == *funname)
 	funname[fl - 1] = '\0';
 
-      rl_macro_bind (useq, &funname[1], _rl_keymap);
+      clink_bind_macro (useq, &funname[1], rl_keymap_to_table (_rl_keymap));
     }
 #if defined (PREFIX_META_HACK)
+#if 0
   /* Ugly, but working hack to keep prefix-meta around. */
   else if (_rl_stricmp (funname, "prefix-meta") == 0)
     {
@@ -1873,11 +1624,12 @@ rl_parse_and_bind (char *string)
 /* end_clink_change */
       rl_generic_bind (ISKMAP, seq, (char *)emacs_meta_keymap, _rl_keymap);
     }
+#endif
 #endif /* PREFIX_META_HACK */
   else
 /* begin_clink_change */
     //rl_bind_key (key, rl_named_function (funname));
-    rl_bind_keyseq (keyseq, rl_named_function (funname));
+    clink_bind (keyseq, funname, rl_keymap_to_table (_rl_keymap));
 /* end_clink_change */
 
   return 0;

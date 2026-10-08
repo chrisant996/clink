@@ -89,6 +89,7 @@ extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
+static bool s_want_redisplay = false;
 static bool s_force_redisplay = false;
 static bool s_ever_input_hint = false;
 static bool s_transient_prompt_context = false;
@@ -1541,18 +1542,31 @@ void ignore_column_in_uninit_display_readline()
 void display_readline()
 {
     s_display_manager.display();
+    s_want_redisplay = false;
 }
 
 //------------------------------------------------------------------------------
 void want_redisplay_readline()
 {
+    s_want_redisplay = true;
     g_tib->invalidate();
+}
+
+//------------------------------------------------------------------------------
+void maybe_redisplay_readline()
+{
+    if (s_want_redisplay)
+    {
+        display_readline();
+        assert(!s_want_redisplay);
+    }
 }
 
 //------------------------------------------------------------------------------
 void force_redisplay_readline()
 {
     s_force_redisplay = true;
+    s_want_redisplay = true;
     g_tib->force_redisplay();
 }
 

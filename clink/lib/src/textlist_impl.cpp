@@ -343,7 +343,7 @@ public:
     // input_dispatcher
     void                dispatch(int32 bind_group) override;
     bool                available(uint32 timeout) override;
-    uint8               peek() override;
+    int32               peek() override;
 
     // key_tester
     bool                is_bound(const char* seq, int32 len);
@@ -977,7 +977,7 @@ find:
             {
                 if (!host_remove_dir_history(external_index))
                 {
-                    rl_ding();
+                    tib::ding();
                     break;
                 }
             }
@@ -985,7 +985,7 @@ find:
             {
                 if (!m_del_callback(external_index))
                 {
-                    rl_ding();
+                    tib::ding();
                     break;
                 }
             }
@@ -2191,10 +2191,10 @@ bool textlist_impl::filter_items()
         defer_test = 128;
         if (!m_dispatcher.available(0))
             return false;
-        const uint8 c = m_dispatcher.peek();
-        if (!c)
+        const int32 c = m_dispatcher.peek();
+        if (c < 0)
             return false;
-        if (c != 0x08 && (c < ' ' || c >= 0xf8))
+        if (c != 0x08 && (c < ' ' || !tib::is_input_byte(c)))
         {
             defer_test = 999999;
             return false;
@@ -2444,11 +2444,9 @@ bool standalone_input::available(uint32 timeout)
 }
 
 //------------------------------------------------------------------------------
-uint8 standalone_input::peek()
+int32 standalone_input::peek()
 {
-    const int32 c = m_terminal.peek();
-    assert(c < 0xf8);
-    return (c < 0) ? 0 : uint8(c);
+    return m_terminal.peek();
 }
 
 //------------------------------------------------------------------------------
@@ -2486,7 +2484,7 @@ bool standalone_input::update_input()
             module->on_terminal_resize(columns, rows, context);
     }
 
-    if (key < 0)
+    if (!terminal_in::is_input_byte(key))
         return true;
 
     if (!m_bind_resolver.step(key))

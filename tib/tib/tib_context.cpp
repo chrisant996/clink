@@ -1040,7 +1040,7 @@ void editor_context::clear_overwrite_input()
 
 void editor_context::apply_message_text()
 {
-    if (has_numeric_argument() && (m_numflags & (NUMFLAG_ARGUMENT_MODE|NUMFLAG_UNIVERSAL_MODE)))
+    if (has_numeric_argument() && (m_numflags & NUMFLAG_ARGUMENT_MODE))
     {
         static const char c_normal[] = "\x1b[m";
         cstring msg;
@@ -1523,6 +1523,11 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                         input.append(&next, 1);
                         peek = term_in_peek();
                     }
+                    if (hook_input_trace)
+                    {
+                        for (size_t i = 0; i < input.length(); ++i)
+                            hook_input_trace("insert batch byte", uint8_t(input.c_str()[i]), i);
+                    }
                     insert_text(input.c_str(), input.length(), get_overwrite_mode());
                     handled = true;
                 }
@@ -1535,7 +1540,11 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                 {
                     begin_undo_group();
                     while (n-- > 0)
+                    {
+                        if (hook_input_trace)
+                            hook_input_trace("insert char", uint8_t(c), n);
                         insert_char(c, get_overwrite_mode());
+                    }
                     end_undo_group();
                 }
             }
@@ -1561,10 +1570,12 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
     return ret;
 }
 
+#ifdef STRANGE_PROBING_CODE
 std::shared_ptr<const key_table_list> editor_context::probe_bindings_on_miss() const
 {
     return (m_numflags & NUMFLAG_ARGUMENT_MODE) ? get_base_bindings() : nullptr;
 }
+#endif
 
 bool editor_context::on_binding_miss(const cstring&, int32_t) noexcept
 {

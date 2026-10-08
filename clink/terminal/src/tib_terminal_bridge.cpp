@@ -15,20 +15,33 @@
 #include <core/settings.h>
 #include <core/callstack.h>
 
-extern "C" void rl_ding(void);
-
 extern setting_bool g_debug_log_terminal;
 
 uint32 g_ambiguous_keyseq_timeout = 500;
+bool g_debug_log_input_pipeline = false;
 
 #ifdef _MSC_VER
 extern setting_bool g_debug_log_output_callstacks;
 #endif
 
+static_assert(terminal_in::input_eof == tib::c_input_eof);
+static_assert(terminal_in::input_terminal_resize == tib::c_input_resize);
+
 //------------------------------------------------------------------------------
 
 namespace
 {
+
+static void format_input_bytes(str_base& out, const char* bytes, uint32 len)
+{
+    out.clear();
+    for (uint32 i = 0; i < min<uint32>(len, 32); ++i)
+        out.format_append("%02x ", uint8(bytes[i]));
+    if (len > 32)
+        out.concat("...");
+    else
+        out.trim();
+}
 
 class input_adapter : public tib::terminal_in
 {
@@ -36,11 +49,6 @@ public:
     explicit input_adapter(tib_terminal_bridge& bridge) : m_bridge(bridge) {}
     int32_t read() noexcept override { return m_bridge.read(); }
     bool avail(uint32_t timeout) noexcept override { return m_bridge.available(timeout); }
-    bool peek(int32_t& value) noexcept override
-    {
-        value = m_bridge.peek();
-        return (value != ::terminal_in::input_none);
-    }
 private:
     tib_terminal_bridge& m_bridge;
 };
@@ -188,16 +196,19 @@ void tib_terminal_bridge::begin(bool can_hide_cursor)
 
         m_old_input_hook = tib::hook_new_terminal_in;
         m_old_output_hook = tib::hook_new_terminal_out;
+        m_old_input_trace_hook = tib::hook_input_trace;
         tib::hook_new_terminal_in = [](tib::pushed_input&) -> tib::terminal_in* {
             return new input_adapter(*g_terminal);
         };
         tib::hook_new_terminal_out = []() -> tib::terminal_out* {
             return new output_adapter(*g_terminal);
         };
+        tib::hook_input_trace = g_debug_log_input_pipeline ? +[](const char* event, int32_t value, size_t count) {
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT tib.%s value=%d (0x%02x '%c') count=%zu", event, value, value, value, count);
+        } : nullptr;
 
-        m_lookahead = terminal_in::input_none;
         reset_bindings();
-        tib::term_clear_input();
     }
 
     if (m_in)
@@ -236,10 +247,10 @@ void tib_terminal_bridge::end(bool can_show_cursor)
     {
         reset_bindings();
         set_chord(nullptr, 0);
-        m_lookahead = terminal_in::input_none;
 
         tib::hook_new_terminal_in = m_old_input_hook;
         tib::hook_new_terminal_out = m_old_output_hook;
+        tib::hook_input_trace = m_old_input_trace_hook;
 
         g_terminal = nullptr;
     }
@@ -265,6 +276,15 @@ void tib_terminal_bridge::set_chord(const char* keys, uint32 len)
     if (!m_in)
         return;
 
+    if (g_debug_log_input_pipeline)
+    {
+        str<80> bytes;
+        if (keys && len)
+            format_input_bytes(bytes, keys, len);
+        LOG("INPUT bridge.set_chord bytes=(%s) len=%u old_remaining=%u",
+            bytes.c_str(), len, m_chord_len);
+    }
+
 // TODO-TIB: this borrows the keys pointer; is that safe?
     m_chord = keys;
     m_chord_len = len;
@@ -272,38 +292,35 @@ void tib_terminal_bridge::set_chord(const char* keys, uint32 len)
 
 int32 tib_terminal_bridge::read()
 {
-    if (!m_in)
-        return terminal_in::input_none;
-
-    // Bytes already delivered by Clink's resolver precede new driver input.
     if (m_chord_len)
     {
         --m_chord_len;
-        return uint8(*m_chord++);
-    }
-    if (m_lookahead != terminal_in::input_none)
-    {
-        const int32 value = m_lookahead;
-        m_lookahead = terminal_in::input_none;
+        const int32 value = uint8(*m_chord++);
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT bridge.read source=chord value=%d (0x%02x '%c') remaining=%u", value, value, value, m_chord_len);
         return value;
     }
-    return m_in->read();
+
+    const int32 value = m_in ? m_in->read() : terminal_in::input_none;
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.read source=driver value=%d (0x%02x '%c')", value, value, value);
+    return value;
 }
 
 int32 tib_terminal_bridge::peek()
 {
-    if (!m_in)
-        return terminal_in::input_none;
-
     if (m_chord_len)
-        return uint8(*m_chord);
+    {
+        const int32 value = uint8(*m_chord);
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT bridge.peek source=chord value=%d (0x%02x '%c') remaining=%u", value, value, value, m_chord_len);
+        return value;
+    }
 
-    // Cache the signed result, including resize/abort/exit.  Clink's read()
-    // checks dimensions, whereas its peek() does not.  Keeping the read here
-    // makes peek/read agree without losing an event to tib's byte pushback.
-    if (m_lookahead == terminal_in::input_none)
-        m_lookahead = m_in->read();
-    return m_lookahead;
+    const int32 value = m_in ? m_in->peek() : terminal_in::input_none;
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.peek source=driver value=%d (0x%02x '%c')", value, value, value);
+    return value;
 }
 
 bool tib_terminal_bridge::available(uint32 timeout)
@@ -311,9 +328,10 @@ bool tib_terminal_bridge::available(uint32 timeout)
     if (!m_in)
         return false;
 
-    return (m_chord_len ||
-            m_lookahead != terminal_in::input_none ||
-            m_in->available(timeout));
+    const bool result = (m_chord_len || m_in->available(timeout));
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.available timeout=%u result=%d chord=%u", timeout, result, m_chord_len);
+    return result;
 }
 
 void tib_terminal_bridge::write(const char* text, size_t len)
@@ -350,7 +368,19 @@ void tib_terminal_bridge::write(const char* text)
 
 void tib_terminal_bridge::ding()
 {
-    rl_ding();
+    switch (g_bell_preference)
+    {
+    default:
+        assert(false && "unrecognized bell preference");
+    case bell_preference::none:
+        break;
+    case bell_preference::visible:
+        write("\x1bg", 2);
+        break;
+    case bell_preference::audible:
+        write("\x07", 1);
+        break;
+    }
 }
 
 int32 tib_terminal_bridge::get_columns() const
@@ -371,10 +401,17 @@ bool tib_terminal_bridge::wait_for_input(input_idle* idle)
 {
     assert(m_began);
 
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.wait begin pending=%d ambiguous=%d chord=%u", m_resolver.pending(), m_ambiguous, m_chord_len);
+
     // Must go through tib::term_in_avail because of pushed input.
 // TODO-TIB: is this correctly integrated with m_chord_len?
     if (tib::term_in_avail(0))
+    {
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT bridge.wait queued input ready");
         return false;
+    }
 
     if (m_ambiguous)
     {
@@ -385,11 +422,15 @@ bool tib_terminal_bridge::wait_for_input(input_idle* idle)
         {
             auto resolved = m_resolver.resolve_pending();
             m_ambiguous = resolved.ambiguous();
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT bridge.wait timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
             return resolved.dispatch();
         }
     }
     else
         m_in->select(idle);
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.wait select returned");
     return false;
 }
 
@@ -415,23 +456,30 @@ void tib_terminal_bridge::reset_bindings()
 
 bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
 {
-#ifdef TIB_TODO
     if (!len)
     {
-LNope:
+// LNope:
+#ifdef TIB_TODO
         if (RL_ISSTATE (RL_STATE_MULTIKEY))
         {
             RL_UNSETSTATE(RL_STATE_MULTIKEY);
             _rl_keyseq_chain_dispose();
         }
-        rl_ding();
+#endif
+        ding();
         return false;
     }
 
+#ifdef TIB_TODO
     // `quoted-insert` must accept all input (that's its whole purpose).
     if (rl_is_insert_next_callback_pending())
         return true;
+#else
+    if (quoted_insert_pending())
+        return true;
+#endif
 
+#ifdef TIB_TODO
     // The F2, F4, and F9 console compatibility implementations can accept
     // input, but extended keys are meaningless so don't accept them.  The
     // intent is to allow printable textual input, control characters, and ESC.
@@ -454,10 +502,11 @@ LNope:
             goto LNope;
         return true;
     }
+#endif
 
     // The intent here is to accept all UTF8 input (not sure why readline
     // reports them as not bound, but this seems good enough for now).
-    if (len > 1 && uint8(seq[0]) >= ' ')
+    if (len > 1 && seq[0] >= ' ' && terminal_in::is_input_byte(uint8(seq[0])))
         return true;
 
     // NOTE:  Checking readline's keymap is incorrect when a special bind group
@@ -466,21 +515,27 @@ LNope:
     // everything not explicitly bound in the keymap.  So it works out
     // naturally, without additional effort.
 
+#ifdef TIB_TODO
     // Using nullptr for the keymap starts from the root of the current keymap,
     // but in a multi key sequence this needs to use the current dispatching
     // node of the current keymap.
     Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
     if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
         return true;
-
-    goto LNope;
 #endif
 
+#ifdef STRANGE_PROBING_CODE
     if (len > 0 && m_resolver.accepts(seq, size_t(len)))
         return true;
     reset_bindings();
     tib::ding();
     return false;
+#else
+    // TODO-TIB: clone the resolver and check whether seq,len is a miss.
+    // TODO-TIB: if not a miss, return true;
+    // TODO-TIB: if a miss, goto LNope;
+    return true;
+#endif
 }
 
 bool tib_terminal_bridge::pending_input() const
@@ -495,7 +550,16 @@ bool tib_terminal_bridge::quoted_insert_pending() const
 
 void tib_terminal_bridge::dispatch(uint8 key)
 {
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.dispatch step key=%u (0x%02x '%c') pending=%d", key, key, key, m_resolver.pending());
     auto resolved = m_resolver.step(key);
     m_ambiguous = resolved.ambiguous();
+    if (g_debug_log_input_pipeline)
+    {
+        str<80> bytes;
+        format_input_bytes(bytes, resolved.sequence.c_str(), uint32(resolved.sequence.length()));
+        LOG("INPUT bridge.dispatch resolved outcome=%d bytes=(%s) len=%zu pending=%d ambiguous=%d",
+            int32(resolved.outcome), bytes.c_str(), resolved.sequence.length(), m_resolver.pending(), m_ambiguous);
+    }
     resolved.dispatch();
 }

@@ -21,7 +21,6 @@
 #include "line_editor_integration.h"
 #include "suggestions.h"
 #include "line_queue.h"
-#include "kill_ring.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -756,7 +755,7 @@ int32 clink_copy_word(int32 count, int32 invoking_key)
     if (count < 0 || !g_rl_buffer)
     {
 Nope:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -875,7 +874,7 @@ static int32 do_expand_line(int32 flags)
 
     if (!expanded)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -968,7 +967,7 @@ int32 clink_toggle_slashes(int32 count, int32 invoking_key)
     if (count < 0 || !g_rl_buffer)
     {
 Nope:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1060,7 +1059,7 @@ int32 clink_find_conhost(int32 count, int32 invoking_key)
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1077,7 +1076,7 @@ int32 clink_mark_conhost(int32 count, int32 invoking_key)
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1131,7 +1130,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
     if (!history || !total)
     {
         free(history);
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1144,7 +1143,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
     case popup_result::cancel:
         break;
     case popup_result::error:
-        rl_ding();
+        tib::ding();
         break;
     case popup_result::select:
     case popup_result::use:
@@ -1196,7 +1195,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 int32 clink_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1204,7 +1203,7 @@ int32 clink_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1212,7 +1211,7 @@ int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers_backward"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1220,7 +1219,7 @@ int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1228,7 +1227,7 @@ int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers_backward"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1236,7 +1235,7 @@ int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1244,7 +1243,7 @@ int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_popup_show_help(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_show_help"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1307,7 +1306,7 @@ another_word:
             return 0;
         }
         if (sugg)
-        return 0;
+            return 0;
     }
 
     return tib::cua_forward_char(ctx, key, name, params);
@@ -1331,7 +1330,7 @@ another_word:
                 goto another_word;
         }
         if (sugg)
-        return 0;
+            return 0;
     }
 
     return tib::forward_word(ctx, key, name, params);
@@ -1353,7 +1352,7 @@ another_word:
                 goto another_word;
         }
         if (sugg)
-        return 0;
+            return 0;
     }
 
     return tib::forward_bigword(ctx, key, name, params);
@@ -1434,7 +1433,7 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
     if (!hi.make(g_rl_buffer->get_buffer(), search_len, orig_pos))
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1704,7 +1703,7 @@ int32 win_f1(int32 count, int32 invoking_key)
     if (!prev_buffer)
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1746,7 +1745,7 @@ static int32 finish_win_f2()
     char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1790,7 +1789,7 @@ int32 _win_f2_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f2();
 #else
@@ -1868,7 +1867,7 @@ int32 _win_f4_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f4();
 }
@@ -1916,7 +1915,7 @@ int32 win_f7(int32 count, int32 invoking_key)
     if (!total)
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -2049,7 +2048,7 @@ int32 _win_f9_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f9();
 #else
@@ -2099,58 +2098,489 @@ bool win_fn_callback_pending()
 
 
 //------------------------------------------------------------------------------
-int32_t backward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+static int32_t kill_worker(tib::editor_context& ctx, bool forward, uint8_t word, bool copy=false) noexcept
 {
     const auto line = ctx.get_text();
 
     if (ctx.has_selection())
     {
-        add_to_kill_ring(line.c_str() + ctx.get_sel_begin(), ctx.get_sel_end() - ctx.get_sel_begin());
+        tib::add_to_kill_ring(-1, line.c_str() + ctx.get_sel_begin(), ctx.get_sel_end() - ctx.get_sel_begin());
         ctx.del();
         return 0;
     }
 
+    const tib::textpos_t orig_caret = ctx.get_caret();
+
+    // Readline seems to be inconsistent about when it dings, but mimic them.
+    if (!forward && !word && !copy)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    ctx.set_caret(orig_caret);
+
+    auto inverted = (word ? (forward ? tib::backward_word : tib::forward_word)
+                          : (forward ? tib::begin_of_line : tib::end_of_line));
+
+    if (copy && word)
+        inverted(ctx, 0, nullptr, nullptr);
+
     const tib::textpos_t c1 = ctx.get_caret();
 
-    tib::do_with_numeric_argument(ctx, key, name, params, tib::forward_word, [&]() {
-        return ctx.move_left(true);
+    tib::do_with_numeric_argument(ctx, 0, nullptr, nullptr, inverted, [&]() {
+        if (word)
+        {
+            return forward ? ctx.move_right(word) : ctx.move_left(word);
+        }
+        else
+        {
+            forward ? ctx.end_of_input(word) : ctx.begin_of_input(word);
+            return false;
+        }
     }, tib::NO_DING);
 
     const tib::textpos_t c2 = ctx.get_caret();
 
     const tib::textpos_t start = min(c1, c2);
     const tib::textpos_t end = max(c1, c2);
+    tib::add_to_kill_ring((c1 < c2), line.c_str() + start, end - start);
 
-    add_to_kill_ring(line.c_str() + start, end - start);
-    ctx.remove_text(start, end);
+    if (copy)
+    {
+        ctx.set_caret(orig_caret);
+    }
+    else if (start != end)
+    {
+        ctx.begin_undo_group();
+        ctx.remove_text(start, end);
+        ctx.set_mark(start);
+        ctx.end_undo_group();
+    }
     return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t backward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_worker(ctx, false/*forward*/, true/*word*/);
 }
 
 //------------------------------------------------------------------------------
 int32_t forward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
+    return kill_worker(ctx, true/*forward*/, true/*word*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t backward_kill_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_worker(ctx, false/*forward*/, false/*word*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t forward_kill_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_worker(ctx, true/*forward*/, false/*word*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t kill_full_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
     const auto line = ctx.get_text();
 
-    if (ctx.has_selection())
+    tib::add_to_kill_ring(-1, line.c_str(), line.length());
+
+    if (!line.empty())
     {
-        add_to_kill_ring(line.c_str() + ctx.get_sel_begin(), ctx.get_sel_end() - ctx.get_sel_begin());
-        ctx.del();
-        return 0;
+        ctx.begin_undo_group();
+        ctx.remove_text(0, ~0);
+        ctx.set_mark(0);
+        ctx.end_undo_group();
     }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t copy_backward_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_worker(ctx, false/*forward*/, true/*word*/, true/*copy*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t copy_forward_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_worker(ctx, true/*forward*/, true/*word*/, true/*copy*/);
+}
+
+//------------------------------------------------------------------------------
+static int32_t kill_region_worker(tib::editor_context& ctx, bool copy) noexcept
+{
+    const auto line = ctx.get_text();
 
     const tib::textpos_t c1 = ctx.get_caret();
-
-    tib::do_with_numeric_argument(ctx, key, name, params, tib::backward_word, [&]() {
-        return ctx.move_right(true);
-    }, tib::NO_DING);
-
-    const tib::textpos_t c2 = ctx.get_caret();
+    const tib::textpos_t c2 = ctx.has_selection() ? ctx.get_anchor() : ctx.get_mark();
 
     const tib::textpos_t start = min(c1, c2);
     const tib::textpos_t end = max(c1, c2);
+    tib::add_to_kill_ring(-1, line.c_str() + start, end - start);
 
-    add_to_kill_ring(line.c_str() + start, end - start);
-    ctx.remove_text(start, end);
+    if (!copy && start != end)
+    {
+        ctx.begin_undo_group();
+        ctx.remove_text(start, end);
+        ctx.set_mark(start);
+        ctx.end_undo_group();
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t kill_region(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_region_worker(ctx, false/*copy*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t copy_region_to_kill(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return kill_region_worker(ctx, true/*copy*/);
+}
+
+//------------------------------------------------------------------------------
+int32_t rubout_or_delete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const tib::textpos_t caret = ctx.get_caret();
+    if (caret == ctx.get_length())
+        return tib::del_char_left(ctx, 0, nullptr, nullptr);
+    else
+        return tib::del_char_right(ctx, 0, nullptr, nullptr);
+}
+
+//------------------------------------------------------------------------------
+int32_t insert_close(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    // Only for use with these specific characters.
+    if (key != ')' && key != ']' && key != '}')
+    {
+        tib::ding();
+        return 0;
+    }
+
+    // Insert the character.
+    const char c = char(key);
+    ctx.insert_text(&c, 1, ctx.get_overwrite_mode());
+
+    // An explicit argument bypasses the matching behavior.
+    if (ctx.has_numeric_argument())
+        return 0;
+
+    // Redirected input bypasses the matching behavior.
+    DWORD dummy;
+    HANDLE h = get_std_handle(STD_INPUT_HANDLE);
+    if (!h || !GetConsoleMode(h, &dummy))
+        return 0;
+
+    // Determine the matching opening character.
+    const char o = (c == ')' ? '(' :
+                    c == ']' ? '[' :
+                    c == '}' ? '{' : 0);
+    assert(o);
+    if (!o)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    // Find the matching opening character.
+    int32_t pending = -1;
+    tib::textpos_t paren = ctx.get_caret() - 2; // -1 is the closing character.
+    for (const auto text = ctx.get_text().c_str(); paren > 0; --paren)
+    {
+        if (text[paren] == c)
+            --pending;
+        else if (text[paren] == o)
+            ++pending;
+        if (!pending)
+            break;
+    }
+
+    // No match?
+    if (pending)
+        return 0;
+
+    // Any input available?
+    if (tib::term_in_avail(0))
+        return 0;
+
+    // Remember the caret position.
+    const auto caret = ctx.get_caret();
+#if 0
+    const auto top = ctx.get_top();
+    const auto left = ctx.get_left();
+#endif
+
+    // Go to the matching paren and update the display.
+    ctx.set_caret(paren);
+    ctx.display();
+
+    // The cursor is visible on the matching paren while waiting briefly for
+    // input.
+    {
+        const auto was_visible = show_cursor(1);
+
+        tib::term_in_avail(500);
+
+        if (!was_visible)
+            show_cursor(0);
+    }
+
+    // Restore the caret position.
+    ctx.set_caret(caret);
+#if 0
+    ctx.set_top(top);
+    ctx.set_left(left);
+#endif
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t insert_comment(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const char* comment = _rl_comment_begin ? _rl_comment_begin : "::";
+    const size_t comment_len = strlen(comment);
+    ctx.begin_undo_group();
+    ctx.begin_of_input();
+    if (ctx.has_numeric_argument() && strnicmp(ctx.get_text().c_str(), comment, comment_len) == 0)
+        ctx.remove_text(0, comment_len);
+    else
+        ctx.insert_text(_rl_comment_begin ? _rl_comment_begin : "::");
+    ctx.end_undo_group();
+    return clink_accept_line(ctx, 0, nullptr, nullptr);
+}
+
+//------------------------------------------------------------------------------
+int32_t unix_filename_rubout(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const tib::textpos_t end = ctx.get_caret();
+    if (end == 0)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    const char* line = ctx.get_text().c_str();
+    const char* p = line + end - 1;
+
+    auto count = max(1, ctx.get_numeric_argument());
+    while (count--)
+    {
+        // Retreat through spaces.
+        while (p >= line && *p == ' ')
+            --p;
+
+        // Retreat through path separators.
+        while (p >= line && path::is_separator(*p))
+            --p;
+
+        // Retreat through anything other than spaces or path separators.
+        while (p >= line && *p != ' ' && !path::is_separator(*p))
+            --p;
+    }
+
+    ++p;
+    assert(p >= line);
+
+    const tib::textpos_t start = tib::textpos_t(p - line);
+    tib::add_to_kill_ring(false, line + start, end - start);
+
+    if (end != start)
+    {
+        ctx.begin_undo_group();
+        ctx.remove_text(start, end);
+        ctx.set_mark(start);
+        ctx.end_undo_group();
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t unix_line_discard(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const tib::textpos_t end = ctx.get_caret();
+    if (end == 0)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    tib::add_to_kill_ring(false, ctx.get_text().c_str(), end);
+
+    if (end)
+    {
+        ctx.begin_undo_group();
+        ctx.remove_text(0, end);
+        ctx.set_mark(0);
+        ctx.end_undo_group();
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t unix_word_rubout(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const tib::textpos_t end = ctx.get_caret();
+    if (end == 0)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    const char* line = ctx.get_text().c_str();
+    const char* p = line + end - 1;
+
+    auto count = max(1, ctx.get_numeric_argument());
+    while (count--)
+    {
+        // Retreat through spaces.
+        while (p >= line && *p == ' ')
+            --p;
+
+        // Retreat through non-spaces.
+        while (p >= line && *p != ' ')
+            --p;
+    }
+
+    ++p;
+    assert(p >= line);
+
+    const tib::textpos_t start = tib::textpos_t(p - line);
+    tib::add_to_kill_ring(false, line + start, end - start);
+
+    if (end != start)
+    {
+        ctx.begin_undo_group();
+        ctx.remove_text(start, end);
+        ctx.set_mark(start);
+        ctx.end_undo_group();
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t yank(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    if (!tib::get_kill_ring_count())
+    {
+        tib::abort(ctx, key, name, params);
+        return 1;
+    }
+
+    ctx.begin_undo_group();
+    ctx.set_mark(ctx.get_caret());
+    ctx.insert_text(tib::get_kill_ring_text(tib::get_kill_ring_index()));
+    ctx.end_undo_group();
+    return 0;
+}
+
+#ifdef TIB_TODO
+//------------------------------------------------------------------------------
+int32_t yank_last_arg(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t yank_nth_arg(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    return 0;
+}
+#endif
+
+//------------------------------------------------------------------------------
+int32_t yank_pop(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const auto index = tib::get_kill_ring_index();
+    const auto len = tib::get_kill_ring_text_length(index);
+    const char* last_command = ctx.get_last_command();
+    if (!len || (stricmp(last_command, "yank") && stricmp(last_command, "yank-pop")))
+    {
+nope:
+        tib::abort(ctx, key, name, params);
+        return 1;
+    }
+
+    const auto text = tib::get_kill_ring_text(index);
+    const auto line = ctx.get_text().c_str();
+    const auto caret = ctx.get_caret();
+    if (len > caret || strncmp(line + caret - len, text, len) != 0)
+        goto nope;
+
+    ctx.begin_undo_group();
+    ctx.remove_text(caret - len, caret);
+    tib::pop_kill_ring_index();
+    auto ret = yank(ctx, 0, nullptr, nullptr);
+    ctx.end_undo_group();
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+int32_t re_read_init_file(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    extern void initialise_readline(bool no_user=false);
+    initialise_readline();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t refresh_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    force_redisplay_readline();
+    display_readline();
+    g_tib->clear_auto_deactivate_mark();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const auto line = ctx.get_text().c_str();
+    const auto end = ctx.get_length();
+    auto caret = ctx.get_caret();
+    auto start = caret;
+
+    // If the caret is immediately after a tilde, then expand the rest of the
+    // word.  Otherwise, retreat to find a tilde at the beginning of a word.
+    if (caret && line[caret - 1] == '~')
+    {
+        start = caret - 1;
+    }
+    else
+    {
+        // Retreat through non-spaces and non-quotes.
+        while (start && line[start - 1] != ' ' && line[start - 1] != '"')
+            --start;
+    }
+
+    // No tilde?  Easy out.
+    if (line[start] != '~')
+        return 0;
+
+    // Advance through non-spaces and non-quotes.
+    while (caret < end && line[caret] != ' ' && line[caret] != '"')
+        ++caret;
+
+    // Get the word.
+    tib::cstring word;
+    word.set(line + start, caret - start);
+
+    // Expand it.
+    char* expanded = tilde_expand(word.c_str());
+    ctx.begin_undo_group();
+    ctx.remove_text(start, caret);
+    ctx.insert_text(expanded);
+    ctx.end_undo_group();
+    free(expanded);
     return 0;
 }
 
@@ -2219,7 +2649,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
         HIST_ENTRY* h = history_get(count);
         if (!h)
         {
-            rl_ding();
+            tib::ding();
             return 0;
         }
         line = h->line;
@@ -2229,7 +2659,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
         line.concat(rl_line_buffer, rl_end);
         if (!host_add_history(0, line.c_str()))
         {
-            rl_ding();
+            tib::ding();
             return 0;
         }
     }
@@ -2239,7 +2669,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
     if (!file)
     {
 LDing:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 

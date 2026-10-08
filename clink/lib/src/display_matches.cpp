@@ -22,6 +22,7 @@
 #include "ellipsify.h"
 #include "line_buffer.h"
 #include "pager.h"
+#include "rl_integration.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -1079,7 +1080,7 @@ extern "C" void display_matches(char** matches)
         {
             if (!filtered_matches->get_match_count())
             {
-                rl_ding();
+                tib::ding();
                 delete filtered_matches;
                 return;
             }

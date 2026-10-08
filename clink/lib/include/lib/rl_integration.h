@@ -93,3 +93,19 @@ private:
 #undef RUBOUT
 constexpr uint8 RUBOUT = 0x7f;
 
+//------------------------------------------------------------------------------
+enum binding_table
+{
+    emacs_table,
+#ifdef TIB_TODO
+    vi_insertion_table,
+    vi_movement_table,
+#endif
+};
+extern "C" void clink_bind(const char* keyseq, const char* target, int table);
+extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table);
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table);
+typedef const char* two_strings[2];
+extern "C" void clink_bind_list(const two_strings* list, int table);
+extern "C" void set_key_table(int table);
+extern "C" int get_key_table(void);

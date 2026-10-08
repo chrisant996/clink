@@ -29,9 +29,6 @@ public:
     virtual             ~terminal_in() = default;
     virtual int32_t     read() noexcept = 0;
     virtual bool        avail(uint32_t timeout=0) noexcept = 0;
-    // Return true when the driver implements non-consuming lookahead.
-    // Unlike the byte pushback fallback, this can preserve host events.
-    virtual bool        peek(int32_t& value) noexcept { return false; }
     virtual bool        enable_mouse_input(mouse_input_mode mode, bool sgr_encoding) noexcept { return false; }
 };
 
@@ -45,8 +42,10 @@ public:
 
 typedef terminal_in* (*hook_new_terminal_in_func_t)(pushed_input& pushed);
 typedef terminal_out* (*hook_new_terminal_out_func_t)();
+typedef void (*hook_input_trace_func_t)(const char* event, int32_t value, size_t count);
 extern hook_new_terminal_in_func_t hook_new_terminal_in;
 extern hook_new_terminal_out_func_t hook_new_terminal_out;
+extern hook_input_trace_func_t hook_input_trace;
 
 void term_begin();
 void term_end();
@@ -60,8 +59,6 @@ bool is_term_sigclose();
 int32_t term_in();
 int32_t term_in_peek();
 bool term_in_avail(DWORD timeout=0);
-bool term_has_queued_input();
-void term_clear_input();
 // Prepend text to the highest-priority pushed-input queue.
 bool term_push_input(const char* text, size_t len=-1);
 bool term_push_macro_text(const char* text, size_t len=-1);

@@ -63,6 +63,7 @@ extern setting_enum g_expand_mode;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
+extern bool g_debug_log_input_pipeline;
 // TODO: line_editor_impl vs rl_module.
 extern int32 g_suggestion_offset;
 void before_display_readline();
@@ -311,6 +312,12 @@ void line_editor_impl::initialise()
 //------------------------------------------------------------------------------
 void line_editor_impl::begin_line()
 {
+    {
+        str<16> tmp;
+        os::get_env("CLINK_LOG_INPUT_PIPELINE", tmp);
+        g_debug_log_input_pipeline = (atoi(tmp.c_str()) > 0);
+    }
+
     clear_flag(~flag_init);
     set_flag(flag_editing);
 
@@ -485,6 +492,7 @@ bool line_editor_impl::edit(str_base& out, bool edit)
     {
         update();
 // TODO-TIB: how to reach this, to test it?
+        assert(false);
         clink_newline(0, 0);
     }
 
@@ -848,12 +856,10 @@ bool line_editor_impl::available(uint32 timeout)
 }
 
 //------------------------------------------------------------------------------
-uint8 line_editor_impl::peek()
+int32 line_editor_impl::peek()
 {
     assert(check_flag(flag_init));
-    const int32 c = tib::term_in_peek();
-    assert(c < 0xf8);
-    return (c < 0) ? 0 : uint8(c);
+    return tib::term_in_peek();
 }
 
 //------------------------------------------------------------------------------
@@ -912,8 +918,9 @@ bool line_editor_impl::update_input()
     int32 key;
     {
         key = tib::term_in();
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT editor.read key=%d (0x%02x '%c') group=%d", key, key, key, m_bind_resolver.get_group());
 
-// TODO-TIB: the special keys...
         if (key == terminal_in::input_terminal_resize)
         {
             assert(g_terminal);
@@ -949,7 +956,7 @@ bool line_editor_impl::update_input()
         }
     }
 
-    if (key < 0)
+    if (!terminal_in::is_input_byte(key))
         return true;
 
 #ifdef DEBUG
@@ -972,7 +979,11 @@ bool line_editor_impl::update_input()
         && !rl_vi_insert_mode_esc_special_case(key)
 #endif
         )
+    {
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT editor.binding prefix key=%d group=%d", key, m_bind_resolver.get_group());
         return false;
+    }
 
     struct result_impl : public editor_module::result
     {
@@ -1005,6 +1016,13 @@ bool line_editor_impl::update_input()
         editor_module* module = binding.get_module();
         uint8 id = binding.get_id();
         binding.get_chord(chord);
+
+        if (g_debug_log_input_pipeline)
+        {
+            LOG("INPUT editor.binding id=%u chord_len=%u first=0x%02x group=%d more=%d",
+                id, chord.length(), chord.length() ? uint8(chord.c_str()[0]) : 0,
+                m_bind_resolver.get_group(), m_bind_resolver.more_than(chord.length()));
+        }
 
         {
             rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
@@ -1467,7 +1485,7 @@ void line_editor_impl::reclassify(reclassify_reason why)
 
         if (why == reclassify_reason::lazy_force)
         {
-            _rl_want_redisplay = true;
+            want_redisplay_readline();
             return;
         }
     }
@@ -1559,7 +1577,6 @@ bool line_editor_impl::maybe_handle_signal()
 
         // TODO-TIB: wait what?  Why?  This is a change in behavior.
         m_terminal->reset_bindings();
-        tib::term_clear_input();
 
         for (auto* module : m_modules)
             module->on_signal(sig);
@@ -1739,10 +1756,9 @@ void line_editor_impl::update_internal(bool force)
     // Should we collect suggestions?
     try_suggest();
 
-// TODO-TIB: too aggressive now; Readline's _rl_want_redisplay optimization has been lost.
     // In case a new argmatcher got registered during the oncommand event.
     // Wait until after try_suggest in case that already did a redisplay.
-    display_readline();
+    maybe_redisplay_readline();
 
     // Must defer updating m_prev_generate since the old value is still needed
     // for deciding whether to sort/select, after deciding whether to generate.

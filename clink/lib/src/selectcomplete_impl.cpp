@@ -944,7 +944,7 @@ append_not_dup:
         }
         else
         {
-            rl_ding();
+            tib::ding();
         }
         break;
 

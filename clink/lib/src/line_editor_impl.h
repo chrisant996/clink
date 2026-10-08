@@ -82,7 +82,7 @@ public:
     // input_dispatcher
     virtual void        dispatch(int32 bind_group) override;
     virtual bool        available(uint32 timeout) override;
-    virtual uint8       peek() override;
+    virtual int32       peek() override;
 
     // tib::editor_callbacks
     virtual void        provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;

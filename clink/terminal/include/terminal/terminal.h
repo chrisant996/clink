@@ -14,8 +14,13 @@ class input_idle;
 class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
+enum class bell_preference { none, visible, audible };
+
+//------------------------------------------------------------------------------
 extern tib_terminal_bridge* g_terminal;
 extern uint32 g_ambiguous_keyseq_timeout;
+extern bell_preference g_bell_preference;
+extern bool g_debug_log_input_pipeline;
 
 //------------------------------------------------------------------------------
 bool                init_terminal();
@@ -114,8 +119,8 @@ private:
     bool                m_ambiguous = false;
     const char*         m_chord = nullptr;
     uint32              m_chord_len = 0;
-    int32               m_lookahead;
     int32               m_began = 0;
     tib::hook_new_terminal_in_func_t m_old_input_hook = nullptr;
     tib::hook_new_terminal_out_func_t m_old_output_hook = nullptr;
+    tib::hook_input_trace_func_t m_old_input_trace_hook = nullptr;
 };

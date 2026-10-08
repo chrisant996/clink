@@ -467,6 +467,7 @@ bool binding_resolver::quoted_insert_pending() const
     return !m_state->quoted_insert_target.expired();
 }
 
+#ifdef STRANGE_PROBING_CODE
 bool binding_resolver::accepts(const char* sequence, size_t len) const
 {
     if (!len)
@@ -488,6 +489,9 @@ bool binding_resolver::accepts(const char* sequence, size_t len) const
 }
 
 resolved_binding binding_resolver::resolve(bool force, bool probe)
+#else
+resolved_binding binding_resolver::resolve(bool force)
+#endif
 {
     constexpr uint32_t c_max_binding_retries = 1;
 
@@ -568,7 +572,11 @@ retry_sequence:
 retry_target:
         const step_state saved_state = state;
 
+#ifdef STRANGE_PROBING_CODE
         const auto bindings_list = (probe && retry_count) ? target->probe_bindings_on_miss() : target->get_bindings();
+#else
+        const auto bindings_list = target->get_bindings();
+#endif
         if (!bindings_list)
             continue;
 
@@ -721,9 +729,13 @@ retry_target:
         // Invoke the callback only when neither condition is true among the
         // dispatcher targets examined so far; this also preserves the rule
         // that an earlier target's partial match suppresses later callbacks.
+#ifdef STRANGE_PROBING_CODE
         if (!state.is_prefix && !state.best.length &&
             (probe ? (!retry_count && !!target->probe_bindings_on_miss()) :
                      target->on_binding_miss(m_sequence, c)))
+#else
+        if (!state.is_prefix && !state.best.length && target->on_binding_miss(m_sequence, c))
+#endif
         {
             state = saved_state;
             if (++retry_count <= c_max_binding_retries)
@@ -770,7 +782,11 @@ retry_target:
         return resolved;
     }
 
+#ifdef STRANGE_PROBING_CODE
     if (!probe && m_sequence.length() > 1 && (c & 0xc0) != 0x80)
+#else
+    if (m_sequence.length() > 1 && (c & 0xc0) != 0x80)
+#endif
     {
         // Discard the sequence before c and try again.
         reset();

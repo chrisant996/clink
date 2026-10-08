@@ -11,6 +11,7 @@
 #include <core/linear_allocator.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/ecma48_wrapper.h>
 #include "rl_commands.h"
@@ -242,7 +243,7 @@ static const func_desc c_func_descriptions[] =
 #endif
     { "backward-char", tib::backward_char, keycat_cursor, "Move back a character" },
     { "backward-delete-char", tib::del_char_left, keycat_basic, "Delete the character behind the cursor point.  A numeric argument means to kill the characters instead of deleting them" },
-    // { "backward-kill-line", rl_backward_kill_line, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
+    { "backward-kill-line", backward_kill_line, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
     { "backward-kill-word", backward_kill_word, keycat_basic, "Kill the word behind the cursor point.  Word boundaries are the same as 'backward-word'" },
     { "backward-word", tib::backward_word, keycat_cursor, "Move back to the start of the current or previous word" },
     // { "beginning-of-history", rl_beginning_of_history, keycat_history, "Move to the first line in the history" },
@@ -255,9 +256,9 @@ static const func_desc c_func_descriptions[] =
     { "clear-display", clear_display, keycat_misc, "Clear the terminal screen and the scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen" },
     { "clear-screen", clear_screen, keycat_misc, "Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen" },
     // { "complete", rl_complete, keycat_completion, "Perform completion on the text before the cursor point" },
-    // { "copy-backward-word", rl_copy_backward_word, keycat_killyank, "Copy the word before the cursor point to the kill buffer.  The word boundaries are the same as 'backward-word'" },
-    // { "copy-forward-word", rl_copy_forward_word, keycat_killyank, "Copy the word following the cursor point to the kill buffer.  The word boundaries are the same as 'forward-word'" },
-    // { "copy-region-as-kill", rl_copy_region_to_kill, keycat_killyank, "Copy the text in the marked region to the kill buffer, so it can be yanked right away" },
+    { "copy-backward-word", copy_backward_word, keycat_killyank, "Copy the word before the cursor point to the kill buffer.  The word boundaries are the same as 'backward-word'" },
+    { "copy-forward-word", copy_forward_word, keycat_killyank, "Copy the word following the cursor point to the kill buffer.  The word boundaries are the same as 'forward-word'" },
+    { "copy-region-as-kill", copy_region_to_kill, keycat_killyank, "Copy the text in the marked region to the kill buffer, so it can be yanked right away" },
     { "delete-char", tib::del_char_right, keycat_basic, "Delete the character at the cursor point" },
     // { "delete-char-or-list", rl_delete_or_show_completions, keycat_basic, "Deletes the character at the cursor, or lists completions if at the end of the line" },
     // { "delete-horizontal-space", rl_delete_horizontal_space, keycat_basic, "Delete all spaces and tabs around the cursor point" },
@@ -270,32 +271,30 @@ static const func_desc c_func_descriptions[] =
     // { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "When in 'vi' command mode, this causes a switch to 'emacs' editing mode" },
     // { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "Stop saving the characters typed into the current keyboard macro and save the definition" },
     // { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e. the line currently being entered" },
-    { "end-of-line", tib::end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
+    { "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
     { "exchange-point-and-mark", tib::exchange_caret_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
     // { "execute-named-command", rl_execute_named_command, keycat_misc, "Execute the named bindable command supplied by the user" },
 #ifdef INCLUDE_EXPORT_COMPLETIONS
     { "export-completions", rl_export_completions, keycat_misc, "Perform completion on the text before the cursor point and write the list of possible completions to Readline's output stream" },
 #endif
     // { "fetch-history", rl_fetch_history, keycat_history, "With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list" },
-    // { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
+    { "forward-backward-delete-char", rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
 #if 0
     { "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
-    { "forward-char", tib::forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
 #endif
     // { "forward-search-history", rl_forward_search_history, keycat_history, "Incremental search forward starting at the current line and moving 'down' through the history as necessary.  Sets the marked region to the matched text" },
-#if 0
-    { "forward-word", tib::forward_word, keycat_cursor, "Move forward to the end of the next word" },
-#endif
+    { "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
+    { "forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word" },
     // { "history-search-backward", rl_history_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
     // { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
     // { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
     // { "history-substring-search-forward", rl_history_substr_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
-    // { "insert-close", rl_insert_close, keycat_misc, "Insert the typed closing character and briefly move the cursor to the matching opening character" },
-    // { "insert-comment", rl_insert_comment, keycat_misc, "Insert '::' at the beginning of the input line and accept the line" },
+    { "insert-close", insert_close, keycat_misc, "Insert the typed closing character and briefly move the cursor to the matching opening character" },
+    { "insert-comment", insert_comment, keycat_misc, "Insert '::' at the beginning of the input line and accept the line" },
     // { "insert-completions", rl_insert_completions, keycat_misc, "Insert all the completions that 'possible-completions' would list" },
-    // { "kill-whole-line", rl_kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
-    // { "kill-line", rl_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
-    // { "kill-region", rl_kill_region, keycat_killyank, "Kill the text in the current marked region" },
+    { "kill-whole-line", kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
+    { "kill-line", forward_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
+    { "kill-region", kill_region, keycat_killyank, "Kill the text in the current marked region" },
     { "kill-word", forward_kill_word, keycat_basic, "Kill from the cursor point to the end of the current word, or if between words, to the end of the next word.  Word boundaries are the same as 'forward-word'" },
     // { "menu-complete", rl_menu_complete, keycat_completion, "Replace the completion word with the common prefix.  Repeated execution steps through the possible completions" },
     // { "menu-complete-backward", rl_backward_menu_complete, keycat_completion, "Like 'menu-complete' but in reverse" },
@@ -308,18 +307,14 @@ static const func_desc c_func_descriptions[] =
     // { "old-menu-complete", rl_old_menu_complete, keycat_completion, "Replace the completion word with the next match.  Repeated execution steps through the possible completions" },
     // { "operate-and-get-next", rl_operate_and_get_next, keycat_history, "Accept the current line, and fetch the next line relative to the current line from the history for editing.  A numeric argument, if supplied, specifies the history entry to use instead of the current line" },
     { "overwrite-mode", tib::toggle_overwrite_mode, keycat_basic, "Toggle overwrite mode.  This commands affects only 'emacs' mode.  Each input line always starts in insert mode" },
-#if defined (_WIN32)
-#if 0
-    { "paste-from-clipboard", rl_paste_from_clipboard, keycat_basic, "" },
-#endif
-#endif
+    { "paste-from-clipboard", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
     // { "possible-completions", rl_possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },
     // { "previous-history", rl_get_previous_history, keycat_history, "Move 'back' through the history list, fetching the previous command" },
     { "previous-screen-line", tib::screen_line_up, keycat_cursor, "Attempt to move the cursor point to the same screen column on the previous screen line" },
     // { "print-last-kbd-macro", rl_print_last_kbd_macro, keycat_misc, "Print the last keboard macro defined in a format suitable for the INPUTRC file" },
     { "quoted-insert", tib::quoted_insert, keycat_basic, "Add the next character typed to the line verbatim" },
-    // { "re-read-init-file", rl_re_read_init_file, keycat_misc, "Read in the contents of the INPUTRC file, and incorporate any bindings or variable assignments found there" },
-    // { "redraw-current-line", rl_refresh_line, keycat_misc, "Refresh the current line" },
+    { "re-read-init-file", re_read_init_file, keycat_misc, "Read in the contents of the INPUTRC file, and incorporate any bindings or variable assignments found there" },
+    { "redraw-current-line", refresh_line, keycat_misc, "Refresh the current line" },
     // { "reverse-search-history", rl_reverse_search_history, keycat_history, "Incremental search backward starting at the current line and moving 'up' through the history as necessary.  Sets the marked region to the matched text" },
     { "revert-line", tib::undo_all, keycat_basic, "Undo all changes made to this line.  This is like executing the 'undo' command enough times to get back to the beginning" },
 #if 0
@@ -328,21 +323,23 @@ static const func_desc c_func_descriptions[] =
     { "set-mark", tib::set_mark, keycat_misc, "Set the mark to the cursor point.  If a numeric argument is supplied, sets the mark to that position" },
     // { "skip-csi-sequence", rl_skip_csi_sequence, keycat_misc, "" },
     // { "start-kbd-macro", rl_start_kbd_macro, keycat_misc, "Begin saving the characters typed into the current keyboard macro" },
-    // { "tab-insert", rl_tab_insert, keycat_basic, "Insert a tab character" },
-    // { "tilde-expand", rl_tilde_expand, keycat_completion, "Perform tilde expansion on the current word" },
+#if 0
+    { "tab-insert", nullptr, keycat_basic, "Insert a tab character" }, // Not supported by CMD.
+#endif
+    { "tilde-expand", clink_tilde_expand, keycat_completion, "Perform tilde expansion on the current word" },
     { "transpose-chars", tib::transpose_chars, keycat_basic, "Drag the character before the cursor point forward over the character at the cursor, moving the cursor forward as well.  If the cursor point is at the end of the line, then this transposes the last two characters of the line" },
     { "transpose-words", tib::transpose_words, keycat_basic, "Drag the word before the cursor point past the word after the cursor, moving the cursor past that word as well.  If the cursor point is at the end of the line, this transposes the last two words on the line" },
     // { "tty-status", rl_tty_status, keycat_misc, "" },
     { "undo", tib::undo, keycat_basic, "Incremental undo, separately remembered for each line" },
     { "universal-argument", tib::universal_argument, keycat_misc, "Multiply numeric argument by 4 and enter argument input mode" },
-    // { "unix-filename-rubout", rl_unix_filename_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space and the path separator as the word boundaries.  The killed text is saved on the kill-ring" },
-    // { "unix-line-discard", rl_unix_line_discard, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line" },
-    // { "unix-word-rubout", rl_unix_word_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space as a word boundary.  The killed text is saved on the kill-ring" },
+    { "unix-filename-rubout", unix_filename_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space and the path separator as the word boundaries.  The killed text is saved on the kill-ring" },
+    { "unix-line-discard", unix_line_discard, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line" },
+    { "unix-word-rubout", unix_word_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space as a word boundary.  The killed text is saved on the kill-ring" },
     { "upcase-word", tib::upper_case, keycat_misc, "Uppercase the current (or following) word.  With a negative argument, uppercases the previous word, but does not move the cursor point" },
-    // { "yank", rl_yank, keycat_killyank, "Yank the top of the kill ring into the buffer at the cursor point" },
-    // { "yank-last-arg", rl_yank_last_arg, keycat_history, "Insert last argument from the previous history entry.  With a numeric argument, behaves exactly like 'yank-nth-arg'.  Repeated execution moves back through the history list, inserting the last word (or nth word) of each line in turn" },
-    // { "yank-nth-arg", rl_yank_nth_arg, keycat_history, "Insert the first argument from the previous history entry (e.g. second word on the line).  With an argument N, inserts the Nth word from the previous history entry (0 refers to the first word).  A negative argument inserts the Nth word from the end of the history entry.  The argument is extracted as if the '!N' history expansion had been specified" },
-    // { "yank-pop", rl_yank_pop, keycat_killyank, "Rotate the kill-ring and yank the new top; but only if the prior command is 'yank' or 'yank-pop'" },
+    { "yank", yank, keycat_killyank, "Yank the top of the kill ring into the buffer at the cursor point" },
+    // { "yank-last-arg", yank_last_arg, keycat_history, "Insert last argument from the previous history entry.  With a numeric argument, behaves exactly like 'yank-nth-arg'.  Repeated execution moves back through the history list, inserting the last word (or nth word) of each line in turn" },
+    // { "yank-nth-arg", yank_nth_arg, keycat_history, "Insert the first argument from the previous history entry (e.g. second word on the line).  With an argument N, inserts the Nth word from the previous history entry (0 refers to the first word).  A negative argument inserts the Nth word from the end of the history entry.  The argument is extracted as if the '!N' history expansion had been specified" },
+    { "yank-pop", yank_pop, keycat_killyank, "Rotate the kill-ring and yank the new top; but only if the prior command is 'yank' or 'yank-pop'" },
 
 #if defined (VI_MODE)
 #ifdef TIB_TODO
@@ -485,6 +482,7 @@ static const func_desc c_func_descriptions[] =
     // { "magic-space", magic_space, keycat_history, "Perform history expansion on the text before the cursor position and insert a space" },
     { "clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information" },
     { "clink-diagnostics-output", clink_diagnostics_output, keycat_misc, "Write internal diagnostic information to a file" },
+    { "lorem-ipsum", tib::lorem_ipsum, keycat_misc, "Inserts lorem ipsum text" },
 
     // Alias some Clink commands.
     // { "clink-popup-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it" },
@@ -495,17 +493,6 @@ static const func_desc c_func_descriptions[] =
     // { "history-expand-line", clink_expand_history },
     // { "insert-last-argument", rl_yank_last_arg },
     // { "shell-expand-line", clink_expand_line },
-
-    // Preemptively replace some commands with versions that support suggestions.
-#if 0
-    { "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
-#endif
-    { "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
-    { "forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word" },
-    { "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
-
-    // Preemptively replace paste command with one that supports Unicode.
-    { "paste-from-clipboard", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
 };
 
 //------------------------------------------------------------------------------
@@ -542,7 +529,7 @@ static void clink_add_funmap_entry(const char *name, tib::editor_command_func_t 
 //------------------------------------------------------------------------------
 void init_editor_commands()
 {
-    assert(tib::editor_context::get_registered_commands().empty());
+    assert(tib::editor_context::get_registered_commands().empty() || tib::is_test_harness());
     tib::editor_context::clear_all_commands();
 
     for (const auto& d : c_func_descriptions)
@@ -848,7 +835,7 @@ static Keyentry* collect_keymap(
                 }
                 else
                 {
-                name = get_function_info(b.target.get_text(), &desc, &cat);
+                    name = get_function_info(b.target.get_text(), &desc, &cat);
                 }
                 assert(name);
                 if (!name)
@@ -1891,6 +1878,7 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
     const bool friendly = !ctx.has_numeric_argument() || !ctx.get_numeric_argument();
 
     str<> s;
+    bool unbound_sequence = false;
     while (true)
     {
         int32 sort = 0;
@@ -1898,7 +1886,7 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
         int32 key;
 
         key = read_key_direct(false/*wait*/);
-        if (key < 0)
+        if (key < 0 || terminal_in::is_input_event(key))
         {
             g_terminal->write("\r\x1b[Kwhat-is: ");
             if (keyseq.length())
@@ -1915,7 +1903,11 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             key = read_key_direct(true/*wait*/);
         }
 
-        if (key < 0)
+        if (key == terminal_in::input_none ||
+            key == terminal_in::input_terminal_resize)
+            continue;
+
+        if (key < 0 || terminal_in::is_input_event(key))
         {
             assert(target.get_type() == tib::binding_type::none);
             self_insert = false;
@@ -1936,30 +1928,39 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             done = false;
             break;
         case tib::dispatch_outcome::self_insert:
-            self_insert = true;
+            // A later byte can stop matching an escape sequence and resolve
+            // as self-insert.  Keep reading the rest of that unbound sequence.
+            self_insert = (keyseq.length() == 1);
+            if (!self_insert)
+                unbound_sequence = true;
             break;
         case tib::dispatch_outcome::match:
             if (resolved.binding_target)
             {
                 prefix = (keyseq.length() > resolved.sequence.length());
-                target = *resolved.binding_target;
+                target = resolved.binding_target;
                 keyseq.clear();
                 keyseq.concat_no_truncate(resolved.sequence.c_str(), int32(resolved.sequence.length()));
             }
+            break;
+        case tib::dispatch_outcome::miss:
+            unbound_sequence = true;
             break;
         }
 
         if (done)
         {
-            if (prefix)
+            if (prefix || unbound_sequence)
             {
                 // Read until no more input to capture the full typed key
                 // sequence.
                 while (true)
                 {
                     key = read_key_direct(false/*wait*/);
-                    if (key < 0)
+                    if (key < 0 || terminal_in::is_input_event(key))
                         break;
+                    if (unbound_sequence)
+                        concat_key_string(key, keyseq);
                 }
             }
             break;
@@ -1983,7 +1984,11 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             s << "\x1b[0;1m" << key_name << "\x1b[m" << " : ";
             free(key_name);
 
-            if (self_insert)
+            if (unbound_sequence)
+            {
+                goto not_bound;
+            }
+            else if (self_insert)
             {
                 s << "\x1b[0;1m" << "key inserts itself" << "\x1b[m";
             }
@@ -2028,6 +2033,7 @@ int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, c
             }
             else
             {
+not_bound:
                 s << "key is not bound";
             }
 

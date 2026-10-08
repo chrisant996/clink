@@ -11,6 +11,7 @@
 #include <lib/line_editor.h>
 #include <lib/match_generator.h>
 #include <lib/recognizer.h>
+#include <lib/rl_integration.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
 #include <lua/lua_task_manager.h>
@@ -29,14 +30,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern void init_editor_commands();
-
-//------------------------------------------------------------------------------
-typedef const char* two_strings[2];
-static void bind_keyseq_list(const two_strings* list, Keymap map)
-{
-    for (int32 i = 0; list[i][0]; ++i)
-        rl_bind_keyseq_in_map(list[i][0], rl_named_function(list[i][1]), map);
-}
+extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
 static void init_readline_testbed()
@@ -52,6 +46,17 @@ static void init_readline_testbed()
 
     // Some basic key bindings.
     static constexpr const char* const general_key_binds[][2] = {
+        // Basic.
+        { "\\e[A",          "get-previous-history" },    // up
+        { "\\e[B",          "get-next-history" },        // down
+        { "\\e[C",          "forward-char" },            // right
+        { "\\e[D",          "backward-char" },           // left
+        { "\\e[F",          "end-of-line" },             // end
+        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[3~",         "delete-char" },             // del
+        { "\\e[2~",         "overwrite-mode" },          // ins
+        { "\\e[5~",         "history-search-backward" }, // pgup
+        { "\\e[6~",         "history-search-forward" },  // pgdn
         // Help.
         { "\\M-h",          "clink-show-help" },         // alt-h
         { "\\e?",           "clink-what-is" },           // alt-? (alt-shift-/)
@@ -65,8 +70,6 @@ static void init_readline_testbed()
         { "\\e[1;5D",       "backward-word" },           // ctrl-left
         { "\\e[1;5C",       "forward-word" },            // ctrl-right
         { "\\e[C",          "forward-char" },            // right
-        { "\\e[F",          "end-of-line" },             // end
-        { "\\e[H",          "beginning-of-line" },       // home
         { "\\e[1;2A",       "cua-previous-screen-line" },// shift-up
         { "\\e[1;2B",       "cua-next-screen-line" },    // shift-down
         { "\\e[1;2D",       "cua-backward-char" },       // shift-left
@@ -75,13 +78,14 @@ static void init_readline_testbed()
         { "\\e[1;6C",       "cua-forward-word" },        // ctrl-shift-right
         { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
+        { "\\e[27;8;76~",   "lorem-ipsum" },             // alt-ctrl-shift-l
         // Diagnostics.
-        { "\\C-x\\C-f",     "clink-dump-functions" },    // ctrl+x,ctrl+f
-        { "\\C-x\\C-m",     "clink-dump-macros" },       // ctrl+x,ctrl+m
-        { "\\C-x\\e[27;5;77~", "clink-dump-macros" },    // ctrl+x,ctrl+m (differentiated)
-        { "\\C-x\\e\\C-f",  "dump-functions" },          // ctrl+x,alt+ctrl+f
-        { "\\C-x\\e[27;7;77~", "dump-macros" },          // ctrl+x,alt+ctrl+m (differentiated)
-        { "\\C-x\\e\\C-v",  "dump-variables" },          // ctrl+x,alt+ctrl+v
+        { "\\C-x\\C-f",     "clink-dump-functions" },    // ctrl-x,ctrl-f
+        { "\\C-x\\C-m",     "clink-dump-macros" },       // ctrl-x,ctrl-m
+        { "\\C-x\\e[27;5;77~", "clink-dump-macros" },    // ctrl-x,ctrl-m (differentiated)
+        { "\\C-x\\e\\C-f",  "dump-functions" },          // ctrl-x,alt-ctrl-f
+        { "\\C-x\\e[27;7;77~", "dump-macros" },          // ctrl-x,alt-ctrl-m (differentiated)
+        { "\\C-x\\e\\C-v",  "dump-variables" },          // ctrl-x,alt-ctrl-v
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         {}
@@ -96,8 +100,6 @@ static void init_readline_testbed()
         { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\M-\\C-e",      "clink-expand-line" },       // alt-ctrl-e
         { "\\e^",           "clink-expand-history" },    // alt-^
-        { "\\e[2~",         "overwrite-mode" },          // ins
-        { "\\e[3~",         "delete-char" },             // del
         { "\\e[2;5~",       "cua-copy" },                // ctrl-ins
         { "\\e[2;2~",       "clink-paste" },             // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
@@ -115,6 +117,7 @@ static void init_readline_testbed()
         {}
     };
 
+#ifdef TIB_TODO
     static constexpr const char* const vi_insertion_key_binds[][2] = {
         { "\\M-\\C-i",      "tab-insert" },              // alt-ctrl-i
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
@@ -143,25 +146,41 @@ static void init_readline_testbed()
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}
     };
+#endif
 
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
     {
-        rl_unbind_key_in_map(27/*alt-ctrl-[*/, emacs_meta_keymap);
-        rl_unbind_key_in_map(27, vi_insertion_keymap);
-        rl_bind_keyseq_in_map("\\e[27;7;219~"/*alt-ctrl-[*/, rl_named_function("complete"), emacs_standard_keymap);
-        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("clink-reset-line"), emacs_standard_keymap);
-        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("vi-movement-mode"), vi_insertion_keymap);
+        clink_bind("\\M-\\C-["/*alt-ctrl-[*/, nullptr, emacs_table);
+#ifdef TIB_TODO
+        clink_bind("\\e", nullptr, vi_insertion_table);
+#endif
+        clink_bind(bindableEsc, "clink-reset-line", emacs_table);
+#ifdef TIB_TODO
+        clink_bind(bindableEsc, "vi-movement-mode", vi_insertion_table);
+#endif
+        if (g_default_bindings.get() == 0/*bash*/)
+        {
+            str<16> tmp;
+            tmp.concat(bindableEsc);
+            tmp.concat(bindableEsc);
+            clink_bind(tmp.c_str()/*Esc,Esc*/, "complete", emacs_table);
+        }
     }
 
-    rl_unbind_key_in_map(' ', emacs_meta_keymap);
-    bind_keyseq_list(general_key_binds, emacs_standard_keymap);
-    bind_keyseq_list(emacs_key_binds, emacs_standard_keymap);
+    clink_bind("\\e ", nullptr, emacs_table);
+    clink_bind_list(general_key_binds, emacs_table);
+    clink_bind_list(emacs_key_binds, emacs_table);
 
-    bind_keyseq_list(general_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(general_key_binds, vi_movement_keymap);
-    bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
+// TODO-TIB: vi modes.
+#ifdef TIB_TODO
+    clink_bind_list(general_key_binds, vi_insertion_table);
+    clink_bind_list(general_key_binds, vi_movement_table);
+    clink_bind_list(vi_insertion_key_binds, vi_insertion_table);
+    clink_bind_list(vi_movement_key_binds, vi_movement_table);
+#endif
+
+    set_key_table(emacs_table);
 }
 
 //------------------------------------------------------------------------------

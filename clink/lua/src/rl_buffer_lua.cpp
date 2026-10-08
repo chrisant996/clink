@@ -408,6 +408,6 @@ int32 rl_buffer_lua::set_comment_row(lua_State* state)
 /// <code>visible</code> then it flashes the cursor instead.
 int32 rl_buffer_lua::ding(lua_State* state)
 {
-    rl_ding();
+    tib::ding();
     return 0;
 }

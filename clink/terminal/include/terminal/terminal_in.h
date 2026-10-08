@@ -11,12 +11,18 @@ class str_base;
 class terminal_in
 {
 public:
-    enum : int32 {
-        input_none              = int32(0x80000000),
-        input_abort,
-        input_terminal_resize,
-        input_exit,
+    enum : int32
+    {
+        input_error             = -1,
+        input_eof               = 0x0100,
+        input_terminal_resize   = 0x0200,
+        input_none              = 0x0300,
+        input_abort             = 0x0400,
+        input_exit              = 0x0500,
     };
+
+    inline static bool is_input_byte(int32 c) { return !(c & 0xffffff00); }
+    inline static bool is_input_event(int32 c) { return (c & 0x00000f00) && !(c & 0xfffff0ff); }
 
     virtual         ~terminal_in() = default;
     virtual int32   begin(bool can_hide_cursor=true) = 0;

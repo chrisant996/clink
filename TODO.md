@@ -6,6 +6,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
+- Ugh, the tests are triggering dings somehow...
+  - _rl_term_clrscroll
+  - _rl_term_clreol
+  - _rl_term_clrpag
+  - _rl_term_mm, _rl_term_mo, _rl_enable_meta_key(), _rl_disable_meta_key()
+  - _rl_term_vs, _rl_term_ve, _rl_set_cursor()
+  - rl_cr(), rl_crlf()
+- Reconnect `debug.log_terminal` support for logging read input.
 - Need an equivalent of `_rl_want_redisplay` to completely no-op display calls when false.
 - Need to swap `\x08` and `\x7f` again, oops.
 - Internal states, for specialized behaviors that used to rely on RL_STATE flags.
@@ -24,7 +32,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Popup lists in general.
 - Luafunc commands.
   - [x] Invoke luafunc commands.
+- Bracketed paste.
 - VI mode.
+- `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
 - `_rl_show_mode_in_prompt` and emacs and vi modes.
 
 ## Mystery Issue

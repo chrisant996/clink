@@ -24,6 +24,7 @@
 #include "rl_integration.h"
 #include "suggestions.h"
 #include "slash_translation.h"
+#include "host_callbacks.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -336,6 +337,8 @@ extern setting_bool g_autosuggest_inline;
 extern setting_bool g_autosuggest_hint;
 #endif
 
+extern bool g_debug_log_input_pipeline;
+
 
 
 //------------------------------------------------------------------------------
@@ -402,7 +405,7 @@ public:
                             return true;
                         // Unreachable; gets handled by translate.
                         assert(!bindableEsc || strcmp(seq, bindableEsc) != 0);
-                        rl_ding();
+                        tib::ding();
                         return false;
                     }
     virtual bool    translate(const char* seq, int32 len, str_base& out) override
@@ -473,7 +476,7 @@ extern "C" int32 read_key_hook(void)
     int32 key = s_direct_input->read();
 
     s_direct_input->set_key_tester(old);
-    return key;
+    return terminal_in::is_input_byte(key) ? key : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -582,6 +585,7 @@ int32 terminal_getc_thunk(FILE* stream)
 {
     if (stream == thunk_in_stream)
     {
+#ifdef TIB_TODO
         assert(s_direct_input);
         if (rl_has_clink_input())
         {
@@ -595,6 +599,15 @@ int32 terminal_getc_thunk(FILE* stream)
             s_direct_input->select();
             return s_direct_input->read();
         }
+#else
+retry:
+        const auto c = tib::term_in();
+        if (c < 0 || c == tib::c_input_eof || c == tib::c_input_error)
+            return EOF;
+        if (terminal_in::is_input_event(c))
+            goto retry;
+        return c;
+#endif
     }
 
     if (stream == thunk_null_stream)
@@ -1673,7 +1686,6 @@ static void bind_keyseq(const char* keyseq, const char* target, const std::share
 }
 
 //------------------------------------------------------------------------------
-typedef const char* two_strings[2];
 static void bind_keyseq_list(const two_strings* list, const std::shared_ptr<tib::key_table>& t)
 {
     for (int32 i = 0; list[i][0]; ++i)
@@ -1681,24 +1693,269 @@ static void bind_keyseq_list(const two_strings* list, const std::shared_ptr<tib:
 }
 
 //------------------------------------------------------------------------------
-extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target)
+static void init_emacs_standard_binds(bool force=false)
+{
+    if (s_emacs_standard_bindings && !force)
+        return;
+
+    if (!s_emacs_standard_bindings)
+        init_editor_commands();
+
+    static constexpr const char* const emacs_standard_binds[][2] = {
+        // NORMAL KEY SEQUENCES
+        { "\\C-@",          "set-mark" },               // Ctrl-@ (Ctrl-2)
+        { "\\C-a",          "beginning-of-line" },      // Ctrl-A
+        { "\\C-b",          "backward-char" },          // Ctrl-B
+        { "\\C-d",          "delete-char" },            // Ctrl-D
+        { "\\C-e",          "end-of-line" },            // Ctrl-E
+        { "\\C-f",          "forward-char" },           // Ctrl-F
+        { "\\C-g",          "abort" },                  // Ctrl-G
+        // { "\\C-h",          "backward-kill-word" },     // VT sends 0x08 for Ctrl-Backspace.
+        { "\\C-h",          "backward-delete-char" },   // Clink sends 0x08 for Backspace.
+        { "\\C-i",          "complete" },               // Ctrl-I / TAB
+        { "\\C-j",          "accept-line" },            // Ctrl-J
+        { "\\C-k",          "kill-line" },              // Ctrl-K
+        { "\\C-l",          "clear-screen" },           // Ctrl-L
+        { "\\C-m",          "accept-line" },            // Ctrl-M / Enter
+        { "\\C-n",          "next-history" },           // Ctrl-N
+        { "\\C-o",          "operate-and-get-next" },   // Ctrl-O
+        { "\\C-p",          "previous-history" },       // Ctrl-P
+        { "\\C-q",          "quoted-insert" },          // Ctrl-Q
+        { "\\C-e",          "reverse-search-history" }, // Ctrl-R
+        { "\\C-s",          "forward-search-history" }, // Ctrl-S
+        { "\\C-t",          "transpose-chars" },        // Ctrl-T
+        { "\\C-u",          "unix-line-discard" },      // Ctrl-U
+        { "\\C-v",          "quoted-insert" },          // Ctrl-V
+        { "\\C-w",          "unix-word-rubout" },       // Ctrl-W
+        { "\\C-y",          "yank" },                   // Ctrl-Y
+        { "\\C-]",          "character-search" },       // Ctrl-]
+        { "\\C-_",          "undo" },                   // Ctrl-_
+        // { "\x7f",           "backward-delete-char" },   // RUBOUT / VT sends 0x7F for Backspace.
+        { "\x7f",           "backward-kill-word" },     // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
+
+        // META KEY SEQUENCES
+        { "\\M-\\C-g",      "abort" },                  // Alt-Ctrl-G
+        { "\\M-\\C-h",      "backward-kill-word" },     // Alt-Ctrl-H
+        // { "\\M-\\C-i",      "tab-insert" },             // Alt-Ctrl-I
+        // { "\\M-\\C-j",      "vi-editing-mode" },        // Alt-Ctrl-J
+        { "\\M-\\C-l",      "clear-display" },          // Alt-Ctrl-L
+        // { "\\M-\\C-m",      "vi-editing-mode" },        // Alt-Ctrl-M
+        { "\\M-\\C-r",      "revert-line" },            // Alt-Ctrl-R
+        { "\\M-\\C-y",      "yank-nth-arg" },           // Alt-Ctrl-Y
+        { "\\M-\\C-[",      "complete" },               // Alt-ESC / ESC,ESC
+        { "\\M-\\C-]",      "backward-character-search" }, // Alt-Ctrl-]
+        { "\\M- ",          "set-mark" },               // Alt-SPACE
+        { "\\M-#",          "insert-comment" },         // Alt-#
+        { "\\M-&",          "tilde-expand" },           // Alt-&
+        { "\\M-*",          "insert-completions" },     // Alt-*
+        { "\\M--",          "digit-argument" },         // Alt--
+        { "\\M-.",          "yank-last-arg" },          // Alt-.
+        { "\\M-0",          "digit-argument" },         // Alt-0
+        { "\\M-1",          "digit-argument" },         // Alt-1
+        { "\\M-2",          "digit-argument" },         // Alt-2
+        { "\\M-3",          "digit-argument" },         // Alt-3
+        { "\\M-4",          "digit-argument" },         // Alt-4
+        { "\\M-5",          "digit-argument" },         // Alt-5
+        { "\\M-6",          "digit-argument" },         // Alt-6
+        { "\\M-7",          "digit-argument" },         // Alt-7
+        { "\\M-8",          "digit-argument" },         // Alt-8
+        { "\\M-9",          "digit-argument" },         // Alt-9
+        { "\\M-A",          "do-lowercase-version" },   // Alt-A
+        { "\\M-B",          "do-lowercase-version" },   // Alt-B
+        { "\\M-C",          "do-lowercase-version" },   // Alt-C
+        { "\\M-D",          "do-lowercase-version" },   // Alt-D
+        { "\\M-E",          "do-lowercase-version" },   // Alt-E
+        { "\\M-F",          "do-lowercase-version" },   // Alt-F
+        { "\\M-G",          "do-lowercase-version" },   // Alt-G
+        { "\\M-H",          "do-lowercase-version" },   // Alt-H
+        { "\\M-I",          "do-lowercase-version" },   // Alt-I
+        { "\\M-J",          "do-lowercase-version" },   // Alt-J
+        { "\\M-K",          "do-lowercase-version" },   // Alt-K
+        { "\\M-L",          "do-lowercase-version" },   // Alt-L
+        { "\\M-M",          "do-lowercase-version" },   // Alt-M
+        { "\\M-N",          "do-lowercase-version" },   // Alt-N
+        { "\\M-O",          "do-lowercase-version" },   // Alt-O
+        { "\\M-P",          "do-lowercase-version" },   // Alt-P
+        { "\\M-Q",          "do-lowercase-version" },   // Alt-Q
+        { "\\M-R",          "do-lowercase-version" },   // Alt-R
+        { "\\M-S",          "do-lowercase-version" },   // Alt-S
+        { "\\M-T",          "do-lowercase-version" },   // Alt-T
+        { "\\M-U",          "do-lowercase-version" },   // Alt-U
+        { "\\M-V",          "do-lowercase-version" },   // Alt-V
+        { "\\M-W",          "do-lowercase-version" },   // Alt-W
+        { "\\M-X",          "do-lowercase-version" },   // Alt-X
+        { "\\M-Y",          "do-lowercase-version" },   // Alt-Y
+        { "\\M-Z",          "do-lowercase-version" },   // Alt-Z
+        { "\\M-\\",         "delete-horizontal-space" }, // Alt-\ (don't end with \ or the compiler joins lines)
+        { "\\M-_",          "yank-last-arg" },          // Alt-_
+        { "\\M-b",          "backward-word" },          // Alt-b
+        { "\\M-c",          "capitalize-word" },        // Alt-c
+        { "\\M-d",          "kill-word" },              // Alt-d
+        { "\\M-f",          "forward-word" },           // Alt-f
+        { "\\M-l",          "downcase-word" },          // Alt-l
+        { "\\M-n",          "non-incremental-forward-search-history" }, // Alt-n
+        { "\\M-p",          "non-incremental-backward-search-history" }, // Alt-p
+        { "\\M-r",          "revert-line" },            // Alt-r
+        { "\\M-t",          "transpose-words" },        // Alt-t
+        { "\\M-u",          "upcase-word" },            // Alt-u
+        { "\\M-x",          "execute-named-command" },  // Alt-x
+        { "\\M-y",          "yank-pop" },               // Alt-y
+        { "\\M-~",          "tilde-expand" },           // Alt-~
+        { "\\M-\x7f",       "backward-kill-word" },     // Alt-RUBOUT
+
+        // CTRL-X KEY SEQUENCES
+        { "\\C-x\\C-g",     "abort" },                  // Ctrl-X,Ctrl-G
+        { "\\C-x\\C-r",     "re-read-init-file" },      // Ctrl-X,Ctrl-R
+        { "\\C-x\\C-u",     "undo" },                   // Ctrl-X,Ctrl-U
+        { "\\C-x\\C-x",     "exchange-point-and-mark" }, // Ctrl-X,Ctrl-X
+        { "\\C-x\\C-(",     "start-kbd-macro" },        // Ctrl-X,Ctrl-(
+        { "\\C-x\\C-)",     "end-kbd-macro" },          // Ctrl-X,Ctrl-)
+        { "\\C-xA",         "do-lowercase-version" },   // Ctrl-X,A
+        { "\\C-xB",         "do-lowercase-version" },   // Ctrl-X,B
+        { "\\C-xC",         "do-lowercase-version" },   // Ctrl-X,C
+        { "\\C-xD",         "do-lowercase-version" },   // Ctrl-X,D
+        { "\\C-xE",         "do-lowercase-version" },   // Ctrl-X,E
+        { "\\C-xF",         "do-lowercase-version" },   // Ctrl-X,F
+        { "\\C-xG",         "do-lowercase-version" },   // Ctrl-X,G
+        { "\\C-xH",         "do-lowercase-version" },   // Ctrl-X,H
+        { "\\C-xI",         "do-lowercase-version" },   // Ctrl-X,I
+        { "\\C-xJ",         "do-lowercase-version" },   // Ctrl-X,J
+        { "\\C-xK",         "do-lowercase-version" },   // Ctrl-X,K
+        { "\\C-xL",         "do-lowercase-version" },   // Ctrl-X,L
+        { "\\C-xM",         "do-lowercase-version" },   // Ctrl-X,M
+        { "\\C-xN",         "do-lowercase-version" },   // Ctrl-X,N
+        { "\\C-xO",         "do-lowercase-version" },   // Ctrl-X,O
+        { "\\C-xP",         "do-lowercase-version" },   // Ctrl-X,P
+        { "\\C-xQ",         "do-lowercase-version" },   // Ctrl-X,Q
+        { "\\C-xR",         "do-lowercase-version" },   // Ctrl-X,R
+        { "\\C-xS",         "do-lowercase-version" },   // Ctrl-X,S
+        { "\\C-xT",         "do-lowercase-version" },   // Ctrl-X,T
+        { "\\C-xU",         "do-lowercase-version" },   // Ctrl-X,U
+        { "\\C-xV",         "do-lowercase-version" },   // Ctrl-X,V
+        { "\\C-xW",         "do-lowercase-version" },   // Ctrl-X,W
+        { "\\C-xX",         "do-lowercase-version" },   // Ctrl-X,X
+        { "\\C-xY",         "do-lowercase-version" },   // Ctrl-X,Y
+        { "\\C-xZ",         "do-lowercase-version" },   // Ctrl-X,Z
+        { "\\C-xe",         "call-last-kbd-macro" },    // Ctrl-X,e
+        { "\\C-x\x7f",      "backward-kill-line" },     // Ctrl-X,RUBOUT
+        {}
+    };
+
+    auto t = std::make_shared<tib::key_table>(true/*can_self_insert*/);
+    bind_keyseq_list(emacs_standard_binds, t);
+
+    s_emacs_standard_bindings = std::make_shared<tib::key_table_list>();
+    s_emacs_standard_bindings->emplace_back(std::move(t));
+}
+
+//------------------------------------------------------------------------------
+extern "C" void set_key_table(int table)
+{
+    switch (table)
+    {
+    case emacs_table:   g_tib->set_bindings(s_emacs_standard_bindings); break;
+    default:            assert(false); return;
+    }
+}
+
+//------------------------------------------------------------------------------
+extern "C" int get_key_table(void)
+{
+    return emacs_table;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
 {
     assert(s_emacs_standard_bindings);
     if (!s_emacs_standard_bindings)
         return;
 
-    if (!is_macro)
+    std::shared_ptr<tib::key_table> t;
+    switch (table)
     {
-        bind_keyseq_translated(keys, keys_len, target, s_emacs_standard_bindings->at(0));
+    case emacs_table:   t = s_emacs_standard_bindings->at(0); break;
+    default:            return;
+    }
+
+    if (!is_macro || !target)
+    {
+        bind_keyseq_translated(keys, keys_len, target, t);
     }
     else if (strnicmp(target, "luafunc:", 8) == 0)
     {
-        s_emacs_standard_bindings->at(0)->add(keys, keys_len, tib::binding_target_func(target));
+        t->add(keys, keys_len, tib::binding_target_func(target));
     }
     else
     {
-        s_emacs_standard_bindings->at(0)->add(keys, keys_len, tib::binding_target_macro(target));
+        t->add(keys, keys_len, tib::binding_target_macro(target));
     }
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    char* macro = nullptr;
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    clink_bind_translated(false, keys, keys_len, target, table);
+
+    free(macro);
+    free(keys);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    char* macro = nullptr;
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    {
+        int macro_len;
+        macro = (char*)malloc((2 * strlen(target)) + 1);
+        if (rl_translate_keyseq(target, macro, &macro_len))
+            goto out;
+        target = macro;
+    }
+
+    clink_bind_translated(true, keys, keys_len, target, table);
+
+out:
+    free(macro);
+    free(keys);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_list(const two_strings* list, int table)
+{
+    for (int32 i = 0; list[i][0]; ++i)
+        clink_bind(list[i][0], list[i][1], table);
 }
 
 //------------------------------------------------------------------------------
@@ -1870,33 +2127,13 @@ static void save_restore_initial_state(const bool restore)
 {
     // Keymaps.
 
-    static const Keymap saved_vi_movement_keymap = rl_make_bare_keymap();
-    static const Keymap saved_vi_insertion_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_standard_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_meta_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_ctlx_keymap = rl_make_bare_keymap();
-
-    if (!restore)
+    if (restore)
     {
-        // Save original state of keymaps.
-        safe_replace_keymap(saved_vi_movement_keymap, vi_movement_keymap);
-        safe_replace_keymap(saved_vi_insertion_keymap, vi_insertion_keymap);
-        safe_replace_keymap(saved_emacs_meta_keymap, emacs_meta_keymap);
-        safe_replace_keymap(saved_emacs_ctlx_keymap, emacs_ctlx_keymap);
-        safe_replace_keymap(saved_emacs_standard_keymap, emacs_standard_keymap);
-    }
-    else
-    {
-        // Restore saved keymaps.
-        safe_replace_keymap(vi_movement_keymap, saved_vi_movement_keymap);
-        safe_replace_keymap(vi_insertion_keymap, saved_vi_insertion_keymap);
-        safe_replace_keymap(emacs_standard_keymap, saved_emacs_standard_keymap);
-        safe_replace_keymap(emacs_meta_keymap, saved_emacs_meta_keymap);
-        safe_replace_keymap(emacs_ctlx_keymap, saved_emacs_ctlx_keymap);
-
-        // Clear global "recent" pointer, since it could have been invalidated
-        // by the operations above.
-        rl_binding_keymap = nullptr;
+        init_emacs_standard_binds(true/*force*/);
+#ifdef TIB_TODO
+        init_vi_movement_binds(true/*force*/);
+        init_vi_insertion_binds(true/*force*/);
+#endif
     }
 
     // Config variables.
@@ -2018,11 +2255,17 @@ void rl_postinit()
 }
 
 //------------------------------------------------------------------------------
-void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user)
+void initialise_readline(bool no_user)
 {
     // Can't give a more specific scope like "Readline initialization", because
     // realloc of some things will use "Readline" and assert on label change.
     dbg_ignore_scope(snapshot, "Readline");
+
+    int32 id;
+    host_context context;
+    host_get_app_context(id, context);
+    const char* const state_dir = context.profile.empty() ? nullptr : context.profile.c_str();
+    const char* const default_inputrc = context.default_inputrc.empty() ? nullptr : context.default_inputrc.c_str();
 
 #if 0
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
@@ -2054,7 +2297,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         rl_preinit(s_default_inputrc.c_str());
 
         init_readline_hooks();
-        init_editor_commands();
+        init_emacs_standard_binds();
 
         // Clink manages showing and hiding the cursor; tib should not.
         tib::g_show_hide_cursor = false;
@@ -2077,7 +2320,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // rl_initialize() set some default key bindings AFTER it loaded the
         // inputrc file.  Those were interfering with suppressing the
         // *-mode-string config variables.
-        rl_readline_name = shell_name;
+        rl_readline_name = "clink";
         rl_initialize();
 
         rl_postinit();
@@ -2088,153 +2331,11 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     // key bindings or config variables values.
     save_restore_initial_state(initialized);
 
-    static constexpr const char* const emacs_standard_binds[][2] = {
-        // NORMAL KEY SEQUENCES
-        { "\\C-@",          "set-mark" },               // Ctrl-@ (Ctrl-2)
-        { "\\C-a",          "beginning-of-line" },      // Ctrl-A
-        { "\\C-b",          "backward-char" },          // Ctrl-B
-        { "\\C-d",          "delete-char" },            // Ctrl-D
-        { "\\C-e",          "end-of-line" },            // Ctrl-E
-        { "\\C-f",          "forward-char" },           // Ctrl-F
-        { "\\C-g",          "abort" },                  // Ctrl-G
-        // { "\\C-h",          "backward-kill-word" },     // VT sends 0x08 for Ctrl-Backspace.
-        { "\\C-h",          "backward-delete-char" },   // Clink sends 0x08 for Backspace.
-        { "\\C-i",          "complete" },               // Ctrl-I / TAB
-        { "\\C-j",          "accept-line" },            // Ctrl-J
-        { "\\C-k",          "kill-line" },              // Ctrl-K
-        { "\\C-l",          "clear-screen" },           // Ctrl-L
-        { "\\C-m",          "accept-line" },            // Ctrl-M / Enter
-        { "\\C-n",          "next-history" },           // Ctrl-N
-        { "\\C-o",          "operate-and-get-next" },   // Ctrl-O
-        { "\\C-p",          "previous-history" },       // Ctrl-P
-        { "\\C-q",          "quoted-insert" },          // Ctrl-Q
-        { "\\C-e",          "reverse-search-history" }, // Ctrl-R
-        { "\\C-s",          "forward-search-history" }, // Ctrl-S
-        { "\\C-t",          "transpose-chars" },        // Ctrl-T
-        { "\\C-u",          "unix-line-discard" },      // Ctrl-U
-        { "\\C-v",          "quoted-insert" },          // Ctrl-V
-        { "\\C-w",          "unix-word-rubout" },       // Ctrl-W
-        { "\\C-y",          "yank" },                   // Ctrl-Y
-        { "\\C-]",          "character-search" },       // Ctrl-]
-        { "\\C-_",          "undo" },                   // Ctrl-_
-        // { "\x7f",           "backward-delete-char" },   // RUBOUT / VT sends 0x7F for Backspace.
-        { "\x7f",           "backward-kill-word" },     // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
-
-        // META KEY SEQUENCES
-        { "\\M-\\C-g",      "abort" },                  // Alt-Ctrl-G
-        { "\\M-\\C-h",      "backward-kill-word" },     // Alt-Ctrl-H
-        // { "\\M-\\C-i",      "tab-insert" },             // Alt-Ctrl-I
-        // { "\\M-\\C-j",      "vi-editing-mode" },        // Alt-Ctrl-J
-        { "\\M-\\C-l",      "clear-display" },          // Alt-Ctrl-L
-        // { "\\M-\\C-m",      "vi-editing-mode" },        // Alt-Ctrl-M
-        { "\\M-\\C-r",      "revert-line" },            // Alt-Ctrl-R
-        { "\\M-\\C-y",      "yank-nth-arg" },           // Alt-Ctrl-Y
-        { "\\M-\\C-[",      "complete" },               // Alt-ESC / ESC,ESC
-        { "\\M-\\C-]",      "backward-character-search" }, // Alt-Ctrl-]
-        { "\\M- ",          "set-mark" },               // Alt-SPACE
-        { "\\M-#",          "insert-comment" },         // Alt-#
-        { "\\M-&",          "tilde-expand" },           // Alt-&
-        { "\\M-*",          "insert-completions" },     // Alt-*
-        { "\\M--",          "digit-argument" },         // Alt--
-        { "\\M-.",          "yank-last-arg" },          // Alt-.
-        { "\\M-0",          "digit-argument" },         // Alt-0
-        { "\\M-1",          "digit-argument" },         // Alt-1
-        { "\\M-2",          "digit-argument" },         // Alt-2
-        { "\\M-3",          "digit-argument" },         // Alt-3
-        { "\\M-4",          "digit-argument" },         // Alt-4
-        { "\\M-5",          "digit-argument" },         // Alt-5
-        { "\\M-6",          "digit-argument" },         // Alt-6
-        { "\\M-7",          "digit-argument" },         // Alt-7
-        { "\\M-8",          "digit-argument" },         // Alt-8
-        { "\\M-9",          "digit-argument" },         // Alt-9
-        { "\\M-A",          "do-lowercase-version" },   // Alt-A
-        { "\\M-B",          "do-lowercase-version" },   // Alt-B
-        { "\\M-C",          "do-lowercase-version" },   // Alt-C
-        { "\\M-D",          "do-lowercase-version" },   // Alt-D
-        { "\\M-E",          "do-lowercase-version" },   // Alt-E
-        { "\\M-F",          "do-lowercase-version" },   // Alt-F
-        { "\\M-G",          "do-lowercase-version" },   // Alt-G
-        { "\\M-H",          "do-lowercase-version" },   // Alt-H
-        { "\\M-I",          "do-lowercase-version" },   // Alt-I
-        { "\\M-J",          "do-lowercase-version" },   // Alt-J
-        { "\\M-K",          "do-lowercase-version" },   // Alt-K
-        { "\\M-L",          "do-lowercase-version" },   // Alt-L
-        { "\\M-M",          "do-lowercase-version" },   // Alt-M
-        { "\\M-N",          "do-lowercase-version" },   // Alt-N
-        { "\\M-O",          "do-lowercase-version" },   // Alt-O
-        { "\\M-P",          "do-lowercase-version" },   // Alt-P
-        { "\\M-Q",          "do-lowercase-version" },   // Alt-Q
-        { "\\M-R",          "do-lowercase-version" },   // Alt-R
-        { "\\M-S",          "do-lowercase-version" },   // Alt-S
-        { "\\M-T",          "do-lowercase-version" },   // Alt-T
-        { "\\M-U",          "do-lowercase-version" },   // Alt-U
-        { "\\M-V",          "do-lowercase-version" },   // Alt-V
-        { "\\M-W",          "do-lowercase-version" },   // Alt-W
-        { "\\M-X",          "do-lowercase-version" },   // Alt-X
-        { "\\M-Y",          "do-lowercase-version" },   // Alt-Y
-        { "\\M-Z",          "do-lowercase-version" },   // Alt-Z
-        { "\\M-\\",         "delete-horizontal-space" }, // Alt-\ (don't end with \ or the compiler joins lines)
-        { "\\M-_",          "yank-last-arg" },          // Alt-_
-        { "\\M-b",          "backward-word" },          // Alt-b
-        { "\\M-c",          "capitalize-word" },        // Alt-c
-        { "\\M-d",          "kill-word" },              // Alt-d
-        { "\\M-f",          "forward-word" },           // Alt-f
-        { "\\M-l",          "downcase-word" },          // Alt-l
-        { "\\M-n",          "non-incremental-forward-search-history" }, // Alt-n
-        { "\\M-p",          "non-incremental-backward-search-history" }, // Alt-p
-        { "\\M-r",          "revert-line" },            // Alt-r
-        { "\\M-t",          "transpose-words" },        // Alt-t
-        { "\\M-u",          "upcase-word" },            // Alt-u
-        { "\\M-x",          "execute-named-command" },  // Alt-x
-        { "\\M-y",          "yank-pop" },               // Alt-y
-        { "\\M-~",          "tilde-expand" },           // Alt-~
-        { "\\M-\x7f",       "backward-kill-word" },     // Alt-RUBOUT
-
-        // CTRL-X KEY SEQUENCES
-        { "\\C-x\\C-g",     "abort" },                  // Ctrl-X,Ctrl-G
-        { "\\C-x\\C-r",     "re-read-init-file" },      // Ctrl-X,Ctrl-R
-        { "\\C-x\\C-u",     "undo" },                   // Ctrl-X,Ctrl-U
-        { "\\C-x\\C-x",     "exchange-point-and-mark" }, // Ctrl-X,Ctrl-X
-        { "\\C-x\\C-(",     "start-kbd-macro" },        // Ctrl-X,Ctrl-(
-        { "\\C-x\\C-)",     "end-kbd-macro" },          // Ctrl-X,Ctrl-)
-        { "\\C-xA",         "do-lowercase-version" },   // Ctrl-X,A
-        { "\\C-xB",         "do-lowercase-version" },   // Ctrl-X,B
-        { "\\C-xC",         "do-lowercase-version" },   // Ctrl-X,C
-        { "\\C-xD",         "do-lowercase-version" },   // Ctrl-X,D
-        { "\\C-xE",         "do-lowercase-version" },   // Ctrl-X,E
-        { "\\C-xF",         "do-lowercase-version" },   // Ctrl-X,F
-        { "\\C-xG",         "do-lowercase-version" },   // Ctrl-X,G
-        { "\\C-xH",         "do-lowercase-version" },   // Ctrl-X,H
-        { "\\C-xI",         "do-lowercase-version" },   // Ctrl-X,I
-        { "\\C-xJ",         "do-lowercase-version" },   // Ctrl-X,J
-        { "\\C-xK",         "do-lowercase-version" },   // Ctrl-X,K
-        { "\\C-xL",         "do-lowercase-version" },   // Ctrl-X,L
-        { "\\C-xM",         "do-lowercase-version" },   // Ctrl-X,M
-        { "\\C-xN",         "do-lowercase-version" },   // Ctrl-X,N
-        { "\\C-xO",         "do-lowercase-version" },   // Ctrl-X,O
-        { "\\C-xP",         "do-lowercase-version" },   // Ctrl-X,P
-        { "\\C-xQ",         "do-lowercase-version" },   // Ctrl-X,Q
-        { "\\C-xR",         "do-lowercase-version" },   // Ctrl-X,R
-        { "\\C-xS",         "do-lowercase-version" },   // Ctrl-X,S
-        { "\\C-xT",         "do-lowercase-version" },   // Ctrl-X,T
-        { "\\C-xU",         "do-lowercase-version" },   // Ctrl-X,U
-        { "\\C-xV",         "do-lowercase-version" },   // Ctrl-X,V
-        { "\\C-xW",         "do-lowercase-version" },   // Ctrl-X,W
-        { "\\C-xX",         "do-lowercase-version" },   // Ctrl-X,X
-        { "\\C-xY",         "do-lowercase-version" },   // Ctrl-X,Y
-        { "\\C-xZ",         "do-lowercase-version" },   // Ctrl-X,Z
-        { "\\C-xe",         "call-last-kbd-macro" },    // Ctrl-X,e
-        { "\\C-x\x7f",      "backward-kill-line" },     // Ctrl-X,RUBOUT
-        {}
-    };
     // Bind extended keys so editing follows Windows' conventions.
     static constexpr const char* const emacs_key_binds[][2] = {
         { "\\e[1;5F",       "kill-line" },               // ctrl-end
         { "\\e[1;5H",       "backward-kill-line" },      // ctrl-home
-        { "\\e[5~",         "history-search-backward" }, // pgup
-        { "\\e[6~",         "history-search-forward" },  // pgdn
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
-        { "\\e[2~",         "overwrite-mode" },          // ins
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x*",         "glob-expand-word" },        // ctrl-x,*
@@ -2282,6 +2383,16 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     };
 
     static constexpr const char* const general_key_binds[][2] = {
+        { "\\e[A",          "get-previous-history" },    // up
+        { "\\e[B",          "get-next-history" },        // down
+        { "\\e[C",          "forward-char" },            // right
+        { "\\e[D",          "backward-char" },           // left
+        { "\\e[F",          "end-of-line" },             // end
+        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[3~",         "delete-char" },             // del
+        { "\\e[2~",         "overwrite-mode" },          // ins
+        { "\\e[5~",         "history-search-backward" }, // pgup
+        { "\\e[6~",         "history-search-forward" },  // pgdn
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
@@ -2312,17 +2423,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\e?",           "clink-what-is" },           // alt-? (alt-shift-/)
         { "\\e[27;8;191~",  "clink-show-help" },         // ctrl-alt-? (ctrl-alt-shift-/)
         { "\\e^",           "clink-expand-history" },    // alt-^
-        { "\\e[A",          "get-previous-history" },    // up
-        { "\\e[B",          "get-next-history" },        // down
-        { "\\e[D",          "backward-char" },           // left
-        { "\\e[C",          "forward-char" },            // right
         { "\\e[1;5D",       "backward-word" },           // ctrl-left
         { "\\e[1;5C",       "forward-word" },            // ctrl-right
         { "\\e[1;3D",       "backward-word" },           // alt-left
         { "\\e[1;3C",       "forward-word" },            // alt-right
-        { "\\e[3~",         "delete-char" },             // del
-        { "\\e[F",          "end-of-line" },             // end
-        { "\\e[H",          "beginning-of-line" },       // home
         { "\\e[1;2A",       "cua-previous-screen-line" },// shift-up
         { "\\e[1;2B",       "cua-next-screen-line" },    // shift-down
         { "\\e[1;2D",       "cua-backward-char" },       // shift-left
@@ -2339,6 +2443,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         {}
     };
 
+#ifdef TIB_TODO
     static constexpr const char* const vi_insertion_key_binds[][2] = {
         { "\\M-\\C-i",      "tab-insert" },              // alt-ctrl-i
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
@@ -2369,6 +2474,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}
     };
+#endif
 
 #ifdef DEBUG
     static constexpr const char* const temporary_R_and_D[][2] = {
@@ -2377,9 +2483,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         {}
     };
 #endif
-
-    auto t = std::make_shared<tib::key_table>(true/*can_self_insert*/);
-    bind_keyseq_list(emacs_standard_binds, t);
 
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
@@ -2392,43 +2495,59 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // NOTE: When using `terminal.raw_esc`, it's expected that ESC doesn't
         // do anything by itself (except in vi mode, where there's a hack to
         // make ESC + timeout drop into vi command mode).
-        bind_keyseq("\\M-\\C-["/*alt-ctrl-[*/, nullptr, t);
+        clink_bind("\\M-\\C-["/*alt-ctrl-[*/, nullptr, emacs_table);
 #ifdef TIB_TODO
-        bind_keyseq("\\e", nullptr, vi_insertion_keymap);
+        clink_bind("\\e", nullptr, vi_insertion_table);
 #endif
-        bind_keyseq(bindableEsc, "clink-reset-line", t);
+        clink_bind(bindableEsc, "clink-reset-line", emacs_table);
 #ifdef TIB_TODO
-        bind_keyseq(bindableEsc, "vi-movement-mode", vi_insertion_keymap);
+        clink_bind(bindableEsc, "vi-movement-mode", vi_insertion_table);
 #endif
+        if (g_default_bindings.get() == 0/*bash*/)
+        {
+            str<16> tmp;
+            tmp.concat(bindableEsc);
+            tmp.concat(bindableEsc);
+            clink_bind(tmp.c_str()/*Esc,Esc*/, "complete", emacs_table);
+        }
     }
 
-    bind_keyseq("\\e ", nullptr, t);
-    bind_keyseq_list(general_key_binds, t);
-    bind_keyseq_list(emacs_key_binds, t);
-    bind_keyseq_list(bash_emacs_key_binds, t);
+    clink_bind("\\e ", nullptr, emacs_table);
+    clink_bind_list(general_key_binds, emacs_table);
+    clink_bind_list(emacs_key_binds, emacs_table);
+    clink_bind_list(bash_emacs_key_binds, emacs_table);
     if (g_default_bindings.get() == 1)
-        bind_keyseq_list(windows_emacs_key_binds, t);
+        clink_bind_list(windows_emacs_key_binds, emacs_table);
 
 #ifdef DEBUG
-    bind_keyseq_list(temporary_R_and_D, t);
+    clink_bind_list(temporary_R_and_D, emacs_table);
 #endif
 
-    s_emacs_standard_bindings = std::make_shared<tib::key_table_list>();
-    s_emacs_standard_bindings->emplace_back(std::move(t));
+    clink_bind(")", nullptr, emacs_table);
+    clink_bind("]", nullptr, emacs_table);
+    clink_bind("}", nullptr, emacs_table);
 
 // TODO-TIB: vi modes.
 #ifdef TIB_TODO
-    bind_keyseq_list(general_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(general_key_binds, vi_movement_keymap);
-    bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
+    clink_bind_list(general_key_binds, vi_insertion_table);
+    clink_bind_list(general_key_binds, vi_movement_table);
+    clink_bind_list(vi_insertion_key_binds, vi_insertion_table);
+    clink_bind_list(vi_movement_key_binds, vi_movement_table);
 #endif
 
-// TODO-TIB: hook up all the real bindings.
     g_tib->set_bindings(s_emacs_standard_bindings);
 
     // Finally, load the inputrc file.
     load_user_inputrc(state_dir, no_user);
+
+    g_bell_preference = static_cast<bell_preference>(_rl_bell_preference);
+
+    if (rl_blink_matching_paren)
+    {
+        clink_bind(")", "insert-close", emacs_table);
+        clink_bind("]", "insert-close", emacs_table);
+        clink_bind("}", "insert-close", emacs_table);
+    }
 
     // Override the effect of any 'set keymap' assignments in the inputrc file.
     // This mimics what rl_initialize() does.
@@ -2794,6 +2913,8 @@ bool rl_module::is_showing_argmatchers()
 //------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
+    init_emacs_standard_binds();
+
 #ifdef TIB_TODO
     const int32 default_group = binder.get_group();
     assert(default_group == 1);
@@ -3080,6 +3201,7 @@ void rl_module::on_end_line()
 //------------------------------------------------------------------------------
 void rl_module::on_need_input(int32& bind_group)
 {
+#if 0
 // TODO-TIB: ?
     if (pending_input())
     {
@@ -3092,6 +3214,7 @@ void rl_module::on_need_input(int32& bind_group)
         bind_group = m_previous_group;
         m_previous_group = -1;
     }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3173,9 +3296,12 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             return;
         }
     }
+#endif
 
     g_result = &result;
+    s_matches = &context.matches;
 
+#ifdef TIB_TODO
     // Tell Readline about the input chord, and whether the binding resolver
     // has more bytes pending.
     struct shim_in
@@ -3183,8 +3309,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         shim_in(const char* input, int32 len) { rl_set_clink_input(input, len); }
         ~shim_in() { rl_set_clink_input(nullptr, 0); }
     } rl_in(input.keys, input.len);
-
-    s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
     rollback<bool> rb_input_more(s_input_more, input.more);
@@ -3234,29 +3358,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
-
-        // NOTE:  There's ambiguity for quoted-insert.  Ideally the whole
-        // console input key sequence could be inserted as quoted text (e.g.
-        // CTRL-Q then UP).  But in a recorded key macro there's no way to
-        // know how many characters should be quoted.  For consistency between
-        // direct console input and recorded macros, the implementation here
-        // no longer quotes the whole console input key sequence.
-        //
-        // Related commits:
-        //  - 3a64c92f55ab8d55a979c6f9515eba99a82bb4a8, 2022/09/21 15:43:42
-        //  - 62c44d2c75f998242c59af11db9cac78059189a5, 2021/09/18 11:22:51
-        //  - f28e6018aa6b6b1e26c3a734ec82719abdf0109e, 2021/09/18  3:23:16
-        //  - 7a2236ad48e742be6552a60e32ed26a11581dd8c, 2020/10/07 18:14:49
-    }
-
-    g_result = nullptr;
-    s_matches = nullptr;
-
-    if (is_force_reload_scripts())
-    {
-        end_prompt(false);
-        reset_cached_font(); // Force discarding cached font info.
-        readline_internal_teardown(true);
     }
 #else
     // Expose the remaining chord to tib's self-insert lookahead before it
@@ -3265,6 +3366,11 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     while (m_terminal->has_chord() && !m_done)
     {
         const int32 key = tib::term_in();
+        if (g_debug_log_input_pipeline)
+        {
+            LOG("INPUT rl.on_input key=%d (0x%02x '%c') has_chord=%d",
+                key, key, key, m_terminal->has_chord());
+        }
         m_terminal->dispatch(uint8(key));
         if (g_tib->is_done())
             done(g_tib->get_text().c_str());
@@ -3275,6 +3381,16 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     on_need_input(group);
     result.set_bind_group(group);
 #endif
+
+    g_result = nullptr;
+    s_matches = nullptr;
+
+    if (is_force_reload_scripts())
+    {
+        end_prompt(false);
+        reset_cached_font(); // Force discarding cached font info.
+        readline_internal_teardown(true);
+    }
 
     if (m_done)
     {

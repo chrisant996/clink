@@ -911,13 +911,11 @@ force_reload_lua:
     // Load scripts.
     if (init_scripts)
     {
-        // Load inputrc before loading scripts.  Config settings in inputrc can
-        // affect Lua scripts (e.g. completion-case-map affects '-' and '_' in
-        // command names in argmatchers).
-        str_moveable default_inputrc;
-        app->get_default_init_file(default_inputrc);
-        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user=false);
-        initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
+        // Load inputrc before loading scripts.  Config settings in inputrc
+        // can affect Lua scripts (e.g. completion-case-map affects '-' and
+        // '_' in command names in argmatchers).
+        extern void initialise_readline(bool no_user=false);
+        initialise_readline();
         initialise_lua(lua);
         lua.load_scripts();
     }

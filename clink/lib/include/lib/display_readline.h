@@ -33,6 +33,7 @@ void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();
 void display_readline();
 void want_redisplay_readline();
+void maybe_redisplay_readline();
 void force_redisplay_readline();
 void set_history_expansions(history_expansion* list=nullptr);
 void force_comment_row(const char* text);

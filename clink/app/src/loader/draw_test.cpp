@@ -92,12 +92,8 @@ void test_editor::start(const char* prompt)
     m_cc = new console_config();
 
 #ifdef INIT_READLINE
-    str_moveable state_dir;
-    str_moveable default_inputrc;
-    app_context::get()->get_state_dir(state_dir);
-    app_context::get()->get_default_init_file(default_inputrc);
-    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc, bool no_user=false);
-    initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
+    extern void initialise_readline(bool no_user=false);
+    initialise_readline();
 #endif
 
     line_editor::desc desc(nullptr);

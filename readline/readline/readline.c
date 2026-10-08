@@ -88,9 +88,6 @@ extern int errno;
 static char *readline_internal (void);
 static void readline_initialize_everything (void);
 
-static void bind_arrow_keys_internal (Keymap);
-static void bind_arrow_keys (void);
-
 static void bind_bracketed_paste_prefix (void);
 
 static void readline_default_bindings (void);
@@ -1233,100 +1230,6 @@ reset_default_bindings (void)
 }
 #endif
 
-/* Bind some common arrow key sequences in MAP. */
-static void
-bind_arrow_keys_internal (Keymap map)
-{
-  Keymap xkeymap;
-
-  xkeymap = _rl_keymap;
-  _rl_keymap = map;
-
-/* begin_clink_change
- * Clink's inputrc takes care of this.
- */
-#if defined (__MSDOS__) && 0
-/* end_clink_change */
-  rl_bind_keyseq_if_unbound ("\033[0A", rl_get_previous_history);
-  rl_bind_keyseq_if_unbound ("\033[0B", rl_backward_char);
-  rl_bind_keyseq_if_unbound ("\033[0C", rl_forward_char);
-  rl_bind_keyseq_if_unbound ("\033[0D", rl_get_next_history);
-#endif
-
-  rl_bind_keyseq_if_unbound ("\033[A", rl_get_previous_history);
-  rl_bind_keyseq_if_unbound ("\033[B", rl_get_next_history);
-  rl_bind_keyseq_if_unbound ("\033[C", rl_forward_char);
-  rl_bind_keyseq_if_unbound ("\033[D", rl_backward_char);
-  rl_bind_keyseq_if_unbound ("\033[H", rl_beg_of_line);
-  rl_bind_keyseq_if_unbound ("\033[F", rl_end_of_line);
-
-/* begin_clink_change
- * Clink doesn't produce these as input, so it doesn't want them showing up in
- * the list of bound key sequences.
- */
-#if 0
-/* end_clink_change */
-  rl_bind_keyseq_if_unbound ("\033OA", rl_get_previous_history);
-  rl_bind_keyseq_if_unbound ("\033OB", rl_get_next_history);
-  rl_bind_keyseq_if_unbound ("\033OC", rl_forward_char);
-  rl_bind_keyseq_if_unbound ("\033OD", rl_backward_char);
-  rl_bind_keyseq_if_unbound ("\033OH", rl_beg_of_line);
-  rl_bind_keyseq_if_unbound ("\033OF", rl_end_of_line);
-/* begin_clink_change */
-#endif
-/* end_clink_change */
-
-  /* Key bindings for control-arrow keys */
-  rl_bind_keyseq_if_unbound ("\033[1;5C", rl_forward_word);
-  rl_bind_keyseq_if_unbound ("\033[1;5D", rl_backward_word);
-  rl_bind_keyseq_if_unbound ("\033[3;5~", rl_kill_word);
-
-  /* Key bindings for alt-arrow keys */
-  rl_bind_keyseq_if_unbound ("\033[1;3C", rl_forward_word);
-  rl_bind_keyseq_if_unbound ("\033[1;3D", rl_backward_word);
-
-#if defined (__MINGW32__)
-  rl_bind_keyseq_if_unbound ("\340H", rl_get_previous_history);
-  rl_bind_keyseq_if_unbound ("\340P", rl_get_next_history);
-  rl_bind_keyseq_if_unbound ("\340M", rl_forward_char);
-  rl_bind_keyseq_if_unbound ("\340K", rl_backward_char);
-  rl_bind_keyseq_if_unbound ("\340G", rl_beg_of_line);
-  rl_bind_keyseq_if_unbound ("\340O", rl_end_of_line);
-  rl_bind_keyseq_if_unbound ("\340S", rl_delete);
-  rl_bind_keyseq_if_unbound ("\340R", rl_overwrite_mode);
-
-  /* These may or may not work because of the embedded NUL. */
-  rl_bind_keyseq_if_unbound ("\\000H", rl_get_previous_history);
-  rl_bind_keyseq_if_unbound ("\\000P", rl_get_next_history);
-  rl_bind_keyseq_if_unbound ("\\000M", rl_forward_char);
-  rl_bind_keyseq_if_unbound ("\\000K", rl_backward_char);
-  rl_bind_keyseq_if_unbound ("\\000G", rl_beg_of_line);
-  rl_bind_keyseq_if_unbound ("\\000O", rl_end_of_line);
-  rl_bind_keyseq_if_unbound ("\\000S", rl_delete);
-  rl_bind_keyseq_if_unbound ("\\000R", rl_overwrite_mode);
-#endif
-
-  _rl_keymap = xkeymap;
-}
-
-/* Try and bind the common arrow key prefixes after giving termcap and
-   the inputrc file a chance to bind them and create `real' keymaps
-   for the arrow key prefix. */
-static void
-bind_arrow_keys (void)
-{
-  bind_arrow_keys_internal (emacs_standard_keymap);
-
-#if defined (VI_MODE)
-  bind_arrow_keys_internal (vi_movement_keymap);
-  /* Unbind vi_movement_keymap[ESC] to allow users to repeatedly hit ESC
-     in vi command mode while still allowing the arrow keys to work. */
-  if (vi_movement_keymap[ESC].type == ISKMAP)
-    rl_bind_keyseq_in_map ("\033", (rl_command_func_t *)NULL, vi_movement_keymap);
-  bind_arrow_keys_internal (vi_insertion_keymap);
-#endif
-}
-
 static void
 bind_bracketed_paste_prefix (void)
 {
@@ -1334,6 +1237,7 @@ bind_bracketed_paste_prefix (void)
 
   xkeymap = _rl_keymap;
 
+#ifdef TIB_TODO
   _rl_keymap = emacs_standard_keymap;
   rl_bind_keyseq_if_unbound (BRACK_PASTE_PREF, rl_bracketed_paste_begin);
 
@@ -1341,6 +1245,7 @@ bind_bracketed_paste_prefix (void)
   _rl_keymap = vi_insertion_keymap;
   rl_bind_keyseq_if_unbound (BRACK_PASTE_PREF, rl_bracketed_paste_begin);
   /* XXX - is there a reason to do this in the vi command keymap? */
+#endif
 #endif
 
   _rl_keymap = xkeymap;

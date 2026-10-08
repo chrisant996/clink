@@ -236,8 +236,6 @@ char *_rl_active_region_end_color = NULL;
 #endif
 #define TGETFLAG(cap)	(tgetflag (cap) == TGETFLAG_SUCCESS)
 
-static void bind_termcap_arrow_keys (Keymap);
-
 /* Variables that hold the screen dimensions, used by the display code. */
 int _rl_screenwidth, _rl_screenheight, _rl_screenchars;
 
@@ -735,16 +733,6 @@ _rl_init_terminal_io (const char *terminal_name)
     _rl_term_mm = _rl_term_mo = (char *)NULL;
 #endif /* !__MSDOS__ */
 
-  /* Attempt to find and bind the arrow keys.  Do not override already
-     bound keys in an overzealous attempt, however. */
-
-  bind_termcap_arrow_keys (emacs_standard_keymap);
-
-#if defined (VI_MODE)
-  bind_termcap_arrow_keys (vi_movement_keymap);
-  bind_termcap_arrow_keys (vi_insertion_keymap);
-#endif /* VI_MODE */
-
   if (dumbterm == 0 && _rl_term_isansi == 0)
     _rl_term_isansi = _rl_check_ansi_terminal (terminal_name);
 
@@ -761,32 +749,6 @@ _rl_init_terminal_io (const char *terminal_name)
     }
 
   return 0;
-}
-
-/* Bind the arrow key sequences from the termcap description in MAP. */
-static void
-bind_termcap_arrow_keys (Keymap map)
-{
-  Keymap xkeymap;
-
-  xkeymap = _rl_keymap;
-  _rl_keymap = map;
-
-  rl_bind_keyseq_if_unbound (_rl_term_ku, rl_get_previous_history);
-  rl_bind_keyseq_if_unbound (_rl_term_kd, rl_get_next_history);
-  rl_bind_keyseq_if_unbound (_rl_term_kr, rl_forward_char);
-  rl_bind_keyseq_if_unbound (_rl_term_kl, rl_backward_char);
-
-  rl_bind_keyseq_if_unbound (_rl_term_kh, rl_beg_of_line);	/* Home */
-  rl_bind_keyseq_if_unbound (_rl_term_at7, rl_end_of_line);	/* End */
-
-  rl_bind_keyseq_if_unbound (_rl_term_kD, rl_delete);
-  rl_bind_keyseq_if_unbound (_rl_term_kI, rl_overwrite_mode);	/* Insert */
-
-  rl_bind_keyseq_if_unbound (_rl_term_kN, rl_history_search_forward);	/* Page Down */
-  rl_bind_keyseq_if_unbound (_rl_term_kP, rl_history_search_backward);	/* Page Up */
-
-  _rl_keymap = xkeymap;
 }
 
 char *

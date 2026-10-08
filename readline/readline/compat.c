@@ -70,18 +70,6 @@ maybe_unsave_line (void)
 }
 
 int
-ding (void)
-{
-  return rl_ding ();
-}
-
-int
-crlf (void)
-{
-  return rl_crlf ();
-}
-
-int
 alphabetic (int c)
 {
   return rl_alphabetic (c);

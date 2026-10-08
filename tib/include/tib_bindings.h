@@ -143,10 +143,12 @@ public:
     std::shared_ptr<const key_table_list> get_bindings() const;
     void                set_bindings(std::shared_ptr<const key_table_list> bindings);
     void                override_bindings(std::shared_ptr<const key_table_list> bindings);
+#ifdef STRANGE_PROBING_CODE
     // Tables a stateful target would switch to on a miss, without making
     // that transition during the host's key-recognition probe.
     virtual std::shared_ptr<const key_table_list> probe_bindings_on_miss() const { return nullptr; }
     std::shared_ptr<const key_table_list> get_base_bindings() const { return m_bindings; }
+#endif
 
     // The binding_resolver::step() produces a resolved_binding in three cases:
     //
@@ -217,13 +219,20 @@ public:
                         // Commit the longest complete binding in the pending
                         // sequence, normally after an ambiguity timeout.
     resolved_binding    resolve_pending();
-    bool                pending() const { return !m_sequence.empty(); }
     bool                quoted_insert_pending() const;
+// #ifdef STRANGE_PROBING_CODE
+    bool                pending() const { return !m_sequence.empty(); }
+#ifdef STRANGE_PROBING_CODE
     // Probe without dispatching, changing targets, or consuming the prefix.
     bool                accepts(const char* sequence, size_t len) const;
+#endif
 
 private:
+#ifdef STRANGE_PROBING_CODE
     resolved_binding    resolve(bool force, bool probe=false);
+#else
+    resolved_binding    resolve(bool force);
+#endif
 
     std::vector<std::weak_ptr<dispatcher_target>> m_registrants;
     cstring             m_sequence;

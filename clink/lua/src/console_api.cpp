@@ -821,7 +821,8 @@ static int32 read_input(lua_State* state)
             continue;
         }
 
-        if (k == terminal_in::input_abort)
+        if (k == terminal_in::input_abort ||
+            k == terminal_in::input_eof)
             break;
 
         if (k == terminal_in::input_terminal_resize ||

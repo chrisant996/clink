@@ -96,7 +96,7 @@ const char* test_module::get_input_hint() const
 //------------------------------------------------------------------------------
 void test_module::bind_input(binder& binder)
 {
-    rl_bind_keyseq("\t", rl_named_function(m_tab_binding ? m_tab_binding : "complete"));
+    clink_bind("\t", m_tab_binding ? m_tab_binding : "complete", emacs_table);
 }
 
 //------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ void line_editor_tester::run(bool expectationless)
     {
         REQUIRE(m_editor->update());
     }
-    while (rl_has_queued_input() || m_terminal_in.available(0));
+    while (m_terminal_in.available(0));
 
     m_editor->update_matches();
 

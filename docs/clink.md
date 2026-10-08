@@ -1776,6 +1776,7 @@ Command | Key | Description
 <a name="rlcmd-history-and-alias-expand-line"></a>`history-and-alias-expand-line` | | A synonym for [`clink-expand-history-and-alias`](#rlcmd-clink-expand-history-and-alias).
 <a name="rlcmd-history-expand-line"></a>`history-expand-line` | | A synonym for [`clink-expand-history`](#rlcmd-clink-expand-history).
 <a name="rlcmd-insert-last-argument"></a>`insert-last-argument` | | A synonym for [`yank-last-arg`](#rlcmd-yank-last-arg).
+<a name="rlcmd-lorem-ipsum"></a>`lorem-ipsum` | | Insert lorum ipsum text.
 <a name="rlcmd-magic-space"></a>`magic-space` | | Perform [history expansion](#using-history-expansion) on the text before the cursor position and insert a space.
 <a name="rlcmd-old-menu-complete-backward"></a>`old-menu-complete-backward` | | Like [`old-menu-complete`](#rlcmd-old-menu-complete), but in reverse. This behaves like the default completion in cmd.exe on Windows. When Clink is installed using the setup program with the "Use enhanced default settings" box checked or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`, then this is bound by default to <kbd>Shift</kbd>-<kbd>Tab</kbd>.
 <a name="rlcmd-remove-history"></a>`remove-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>d</kbd> | While searching history, removes the current line from the history.

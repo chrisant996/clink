@@ -338,26 +338,8 @@ extern int rl_initialize (void);
 /* Undocumented; unused by readline */
 extern int rl_discard_argument (void);
 
-/* Utility functions to bind keys to readline commands. */
-extern int rl_add_defun (const char *, rl_command_func_t *, int);
-extern int rl_bind_key (int, rl_command_func_t *);
-extern int rl_bind_key_in_map (int, rl_command_func_t *, Keymap);
-extern int rl_unbind_key (int);
-extern int rl_unbind_key_in_map (int, Keymap);
-extern int rl_bind_key_if_unbound (int, rl_command_func_t *);
-extern int rl_bind_key_if_unbound_in_map (int, rl_command_func_t *, Keymap);
-extern int rl_unbind_function_in_map (rl_command_func_t *, Keymap);
-extern int rl_bind_keyseq (const char *, rl_command_func_t *);
-extern int rl_bind_keyseq_in_map (const char *, rl_command_func_t *, Keymap);
-extern int rl_bind_keyseq_if_unbound (const char *, rl_command_func_t *);
-extern int rl_bind_keyseq_if_unbound_in_map (const char *, rl_command_func_t *, Keymap);
-extern int rl_generic_bind (int, const char *, char *, Keymap);
-
 extern char *rl_variable_value (const char *);
 extern int rl_variable_bind (const char *, const char *);
-
-/* Backwards compatibility, use rl_generic_bind instead. */
-extern int rl_macro_bind (const char *, const char *, Keymap);
 
 /* Undocumented in the texinfo manual; not really useful to programs. */
 extern int rl_translate_keyseq (const char *, char *, int *);
@@ -741,7 +723,6 @@ extern rl_macro_print_func_t *rl_macro_display_hook;
 
 /* Dispatch variables. */
 extern Keymap rl_executing_keymap;
-extern Keymap rl_binding_keymap;
 
 extern int rl_executing_key;
 extern char *rl_executing_keyseq;

@@ -256,7 +256,7 @@ void last_command_hook_func(int32 dispatched)
     }
 
     host_send_event("onaftercommand");
-    display_readline();
+    maybe_redisplay_readline();
 }
 
 //------------------------------------------------------------------------------

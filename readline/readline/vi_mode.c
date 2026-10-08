@@ -2354,8 +2354,10 @@ rl_vi_replace (int count, int key)
   _rl_vi_last_key_before_insert = 'R';	/* in case someone rebinds it */
   _rl_keymap = vi_replace_map;
 
+#ifdef TIB_TODO
   if (_rl_enable_bracketed_paste)
     rl_bind_keyseq_if_unbound (BRACK_PASTE_PREF, rl_vi_overstrike_bracketed_paste);
+#endif
 
   return (0);
 }
