@@ -28,11 +28,11 @@
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/wcwidth.h>
-#include <terminal/printer.h>
 #include <terminal/scroll.h>
 #include <terminal/screen_buffer.h>
-#include <terminal/terminal_helpers.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_out.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -2538,7 +2538,7 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
     str<> tmp;
 
     s << "  " << tag << ":\n";
-    g_printer->print(s.c_str(), s.length());
+    g_terminal->write(s.c_str(), s.length());
 
     for (alert_char ac : chars)
     {
@@ -2557,7 +2557,7 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
         s << tmp << ", text \"" << red;
         s.concat(ac.text, ac.len);
         s << norm << "\"\n";
-        g_printer->print(s.c_str(), s.length());
+        g_terminal->write(s.c_str(), s.length());
 
         // Log plain text string.
 
@@ -2625,7 +2625,7 @@ static void list_problem_codes(const std::vector<prompt_problem_details>& proble
         }
 
         s << norm << "\"\n";
-        g_printer->print(s.c_str(), s.length());
+        g_terminal->write(s.c_str(), s.length());
 
         // Log plain text string.
 
@@ -2758,14 +2758,14 @@ static void do_clink_diagnostics(bool include_settings=false)
     {
         _lambda_s.clear();
         _lambda_s << bold << text << ":" << norm << lf;
-        g_printer->print(_lambda_s.c_str(), _lambda_s.length());
+        g_terminal->write(_lambda_s.c_str(), _lambda_s.length());
     };
     auto print_value = [&](const char* name, const char* value)
     {
         if (value && *value)
         {
             _lambda_s.format("  %-*s  %s\n", spacing, name, value);
-            g_printer->print(_lambda_s.c_str(), _lambda_s.length());
+            g_terminal->write(_lambda_s.c_str(), _lambda_s.length());
         }
     };
 
@@ -2849,7 +2849,7 @@ static void do_clink_diagnostics(bool include_settings=false)
                      err, ansicon_problem, norm,
                      err, norm,
                      err, norm);
-            g_printer->print(t.c_str(), t.length());
+            g_terminal->write(t.c_str(), t.length());
         }
     }
 
@@ -2872,7 +2872,7 @@ static void do_clink_diagnostics(bool include_settings=false)
             if (cjk.size())
             {
                 list_ambiguous_codepoints("CJK ambiguous characters", cjk);
-                g_printer->print(
+                g_terminal->write(
                     "    Running 'chcp 65001' can often fix width problems with these characters.\n"
                     "    Or you can use a different character.\n");
             }
@@ -2889,7 +2889,7 @@ static void do_clink_diagnostics(bool include_settings=false)
         {
             print_heading("problematic codes in prompt");
             list_problem_codes(problems);
-            g_printer->print(
+            g_terminal->write(
                 "    These characters in the prompt string can cause problems.  Clink will try\n"
                 "    to compensate as much as it can, but for best results you may need to fix\n"
                 "    the prompt string by removing the characters.\n");
@@ -2909,11 +2909,11 @@ static void do_clink_diagnostics(bool include_settings=false)
             t.format("%s = %s\n", next->get_name(), value.c_str());
             if (!printed)
             {
-                g_printer->print("\n\n");
+                g_terminal->write("\n\n");
                 print_heading("clink_settings");
                 printed = true;
             }
-            g_printer->print(t.c_str(), t.length());
+            g_terminal->write(t.c_str(), t.length());
         }
     }
 }
@@ -2926,7 +2926,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     do_clink_diagnostics();
 
     if (!rl_explicit_arg || !rl_numeric_arg)
-        g_printer->print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");
+        g_terminal->write("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");
 
     rl_forced_update_display();
     return 0;
@@ -2958,18 +2958,19 @@ int32 clink_diagnostics_output(int32 count, int32 invoking_key)
     str_moveable file;
     path::join(context.profile.c_str(), "clink.info", file);
     terminal_file out(file.c_str(), rows, cols, top);
-    printer file_printer(out);
 
     {
         // Because redirecting to a file, not the console.
         suppress_implicit_write_console_logging nolog;
 
-        rollback<printer*> rb_printer(g_printer, &file_printer);
+        g_terminal->redirect(&out);
         rollback<int> rb_numeric_arg(rl_numeric_arg, 999);
         rollback<int> rb_explicit_arg(rl_explicit_arg, 1);
         rollback<int> rb_arg_sign(rl_arg_sign, 1);
 
         do_clink_diagnostics(true/*include_settings*/);
+
+        g_terminal->redirect(nullptr);
     }
 
     printf("Clink diagnostics output written to '%s'.\n", file.c_str());

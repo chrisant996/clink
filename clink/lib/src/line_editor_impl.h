@@ -25,7 +25,6 @@
 
 #include <core/array.h>
 #include <core/str.h>
-#include <terminal/printer.h>
 
 enum class reclassify_reason : uint8;
 
@@ -153,6 +152,7 @@ private:
                                     bool compare_cursor);
 
     desc                m_desc;
+    tib_terminal_bridge* m_terminal = nullptr;
     rl_module           m_module;
     rl_buffer           m_buffer;
     word_collector      m_collector;
@@ -167,7 +167,6 @@ private:
     word_classifications m_classifications;
     matches_impl        m_regen_matches;
     matches_impl        m_matches;
-    printer&            m_printer;
     pager_impl          m_pager;
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;

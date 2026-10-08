@@ -18,6 +18,7 @@
 #include <lib/matches.h>
 #include <lib/match_colors.h>
 #include <lib/display_readline.h>
+#include <terminal/terminal.h>
 #include "match_builder_lua.h"
 #include "prompt.h"
 

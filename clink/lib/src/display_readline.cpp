@@ -40,7 +40,6 @@
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/screen_buffer.h>
-#include <terminal/printer.h>
 #include <terminal/scroll.h>
 
 #include <memory>
@@ -1471,8 +1470,8 @@ void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
 {
     if (stream == thunk_out_stream)
     {
-        assert(g_printer);
-        g_printer->print(chars, char_count);
+        assert(g_terminal);
+        tib::term_out(chars, char_count);
         return;
     }
 
@@ -1507,26 +1506,14 @@ void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
 }
 
 //------------------------------------------------------------------------------
-static const char* s_log_fwrite_context = 0;
 void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
 {
     suppress_implicit_write_console_logging nolog;
 
     if (stream == thunk_out_stream)
     {
-        assert(g_printer);
-        LOGCURSORPOS(GetStdHandle(STD_OUTPUT_HANDLE));
-        const char* ctx = s_log_fwrite_context ? s_log_fwrite_context : "RL_OUTSTREAM";
-        LOG("%s \"%.*s\", %d", ctx, char_count, chars, char_count);
-#ifdef _MSC_VER
-        if (g_debug_log_output_callstacks.get())
-        {
-            char stk[8192];
-            format_callstack(2, 20, stk, sizeof(stk), false);
-            LOG("%s", stk);
-        }
-#endif
-        g_printer->print(chars, char_count);
+        // Logging happens inside tib_terminal_bridge.
+        tib::term_out(chars, char_count);
         return;
     }
 
@@ -2213,7 +2200,7 @@ void display_manager::display()
         {
             COORD cursor;
             coalesce.flush();
-            if (g_printer && g_printer->get_cursor_pos(cursor.X, cursor.Y) &&
+            if (g_terminal && g_terminal->get_cursor_pos(cursor.X, cursor.Y) &&
                 m_last_prompt_line_width != cursor.X)
             {
                 m_last_prompt_line_width = cursor.X;
@@ -3411,12 +3398,12 @@ bool has_modmark()
 //------------------------------------------------------------------------------
 void refresh_terminal_size()
 {
-    assert(g_printer);
-    if (!g_printer)
+    assert(g_terminal);
+    if (!g_terminal)
         return;
 
-    const int32 width = g_printer->get_columns();
-    const int32 height = g_printer->get_rows();
+    const int32 width = g_terminal->get_columns();
+    const int32 height = g_terminal->get_rows();
 
     if (_rl_screenheight != height || _rl_screenwidth != width)
     {

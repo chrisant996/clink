@@ -14,30 +14,6 @@
 static bool s_has_synchronize_output = false;
 
 //------------------------------------------------------------------------------
-terminal terminal_create(screen_buffer* screen, bool cursor_visibility)
-{
-#if defined(PLATFORM_WINDOWS)
-    terminal term;
-    term.screen_owned = (screen == nullptr);
-    term.screen = screen ? screen : new win_screen_buffer();
-    term.in = new win_terminal_in(cursor_visibility);
-    term.out = new ecma48_terminal_out(*term.screen);
-    return term;
-#else
-    return {};
-#endif
-}
-
-//------------------------------------------------------------------------------
-void terminal_destroy(const terminal& terminal)
-{
-    delete terminal.out;
-    delete terminal.in;
-    if (terminal.screen_owned)
-        delete terminal.screen;
-}
-
-//------------------------------------------------------------------------------
 void terminal_discover_config(terminal_in* in)
 {
     str<> response;

@@ -62,15 +62,14 @@ void    set_refilter_after_resize(bool refilter);
 class resync_rl_cursor_pos
 {
 public:
-                resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite=false);
+                resync_rl_cursor_pos();
                 ~resync_rl_cursor_pos();
     void        clear();
     void        resync(bool update_rl_last_pos=true);
     int16       get_cursor_x() const { return m_cursor_x; }
 private:
-    printer*    m_printer;
+    bool        m_resync;
     int16       m_cursor_x;
-    const bool  m_use_rl_fwrite;
     const int32 m_vpos;
     const int32 m_cpos;
 };

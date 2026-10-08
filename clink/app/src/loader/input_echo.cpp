@@ -75,9 +75,9 @@ int32 input_echo(int32 argc, char** argv)
 
     console_config cc(nullptr, mouse_input);
 
-    terminal terminal = terminal_create();
-    terminal_in& input = *terminal.in;
-    input.begin();
+    init_terminal();
+    terminal_context tc;
+    terminal_in& input = *g_terminal->get_in();
 
     bool quit = false;
     while (!quit)
@@ -118,6 +118,5 @@ int32 input_echo(int32 argc, char** argv)
         puts("");
     }
 
-    input.end();
     return 0;
 }

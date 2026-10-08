@@ -29,7 +29,6 @@
 #include <lua/lua_script_loader.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 
 #define ADMINISTRATOR_TITLE_PREFIX 0x40002748
 
@@ -54,9 +53,6 @@ static bool s_detoured_write_console = false;
 #endif
 static int32 s_in_read_console = 0;
 static DWORD s_main_thread = 0;
-
-//------------------------------------------------------------------------------
-extern printer* g_printer;
 
 //------------------------------------------------------------------------------
 extern setting_bool g_ctrld_exits;
@@ -634,10 +630,11 @@ LReturnReal:
     host_cmd* const hc = host_cmd::get();
     hc->clear_suppress_title();
 
-    // clink_maybe_handle_signal() needs g_printer for output.
-    dbg_snapshot_heap(prt_ignore);
-    auto prt = hc->make_printer_context();
-    dbg_ignore_since_snapshot(prt_ignore, "read_console");
+    // clink_maybe_handle_signal() needs g_terminal for output.
+    assert(!g_terminal);
+    assert(tib_terminal_bridge::get());
+    terminal_context tc;
+    assert(g_terminal);
 
     // Always dequeue if queued lines are present:  the More? continuation
     // prompt, a Yes/No/All prompt, an edit line prompt, etc -- in Conhost's
@@ -766,12 +763,12 @@ LReturnReal:
 
             hc->adjust_prompt_spacing();
 
-            g_printer->print(prompt.c_str(), prompt.length());
+            g_terminal->write(prompt.c_str(), prompt.length());
             // Add a newline so that output always starts on the line after the
             // prompt.  Conhost starts output on the prompt line, making the
             // output look as though it's what was typed as input.  Clink
             // attempts to clear up the confusion.
-            g_printer->print("\n");
+            g_terminal->write("\n");
         }
     }
 

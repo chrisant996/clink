@@ -3,22 +3,21 @@
 
 #pragma once
 
+#include <tib.h>
+
 class screen_buffer;
 class terminal_in;
 class terminal_out;
+class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
-struct terminal
-{
-    screen_buffer*  screen;
-    terminal_in*    in;
-    terminal_out*   out;
-    bool            screen_owned;
-};
+extern tib_terminal_bridge* g_terminal;
 
 //------------------------------------------------------------------------------
-terminal            terminal_create(screen_buffer* screen=nullptr, bool cursor_visibility=true);
-void                terminal_destroy(const terminal& terminal);
+bool                init_terminal();
+bool                init_terminal(bool cursor_visibility);
+bool                init_terminal(terminal_in* in, terminal_out* out);
+bool                uninit_terminal();
 void                terminal_discover_config(terminal_in* in);
 bool                terminal_has_synchronize_output();
 

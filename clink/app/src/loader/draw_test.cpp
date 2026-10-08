@@ -11,7 +11,6 @@
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 
 #include <getopt.h>
 
@@ -64,13 +63,10 @@ public:
 private:
     static DWORD WINAPI thread_proc(void* param);
 
-    terminal        m_terminal;
-    printer*        m_printer;
     line_editor*    m_editor;
     handle          m_thread;
     volatile bool   m_done = true;
 
-    printer_context* m_printer_context;
     console_config* m_cc;
 };
 
@@ -91,13 +87,11 @@ void test_editor::start(const char* prompt)
     settings::TEST_set_ever_loaded();
 #endif
 
-    m_terminal = terminal_create();
-    m_printer = new printer(*m_terminal.out);
-    m_printer_context = new printer_context(m_terminal.out, m_printer);
+    init_terminal();
+    g_terminal->begin();
     m_cc = new console_config();
 
 #ifdef INIT_READLINE
-    // initialise_readline() needs a printer_context to be active.
     str_moveable state_dir;
     str_moveable default_inputrc;
     app_context::get()->get_state_dir(state_dir);
@@ -106,13 +100,12 @@ void test_editor::start(const char* prompt)
     initialise_readline("clink", state_dir.c_str(), default_inputrc.c_str());
 #endif
 
-    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);
+    line_editor::desc desc(nullptr);
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
 
-    assert(g_printer);
-    g_printer->print(RET_msg);
-    g_printer->print("\n");
+    g_terminal->write(RET_msg);
+    g_terminal->write("\n");
 
     m_done = false;
     m_thread = CreateThread(nullptr, 0, thread_proc, this, 0, nullptr);
@@ -126,10 +119,7 @@ void test_editor::end()
     WaitForSingleObject(m_thread, INFINITE);
     line_editor_destroy(m_editor);
     delete m_cc;
-    delete m_printer_context;
-    delete m_printer;
-    m_printer = nullptr;
-    terminal_destroy(m_terminal);
+    uninit_terminal();
 }
 
 //------------------------------------------------------------------------------
@@ -391,8 +381,8 @@ bool runner::step()
 bool runner::ecma48_test()
 {
 #define CSI(x) "\x1b[" #x
-    terminal terminal = terminal_create();
-    terminal_out& output = *terminal.out;
+    init_terminal();
+    terminal_out& output = *g_terminal->get_out();
     output.begin();
 
     if (m_stepper.paused())
@@ -434,7 +424,7 @@ bool runner::ecma48_test()
 
     output.write(CSI(0m) CSI(1;1H) CSI(J));
     output.end();
-    terminal_destroy(terminal);
+    uninit_terminal();
     return true;
 #undef CSI
 }

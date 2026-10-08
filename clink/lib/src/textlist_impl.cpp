@@ -26,7 +26,6 @@
 #include <core/auto_closure.h>
 #include <core/debugheap.h>
 #include <rl/rl_commands.h>
-#include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
@@ -338,7 +337,7 @@ class standalone_input : public input_dispatcher, public key_tester
     typedef fixed_array<editor_module*, 16>     modules;
 
 public:
-                        standalone_input(terminal& term);
+                        standalone_input();
     void                on_resize();
 
     // input_dispatcher
@@ -798,15 +797,16 @@ void textlist_impl::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void textlist_impl::on_begin_line(const context& context)
 {
+    assert(g_terminal);
     assert(!s_textlist);
     s_textlist = this;
     m_buffer = &context.buffer;
-    m_printer = &context.printer;
+    m_terminal = g_terminal;
 
     m_scroll_helper.clear();
 
-    m_screen_cols = context.printer.get_columns();
-    m_screen_rows = context.printer.get_rows();
+    m_screen_cols = m_terminal->get_columns();
+    m_screen_rows = m_terminal->get_rows();
     update_layout();
 }
 
@@ -815,7 +815,7 @@ void textlist_impl::on_end_line()
 {
     s_textlist = nullptr;
     m_buffer = nullptr;
-    m_printer = nullptr;
+    m_terminal = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -1585,7 +1585,7 @@ void textlist_impl::update_display()
     {
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
-        resync_rl_cursor_pos resync(m_printer, true);
+        resync_rl_cursor_pos resync;
         int32 up = 0;
 
         display_accumulator coalesce;
@@ -1899,10 +1899,9 @@ void textlist_impl::update_display()
             s.format("\x1b[%dA", up);
             clink_write(s.c_str(), s.length());
         }
-        clink_flush();
         coalesce.end();
         COORD cursor;
-        m_printer->get_cursor_pos(cursor.X, cursor.Y);
+        m_terminal->get_cursor_pos(cursor.X, cursor.Y);
         m_mouse_offset = cursor.Y + 1/*to top item*/;
         if (!s_standalone)
             m_mouse_offset += 1/*to border*/;
@@ -2356,10 +2355,12 @@ popup_results activate_history_text_list(const char** history, int32 count, int3
 
 
 //------------------------------------------------------------------------------
-standalone_input::standalone_input(terminal& term)
-: m_terminal(term)
+standalone_input::standalone_input()
+: m_terminal(*g_terminal)
 , m_textlist(*this)
 {
+    assert(g_terminal);
+
     *m_modules.push_back() = &m_textlist;
 
     struct : public module::binder {
@@ -2397,8 +2398,8 @@ standalone_input::standalone_input(terminal& term)
 //------------------------------------------------------------------------------
 void standalone_input::on_resize()
 {
-    auto cols = m_terminal.out->get_columns();
-    auto rows = m_terminal.out->get_rows();
+    auto cols = m_terminal.get_columns();
+    auto rows = m_terminal.get_rows();
 
     module::context context = get_context();
     for (auto* module : m_modules)
@@ -2456,8 +2457,8 @@ uint8 standalone_input::peek()
 //------------------------------------------------------------------------------
 editor_module::context standalone_input::get_context()
 {
-    assert(g_printer);
-    module::context context = { nullptr, nullptr, *g_printer, *(pager*)nullptr, *(line_buffer*)nullptr, *(matches*)nullptr, *(word_classifications*)nullptr, *(input_hint*)nullptr };
+    assert(g_terminal);
+    module::context context = { nullptr, nullptr, *(pager*)nullptr, *(line_buffer*)nullptr, *(matches*)nullptr, *(word_classifications*)nullptr, *(input_hint*)nullptr };
     return context;
 }
 
@@ -2483,8 +2484,8 @@ bool standalone_input::update_input()
 
     if (key == terminal_in::input_terminal_resize)
     {
-        int32 columns = m_terminal.out->get_columns();
-        int32 rows = m_terminal.out->get_rows();
+        int32 columns = m_terminal.get_columns();
+        int32 rows = m_terminal.get_rows();
         module::context context = get_context();
         for (auto* module : m_modules)
             module->on_terminal_resize(columns, rows, context);
@@ -2595,13 +2596,14 @@ bool standalone_input::translate(const char* seq, int32 len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void init_standalone_textlist(terminal& term)
+void init_standalone_textlist()
 {
+    assert(g_terminal);
     assert(!s_standalone_input);
 
     // This initializes s_textlist.
     s_standalone = true;
-    s_standalone_input = new standalone_input(term);
+    s_standalone_input = new standalone_input();
 
     // Since there is no inputrc file in standalone mode, set some defaults.
     _rl_menu_complete_wraparound = false;   // Affects textlist_impl.

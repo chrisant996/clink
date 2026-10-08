@@ -13,6 +13,7 @@ class line_state;
 class matches;
 class word_classifications;
 class input_hint;
+class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
 class editor_module
@@ -40,7 +41,6 @@ public:
     {
         const char*         prompt;
         const char*         rprompt;
-        printer&            printer;
         pager&              pager;
         line_buffer&        buffer;
         const matches&      matches;

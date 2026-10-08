@@ -28,7 +28,7 @@ TEST_CASE("Word collection")
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
 
-    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr);
     desc.command_tokeniser = &command_tokeniser;
     desc.word_tokeniser = &word_tokeniser;
     line_editor_tester tester(desc, nullptr, nullptr);

@@ -15,7 +15,6 @@
 #include <core/str_tokeniser.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <lua/lua_script_loader.h>
 #include <lua/prompt.h>
 
@@ -127,13 +126,13 @@ static bool print_value(bool describe, const char* key, bool compat, bool list=f
         return false;
     }
 
-    if (list && g_printer)
+    if (list && g_terminal)
     {
         str<> s;
         static const char bold[] = "\x1b[1m";
         static const char norm[] = "\x1b[m";
         s.format("        %sName: %s%s\n", bold, setting->get_name(), norm);
-        g_printer->print(s.c_str(), s.length());
+        g_terminal->write(s.c_str(), s.length());
     }
     else
     {
@@ -379,9 +378,8 @@ int32 set(int32 argc, char** argv)
     argc -= optind;
     argv += optind;
 
-    terminal term = terminal_create();
-    printer printer(*term.out);
-    printer_context printer_context(term.out, &printer);
+    init_terminal();
+    terminal_context tc;
 
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
@@ -411,7 +409,11 @@ int32 set(int32 argc, char** argv)
 
     DWORD dummy;
     if (!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dummy))
-        g_printer = nullptr;
+    {
+// TODO-TIB: test this.
+        assert(false);
+        g_terminal = nullptr;
+    }
 
     switch (argc)
     {

@@ -15,8 +15,8 @@ class pager_impl
 public:
     enum pager_amount { unlimited, line, half_page, page, first_page };
                     pager_impl(input_dispatcher& dispatcher);
-    virtual void    start_pager(printer& printer) override;
-    virtual bool    on_print_lines(printer& printer, int32 lines) override;
+    virtual void    start_pager() override;
+    virtual bool    on_print_lines(int32 lines) override;
 
 private:
     virtual void    bind_input(binder& binder) override;
@@ -27,7 +27,7 @@ private:
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
     virtual void    on_signal(int32 sig) override;
-    void            set_limit(printer& printer, pager_amount amount);
+    void            set_limit(pager_amount amount);
     int32           m_max = 0;
     int32           m_pager_bind_group = -1;
     input_dispatcher& m_dispatcher;

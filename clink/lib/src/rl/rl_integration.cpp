@@ -11,8 +11,9 @@
 
 #include <core/base.h>
 #include <core/debugheap.h>
-#include <terminal/printer.h>
+#include <terminal/ecma48_iter.h>
 #include <terminal/scroll.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/wcwidth.h>
 
@@ -253,14 +254,13 @@ bool rl_has_queued_input()
 
 
 //------------------------------------------------------------------------------
-resync_rl_cursor_pos::resync_rl_cursor_pos(printer* printer, bool use_rl_fwrite)
-    : m_printer(printer ? printer : g_printer)
-    , m_use_rl_fwrite(use_rl_fwrite)
+resync_rl_cursor_pos::resync_rl_cursor_pos()
+    : m_resync(!!g_terminal)
     , m_vpos(_rl_last_v_pos)
     , m_cpos(_rl_last_c_pos)
 {
-    assert(m_printer);
-    if (m_printer)
+    assert(g_terminal);
+    if (m_resync)
     {
         int16 unused;
         if (!m_printer->get_cursor_pos(m_cursor_x, unused))
@@ -286,7 +286,7 @@ void resync_rl_cursor_pos::clear()
 //------------------------------------------------------------------------------
 void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
 {
-    if (m_printer)
+    if (m_resync)
     {
         if (update_rl_last_pos)
         {
@@ -304,9 +304,7 @@ void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
             rl_fflush_function(_rl_out_stream);
         }
         else
-        {
-            m_printer->print(tmp.c_str(), tmp.length());
-        }
+            clink_write(tib::term_col(m_cursor_x));
 
         clear();
     }

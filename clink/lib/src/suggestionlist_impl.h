@@ -14,7 +14,7 @@
 
 #include <vector>
 
-class printer;
+class tib_terminal_bridge;
 enum class mouse_input_type : uint8;
 
 //------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ private:
     line_buffer*    m_buffer = nullptr;
     suggestions     m_suggestions;
     int32           m_count = 0;
-    printer*        m_printer = nullptr;
+    tib_terminal_bridge* m_terminal = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;
     bool            m_fallback_prev_bind_group = false;

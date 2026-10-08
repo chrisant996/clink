@@ -21,7 +21,6 @@
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 
 #include <memory>
 #include <assert.h>
@@ -1098,24 +1097,9 @@ extern "C" size_t lua_fwrite(void const* buffer, size_t size, size_t count, FILE
 #endif
             }
 
-            // g_printer is needed for terminal emulation.
-            assert(g_printer);
-
             // Print the buffer.
             suppress_implicit_write_console_logging nolog;
-            if (g_printer)
-            {
-                g_printer->print(static_cast<const char*>(buffer), uint32(count));
-            }
-            else
-            {
-                // Convert to UTF16.
-                wstr<32> s;
-                str_iter tmpi(static_cast<const char*>(buffer), uint32(count));
-                to_utf16(s, tmpi);
-                // Write in a single OS console call.
-                WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-            }
+            clink_write(static_cast<const char*>(buffer), uint32(count));
             return count;
         }
     }

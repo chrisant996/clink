@@ -15,7 +15,6 @@
 #include <lib/match_colors.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <lua/lua_script_loader.h>
 #include <lua/prompt.h>
 
@@ -96,10 +95,8 @@ do_help:
     if (!argc)
         goto do_help;
 
-    terminal term = terminal_create();
-    printer printer(*term.out);
-    printer_context printer_context(term.out, &printer);
-
+    init_terminal();
+    terminal_context tc;
     console_config cc(nullptr, false/*accept_mouse_input*/);
 
     // Load the settings and inputrc file from disk.
@@ -128,7 +125,7 @@ do_help:
 
     DWORD dummy;
     if (!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dummy))
-        g_printer = nullptr;
+        g_terminal = nullptr;
 
     return do_config(lua, argc, argv) ? 0 : 1;
 }

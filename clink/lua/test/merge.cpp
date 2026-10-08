@@ -24,7 +24,7 @@ TEST_CASE("Merge argmatchers")
     lua_state lua;
     lua_match_generator lua_generator(lua); // This loads the required lua scripts.
 
-    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr);
     line_editor_tester tester(desc, "&|", nullptr);
     tester.get_editor()->set_generator(lua_generator);
 

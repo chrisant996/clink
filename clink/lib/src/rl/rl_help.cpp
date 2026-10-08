@@ -9,9 +9,9 @@
 #include <core/str_unordered_set.h>
 #include <core/debugheap.h>
 #include <core/linear_allocator.h>
-#include <terminal/printer.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/ecma48_wrapper.h>
 #include "rl_commands.h"
@@ -1212,14 +1212,16 @@ static bool is_keyentry_equivalent(const Keyentry* map, int32 a, int32 b)
 //------------------------------------------------------------------------------
 static bool print_warnings(const std::vector<str_moveable>& warnings, int32 max_width, bool pager)
 {
+    assert(g_terminal);
+
     if (warnings.size() > 0)
     {
         bool stop = false;
 
-        if (pager && !g_pager->on_print_lines(*g_printer, 1))
+        if (pager && !g_pager->on_print_lines(1))
             stop = true;
         else
-            g_printer->print("\n");
+            g_terminal->write("\n");
 
         int32 num_warnings = stop ? 0 : int32(warnings.size());
         for (int32 i = 0; i < num_warnings; ++i)
@@ -1230,7 +1232,7 @@ static bool print_warnings(const std::vector<str_moveable>& warnings, int32 max_
             if (pager)
             {
                 const int32 lines = ((cell_count(s.c_str()) + max_width - 1) / max_width);
-                if (!g_pager->on_print_lines(*g_printer, lines))
+                if (!g_pager->on_print_lines(lines))
                 {
                     stop = true;
                     break;
@@ -1238,17 +1240,17 @@ static bool print_warnings(const std::vector<str_moveable>& warnings, int32 max_
             }
 
             // Print the warning.
-            g_printer->print(s.c_str(), s.length());
-            g_printer->print("\n");
+            g_terminal->write(s.c_str(), s.length());
+            g_terminal->write("\n");
         }
 
         if (pager)
         {
-            if (stop || !g_pager->on_print_lines(*g_printer, 1))
+            if (stop || !g_pager->on_print_lines(1))
                 return false;
         }
 
-        g_printer->print("\n");
+        g_terminal->write("\n");
     }
 
     return true;
@@ -1415,7 +1417,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     // Display any warnings.
     if (!out)
     {
-        g_pager->start_pager(*g_printer);
+        g_pager->start_pager();
         if (!print_warnings(warnings, max_width, true))
             lines.clear();
     }
@@ -1445,9 +1447,9 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
                     else
                         len += 1 + min(cell_count(entry.macro_text), macro_limit) + 1;
                 }
-                lines += len / g_printer->get_columns();
+                lines += len / g_terminal->get_columns();
             }
-            if (!g_pager->on_print_lines(*g_printer, lines))
+            if (!g_pager->on_print_lines(lines))
                 break;
         }
 
@@ -1512,7 +1514,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
 
                 // Print the key binding.
                 if (!out)
-                    g_printer->print(str.c_str(), str.length());
+                    g_terminal->write(str.c_str(), str.length());
                 else
                     out->emplace_back(std::move(info));
 
@@ -1525,12 +1527,12 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
             {
                 str.clear();
                 str << "\x1b[7m" << line.m_heading << "\x1b[m";
-                g_printer->print(str.c_str(), str.length());
+                g_terminal->write(str.c_str(), str.length());
             }
         }
 
         if (!out)
-            g_printer->print("\n");
+            g_terminal->write("\n");
     }
 
     if (!out)
@@ -1779,7 +1781,7 @@ static bool funcmac_dumper_internal(bool macros)
                 ++i;
             }
 
-            g_printer->print(line.c_str(), line.length());
+            g_terminal->write(line.c_str(), line.length());
         }
 
         rl_reset_line_state();
@@ -1834,14 +1836,14 @@ int32 clink_what_is(int32, int32)
             if (not_bound)
                 break;
 
-            g_printer->print("\r\x1b[Kwhat-is: ");
+            g_terminal->write("\r\x1b[Kwhat-is: ");
             if (keyseq.length())
                 translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, friendly, sort);
             if (key_name)
             {
                 s.clear();
                 s << "\x1b[0;1m" << key_name << "\x1b[m,";
-                g_printer->print(s.c_str(), s.length());
+                g_terminal->write(s.c_str(), s.length());
                 free(key_name);
                 key_name = nullptr;
             }
@@ -1870,7 +1872,7 @@ int32 clink_what_is(int32, int32)
     if (clink_is_signaled())
         return 0;
 
-    g_printer->print("\r\x1b[J");
+    g_terminal->write("\r\x1b[J");
 
     if (keyseq.length())
     {
@@ -1924,7 +1926,7 @@ int32 clink_what_is(int32, int32)
             str<> tmp;
             ecma48_wrapper wrapper(s.c_str(), _rl_screenwidth - 2);
             while (wrapper.next(tmp))
-                g_printer->print(tmp.c_str(), tmp.length());
+                g_terminal->write(tmp.c_str(), tmp.length());
         }
     }
 

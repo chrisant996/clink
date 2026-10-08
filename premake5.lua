@@ -279,7 +279,7 @@ workspace("clink")
 
 --------------------------------------------------------------------------------
 project("readline")
-    language("c")
+    language("c++")
     kind("staticlib")
     defines("BUILD_READLINE")
     includedirs("clink/core/include")
@@ -316,6 +316,12 @@ project("tib")
     includedirs("tib")                  -- for TIB_CONFIG_H and tib_config.h
     includedirs("tib/include")
     files("tib/tib/*.cpp")
+
+    includedirs("clink/lib/include/lib")
+    includedirs("readline")
+    includedirs("readline/compat")
+    files("readline/compat/*.cpp")
+    files("readline/compat/*.hpp")
 
 --------------------------------------------------------------------------------
 project("getopt")
@@ -383,6 +389,10 @@ project("detours")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_lib")
+    includedirs("clink/core/include/core")          -- for tib_config.h
+    includedirs("clink/terminal/include/terminal")  -- for tib's wcwidth.h
+    includedirs("tib")
+    includedirs("tib/include")
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")
@@ -463,6 +473,10 @@ clink_lib("clink_core")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_terminal")
+    includedirs("clink/core/include/core")          -- for tib_config.h
+    includedirs("clink/terminal/include/terminal")  -- for tib's wcwidth.h
+    includedirs("tib")
+    includedirs("tib/include")
     includedirs("clink/terminal/include/terminal")
     includedirs("clink/core/include")
     includedirs("clink/process/include")
@@ -637,6 +651,10 @@ clink_exe("clink_app_exe")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
+    includedirs("clink/core/include/core")          -- for tib_config.h
+    includedirs("clink/terminal/include/terminal")  -- for tib's wcwidth.h
+    includedirs("tib")
+    includedirs("tib/include")
     links("clink_app_common")
     links("clink_core")
     links("clink_lib")

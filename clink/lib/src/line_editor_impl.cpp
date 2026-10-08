@@ -46,6 +46,8 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <tib.h>
+
 //------------------------------------------------------------------------------
 setting_bool g_comment_row_show_hints(
     "comment_row.show_hints",
@@ -100,9 +102,7 @@ static bool rl_vi_insert_mode_esc_special_case(int32 key)
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
-    if (desc.input == nullptr) return nullptr;
-    if (desc.output == nullptr) return nullptr;
-    if (desc.printer == nullptr) return nullptr;
+    if (!g_terminal) return nullptr;
 
     return new line_editor_impl(desc);
 }
@@ -110,6 +110,7 @@ line_editor* line_editor_create(const line_editor::desc& desc)
 //------------------------------------------------------------------------------
 void line_editor_destroy(line_editor* editor)
 {
+    assert(g_terminal); // Promote symmetry from callers.
     delete editor;
 }
 
@@ -236,7 +237,6 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
 , m_module(desc.input)
 , m_collector(desc.command_tokeniser, desc.word_tokeniser, desc.get_quote_pair())
-, m_printer(*desc.printer)
 , m_pager(*this)
 , m_selectcomplete(*this)
 , m_textlist(*this)
@@ -248,7 +248,9 @@ line_editor_impl::line_editor_impl(const desc& desc)
     add_module(m_textlist);
     add_module(m_suggestionlist);
 
-    key_tester* old_tester = desc.input->set_key_tester(this);
+    assert(g_terminal);
+
+    key_tester* old_tester = g_terminal->get_in()->set_key_tester(this);
     assert(!old_tester);
 }
 
@@ -259,7 +261,9 @@ line_editor_impl::~line_editor_impl()
     if (check_flag(flag_editing))
         end_line();
 
-    m_desc.input->set_key_tester(nullptr);
+    assert(g_terminal);
+    if (g_terminal)
+        g_terminal->get_in()->set_key_tester(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -322,15 +326,18 @@ void line_editor_impl::begin_line()
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
-    m_desc.input->begin();
-    m_desc.output->begin();
+    assert(tib_terminal_bridge::get());
+    tib_terminal_bridge::get()->begin();
+    m_terminal = g_terminal;
+    assert(m_terminal);
+
     m_buffer.begin_line();
 
     static bool s_discover_terminal = true;
     if (s_discover_terminal)
     {
         s_discover_terminal = false;
-        terminal_discover_config(m_desc.input);
+        terminal_discover_config(m_terminal->get_in());
     }
 
     m_prev_generate.clear();
@@ -370,8 +377,8 @@ void line_editor_impl::end_line()
     rl_before_display_function = nullptr;
 
     m_buffer.end_line();
-    m_desc.output->end();
-    m_desc.input->end();
+    m_terminal->end();
+    m_terminal = nullptr;
 
     m_words.clear();
     m_command_line_states.clear();
@@ -904,8 +911,9 @@ bool line_editor_impl::update_input()
 
         if (key == terminal_in::input_terminal_resize)
         {
-            int32 columns = m_desc.output->get_columns();
-            int32 rows = m_desc.output->get_rows();
+            assert(g_terminal);
+            int32 columns = g_terminal->get_out()->get_columns();
+            int32 rows = g_terminal->get_out()->get_rows();
             editor_module::context context = get_context();
             for (auto* module : m_modules)
                 module->on_terminal_resize(columns, rows, context);
@@ -1068,7 +1076,7 @@ command_line_states line_editor_impl::collect_command_line_states()
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-static void print_words(printer& printer, int32 row, bool after_break, const words& words, const rl_buffer& buffer)
+static void print_words(tib_terminal_bridge& terminal, int32 row, bool after_break, const words& words, const rl_buffer& buffer)
 {
     str<> tmp;
     if (words.size() > 0)
@@ -1077,22 +1085,22 @@ static void print_words(printer& printer, int32 row, bool after_break, const wor
         int32 i_word = 1;
         const char* tag = after_break ? "after word break info:  " : "collected words:        ";
         tmp.format("\x1b[s\x1b[%dH%s", row, tag);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
         for (auto const& w : words)
         {
             tmp.format("\x1b[90m%u\x1b[m", i_word);
-            printer.print(tmp.c_str(), tmp.length());
+            terminal.write(tmp.c_str(), tmp.length());
 
             const char* q = w.quoted ? "\"" : "";
             const char* color = "37";
             if (w.command_word)
             {
                 command = true;
-                printer.print("!");
+                terminal.write("!");
             }
             if (w.is_redir_arg)
             {
-                printer.print(">");
+                terminal.write(">");
                 color = "33";
             }
             if (command && !w.is_redir_arg)
@@ -1103,17 +1111,17 @@ static void print_words(printer& printer, int32 row, bool after_break, const wor
             if (after_break && i_word == words.size())
                 color = "35";
             tmp.format("%s\x1b[0;%s;7m%.*s\x1b[m%s ", q, color, w.length, buffer.get_buffer() + w.offset, q);
-            printer.print(tmp.c_str(), tmp.length());
+            terminal.write(tmp.c_str(), tmp.length());
             i_word++;
         }
-        printer.print("\x1b[K\x1b[u");
+        terminal.write("\x1b[K\x1b[u");
     }
     else if (!after_break)
     {
         tmp.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", row);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
         tmp.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", row + 1);
-        printer.print(tmp.c_str(), tmp.length());
+        terminal.write(tmp.c_str(), tmp.length());
     }
 }
 #endif
@@ -1142,7 +1150,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     str<> tmp2;
     if (dbg_row > 0)
     {
-        print_words(m_printer, dbg_row, false, words, m_buffer);
+        print_words(*m_terminal, dbg_row, false, words, m_buffer);
     }
 #endif
 
@@ -1163,7 +1171,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
         if (dbg_row > 0)
         {
             auto const& after_break_words = command_line_states.get_linestate(m_buffer).get_words();
-            print_words(m_printer, dbg_row + 1, true, after_break_words, m_buffer);
+            print_words(*m_terminal, dbg_row + 1, true, after_break_words, m_buffer);
         }
 #endif
 
@@ -1468,10 +1476,10 @@ line_states line_editor_impl::get_linestates() const
 //------------------------------------------------------------------------------
 editor_module::context line_editor_impl::get_context() const
 {
-    auto& pter = const_cast<printer&>(m_printer);
+    assert(g_terminal);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, m_desc.rprompt, pter, pger, buffer, m_matches, m_classifications, m_input_hint };
+    return { m_desc.prompt, m_desc.rprompt, pger, buffer, m_matches, m_classifications, m_input_hint };
 }
 
 //------------------------------------------------------------------------------

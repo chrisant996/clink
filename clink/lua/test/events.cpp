@@ -69,7 +69,7 @@ TEST_CASE("Lua events")
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
 
-    line_editor::desc desc(nullptr, nullptr, nullptr, &test_host);
+    line_editor::desc desc(&test_host);
     desc.command_tokeniser = &command_tokeniser;
     desc.word_tokeniser = &word_tokeniser;
     line_editor_tester tester(desc, nullptr, nullptr);

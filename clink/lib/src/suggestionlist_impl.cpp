@@ -26,7 +26,6 @@
 #include <core/str_iter.h>
 #include <core/auto_closure.h>
 #include <rl/rl_commands.h>
-#include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/key_tester.h>
 #include <terminal/terminal_helpers.h>
@@ -318,10 +317,11 @@ static void make_color_sequence(const setting_color& color, str_base& out, int32
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_begin_line(const context& context)
 {
+    assert(g_terminal);
     assert(!s_suggestionlist);
     s_suggestionlist = this;
     m_buffer = &context.buffer;
-    m_printer = &context.printer;
+    m_terminal = g_terminal;
     m_force_display = false;
     m_clear_display = false;
     m_applied = false;
@@ -338,8 +338,8 @@ void suggestionlist_impl::on_begin_line(const context& context)
     make_color_sequence(s_color_suggestionlist_selected, m_selected_color, -1);
     make_color_sequence(g_color_description, m_tooltip_color);
 
-    m_screen_cols = context.printer.get_columns();
-    m_screen_rows = context.printer.get_rows();
+    m_screen_cols = m_terminal->get_columns();
+    m_screen_rows = m_terminal->get_rows();
     update_layout();
 }
 
@@ -348,7 +348,7 @@ void suggestionlist_impl::on_end_line()
 {
     s_suggestionlist = nullptr;
     m_buffer = nullptr;
-    m_printer = nullptr;
+    m_terminal = nullptr;
     m_force_display = false;
     m_clear_display = false;
     m_applied = false;
@@ -372,7 +372,7 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         // disable the suggestion list.
         m_first_input = false;
         assert(m_buffer);
-        assert(m_printer);
+        assert(m_terminal);
         assert(m_bind_group >= 0);
         if (s_suggestionlist_autooff.get())
         {
@@ -854,7 +854,7 @@ void suggestionlist_impl::update_display()
 
     // Remember the cursor position so it can be restored later to stay
     // consistent with Readline's view of the world.
-    resync_rl_cursor_pos resync(m_printer, true/*use_rl_fwrite*/);
+    resync_rl_cursor_pos resync;
 
     display_accumulator coalesce;
 
@@ -865,7 +865,7 @@ void suggestionlist_impl::update_display()
     int32 up = 0;
     if (m_input_hints)
     {
-        rl_crlf();
+        clink_write("\n", 1);
         up++;
     }
 
@@ -876,7 +876,7 @@ void suggestionlist_impl::update_display()
         const int32 rows = min<>(m_visible_rows, m_count);
         m_displayed_rows = rows;
 
-        rl_crlf();
+        clink_write("\r\n", 2);
         up++;
 
         const bool clear_display = m_clear_display;
@@ -935,7 +935,7 @@ void suggestionlist_impl::update_display()
             if (i >= m_count)
                 break;
 
-            rl_crlf();
+            clink_write("\r\n", 2);
             ++up;
 
             // Print entry.
@@ -990,7 +990,7 @@ void suggestionlist_impl::update_display()
                         assert(m_any_displayed.size() >= screen_row);
 
                         tooltip = m_index;
-                        rl_crlf();
+                        clink_write("\r\n", 2);
                         ++up;
                         const int32 indent_width = 4;
                         tmp.clear();
@@ -1033,7 +1033,7 @@ void suggestionlist_impl::update_display()
         if (!m_any_displayed.empty())
         {
             // Move cursor to next line, then clear to end of screen.
-            rl_crlf();
+            clink_write("\r\n", 2);
             up++;
             clink_write("\x1b[m\x1b[J", 6);
         }
@@ -1047,12 +1047,13 @@ void suggestionlist_impl::update_display()
         s.format("\x1b[%dA", up);
         clink_write(s.c_str(), s.length());
     }
+    resync.resync();
+
     clink_flush();
     coalesce.end();
     COORD cursor;
-    m_printer->get_cursor_pos(cursor.X, cursor.Y);
+    m_terminal->get_cursor_pos(cursor.X, cursor.Y);
     m_mouse_offset = cursor.Y + !!m_input_hints + 2/*to top item*/;
-    resync.resync();
 
     // Restore cursor.
     show_cursor(was_visible);
@@ -1456,13 +1457,13 @@ bool suggestionlist_impl::remove_history_index(int32 history_index)
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active() const
 {
-    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer && !m_hide;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_terminal && !m_hide;
 }
 
 //------------------------------------------------------------------------------
 bool suggestionlist_impl::is_active_even_if_hidden() const
 {
-    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_printer;
+    return !m_disabled && m_prev_bind_group >= 0 && m_buffer && m_terminal;
 }
 
 //------------------------------------------------------------------------------

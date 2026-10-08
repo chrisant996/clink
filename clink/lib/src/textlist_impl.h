@@ -12,7 +12,7 @@
 
 #include <vector>
 
-class printer;
+class tib_terminal_bridge;
 enum class mouse_input_type : uint8;
 
 //------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ private:
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
-    printer*        m_printer = nullptr;
+    tib_terminal_bridge* m_terminal = nullptr;
     int32           m_bind_group = -1;
     del_callback_t  m_del_callback = nullptr;
 

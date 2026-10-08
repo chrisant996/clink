@@ -35,7 +35,6 @@
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
-#include <terminal/printer.h>
 #include <terminal/terminal.h>          // for find_key_name()
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
@@ -1085,10 +1084,10 @@ static void adjust_completion_defaults()
         {
             str<> tmp;
             tmp.format("\x1b[s\x1b[%dHexpand envvars in:  ", dbg_row);
-            g_printer->print(tmp.c_str(), tmp.length());
+            g_terminal->write(tmp.c_str(), tmp.length());
             tmp.format("\x1b[0;37;7m%.*s\x1b[m", word_len, buffer + word_break);
-            g_printer->print(tmp.c_str(), tmp.length());
-            g_printer->print("\x1b[K\x1b[u");
+            g_terminal->write(tmp.c_str(), tmp.length());
+            g_terminal->write("\x1b[K\x1b[u");
         }
 #endif
 
@@ -2960,7 +2959,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         result.done(m_eof);
         return;
     }
-
 }
 
 //------------------------------------------------------------------------------

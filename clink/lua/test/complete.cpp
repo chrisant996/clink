@@ -13,7 +13,6 @@
 #include <lua/lua_state.h>
 #include <rl/rl_commands.h>
 #include <terminal/terminal.h>
-#include <terminal/printer.h>
 
 extern "C" {
 #include <lua.h>
@@ -62,10 +61,7 @@ TEST_CASE("Rl matches")
 
     lua_load_script(lua, app, commands);
 
-    terminal term = terminal_create();
-    printer printer(*term.out);
-
-    line_editor::desc desc(nullptr, term.out, &printer, &test_host);
+    line_editor::desc desc(&test_host);
     line_editor_tester tester(desc, "&|", nullptr);
     tester.get_editor()->set_generator(lua_generator);
 

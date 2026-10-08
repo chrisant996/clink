@@ -14,7 +14,6 @@
 #include <lib/history_timeformatter.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 
 #include <getopt.h>
@@ -33,24 +32,6 @@ static bool s_diag = false;
 static bool s_showtime = false;
 static history_timeformatter s_timeformatter(!is_console(GetStdHandle(STD_OUTPUT_HANDLE)));
 
-//------------------------------------------------------------------------------
-class terminal_scope
-{
-public:
-                    terminal_scope(terminal& term);
-
-private:
-    printer         m_printer;
-    printer_context m_printer_context;
-};
-
-//------------------------------------------------------------------------------
-terminal_scope::terminal_scope(terminal& term)
-: m_printer(*term.out)
-, m_printer_context(term.out, &m_printer)
-{
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -65,8 +46,6 @@ public:
 private:
     str<280>        m_path;
     history_db*     m_history;
-    terminal        m_terminal;
-    terminal_scope* m_terminal_scope;
 };
 
 //------------------------------------------------------------------------------
@@ -81,8 +60,9 @@ history_scope::history_scope()
     app->get_default_settings_file(default_settings_file);
     settings::load(m_path.c_str(), default_settings_file.c_str());
 
-    m_terminal = terminal_create();
-    m_terminal_scope = new terminal_scope(m_terminal);
+// TODO-TIB: does terminal init need settings loaded first?
+    init_terminal();
+    g_terminal->begin();
 
     if (g_history_timestamp.get() == 2)
         s_showtime = true;
@@ -102,8 +82,7 @@ history_scope::history_scope()
 //------------------------------------------------------------------------------
 history_scope::~history_scope()
 {
-    delete m_terminal_scope;
-    terminal_destroy(m_terminal);
+    uninit_terminal();
 }
 
 
@@ -198,7 +177,7 @@ static void print_history(uint32 tail_count, bool bare)
         {
             translate_history_line(utf8, line.get_pointer(), line.length());
             utf8.concat("\r\n", 2);
-            g_printer->print(utf8.c_str(), utf8.length());
+            g_terminal->write(utf8.c_str(), utf8.length());
         }
         else
         {
