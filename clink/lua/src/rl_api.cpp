@@ -34,6 +34,8 @@ extern "C" {
 #include <readline/rlprivate.h>
 }
 
+#include <tib_killring.h>
+
 
 
 //------------------------------------------------------------------------------
@@ -294,6 +296,10 @@ static int32 set_rl_variable(lua_State* state)
         return 0;
 
     int32 failed = rl_variable_bind(name, value);
+
+// TODO-TIB: quick hack for now.
+    g_bell_preference = static_cast<bell_preference>(_rl_bell_preference);
+
     lua_pushboolean(state, !failed);
 
 // TODO-TIB: quick hack for now.
@@ -1514,10 +1520,10 @@ static int32 get_inputrc_file_name(lua_State* state)
 /// -name:  rl.getkillringcount
 /// -ver:   1.9.29
 /// -ret:   integer
-/// Returns the number of strings in Readline's kill-ring.
+/// Returns the number of strings in the kill-ring.
 static int32 get_kill_ring_count(lua_State* L)
 {
-    lua_pushinteger(L, rl_get_kill_ring_count());
+    lua_pushinteger(L, tib::get_kill_ring_count());
     return 1;
 }
 
@@ -1528,7 +1534,7 @@ static int32 get_kill_ring_count(lua_State* L)
 /// Returns the current index in Readline's kill-ring.
 static int32 get_kill_ring_index(lua_State* L)
 {
-    lua_pushinteger(L, rl_get_kill_ring_index() + 1);
+    lua_pushinteger(L, tib::get_kill_ring_index() + 1);
     return 1;
 }
 
@@ -1545,7 +1551,7 @@ static int32 get_kill_ring_string(lua_State* L)
         return 0;
     const int32 index = _index - 1;
 
-    const char* s = rl_get_kill_ring_string(index);
+    const char* s = tib::get_kill_ring_text(index);
     if (!s)
         return 0;
 
@@ -1560,13 +1566,13 @@ static int32 get_kill_ring_string(lua_State* L)
 /// Returns a table containing the kill-ring strings.
 static int32 get_kill_ring_strings(lua_State* L)
 {
-    const int32 count = rl_get_kill_ring_count();
+    const int32 count = tib::get_kill_ring_count();
 
     lua_createtable(L, count, 0);
 
     for (int32 i = 0;;)
     {
-        const char* s = rl_get_kill_ring_string(i++);
+        const char* s = tib::get_kill_ring_text(i++);
         if (!s)
             break;
 

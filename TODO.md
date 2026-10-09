@@ -4,6 +4,39 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # IMPROVEMENTS
 
+## TIB
+
+- terminal_fwrite_context?
+
+- Some Readline termcap strings need native replacement:
+  - _rl_term_clrscroll
+  - _rl_term_clreol
+  - _rl_term_clrpag
+  - _rl_term_mm, _rl_term_mo, _rl_enable_meta_key(), _rl_disable_meta_key()
+  - _rl_term_vs, _rl_term_ve, _rl_set_cursor()
+  - rl_cr(), rl_crlf()
+- Reconnect `debug.log_terminal` support for logging read input.
+- Need to swap `\x08` and `\x7f` again, oops.
+- Internal states, for specialized behaviors that used to rely on RL_STATE flags.
+- Command groups:
+  - [x] Kill ring.
+  - [ ] Completion.
+  - [ ] History.
+  - [ ] Miscellaneous.
+- Suggestions:
+  - [ ] Inline suggestions.
+  - [ ] Suggestion usage hint.
+  - [ ] Suggestion list (requires history commands to be working).
+  - [ ] Suggestion list has an extra blank line below it that doesn't get cleared correctly.
+- `clink-select-complete`:
+  - [ ] Activate.
+  - [ ] Overlay key bindings.  This would need a way to tell the dispatcher to forward the binding as though a miss had occurred, even though it didn't miss.  But that could get weird:  what if the fallback produces a miss?  The design might not be generalized enough yet to replace Clink's `bind_resolver` with tib's binding framework.
+- Popup lists in general.
+- Bracketed paste.
+- VI mode.
+- `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
+- `_rl_show_mode_in_prompt` and emacs and vi modes.
+
 ## Mystery Issue
 
 ## High Priority
