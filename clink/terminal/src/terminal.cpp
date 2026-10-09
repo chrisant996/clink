@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------
 static bool s_has_synchronize_output = false;
 tib_terminal_bridge* g_terminal = nullptr;
+bell_preference g_bell_preference = bell_preference::audible;
 
 //------------------------------------------------------------------------------
 void terminal_discover_config(terminal_in* in)

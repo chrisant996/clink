@@ -83,6 +83,9 @@ _rl_callback_newline (void)
   rl_eof_found = 0;
   RL_UNSETSTATE(RL_STATE_DONE|RL_STATE_TIMEOUT|RL_STATE_EOF);
 
+  /* Tell the history routines what is going on. */
+  _rl_start_using_history ();
+
   /* Parsing of key-bindings begins in an enabled state. */
   _rl_parsing_conditionalized_out = 0;
 

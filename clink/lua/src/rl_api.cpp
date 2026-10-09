@@ -295,6 +295,10 @@ static int32 set_rl_variable(lua_State* state)
 
     int32 failed = rl_variable_bind(name, value);
     lua_pushboolean(state, !failed);
+
+// TODO-TIB: quick hack for now.
+    g_bell_preference = static_cast<bell_preference>(_rl_bell_preference);
+
     return 1;
 }
 

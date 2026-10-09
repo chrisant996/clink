@@ -7,6 +7,7 @@
 #include "match_generator.h"
 #include "match_pipeline.h"
 #include "slash_translation.h"
+#include "rl_integration.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -1168,8 +1169,9 @@ void matches_impl::set_input_line(const char* text, int32 generation_id)
 //------------------------------------------------------------------------------
 bool matches_impl::is_from_current_input_line()
 {
-    const bool diff = (m_input_line.length() != rl_end ||
-                       strncmp(m_input_line.c_str(), rl_line_buffer, rl_end) != 0);
+    const tib::cstring& input_line = g_tib->get_text();
+    const bool diff = (m_input_line.length() != input_line.length() ||
+                       strncmp(m_input_line.c_str(), input_line.c_str(), input_line.length()) != 0);
     return !diff;
 }
 

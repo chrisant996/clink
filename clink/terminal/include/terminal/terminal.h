@@ -14,8 +14,12 @@ class input_idle;
 class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
+enum class bell_preference { none, visible, audible };
+
+//------------------------------------------------------------------------------
 extern tib_terminal_bridge* g_terminal;
 extern uint32 g_ambiguous_keyseq_timeout;
+extern bell_preference g_bell_preference;
 extern bool g_debug_log_input_pipeline;
 
 //------------------------------------------------------------------------------

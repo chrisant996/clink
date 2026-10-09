@@ -810,6 +810,7 @@ static int saved_history_logical_offset = -1;
 
 #define HISTORY_FULL() (history_is_stifled () && history_length >= history_max_entries)
 
+#ifdef TIB_TODO
 static int
 set_saved_history (void)
 {
@@ -826,6 +827,7 @@ set_saved_history (void)
 
   return (0);
 }
+#endif
 
 int
 rl_operate_and_get_next (int count, int c)
