@@ -63,6 +63,7 @@ static int _paren_blink_usec = 500000;
 void
 _rl_enable_paren_matching (int on_or_off)
 {
+#ifdef TIB_TODO
   if (on_or_off)
     {
       /* ([{ */
@@ -91,6 +92,7 @@ _rl_enable_paren_matching (int on_or_off)
       rl_bind_key_in_map ('}', rl_insert, vi_insertion_keymap);
 #endif
     }
+#endif
 }
 
 int

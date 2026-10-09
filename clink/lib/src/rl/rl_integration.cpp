@@ -101,10 +101,11 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
 static str_moveable s_prev_inputline;
 static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
-static bool         s_has_override_rl_last_func = false;
+static bool         s_has_override_last_command = false;
 static uint32       s_last_func_override_counter = 0;
-static rl_command_func_t* s_override_rl_last_func = nullptr;
+static str_moveable s_override_last_command;
 static str_moveable s_last_luafunc;
+static bool         s_ignore_last_command_hook = false;
 
 //------------------------------------------------------------------------------
 void set_prev_inputline(const char* line, uint32 length)
@@ -129,15 +130,19 @@ void set_pending_luafunc(const char* macro)
 }
 
 //------------------------------------------------------------------------------
-void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
+void override_last_command(const char* name, bool force_when_null)
 {
     ++s_last_func_override_counter;
-    s_has_override_rl_last_func = true;
-    s_override_rl_last_func = func;
-    if (func || force_when_null)
+    s_has_override_last_command = true;
+    s_override_last_command = name;
+    if (name || force_when_null)
     {
-        rl_last_func = func;
+        rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
+        g_tib->set_last_command(name);
+#ifdef TIB_TODO
+        // TODO-TIB: seems unnecessary anymore.
         cua_after_command();
+#endif
     }
 }
 
@@ -148,9 +153,13 @@ const char* get_last_luafunc()
 }
 
 //------------------------------------------------------------------------------
-void* get_effective_last_func()
+const char* get_effective_last_command()
 {
-    return reinterpret_cast<void*>(s_has_override_rl_last_func ? s_override_rl_last_func : rl_last_func);
+    if (s_has_override_last_command)
+        return s_override_last_command.c_str();
+    if (g_tib)
+        return g_tib->get_last_command();
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -160,61 +169,88 @@ uint32 get_last_func_override_counter()
 }
 
 //------------------------------------------------------------------------------
-int32 macro_hook_func(const char* macro)
+bool is_luafunc_command(const char* name, str_base* out)
 {
-    bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
+    const bool is_luafunc = (name && strnicmp(name, "luafunc:", 8) == 0);
 
-    if (is_luafunc)
+    if (!is_luafunc)
+        return false;
+
+    if (out)
     {
-        str<> func_name;
-        func_name = macro + 8;
-        func_name.trim();
-
-        // TODO: Ideally optimize this so that it only resets match generation if
-        // the Lua function triggers completion.
-        reset_generate_matches();
-
-        HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
-        DWORD prev_mode[2];
-        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes must match");
-        for (size_t i = 0; i < _countof(std_handles); ++i)
-            GetConsoleMode(std_handles[i], &prev_mode[i]);
-
-        if (!host_call_lua_rl_global_function(func_name.c_str()))
-            rl_ding();
-
-        const DWORD raw_prev_mode = prev_mode[0];
-        prev_mode[0] = cleanup_console_input_mode(prev_mode[0]);
-        for (size_t i = 0; i < _countof(std_handles); ++i)
-            SetConsoleMode(std_handles[i], prev_mode[i]);
-        if (raw_prev_mode != prev_mode[0])
-            debug_show_console_mode();
+        out->copy(name + 8);
+        out->trim();
     }
 
-    cua_after_command(!is_luafunc/*force_clear*/);
-
-    return is_luafunc;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-void last_func_hook_func(int32 dispatched)
+bool luafunc_hook_func(const char* name)
 {
-    if (s_has_override_rl_last_func)
+    str<> func_name;
+    if (!is_luafunc_command(name, &func_name))
+        return false;
+
+    static bool s_busy = false;
+    assert(!s_busy);
+    if (s_busy)
+        return true;
+    rollback<bool> rb_busy(s_busy, true);
+
+    // TODO: Ideally optimize this so that it only resets match generation if
+    // the Lua function triggers completion.
+    reset_generate_matches();
+
+    HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
+    DWORD prev_mode[2];
+    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes must match");
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        GetConsoleMode(std_handles[i], &prev_mode[i]);
+
+    if (!host_call_lua_rl_global_function(func_name.c_str()))
+        tib::ding();
+
+    const DWORD raw_prev_mode = prev_mode[0];
+    prev_mode[0] = cleanup_console_input_mode(prev_mode[0]);
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        SetConsoleMode(std_handles[i], prev_mode[i]);
+    if (raw_prev_mode != prev_mode[0])
+        debug_show_console_mode();
+
+#ifdef TIB_TODO
+    // TODO-TIB: seems unnecessary anymore.
+    cua_after_command(!is_luafunc/*force_clear*/);
+#endif
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void last_command_hook_func(int32 dispatched)
+{
+    if (s_ignore_last_command_hook)
+        return;
+    rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
+
+// TODO-TIB: the shape of this integration may need to change?
+    if (s_has_override_last_command)
     {
-        rl_last_func = s_override_rl_last_func;
-        s_has_override_rl_last_func = false;
+        g_tib->set_last_command(s_override_last_command.c_str());
+        s_has_override_last_command = false;
     }
 
-    cua_after_command();
     s_last_luafunc.clear();
 
     if (!dispatched)
         return;
 
-    if (s_prev_inputline.length() != rl_end || memcmp(s_prev_inputline.c_str(), rl_line_buffer, rl_end))
+    const tib::cstring input_line = g_tib->get_text();
+    const tib::textpos_t end = input_line.length();
+    if (s_prev_inputline.length() != end || memcmp(s_prev_inputline.c_str(), input_line.c_str(), end))
     {
         s_prev_inputline.clear();
-        s_prev_inputline.concat(rl_line_buffer, rl_end);
+        s_prev_inputline.concat(input_line.c_str(), end);
         host_send_oninputlinechanged_event(s_prev_inputline.c_str());
     }
 
@@ -225,10 +261,15 @@ void last_func_hook_func(int32 dispatched)
 //------------------------------------------------------------------------------
 void apply_pending_lastfunc()
 {
-    if (s_has_override_rl_last_func)
+    if (s_has_override_last_command)
     {
-        rl_last_func = s_override_rl_last_func;
-        s_has_override_rl_last_func = false;
+        assert(g_tib);
+        if (g_tib)
+        {
+            rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
+            g_tib->set_last_command(s_override_last_command.c_str());
+        }
+        s_has_override_last_command = false;
     }
     if (s_has_pending_luafunc)
     {
@@ -241,8 +282,8 @@ void apply_pending_lastfunc()
 void clear_pending_lastfunc()
 {
     s_pending_luafunc.clear();
-    s_has_override_rl_last_func = false;
-    s_override_rl_last_func = nullptr;
+    s_has_override_last_command = false;
+    s_override_last_command.clear();
 }
 
 
@@ -250,11 +291,16 @@ void clear_pending_lastfunc()
 //------------------------------------------------------------------------------
 bool rl_has_queued_input()
 {
+#ifdef TIB_TODO
     assertimplies(rl_pending_input, RL_ISSTATE(RL_STATE_INPUTPENDING));
     assertimplies(_rl_peek_macro_key(), RL_ISSTATE(RL_STATE_MACROINPUT));
     return ((RL_ISSTATE(RL_STATE_INPUTPENDING)) ||
             (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()) ||
             _rl_pushed_input_available());
+#else
+// TODO-TIB: this is a behavior change; it did not check live input before.
+    return tib::term_in_avail(0);
+#endif
 }
 
 

@@ -8,7 +8,7 @@
 #include <tib.h>
 
 //------------------------------------------------------------------------------
-void    init_readline_funmap();
+void    init_editor_commands();
 
 //------------------------------------------------------------------------------
 void    reset_command_states();
@@ -19,13 +19,15 @@ int32   host_add_history(int32, const char* line, const char** out_timestamp=nul
 int32   host_remove_history(int32 rl_history_index, const char* line);
 
 //------------------------------------------------------------------------------
-int32   show_rl_help(int32, int32);
-int32   show_rl_help_raw(int32, int32);
-int32   clink_dump_functions(int32, int32);
-int32   clink_dump_macros(int32, int32);
-int32   clink_what_is(int32, int32);
+int32_t show_rl_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t show_rl_help_raw(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
+int32   clink_newline(int32 count, int32 invoking_key); // TODO-TIB: temporary placeholder.
+int32_t clink_accept_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   clink_reload(int32, int32);
 int32   clink_reset_line(int32, int32);
 int32   clink_exit(int32 count, int32 invoking_key);

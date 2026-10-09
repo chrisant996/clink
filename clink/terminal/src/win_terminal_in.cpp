@@ -11,6 +11,8 @@
 #include "screen_buffer.h"
 #include "ecma48_iter.h" // for send_terminal_request()
 
+#include <tib_terminal.h>
+
 #include <core/base.h>
 #include <core/os.h>
 #include <core/str.h>
@@ -68,6 +70,8 @@ setting_bool g_debug_log_terminal(
     "Having this on significantly increases the amount of information written to\n"
     "the log file.",
     false);
+
+extern bool g_debug_log_input_pipeline;
 
 #ifdef _MSC_VER
 setting_bool g_debug_log_output_callstacks(
@@ -549,35 +553,6 @@ const char* find_key_name(const char* keyseq, int32& len, int32& eqclass, int32&
 
 
 //------------------------------------------------------------------------------
-enum : uint8
-{
-    // Currently, the first byte in UTF8 cannot have the high 5 bits all 1.
-    // That gives us room to define some magic characters:
-    //      0xff  0xfe  0xfd  0xfc  0xfb  0xfa  0xf9  0xf8
-    //
-    // Longer term, it's probably worth pushing valid UTF8 representations of
-    // invalid UTF8 codepoints, if that's possible.
-
-    input_abort_byte    = 0xff,
-    input_none_byte     = 0xfe,
-    input_exit_byte     = 0xfd,
-};
-
-//------------------------------------------------------------------------------
-static int32 translate_special_input_bytes(uint8 c)
-{
-    switch (c)
-    {
-    case input_none_byte:       return terminal_in::input_none;
-    case input_abort_byte:      return terminal_in::input_abort;
-    case input_exit_byte:       return terminal_in::input_exit;
-    default:                    return c;
-    }
-}
-
-
-
-//------------------------------------------------------------------------------
 uint32 win_terminal_in::get_dimensions()
 {
     uint16 cols, rows;
@@ -673,6 +648,7 @@ bool win_terminal_in::available(uint32 _timeout)
 {
     bool ret = (m_buffer_count > 0 || !m_pending_records.empty());
     const DWORD stop = GetTickCount() + _timeout;
+
     while (!ret)
     {
         DWORD timeout = stop - GetTickCount();
@@ -694,54 +670,76 @@ bool win_terminal_in::available(uint32 _timeout)
         if (!timeout)
             break;
     }
+
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT win.available timeout=%u result=%d buffered=%u pending=%zu", _timeout, ret, m_buffer_count, m_pending_records.size());
     return ret;
 }
 
 //------------------------------------------------------------------------------
 void win_terminal_in::select(input_idle* callback, uint32 timeout)
 {
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT win.select timeout=%u buffered=%u pending=%zu", timeout, m_buffer_count, m_pending_records.size());
+
     if (!m_buffer_count)
         read_console(callback, timeout);
+
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT win.select returned buffered=%u pending=%zu", m_buffer_count, m_pending_records.size());
 }
 
 //------------------------------------------------------------------------------
-// WARNING: This must return a signed value because things like
-// line_editor_impl::update_input, standalone_input::update_input,
-// read_key_direct, etc use a signed comparison to detect "special" inputs.
 int32 win_terminal_in::read()
 {
-    uint32 dimensions = get_dimensions();
-    if (dimensions != m_dimensions)
-    {
-        m_dimensions = dimensions;
-        return terminal_in::input_terminal_resize;
-    }
-
     if (!m_buffer_count)
     {
         if (!m_pending_records.empty())
         {
             const INPUT_RECORD record = m_pending_records.back();
             m_pending_records.pop_back();
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT win.read pending record type=%u remaining=%zu", record.EventType, m_pending_records.size());
             process_record(record);
         }
 
         if (!m_buffer_count)
-            return terminal_in::input_none;
+        {
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT win.read none pending=%zu", m_pending_records.size());
+            return input_none;
+        }
     }
 
-    const uint8 c = pop();
-    return translate_special_input_bytes(c);
+    const int32 c = pop();
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT win.read buffer value=%d (0x%02x '%c') remaining=%u pending=%zu", c, c, c, m_buffer_count, m_pending_records.size());
+
+#if 0
+    if (c == input_none)
+    {
+        // If there's no input available, then it's safe to synthesize a
+        // terminal resize event.  But this should be unnecessary now that
+        // WINDOW_BUFFER_SIZE_EVENT is treated as a first class citizen.
+        const auto dim = get_dimensions();
+        if (dim != m_dimensions)
+        {
+            m_dimensions = dim;
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT win.read resize buffered=%u pending=%zu", m_buffer_count, m_pending_records.size());
+            return input_terminal_resize;
+        }
+    }
+#endif
+
+    return c;
 }
 
 //------------------------------------------------------------------------------
 int32 win_terminal_in::peek()
 {
     if (m_buffer_count)
-    {
-        const uint8 c = m_buffer[m_buffer_head];
-        return translate_special_input_bytes(c);
-    }
+        return m_buffer[m_buffer_head];
 
     if (!m_pending_records.empty())
     {
@@ -750,7 +748,7 @@ int32 win_terminal_in::peek()
             return peeked;
     }
 
-    return terminal_in::input_none;
+    return input_none;
 }
 
 static bool is_final_byte(const char* final, const char* candidate)
@@ -872,7 +870,7 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
 
     std::vector<INPUT_RECORD> pending_records;      // (a stack)
     std::vector<INPUT_RECORD> processed_records;    // (an array)
-    uint8 buffer[sizeof(m_buffer)];
+    int16 buffer[sizeof_array(m_buffer)];
     auto buffer_head = m_buffer_head;
     auto buffer_count = m_buffer_count;
     auto lead_surrogate = m_lead_surrogate;
@@ -929,8 +927,12 @@ bool win_terminal_in::send_terminal_request(const char* request, const char* pre
 
             while (m_buffer_count)
             {
-                const uint8 c = pop();
-                input.concat_no_truncate(reinterpret_cast<const char*>(&c), 1);
+                const auto key = pop();
+                if (is_input_byte(key))
+                {
+                    char c = char(key);
+                    input.concat_no_truncate(reinterpret_cast<const char*>(&c), 1);
+                }
             }
 
             correlation.char_count = input.length() - correlation.stream_index;
@@ -1035,22 +1037,19 @@ static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
 }
 
 //------------------------------------------------------------------------------
-bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
+bool win_terminal_in::peek_record(INPUT_RECORD& record, int32* peeked)
 {
     bool ret = false;
     const uint32 buffer_count = m_buffer_count;
     const wchar_t lead_surrogate = m_lead_surrogate;
 
-    switch (record.EventType)
+    switch (record.EventType & 0x0fff)
     {
     case KEY_EVENT:
         process_input(record.Event.KeyEvent, true/*peek*/);
         ret = (m_buffer_count > buffer_count);
         if (peeked)
-        {
-            const uint8 c = ret ? m_buffer[m_buffer_head] : input_none_byte;
-            *peeked = translate_special_input_bytes(c);
-        }
+            *peeked = ret ? m_buffer[m_buffer_head] : input_none;
         m_buffer_count = buffer_count; // Revert.
         if (lead_surrogate)
             m_lead_surrogate = lead_surrogate; // Revert.
@@ -1060,17 +1059,28 @@ bool win_terminal_in::peek_record(const INPUT_RECORD& record, int32* peeked)
         process_input(record.Event.MouseEvent, true/*peek*/);
         ret = (m_buffer_count > buffer_count);
         if (peeked)
-        {
-            const uint8 c = ret ? m_buffer[m_buffer_head] : input_none_byte;
-            *peeked = translate_special_input_bytes(c);
-        }
+            *peeked = ret ? m_buffer[m_buffer_head] : input_none;
         m_buffer_count = buffer_count; // Revert.
         if (lead_surrogate)
             m_lead_surrogate = lead_surrogate; // Revert.
         break;
 
     case WINDOW_BUFFER_SIZE_EVENT:
-        ret = true;
+        // Bit 0x8000 means already handled previously.
+        // Bit 0x4000 is whether there's an actual size change.
+        if (!(record.EventType & 0x8000))
+        {
+            const auto dim = get_dimensions();
+            record.EventType |= 0x8000;
+            if (dim != m_dimensions)
+            {
+                record.EventType |= 0x4000;
+                m_dimensions = dim;
+            }
+        }
+        ret = !!(record.EventType & 0x4000);
+        if (peeked)
+            *peeked = input_terminal_resize;
         break;
     }
 
@@ -1082,8 +1092,9 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
 {
     const uint32 buffer_count = m_buffer_count;
     bool ret = false;
+    bool keep_event = true;
 
-    switch (record.EventType)
+    switch (record.EventType & 0x0fff)
     {
     case KEY_EVENT:
         process_input(record.Event.KeyEvent, false/*peek*/);
@@ -1096,11 +1107,31 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
         break;
 
     case WINDOW_BUFFER_SIZE_EVENT:
-        // Windows can move the cursor onto a new line as a result of line
-        // wrapping adjustments.  If the width changes then return to give
-        // editor modules a chance to respond to the width change.
-        reset_wcwidths();
-        ret = (get_dimensions() != m_dimensions);
+        // Discard these events unless the dimensions change.  But if the
+        // record was previously peeked, then the filtering already occurred
+        // during the peek and the event must be passed through, otherwise
+        // read() and peek() could get out of sync.
+        if (record.EventType & 0x8000)
+        {
+            if (!(record.EventType & 0x4000))
+            {
+                keep_event = false;
+                break;
+            }
+        }
+        else
+        {
+            const auto dim = get_dimensions();
+            if (dim == m_dimensions)
+            {
+                keep_event = false;
+                break;
+            }
+            m_dimensions = dim;
+        }
+        push_event(input_terminal_resize);
+        if (!s_sending_terminal_request)
+            reset_wcwidths();
         break;
 
     default:
@@ -1115,7 +1146,11 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
         {
             str<32> keyseq;
             for (uint32 len = 0; len < keyseqlen; ++len)
-                keyseq.concat(reinterpret_cast<char*>(m_buffer) + ((m_buffer_head + buffer_count + len) % sizeof_array(m_buffer)), 1);
+            {
+                const auto index = ((m_buffer_head + buffer_count + len) % sizeof_array(m_buffer));
+                if (is_input_byte(m_buffer[index]))
+                    keyseq.concat(reinterpret_cast<char*>(&m_buffer[index]), 1);
+            }
 
             char* key_name = nullptr;
             int32 sort = 0;
@@ -1130,8 +1165,33 @@ bool win_terminal_in::process_record(const INPUT_RECORD& record)
     }
 #endif
 
-    if (s_sending_terminal_request)
-        m_processed_records.push_back(record);
+    if (s_sending_terminal_request && keep_event)
+    {
+        if ((record.EventType & 0x0fff) == WINDOW_BUFFER_SIZE_EVENT)
+        {
+            INPUT_RECORD processed = record;
+            processed.EventType |= 0xc000;
+            m_processed_records.push_back(processed);
+        }
+        else
+        {
+            m_processed_records.push_back(record);
+        }
+    }
+
+    if (g_debug_log_input_pipeline)
+    {
+        const uint32 added = m_buffer_count - buffer_count;
+        str<80> bytes;
+        for (uint32 i = 0; i < min<uint32>(added, 32); ++i)
+            bytes.format_append("%02x ", m_buffer[(m_buffer_head + buffer_count + i) % sizeof_array(m_buffer)]);
+        if (added > 32)
+            bytes.concat("...");
+        else
+            bytes.trim();
+        LOG("INPUT win.process_record type=%u bytes=(%s) added=%u buffered=%u pending=%zu",
+            record.EventType, bytes.c_str(), added, m_buffer_count, m_pending_records.size());
+    }
 
     return (m_buffer_count > buffer_count) || ret;
 }
@@ -1238,7 +1298,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                 {
                     m_buffer_head = 0;
                     m_buffer_count = 1;
-                    m_buffer[0] = input_abort_byte;
+                    m_buffer[0] = input_abort;
                     return;
                 }
             }
@@ -1260,7 +1320,11 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                 // reentrant input can break filter_unbound_input() or can
                 // result in reading input out of order.
                 if (buffer_count != m_buffer_count || !m_pending_records.empty())
+                {
+                    if (g_debug_log_input_pipeline)
+                        LOG("INPUT win.select callback queued buffered=%u pending=%zu", m_buffer_count, m_pending_records.size());
                     return;
+                }
             }
 
             if (has_mode)
@@ -1282,9 +1346,20 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
             {
                 m_buffer_head = 0;
                 m_buffer_count = 1;
-                m_buffer[0] = input_abort_byte;
+                m_buffer[0] = input_error;
             }
             return;
+        }
+
+        if (g_debug_log_input_pipeline)
+        {
+            if (record.EventType == KEY_EVENT)
+                LOG("INPUT win.console_record peek=%d down=%d char=0x%04x vk=0x%04x repeat=%u",
+                    peek, record.Event.KeyEvent.bKeyDown,
+                    uint32(record.Event.KeyEvent.uChar.UnicodeChar),
+                    uint32(record.Event.KeyEvent.wVirtualKeyCode), record.Event.KeyEvent.wRepeatCount);
+            else
+                LOG("INPUT win.console_record peek=%d type=%u", peek, record.EventType);
         }
 
         if (peek)
@@ -1294,6 +1369,8 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                 assert(m_pending_records.empty());
                 m_pending_records.clear();
                 m_pending_records.push_back(record);
+                if (g_debug_log_input_pipeline)
+                    LOG("INPUT win.queue pending record type=%u pending=%zu", record.EventType, m_pending_records.size());
                 return;
             }
         }
@@ -1444,6 +1521,13 @@ static bool translate_ctrl_bracket(int32& key_vk, int32 key_sc)
 //------------------------------------------------------------------------------
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
 {
+    if (g_debug_log_input_pipeline)
+    {
+        LOG("INPUT win.key peek=%d down=%d char=0x%04x '%c' vk=0x%04x repeat=%u flags=0x%08x",
+            peek, record.bKeyDown, record.uChar.UnicodeChar, record.uChar.UnicodeChar,
+            uint32(record.wVirtualKeyCode), record.wRepeatCount, record.dwControlKeyState);
+    }
+
     int32 key_char = record.uChar.UnicodeChar;
     int32 key_vk = record.wVirtualKeyCode;
     int32 key_sc = record.wVirtualScanCode;
@@ -1555,7 +1639,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record, bool peek)
         {
             m_buffer_head = 0;
             m_buffer_count = 1;
-            m_buffer[0] = input_exit_byte;
+            m_buffer[0] = input_exit;
             return;
         }
         push((terminfo::kfx + (12 * kfx_group) + key_func)[0]);
@@ -1899,7 +1983,12 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
     char chord[sizeof_array(m_buffer) + 1];
     static const uint32 mask = sizeof_array(m_buffer) - 1;
     for (int32 i = 0; i < len; ++i)
-        chord[i] = m_buffer[(m_buffer_head + i) & mask];
+    {
+        const auto index = (m_buffer_head + i) & mask;
+        if (!is_input_byte(m_buffer[index]))
+            return;
+        chord[i] = uint8(m_buffer[index]);
+    }
     chord[len] = '\0'; // Work around rl_function_of_keyseq_len bug.
 
     str<32> new_chord;
@@ -1908,13 +1997,32 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
         // Reset buffer and push translated chord.
         m_buffer_count = buffer_count;
         for (uint32 i = 0; i < new_chord.length(); ++i)
-            push((uint32)new_chord.c_str()[i]);
+            push(uint32(uint8(new_chord.c_str()[i])));
     }
     else if (!m_keys->is_bound(chord, len))
     {
         // Reset buffer, discarding the chord.
         m_buffer_count = buffer_count;
     }
+}
+
+//------------------------------------------------------------------------------
+void win_terminal_in::push_event(int32 event)
+{
+    assert(is_input_event(event));
+    assert(!m_buffer_count);
+
+    static const uint32 mask = sizeof_array(m_buffer) - 1;
+
+    int32 index = m_buffer_head + m_buffer_count;
+    if (m_buffer_count >= sizeof_array(m_buffer))
+    {
+        assert(false && "input buffer full!");
+        return;
+    }
+
+    m_buffer[index & mask] = event;
+    ++m_buffer_count;
 }
 
 //------------------------------------------------------------------------------
@@ -1930,9 +2038,12 @@ void win_terminal_in::push(const char* seq)
     {
         assert(m_buffer_count < sizeof_array(m_buffer));
         if (m_buffer_count < sizeof_array(m_buffer))
-            m_buffer[index & mask] = *seq;
+            m_buffer[index & mask] = uint8(*seq);
         else
+        {
+            assert(false && "input buffer full!");
             return;
+        }
     }
 }
 
@@ -1941,6 +2052,8 @@ void win_terminal_in::push(uint32 value)
 {
     static_assert(sizeof_array(m_buffer) && !(sizeof_array(m_buffer) & sizeof_array(m_buffer) - 1), "size of m_buffer must be a non-zero power of 2");
     static const uint32 mask = sizeof_array(m_buffer) - 1;
+
+    assert(!is_input_event(int32(value)) && "suspicious...did you mean to use push_event() instead?");
 
     int32 index = m_buffer_head + m_buffer_count;
 
@@ -1952,7 +2065,7 @@ void win_terminal_in::push(uint32 value)
         assert(m_buffer_count < sizeof_array(m_buffer));
         if (m_buffer_count < sizeof_array(m_buffer))
         {
-            m_buffer[index & mask] = value;
+            m_buffer[index & mask] = uint8(value);
             ++m_buffer_count;
         }
         return;
@@ -1981,19 +2094,19 @@ void win_terminal_in::push(uint32 value)
         assert(m_buffer_count < sizeof_array(m_buffer));
         if (m_buffer_count < sizeof_array(m_buffer))
         {
-            m_buffer[index & mask] = utf8[i];
+            m_buffer[index & mask] = uint8(utf8[i]);
             m_buffer_count++;
         }
     }
 }
 
 //------------------------------------------------------------------------------
-uint8 win_terminal_in::pop()
+int32 win_terminal_in::pop()
 {
     if (!m_buffer_count)
-        return input_none_byte;
+        return input_none;
 
-    uint8 value = m_buffer[m_buffer_head];
+    const int32 value = m_buffer[m_buffer_head];
 
     --m_buffer_count;
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);

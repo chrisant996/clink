@@ -47,7 +47,7 @@ class rl_module
     , public singleton<rl_module>
 {
 public:
-                    rl_module(terminal_in* input);
+                    rl_module();
                     ~rl_module();
 
     bool            is_bound(const char* seq, int32 len);
@@ -58,6 +58,13 @@ public:
     const char*     get_face_def(char face);
 
     bool            next_line(str_base& out);
+    bool            quoted_insert_pending() const;
+    bool            pending_input() const;
+    void            accept_line();
+
+#ifdef DEBUG
+    bool            is_done() const { return m_done; }
+#endif
 
     static bool     is_showing_argmatchers();
 
@@ -72,6 +79,8 @@ private:
     virtual void    on_signal(int32 sig) override;
     void            done(const char* line);
     tib_terminal_bridge* m_terminal = nullptr;
+    int32           m_previous_group = -1;
+    bool            m_active = false;
     int32           m_catch_group;
     bool            m_done;
     bool            m_eof;

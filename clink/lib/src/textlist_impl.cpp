@@ -343,7 +343,7 @@ public:
     // input_dispatcher
     void                dispatch(int32 bind_group) override;
     bool                available(uint32 timeout) override;
-    uint8               peek() override;
+    int32               peek() override;
 
     // key_tester
     bool                is_bound(const char* seq, int32 len);
@@ -2191,10 +2191,10 @@ bool textlist_impl::filter_items()
         defer_test = 128;
         if (!m_dispatcher.available(0))
             return false;
-        const uint8 c = m_dispatcher.peek();
-        if (!c)
+        const int32 c = m_dispatcher.peek();
+        if (c < 0)
             return false;
-        if (c != 0x08 && (c < ' ' || c >= 0xf8))
+        if (c != 0x08 && (c < ' ' || !tib::is_input_byte(c)))
         {
             defer_test = 999999;
             return false;
@@ -2421,17 +2421,16 @@ void standalone_input::dispatch(int32 bind_group)
 
     m_dispatching++;
 
-    key_tester* const old_key_tester = m_terminal.in->set_key_tester(this);
+    key_tester* const old_key_tester = m_terminal.get_in()->set_key_tester(this);
 
     do
     {
-        if (!rl_has_queued_input())
-            m_terminal.in->select();
+        m_terminal.wait_for_input();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
 
-    m_terminal.in->set_key_tester(old_key_tester);
+    m_terminal.get_in()->set_key_tester(old_key_tester);
 
     m_dispatching--;
 
@@ -2441,15 +2440,13 @@ void standalone_input::dispatch(int32 bind_group)
 //------------------------------------------------------------------------------
 bool standalone_input::available(uint32 timeout)
 {
-    return m_terminal.in->available(timeout);
+    return m_terminal.available(timeout);
 }
 
 //------------------------------------------------------------------------------
-uint8 standalone_input::peek()
+int32 standalone_input::peek()
 {
-    const int32 c = m_terminal.in->peek();
-    assert(c < 0xf8);
-    return (c < 0) ? 0 : uint8(c);
+    return m_terminal.peek();
 }
 
 //------------------------------------------------------------------------------
@@ -2476,9 +2473,7 @@ bool standalone_input::update_input()
         return true;
     }
 
-    const int32 key = (rl_has_queued_input() ?
-                       rl_read_key() :
-                       m_terminal.in->read());
+    const int32 key = m_terminal.read();
 
     if (key == terminal_in::input_terminal_resize)
     {
@@ -2489,7 +2484,7 @@ bool standalone_input::update_input()
             module->on_terminal_resize(columns, rows, context);
     }
 
-    if (key < 0)
+    if (!terminal_in::is_input_byte(key))
         return true;
 
     if (!m_bind_resolver.step(key))

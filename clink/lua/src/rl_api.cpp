@@ -362,7 +362,7 @@ static int32 is_rl_variable_true(lua_State* state)
 /// -show:  end
 static int32 get_rl_binding(lua_State* state)
 {
-    if (!funmap)
+    if (!g_tib)
         return 0;
 
     const char* _key = checkstring(state, 1);
@@ -370,10 +370,11 @@ static int32 get_rl_binding(lua_State* state)
     if (!_key)
         return 0;
 
+#ifdef TIB_TODO
     Keymap map = keymap ? rl_get_keymap_by_name(keymap) : rl_get_keymap();
+#endif
 
-    int32 type;
-    rl_command_func_t* func = nullptr;
+    tib::resolved_binding resolved;
 
     {
         str<> keys;
@@ -387,36 +388,45 @@ static int32 get_rl_binding(lua_State* state)
             return 0;
         }
 
-        func = rl_function_of_keyseq_len(keyseq, keylen, map, &type);
+        resolved = lookup_keyseq(*g_tib, keyseq, keylen);
         free(keyseq);
     }
 
-    if (func)
+    if (resolved.outcome == tib::dispatch_outcome::self_insert)
     {
-        if (type == ISFUNC)
+        lua_pushliteral(state, "self-insert");
+ret_func:
+        lua_pushliteral(state, "function");
+        return 2;
+    }
+    else if (resolved.more())
+    {
+        lua_pushnil(state);
+        lua_pushliteral(state, "keymap");
+        return 2;
+    }
+    else if (resolved.outcome == tib::dispatch_outcome::match && resolved.binding_target)
+    {
+        const auto& target = resolved.binding_target;
+        const auto type = target.get_type();
+        const bool is_luafunc = (type == tib::binding_type::func && is_luafunc_command(target.get_text()));
+        if (is_luafunc)
         {
-            for (const FUNMAP* const* walk = funmap; *walk; ++walk)
-            {
-                if ((*walk)->function == func)
-                {
-                    lua_pushstring(state, (*walk)->name);
-                    lua_pushliteral(state, "function");
-                    return 2;
-                }
-            }
+            str<> luafunc;
+            luafunc.format("\"%s\"", target.get_text());
+            lua_pushlstring(state, luafunc.c_str(), luafunc.length());
+            goto ret_func;
         }
-        else if (type == ISKMAP)
+        else if (type == tib::binding_type::func)
         {
-            // Bound to a keymap, i.e. the key sequence is incomplete.
-            lua_pushnil(state);
-            lua_pushliteral(state, "keymap");
-            return 2;
+            lua_pushstring(state, target.get_text());
+            goto ret_func;
         }
-        else if (type == ISMACR)
+        else if (type == tib::binding_type::macro)
         {
             str<> tmp;
 
-            char* macro = _rl_untranslate_macro_value((char*)func, 0);
+            char* macro = _rl_untranslate_macro_value(const_cast<char*>(target.get_text()), 0);
             if (macro)
                 tmp << "\"" << macro << "\"";
             else
@@ -426,6 +436,11 @@ static int32 get_rl_binding(lua_State* state)
             lua_pushstring(state, tmp.c_str());
             lua_pushliteral(state, "macro");
             return 2;
+        }
+        else if (type == tib::binding_type::lowercase_version)
+        {
+            lua_pushliteral(state, "do-lowercase-version");
+            goto ret_func;
         }
     }
 
@@ -480,7 +495,7 @@ static int32 get_rl_binding(lua_State* state)
 /// -show:  rl.setbinding([["\e[H"]], [[beginning-of-line]])
 static int32 set_rl_binding(lua_State* state)
 {
-    if (!funmap)
+    if (!g_tib)
         return 0;
 
     const char* _key = checkstring(state, 1);
@@ -489,7 +504,9 @@ static int32 set_rl_binding(lua_State* state)
     if (!_key || !binding)
         return 0;
 
+#ifdef TIB_TODO
     Keymap map = keymap ? rl_get_keymap_by_name(keymap) : rl_get_keymap();
+#endif
 
     str<> keys;
     unquote_keys(_key, keys);
@@ -497,7 +514,7 @@ static int32 set_rl_binding(lua_State* state)
     int32 result = -1;
     if (!binding)
     {
-        result = rl_bind_keyseq_in_map(keys.c_str(), nullptr, map);
+        clink_bind(keys.c_str(), nullptr, emacs_table);
     }
     else if (binding[0] == '\'' || binding[0] == '"')
     {
@@ -506,14 +523,15 @@ static int32 set_rl_binding(lua_State* state)
         if (tmp.length() && tmp.c_str()[tmp.length() - 1] == binding[0])
             tmp.truncate(tmp.length() - 1);
 
-        result = rl_macro_bind(keys.c_str(), tmp.c_str(), map);
+        clink_bind_macro(keys.c_str(), tmp.c_str(), emacs_table);
     }
     else
     {
-        rl_command_func_t* func = rl_named_function(binding);
-        result = rl_bind_keyseq_in_map(keys.c_str(), func, map);
-        if (!func)
-            result = -1;
+        if (tib::editor_context::lookup_command(binding))
+        {
+            clink_bind(keys.c_str(), binding, emacs_table);
+            result = 0;
+        }
     }
 
     lua_pushboolean(state, result >= 0);
@@ -543,6 +561,9 @@ static int32 invoke_command(lua_State* state)
     if (!lua_state::is_in_luafunc())
         return luaL_error(state, LUA_QL("rl.invokecommand") " may only be used in a " LUA_QL("luafunc:") " key binding");
 
+    if (!g_tib)
+        return 0;
+
     const char* command = checkstring(state, 1);
     if (!command)
         return 0;
@@ -557,12 +578,12 @@ static int32 invoke_command(lua_State* state)
 
     if (*command == '"')
     {
-        str<> tmp(command + 1);
-        if (tmp.length() && tmp[tmp.length() - 1] == '"')
-            tmp.truncate(tmp.length() - 1);
-
-        if (!macro_hook_func(tmp.c_str()))
+        if (!luafunc_hook_func(command))
         {
+            str<> tmp(command + 1);
+            if (tmp.length() && tmp[tmp.length() - 1] == '"')
+                tmp.truncate(tmp.length() - 1);
+
             int32 len = 0;
             char* macro = static_cast<char*>(malloc(tmp.length() * 2 + 1));
             if (rl_translate_keyseq(tmp.c_str(), macro, &len))
@@ -570,30 +591,42 @@ static int32 invoke_command(lua_State* state)
                 free(macro);
                 return 0;
             }
-            _rl_with_macro_input(macro);
+            tib::term_push_macro_text(macro);
         }
 
         lua_pushinteger(state, true);
         return 1;
     }
 
-    rl_command_func_t *func = rl_named_function(command);
+    // TIB COMPATIBILITY NOTE:  self-insert is not supported here, but also it
+    // never worked very well here even with Readline.
+
+    auto func = tib::editor_context::lookup_command(command);
     if (func == nullptr)
         return 0;
 
-    const auto last_func = get_effective_last_func();
+    const auto last_command = get_effective_last_command();
     const auto counter = get_last_func_override_counter();
 
     int32 isnum;
     int32 count = int32(lua_tointegerx(state, 2, &isnum));
-    int32 self_insert = (func == rl_insert);
-    int32 err = func(isnum ? count : 1, self_insert ? rl_executing_key : 0);
+
+    g_tib->set_numeric_argument(isnum ? count : 1);
+
+    const auto err = func(*g_tib, 0, command, nullptr);
 
     // Set rl_last_func, unless the invoked command already set rl_last_func.
     // For example, clink-select-complete needs to override it if activation
     // fails, to ensure it can prompt the next time activation is attempted.
-    if (last_func == get_effective_last_func() && counter == get_last_func_override_counter())
-        override_rl_last_func(func);
+    if (counter == get_last_func_override_counter())
+    {
+        const auto effective_last = g_tib ? g_tib->get_last_command() : nullptr;
+        if ((!last_command && !effective_last) ||
+            (stricmp(last_command, effective_last) == 0))
+        {
+            override_last_command(command);
+        }
+    }
 
     lua_pushinteger(state, !err);
     return 1;
@@ -618,20 +651,10 @@ static int32 invoke_command(lua_State* state)
 /// -show:  local last_rl_func, last_lua_func = rl.getlastcommand()
 static int32 get_last_command(lua_State* state)
 {
-    const char* last_rl_func_name = "";
-    if (rl_last_func)
-    {
-        for (const FUNMAP* const* walk = funmap; *walk; ++walk)
-        {
-            if ((*walk)->function == rl_last_func)
-            {
-                last_rl_func_name = (*walk)->name;
-                break;
-            }
-        }
-    }
+    if (!g_tib)
+        return 0;
 
-    lua_pushstring(state, last_rl_func_name);
+    lua_pushstring(state, g_tib->get_last_command());
     lua_pushstring(state, get_last_luafunc());
     return 2;
 }
@@ -1297,12 +1320,15 @@ static int32 need_quotes(lua_State* state)
 /// -show:  end
 static int32 is_line_equal(lua_State* state)
 {
+    if (!g_tib)
+        return 0;
+
     const char* text = checkstring(state, 1);
     const bool to_cursor = lua_toboolean(state, 2);
-    const int32 len = to_cursor ? rl_point : rl_end;
+    const int32 len = to_cursor ? g_tib->get_caret() : g_tib->get_length();
     const bool equal = (text &&
                         strlen(text) == len &&
-                        strncmp(text, rl_line_buffer, len) == 0);
+                        strncmp(text, g_tib->get_text().c_str(), len) == 0);
     lua_pushboolean(state, equal);
     return 1;
 }

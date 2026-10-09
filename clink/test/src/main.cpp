@@ -133,7 +133,7 @@ int32 main(int32 argc, char** argv)
         return 0;
     }
 
-    init_readline_funmap();
+    init_editor_commands();
 
     // Make console input work, e.g. for the Lua debugger.
     console_config cc(nullptr, false);

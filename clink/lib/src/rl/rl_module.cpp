@@ -24,6 +24,7 @@
 #include "rl_integration.h"
 #include "suggestions.h"
 #include "slash_translation.h"
+#include "host_callbacks.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -58,8 +59,6 @@ extern "C" {
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
-extern int32 _rl_get_inserted_char(void);
-extern Keymap _rl_dispatching_keymap;
 extern int _rl_default_init_file_optional_set;
 }
 
@@ -96,8 +95,6 @@ const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|   // All of these...
 
 extern "C" {
 extern char*        _rl_comment_begin;
-extern int          _rl_convert_meta_chars_to_ascii;
-extern int          _rl_output_meta_chars;
 } // extern "C"
 
 extern bool get_command_bindings(const char* command, bool friendly, str_base& desc, str_base& category, std::vector<str_moveable>& keys);
@@ -120,6 +117,8 @@ static bool s_build_suggestion_hint = false;
 static str<32, false> s_suggestion_hint_text;
 static str<32, false> s_suggestion_hint_faces;
 static suggestion_manager s_suggestion;
+
+static std::shared_ptr<tib::key_table_list> s_emacs_standard_bindings;
 
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
@@ -336,6 +335,16 @@ extern setting_bool g_autosuggest_inline;
 extern setting_bool g_autosuggest_hint;
 #endif
 
+extern bool g_debug_log_input_pipeline;
+
+
+
+//------------------------------------------------------------------------------
+std::shared_ptr<const tib::key_table_list> get_emacs_standard_bindings()
+{
+    return s_emacs_standard_bindings;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -465,7 +474,7 @@ extern "C" int32 read_key_hook(void)
     int32 key = s_direct_input->read();
 
     s_direct_input->set_key_tester(old);
-    return key;
+    return terminal_in::is_input_byte(key) ? key : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -574,6 +583,7 @@ int32 terminal_getc_thunk(FILE* stream)
 {
     if (stream == thunk_in_stream)
     {
+#ifdef TIB_TODO
         assert(s_direct_input);
         if (rl_has_clink_input())
         {
@@ -587,6 +597,15 @@ int32 terminal_getc_thunk(FILE* stream)
             s_direct_input->select();
             return s_direct_input->read();
         }
+#else
+retry:
+        const auto c = tib::term_in();
+        if (c < 0 || c == tib::c_input_eof || c == tib::c_input_error)
+            return EOF;
+        if (terminal_in::is_input_event(c))
+            goto retry;
+        return c;
+#endif
     }
 
     if (stream == thunk_null_stream)
@@ -1154,7 +1173,7 @@ static int can_concat_undo_hook(UNDO_LIST* undo, const char* string)
     const double delta = clock - undo->clock;
 
     assert(undo->end > undo->start);
-    const int was_space = whitespace(rl_line_buffer[undo->end - 1]);
+    const int was_space = whitespace(g_tib->get_text().c_str()[undo->end - 1]);
     const int is_space = whitespace(string[0]) && !string[1];
 
     const int can = ((delta < 0.1) ||
@@ -1179,7 +1198,7 @@ static char* completion_word_break_hook()
 static char adjust_completion_word(char quote_char, int32 *found_quote, int32 *delimiter)
 {
     // This is too late to call maybe_collect_words(); by the time this is
-    // called, rl_find_completion_word() has already modified rl_point.
+    // called, rl_find_completion_word() has already modified the caret.
     if (s_matches)
     {
         // Override Readline's word break position.  Often it's the same as
@@ -1189,22 +1208,23 @@ static char adjust_completion_word(char quote_char, int32 *found_quote, int32 *d
         assert(s_matches->get_word_break_position() >= 0);
         if (s_matches->get_word_break_position() >= 0)
         {
-            int32 old_point = rl_point;
-            rl_point = min(s_matches->get_word_break_position(), rl_end);
+            const auto old_caret = g_tib->get_caret();
+            g_tib->set_caret(min<tib::textpos_t>(s_matches->get_word_break_position(), g_tib->get_length()));
 
             const char* pqc = nullptr;
-            if (rl_point > 0)
+            if (g_tib->get_caret() > 0)
             {
                 // Check if the preceding character is a quote.
-                pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point - 1]);
-                if (rl_point < old_point && !(pqc && *pqc))
+                pqc = strchr(rl_completer_quote_characters, g_tib->get_text().c_str()[g_tib->get_caret() - 1]);
+                if (g_tib->get_caret() < old_caret && !(pqc && *pqc))
                 {
-                    // If the preceding character is not a quote, but rl_point
-                    // got moved and it points at a quote, then advance rl_point
-                    // so that lua scripts don't have to do quote handling.
-                    pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point]);
+                    // If the preceding character is not a quote, but the
+                    // caret got moved and it points at a quote, then advance
+                    // the caret so that lua scripts don't have to do quote
+                    // handling.
+                    pqc = strchr(rl_completer_quote_characters, g_tib->get_text().c_str()[g_tib->get_caret()]);
                     if (pqc && *pqc)
-                        rl_point++;
+                        g_tib->set_caret(g_tib->get_caret() + 1);
                 }
             }
             if (pqc && *pqc)
@@ -1271,23 +1291,17 @@ static bool ensure_matches_size(char**& matches, int32 count, int32& reserved)
 //------------------------------------------------------------------------------
 static void buffer_changing(int32 event)
 {
-    increment_line_generation_id();
-
     // Reset the history position for the next input line prompt, upon changing
     // the input text at all.
     if (event != CHG_REPLACE && event != CHG_REPLACEEMPTY && has_sticky_search_position())
     {
         clear_sticky_search_position();
-        if (!rl_end)
+        if (!g_tib->get_length())
         {
             assert(!_rl_saved_line_for_history);
             using_history();
         }
     }
-
-    // The buffer text is changing, so the selection will be invalidated and
-    // needs to be cleared.
-    cua_clear_selection();
 
     // Lock against suggestions when rl_replace_text() is used.
     if (event == CHG_REPLACE || event == CHG_REPLACEEMPTY)
@@ -1379,7 +1393,7 @@ stop:
                 g_rl_buffer->end_undo_group();
                 // Force the menu-complete family of commands to regenerate
                 // matches, otherwise they'll have no matches.
-                override_rl_last_func(nullptr, true/*force_when_null*/);
+                override_last_command(nullptr, true/*force_when_null*/);
                 return nullptr;
             }
             else
@@ -1619,11 +1633,326 @@ void load_user_inputrc(const char* state_dir, bool no_user)
 }
 
 //------------------------------------------------------------------------------
-typedef const char* two_strings[2];
-static void bind_keyseq_list(const two_strings* list, Keymap map)
+static void bind_keyseq_translated(const char* keys, int32 keys_len, const char* target, const std::shared_ptr<tib::key_table>& t)
+{
+#ifdef TIB_TODO // For now it's accepted that non-existent commands are in the lists.
+    assert(tib::editor_context::lookup_command(target));
+#endif
+    if (target &&
+        !is_luafunc_command(target) &&
+        !tib::editor_context::lookup_command(target))
+        return;
+
+    if (!target || !*target)
+    {
+        tib::cstring seq;
+        seq.set(keys, keys_len);
+        t->remove(seq);
+    }
+    else if (stricmp(target, "do-lowercase-version") == 0)
+    {
+        t->add(keys, keys_len, tib::binding_target_lowercase_version());
+    }
+    else
+    {
+        t->add(keys, keys_len, tib::binding_target_func(target));
+    }
+}
+
+//------------------------------------------------------------------------------
+static void bind_keyseq(const char* keyseq, const char* target, const std::shared_ptr<tib::key_table>& t)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    bind_keyseq_translated(keys, keys_len, target, t);
+
+    free(keys);
+}
+
+//------------------------------------------------------------------------------
+static void bind_keyseq_list(const two_strings* list, const std::shared_ptr<tib::key_table>& t)
 {
     for (int32 i = 0; list[i][0]; ++i)
-        rl_bind_keyseq_in_map(list[i][0], rl_named_function(list[i][1]), map);
+        bind_keyseq(list[i][0], list[i][1], t);
+}
+
+//------------------------------------------------------------------------------
+static void init_emacs_standard_binds(bool force=false)
+{
+    if (s_emacs_standard_bindings && !force)
+        return;
+
+    if (!s_emacs_standard_bindings)
+        init_editor_commands();
+
+    static constexpr const char* const emacs_standard_binds[][2] = {
+        // NORMAL KEY SEQUENCES
+        { "\\C-@",          "set-mark" },               // Ctrl-@ (Ctrl-2)
+        { "\\C-a",          "beginning-of-line" },      // Ctrl-A
+        { "\\C-b",          "backward-char" },          // Ctrl-B
+        { "\\C-d",          "delete-char" },            // Ctrl-D
+        { "\\C-e",          "end-of-line" },            // Ctrl-E
+        { "\\C-f",          "forward-char" },           // Ctrl-F
+        { "\\C-g",          "abort" },                  // Ctrl-G
+        // { "\\C-h",          "backward-kill-word" },     // VT sends 0x08 for Ctrl-Backspace.
+        { "\\C-h",          "backward-delete-char" },   // Clink sends 0x08 for Backspace.
+        { "\\C-i",          "complete" },               // Ctrl-I / TAB
+        { "\\C-j",          "accept-line" },            // Ctrl-J
+        { "\\C-k",          "kill-line" },              // Ctrl-K
+        { "\\C-l",          "clear-screen" },           // Ctrl-L
+        { "\\C-m",          "accept-line" },            // Ctrl-M / Enter
+        { "\\C-n",          "next-history" },           // Ctrl-N
+        { "\\C-o",          "operate-and-get-next" },   // Ctrl-O
+        { "\\C-p",          "previous-history" },       // Ctrl-P
+        { "\\C-q",          "quoted-insert" },          // Ctrl-Q
+        { "\\C-e",          "reverse-search-history" }, // Ctrl-R
+        { "\\C-s",          "forward-search-history" }, // Ctrl-S
+        { "\\C-t",          "transpose-chars" },        // Ctrl-T
+        { "\\C-u",          "unix-line-discard" },      // Ctrl-U
+        { "\\C-v",          "quoted-insert" },          // Ctrl-V
+        { "\\C-w",          "unix-word-rubout" },       // Ctrl-W
+        { "\\C-y",          "yank" },                   // Ctrl-Y
+        { "\\C-]",          "character-search" },       // Ctrl-]
+        { "\\C-_",          "undo" },                   // Ctrl-_
+        // { "\x7f",           "backward-delete-char" },   // RUBOUT / VT sends 0x7F for Backspace.
+        { "\x7f",           "backward-kill-word" },     // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
+
+        // META KEY SEQUENCES
+        { "\\M-\\C-g",      "abort" },                  // Alt-Ctrl-G
+        { "\\M-\\C-h",      "backward-kill-word" },     // Alt-Ctrl-H
+        // { "\\M-\\C-i",      "tab-insert" },             // Alt-Ctrl-I
+        // { "\\M-\\C-j",      "vi-editing-mode" },        // Alt-Ctrl-J
+        { "\\M-\\C-l",      "clear-display" },          // Alt-Ctrl-L
+        // { "\\M-\\C-m",      "vi-editing-mode" },        // Alt-Ctrl-M
+        { "\\M-\\C-r",      "revert-line" },            // Alt-Ctrl-R
+        { "\\M-\\C-y",      "yank-nth-arg" },           // Alt-Ctrl-Y
+        { "\\M-\\C-[",      "complete" },               // Alt-ESC / ESC,ESC
+        { "\\M-\\C-]",      "backward-character-search" }, // Alt-Ctrl-]
+        { "\\M- ",          "set-mark" },               // Alt-SPACE
+        { "\\M-#",          "insert-comment" },         // Alt-#
+        { "\\M-&",          "tilde-expand" },           // Alt-&
+        { "\\M-*",          "insert-completions" },     // Alt-*
+        { "\\M--",          "digit-argument" },         // Alt--
+        { "\\M-.",          "yank-last-arg" },          // Alt-.
+        { "\\M-0",          "digit-argument" },         // Alt-0
+        { "\\M-1",          "digit-argument" },         // Alt-1
+        { "\\M-2",          "digit-argument" },         // Alt-2
+        { "\\M-3",          "digit-argument" },         // Alt-3
+        { "\\M-4",          "digit-argument" },         // Alt-4
+        { "\\M-5",          "digit-argument" },         // Alt-5
+        { "\\M-6",          "digit-argument" },         // Alt-6
+        { "\\M-7",          "digit-argument" },         // Alt-7
+        { "\\M-8",          "digit-argument" },         // Alt-8
+        { "\\M-9",          "digit-argument" },         // Alt-9
+        { "\\M-A",          "do-lowercase-version" },   // Alt-A
+        { "\\M-B",          "do-lowercase-version" },   // Alt-B
+        { "\\M-C",          "do-lowercase-version" },   // Alt-C
+        { "\\M-D",          "do-lowercase-version" },   // Alt-D
+        { "\\M-E",          "do-lowercase-version" },   // Alt-E
+        { "\\M-F",          "do-lowercase-version" },   // Alt-F
+        { "\\M-G",          "do-lowercase-version" },   // Alt-G
+        { "\\M-H",          "do-lowercase-version" },   // Alt-H
+        { "\\M-I",          "do-lowercase-version" },   // Alt-I
+        { "\\M-J",          "do-lowercase-version" },   // Alt-J
+        { "\\M-K",          "do-lowercase-version" },   // Alt-K
+        { "\\M-L",          "do-lowercase-version" },   // Alt-L
+        { "\\M-M",          "do-lowercase-version" },   // Alt-M
+        { "\\M-N",          "do-lowercase-version" },   // Alt-N
+        { "\\M-O",          "do-lowercase-version" },   // Alt-O
+        { "\\M-P",          "do-lowercase-version" },   // Alt-P
+        { "\\M-Q",          "do-lowercase-version" },   // Alt-Q
+        { "\\M-R",          "do-lowercase-version" },   // Alt-R
+        { "\\M-S",          "do-lowercase-version" },   // Alt-S
+        { "\\M-T",          "do-lowercase-version" },   // Alt-T
+        { "\\M-U",          "do-lowercase-version" },   // Alt-U
+        { "\\M-V",          "do-lowercase-version" },   // Alt-V
+        { "\\M-W",          "do-lowercase-version" },   // Alt-W
+        { "\\M-X",          "do-lowercase-version" },   // Alt-X
+        { "\\M-Y",          "do-lowercase-version" },   // Alt-Y
+        { "\\M-Z",          "do-lowercase-version" },   // Alt-Z
+        { "\\M-\\",         "delete-horizontal-space" }, // Alt-\ (don't end with \ or the compiler joins lines)
+        { "\\M-_",          "yank-last-arg" },          // Alt-_
+        { "\\M-b",          "backward-word" },          // Alt-b
+        { "\\M-c",          "capitalize-word" },        // Alt-c
+        { "\\M-d",          "kill-word" },              // Alt-d
+        { "\\M-f",          "forward-word" },           // Alt-f
+        { "\\M-l",          "downcase-word" },          // Alt-l
+        { "\\M-n",          "non-incremental-forward-search-history" }, // Alt-n
+        { "\\M-p",          "non-incremental-backward-search-history" }, // Alt-p
+        { "\\M-r",          "revert-line" },            // Alt-r
+        { "\\M-t",          "transpose-words" },        // Alt-t
+        { "\\M-u",          "upcase-word" },            // Alt-u
+        { "\\M-x",          "execute-named-command" },  // Alt-x
+        { "\\M-y",          "yank-pop" },               // Alt-y
+        { "\\M-~",          "tilde-expand" },           // Alt-~
+        { "\\M-\x7f",       "backward-kill-word" },     // Alt-RUBOUT
+
+        // CTRL-X KEY SEQUENCES
+        { "\\C-x\\C-g",     "abort" },                  // Ctrl-X,Ctrl-G
+        { "\\C-x\\C-r",     "re-read-init-file" },      // Ctrl-X,Ctrl-R
+        { "\\C-x\\C-u",     "undo" },                   // Ctrl-X,Ctrl-U
+        { "\\C-x\\C-x",     "exchange-point-and-mark" }, // Ctrl-X,Ctrl-X
+        { "\\C-x\\C-(",     "start-kbd-macro" },        // Ctrl-X,Ctrl-(
+        { "\\C-x\\C-)",     "end-kbd-macro" },          // Ctrl-X,Ctrl-)
+        { "\\C-xA",         "do-lowercase-version" },   // Ctrl-X,A
+        { "\\C-xB",         "do-lowercase-version" },   // Ctrl-X,B
+        { "\\C-xC",         "do-lowercase-version" },   // Ctrl-X,C
+        { "\\C-xD",         "do-lowercase-version" },   // Ctrl-X,D
+        { "\\C-xE",         "do-lowercase-version" },   // Ctrl-X,E
+        { "\\C-xF",         "do-lowercase-version" },   // Ctrl-X,F
+        { "\\C-xG",         "do-lowercase-version" },   // Ctrl-X,G
+        { "\\C-xH",         "do-lowercase-version" },   // Ctrl-X,H
+        { "\\C-xI",         "do-lowercase-version" },   // Ctrl-X,I
+        { "\\C-xJ",         "do-lowercase-version" },   // Ctrl-X,J
+        { "\\C-xK",         "do-lowercase-version" },   // Ctrl-X,K
+        { "\\C-xL",         "do-lowercase-version" },   // Ctrl-X,L
+        { "\\C-xM",         "do-lowercase-version" },   // Ctrl-X,M
+        { "\\C-xN",         "do-lowercase-version" },   // Ctrl-X,N
+        { "\\C-xO",         "do-lowercase-version" },   // Ctrl-X,O
+        { "\\C-xP",         "do-lowercase-version" },   // Ctrl-X,P
+        { "\\C-xQ",         "do-lowercase-version" },   // Ctrl-X,Q
+        { "\\C-xR",         "do-lowercase-version" },   // Ctrl-X,R
+        { "\\C-xS",         "do-lowercase-version" },   // Ctrl-X,S
+        { "\\C-xT",         "do-lowercase-version" },   // Ctrl-X,T
+        { "\\C-xU",         "do-lowercase-version" },   // Ctrl-X,U
+        { "\\C-xV",         "do-lowercase-version" },   // Ctrl-X,V
+        { "\\C-xW",         "do-lowercase-version" },   // Ctrl-X,W
+        { "\\C-xX",         "do-lowercase-version" },   // Ctrl-X,X
+        { "\\C-xY",         "do-lowercase-version" },   // Ctrl-X,Y
+        { "\\C-xZ",         "do-lowercase-version" },   // Ctrl-X,Z
+        { "\\C-xe",         "call-last-kbd-macro" },    // Ctrl-X,e
+        { "\\C-x\x7f",      "backward-kill-line" },     // Ctrl-X,RUBOUT
+        {}
+    };
+
+    auto t = std::make_shared<tib::key_table>(true/*can_self_insert*/);
+    bind_keyseq_list(emacs_standard_binds, t);
+
+    s_emacs_standard_bindings = std::make_shared<tib::key_table_list>();
+    s_emacs_standard_bindings->emplace_back(std::move(t));
+}
+
+//------------------------------------------------------------------------------
+extern "C" void set_key_table(int table)
+{
+    switch (table)
+    {
+    case emacs_table:   g_tib->set_bindings(s_emacs_standard_bindings); break;
+    default:            assert(false); return;
+    }
+}
+
+//------------------------------------------------------------------------------
+extern "C" int get_key_table(void)
+{
+    return emacs_table;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
+{
+    assert(s_emacs_standard_bindings);
+    if (!s_emacs_standard_bindings)
+        return;
+
+    std::shared_ptr<tib::key_table> t;
+    switch (table)
+    {
+    case emacs_table:   t = s_emacs_standard_bindings->at(0); break;
+    default:            return;
+    }
+
+    if (!is_macro || !target)
+    {
+        bind_keyseq_translated(keys, keys_len, target, t);
+    }
+    else if (strnicmp(target, "luafunc:", 8) == 0)
+    {
+        t->add(keys, keys_len, tib::binding_target_func(target));
+    }
+    else
+    {
+        t->add(keys, keys_len, tib::binding_target_macro(target));
+    }
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    char* macro = nullptr;
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    clink_bind_translated(false, keys, keys_len, target, table);
+
+    free(macro);
+    free(keys);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    const size_t need = 1 + (2 * strlen(keyseq));
+    char* keys = (char*)malloc(need);
+    char* macro = nullptr;
+    if (!keys)
+        return;
+
+    int32 keys_len;
+    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    {
+        assert(false);
+        free(keys);
+        return;
+    }
+
+    {
+        int macro_len;
+        macro = (char*)malloc((2 * strlen(target)) + 1);
+        if (rl_translate_keyseq(target, macro, &macro_len))
+            goto out;
+        target = macro;
+    }
+
+    clink_bind_translated(true, keys, keys_len, target, table);
+
+out:
+    free(macro);
+    free(keys);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_list(const two_strings* list, int table)
+{
+    for (int32 i = 0; list[i][0]; ++i)
+        clink_bind(list[i][0], list[i][1], table);
 }
 
 //------------------------------------------------------------------------------
@@ -1678,7 +2007,6 @@ static void init_readline_hooks()
     rl_input_available_hook = input_available_hook;
     rl_read_key_hook = read_key_hook;
     rl_buffer_changing_hook = buffer_changing;
-    rl_selection_event_hook = cua_selection_event_hook;
     rl_can_concat_undo_hook = can_concat_undo_hook;
 
     // History hooks.
@@ -1702,10 +2030,6 @@ static void init_readline_hooks()
 
     // Match display.
     rl_is_exec_func = is_exec_ext;
-
-    // Macro hooks (for "luafunc:" support).
-    rl_macro_hook_func = macro_hook_func;
-    rl_last_func_hook_func = last_func_hook_func;
 
     // Recognize both / and \\ as path separators, and normalize to \\.
     rl_backslash_path_sep = 1;
@@ -1800,33 +2124,13 @@ static void save_restore_initial_state(const bool restore)
 {
     // Keymaps.
 
-    static const Keymap saved_vi_movement_keymap = rl_make_bare_keymap();
-    static const Keymap saved_vi_insertion_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_standard_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_meta_keymap = rl_make_bare_keymap();
-    static const Keymap saved_emacs_ctlx_keymap = rl_make_bare_keymap();
-
-    if (!restore)
+    if (restore)
     {
-        // Save original state of keymaps.
-        safe_replace_keymap(saved_vi_movement_keymap, vi_movement_keymap);
-        safe_replace_keymap(saved_vi_insertion_keymap, vi_insertion_keymap);
-        safe_replace_keymap(saved_emacs_meta_keymap, emacs_meta_keymap);
-        safe_replace_keymap(saved_emacs_ctlx_keymap, emacs_ctlx_keymap);
-        safe_replace_keymap(saved_emacs_standard_keymap, emacs_standard_keymap);
-    }
-    else
-    {
-        // Restore saved keymaps.
-        safe_replace_keymap(vi_movement_keymap, saved_vi_movement_keymap);
-        safe_replace_keymap(vi_insertion_keymap, saved_vi_insertion_keymap);
-        safe_replace_keymap(emacs_standard_keymap, saved_emacs_standard_keymap);
-        safe_replace_keymap(emacs_meta_keymap, saved_emacs_meta_keymap);
-        safe_replace_keymap(emacs_ctlx_keymap, saved_emacs_ctlx_keymap);
-
-        // Clear global "recent" pointer, since it could have been invalidated
-        // by the operations above.
-        rl_binding_keymap = nullptr;
+        init_emacs_standard_binds(true/*force*/);
+#ifdef TIB_TODO
+        init_vi_movement_binds(true/*force*/);
+        init_vi_insertion_binds(true/*force*/);
+#endif
     }
 
     // Config variables.
@@ -1847,9 +2151,9 @@ static void save_restore_initial_state(const bool restore)
         { &_rl_completion_case_fold                     },  // "completion-ignore-case"
         { &_rl_completion_case_map                      },  // "completion-map-case"
         { &_rl_completion_prefix_display_length         },  // "completion-prefix-display-length"
-        { &_rl_convert_meta_chars_to_ascii              },  // "convert-meta"
+        // { &_rl_convert_meta_chars_to_ascii              },  // "convert-meta"
         { &rl_inhibit_completion                        },  // "disable-completion"
-        { &_rl_echo_control_chars                       },  // "echo-control-characters"
+        // { &_rl_echo_control_chars                       },  // "echo-control-characters"
         { &rl_editing_mode                              },  // "editing-mode"
         { &_rl_enable_active_region                     },  // "enable-active-region"
         { &_rl_enable_bracketed_paste                   },  // "enable-bracketed-paste"
@@ -1860,7 +2164,7 @@ static void save_restore_initial_state(const bool restore)
         { &_rl_history_preserve_point                   },  // "history-preserve-point"
         //{ nullptr                                       },  // "history-size"
         { &_rl_horizontal_scroll_mode                   },  // "horizontal-scroll-mode"
-        { &_rl_meta_flag                                },  // "input-meta"
+        // { &_rl_meta_flag                                },  // "input-meta"
         { &_rl_keyseq_timeout                           },  // "keyseq-timeout"
         { &_rl_complete_mark_directories                },  // "mark-directories"
         { &_rl_mark_modified_lines                      },  // "mark-modified-lines"
@@ -1868,8 +2172,8 @@ static void save_restore_initial_state(const bool restore)
         { &_rl_match_hidden_files                       },  // "match-hidden-files"
         { &_rl_menu_complete_prefix_first               },  // "menu-complete-display-prefix"
         { &_rl_menu_complete_wraparound                 },  // "menu-complete-wraparound"
-        { &_rl_meta_flag                                },  // "meta-flag"
-        { &_rl_output_meta_chars                        },  // "output-meta"
+        // { &_rl_meta_flag                                },  // "meta-flag"
+        // { &_rl_output_meta_chars                        },  // "output-meta"
         { &_rl_page_completions                         },  // "page-completions"
         { &_rl_bell_preference                          },  // "prefer-visible-bell"
         { &_rl_print_completions_horizontally           },  // "print-completions-horizontally"
@@ -1990,7 +2294,7 @@ void initialise_readline(bool no_user)
         rl_preinit(s_default_inputrc.c_str());
 
         init_readline_hooks();
-        init_readline_funmap();
+        init_emacs_standard_binds();
 
         // Clink manages showing and hiding the cursor; tib should not.
         tib::g_show_hide_cursor = false;
@@ -2028,11 +2332,7 @@ void initialise_readline(bool no_user)
     static constexpr const char* const emacs_key_binds[][2] = {
         { "\\e[1;5F",       "kill-line" },               // ctrl-end
         { "\\e[1;5H",       "backward-kill-line" },      // ctrl-home
-        { "\\e[5~",         "history-search-backward" }, // pgup
-        { "\\e[6~",         "history-search-forward" },  // pgdn
-        { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
-        { "\\e[2~",         "overwrite-mode" },          // ins
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x*",         "glob-expand-word" },        // ctrl-x,*
@@ -2044,7 +2344,7 @@ void initialise_readline(bool no_user)
         { "\\M-f",          "forward-word" },            // alt-f (because of suggestions)
         { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\eOP",          "win-cursor-forward" },      // F1
-        //{ "\\eOQ",          "win-copy-up-to-char" },     // F2
+        //{ "\\eOQ",          "win-copy-up-to-char" },     // F2 (superseded by F2 for toggle suggestion list)
         { "\\eOR",          "win-copy-up-to-end" },      // F3
         { "\\eOS",          "win-delete-up-to-char" },   // F4
         { "\\e[15~",        "previous-history" },        // F5
@@ -2080,6 +2380,16 @@ void initialise_readline(bool no_user)
     };
 
     static constexpr const char* const general_key_binds[][2] = {
+        { "\\e[A",          "get-previous-history" },    // up
+        { "\\e[B",          "get-next-history" },        // down
+        { "\\e[C",          "forward-char" },            // right
+        { "\\e[D",          "backward-char" },           // left
+        { "\\e[F",          "end-of-line" },             // end
+        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[3~",         "delete-char" },             // del
+        { "\\e[2~",         "overwrite-mode" },          // ins
+        { "\\e[5~",         "history-search-backward" }, // pgup
+        { "\\e[6~",         "history-search-forward" },  // pgdn
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
@@ -2112,10 +2422,8 @@ void initialise_readline(bool no_user)
         { "\\e^",           "clink-expand-history" },    // alt-^
         { "\\e[1;5D",       "backward-word" },           // ctrl-left
         { "\\e[1;5C",       "forward-word" },            // ctrl-right
-        { "\\e[3~",         "delete-char" },             // del
-        { "\\e[C",          "forward-char" },            // right (because of suggestions)
-        { "\\e[F",          "end-of-line" },             // end
-        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[1;3D",       "backward-word" },           // alt-left
+        { "\\e[1;3C",       "forward-word" },            // alt-right
         { "\\e[1;2A",       "cua-previous-screen-line" },// shift-up
         { "\\e[1;2B",       "cua-next-screen-line" },    // shift-down
         { "\\e[1;2D",       "cua-backward-char" },       // shift-left
@@ -2125,14 +2433,14 @@ void initialise_readline(bool no_user)
         { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
         { "\\e[2;5~",       "cua-copy" },                // ctrl-ins
+        { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\e[2;2~",       "clink-paste" },             // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
         { "\\e[27;2;32~",   "clink-shift-space" },       // shift-space
-        // Update default bindings for commands replaced for suggestions.
-        { "\\e[1;3C",       "forward-word" },            // alt-right
         {}
     };
 
+#ifdef TIB_TODO
     static constexpr const char* const vi_insertion_key_binds[][2] = {
         { "\\M-\\C-i",      "tab-insert" },              // alt-ctrl-i
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
@@ -2163,6 +2471,15 @@ void initialise_readline(bool no_user)
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}
     };
+#endif
+
+#ifdef DEBUG
+    static constexpr const char* const temporary_R_and_D[][2] = {
+        { "\\C-xf",         "clink-dump-functions" },
+        { "\\C-xm",         "clink-dump-macros" },
+        {}
+    };
+#endif
 
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
@@ -2175,27 +2492,59 @@ void initialise_readline(bool no_user)
         // NOTE: When using `terminal.raw_esc`, it's expected that ESC doesn't
         // do anything by itself (except in vi mode, where there's a hack to
         // make ESC + timeout drop into vi command mode).
-        rl_unbind_key_in_map(27/*alt-ctrl-[*/, emacs_meta_keymap);
-        rl_unbind_key_in_map(27, vi_insertion_keymap);
-        rl_bind_keyseq_in_map("\\e[27;7;219~"/*alt-ctrl-[*/, rl_named_function("complete"), emacs_standard_keymap);
-        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("clink-reset-line"), emacs_standard_keymap);
-        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("vi-movement-mode"), vi_insertion_keymap);
+        clink_bind("\\M-\\C-["/*alt-ctrl-[*/, nullptr, emacs_table);
+#ifdef TIB_TODO
+        clink_bind("\\e", nullptr, vi_insertion_table);
+#endif
+        clink_bind(bindableEsc, "clink-reset-line", emacs_table);
+#ifdef TIB_TODO
+        clink_bind(bindableEsc, "vi-movement-mode", vi_insertion_table);
+#endif
+        if (g_default_bindings.get() == 0/*bash*/)
+        {
+            str<16> tmp;
+            tmp.concat(bindableEsc);
+            tmp.concat(bindableEsc);
+            clink_bind(tmp.c_str()/*Esc,Esc*/, "complete", emacs_table);
+        }
     }
 
-    rl_unbind_key_in_map(' ', emacs_meta_keymap);
-    bind_keyseq_list(general_key_binds, emacs_standard_keymap);
-    bind_keyseq_list(emacs_key_binds, emacs_standard_keymap);
-    bind_keyseq_list(bash_emacs_key_binds, emacs_standard_keymap);
+    clink_bind("\\e ", nullptr, emacs_table);
+    clink_bind_list(general_key_binds, emacs_table);
+    clink_bind_list(emacs_key_binds, emacs_table);
+    clink_bind_list(bash_emacs_key_binds, emacs_table);
     if (g_default_bindings.get() == 1)
-        bind_keyseq_list(windows_emacs_key_binds, emacs_standard_keymap);
+        clink_bind_list(windows_emacs_key_binds, emacs_table);
 
-    bind_keyseq_list(general_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(general_key_binds, vi_movement_keymap);
-    bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
-    bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
+#ifdef DEBUG
+    clink_bind_list(temporary_R_and_D, emacs_table);
+#endif
+
+    clink_bind(")", nullptr, emacs_table);
+    clink_bind("]", nullptr, emacs_table);
+    clink_bind("}", nullptr, emacs_table);
+
+// TODO-TIB: vi modes.
+#ifdef TIB_TODO
+    clink_bind_list(general_key_binds, vi_insertion_table);
+    clink_bind_list(general_key_binds, vi_movement_table);
+    clink_bind_list(vi_insertion_key_binds, vi_insertion_table);
+    clink_bind_list(vi_movement_key_binds, vi_movement_table);
+#endif
+
+    g_tib->set_bindings(s_emacs_standard_bindings);
 
     // Finally, load the inputrc file.
     load_user_inputrc(state_dir, no_user);
+
+    g_bell_preference = static_cast<bell_preference>(_rl_bell_preference);
+
+    if (rl_blink_matching_paren)
+    {
+        clink_bind(")", "insert-close", emacs_table);
+        clink_bind("]", "insert-close", emacs_table);
+        clink_bind("}", "insert-close", emacs_table);
+    }
 
     // Override the effect of any 'set keymap' assignments in the inputrc file.
     // This mimics what rl_initialize() does.
@@ -2279,8 +2628,10 @@ bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 
 
 //------------------------------------------------------------------------------
-rl_module::rl_module(terminal_in* input)
+rl_module::rl_module()
 : m_catch_group(-1)
+, m_done(false)
+, m_eof(false)
 , m_has_pending_line(false)
 , m_old_int(SIG_DFL)
 , m_old_break(SIG_DFL)
@@ -2296,11 +2647,28 @@ rl_module::rl_module(terminal_in* input)
     }
 
     assert(!s_direct_input);
-    s_direct_input = input;
+    assert(tib_terminal_bridge::get());
+    s_direct_input = tib_terminal_bridge::get()->get_in();
 
     init_readline_hooks();
 
+#ifdef TIB_TODO
+// TODO-TIB: this is not how to hook up CTRL-D EOF handling; that needs to be
+// built into tib itself, not as a key binding.
+    tib::editor_context::register_command("clink-eof",
+        [](tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) -> int32_t {
+            if (ctx.get_text().empty() && g_ctrld_exits.get())
+            {
+                ctx.set_done();
+                rl_module::get()->done(nullptr);
+            }
+            else
+                ctx.del();
+            return 0;
+        });
+
     _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -2310,86 +2678,16 @@ rl_module::~rl_module()
 }
 
 //------------------------------------------------------------------------------
-// Readline is designed for raw terminal input, and Windows is capable of richer
-// input analysis where we can avoid generating terminal input if there's no
-// binding that can handle it.
-//
-// WARNING:  Violates abstraction and encapsulation; neither rl_ding nor
-// _rl_keyseq_chain_dispose make sense in an "is bound" method.  But really this
-// is more like "accept_input_key" with the ability to reject an input key, and
-// rl_ding or _rl_keyseq_chain_dispose only happen on rejection.  So it's
-// functionally reasonable.
-//
-// The trouble is, Readline doesn't natively have a way to reset the dispatching
-// state other than rl_abort() or actually dispatching an invalid key sequence.
-// So we have to reverse engineer how Readline responds when a key sequence is
-// terminated by invalid input, and that seems to consist of clearing the
-// RL_STATE_MULTIKEY state and disposing of the key sequence chain.
 bool rl_module::is_bound(const char* seq, int32 len)
 {
-    if (!len)
-    {
-LNope:
-        if (RL_ISSTATE (RL_STATE_MULTIKEY))
-        {
-            RL_UNSETSTATE(RL_STATE_MULTIKEY);
-            _rl_keyseq_chain_dispose();
-        }
-        rl_ding();
-        return false;
-    }
-
-    // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_is_insert_next_callback_pending())
-        return true;
-
-    // The F2, F4, and F9 console compatibility implementations can accept
-    // input, but extended keys are meaningless so don't accept them.  The
-    // intent is to allow printable textual input, control characters, and ESC.
-    if (win_fn_callback_pending())
-    {
-        const char* bindableEsc = get_bindable_esc();
-        if (bindableEsc && strcmp(seq, bindableEsc) == 0)
-            return true;
-        if (len > 1 && seq[0] == '\x1b')
-            goto LNope;
-        return true;
-    }
-
-    // Various states should only accept "simple" input, i.e. not CSI sequences,
-    // so that unrecognized portions of key sequences don't bleed in as textual
-    // input.
-    if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES))
-    {
-        if (seq[0] == '\x1b')
-            goto LNope;
-        return true;
-    }
-
-    // The intent here is to accept all UTF8 input (not sure why readline
-    // reports them as not bound, but this seems good enough for now).
-    if (len > 1 && uint8(seq[0]) >= ' ')
-        return true;
-
-    // NOTE:  Checking readline's keymap is incorrect when a special bind group
-    // is active that should block on_input from reaching readline.  But the way
-    // that blocking is achieved is by adding a "" binding that matches
-    // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.
-
-    // Using nullptr for the keymap starts from the root of the current keymap,
-    // but in a multi key sequence this needs to use the current dispatching
-    // node of the current keymap.
-    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
-    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
-        return true;
-
-    goto LNope;
+    return m_terminal->is_bound(seq, len);
 }
 
 //------------------------------------------------------------------------------
-bool rl_module::accepts_mouse_input(mouse_input_type type)
+bool rl_module::accepts_mouse_input(mouse_input_type)
 {
+// TODO-TIB: Clink's private mouse encoding still needs an adapter to tib.
+#ifdef TIB_TODO
     // `quoted-insert` only accepts keyboard input.
     if (rl_is_insert_next_callback_pending())
         return false;
@@ -2414,6 +2712,7 @@ bool rl_module::accepts_mouse_input(mouse_input_type type)
     case mouse_input_type::drag:
         return true;
     }
+#endif
 
     return false;
 }
@@ -2425,6 +2724,7 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
     if (!bindableEsc)
         return false;
 
+#ifdef TIB_TODO
     if (RL_ISSTATE(RL_STATE_NUMERICARG))
     {
         if (strcmp(seq, bindableEsc) == 0)
@@ -2449,8 +2749,12 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
     else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
              rl_is_insert_next_callback_pending() ||
              win_fn_callback_pending())
+#else
+    if (quoted_insert_pending())
+#endif
     {
-        if (strcmp(seq, bindableEsc) == 0)
+        if (len == int32(strlen(bindableEsc)) &&
+            memcmp(seq, bindableEsc, len) == 0)
         {
             out = "\x1b";
             return true;
@@ -2633,14 +2937,20 @@ bool rl_module::is_showing_argmatchers()
 //------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
+    init_emacs_standard_binds();
+
+#ifdef TIB_TODO
     const int32 default_group = binder.get_group();
     assert(default_group == 1);
     binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*D", bind_id_double_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*M", bind_id_drag, true/*has_params*/);
     binder.bind(default_group, "", bind_id_input);
+#else
+    binder.bind(binder.get_group(), "", bind_id_input);
+#endif
 
-    m_catch_group = binder.create_group("readline");
+    m_catch_group = binder.create_group("tib");
     binder.bind(m_catch_group, "", bind_id_more_input);
 }
 
@@ -2649,9 +2959,17 @@ void rl_module::on_begin_line(const context& context)
 {
     s_build_suggestion_hint = true;
 
-    m_old_int = signal(SIGINT, clink_sighandler);
+    assert(g_terminal);
+    m_terminal = g_terminal;
+
+// TODO-TIB: this seems bizarre; why did AI do this?
+    auto handler = +[](int32 sig) {
+        // The outer Clink loop performs tib cleanup on the main thread.
+        clink_set_signaled(sig);
+    };
+    m_old_int = signal(SIGINT, handler);
 #ifdef SIGBREAK
-    m_old_break = signal(SIGBREAK, clink_sighandler);
+    m_old_break = signal(SIGBREAK, handler);
 #endif
     clink_install_ctrlevent();
 
@@ -2829,16 +3147,23 @@ void rl_module::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_end_line()
 {
+// TODO-TIB: ???
+    if (!m_active)
+        return;
+
     s_suggestion.clear(false/*redraw*/);
 
     if (!m_done)
-        done(rl_line_buffer);
+        done(g_tib->get_text().c_str());
 
 #ifdef DEBUG
     ignore_column_in_uninit_display_readline();
 #endif
 
     uninit_display_readline();
+
+// TODO-TIB: ?
+    m_active = false;
 
 #ifdef USE_MEMORY_TRACKING
     // Force freeing any cached matches, to avoid the appearance of a leak.
@@ -2907,6 +3232,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 {
     assert(!g_result);
 
+#ifdef TIB_TODO
     switch (input.id)
     {
     case bind_id_left_click:
@@ -2980,10 +3306,12 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             return;
         }
     }
+#endif
 
     g_result = &result;
     s_matches = &context.matches;
 
+#ifdef TIB_TODO
     // Tell Readline about the input chord, and whether the binding resolver
     // has more bytes pending.
     struct shim_in
@@ -3040,20 +3368,29 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
-
-        // NOTE:  There's ambiguity for quoted-insert.  Ideally the whole
-        // console input key sequence could be inserted as quoted text (e.g.
-        // CTRL-Q then UP).  But in a recorded key macro there's no way to
-        // know how many characters should be quoted.  For consistency between
-        // direct console input and recorded macros, the implementation here
-        // no longer quotes the whole console input key sequence.
-        //
-        // Related commits:
-        //  - 3a64c92f55ab8d55a979c6f9515eba99a82bb4a8, 2022/09/21 15:43:42
-        //  - 62c44d2c75f998242c59af11db9cac78059189a5, 2021/09/18 11:22:51
-        //  - f28e6018aa6b6b1e26c3a734ec82719abdf0109e, 2021/09/18  3:23:16
-        //  - 7a2236ad48e742be6552a60e32ed26a11581dd8c, 2020/10/07 18:14:49
     }
+#else
+    // Expose the remaining chord to tib's self-insert lookahead before it
+    // reads new bytes from Clink's driver.  Keep the optimization enabled.
+    m_terminal->set_chord(input.keys, input.len);
+    while (m_terminal->has_chord() && !m_done)
+    {
+        const int32 key = tib::term_in();
+        if (g_debug_log_input_pipeline)
+        {
+            LOG("INPUT rl.on_input key=%d (0x%02x '%c') has_chord=%d",
+                key, key, key, m_terminal->has_chord());
+        }
+        m_terminal->dispatch(uint8(key));
+        if (g_tib->is_done())
+            done(g_tib->get_text().c_str());
+    }
+    m_terminal->set_chord(nullptr, 0);
+
+    int32 group = result.set_bind_group(m_catch_group);
+    on_need_input(group);
+    result.set_bind_group(group);
+#endif
 
     g_result = nullptr;
     s_matches = nullptr;
@@ -3082,14 +3419,20 @@ void rl_module::on_matches_changed(const context& context, const line_state& lin
 //------------------------------------------------------------------------------
 void rl_module::done(const char* line)
 {
+    assert(!m_done);
     assert(!m_has_pending_line);
+
+    if (m_done)
+        return;
 
     m_pending_line = line;
     m_has_pending_line = !!line;
     m_done = true;
     m_eof = (line == nullptr);
 
+#ifdef TIB_TODO
     rl_callback_handler_remove();
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3100,7 +3443,27 @@ void rl_module::on_terminal_resize(int32, int32, const context& context)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_signal(int32 sig)
+void rl_module::on_signal(int32)
 {
+#ifdef TIB_TODO
     rl_callback_handler_remove();
+#endif
+}
+
+//------------------------------------------------------------------------------
+bool rl_module::quoted_insert_pending() const
+{
+    return m_terminal->quoted_insert_pending();
+}
+
+bool rl_module::pending_input() const
+{
+    return m_terminal->pending_input();
+}
+
+//------------------------------------------------------------------------------
+void rl_module::accept_line()
+{
+    g_tib->set_done();
+    done(g_tib->get_text().c_str());
 }

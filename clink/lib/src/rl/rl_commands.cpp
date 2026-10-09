@@ -44,6 +44,8 @@ extern int32 find_streqn (const char *a, const char *b, int32 n);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
+#include <tib.h>
+
 #ifdef DEBUG
 #include <core/assert_improved.h>
 #endif
@@ -520,8 +522,8 @@ history_infos::~history_infos()
             m_saved_line = nullptr;
             if (m_saved_point >= 0)
             {
-                assert(m_saved_point <= rl_end);
-                rl_point = m_saved_point;
+                assert(m_saved_point <= g_tib->get_length());
+                g_tib->set_caret(m_saved_point);
             }
         }
         else
@@ -635,50 +637,38 @@ void history_infos::discard()
 
 
 //------------------------------------------------------------------------------
-static int32 s_cua_anchor = -1;
-
-//------------------------------------------------------------------------------
-class cua_selection_manager
+int32 clink_newline(int32 count, int32 invoking_key)
 {
-public:
-    cua_selection_manager()
-    : m_anchor(s_cua_anchor)
-    , m_point(rl_point)
-    {
-        if (s_cua_anchor < 0)
-            s_cua_anchor = rl_point;
-    }
-
-    ~cua_selection_manager()
-    {
-        if (s_cua_anchor >= 0)
-            clear_suggestion();
-        if (g_rl_buffer && (m_anchor != s_cua_anchor || m_point != rl_point))
-            g_rl_buffer->set_need_draw();
-    }
-
-private:
-    int32 m_anchor;
-    int32 m_point;
-};
-
-//------------------------------------------------------------------------------
-static void cua_delete()
-{
-    if (s_cua_anchor >= 0)
-    {
-        if (g_rl_buffer)
-        {
-            // Make sure rl_point is lower so it ends up in the right place.
-            if (s_cua_anchor < rl_point)
-                SWAP(s_cua_anchor, rl_point);
-            g_rl_buffer->remove(s_cua_anchor, rl_point);
-        }
-        cua_clear_selection();
-    }
+    clink_accept_line(*g_tib, invoking_key, nullptr, nullptr);
+    return 0;
 }
 
+//------------------------------------------------------------------------------
+int32_t clink_accept_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    ctx.set_mark_active(false);
 
+#ifdef TIB_TODO
+    if (_rl_history_preserve_point)
+        _rl_history_saved_point = (rl_point == rl_end) ? -1 : rl_point;
+#endif
+
+    ctx.set_done();
+
+#ifdef TIB_TODO
+#if defined (VI_MODE)
+    if (rl_editing_mode == vi_mode)
+    {
+        _rl_vi_done_inserting();
+        if (_rl_vi_textmod_command(_rl_vi_last_command) == 0)
+            _rl_vi_reset_last ();
+    }
+#endif /* VI_MODE */
+#endif
+
+    end_prompt(-1/*crlf*/);
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 int32 clink_reload(int32 count, int32 invoking_key)
@@ -1305,127 +1295,6 @@ int32 clink_cancel_suggestion_list(int32 count, int32 invoking_key)
 }
 
 
-
-//------------------------------------------------------------------------------
-bool cua_clear_selection()
-{
-    if (s_cua_anchor < 0)
-        return false;
-    s_cua_anchor = -1;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-bool cua_set_selection(int32 anchor, int32 point)
-{
-    const int32 new_anchor = min<int32>(rl_end, anchor);
-    const int32 new_point = max<int32>(0, min<int32>(rl_end, point));
-    if (new_anchor == s_cua_anchor && new_point == rl_point)
-        return false;
-    s_cua_anchor = new_anchor;
-    rl_point = new_point;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-int32 cua_get_anchor()
-{
-    return s_cua_anchor;
-}
-
-//------------------------------------------------------------------------------
-bool cua_point_in_selection(int32 in)
-{
-    if (s_cua_anchor < 0)
-        return false;
-    if (s_cua_anchor < rl_point)
-        return (s_cua_anchor <= in && in < rl_point);
-    else
-        return (rl_point <= in && in < s_cua_anchor);
-}
-
-//------------------------------------------------------------------------------
-int32 cua_selection_event_hook(int32 event)
-{
-    if (!g_rl_buffer)
-        return 0;
-
-    static bool s_cleanup = false;
-
-    switch (event)
-    {
-    case SEL_BEFORE_INSERTCHAR:
-        assert(!s_cleanup);
-        if (s_cua_anchor >= 0)
-        {
-            s_cleanup = true;
-            g_rl_buffer->begin_undo_group();
-            cua_delete();
-        }
-        break;
-    case SEL_AFTER_INSERTCHAR:
-        if (s_cleanup)
-        {
-            g_rl_buffer->end_undo_group();
-            s_cleanup = false;
-        }
-        break;
-    case SEL_BEFORE_DELETE:
-        if (s_cua_anchor < 0 || s_cua_anchor == rl_point)
-            break;
-        cua_delete();
-        return 1;
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-void cua_after_command(bool force_clear)
-{
-    static std::unordered_set<void*> s_map;
-
-    if (s_map.empty())
-    {
-        // No action after a cua command.
-        s_map.emplace(cua_previous_screen_line);
-        s_map.emplace(cua_next_screen_line);
-        s_map.emplace(cua_backward_char);
-        s_map.emplace(cua_forward_char);
-        s_map.emplace(cua_backward_word);
-        s_map.emplace(cua_forward_word);
-        s_map.emplace(cua_backward_bigword);
-        s_map.emplace(cua_forward_bigword);
-        s_map.emplace(cua_beg_of_line);
-        s_map.emplace(cua_end_of_line);
-        s_map.emplace(cua_select_all);
-        s_map.emplace(cua_select_word);
-        s_map.emplace(cua_copy);
-        s_map.emplace(cua_cut);
-        s_map.emplace(clink_selectall_conhost);
-
-        // No action after scroll commands.
-        s_map.emplace(clink_scroll_line_up);
-        s_map.emplace(clink_scroll_line_down);
-        s_map.emplace(clink_scroll_page_up);
-        s_map.emplace(clink_scroll_page_down);
-        s_map.emplace(clink_scroll_top);
-        s_map.emplace(clink_scroll_bottom);
-
-        // No action after some special commands.
-        s_map.emplace(show_rl_help);
-        s_map.emplace(show_rl_help_raw);
-        s_map.emplace(rl_dump_functions);
-        s_map.emplace(rl_dump_macros);
-        s_map.emplace(rl_dump_variables);
-        s_map.emplace(clink_dump_functions);
-        s_map.emplace(clink_dump_macros);
-    }
-
-    // If not a recognized command, clear the cua selection.
-    if (force_clear || s_map.find((void*)rl_last_func) == s_map.end())
-        cua_clear_selection();
-}
 
 //------------------------------------------------------------------------------
 int32 cua_previous_screen_line(int32 count, int32 invoking_key)

@@ -31,14 +31,15 @@ private:
     uint32          get_dimensions();
     void            fix_console_input_mode();
     void            read_console(input_idle* callback=nullptr, DWORD timeout=INFINITE, bool peek=false);
-    bool            peek_record(const INPUT_RECORD& record, int32* peeked=nullptr);
+    bool            peek_record(INPUT_RECORD& record, int32* peeked=nullptr);
     bool            process_record(const INPUT_RECORD& record);
     void            process_input(const KEY_EVENT_RECORD& key_event, bool peek);
     void            process_input(const MOUSE_EVENT_RECORD& mouse_event, bool peek);
     void            filter_unbound_input(uint32 buffer_count);
+    void            push_event(int32 event);
     void            push(uint32 value);
     void            push(const char* seq);
-    uint8           pop();
+    int32           pop();
     int32           m_began = 0;
     key_tester*     m_keys = nullptr;
     void*           m_stdin = nullptr;
@@ -49,7 +50,7 @@ private:
     uint8           m_buffer_head = 0;
     uint8           m_buffer_count = 0;
     wchar_t         m_lead_surrogate = 0;
-    uint8           m_buffer[16]; // must be power of two.
+    int16           m_buffer[16]; // must be power of two.
     std::vector<INPUT_RECORD> m_pending_records;
     std::vector<INPUT_RECORD> m_processed_records;
     const bool      m_cursor_visibility = true;

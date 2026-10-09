@@ -338,30 +338,8 @@ extern int rl_initialize (void);
 /* Undocumented; unused by readline */
 extern int rl_discard_argument (void);
 
-/* Utility functions to bind keys to readline commands. */
-extern int rl_add_defun (const char *, rl_command_func_t *, int);
-extern int rl_bind_key (int, rl_command_func_t *);
-extern int rl_bind_key_in_map (int, rl_command_func_t *, Keymap);
-extern int rl_unbind_key (int);
-extern int rl_unbind_key_in_map (int, Keymap);
-extern int rl_bind_key_if_unbound (int, rl_command_func_t *);
-extern int rl_bind_key_if_unbound_in_map (int, rl_command_func_t *, Keymap);
-extern int rl_unbind_function_in_map (rl_command_func_t *, Keymap);
-extern int rl_unbind_command_in_map (const char *, Keymap);
-extern int rl_bind_keyseq (const char *, rl_command_func_t *);
-extern int rl_bind_keyseq_in_map (const char *, rl_command_func_t *, Keymap);
-extern int rl_bind_keyseq_if_unbound (const char *, rl_command_func_t *);
-extern int rl_bind_keyseq_if_unbound_in_map (const char *, rl_command_func_t *, Keymap);
-extern int rl_generic_bind (int, const char *, char *, Keymap);
-
 extern char *rl_variable_value (const char *);
 extern int rl_variable_bind (const char *, const char *);
-
-/* Backwards compatibility, use rl_bind_keyseq_in_map instead. */
-extern int rl_set_key (const char *, rl_command_func_t *, Keymap);
-
-/* Backwards compatibility, use rl_generic_bind instead. */
-extern int rl_macro_bind (const char *, const char *, Keymap);
 
 /* Undocumented in the texinfo manual; not really useful to programs. */
 extern int rl_translate_keyseq (const char *, char *, int *);
@@ -657,13 +635,6 @@ extern rl_hook_func_t *rl_input_available_hook;
 /* Called before the input buffer is changed. */
 enum buffer_change_event { CHG_INSERT, CHG_DELETE, CHG_REPLACE, CHG_REPLACEEMPTY };
 extern rl_vintfunc_t *rl_buffer_changing_hook;
-/* Called when an event occurs that is relevant for a host that implements a
-   text selection model where typing can replace the selection. The function is
-   called with one argument, an enum indicating the type of selection event.
-   The function can return zero to allow the command to continue, or return
-   non-zero to stop further processing. */
-enum selection_event { SEL_BEFORE_INSERTCHAR, SEL_AFTER_INSERTCHAR, SEL_BEFORE_DELETE };
-extern rl_intfunc_t *rl_selection_event_hook;
 /* Called to check whether to concatenate new input with last undo entry. */
 extern rl_can_concat_undo_hook_func_t *rl_can_concat_undo_hook;
 /* end_clink_change */
@@ -752,16 +723,10 @@ extern rl_macro_print_func_t *rl_macro_display_hook;
 
 /* Dispatch variables. */
 extern Keymap rl_executing_keymap;
-extern Keymap rl_binding_keymap;
 
 extern int rl_executing_key;
 extern char *rl_executing_keyseq;
 extern int rl_key_sequence_length;
-
-/* begin_clink_change */
-extern rl_macro_hook_func_t *rl_macro_hook_func;
-extern rl_vintfunc_t *rl_last_func_hook_func;
-/* end_clink_change */
 
 /* Display variables. */
 /* If non-zero, readline will erase the entire line, including any prompt,

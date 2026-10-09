@@ -8,6 +8,7 @@
 #include "line_editor_tester.h"
 
 #include <lib/host_callbacks.h>
+#include <lib/rl_integration.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -73,8 +74,8 @@ TEST_CASE("Rl matches")
 
     SECTION("numbers completion")
     {
-        MAKE_CLEANUP([](){ rl_unbind_key_in_map(0x0e, emacs_meta_keymap); });
-        rl_bind_keyseq_in_map("\\C-N", clink_complete_numbers, emacs_meta_keymap); // Alt-Ctrl-N "\e\C-N" "\x1b\x0e"
+        MAKE_CLEANUP([](){ clink_bind("\\M-\\C-n", nullptr, emacs_table); });
+        clink_bind("\\M-\\C-n", "clink-complete-numbers", emacs_table); // Alt-Ctrl-N "\e\C-N" "\x1b\x0e"
 
         // Must have at least two matching matches, or clink_complete_numbers
         // will just insert the single matching match and not actually update

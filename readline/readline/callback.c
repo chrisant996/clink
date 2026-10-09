@@ -83,6 +83,9 @@ _rl_callback_newline (void)
   rl_eof_found = 0;
   RL_UNSETSTATE(RL_STATE_DONE|RL_STATE_TIMEOUT|RL_STATE_EOF);
 
+  /* Parsing of key-bindings begins in an enabled state. */
+  _rl_parsing_conditionalized_out = 0;
+
 #if defined (VI_MODE)
   if (rl_editing_mode == vi_mode)
     _rl_vi_initialize_line ();

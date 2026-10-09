@@ -9,5 +9,5 @@ class input_dispatcher
 public:
     virtual void    dispatch(int32 bind_group) = 0;
     virtual bool    available(uint32 timeout) = 0;
-    virtual uint8   peek() = 0;
+    virtual int32   peek() = 0;
 };

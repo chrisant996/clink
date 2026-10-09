@@ -62,6 +62,7 @@ extern setting_enum g_expand_mode;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
+extern bool g_debug_log_input_pipeline;
 // TODO: line_editor_impl vs rl_module.
 extern int32 g_suggestion_offset;
 void before_display_readline();
@@ -75,6 +76,7 @@ inline char get_closing_quote(const char* quote_pair)
 }
 
 //------------------------------------------------------------------------------
+#ifdef TIB_TODO
 static bool rl_vi_insert_mode_esc_special_case(int32 key)
 {
     // This mirrors the conditions in the #if defined (VI_MODE) block in
@@ -96,6 +98,7 @@ static bool rl_vi_insert_mode_esc_special_case(int32 key)
 
     return false;
 }
+#endif
 
 
 
@@ -234,7 +237,6 @@ static bool is_endword_tilde(const line_state& line)
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
-, m_module(desc.input)
 , m_collector(desc.command_tokeniser, desc.word_tokeniser, desc.get_quote_pair())
 , m_pager(*this)
 , m_selectcomplete(*this)
@@ -249,6 +251,9 @@ line_editor_impl::line_editor_impl(const desc& desc)
 
     assert(g_terminal);
 
+    g_tib->set_callbacks(this);
+    g_terminal->add_target(g_tib->weak_from_this());
+
     key_tester* old_tester = g_terminal->get_in()->set_key_tester(this);
     assert(!old_tester);
 }
@@ -259,6 +264,8 @@ line_editor_impl::~line_editor_impl()
     // Ensure cleanup if/when clatch's REQUIRE throws.
     if (check_flag(flag_editing))
         end_line();
+
+    g_tib->set_callbacks(nullptr);
 
     assert(g_terminal);
     if (g_terminal)
@@ -304,6 +311,12 @@ void line_editor_impl::initialise()
 //------------------------------------------------------------------------------
 void line_editor_impl::begin_line()
 {
+    {
+        str<16> tmp;
+        os::get_env("CLINK_LOG_INPUT_PIPELINE", tmp);
+        g_debug_log_input_pipeline = (atoi(tmp.c_str()) > 0);
+    }
+
     clear_flag(~flag_init);
     set_flag(flag_editing);
 
@@ -330,6 +343,7 @@ void line_editor_impl::begin_line()
     m_terminal = g_terminal;
     assert(m_terminal);
 
+    g_tib->set_callbacks(this);
     m_buffer.begin_line();
 
     static bool s_discover_terminal = true;
@@ -376,7 +390,9 @@ void line_editor_impl::end_line()
 
     rl_before_display_function = nullptr;
 
+    m_bind_resolver.set_group(m_binder.get_group()); // TODO-TIB: why?
     m_buffer.end_line();
+    g_tib->set_callbacks(nullptr);
     m_terminal->end();
     m_terminal = nullptr;
 
@@ -469,15 +485,14 @@ bool line_editor_impl::edit(str_base& out, bool edit)
     {
         // Update first so the init state goes through.
         while (update())
-        {
-            if (!rl_has_queued_input())
-                m_desc.input->select(m_idle);
-        }
+            wait_for_input(m_idle);
     }
     else
     {
         update();
-        rl_newline(0, 0);
+// TODO-TIB: test this.
+        assert(false);
+        clink_newline(0, 0);
     }
 
     return get_line(out);
@@ -820,8 +835,7 @@ void line_editor_impl::dispatch(int32 bind_group)
 
     do
     {
-        if (!rl_has_queued_input())
-            m_desc.input->select();
+        wait_for_input();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -837,27 +851,25 @@ void line_editor_impl::dispatch(int32 bind_group)
 bool line_editor_impl::available(uint32 timeout)
 {
     assert(check_flag(flag_init));
-    return m_desc.input->available(timeout);
+    return tib::term_in_avail(timeout);
 }
 
 //------------------------------------------------------------------------------
-uint8 line_editor_impl::peek()
+int32 line_editor_impl::peek()
 {
     assert(check_flag(flag_init));
-    const int32 c = m_desc.input->peek();
-    assert(c < 0xf8);
-    return (c < 0) ? 0 : uint8(c);
+    return tib::term_in_peek();
 }
 
 //------------------------------------------------------------------------------
 bool line_editor_impl::is_bound(const char* seq, int32 len)
 {
-    // Check if clink has a binding; these override Readline.
+    // Check if clink has a binding; these override tib.
     int32 bound = m_bind_resolver.is_bound(seq, len);
     if (bound != 0)
         return (bound > 0);
 
-    // Check if Readline has a binding.
+    // Check if tib has a binding.
     return m_module.is_bound(seq, len);
 }
 
@@ -900,14 +912,13 @@ bool line_editor_impl::update_input()
         m_bind_resolver.set_group(bind_group);
     }
 
+    assert(!m_module.is_done());
+
     int32 key;
-    if (rl_has_queued_input())
     {
-        key = rl_read_key();
-    }
-    else
-    {
-        key = m_desc.input->read();
+        key = tib::term_in();
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT editor.read key=%d (0x%02x '%c') group=%d", key, key, key, m_bind_resolver.get_group());
 
         if (key == terminal_in::input_terminal_resize)
         {
@@ -944,7 +955,7 @@ bool line_editor_impl::update_input()
         }
     }
 
-    if (key < 0)
+    if (!terminal_in::is_input_byte(key))
         return true;
 
 #ifdef DEBUG
@@ -955,16 +966,23 @@ bool line_editor_impl::update_input()
     dbg_printf_row(-1, "bind_resolver:  group '%s' (%d), key 0x%02x ('%c'), multikey %s",
         group_name.c_str(), m_bind_resolver.get_group(),
         key, (key < 32) ? '.' : key,
-        RL_ISSTATE(RL_STATE_MULTIKEY) ? "true" : "false");
+        m_module.pending_input() ? "true" : "false");
 #endif
 #endif
 
     // `quoted-insert` should always behave as though the key resolved a
-    // binding, to ensure that Readline gets to handle the key (even Esc).
+    // binding, to ensure that tib gets to handle the key (even Esc).
     if (!m_bind_resolver.step(key) &&
-        !rl_is_insert_next_callback_pending() &&
-        !rl_vi_insert_mode_esc_special_case(key))
+        !m_module.quoted_insert_pending()
+#ifdef TIB_TODO
+        && !rl_vi_insert_mode_esc_special_case(key)
+#endif
+        )
+    {
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT editor.binding prefix key=%d group=%d", key, m_bind_resolver.get_group());
         return false;
+    }
 
     struct result_impl : public editor_module::result
     {
@@ -997,6 +1015,13 @@ bool line_editor_impl::update_input()
         editor_module* module = binding.get_module();
         uint8 id = binding.get_id();
         binding.get_chord(chord);
+
+        if (g_debug_log_input_pipeline)
+        {
+            LOG("INPUT editor.binding id=%u chord_len=%u first=0x%02x group=%d more=%d",
+                id, chord.length(), chord.length() ? uint8(chord.c_str()[0]) : 0,
+                m_bind_resolver.get_group(), m_bind_resolver.more_than(chord.length()));
+        }
 
         {
             rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
@@ -1197,6 +1222,18 @@ void line_editor_impl::provide_faces(const tib::input_buffer& buffer, tib::cstri
 const char* line_editor_impl::get_face_def(char face)
 {
     return m_module.get_face_def(face);
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::on_dispatch(const char* name)
+{
+    return luafunc_hook_func(name);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::on_dispatched(const char* name)
+{
+    last_command_hook_func(!!name);
 }
 
 //------------------------------------------------------------------------------
@@ -1530,8 +1567,8 @@ bool line_editor_impl::maybe_handle_signal()
         m_signaled = true;
 #endif
 
-        if (m_desc.input->peek() == terminal_in::input_abort)
-            m_desc.input->read();
+        if (tib::term_in_peek() == terminal_in::input_abort)
+            tib::term_in();
 
         for (auto* module : m_modules)
             module->on_signal(sig);
@@ -1629,8 +1666,8 @@ void line_editor_impl::update_internal(bool force)
         // when the key sequence is finished.  For example, in a key sequence
         // like "\e[27;5;32~" (Ctrl-Space) this is called 10 times, and the
         // first 9 are redundant since the line can't have changed yet.
-        if (RL_ISSTATE(RL_STATE_MULTIKEY))
-            return;     // Readline is reading a multikey sequence.
+        if (m_terminal.pending_input())
+            return;     // The terminal is reading a multikey sequence.
         if (!m_bind_resolver.is_done())
             return;     // m_bind_resolver is reading a multikey sequence.
     }
@@ -1731,7 +1768,9 @@ void line_editor_impl::try_suggest()
     rollback<bool> guard(m_in_try_suggest, true);
 #endif
 
-    if (!g_autosuggest_enable.get())
+    assert(g_tib);
+    assert(g_terminal);
+    if (!g_autosuggest_enable.get() || !g_tib || !g_terminal)
         return;
 
     // This prevents generating suggestions while navigating in the suggestion
@@ -1745,7 +1784,7 @@ void line_editor_impl::try_suggest()
     // NOTE:  It's important to check rl_done first, to avoid dequeuing
     // console input that isn't for the current input line.  This ensures the
     // "More?" prompt receives all appropriate input.
-    if (rl_done || _rl_pushed_input_available() || _rl_input_queued(0))
+    if (g_tib->is_done() || g_terminal->available(0))
         return;
 
     const line_states& lines = m_command_line_states.get_linestates(m_buffer);
@@ -1841,4 +1880,24 @@ void line_editor_impl::clear_input_hint_timeout()
 const input_hint* line_editor_impl::get_input_hint() const
 {
     return &m_input_hint;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::wait_for_input(input_idle* idle)
+{
+    assert(!m_module.is_done());
+
+    if (m_terminal->wait_for_input(idle))
+    {
+        // The terminal host has already resolved and dispatched the binding.
+        // Observe this editor's target separately from that shared machinery.
+// TODO-TIB: why is the terminal host dispatching anything?  This seems wrong.
+        if (g_tib->is_done())
+        {
+            assert(false);
+            m_module.accept_line();
+        }
+        else
+            m_buffer.draw();
+    }
 }

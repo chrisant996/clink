@@ -15,6 +15,8 @@ class tib_terminal_bridge;
 
 //------------------------------------------------------------------------------
 extern tib_terminal_bridge* g_terminal;
+extern uint32 g_ambiguous_keyseq_timeout;
+extern bool g_debug_log_input_pipeline;
 
 //------------------------------------------------------------------------------
 bool                init_terminal();

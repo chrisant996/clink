@@ -916,7 +916,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, const line_st
         return false;
     }
 
-    override_rl_last_func(nullptr);
+    override_last_command(nullptr);
 
     buffer.push(L);
     if (line_lua)

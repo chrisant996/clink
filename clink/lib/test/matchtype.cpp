@@ -6,6 +6,7 @@
 
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
+#include "rl_integration.h"
 
 #include <core/settings.h>
 #include <lua/lua_match_generator.h>
@@ -230,23 +231,25 @@ TEST_CASE("Match type : lcd")
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
 
-    rl_bind_keyseq_in_map("\x99", rl_named_function("complete"), emacs_standard_keymap);
+// TODO-TIB: use "complete" command.
+    // clink_bind("\xe2\x84\xa2", "complete", emacs_table);
+    clink_bind("\xe2\x84\xa2", "end-of-line", emacs_table);
 
     SECTION("pathish readline")
     {
-        tester.set_input("plugh dir\\\x99");
+        tester.set_input("plugh dir\\\xe2\x84\xa2");
         tester.set_expected_output("plugh dir\\b");
         tester.run();
     }
 
     SECTION("non-pathish readline")
     {
-        tester.set_input("xyzzy foo/\x99");
+        tester.set_input("xyzzy foo/\xe2\x84\xa2");
         tester.set_expected_output("xyzzy foo/b");
         tester.run();
     }
 
-    rl_bind_keyseq_in_map("\x99", rl_insert, emacs_standard_keymap);
+    clink_bind("\xe2\x84\xa2", nullptr, emacs_table);
 }
 
 //------------------------------------------------------------------------------
