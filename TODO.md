@@ -23,10 +23,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] History.
   - [ ] Miscellaneous.
 - Suggestions:
-  - [ ] Inline suggestions.
-  - [ ] Suggestion usage hint.
-  - [ ] Suggestion list (requires history commands to be working).
-  - [ ] Suggestion list has an extra blank line below it that doesn't get cleared correctly.
+  - [x] Inline suggestions.
+  - [x] Suggestion usage hint.
+  - [x] Suggestion list basic functionality.
+  - [x] Suggestion list has an extra blank line below it that doesn't get cleared correctly.
+  - [ ] Suggestion list full functionality (requires history commands to be working).
 - `clink-select-complete`:
   - [ ] Activate.
   - [ ] Overlay key bindings.  This would need a way to tell the dispatcher to forward the binding as though a miss had occurred, even though it didn't miss.  But that could get weird:  what if the fallback produces a miss?  The design might not be generalized enough yet to replace Clink's `bind_resolver` with tib's binding framework.

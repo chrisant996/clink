@@ -859,15 +859,8 @@ void suggestionlist_impl::update_display()
     tib::display_accumulator coalesce;
 
     // Move cursor to bottom of the input line area.
-    g_tib->move_to_end_of_display(true);
-
-    // Make room for input hints.
     int32 up = 0;
-    if (m_input_hints)
-    {
-        clink_write("\n", 1);
-        up++;
-    }
+    g_tib->move_to_end_of_display(true);
 
     // Display suggestions.
     if (is_active() && m_count > 0)
