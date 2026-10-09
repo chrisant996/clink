@@ -331,9 +331,7 @@ extern setting_bool g_terminal_raw_esc;
 
 extern setting_bool g_autosuggest_enable;
 extern setting_bool g_autosuggest_inline;
-#ifdef USE_SUGGESTION_HINT_INLINE
 extern setting_bool g_autosuggest_hint;
-#endif
 
 extern bool g_debug_log_input_pipeline;
 
@@ -675,9 +673,7 @@ const char* rl_module::get_face_def(char face)
     static const char c_hyperlink[] = "\x1b]8;;";
     static const char c_BEL[] = "\a";
     static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
-#ifdef USE_SUGGESTION_HINT_INLINE
     static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-#endif
 #endif
 
     switch (face)
@@ -755,9 +751,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
     static const char c_hyperlink[] = "\x1b]8;;";
     static const char c_BEL[] = "\a";
     static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
-#ifdef USE_SUGGESTION_HINT_INLINE
     static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-#endif
 
     str<280> out;
     const char* const other_color = fallback_color(s_input_color, c_normal);
@@ -808,10 +802,8 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                 break;
 
             case FACE_SUGGESTION:
-#ifdef USE_SUGGESTION_HINT_INLINE
             case FACE_SUGGESTIONKEY:
             case FACE_SUGGESTIONLINK:
-#endif
                 assert(g_autosuggest_enable.get());
                 if (s_suggestion_color)
                     out << s_suggestion_color;
@@ -836,7 +828,6 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                     out << "\x1b[0;90m";
 #endif
                 }
-#ifdef USE_SUGGESTION_HINT_INLINE
                 if (cur_face == FACE_SUGGESTIONKEY)
                     out << "\x1b[7m";
                 else if (cur_face == FACE_SUGGESTIONLINK)
@@ -844,7 +835,6 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                     out << c_hyperlink << c_doc_autosuggest << c_BEL;
                     hyperlink = true;
                 }
-#endif
                 break;
 
             case FACE_OTHER:        out << other_color; break;
@@ -967,24 +957,19 @@ extern "C" void clear_suggestion()
 }
 
 //------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_INLINE
 static void append_face(str_base& s, char face, uint32 count)
 {
     while (count--)
         s.concat(&face, 1);
 }
-#endif
 
 //------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_INLINE
 const char* get_suggestion_hint_text()
 {
     return s_suggestion_hint_text.c_str();
 }
-#endif
 
 //------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_INLINE
 bool can_show_suggestion_hint()
 {
     if (s_build_suggestion_hint)
@@ -995,16 +980,17 @@ bool can_show_suggestion_hint()
         {
             int32 type;
             str_moveable tmp;
-            rl_command_func_t* func_right = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
-            const bool has_right = (type == ISFUNC &&
+
+            auto resolved = lookup_keyseq(*g_tib, "\x1b[C", 3);
+            const bool has_right = (resolved.outcome == tib::dispatch_outcome::match &&
                                     g_autosuggest_inline.get() &&
-                                    (func_right == win_f1 ||
-                                     func_right == clink_forward_char ||
-                                     func_right == clink_forward_byte ||
-                                     func_right == clink_end_of_line));
-            rl_command_func_t* func_f2 = rl_function_of_keyseq_len("\x1bOQ", 3, nullptr, &type);
+                                    (resolved.is_func_name("win-cursor-forward") ||
+                                     resolved.is_func_name("forward-char") ||
+                                     resolved.is_func_name("forward-byte") ||
+                                     resolved.is_func_name("end-of-line")));
+            auto func_f2 = lookup_keyseq(*g_tib, "\x1bOQ", 3);
             const char* toggle_key_name = nullptr;
-            if (type == ISFUNC && func_f2 == clink_toggle_suggestion_list)
+            if (func_f2.is_func_name("clink-toggle-suggestion-list"))
             {
                 toggle_key_name = "F2";
             }
@@ -1059,7 +1045,6 @@ bool can_show_suggestion_hint()
     }
     return !s_suggestion_hint_text.empty();
 }
-#endif
 
 
 

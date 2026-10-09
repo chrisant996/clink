@@ -9,6 +9,7 @@
 #include "suggestions.h"
 #include "suggestionlist_impl.h"
 #include "line_editor_integration.h"
+#include "rl_integration.h"
 
 #include <core/base.h>
 #include <core/str_compare.h>
@@ -234,12 +235,9 @@ bool suggestion_manager::more() const
 }
 
 //------------------------------------------------------------------------------
-bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
+bool suggestion_manager::get_visible(str_base& out) const
 {
     assert(g_autosuggest_enable.get());
-
-    if (includes_hint)
-        *includes_hint = false;
 
     out.clear();
     if (!g_rl_buffer)
@@ -273,28 +271,12 @@ bool suggestion_manager::get_visible(str_base& out, bool* includes_hint) const
         out.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     }
 
-#ifdef USE_SUGGESTION_HINT_INLINE
     if (can_show_suggestion_hint())
     {
         const char* hint_text = get_suggestion_hint_text();
-#ifdef RIGHT_ALIGN_SUGGESTION_HINT
-        const char* local_prompt = rl_get_local_prompt();
-        COORD size = measure_readline_display(local_prompt, out.c_str(), out.length());
-        if (has_modmark())
-            size.X += 1;
         static const uint32 hint_cols = cell_count(hint_text) + 1;
-        if (size.X + hint_cols >= _rl_screenwidth)
-        {
-            concat_spaces(out, _rl_screenwidth - size.X);
-            size.X = 0;
-        }
-        concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
-#endif // RIGHT_ALIGN_SUGGESTION_HINT
-        out.concat(hint_text);
-        if (includes_hint)
-            *includes_hint = true;
+        g_tib->set_usage_text(hint_text, hint_cols);
     }
-#endif  // USE_SUGGESTION_HINT_INLINE
 
     return true;
 }

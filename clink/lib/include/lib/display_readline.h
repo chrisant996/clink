@@ -4,13 +4,6 @@
 #include <core/str.h>
 #include <vector>
 
-// Define USE_SUGGESTION_HINT_INLINE to show "[Right]=Insert Suggestion" (with a hyperlink)
-// inline when there's suggestion text.
-// Define RIGHT_ALIGN_SUGGESTION_HINT to show the hint right aligned, dropping
-// down a line if it doesn't fit.
-#define USE_SUGGESTION_HINT_INLINE
-#define RIGHT_ALIGN_SUGGESTION_HINT
-
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
@@ -52,9 +45,7 @@ void defer_clear_lines(uint32 prompt_lines, bool transient);
 extern bool g_display_manager_no_comment_row;
 
 //------------------------------------------------------------------------------
-#ifdef USE_SUGGESTION_HINT_INLINE
 #define DOC_HYPERLINK_AUTOSUGGEST "https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest"
-#endif
 
 //------------------------------------------------------------------------------
 #define BIT_PROMPT_PROBLEM          (0x01)
@@ -84,10 +75,8 @@ constexpr char FACE_SELECTION       = '#';
 constexpr char FACE_HISTEXPAND1     = '!';
 constexpr char FACE_HISTEXPAND2     = '?';
 constexpr char FACE_SUGGESTION      = '-';
-#ifdef USE_SUGGESTION_HINT_INLINE
 constexpr char FACE_SUGGESTIONKEY   = char(0x1a); // In OEM 437 codepage, 0x1a is a right-arrow character.
 constexpr char FACE_SUGGESTIONLINK  = char(0x15); // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
-#endif
 
 constexpr char FACE_OTHER           = 'o';
 constexpr char FACE_UNRECOGNIZED    = 'u';
