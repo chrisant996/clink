@@ -44,7 +44,6 @@ int __append_to_match(char* text, int orig_start, int delimiter, int quote_char,
 char* __printable_part(char* text);
 void __set_completion_defaults(int what_to_do);
 int __get_y_or_n(int for_pager);
-extern int _rl_last_v_pos;
 };
 
 extern bool is_test_harness();
@@ -290,7 +289,7 @@ cant_activate:
         resync_rl_cursor_pos resync;
 
         // Move cursor after the input line.
-        _rl_move_vert(_rl_vis_botlin);
+        move_to_end_of_display(true);
         clink_write("\n", 1);
 
         // Show prompt.
@@ -312,7 +311,7 @@ cant_activate:
         for (int32 up = 1 + ((prompt.length() - 1) / m_screen_cols); up > 0; --up)
             clink_write("\r\x1b[K\x1b[A");
         resync.resync();
-        // Now the cursor is back to _rl_vis_botlin and _rl_last_c_pos.
+        // Now the cursor is back to the original position.
 
         if (!yes)
         {
@@ -944,7 +943,7 @@ append_not_dup:
         }
         else
         {
-            rl_ding();
+            tib::ding();
         }
         break;
 
@@ -1396,7 +1395,7 @@ force_desc_below:
     }
 
     // +3 for quotes and append character (e.g. space).
-    const int32 input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
+    const int32 input_height = get_input_height() + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
     m_visible_rows = m_screen_rows - input_height;
     m_visible_rows -= min<int32>(2, m_screen_rows / 10);
 
@@ -1476,10 +1475,10 @@ void selectcomplete_impl::update_display()
         // consistent with Readline's view of the world.
         resync_rl_cursor_pos resync;
 
-        display_accumulator coalesce;
+        tib::display_accumulator coalesce;
 
         // Move cursor after the input line.
-        _rl_move_vert(_rl_vis_botlin);
+        move_to_end_of_display(false);
 
 #ifdef SHOW_DISPLAY_GENERATION
         static char s_chGen = '0';

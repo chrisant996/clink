@@ -93,3 +93,14 @@ public:
     ~suppress_implicit_write_console_logging();
     static bool is_suppressed();
 };
+
+//------------------------------------------------------------------------------
+class terminal_fwrite_context
+{
+public:
+    terminal_fwrite_context(const char* ctx);
+    ~terminal_fwrite_context();
+    static const char* get_context();
+private:
+    const char* const m_old;
+};

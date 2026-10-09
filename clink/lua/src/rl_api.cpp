@@ -923,8 +923,8 @@ static int32 get_prompt_info(lua_State* state)
 
     lua_createtable(state, 0, 7);
 
-    const char* prefix = rl_get_local_prompt_prefix();
-    const char* prompt = rl_get_local_prompt();
+    const char* prefix = g_prompt_prefix.c_str();
+    const char* prompt = g_prompt.c_str();
 
     int32 prefix_lines = count_prompt_lines(prefix);
     int32 prompt_lines = count_prompt_lines(prompt);
@@ -941,19 +941,19 @@ static int32 get_prompt_info(lua_State* state)
     lua_pushstring(state, prompt);
     lua_rawset(state, -3);
 
-    if (rl_rprompt)
+    if (!g_rprompt.empty())
     {
         lua_pushliteral(state, "rprompt");
-        lua_pushstring(state, rl_rprompt);
+        lua_pushlstring(state, g_rprompt.c_str(), g_rprompt.length());
         lua_rawset(state, -3);
     }
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
     {
-        int32 anchor = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-        int32 prompt_line = anchor - prefix_lines;
-        int32 input_line = anchor + prompt_lines;
+        int32 origin = csbi.dwCursorPosition.Y - (g_tib ? g_tib->get_relative_cursor().y : 0);
+        int32 prompt_line = origin - prefix_lines;
+        int32 input_line = origin + prompt_lines;
 
         lua_pushliteral(state, "promptline");
         lua_pushinteger(state, 1 + prompt_line);
@@ -964,7 +964,7 @@ static int32 get_prompt_info(lua_State* state)
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "inputlinecount");
-        lua_pushinteger(state, 1 + _rl_vis_botlin - prompt_lines);
+        lua_pushinteger(state, get_input_height());
         lua_rawset(state, -3);
     }
 

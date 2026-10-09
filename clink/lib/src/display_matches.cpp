@@ -13,6 +13,7 @@
 #define BUILD_READLINE
 
 #include "display_matches.h"
+#include "display_readline.h"
 #include "match_colors.h"
 #include "matches_lookaside.h"
 #include "matches_impl.h"
@@ -21,6 +22,7 @@
 #include "ellipsify.h"
 #include "line_buffer.h"
 #include "pager.h"
+#include "rl_integration.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -1078,7 +1080,7 @@ extern "C" void display_matches(char** matches)
         {
             if (!filtered_matches->get_match_count())
             {
-                rl_ding();
+                tib::ding();
                 delete filtered_matches;
                 return;
             }
@@ -1148,7 +1150,7 @@ extern "C" void display_matches(char** matches)
     // If there are many items, then ask the user if she really wants to see
     // them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(adapter, widths, 1, presuf) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        display_match_list_internal(adapter, widths, 1, presuf) >= (_rl_screenheight - get_input_height()) :
         rl_completion_query_items > 0 && count >= rl_completion_query_items)
     {
         if (!prompt_display_matches(count))
@@ -1160,7 +1162,6 @@ extern "C" void display_matches(char** matches)
 done:
     destroy_matches_lookaside(rebuilt);
     rl_forced_update_display();
-    rl_display_fixed = 1;
 }
 
 //------------------------------------------------------------------------------

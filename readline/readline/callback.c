@@ -54,14 +54,6 @@
 _rl_callback_func_t *_rl_callback_func = 0;
 _rl_callback_generic_arg *_rl_callback_data = 0;
 
-/* Applications can set this to non-zero to have readline's signal handlers
-   installed during the entire duration of reading a complete line, as in
-   readline-6.2.  This should be used with care, because it can result in
-   readline receiving signals and not handling them until it's called again
-   via rl_callback_read_char, thereby stealing them from the application.
-   By default, signal handlers are only active while readline is active. */   
-int rl_persistent_signal_handlers = 0;
-
 /* **************************************************************** */
 /*								    */
 /*			Callback Readline Functions		    */
@@ -86,19 +78,22 @@ static int in_handler;		/* terminal_prepped and signals set? */
 static void
 _rl_callback_newline (void)
 {
-  rl_initialize ();
+  /* We aren't done yet.  We haven't even gotten started yet! */
+  rl_done = 0;
+  rl_eof_found = 0;
+  RL_UNSETSTATE(RL_STATE_DONE|RL_STATE_TIMEOUT|RL_STATE_EOF);
+
+#if defined (VI_MODE)
+  if (rl_editing_mode == vi_mode)
+    _rl_vi_initialize_line ();
+#endif
+
+  /* Each line starts in insert mode (the default). */
+  _rl_set_insert_mode (RL_IM_DEFAULT, 1);
 
   if (in_handler == 0)
     {
       in_handler = 1;
-
-      if (rl_prep_term_function)
-	(*rl_prep_term_function) (_rl_meta_flag);
-
-#if defined (HANDLE_SIGNALS)
-      if (rl_persistent_signal_handlers)
-	rl_set_signals ();
-#endif
     }
 
   readline_internal_setup ();
@@ -109,20 +104,15 @@ _rl_callback_newline (void)
 void
 rl_callback_handler_install (const char *prompt, rl_vcpfunc_t *linefunc)
 {
-  rl_set_prompt (prompt);
-  RL_SETSTATE (RL_STATE_CALLBACK);
-  rl_linefunc = linefunc;
   _rl_callback_newline ();
 }
 
 #if defined (HANDLE_SIGNALS)
 #define CALLBACK_READ_RETURN() \
   do { \
-    if (rl_persistent_signal_handlers == 0) \
-      { \
-	rl_clear_signals (); \
-	if (_rl_caught_signal) _rl_signal_handler (_rl_caught_signal); \
-      } \
+    rl_clear_signals (); \
+      if (_rl_caught_signal) \
+	_rl_signal_handler (_rl_caught_signal); \
     return; \
   } while (0)
 #else
@@ -168,9 +158,7 @@ rl_callback_read_char (void)
     }
 
 #if defined (HANDLE_SIGNALS)
-  /* Install signal handlers only when readline has control. */
-  if (rl_persistent_signal_handlers == 0)
-    rl_set_signals ();
+  rl_set_signals ();
 #endif
 
   do
@@ -303,8 +291,6 @@ rl_callback_read_char (void)
 	{
 	  line = readline_internal_teardown (eof);
 
-	  if (rl_deprep_term_function)
-	    (*rl_deprep_term_function) ();
 #if defined (HANDLE_SIGNALS)
 	  rl_clear_signals ();
 #endif
@@ -359,8 +345,6 @@ rl_callback_handler_remove (void)
   if (in_handler)
     {
       in_handler = 0;
-      if (rl_deprep_term_function)
-	(*rl_deprep_term_function) ();
 #if defined (HANDLE_SIGNALS)
       rl_clear_signals ();
 #endif

@@ -29,6 +29,7 @@ void            (*rl_fflush_function)(FILE*)                    = NULL;
 extern int is_exec_ext(const char* ext);
 extern void allow_suggestion_list(int enable);
 extern void clear_suggestion();
+extern void clear_comment_row();
 extern void end_recognizer();
 extern void end_task_manager();
 extern void uninit_display_readline();
@@ -37,8 +38,6 @@ extern void host_filter_transient_prompt(int crlf);
 extern void terminal_begin_command();
 extern int show_cursor(int visible);
 extern HANDLE get_std_handle(DWORD n);
-extern int _rl_last_v_pos;
-extern int _rl_rprompt_shown_len;
 
 //------------------------------------------------------------------------------
 static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wchar_t** out_wide, int* out_free)
@@ -296,6 +295,7 @@ void end_prompt(int crlf)
 
     allow_suggestion_list(0);
     clear_suggestion();
+    clear_comment_row();
 
     if (crlf < 0)
     {
@@ -308,16 +308,13 @@ void end_prompt(int crlf)
 
     host_filter_transient_prompt(crlf);
 
-    _rl_move_vert(_rl_vis_botlin);
+    move_to_end_of_display(0);
     if (crlf != 0)
         end_prompt_lf();
+#ifdef TIB_TODO
     if (crlf > 0)
         _rl_last_c_pos = 0;
-
-    _rl_rprompt_shown_len = 0;
-    _rl_last_c_pos = 0;
-    _rl_last_v_pos = 0;
-    _rl_vis_botlin = 0;
+#endif
 
     // Must ensure display_manager gets reset, so it doesn't try to optimize
     // away printing the next prompt.

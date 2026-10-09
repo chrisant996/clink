@@ -17,7 +17,6 @@
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
-extern int _rl_last_v_pos;
 }
 
 //------------------------------------------------------------------------------

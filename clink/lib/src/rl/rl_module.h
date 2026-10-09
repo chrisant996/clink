@@ -9,10 +9,17 @@
 #include <core/str.h>
 #include <core/singleton.h>
 
+#include <tib.h>
+
 class terminal_in;
+class tib_terminal_bridge;
 class line_buffer;
 enum class mouse_input_type : uint8;
 typedef void (__cdecl sig_func_t)(int32);
+
+namespace tib {
+class input_box;
+}
 
 extern line_buffer& buffer;
 
@@ -47,6 +54,8 @@ public:
     bool            accepts_mouse_input(mouse_input_type type);
     bool            translate(const char* seq, int32 len, str_base& out);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false);
+    void            provide_faces(const tib::input_buffer& buffer, tib::cstring& faces);
+    const char*     get_face_def(char face);
 
     bool            next_line(str_base& out);
 
@@ -62,6 +71,7 @@ private:
     virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
     virtual void    on_signal(int32 sig) override;
     void            done(const char* line);
+    tib_terminal_bridge* m_terminal = nullptr;
     int32           m_catch_group;
     bool            m_done;
     bool            m_eof;
@@ -72,26 +82,28 @@ private:
     str_moveable    m_rl_rprompt;
     str<16>         m_input_color;
     str<16>         m_selection_color;
+    str<16>         m_argmatcher_color;
+    str<16>         m_executable_color;
+    str<16>         m_command_color;
+    str<16>         m_alias_color;
+    str<16>         m_arg_color;
+    str<16>         m_flag_color;
+    str<16>         m_unrecognized_color;
+    str<16>         m_none_color;
+    str<16>         m_suggestion_color;
+    str<16>         m_histexpand_color;
     str<16>         m_modmark_color;
     str<16>         m_horizscroll_color;
     str<16>         m_message_color;
-    str<16>         m_pager_color;
-    str<16>         m_hidden_color;
-    str<16>         m_readonly_color;
-    str<16>         m_command_color;
-    str<16>         m_alias_color;
+    str<16>         m_sgr_pager_color;
+    str<16>         m_sgr_hidden_color;
+    str<16>         m_sgr_readonly_color;
+    str<16>         m_sgr_command_color;
+    str<16>         m_sgr_alias_color;
     str<16>         m_description_color;
     str<16>         m_filtered_color;
     str<16>         m_arginfo_color;
-    str<16>         m_selected_color;
-    str<16>         m_suggestion_color;
-    str<16>         m_histexpand_color;
-    str<16>         m_arg_color;
-    str<16>         m_argmatcher_color;
-    str<16>         m_flag_color;
-    str<16>         m_unrecognized_color;
-    str<16>         m_executable_color;
-    str<16>         m_none_color;
+    str<16>         m_sgr_selected_color;
     sig_func_t*     m_old_int;
     sig_func_t*     m_old_break;
 };

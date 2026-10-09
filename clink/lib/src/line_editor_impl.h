@@ -26,7 +26,15 @@
 #include <core/array.h>
 #include <core/str.h>
 
+#include <tib.h>
+
 enum class reclassify_reason : uint8;
+class line_editor_tib_callbacks;
+class tib_terminal_bridge;
+
+namespace tib {
+class input_box;
+}
 
 //------------------------------------------------------------------------------
 class prev_buffer
@@ -48,6 +56,7 @@ private:
 class line_editor_impl
     : public line_editor
     , public input_dispatcher
+    , public tib::editor_callbacks
     , public key_tester
 {
 public:
@@ -75,6 +84,9 @@ public:
     virtual bool        available(uint32 timeout) override;
     virtual uint8       peek() override;
 
+    // tib::editor_callbacks
+    virtual void        provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
+    virtual const char* get_face_def(char face) override;
     // key_tester
     virtual bool        is_bound(const char* seq, int32 len) override;
     virtual bool        accepts_mouse_input(mouse_input_type type) override;

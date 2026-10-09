@@ -26,8 +26,10 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "line_editor_integration.h"
+#include "rl_integration.h"
 #include "suggestionlist_impl.h"
 #include "hinter.h"
+#include "clink_ctrlevent.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -70,16 +72,7 @@ extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 
 extern char* tgetstr(const char*, char**);
-extern char* tgoto(const char* base, int x, int y);
-
-extern int _rl_last_v_pos;
-int _rl_rprompt_shown_len = 0;
 } // extern "C"
-
-// rl_prompt is the right-justified prompt string, if any.  It is set by
-// rl_set_rprompt(), and should not be assigned to directly.
-char* rl_rprompt = nullptr;
-int32 rl_visible_rprompt_length = 0;
 
 #ifndef HANDLE_MULTIBYTE
 #error HANDLE_MULTIBYTE is required.
@@ -93,10 +86,11 @@ const uint32 c_horz_scroll_indicator_chars = 1;
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
-extern bool is_test_harness();
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
+static bool s_want_redisplay = false;
+static bool s_force_redisplay = false;
 static bool s_ever_input_hint = false;
 static bool s_transient_prompt_context = false;
 bool g_display_manager_no_comment_row = false;
@@ -131,39 +125,6 @@ extern setting_bool g_debug_log_output_callstacks;
 #endif
 
 //------------------------------------------------------------------------------
-#ifdef REPORT_REDISPLAY
-static int32 s_calls = 0;
-static int32 s_lastline = 0;
-static int32 s_identical = 0;
-#endif
-
-//------------------------------------------------------------------------------
-static bool is_autowrap_bug_present()
-{
-#pragma warning(push)
-#pragma warning(disable:4996)
-    OSVERSIONINFO ver = {sizeof(ver)};
-    if (GetVersionEx(&ver))
-        return ver.dwMajorVersion < 10;
-    return false;
-#pragma warning(pop)
-}
-
-//------------------------------------------------------------------------------
-static HANDLE is_horizpos_workaround_needed()
-{
-    if (is_test_harness())
-        return nullptr;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(h, &csbi))
-        return nullptr;
-    if (csbi.srWindow.Left == 0 && csbi.srWindow.Right == csbi.dwSize.X - 1)
-        return nullptr;
-    return h;
-}
-
-//------------------------------------------------------------------------------
 static bool has_erase_in_line(const char* text, uint32 len)
 {
     ecma48_state state;
@@ -178,12 +139,17 @@ static bool has_erase_in_line(const char* text, uint32 len)
 }
 
 //------------------------------------------------------------------------------
+static bool s_force_signaled_redisplay = false;
+void force_signaled_redisplay()
+{
+    s_force_signaled_redisplay = true;
+}
+
+//------------------------------------------------------------------------------
 static void clear_to_end_of_screen()
 {
     static const char* const termcap_cd = tgetstr("cd", nullptr);
-    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
-    if (_rl_last_v_pos == 0)
-        _rl_rprompt_shown_len = 0;
+    clink_write(termcap_cd, strlen(termcap_cd));
     notify_suggestion_list_cleared();
 }
 
@@ -194,7 +160,7 @@ static void tputs(const char* s)
 }
 
 //------------------------------------------------------------------------------
-static void append_expand_ctrl(str_base& out, const char* in, uint32 len=-1)
+static void append_expand_ctrl(tib::cstring& out, const char* in, uint32 len=-1)
 {
     wcwidth_iter iter(in, len);
     while (const uint32 c = iter.next())
@@ -204,11 +170,11 @@ static void append_expand_ctrl(str_base& out, const char* in, uint32 len=-1)
             char sz[3] = "^?";
             if (CTRL_CHAR(c))
                 sz[1] = UNCTRL(c);
-            out.concat(sz, 2);
+            out.append(sz, 2);
         }
         else
         {
-            out.concat(iter.character_pointer(), iter.character_length());
+            out.append(iter.character_pointer(), iter.character_length());
         }
     }
 }
@@ -313,853 +279,6 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 
 done:
     return ret;
-}
-
-
-
-//------------------------------------------------------------------------------
-class preserve_window_horiz_scroll_position
-{
-public:
-                        preserve_window_horiz_scroll_position(HANDLE h);
-                        ~preserve_window_horiz_scroll_position();
-private:
-    static int32        s_nested;
-    static char*        s_saved_rl_term_clreol;
-    static HANDLE       s_h;
-    static CONSOLE_SCREEN_BUFFER_INFO s_window;
-};
-
-//------------------------------------------------------------------------------
-int32 preserve_window_horiz_scroll_position::s_nested = 0;
-char* preserve_window_horiz_scroll_position::s_saved_rl_term_clreol = nullptr;
-HANDLE preserve_window_horiz_scroll_position::s_h = nullptr;
-CONSOLE_SCREEN_BUFFER_INFO preserve_window_horiz_scroll_position::s_window;
-
-//------------------------------------------------------------------------------
-preserve_window_horiz_scroll_position::preserve_window_horiz_scroll_position(HANDLE h)
-{
-    assertimplies(!s_nested, !s_h);
-    ++s_nested;
-    if (!s_h && h)
-    {
-        assert(!is_test_harness());
-        s_h = h;
-        s_saved_rl_term_clreol = _rl_term_clreol;
-        if (get_current_ansi_handler() != ansi_handler::clink)
-            _rl_term_clreol = nullptr;
-        display_accumulator::flush();
-        GetConsoleScreenBufferInfo(s_h, &s_window);
-    }
-}
-
-//------------------------------------------------------------------------------
-preserve_window_horiz_scroll_position::~preserve_window_horiz_scroll_position()
-{
-    assert(s_nested > 0);
-    if (s_h)
-    {
-        assert(!is_test_harness());
-        display_accumulator::flush();
-        CONSOLE_SCREEN_BUFFER_INFO cursor;
-        GetConsoleScreenBufferInfo(s_h, &cursor);
-        if (cursor.srWindow.Right - cursor.srWindow.Left == s_window.srWindow.Right - s_window.srWindow.Left &&
-            cursor.srWindow.Bottom - cursor.srWindow.Top == s_window.srWindow.Bottom - s_window.srWindow.Top &&
-            cursor.srWindow.Left != s_window.srWindow.Left &&
-            cursor.dwCursorPosition.X >= cursor.srWindow.Left &&
-            cursor.dwCursorPosition.X <= cursor.srWindow.Right &&
-            cursor.dwCursorPosition.Y >= cursor.srWindow.Top &&
-            cursor.dwCursorPosition.Y <= cursor.srWindow.Bottom)
-        {
-            // Issue 743; only restore the horizontal scroll position.  If the
-            // vertical scroll position is also restored, then this interferes
-            // with text output scrolling the terminal vertically when it
-            // goes past the bottom of the visible window.
-            cursor.srWindow.Left = s_window.srWindow.Left;
-            cursor.srWindow.Right = s_window.srWindow.Right;
-            SetConsoleWindowInfo(s_h, true, &cursor.srWindow);
-        }
-    }
-    --s_nested;
-    if (!s_nested)
-    {
-        if (s_h)
-            _rl_term_clreol = s_saved_rl_term_clreol;
-        s_h = nullptr;
-        s_saved_rl_term_clreol = nullptr;
-    }
-}
-
-
-
-//------------------------------------------------------------------------------
-struct display_line
-{
-                        display_line() = default;
-                        ~display_line();
-                        display_line(display_line&& d);
-    display_line&       operator=(display_line&& d);
-
-    void                clear();
-    void                append(char c, char face);
-    void                appendspace();
-    void                appendnul();
-
-    char*               m_chars = nullptr;  // Characters in line.
-    char*               m_faces = nullptr;  // Faces for characters in line.
-    uint32              m_len = 0;          // Bytes used in m_chars and m_faces.
-    uint32              m_allocated = 0;    // Bytes allocated in m_chars and m_faces.
-
-    uint32              m_start = 0;        // Index of start in line buffer.
-    uint32              m_end = 0;          // Index of end in line buffer.
-    uint32              m_x = 0;            // Column at which the display line starts.
-    uint32              m_lastcol = 0;      // Column at which the display line ends.
-    uint32              m_lead = 0;         // Number of leading columns (e.g. wrapped part of ^X or \123).
-    uint32              m_trail = 0;        // Number of trailing columns of spaces past m_lastcol.
-
-    bool                m_newline = false;  // Line ends with LF.
-    bool                m_toeol = false;    // Line extends to right edge of terminal (an optimization for clearing spaces).
-    signed char         m_scroll_mark = 0;  // Number of columns for scrolling indicator (positive at left, negative at right).
-
-private:
-    void                appendinternal(char c, char face);
-};
-
-//------------------------------------------------------------------------------
-display_line::~display_line()
-{
-    free(m_chars);
-    free(m_faces);
-}
-
-//------------------------------------------------------------------------------
-display_line::display_line(display_line&& d)
-{
-    memcpy(this, &d, sizeof(d));
-    memset(&d, 0, sizeof(d));
-}
-
-//------------------------------------------------------------------------------
-display_line& display_line::operator=(display_line&& d)
-{
-    memcpy(this, &d, sizeof(d));
-    memset(&d, 0, sizeof(d));
-    return *this;
-}
-
-//------------------------------------------------------------------------------
-void display_line::clear()
-{
-    m_len = 0;
-
-    m_start = 0;
-    m_end = 0;
-    m_x = 0;
-    m_lastcol = 0;
-    m_lead = 0;
-    m_trail = 0;
-
-    m_newline = false;
-    m_toeol = false;
-    m_scroll_mark = 0;
-}
-
-//------------------------------------------------------------------------------
-void display_line::appendinternal(char c, char face)
-{
-    if (m_len >= m_allocated)
-    {
-#ifdef DEBUG
-        const uint32 min_alloc = 40;
-#else
-        const uint32 min_alloc = 160;
-#endif
-
-        const uint32 alloc = max<uint32>(min_alloc, m_allocated * 3 / 2);
-        char* chars = static_cast<char*>(realloc(m_chars, alloc));
-        char* faces = static_cast<char*>(realloc(m_faces, alloc));
-        if (!chars || !faces)
-        {
-            free(chars);
-            free(faces);
-            return;
-        }
-
-        m_chars = chars;
-        m_faces = faces;
-        m_allocated = alloc;
-    }
-
-    m_chars[m_len] = c;
-    m_faces[m_len] = face;
-    ++m_len;
-}
-
-//------------------------------------------------------------------------------
-void display_line::append(char c, char face)
-{
-    assert(!c || !m_trail);
-    appendinternal(c, face);
-}
-
-//------------------------------------------------------------------------------
-void display_line::appendspace()
-{
-    appendinternal(' ', FACE_NORMAL);
-    m_trail++;
-}
-
-//------------------------------------------------------------------------------
-void display_line::appendnul()
-{
-    appendinternal(0, 0);
-    --m_len;
-}
-
-
-
-//------------------------------------------------------------------------------
-class display_lines
-{
-public:
-                        display_lines() = default;
-                        ~display_lines() = default;
-
-    void                parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 len);
-    void                horz_parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 point, uint32 len, const display_lines& ref);
-    void                apply_scroll_markers(uint32 top, uint32 bottom);
-    void                set_top(uint32 top);
-    void                set_comment_row(str_moveable&& s, bool force);
-    void                clear_comment_row();
-    void                swap(display_lines& d);
-    void                clear();
-
-    const display_line* get(uint32 index) const;
-    uint32              count() const;
-    uint32              width() const;
-    uint32              height() const;
-    bool                can_show_rprompt() const;
-    bool                is_horz_scrolled() const;
-    bool                get_horz_offset(int32& bytes, int32& column) const;
-    const char*         get_comment_row() const;
-    bool                has_comment_row() const { return m_has_comment_row; }
-
-    uint32              vpos() const { return m_vpos; }
-    uint32              cpos() const { return m_cpos; }
-    uint32              top() const { return m_top; }
-
-private:
-    display_line*       next_line(uint32 start);
-    bool                adjust_columns(uint32& point, int32 delta, const char* buffer, uint32 len) const;
-
-    std::vector<display_line> m_lines;
-    uint32              m_width = 0;
-    uint32              m_count = 0;
-    uint32              m_prompt_botlin;
-    uint32              m_vpos = 0;
-    uint32              m_cpos = 0;
-    uint32              m_top = 0;
-    uint32              m_horz_start = 0;
-    bool                m_horz_scroll = false;
-    bool                m_has_comment_row = false;
-    str_moveable        m_comment_row;
-};
-
-//------------------------------------------------------------------------------
-void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 len)
-{
-    assert(col < _rl_screenwidth);
-    dbg_ignore_scope(snapshot, "display_readline");
-
-    clear();
-    m_width = _rl_screenwidth;
-
-    m_prompt_botlin = prompt_botlin;
-    while (prompt_botlin--)
-        next_line(0);
-
-    display_line* d = next_line(0);
-    d->m_x = col;
-    m_cpos = col;
-
-    int32 hl_begin = -1;
-    int32 hl_end = -1;
-
-    if (rl_mark_active_p())
-    {
-        if (rl_point >= 0 && rl_point <= rl_end && rl_mark >= 0 && rl_mark <= rl_end)
-        {
-            hl_begin = (rl_mark < rl_point) ? rl_mark : rl_point;
-            hl_end = (rl_mark < rl_point) ? rl_point : rl_mark;
-        }
-    }
-
-    str<16> tmp;
-    uint32 index = 0;
-
-    wcwidth_iter iter(buffer, len);
-    while (const uint32 c = iter.next())
-    {
-        if (c == '\n' && !_rl_horizontal_scroll_mode && _rl_term_up && *_rl_term_up)
-        {
-            d->m_lastcol = col;
-            d->m_end = uint32(index);
-            d->appendnul();
-            d->m_newline = true;
-
-            if (index == rl_point)
-            {
-                m_vpos = m_count - 1;
-                m_cpos = col;
-            }
-
-            ++index;
-            d = next_line(index);
-            col = 0;
-            continue;
-        }
-#ifdef DISPLAY_TABS
-        else if (c == '\t')
-        {
-            // Display as spaces to the next tab stop.
-            uint32 target = ((col | 7) + 1) - col;
-            for (tmp.clear(); target--;)
-                tmp.concat(" ", 1);
-        }
-#endif
-        else if (iter.character_wcwidth_signed() < 0)
-        {
-            // Display control characters as ^X.
-            assert(iter.character_length() == 1);
-            char ctrl[2];
-            ctrl[0] = '^';
-            ctrl[1] = CTRL_CHAR(c) ? UNCTRL(c) : '?';
-            tmp.clear();
-            tmp.concat(ctrl, 2);
-        }
-        else
-        {
-            // Should have been caught by iter.character_wcwidth_signed() < 0.
-            assert(!(CTRL_CHAR(c) || c == RUBOUT));
-
-            const uint32 wc_width = iter.character_wcwidth_signed();
-
-            if (col + wc_width > _rl_screenwidth)
-            {
-                d->m_lastcol = col;
-                d->m_end = uint32(iter.character_pointer() - buffer);
-
-                while (col < _rl_screenwidth)
-                {
-                    d->appendspace();
-                    ++col;
-                }
-                d->appendnul();
-
-                assert(d->m_lead <= d->m_lastcol);
-                assert(d->m_lastcol + d->m_trail == _rl_screenwidth);
-
-                d = next_line(uint32(iter.character_pointer() - buffer));
-                col = 0;
-            }
-
-            if (index <= rl_point && rl_point < index + iter.character_length())
-            {
-                m_vpos = m_count - 1;
-                m_cpos = col;
-            }
-
-            for (const char* ptr = iter.character_pointer(); ptr < iter.get_pointer(); ++ptr, ++index)
-                d->append(*ptr, rl_get_face_func(index, hl_begin, hl_end));
-            col += wc_width;
-            continue;
-        }
-
-        assert(uint32(iter.character_pointer() - buffer) == index);
-
-        bool wrapped = false;
-        const char face = rl_get_face_func(index, hl_begin, hl_end);
-
-        if (index == rl_point)
-        {
-            m_vpos = m_count - 1;
-            m_cpos = col;
-        }
-
-        for (const char* add = tmp.c_str(); *add; ++add)
-        {
-            if (col >= _rl_screenwidth)
-            {
-                d->m_lastcol = col;
-                d->m_end = index;
-                d->appendnul();
-
-                assert(d->m_lead <= d->m_lastcol);
-                assert(d->m_lastcol == _rl_screenwidth);
-                assert(d->m_trail == 0);
-
-                wrapped = true;
-                d = next_line(index);
-                col = 0;
-
-                // Only update the cursor position if the beginning of the text
-                // wraps to the next line.
-                if (add == tmp.c_str() && index == rl_point)
-                {
-                    m_vpos = m_count - 1;
-                    m_cpos = col;
-                }
-            }
-
-            assert(*add >= 0 && *add <= 0x7f); // Only ASCII characters are generated.
-            d->append(*add, face);
-            ++col;
-        }
-
-        ++index;
-
-        assert(uint32(iter.character_pointer() + iter.character_length() - buffer) == index);
-
-        if (wrapped)
-            d->m_lead = col;
-    }
-
-    assert(uint32(iter.get_pointer() - buffer) == index);
-
-    d->m_lastcol = col;
-    d->m_end = index;
-    d->appendnul();
-
-    if (d->m_lastcol + d->m_trail >= _rl_screenwidth)
-    {
-        assert(d->m_lead <= d->m_lastcol);
-        assert(d->m_lastcol == _rl_screenwidth);
-        assert(d->m_trail == 0);
-
-        d = next_line(index);
-        d->m_end = index;
-        col = 0;
-    }
-
-    if (index == rl_point)
-    {
-        m_vpos = m_count - 1;
-        m_cpos = col;
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buffer, uint32 point, uint32 len, const display_lines& ref)
-{
-    assert(col < _rl_screenwidth);
-    dbg_ignore_scope(snapshot, "display_readline");
-
-    clear();
-    m_width = _rl_screenwidth;
-    m_horz_start = ref.m_horz_start;
-
-    m_prompt_botlin = prompt_botlin;
-    while (prompt_botlin--)
-        next_line(0);
-
-    const int32 scroll_stride = _rl_screenwidth / 3;
-    const int32 limit = _rl_screenwidth - c_horz_scroll_indicator_chars - 1; // `>` marker(s) and -1 for space.
-
-    // Adjust horizontal scroll offset to ensure point is visible.
-    if (point < m_horz_start)
-    {
-        m_horz_start = point;
-        adjust_columns(m_horz_start, 0 - scroll_stride, buffer, len);
-    }
-    else
-    {
-        const int32 range = limit - (m_horz_start ? 1 : col);
-        uint32 end = m_horz_start;
-        if (adjust_columns(end, range, buffer, len) && point >= end)
-        {
-            m_horz_start = point;
-            if (!adjust_columns(m_horz_start, 0 - scroll_stride*2, buffer, len))
-                m_horz_start++;
-        }
-    }
-
-    display_line* d = next_line(0);
-    d->m_start = m_horz_start;
-    m_horz_scroll = true;
-
-    if (m_horz_start)
-    {
-        d->m_x = 0;
-        d->m_lead = c_horz_scroll_indicator_chars;
-        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
-            d->append('<', FACE_SCROLL);
-        d->appendnul();
-        col = c_horz_scroll_indicator_chars;
-    }
-    else
-    {
-        d->m_x = col;
-    }
-    m_vpos = m_prompt_botlin;
-    m_cpos = col;
-
-    int32 hl_begin = -1;
-    int32 hl_end = -1;
-
-    if (rl_mark_active_p())
-    {
-        if (rl_point >= 0 && rl_point <= rl_end && rl_mark >= 0 && rl_mark <= rl_end)
-        {
-            hl_begin = (rl_mark < rl_point) ? rl_mark : rl_point;
-            hl_end = (rl_mark < rl_point) ? rl_point : rl_mark;
-        }
-    }
-
-    str<16> tmp;
-    uint32 index = m_horz_start;
-
-    bool overflow = false;
-    wcwidth_iter iter(buffer + m_horz_start, len - m_horz_start);
-    while (const uint32 c = iter.next())
-    {
-        assertimplies((CTRL_CHAR(c) || c == RUBOUT), (iter.character_wcwidth_signed() < 0));
-        if (iter.character_wcwidth_signed() < 0)
-        {
-            // Display control characters as ^X.
-            tmp.clear();
-            tmp.format("^%c", CTRL_CHAR(c) ? UNCTRL(c) : '?');
-        }
-        else
-        {
-            const uint32 wc_width = iter.character_wcwidth_signed();
-
-            if (col + wc_width > limit)
-            {
-                overflow = true;
-                break;
-            }
-
-            if (index <= rl_point && rl_point < index + iter.character_length())
-                m_cpos = col;
-
-            for (const char* ptr = iter.character_pointer(); ptr < iter.get_pointer(); ++ptr, ++index)
-                d->append(*ptr, rl_get_face_func(index, hl_begin, hl_end));
-            col += wc_width;
-            continue;
-        }
-
-        const char face = rl_get_face_func(index, hl_begin, hl_end);
-
-        if (index == rl_point)
-            m_cpos = col;
-
-        for (const char* add = tmp.c_str(); *add; ++add, ++index)
-        {
-            if (col >= limit)
-                break;
-
-            assert(*add >= 0 && *add <= 0x7f); // Only ASCII characters are generated.
-            d->append(*add, face);
-            ++col;
-        }
-
-        assert(uint32(iter.character_pointer() + iter.character_length() - buffer) == index);
-
-        if (col >= limit)
-            break;
-    }
-
-    assert(uint32(iter.character_pointer() - buffer) == index);
-
-    d->m_lastcol = col;
-    d->m_end = index;
-
-    if (iter.more() || overflow)
-    {
-        for (uint32 num = c_horz_scroll_indicator_chars; num--;)
-        {
-            d->append('>', FACE_SCROLL);
-            d->m_lastcol++;
-        }
-        d->m_toeol = false;
-    }
-
-    d->appendnul();
-
-    if (index == rl_point)
-    {
-        m_vpos = m_count - 1;
-        m_cpos = col;
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
-{
-    assert(top >= m_prompt_botlin);
-    assert(top <= bottom);
-    assert(top < m_count);
-
-    int32 c;
-
-    if (top > m_prompt_botlin)
-    {
-        display_line& d = m_lines[top];
-
-        if (!d.m_len)
-        {
-            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
-                d.append('<', FACE_SCROLL);
-            d.appendnul();
-        }
-        else
-        {
-            wcwidth_iter iter_top(d.m_chars, d.m_len);
-            while (iter_top.next())
-            {
-                int32 wc = iter_top.character_wcwidth_onectrl();
-                if (!wc)
-                    continue;
-
-                int32 bytes = int32(iter_top.get_pointer() - d.m_chars);
-                assert(bytes >= wc);
-                if (bytes < wc)
-                    break;
-
-                uint32 i = 0;
-                while (i < c_horz_scroll_indicator_chars)
-                {
-                    d.m_chars[i] = '<';
-                    d.m_faces[i] = FACE_SCROLL;
-                    bytes--;
-                    i++;
-                }
-                d.m_scroll_mark = c_horz_scroll_indicator_chars;
-                if (bytes > 0)
-                {
-                    memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
-                    memmove(d.m_faces + i, d.m_faces + i + bytes, d.m_len - (i + bytes));
-                    d.m_len -= bytes;
-                }
-                while (--wc > 0)
-                    d.appendspace();
-                d.appendnul();
-                break;
-            }
-        }
-    }
-
-    if (bottom + 1 < m_count)
-    {
-        // The approach here doesn't support horizontal scroll mode.
-        assert(top != bottom);
-
-        display_line& d = m_lines[bottom];
-
-        if (d.m_lastcol - d.m_x > 2)
-        {
-            d.m_len -= d.m_trail;
-            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars >= _rl_screenwidth)
-            {
-                const int32 bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
-                d.m_lastcol -= clink_wcswidth(d.m_chars + bytes, d.m_len - bytes);
-                d.m_len = bytes;
-            }
-
-            while (d.m_x + d.m_lastcol + c_horz_scroll_indicator_chars + 1 < _rl_screenwidth)
-            {
-                d.append(' ', FACE_NORMAL);
-                d.m_lastcol++;
-            }
-            for (uint32 num = c_horz_scroll_indicator_chars; num--;)
-            {
-                d.append('>', FACE_SCROLL);
-                d.m_lastcol++;
-            }
-            d.m_scroll_mark = -1;
-            d.m_toeol = false;
-            d.appendnul();
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_lines::set_top(uint32 top)
-{
-    m_top = top;
-}
-
-//------------------------------------------------------------------------------
-void display_lines::set_comment_row(str_moveable&& s, bool force)
-{
-#ifdef USE_MEMORY_TRACKING
-    if (!s.empty())
-        dbgsetignore(s.c_str());
-#endif
-    m_comment_row = std::move(s);
-    m_has_comment_row = force || !m_comment_row.empty();
-}
-
-//------------------------------------------------------------------------------
-void display_lines::clear_comment_row()
-{
-    m_comment_row.clear();
-    m_has_comment_row = false;
-}
-
-//------------------------------------------------------------------------------
-void display_lines::swap(display_lines& d)
-{
-    m_lines.swap(d.m_lines);
-    std::swap(m_width, d.m_width);
-    std::swap(m_count, d.m_count);
-    std::swap(m_prompt_botlin, d.m_prompt_botlin);
-    std::swap(m_vpos, d.m_vpos);
-    std::swap(m_cpos, d.m_cpos);
-    std::swap(m_top, d.m_top);
-    std::swap(m_horz_start, d.m_horz_start);
-    std::swap(m_horz_scroll, d.m_horz_scroll);
-    std::swap(m_comment_row, d.m_comment_row);
-    std::swap(m_has_comment_row, d.m_has_comment_row);
-}
-
-//------------------------------------------------------------------------------
-void display_lines::clear()
-{
-    for (uint32 i = m_count; i--;)
-        m_lines[i].clear();
-    m_width = 0;
-    m_count = 0;
-    m_prompt_botlin = 0;
-    m_vpos = 0;
-    m_cpos = 0;
-    m_top = 0;
-    m_horz_start = 0;
-    m_horz_scroll = false;
-    clear_comment_row();
-}
-
-//------------------------------------------------------------------------------
-const display_line* display_lines::get(uint32 index) const
-{
-    if (index >= m_count)
-        return nullptr;
-    return &m_lines[index];
-}
-
-//------------------------------------------------------------------------------
-uint32 display_lines::count() const
-{
-    return m_count;
-}
-
-//------------------------------------------------------------------------------
-uint32 display_lines::width() const
-{
-    return m_width;
-}
-
-//------------------------------------------------------------------------------
-uint32 display_lines::height() const
-{
-    return m_count + m_has_comment_row;
-}
-
-//------------------------------------------------------------------------------
-bool display_lines::can_show_rprompt() const
-{
-    return (rl_rprompt &&                             // has rprompt
-            (_rl_term_forward_char || _rl_term_ch) && // has termcap
-            rl_display_prompt == rl_prompt &&         // displaying the real prompt
-            m_count == 1 &&                           // only one line
-            (m_lines[0].m_lastcol + 1 + rl_visible_rprompt_length < _rl_screenwidth)); // fits
-}
-
-//------------------------------------------------------------------------------
-bool display_lines::is_horz_scrolled() const
-{
-    return (m_horz_scroll && m_horz_start > 0);
-}
-
-//------------------------------------------------------------------------------
-bool display_lines::get_horz_offset(int32& bytes, int32& column) const
-{
-    if (!is_horz_scrolled())
-        return false;
-    assert(m_count);
-    bytes = m_horz_start;
-    column = 1;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-const char* display_lines::get_comment_row() const
-{
-    return m_comment_row.c_str();
-}
-
-//------------------------------------------------------------------------------
-display_line* display_lines::next_line(uint32 start)
-{
-    assert(!m_horz_scroll);
-
-    if (m_count >= m_lines.size())
-    {
-        m_lines.emplace_back();
-        m_lines.back().m_toeol = (m_width == _rl_screenwidth);
-    }
-
-    display_line* d = &m_lines[m_count++];
-    assert(!d->m_x);
-    assert(!d->m_len);
-    d->m_start = start;
-    d->m_toeol = (m_width == _rl_screenwidth);
-    return d;
-}
-
-//------------------------------------------------------------------------------
-bool display_lines::adjust_columns(uint32& index, int32 delta, const char* buffer, uint32 len) const
-{
-    assert(delta != 0);
-    assert(len >= index);
-
-    bool first = true;
-
-    if (delta < 0)
-    {
-        const char* walk = buffer + index;
-        delta *= -1;
-        while (delta > 0)
-        {
-            if (!index)
-                return false;
-            const int32 i = _rl_find_prev_mbchar(const_cast<char*>(buffer), index, MB_FIND_NONZERO);
-            const int32 bytes = index - i;
-            walk -= bytes;
-            const int32 width = clink_wcswidth_expandctrl(walk, bytes);
-            if (first || delta >= width)
-                index -= bytes;
-            first = false;
-            delta -= width;
-        }
-    }
-    else
-    {
-        wcwidth_iter iter(buffer + index, len - index);
-        while (delta > 0)
-        {
-            const uint32 c = iter.next();
-            if (!c)
-                return false;
-            const int32 width = iter.character_wcwidth_twoctrl();
-            if (first || delta >= width)
-                index += iter.character_length();
-            first = false;
-            delta -= width;
-        }
-    }
-
-    return index > 0;
 }
 
 
@@ -1339,126 +458,25 @@ COORD measure_readline_display(const char* prompt, const char* buffer, uint32 le
     return ret;
 }
 
-
-
 //------------------------------------------------------------------------------
-void (*display_accumulator::s_saved_fwrite)(FILE*, const char*, int32) = nullptr;
-bool display_accumulator::s_active = false;
-bool display_accumulator::s_synchronize_output = false;
-int32 display_accumulator::s_nested = 0;
-static str_moveable s_buf;
-
-//------------------------------------------------------------------------------
-display_accumulator::display_accumulator()
+void init_display_accumulator()
 {
-    assert(rl_fwrite_function);
-    assert(rl_fflush_function);
+    bool coalesce = true;
 
-    if (!s_nested)
-    {
-        assert(!s_saved_fwrite);
-        assert(!s_active);
-        assert(!s_synchronize_output);
-        assert(s_buf.empty());
-        s_saved_fwrite = rl_fwrite_function;
-    }
-
-    ++s_nested;
-
-    if (s_nested == 1)
-    {
-        str<> value;
+    str<> value;
 #ifdef DEBUG
-        if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value))
-        {
-            if (atoi(value.c_str()) != 0)
-                return;
-        }
-        else
-#endif
-        if (os::get_env("CLINK_NO_DISPLAY_ACCUMULATOR", value))
-        {
-            if (atoi(value.c_str()) != 0)
-                return;
-        }
-
-        s_synchronize_output = terminal_has_synchronize_output();
-    }
+    if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value))
+        coalesce = (atoi(value.c_str()) == 0);
     else
-    {
-        if (!s_active)
-            return;
-    }
+#endif
+    if (os::get_env("CLINK_NO_DISPLAY_ACCUMULATOR", value))
+        coalesce = (atoi(value.c_str()) != 0);
 
-    s_active = true;
-    m_active = true;
-
-    rl_fwrite_function = fwrite_proc;
-
-    if (s_nested == 1 && s_synchronize_output)
-        s_buf.concat("\x1b[2026h");
+    tib::g_coalesce_output = coalesce;
+    tib::display_accumulator::synchronize_output(terminal_has_synchronize_output());
 }
 
-//------------------------------------------------------------------------------
-display_accumulator::~display_accumulator()
-{
-    end();
-}
 
-//------------------------------------------------------------------------------
-void display_accumulator::end()
-{
-    if (m_active)
-    {
-        m_active = false;
-        if (--s_nested == 0)
-        {
-            flush();
-            rl_fwrite_function = s_saved_fwrite;
-            s_saved_fwrite = nullptr;
-            s_active = false;
-            s_synchronize_output = false;
-        }
-        assert(s_nested >= 0);
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_accumulator::flush()
-{
-    assertimplies(!s_active, s_buf.empty());
-    static int32 s_in_flush = 0;
-    if (s_active && s_in_flush <= 0)
-    {
-        assert(s_saved_fwrite);
-        ++s_in_flush;
-        assert(s_in_flush <= 3);
-        if (s_synchronize_output)
-        {
-            if (s_buf.equals("\x1b[2026h"))
-                s_buf.clear();
-            else
-                s_buf.concat("\x1b[2026l");
-        }
-        if (!s_buf.empty())
-        {
-            s_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
-            s_buf.clear();
-        }
-        if (s_nested > 0 && s_synchronize_output)
-            s_buf.concat("\x1b[2026h");
-        assert(s_in_flush > 0);
-        --s_in_flush;
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_accumulator::fwrite_proc(FILE* out, const char* text, int32 len)
-{
-    assert(out == _rl_out_stream);
-    dbg_ignore_scope(snapshot, "display_readline");
-    s_buf.concat(text, len);
-}
 
 //------------------------------------------------------------------------------
 FILE* const thunk_null_stream = (FILE*)1;
@@ -1483,7 +501,7 @@ void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count)
         if (stream == stderr && g_rl_hide_stderr.get())
             return;
 
-        display_accumulator::flush();
+        tib::display_accumulator::flush();
 
         DWORD dw;
         HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
@@ -1525,7 +543,7 @@ void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count
         if (stream == stderr && g_rl_hide_stderr.get())
             return;
 
-        display_accumulator::flush();
+        tib::display_accumulator::flush();
 
         DWORD dw;
         HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
@@ -1560,7 +578,7 @@ void terminal_fflush_thunk(FILE* stream)
     {
         ++s_depth;
         assert(s_depth < 5);
-        display_accumulator::flush();
+        tib::display_accumulator::flush();
 #pragma push_macro("fflush")
 #undef fflush // Break out of the BUILD_READLINE cycle that defines fflush.
         fflush(stream);
@@ -1583,31 +601,6 @@ void init_rl_terminal_thunks()
     rl_outstream = thunk_out_stream;
 }
 
-//------------------------------------------------------------------------------
-void clink_write(const char* chars, int32 char_count)
-{
-    rl_fwrite_function(thunk_out_stream, chars, char_count);
-}
-
-//------------------------------------------------------------------------------
-void clink_flush()
-{
-    rl_fflush_function(thunk_out_stream);
-}
-
-//------------------------------------------------------------------------------
-terminal_fwrite_context::terminal_fwrite_context(const char* ctx)
-: m_old(s_log_fwrite_context)
-{
-    s_log_fwrite_context = ctx;
-}
-
-//------------------------------------------------------------------------------
-terminal_fwrite_context::~terminal_fwrite_context()
-{
-    s_log_fwrite_context = m_old;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -1622,65 +615,37 @@ transient_prompt_context::transient_prompt_context(bool is_transient)
 class display_manager
 {
 public:
-                        display_manager();
-    void                initialize();
-    void                uninitialize();
-    void                clear();
-    uint32              top_offset() const;
-    uint32              top_buffer_start() const;
-    void                on_new_line();
+    void                initialize() { m_initialized = true; assert(g_tib); }
+    void                uninitialize() { m_initialized = false; }
+    bool                is_initialized() const { return m_initialized; }
+    bool                is_displayed() const { return is_initialized() && g_tib->is_displayed(); }
+
+    void                begin_display();
+    void                display();
+    void                clear_comment_row();
     void                end_prompt_lf();
     void                clear_to_end_of_screen_on_next_display();
-    void                display();
-    void                set_history_expansions(history_expansion* list=nullptr);
+
+    void                set_history_expansions(history_expansion* list);
     void                force_comment_row(const char* text);
     void                measure(measure_columns& mc);
-    bool                get_horz_offset(int32& bytes, int32& column) const;
-    bool                has_comment_row() const;
-    void                clear_comment_row();
-    bool                is_initialized() const;
-    bool                is_displayed() const;
 
+    void                on_terminal_resize();
 #ifdef DEBUG
     void                ignore_column_on_uninit() { m_ignore_column_on_uninit = true; }
 #endif
 
 private:
-    int32               write_with_clear(FILE* stream, const char* text, int length);
-    void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
-    void                clear_comment_row_internal();
-    void                move_to_column(uint32 col, bool force=false);
-    void                move_to_row(int32 row);
-    void                clear_to_eol(int32 count);
-    void                shift_cols(uint32 col, int32 delta);
-    void                print(const char* chars, uint32 len);
-    void                print_rprompt(const char* s);
-    void                reset_rprompt_shown();
-    void                init_horizpos_workaround();
-    void                detect_pending_wrap();
-    void                finish_pending_wrap();
+    int32               write_with_clear(const char* text, int32 length);
 
     bool                m_initialized = false;
 
-    display_lines       m_next;
-    display_lines       m_curr;
     history_expansion*  m_histexpand = nullptr;
-    uint32              m_top = 0;      // Vertical scrolling; index to top displayed line.
-    str_moveable        m_last_rprompt;
-    str_moveable        m_last_prompt_line;
-    int32               m_last_prompt_line_width = -1;
-    int32               m_last_prompt_line_botlin = -1;
-    int32               m_last_point = -1;
-    bool                m_last_modmark = false;
-    bool                m_horz_scroll = false;
     bool                m_clear_to_end_of_screen_on_next_display = false;
     bool                m_is_transient = false;
 
-    const bool          m_autowrap_bug;
-    HANDLE              m_horizpos_workaround = nullptr;
-    bool                m_pending_wrap = false;
-    const display_lines* m_pending_wrap_display = nullptr;
-
+    bool                m_has_comment_row_text = false;
+    str_moveable        m_comment_row;
     str_moveable        m_forced_comment_row;
     int32               m_forced_comment_row_cursorpos = -1;
 
@@ -1693,95 +658,36 @@ private:
 
 //------------------------------------------------------------------------------
 static display_manager s_display_manager;
+static const bool s_autowrap_bug = tib::is_autowrap_bug_present();
 
 //------------------------------------------------------------------------------
-display_manager::display_manager()
-: m_autowrap_bug(is_autowrap_bug_present())
-{
-    rl_on_new_line();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::initialize()
-{
-    assert(!m_initialized);
-    m_initialized = true;
-    clear();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::uninitialize()
-{
-    m_initialized = false;
-    clear();
-
-#ifdef DEBUG
-    if (!m_ignore_column_on_uninit)
-    {
-        assert(g_printer);
-        COORD cursor;
-        if (g_printer && g_printer->get_cursor_pos(cursor.X, cursor.Y))
-            assert(!cursor.X);
-        assert(!_rl_last_c_pos);
-    }
-#endif
-}
-
-//------------------------------------------------------------------------------
-void display_manager::clear()
+void display_manager::begin_display()
 {
     assert(!s_defer_clear_lines);
     assert(!s_defer_erase_extra_lines);
 
-    m_next.clear();
-    m_curr.clear();
-    // m_histexpand is only cleared in on_new_line().
-    // m_top is only cleared in on_new_line().
-    m_last_rprompt.clear();
+// TODO-TIB: ?
+#ifdef TIB_TODO
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
-    m_last_point = -1;
-    m_last_modmark = false;
-    m_horz_scroll = false;
+#endif
+
     m_clear_to_end_of_screen_on_next_display = false;
     m_is_transient = false;
 
-    m_pending_wrap = false;
-    m_pending_wrap_display = nullptr;
-
-    m_forced_comment_row.free();
+    m_has_comment_row_text = false;
+    m_comment_row.clear();
+    m_forced_comment_row.clear();
     m_forced_comment_row_cursorpos = -1;
 
     m_modal_input = false;
-}
 
-//------------------------------------------------------------------------------
-uint32 display_manager::top_offset() const
-{
-    if (m_last_prompt_line_botlin < 0)
-        return 0;
-    assert(m_top >= m_last_prompt_line_botlin);
-    return m_top - m_last_prompt_line_botlin;
-}
+    g_tib->set_origin(1);
+    g_tib->begin_display();
 
-//------------------------------------------------------------------------------
-uint32 display_manager::top_buffer_start() const
-{
-    const display_line* d = m_curr.get(m_top);
-    assert(d);
-    return d ? d->m_start : 0;
-}
-
-//------------------------------------------------------------------------------
-void display_manager::on_new_line()
-{
-    clear();
-    if (!rl_end)
-    {
-        m_top = 0;
+    if (!g_tib->get_length())
         history_free_expansions(&m_histexpand);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -1790,75 +696,10 @@ void display_manager::end_prompt_lf()
     if (!m_initialized)
         return;
 
-    init_horizpos_workaround();
-    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
-
-    // FUTURE: When in a scrolling mode (vert or horz), reprint the entire
-    // prompt and input line without the scroll constraints?
-
     // Erase comment row if present.
-    clear_comment_row_internal();
+    clear_comment_row();
 
-    // If the cursor is the only thing on an otherwise-blank last line,
-    // compensate so we don't print an extra CRLF.
-    bool unwrap = false;
-    const uint32 count = m_curr.count();
-    if (_rl_vis_botlin &&
-        m_top - m_last_prompt_line_botlin + _rl_vis_botlin + 1 == count &&
-        count > 0)
-    {
-        const display_line* const last = m_curr.get(count - 1);
-        if (last->m_x == 0 && last->m_len == 0)
-        {
-            _rl_vis_botlin--;
-            unwrap = true;
-        }
-    }
-    _rl_move_vert(_rl_vis_botlin);
-
-    // If we've wrapped lines, remove the final xterm line-wrap flag.
-    // BUGBUG:  The Windows console is not smart enough to recognize that this
-    // means it should not merge the line and the next line when resizing the
-    // terminal width.  But, Windows Terminal gets the line breaks correct when
-    // copy/pasting.  Let's call it a win.
-    if (unwrap && _rl_term_autowrap)
-    {
-        const display_line* d = m_curr.get(count - 2);
-        if (d && d->m_chars &&
-            _rl_vis_botlin - m_last_prompt_line_botlin >= 2 &&
-            d->m_lastcol + d->m_trail == _rl_screenwidth)
-        {
-            // Reprint end of the previous row if at least 2 rows are visible.
-            const int32 index = _rl_find_prev_mbchar(d->m_chars, d->m_len, MB_FIND_NONZERO);
-            const uint32 len = d->m_len - index;
-            const uint32 wc = clink_wcswidth(d->m_chars + index, len);
-            move_to_column(_rl_screenwidth - wc);
-            clear_to_eol(wc);
-            rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
-        }
-        else if (m_top == m_last_prompt_line_botlin && count <= 1)
-        {
-            // When there is no previous row (input line is empty but starts at
-            // col 0), reprint the last prompt line to clear the line-wrap flag.
-            _rl_move_vert(0);
-            clear_to_end_of_screen();
-            rl_fwrite_function(_rl_out_stream, m_last_prompt_line.c_str(), m_last_prompt_line.length());
-            _rl_vis_botlin = m_last_prompt_line_botlin;
-        }
-        else
-        {
-            // Degenerate case; just give up.
-        }
-    }
-
-    // Print CRLF to end the prompt.
-    rl_crlf();
-    reset_rprompt_shown();
-    _rl_last_v_pos = 0;
-    _rl_last_c_pos = 0;
-    _rl_vis_botlin = 0;
-    rl_fflush_function(_rl_out_stream);
-    rl_display_fixed++;
+    g_tib->end_display_lf();
 
     // Hide suggestion list until the input line is changed by something else.
     hide_suggestion_list();
@@ -1874,66 +715,33 @@ void display_manager::clear_to_end_of_screen_on_next_display()
 }
 
 //------------------------------------------------------------------------------
-int32 display_manager::write_with_clear(FILE* stream, const char* text, int length)
-{
-    int32 remaining = length;
-    int32 lines = 0;
-    while (remaining > 0)
-    {
-        bool erase_in_line = true;
-        uint32 erase_length = _rl_screenwidth;
-
-        const char* eol = strpbrk(text, "\r\n");
-        length = eol ? int(eol - text) : remaining;
-        if (length > 0)
-        {
-            measure_columns mc(measure_columns::print);
-            mc.measure(text, length, true/*is_prompt*/);
-            if (eol)
-                lines += mc.get_line_count() - 1;
-            if (!mc.get_column() && mc.get_line_count() > 1)
-                erase_in_line = false;
-            else
-                erase_length -= mc.get_column();
-            if (eol && erase_in_line && has_erase_in_line(text, length))
-                erase_in_line = false;
-            rl_fwrite_function(stream, text, length);
-            text += length;
-            remaining -= length;
-
-            // Windows 8.1 autowrap issue:  if a line in a multiline prompt
-            // reaches the right edge of the terminal and is followed by a CR
-            // or LF then the cursor ends on the wrong line.  Compensate by
-            // first moving the cursor up a line.
-            if (eol && m_autowrap_bug && mc.has_autowrap_at_end())
-                tputs(tgetstr("up", nullptr));
-        }
-
-        if (eol)
-        {
-            ++lines;
-            while (remaining > 0 && (*text == '\r' || *text == '\n'))
-                ++text, --remaining;
-            length = int(text - eol);
-            if (erase_in_line)
-                clear_to_eol(erase_length);
-            if (length > 0)
-                rl_fwrite_function(stream, eol, length);
-        }
-    }
-    return lines;
-}
-
-//------------------------------------------------------------------------------
 void display_manager::display()
 {
-    static const char* const UP = tgetstr("UP", nullptr);
-
-    assert(g_printer);
-
-    if (!_rl_echoing_p || !m_initialized)
+    static bool s_busy = false;
+    if (s_busy || !s_display_manager.is_initialized())
         return;
+    rollback<bool> rb(s_busy, true);
 
+    // Readline callback mode seems to have some problems with how redisplay
+    // works.  It shows the old buffer and shows the prompt at an inopportune
+    // time.  So just disable it so Clink can drive when redisplay happens.
+    if (clink_is_signaled())
+    {
+        if (!s_force_signaled_redisplay)
+            return;
+        s_force_signaled_redisplay = false;
+    }
+
+    // Terminal shell integration.  The caller doesn't have to worry about
+    // redundant calls; the terminal_begin_command and terminal_end_command
+    // functions internally track the state and ensure that only one begin
+    // code is printed, and that an end code is only printed if a command
+    // scope is currently active (begin without end yet).
+    terminal_end_command();
+
+    assert(g_terminal);
+
+// TODO-TIB: special states.
     if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR))
     {
         m_modal_input = true;
@@ -1945,31 +753,39 @@ void display_manager::display()
         allow_suggestion_list(1);
     }
 
-    init_horizpos_workaround();
-    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
-
 #ifdef REPORT_REDISPLAY
-    ++s_calls;
+    {
+        str<> value;
+        const bool report = (os::get_env("DEBUG_REPORT_REDISPLAY", value) && atoi(value.c_str()) != 0);
+        tib::show_display_manager_statistics(report);
+        if (report)
+        {
+            char stk[DEFAULT_CALLSTACK_LEN];
+            format_callstack(1, 16, stk, _countof(stk), true);
+            LOG("DISPLAY() CALLSTACK:");
+            LOG("%s", stk);
+        }
+    }
 #endif
 
-    // NOTE:  This implementation doesn't use _rl_quick_redisplay.  I'm not
-    // clear on what practical benefit it would provide, or why it would be
-    // worth adding that complexity.
+// TODO-TIB: _rl_quick_redisplay could disable optimization on a single call;
+// maybe tib should support that, and maybe Clink should use it?
 
+    tib::preserve_window_horiz_scroll_position preserve(tib::is_horizpos_workaround_needed());
+
+#ifdef DEBUG
+    tib::g_can_optimize_display_lines = !dbg_get_env_int("DEBUG_NOOPT_UPDATE_LINE");
+#endif
+
+#ifdef TIB_TODO
     // Block keyboard interrupts because this function manipulates global data
     // structures.
+// TODO-TIB: sigint.
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
+#endif
 
-    display_accumulator coalesce;
-
-    m_pending_wrap = false;
-
-    if (!rl_display_prompt)
-    {
-        // This assignment technically isn't safe, but Readline does it.
-        rl_display_prompt = const_cast<char *>("");
-    }
+    tib::display_accumulator coalesce;
 
     // Latch the display_manager into transient mode until the next reset.
     // This ensures the comment row cannot accidentally show up during a
@@ -1977,6 +793,7 @@ void display_manager::display()
     if (s_transient_prompt_context)
         m_is_transient = true;
 
+// TODO-TIB: history expansion preview.
     // Is history expansion preview desired?
     const bool can_show_comment_row = (!m_is_transient &&
                                        !g_display_manager_no_comment_row &&
@@ -1999,11 +816,11 @@ void display_manager::display()
     // column, and configurable max row count (with vertical scrolling and
     // optional scroll bar).
 
-    const char* prompt = rl_get_local_prompt();
-    const char* prompt_prefix = rl_get_local_prompt_prefix();
+    const char* prompt = g_prompt.c_str();
+    const char* prompt_prefix = g_prompt_prefix.c_str();
 
-    bool forced_display = rl_get_forced_display();
-    rl_set_forced_display(false);
+    const bool forced_display = s_force_redisplay;
+    s_force_redisplay = false;
 
     if (m_clear_to_end_of_screen_on_next_display)
     {
@@ -2011,64 +828,41 @@ void display_manager::display()
         clear_to_end_of_screen();
     }
 
+    assert(s_defer_clear_lines >= 0);
     if (s_defer_clear_lines > 0)
     {
         // Clear the lines within the display_accumulator scope.
-        move_to_column(0);
+        rl_fwrite_function(_rl_out_stream, "\r", 1);
         for (int32 lines = s_defer_clear_lines; lines--;)
         {
-            clear_to_eol(_rl_screenwidth);
+            tputs(tib::term_erase_to_eol());
             if (lines)
                 rl_fwrite_function(_rl_out_stream, "\n", 1);
         }
         // Go back up to where the cursor was before clearing lines.
         if (s_defer_clear_lines > 1)
-        {
-            str<16> tmp;
-            tmp.format(UP, s_defer_clear_lines - 1);
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-        }
+            tputs(tib::term_move_up(s_defer_clear_lines - 1));
         s_defer_clear_lines = 0;
     }
 
-    // At this point, forced_display is from rl_get_forced_display() and means
-    // to print a whole new prompt.  The caller is responsible for positioning
-    // the cursor appropriately already.
+    // At this point, forced_display means to print a whole new prompt.  The
+    // caller is responsible for positioning the cursor appropriately already.
+    // The last line of the prompt is handled by tib in set_left_text().
     int32 prompt_prefix_lines = 0;
-    if (prompt || rl_display_prompt == rl_prompt)
+    if (prompt_prefix && *prompt_prefix && forced_display)
     {
-        if (prompt_prefix && forced_display)
-            prompt_prefix_lines = write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
-    }
-    else
-    {
-        prompt = strrchr(rl_display_prompt, '\n');
-        if (!prompt)
-            prompt = rl_display_prompt;
-        else
-        {
-            assert(!rl_get_message_buffer());
-            prompt++;
-            const int32 pmtlen = int32(prompt - rl_display_prompt);
-            if (forced_display)
-            {
-                prompt_prefix_lines = write_with_clear(_rl_out_stream, rl_display_prompt, pmtlen);
-                // Make sure we are at column zero even after a newline,
-                // regardless of the state of terminal output processing.
-                if (pmtlen < 2 || prompt[-2] != '\r')
-                    _rl_cr();
-            }
-        }
+        prompt_prefix_lines = write_with_clear(prompt_prefix, strlen(prompt_prefix));
+        // TODO-TIB: handle potential wrapping of prompt string.
     }
 
-    if (!prompt)
-        prompt = "";
-
+// TODO-TIB: how to fit this into the display optimizations properly?
     // Let the application have a chance to do processing; for example to parse
     // the input line and update font faces for the line.
     if (rl_before_display_function)
         rl_before_display_function();
 
+// TODO-TIB: modmark.
+#ifdef TIB_TODO
     // Modmark.
     const bool modmark = has_modmark();
 
@@ -2078,12 +872,29 @@ void display_manager::display()
     if (modmark != m_last_modmark)
         rl_display_fixed = 0;
 
+// TODO-TIB: adjust the left text to include a modmark.
+    if (modmark)
+    {
+        if (_rl_display_modmark_color)
+            rl_fwrite_function(_rl_out_stream, _rl_display_modmark_color, strlen(_rl_display_modmark_color));
+
+        rl_fwrite_function(_rl_out_stream, "*", 1);
+
+        if (_rl_display_modmark_color)
+            rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
+    }
+#endif
+
+#ifdef TIB_TODO
     // Is update needed?
     forced_display |= (m_last_prompt_line_width < 0 ||
                        modmark != m_last_modmark ||
                        !m_last_prompt_line.equals(prompt));
     bool invalidate_display = forced_display;
+#endif
 
+// TODO-TIB: this is where the wrapping is handled for the last line.
+#ifdef TIB_TODO
     // Calculate ending row and column, accounting for wrapping (including
     // double width characters that don't fit).
     bool force_wrap = false;
@@ -2096,213 +907,57 @@ void display_manager::display()
         force_wrap = mc.get_force_wrap();
         m_last_prompt_line_width = mc.get_column();
         m_last_prompt_line_botlin = mc.get_line_count() - 1;
+
+// TODO-TIB: print everything up to but not including the last row; the last
+// row will be given to set_left_text().
+// TODO-TIB: use write_with_clear() and deal properly with force_wrap.
+        clink_write(prompt, mc.???());
+        m_pending_wrap = force_wrap;
     }
+#endif
 
-    // Activate horizontal scroll mode when requested or when necessary.
-    const bool was_horz_scroll = m_horz_scroll;
-    m_horz_scroll = (_rl_horizontal_scroll_mode || max_rows <= 1 || m_last_prompt_line_botlin + max_rows > _rl_screenheight);
-
-    // Can we show history expansion?
-    const bool can_show_histexpand = (want_histexpand_preview &&
-                                      m_last_prompt_line_botlin + max_rows + 1 <= _rl_screenheight);
-
+#ifdef TIB_TODO
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
     const bool need_update = (!rl_display_fixed || forced_display || was_horz_scroll != m_horz_scroll || rl_point != m_last_point);
-
-    // Prepare data structures for displaying the input line.
-    const display_lines* next = &m_curr;
-    display_lines* update_next = nullptr;
-    m_pending_wrap_display = &m_curr;
-    if (need_update)
-    {
-        next = update_next = &m_next;
-        if (m_horz_scroll)
-            update_next->horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
-        else
-            update_next->parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
-        assert(update_next->count() > 0);
-    }
-#define m_next __use_next_instead__ // Or use update_next if need_update is true.
-    const int32 input_botlin_offset = max<int32>(0,
-        min<int32>(min<int32>(next->count() - 1 - m_last_prompt_line_botlin, max_rows - 1), _rl_screenheight - 1));
-    const int32 new_botlin = m_last_prompt_line_botlin + input_botlin_offset;
-
-    // Scroll to keep cursor in view.
-    const uint32 old_top = m_top;
-    if (m_top < m_last_prompt_line_botlin)
-        m_top = m_last_prompt_line_botlin;
-    if (m_last_prompt_line_botlin + next->vpos() < m_top)
-        m_top = m_last_prompt_line_botlin + next->vpos();
-    if (m_last_prompt_line_botlin + next->vpos() > m_top + input_botlin_offset)
-        m_top = next->vpos() - input_botlin_offset;
-    if (m_top + input_botlin_offset + 1 > next->count())
-        m_top = next->count() - 1 - input_botlin_offset;
-
-    // Scroll when cursor is on a scroll marker.
-    if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
-    {
-        const display_line* d = next->get(m_top);
-        if (next->cpos() >= d->m_x && next->cpos() < d->m_x + c_horz_scroll_indicator_chars)
-            m_top--;
-    }
-    else if (m_top + input_botlin_offset < next->count() - 1 && m_top + input_botlin_offset == next->vpos())
-    {
-        if (next->cpos() + c_horz_scroll_indicator_chars >= _rl_screenwidth && next->cpos() < _rl_screenwidth)
-            m_top++;
-    }
-    assert(m_top >= m_last_prompt_line_botlin);
-
-    // Remember the top.
-#undef m_next
-    m_next.set_top(m_top);
-#define m_next __use_next_instead__
-
-    // Apply scroll markers.
-    if (need_update && !m_horz_scroll)
-        update_next->apply_scroll_markers(m_top, m_top + input_botlin_offset);
-
-    // Display the last line of the prompt.
-    const bool old_horz_scrolled = m_curr.is_horz_scrolled();
-    const bool is_horz_scrolled = next->is_horz_scrolled();
-    if (m_top == m_last_prompt_line_botlin && (forced_display ||
-                                               old_top != m_top ||
-                                               old_horz_scrolled != is_horz_scrolled))
-    {
-        assert(need_update); // See is_CJK_codepage usage below...
-
-        move_to_row(0);
-        move_to_column(0, true/*force*/);
-
-#ifdef REPORT_REDISPLAY
-        ++s_lastline;
 #endif
 
-        if (modmark)
-        {
-            if (_rl_display_modmark_color)
-                rl_fwrite_function(_rl_out_stream, _rl_display_modmark_color, strlen(_rl_display_modmark_color));
-
-            rl_fwrite_function(_rl_out_stream, "*", 1);
-
-            if (_rl_display_modmark_color)
-                rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
-        }
-
-        if (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM)
-            invalidate_display = true;
-
-        rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
-
-        m_pending_wrap = force_wrap;
-
-        if (is_CJK_codepage(GetConsoleOutputCP()))
+#ifdef TIB_TODO
+        // TODO-TIB: CJK issues -- this needs to happen inside tib itself to
+        // detect the actual left_text width.
+        if (is_CJK_codepage(GetConsoleOutputCP()) && /* g_prompt contains any EAA width codepoints */)
         {
             COORD cursor;
             coalesce.flush();
             if (g_terminal && g_terminal->get_cursor_pos(cursor.X, cursor.Y) &&
                 m_last_prompt_line_width != cursor.X)
             {
+                // TODO-TIB: this minus origin defines left_text width.
                 m_last_prompt_line_width = cursor.X;
-#undef m_next
-                // TODO: Is this correct when !need_update?
-                if (m_horz_scroll)
-                    m_next.horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
-                else
-                    m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
-#define m_next __use_next_instead__
             }
         }
+#endif
 
-        _rl_last_c_pos = m_last_prompt_line_width;
-        _rl_last_v_pos = m_last_prompt_line_botlin;
-
-        move_to_column(_rl_last_c_pos, true/*force*/);
-
+#ifdef TIB_TODO
         dbg_ignore_scope(snapshot, "display_readline");
-
         m_last_prompt_line = prompt;
         m_last_modmark = modmark;
-    }
+#endif
 
-    // From here on, use move_to_row/move_to_column/print/etc so that the
-    // m_pending_wrap compatibility logic can work reliably.
-#define rl_fwrite_function  __not_safe__
-#define rl_fflush_function  __not_safe__
-#define tputs               __not_safe__
-#define _rl_move_vert       __not_safe__
-#define _rl_cr              __not_safe__
-#define _rl_crlf            __not_safe__
-
+#ifdef TIB_TODO
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
-    bool can_show_rprompt = false;
-    const int32 old_botlin = _rl_vis_botlin;
-    bool clear_suggestion_list = false;
-    if (need_update)
-    {
-        // If the right side prompt is shown but shouldn't be, erase it.
-        can_show_rprompt = next->can_show_rprompt();
-        if (_rl_rprompt_shown_len && !can_show_rprompt)
-            print_rprompt(nullptr);
-
-        // Erase old comment row if its row changes.
-        if (*m_curr.get_comment_row() && new_botlin != old_botlin)
-        {
-            move_to_row(old_botlin + 1);
-            move_to_column(0);
-            clear_to_eol(_rl_screenwidth);
-        }
-
-        // Update each display line for the line buffer.
-        uint32 rows = m_last_prompt_line_botlin;
-        for (uint32 i = m_top; auto d = next->get(i); ++i)
-        {
-            if (rows++ > new_botlin)
-                break;
-
-            const bool ignore_curr = (invalidate_display || s_defer_erase_extra_lines);
-            auto o = ignore_curr ? nullptr : m_curr.get(i - m_top + old_top);
-            update_line(i, o, d, _rl_rprompt_shown_len > 0);
-        }
-
-        // Once the display lines have been printed, the next (pending) state
-        // must be used for finishing pending wraps.  In practice, this affects
-        // only pending wrap caused by printing an rprompt.
-        m_pending_wrap_display = next;
-
-        // Erase any surplus lines and update the bottom line counter.
-        if (new_botlin < old_botlin)
-        {
-            move_to_column(0);
-
-            // BUGBUG: This probably will garble the display if the terminal
-            // height has shrunk and no longer fits _rl_vis_botlin.
-            for (int32 i = new_botlin; i++ < old_botlin;)
-            {
-                move_to_row(i);
-                clear_to_eol(_rl_screenwidth);
-                if (_rl_last_c_pos)
-                {
-                    print("\r", 1);
-                    _rl_last_c_pos = 0;
-                }
-            }
-        }
-
-        // Update current cursor position.
-        assertimplies(m_horizpos_workaround, _rl_last_c_pos <= _rl_screenwidth);
-        assertimplies(!m_horizpos_workaround, _rl_last_c_pos < _rl_screenwidth);
-
-        // Finally update the bottom line counter.
-        _rl_vis_botlin = new_botlin;
-    }
+#endif
 
     // Maybe show input hint.
-    if (need_update && can_show_comment_row && _rl_vis_botlin < _rl_screenheight)
+// TODO-TIB: optimize to avoid regenerating comment row when unnecessary.
+    if (can_show_comment_row)
     {
-        str_moveable in;
-        if (m_forced_comment_row_cursorpos == rl_point)
+        const tib::textpos_t caret = g_tib->get_caret();
+        const tib::textpos_t end = g_tib->get_length();
+
+        tib::cstring in;
+        if (m_forced_comment_row_cursorpos == caret)
             in = m_forced_comment_row.c_str();
         else
         {
@@ -2313,21 +968,21 @@ void display_manager::display()
         const input_hint* hint = in.empty() ? get_input_hint() : nullptr;
         const int32 pos = hint ? hint->pos() : -1;
 
-        if (can_show_histexpand && in.empty())
+        if (want_histexpand_preview && in.empty())
         {
             const history_expansion* e;
             for (e = m_histexpand; e; e = e->next)
             {
-                if (e->start <= rl_point && rl_point <= e->start + e->len)
+                if (e->start <= caret && caret <= e->start + e->len)
                 {
                     if (e->start >= pos)
                     {
                         const char* expanded = e->result;
                         if (!expanded || !*expanded)
                             expanded = "(empty)";
-                        in << "History expansion for \"";
-                        append_expand_ctrl(in, rl_line_buffer + e->start, e->len);
-                        in << "\": ";
+                        in.append("History expansion for \"");
+                        append_expand_ctrl(in, g_tib->get_text().c_str() + e->start, e->len);
+                        in.append("\": ");
                         append_expand_ctrl(in, expanded);
                     }
                     break;
@@ -2341,7 +996,7 @@ void display_manager::display()
 
             if (hint && in.empty())
             {
-                if ((m_curr.has_comment_row() && *m_curr.get_comment_row()) || int32(hint->get_timeout()) <= 0)
+                if (m_has_comment_row_text || int32(hint->get_timeout()) <= 0)
                     in = hint->c_str();
                 if (!in.empty())    // History expansion doesn't count.
                     s_ever_input_hint = true;
@@ -2350,63 +1005,52 @@ void display_manager::display()
             // To avoid recurring jitter on the bottom row, if an input hint
             // has been shown in this session before, then force reserving
             // space for the comment row even if it's blank.
-            update_next->set_comment_row(std::move(in), s_ever_input_hint);
+            m_has_comment_row_text = false;
+            if (!in.empty() || s_ever_input_hint)
+            {
+                tib::additional_display_line addl;
+                if (!in.empty())
+                {
+                    str<> out;
+                    const int32 limit = _rl_screenwidth - 1;
+                    addl.width = ellipsify(in.c_str(), limit, out, false);
+                    addl.text.append_color(g_color_comment_row.get());
+                    addl.text.append(out.c_str(), out.length());
+                    addl.text.append_color("");
+                    m_has_comment_row_text = !!addl.width;
+                }
+                std::vector<tib::additional_display_line> addls;
+                addls.emplace_back(std::move(addl));
+                g_tib->set_additional_lines(addls);
+            }
         }
     }
 
-    if (invalidate_display ||
-        m_curr.has_comment_row() != next->has_comment_row() ||
-        strcmp(m_curr.get_comment_row(), next->get_comment_row()) ||
-        new_botlin != old_botlin)
+    // Update the display.
+
+    const uint32 old_height = min<uint32>(_rl_screenheight, s_defer_erase_extra_lines + get_input_height());
+
     {
-        bool reset_col = false;
-
-        move_to_row(_rl_vis_botlin + 1);
-        move_to_column(0);
-
-        if (next->has_comment_row())
-        {
-            str<> out;
-            const int32 limit = _rl_screenwidth - 1;
-            ellipsify(next->get_comment_row(), limit, out, false);
-
-            str<16> color;
-            const char* color_comment_row = g_color_comment_row.get();
-            color << "\x1b[" << color_comment_row << "m";
-
-            print(color.c_str(), color.length());
-            print(out.c_str(), out.length());
-            reset_col = true;
-
-            _rl_last_c_pos = cell_count(out.c_str());
-        }
-
-        print("\x1b[m", 3);
-        clear_to_eol(_rl_screenwidth - _rl_last_c_pos);
-
-        if (reset_col)
-        {
-            print("\r", 1);
-            _rl_last_c_pos = 0;
-        }
+        dbg_ignore_scope(snapshot, "display_readline");
+        g_tib->display();
     }
 
     // Erase lingering extra lines.  This handles when the number of lines
     // used by the prompt prefix shrinks (e.g. from 1 line to 0 lines).
+    bool clear_suggestion_list = false;
     if (s_defer_erase_extra_lines)
     {
         assert(forced_display);
-        const uint32 old_height = min<uint32>(_rl_screenheight, s_defer_erase_extra_lines + m_curr.height());
-        const uint32 next_height = prompt_prefix_lines + next->height();
-        if (old_height > next_height)
+        const uint32 new_height = prompt_prefix_lines + get_input_height();
+        if (old_height > new_height)
         {
-            move_to_row(_rl_vis_botlin + next->has_comment_row() + 1);
-            move_to_column(0);
+            g_tib->move_to_end_of_display(true);
+            clink_write("\n", 1);
 #ifdef DEBUG
             const int32 dbgrow = dbg_get_env_int("DEBUG_ERASE_EXTRA_LINES");
             if (dbgrow)
             {
-                dbg_printf_row(dbgrow, "old_height %u (%u), next_height %u (%u)", old_height, s_defer_erase_extra_lines, next_height, prompt_prefix_lines);
+                dbg_printf_row(dbgrow, "old_height %u (%u), new_height %u (%u)", old_height, s_defer_erase_extra_lines, new_height, prompt_prefix_lines);
                 if (dbgrow < 0)
                 {
                     dbg_printf_row(dbgrow, "%s", prompt_prefix);
@@ -2418,93 +1062,47 @@ void display_manager::display()
                     // what row it ends up on.
                     str<16> tmp;
                     tmp.format("\x1b[s\x1b[%uH", dbgrow + 1);
-                    print(tmp.c_str(), tmp.length());
-                    write_with_clear(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
-                    print("\x1b[u", 3);
+                    clink_write(tmp.c_str(), tmp.length());
+                    write_with_clear(prompt_prefix, strlen(prompt_prefix));
+                    clink_write("\x1b[u", 3);
                 }
             }
 #endif
-            const int32 delta = old_height - next_height;
+            const int32 delta = old_height - new_height;
             for (int32 lines = delta; lines--;)
             {
-                clear_to_eol(_rl_screenwidth);
+                clink_write(tib::term_erase_to_eol());
                 if (lines)
-                    print("\n", 1);
+                    clink_write("\n", 1);
             }
             if (delta > 1)
-            {
-                str<16> tmp;
-                tmp.format(UP, delta - 1);
-                print(tmp.c_str(), tmp.length());
-            }
+                clink_write(tib::term_move_up(delta - 1));
         }
         clear_suggestion_list = true;
         s_defer_erase_extra_lines = 0;
     }
 
-    // Display the right side prompt if it's not shown, or if it's shown but
-    // has changed.
-    if (can_show_rprompt && (invalidate_display ||
-                             !_rl_rprompt_shown_len ||
-                             !m_last_rprompt.equals(rl_rprompt)))
-        print_rprompt(rl_rprompt);
-
-    // Move cursor to the rl_point position.
-    move_to_row(m_last_prompt_line_botlin + next->vpos() - m_top);
-    move_to_column(next->cpos());
-
-#undef rl_fwrite_function
-#undef rl_fflush_function
-#undef tputs
-#undef _rl_move_vert
-#undef _rl_cr
-#undef _rl_crlf
-
-    assert(!m_pending_wrap);
-    rl_fflush_function(_rl_out_stream);
-
-    m_pending_wrap_display = nullptr;
-
-#undef m_next
-
-    if (need_update)
-    {
-        m_next.swap(m_curr);
-        m_next.clear();
-        m_last_point = rl_point;
-    }
-
-    rl_display_fixed = 0;
-
-    coalesce.flush();
-
+// TODO-TIB: suggestion list.
     if (is_suggestion_list_active(false/*even_if_hidden*/))
     {
+// TODO-TIB: figure out the correct conditions for clearing the existing
+// suggestion list area.
+#ifdef TIB_TODO
         if (invalidate_display || old_botlin != _rl_vis_botlin)
+#endif
             clear_suggestion_list = true;
-        coalesce.end(); // Because suggestionlist_impl uses m_printer directly.
         update_suggestion_list_display(clear_suggestion_list);
     }
 
-#ifdef REPORT_REDISPLAY
-    {
-        str<> value;
-        if (os::get_env("DEBUG_REPORT_REDISPLAY", value) && atoi(value.c_str()) != 0)
-        {
-            char statistics[120];
-            sprintf_s(statistics, _countof(statistics), "\x1b[s\x1b[H\x1b[36mdisplay %d, lastline %d, identical %d\x1b[m\x1b[K\x1b[u", s_calls, s_lastline, s_identical);
-            rl_fwrite_function(_rl_out_stream, statistics, strlen(statistics));
-            char stk[DEFAULT_CALLSTACK_LEN];
-            format_callstack(1, 16, stk, _countof(stk), true);
-            LOG("DISPLAY() CALLSTACK:");
-            LOG("%s", stk);
-        }
-    }
-#endif
+    coalesce.flush();
+    coalesce.end();
 
+// TODO-TIB: deduce scroll mode.
     init_deduce_scroll_mode();
 
+// TODO-TIB: is this needed?
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
+// TODO-TIB: sigint.
     _rl_release_sigint();
 }
 
@@ -2527,7 +1125,7 @@ void display_manager::force_comment_row(const char* text)
     if (text && *text)
     {
         m_forced_comment_row = text;
-        m_forced_comment_row_cursorpos = rl_point;
+        m_forced_comment_row_cursorpos = g_tib->get_caret();
         display();
     }
 }
@@ -2537,6 +1135,7 @@ void display_manager::measure(measure_columns& mc)
 {
     assert(m_initialized);
 
+#ifdef TIB_TODO
     // FUTURE:  Ideally this would remember what prompt it displayed and use
     // that here, rather than using whatever is the current prompt content.
     const char* prompt = rl_get_local_prompt();
@@ -2588,605 +1187,93 @@ void display_manager::measure(measure_columns& mc)
             len = d->m_lead + rl_point - d->m_start;
         mc.measure(d->m_chars, len, false);
     }
+#endif
 }
 
 //------------------------------------------------------------------------------
-bool display_manager::get_horz_offset(int32& bytes, int32& column) const
+int32 display_manager::write_with_clear(const char* text, int32 length)
 {
-    return m_curr.get_horz_offset(bytes, column);
-}
-
-//------------------------------------------------------------------------------
-bool display_manager::has_comment_row() const
-{
-    return !!*m_curr.get_comment_row();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::clear_comment_row_internal()
-{
-    assert(m_initialized);
-
-    if (*m_curr.get_comment_row())
+    const char* const orig_text = text;
+    int32 remaining = length;
+    int32 lines = 0;
+    while (remaining > 0)
     {
-        _rl_move_vert(_rl_vis_botlin + 1);
-        _rl_cr();
-        _rl_last_c_pos = 0;
-        clear_to_eol(_rl_screenwidth);
-        m_curr.clear_comment_row();
+        bool erase_in_line = true;
+        uint32 erase_length = _rl_screenwidth;
+
+        const char* eol = strpbrk(text, "\r\n");
+        length = eol ? int(eol - text) : remaining;
+        if (length > 0)
+        {
+            measure_columns mc(measure_columns::print);
+            mc.measure(text, length, true/*is_prompt*/);
+            if (eol)
+                lines += mc.get_line_count() - 1;
+            if (!mc.get_column() && mc.get_line_count() > 1)
+                erase_in_line = false;
+            else
+                erase_length -= mc.get_column();
+            if (eol && erase_in_line && has_erase_in_line(text, length))
+                erase_in_line = false;
+            clink_write(text, length);
+            text += length;
+            remaining -= length;
+
+            // Windows 8.1 autowrap issue:  if a line in a multiline prompt
+            // reaches the right edge of the terminal and is followed by a CR
+            // or LF then the cursor ends on the wrong line.  Compensate by
+            // first moving the cursor up a line.
+            if (eol && s_autowrap_bug && mc.has_autowrap_at_end())
+                clink_write(tib::term_move_up(1));
+        }
+
+        if (eol)
+        {
+            ++lines;
+            while (remaining > 0 && (*text == '\r' || *text == '\n'))
+                ++text, --remaining;
+            length = int(text - eol);
+            if (erase_in_line)
+                clink_write(tib::term_erase_to_eol());
+            if (length > 0)
+            {
+                clink_write(eol, length);
+
+                // Make sure we are at column zero even after a newline,
+                // regardless of the state of terminal output processing.
+                if (remaining <= 0)
+                {
+                    const int32 total_length = int32(eol + length - orig_text);
+                    if (total_length > 0 && orig_text[total_length - 1] == '\n')
+                    {
+                        if (total_length < 2 || orig_text[total_length - 2] != '\r')
+                            clink_write("\r", 1);
+                    }
+                }
+            }
+        }
     }
+
+    return lines;
 }
 
 //------------------------------------------------------------------------------
 void display_manager::clear_comment_row()
 {
-    if (*m_curr.get_comment_row())
+    if (!m_comment_row.empty())
     {
-        assert(m_initialized);
-
-        init_horizpos_workaround();
-        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
-
-        clear_comment_row_internal();
+        m_has_comment_row_text = false;
+        m_comment_row.clear();
+        m_forced_comment_row.clear();
+        m_forced_comment_row_cursorpos = -1;
+        display();
     }
-}
-
-//------------------------------------------------------------------------------
-bool display_manager::is_initialized() const
-{
-    return m_initialized;
-}
-
-//------------------------------------------------------------------------------
-bool display_manager::is_displayed() const
-{
-    return m_curr.count() > 0;
-}
-
-//------------------------------------------------------------------------------
-void display_manager::update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt)
-{
-    assert(m_initialized);
-
-    uint32 lcol = d->m_x;
-    uint32 rcol = d->m_lastcol + d->m_trail;
-    uint32 lind = 0;
-    uint32 rind = d->m_len;
-    int32 delta = 0;
-
-    // If the old and new lines are identical, there's nothing to do.
-    if (o &&
-        o->m_x == d->m_x &&
-        o->m_len == d->m_len &&
-        !memcmp(o->m_chars, d->m_chars, d->m_len) &&
-        !memcmp(o->m_faces, d->m_faces, d->m_len))
-    {
-#ifdef REPORT_REDISPLAY
-        ++s_identical;
-#endif
-        return;
-    }
-
-    bool use_eol_opt = !m_horizpos_workaround && !has_rprompt && d->m_toeol;
-
-#ifdef DEBUG
-    const bool can_optimize = !dbg_get_env_int("DEBUG_NOOPT_UPDATE_LINE");
-#else
-    const bool can_optimize = true;
-#endif
-
-    // Optimize updating when the new starting column is less than or equal to
-    // the old starting column.  Can't optimize in the other direction unless
-    // update_line(0) happens before displaying the prompt string.
-    if (!m_horizpos_workaround && o && d->m_x <= o->m_x && can_optimize)
-    {
-        const char* oc = o->m_chars;
-        const char* of = o->m_faces;
-        const char* dc = d->m_chars;
-        const char* df = d->m_faces;
-
-        // Find left index of difference.
-        {
-            uint32 lcol_whole = lcol;
-            const char* oc_whole = o->m_chars;
-            const char* of_whole = o->m_faces;
-            const char* dc_whole = d->m_chars;
-            const char* df_whole = d->m_faces;
-
-            wcwidth_iter oiter(oc, o->m_len);
-            wcwidth_iter diter(dc, d->m_len);
-            const char* p = dc;
-            char histface = 0;
-            while (oiter.next() && diter.next())
-            {
-                const uint32 bytes = diter.character_length();
-                if (oiter.character_length() != bytes)
-                    break;
-                if (memcmp(oc, dc, bytes) ||
-                    memcmp(of, df, bytes))
-                    break;
-                assert(oiter.character_wcwidth_onectrl() == diter.character_wcwidth_onectrl());
-                lcol += diter.character_wcwidth_onectrl();
-                oc += bytes;
-                of += bytes;
-                dc += bytes;
-                df += bytes;
-                // Avoid splitting a FACE_HISTEXPAND1 or FACE_HISTEXPAND2 run,
-                // otherwise Windows Terminal splits the hyperlink underline.
-                const char thisface = *(df - 1);
-                if (thisface != FACE_HISTEXPAND1 && thisface != FACE_HISTEXPAND2)
-                {
-                    histface = 0;
-left_whole:
-                    lcol_whole = lcol;
-                    oc_whole = oc;
-                    of_whole = of;
-                    dc_whole = dc;
-                    df_whole = df;
-                }
-                else if (thisface != histface)
-                {
-                    histface = thisface;
-                    if (diter.more() && thisface != *df)
-                        goto left_whole;
-                }
-            }
-
-            lcol = lcol_whole;
-            oc = oc_whole;
-            of = of_whole;
-            dc = dc_whole;
-            df = df_whole;
-        }
-
-        lind = uint32(dc - d->m_chars);
-
-        const char* oc2 = o->m_chars + o->m_len;
-        const char* of2 = o->m_faces + o->m_len;
-        const char* dc2 = d->m_chars + d->m_len;
-        const char* df2 = d->m_faces + d->m_len;
-
-        // Find right index of difference.  But not if there is a right side
-        // prompt on this line.
-        if (!has_rprompt)
-        {
-            const char* dcend = dc2;
-            const char* oc2best = oc2;
-            const char* dc2best = dc2;
-
-            while (oc2 > oc && dc2 > dc)
-            {
-                const char* oback = oc + _rl_find_prev_mbchar(const_cast<char*>(oc), oc2 - oc, MB_FIND_ANY);
-                const char* dback = dc + _rl_find_prev_mbchar(const_cast<char*>(dc), dc2 - dc, MB_FIND_ANY);
-                if (oc2 - oback != dc2 - dback)
-                    break;
-                const size_t bytes = dc2 - dback;
-                if (memcmp(oback, dback, bytes) ||
-                    memcmp(of2 - bytes, df2 - bytes, bytes))
-                    break;
-                oc2 = oback;
-                dc2 = dback;
-                of2 -= bytes;
-                df2 -= bytes;
-                if (bytes == 1)
-                {
-                    // The width and glyph(s) in an emoji sequence can change
-                    // as codepoints are added or removed from emoji sequence.
-                    // Parsing emoji sequences backwards is ambiguous, so for
-                    // reliability the right difference index snaps to ASCII
-                    // character boundaries.  This still achieves at least
-                    // word-level display optimization even when a high volume
-                    // of non-ASCII characters are present.
-                    oc2best = oback;
-                    dc2best = dback;
-                }
-            }
-
-            if (oc2 != oc2best)
-            {
-                oc2 = oc2best;
-                of2 = o->m_faces + (oc2 - o->m_chars);
-            }
-            if (dc2 != dc2best)
-            {
-                dc2 = dc2best;
-                df2 = d->m_faces + (dc2 - d->m_chars);
-            }
-
-            if (use_eol_opt)
-            {
-                const char* ec = dc2;
-                const char* ef = df2;
-                size_t elen = d->m_len - (dc2 - d->m_chars);
-                while (elen--)
-                {
-                    if (*ec != ' ' || *ef != FACE_NORMAL)
-                    {
-                        use_eol_opt = false;
-                        break;
-                    }
-                    --ec;
-                    --ef;
-                }
-            }
-
-            // If rightmost char face is FACE_HISTEXPAND1 or FACE_HISTEXPAND2
-            // then increment right index until it contains the full run of
-            // the face, otherwise Windows Terminal splits the hyperlink.
-            if (df2 > df)
-            {
-                const char face = *(df2 - 1);
-                if (face == FACE_HISTEXPAND1 || face == FACE_HISTEXPAND2)
-                {
-                    while (df2 < d->m_faces + d->m_len && *df2 == face)
-                    {
-                        ++oc2;
-                        ++of2;
-                        ++dc2;
-                        ++df2;
-                    }
-                }
-            }
-        }
-
-        const uint32 olen = uint32(oc2 - oc);
-        const uint32 dlen = uint32(dc2 - dc);
-        assert(oc2 - oc == of2 - of);
-        assert(dc2 - dc == df2 - df);
-        rind = lind + dlen;
-
-        // Measure columns, to find whether to delete characters or open spaces.
-        uint32 dcols = clink_wcswidth(dc, dlen);
-        rcol = lcol + dcols;
-        if (oc2 < o->m_chars + o->m_len)
-        {
-            uint32 ocols = clink_wcswidth(oc, olen);
-            delta = dcols - ocols;
-        }
-
-#ifdef DEBUG
-        if (dbg_get_env_int("DEBUG_DISPLAY"))
-        {
-            dbg_printf_row(-1, "delta %d; len %d/%d; col %d/%d; ind %d/%d\r\n", delta, olen, dlen, lcol, rcol, lind, rind);
-            dbg_printf_row(-1, "old=[%*s]\toface='[%*s]'\r\n", olen, oc, olen, of);
-            dbg_printf_row(-1, "new=[%*s]\tdface='[%*s]'\r\n", dlen, dc, dlen, df);
-        }
-#endif
-    }
-
-    assert(i >= m_top);
-    const uint32 row = m_last_prompt_line_botlin + i - m_top;
-
-    move_to_row(row);
-
-    if (o && o->m_x > d->m_x)
-    {
-        move_to_column(d->m_x);
-        shift_cols(d->m_x, d->m_x - o->m_x);
-    }
-
-    move_to_column(lcol);
-    shift_cols(lcol, delta);
-
-    rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
-
-    _rl_last_c_pos = rcol;
-
-    // Scroll marker should have a trailing space.
-    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
-
-    // Clear anything leftover from o.
-    const uint32 lastcol = (o ? o->m_lastcol : _rl_screenwidth);
-    if (d->m_lastcol < lastcol)
-    {
-        if (use_eol_opt)
-        {
-            // Using _rl_screenwidth is more accurate than lastcol, because
-            // the escape code clears to the screen width.
-            clear_to_eol(_rl_screenwidth - rcol);
-        }
-        else
-        {
-            // m_lastcol does not include filler spaces; and that's fine since
-            // the spaces use FACE_NORMAL.
-            const uint32 erase_cols = lastcol - d->m_lastcol;
-
-            move_to_column(d->m_lastcol);
-
-            str<> tmp;
-            make_spaces(erase_cols, tmp);
-
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-            _rl_last_c_pos += erase_cols;
-        }
-    }
-
-    // Update cursor position and deal with autowrap.
-    detect_pending_wrap();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::move_to_column(uint32 col, bool force)
-{
-    assert(m_initialized);
-    assert(_rl_term_ch && *_rl_term_ch);
-    assert(col < _rl_screenwidth);
-
-    if (m_pending_wrap)
-        finish_pending_wrap();
-
-    if (col == _rl_last_c_pos && !force)
-        return;
-
-    if (m_horizpos_workaround)
-    {
-        assert(!is_test_harness());
-        display_accumulator::flush();
-
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(m_horizpos_workaround, &csbi);
-        csbi.dwCursorPosition.X = col;
-
-        preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
-        SetConsoleCursorPosition(m_horizpos_workaround, csbi.dwCursorPosition);
-    }
-    else if (col)
-    {
-        char *buffer = tgoto(_rl_term_ch, 0, col + 1);
-        tputs(buffer);
-    }
-    else
-    {
-        _rl_cr();
-    }
-
-    _rl_last_c_pos = col;
-}
-
-//------------------------------------------------------------------------------
-void display_manager::move_to_row(int32 row)
-{
-    assert(m_initialized);
-
-    if (m_pending_wrap)
-        finish_pending_wrap();
-
-    if (row == _rl_last_v_pos)
-        return;
-
-    preserve_window_horiz_scroll_position preserve(m_horizpos_workaround);
-    _rl_move_vert(row);
-}
-
-//------------------------------------------------------------------------------
-void display_manager::clear_to_eol(int32 count)
-{
-    if (_rl_last_v_pos == 0)
-    {
-        // If the cursor is on the first line of the input buffer, then flag
-        // that the right side prompt is not shown, so it can be redisplayed
-        // later as appropriate.
-        _rl_rprompt_shown_len = 0;
-    }
-
-    assert(_rl_last_c_pos < _rl_screenwidth);
-    assert(count >= 0);
-
-    if (count)
-    {
-        if (_rl_term_clreol)
-        {
-            tputs(_rl_term_clreol);
-        }
-        else
-        {
-            str_moveable s;
-            s.reserve(count);
-            concat_spaces(s, count);
-            tputs(s.c_str());
-            move_to_column(_rl_last_c_pos, true/*force*/);
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_manager::shift_cols(uint32 col, int32 delta)
-{
-    assert(m_initialized);
-    assert(col == _rl_last_c_pos);
-
-    if (delta > 0)
-    {
-        if (m_pending_wrap)
-            finish_pending_wrap();
-
-        assert(!m_horizpos_workaround);
-        assert(delta < _rl_screenwidth - col);
-        if (_rl_term_IC)
-        {
-            char* buffer = tgoto(_rl_term_IC, 0, delta);
-            tputs(buffer);
-        }
-#if 0
-        else if (_rl_term_im && *_rl_term_im && _rl_term_ei && *_rl_term_ei)
-        {
-            tputs(_rl_term_im);
-            for (int32 i = delta; i--;)
-                _rl_output_character_function(' ');
-            tputs(_rl_term_ei);
-        }
-        else if (_rl_term_ic && *_rl_term_ic)
-        {
-            for (int32 i = delta; i--;)
-                tputs(_rl_term_ic);
-        }
-#endif
-        else
-            assert(false);
-    }
-    else if (delta < 0)
-    {
-        if (m_pending_wrap)
-            finish_pending_wrap();
-
-        assert(!m_horizpos_workaround);
-        assert(-delta < _rl_screenwidth - col);
-        if (_rl_term_DC && *_rl_term_DC)
-        {
-            char *buffer = tgoto(_rl_term_DC, -delta, -delta);
-            tputs(buffer);
-        }
-#if 0
-        else if (_rl_term_dc && *_rl_term_dc)
-        {
-            for (int32 i = -delta; i--;)
-                tputs(_rl_term_dc);
-        }
-#endif
-        else
-            assert(false);
-    }
-
-    move_to_column(col);
-}
-
-//------------------------------------------------------------------------------
-void display_manager::print(const char* chars, uint32 len)
-{
-    assert(m_initialized);
-    assert(!m_pending_wrap);
-    m_pending_wrap = false;
-    rl_fwrite_function(_rl_out_stream, chars, len);
-}
-
-//------------------------------------------------------------------------------
-void display_manager::print_rprompt(const char* s)
-{
-    assert(m_initialized);
-
-    const int32 col = _rl_screenwidth - (s ? max(rl_visible_rprompt_length, _rl_rprompt_shown_len) : _rl_rprompt_shown_len);
-    if (col <= 0 || col >= _rl_screenwidth)
-        return;
-
-    move_to_row(0);
-    move_to_column(col);
-
-    if (s)
-    {
-        if (_rl_rprompt_shown_len > rl_visible_rprompt_length)
-        {
-            str<32> tmp;
-            make_spaces(_rl_rprompt_shown_len - rl_visible_rprompt_length, tmp);
-            tputs(tmp.c_str());
-        }
-        tputs(s);
-        _rl_last_c_pos = _rl_screenwidth;
-    }
-    else
-    {
-        clear_to_eol(_rl_rprompt_shown_len);
-    }
-
-    dbg_ignore_scope(snapshot, "display_readline");
-
-    _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
-    m_last_rprompt = s;
-
-    // Win10 and higher don't need to deal with pending wrap from rprompt.
-    if (m_autowrap_bug)
-        detect_pending_wrap();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::reset_rprompt_shown()
-{
-    assert(m_initialized);
-
-    _rl_rprompt_shown_len = 0;
-    m_last_rprompt.clear();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::init_horizpos_workaround()
-{
-    assert(m_initialized);
-
-    m_horizpos_workaround = is_horizpos_workaround_needed();
-}
-
-//------------------------------------------------------------------------------
-void display_manager::detect_pending_wrap()
-{
-    assert(m_initialized);
-
-    if (_rl_last_c_pos == _rl_screenwidth)
-    {
-        _rl_last_c_pos = 0;
-        _rl_last_v_pos++;
-        m_pending_wrap = true;
-    }
-    else
-    {
-        m_pending_wrap = false;
-    }
-}
-
-//------------------------------------------------------------------------------
-void display_manager::finish_pending_wrap()
-{
-    assert(m_initialized);
-
-    // This finishes a pending wrap using a technique that works equally well on
-    // both Win 8.1 and Win 10.
-    assert(m_pending_wrap);
-    assert(m_pending_wrap_display);
-    assert(_rl_last_c_pos == 0);
-
-    uint32 bytes = 0;
-
-    // If there's a display_line, then re-print its first character to force
-    // wrapping.  Otherwise, print a placeholder.
-    const int32 index = m_pending_wrap_display->top() +  _rl_last_v_pos;
-    assert(index >= 0);
-    if (index < m_pending_wrap_display->count())
-    {
-        const display_line& d = *m_pending_wrap_display->get(index);
-
-        wcwidth_iter iter(d.m_chars, d.m_len);
-        uint32 cols = 0;
-        while (iter.next())
-        {
-            const int32 wc = iter.character_wcwidth_onectrl();
-            cols += wc;
-            if (wc)
-                break;
-        }
-
-        bytes = uint32(iter.get_pointer() - d.m_chars);
-        if (bytes)
-        {
-            rl_puts_face_func(d.m_chars, d.m_faces, bytes);
-            _rl_cr();
-        }
-    }
-
-    if (!bytes)
-    {
-        // If there's no display_line or it's empty, print a space to force
-        // wrapping and a backspace to move the cursor to the beginning of the
-        // line with the fewest possible side effects (which potentially matters
-        // during terminal resize, which is asynchronous with respect to the
-        // console application).
-        rl_fwrite_function(_rl_out_stream, "\x1b[m \x08", 5);
-    }
-
-    m_pending_wrap = false;
 }
 
 
 
 //------------------------------------------------------------------------------
-void clear_comment_row()
+extern "C" void clear_comment_row()
 {
     s_display_manager.clear_comment_row();
 }
@@ -3257,21 +1344,16 @@ int32 count_prompt_lines(const char* prompt_prefix)
 }
 
 //------------------------------------------------------------------------------
+// TODO-TIB: ?
 void defer_clear_lines(uint32 prompt_lines, bool transient)
 {
-    str<16> up;
+    g_tib->move_to_origin(true);
     if (prompt_lines > 0)
-        up.format("\r\x1b[%uA", prompt_lines);
-    else
-        up = "\r";
-
-    _rl_move_vert(0);
-    rl_fwrite_function(_rl_out_stream, up.c_str(), up.length());
-    _rl_last_c_pos = 0;
+        clink_write(tib::term_move_up(prompt_lines));
 
     if (transient)
     {
-        s_defer_clear_lines = prompt_lines + _rl_vis_botlin + 1;
+        s_defer_clear_lines = prompt_lines + get_input_height() + 1;
         s_defer_erase_extra_lines = 0;
     }
     else
@@ -3286,16 +1368,47 @@ void defer_clear_lines(uint32 prompt_lines, bool transient)
 extern "C" void reset_display_readline(void)
 {
     s_transient_prompt_context = false;
-    s_display_manager.on_new_line();
-
-#ifdef REPORT_REDISPLAY
-    s_calls = 0;
-    s_lastline = 0;
-    s_identical = 0;
-#endif
+    s_display_manager.begin_display();
 
     // Terminal shell integration.
     terminal_end_command();
+}
+
+//------------------------------------------------------------------------------
+void move_to_caret_position(bool force_column)
+{
+    assert(g_tib);
+    if (g_tib)
+        g_tib->move_to_caret_position(force_column);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void move_to_end_of_display(int cr)
+{
+    assert(g_tib);
+    if (g_tib)
+        g_tib->move_to_end_of_display(!!cr);
+}
+
+//------------------------------------------------------------------------------
+int32 get_input_height()
+{
+    assert(g_tib);
+    return g_tib ? g_tib->get_extent().y : 0;
+}
+
+//------------------------------------------------------------------------------
+int32 get_relative_cursor_row()
+{
+    assert(g_tib);
+    return g_tib ? g_tib->get_relative_cursor().y : 0;
+}
+
+//------------------------------------------------------------------------------
+int32 get_relative_cursor_column()
+{
+    assert(g_tib);
+    return g_tib ? g_tib->get_relative_cursor().x : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -3307,92 +1420,72 @@ extern "C" void end_prompt_lf()
 //------------------------------------------------------------------------------
 extern "C" void _rl_refresh_line(void)
 {
-    _rl_want_redisplay = true;
-    maybe_redisplay_readline();
+    force_redisplay_readline();
+    display_readline();
     rl_keep_mark_active();
 }
 
 //------------------------------------------------------------------------------
 extern "C" void _rl_erase_entire_line(void)
 {
-    _rl_cr ();
-    _rl_last_c_pos = 0;
-
-    if (_rl_last_v_pos == 0)
-    {
-        // If the cursor is on the first line of the input buffer, then flag
-        // that the right side prompt is not shown, so it can be redisplayed
-        // later as appropriate.
-        _rl_rprompt_shown_len = 0;
-    }
-
-    if (_rl_term_clreol)
-    {
-        tputs(_rl_term_clreol);
-    }
-    else
-    {
-        const uint32 count = _rl_screenwidth;
-
-        str_moveable s;
-        s.reserve(count);
-        concat_spaces(s, count);
-        tputs(s.c_str());
-        _rl_cr();
-        _rl_last_c_pos = 0;
-    }
-
-    fflush(rl_outstream);
+    tib::term_out("\r", 1);
+    tib::term_erase_to_eol();
 }
 
 
 //------------------------------------------------------------------------------
-static char* expand_rprompt(const char* pmt)
+void fixup_prompt(str_moveable& prompt)
 {
-    const uint32 l = str_len(pmt);
-    char* ret = (char*)xmalloc(l + 1);
-    bool newlines = false;
+    bool need_fixup = false;
+    const char* p = prompt.c_str();
+    while (*p)
+    {
+        if (*p == RL_PROMPT_START_IGNORE || *p == RL_PROMPT_END_IGNORE)
+        {
+            need_fixup = true;
+            break;
+        }
+        ++p;
+    }
 
-    // Strip the invisible character string markers RL_PROMPT_START_IGNORE and
-    // RL_PROMPT_END_IGNORE.
-    char* r = ret;
-    for (const char* p = pmt; *p; ++p)
+    if (need_fixup)
+    {
+        str_moveable fixup;
+        fixup.concat(prompt.c_str(), int32(p - prompt.c_str()));
+        while (*(++p))
+        {
+            if (*p != RL_PROMPT_START_IGNORE && *p != RL_PROMPT_END_IGNORE)
+                fixup.concat(p, 1);
+        }
+        prompt = std::move(fixup);
+    }
+}
+
+//------------------------------------------------------------------------------
+void fixup_rprompt(str_moveable& rprompt)
+{
+    for (const char* p = rprompt.c_str(); *p; ++p)
     {
         if (*p == '\r' || *p == '\n')
-            newlines = true;
-        if (*p != RL_PROMPT_START_IGNORE && *p != RL_PROMPT_END_IGNORE)
-            *(r++) = *p;
-    }
-    *r = '\0';
-
-    if (newlines)
-    {
-        free(ret);
-        ret = nullptr;
+        {
+            rprompt.clear();
+            return;
+        }
     }
 
-    return ret;
-}
-
-//------------------------------------------------------------------------------
-void rl_set_rprompt(const char* rprompt)
-{
-    free(rl_rprompt);
-
-    if (rprompt && *rprompt)
-        rl_rprompt = expand_rprompt(rprompt);
-    else
-        rl_rprompt = nullptr;
-
-    rl_visible_rprompt_length = rl_rprompt ? cell_count(rl_rprompt) : 0;
+    fixup_prompt(rprompt);
 }
 
 //------------------------------------------------------------------------------
 bool has_modmark()
 {
+#ifdef TIB_TODO
     const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
                              !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
     return (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
+#else
+    return false;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3448,31 +1541,53 @@ void ignore_column_in_uninit_display_readline()
 //------------------------------------------------------------------------------
 void display_readline()
 {
-    // Terminal shell integration.  The caller doesn't have to worry about
-    // redundant calls; the terminal_begin_command and terminal_end_command
-    // functions internally track the state and ensure that only one begin
-    // code is printed, and that an end code is only printed if a command
-    // scope is currently active (begin without end yet).
-    terminal_end_command();
-
     s_display_manager.display();
+    s_want_redisplay = false;
+}
+
+//------------------------------------------------------------------------------
+void want_redisplay_readline()
+{
+    s_want_redisplay = true;
+    g_tib->invalidate();
 }
 
 //------------------------------------------------------------------------------
 void maybe_redisplay_readline()
 {
-    if (_rl_want_redisplay && rl_redisplay_function && is_display_readline_initialized())
+    if (s_want_redisplay)
     {
-        (*rl_redisplay_function)();
-        assert(!_rl_want_redisplay);
+        display_readline();
+        assert(!s_want_redisplay);
     }
 }
 
 //------------------------------------------------------------------------------
 void force_redisplay_readline()
 {
-    rl_set_forced_display(true);
-    (*rl_redisplay_function)();
+    s_force_redisplay = true;
+    s_want_redisplay = true;
+    g_tib->force_redisplay();
+}
+
+//------------------------------------------------------------------------------
+extern "C" int rl_reset_line_state(void)
+{
+// TODO-TIB: start over on the current line.
+// TODO-TIB: reset left prompt text to clear any message.
+    // rl_display_prompt = rl_prompt ? rl_prompt : "";
+    force_redisplay_readline();
+    return 0;
+}
+
+
+//------------------------------------------------------------------------------
+extern "C" int rl_forced_update_display(void)
+{
+// TODO-TIB: start over on the current line.
+    force_redisplay_readline();
+    display_readline();
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -3490,7 +1605,7 @@ void force_comment_row(const char* text)
 //------------------------------------------------------------------------------
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt)
 {
-    assert(g_printer);
+    assert(g_terminal);
 
     if (!s_display_manager.is_initialized())
         return;
@@ -3504,16 +1619,17 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     // complex and inconsistent, so there's no reliable way for Clink to predict
     // the actual exact wrapping that will occur.
 
-    // Coalesce all Readline output in this scope into a single WriteConsoleW
-    // call.  This avoids the vast majority of race conditions that can occur
-    // between the OS async terminal resize and cursor movement while refreshing
-    // the Readline display.  The result is near-perfect resize behavior; but
-    // perfection is beyond reach, due to the inherent async execution.
-    display_accumulator coalesce;
+    // Coalesce all output in this scope into a single WriteConsoleW call.
+    // This avoids the vast majority of race conditions that can occur between
+    // the OS async terminal resize and cursor movement while refreshing the
+    // display.  The result is near-perfect resize behavior; but perfection is
+    // beyond reach, due to the inherent async execution.
+    tib::display_accumulator coalesce;
 
+// TODO-TIB: update tib.
     // Update Readline's perception of the terminal dimensions.
     COORD cursor;
-    const bool has_cursor = g_printer->get_cursor_pos(cursor.X, cursor.Y);
+    const bool has_cursor = g_terminal->get_cursor_pos(cursor.X, cursor.Y);
     refresh_terminal_size();
 
     // Measure what was previously displayed.
@@ -3542,99 +1658,19 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 
     // Move cursor to where the top line should be.
     if (cursor_line > 0)
-    {
-        char *tmp = tgoto(tgetstr("UP", nullptr), 0, cursor_line);
-        tputs(tmp);
-    }
-    _rl_cr();
-    _rl_rprompt_shown_len = 0;
-    _rl_last_v_pos = 0;
-    _rl_last_c_pos = 0;
+        clink_write(tib::term_move_up(cursor_line));
+    clink_write("\r", 1);
 
     // Clear to end of screen.
     clear_to_end_of_screen();
-    s_display_manager.clear();
-
-    // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
-    // very well at responding to terminal resize events.  Apparently Clink must
-    // take care of it manually.  Calling rl_set_prompt() recalculates the
-    // prompt line breaks.
-    rl_set_prompt(_prompt);
-    rl_set_rprompt(_rprompt && *_rprompt ? _rprompt : nullptr);
     g_prompt_redisplay++;
-    rl_forced_update_display();
-}
-
-//------------------------------------------------------------------------------
-uint32 get_readline_display_top_offset()
-{
-    return s_display_manager.top_offset();
-}
-
-//------------------------------------------------------------------------------
-bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
-{
-    assert(!is_test_harness());
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-
-    const int32 v_begin_line_y = max<int32>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
-    int32 v_pos = y - v_begin_line_y;
-
-    if (v_pos < 0)
-    {
-        if (!clip)
-            return false;
-        v_pos = 0;
-    }
-    if (v_pos > _rl_vis_botlin)
-    {
-        if (!clip)
-            return false;
-        v_pos = _rl_vis_botlin;
-    }
-
-    v_pos += get_readline_display_top_offset();
-
-    int32 offset = 0;
-    int32 prefix = rl_get_prompt_prefix_visible();
-    int32 point = 0;
-
-    if (s_display_manager.get_horz_offset(offset, prefix))
-        point = offset;
-
-    wcwidth_iter iter(rl_line_buffer + offset, rl_end);
-    for (uint32 i = 0; i <= v_pos; i++)
-    {
-        const int32 target = (i == v_pos ? x : _rl_screenwidth);
-        int32 consumed = i ? 0 : prefix;
-
-        const char* ptr = iter.character_pointer();
-        while (iter.next())
-        {
-            const int32 w = iter.character_wcwidth_twoctrl();
-            if (consumed + w > target)
-            {
-                iter.unnext();
-                break;
-            }
-            consumed += w;
-        }
-
-        point += int32(iter.character_pointer() - ptr);
-    }
-
-    assert(point <= rl_end);
-    if (point > rl_end)
-        point = rl_end;
-
-    pos = point;
-    return true;
+    force_redisplay_readline();
+    display_readline();
 }
 
 //------------------------------------------------------------------------------
 SHORT calc_max_y_scroll_pos(SHORT y)
 {
-    return y + (_rl_vis_botlin - _rl_last_v_pos) + max<uint32>(s_ever_input_hint, get_suggestion_list_height());
+// TODO-TIB: test to make sure this is accurate (might be off by 1 or 2-ish).
+    return y + (get_input_height() - g_tib->get_relative_cursor().y) + max<uint32>(s_ever_input_hint, get_suggestion_list_height());
 }

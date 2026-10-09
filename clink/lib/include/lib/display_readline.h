@@ -14,8 +14,8 @@
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
-extern char* rl_rprompt;
-void rl_set_rprompt(const char* rprompt);
+void fixup_prompt(str_moveable& prompt);
+void fixup_rprompt(str_moveable& rprompt);
 bool has_modmark();
 
 extern "C" void init_display_readline(void);
@@ -27,9 +27,15 @@ void ignore_column_in_uninit_display_readline();
 #endif
 
 extern "C" void reset_display_readline(void);
+void move_to_caret_position(bool force_column=false);
+extern "C" void move_to_end_of_display(int cr);
+int get_input_height();
+int get_relative_cursor_row();
+int get_relative_cursor_column();
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();
 void display_readline();
+void want_redisplay_readline();
 void maybe_redisplay_readline();
 void force_redisplay_readline();
 void set_history_expansions(history_expansion* list=nullptr);
@@ -39,7 +45,7 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nullptr, uint32 len=-1);
 SHORT calc_max_y_scroll_pos(SHORT y);
 
-void clear_comment_row();
+extern "C" void clear_comment_row();
 int32 count_prompt_lines(const char* prompt_prefix);
 void defer_clear_lines(uint32 prompt_lines, bool transient);
 
@@ -97,24 +103,7 @@ constexpr char FACE_NONE            = 'n';
 // The display_accumulator can be disabled:
 // In release builds with `set CLINK_NO_DISPLAY_ACCUMULATOR=1`.
 // Or in debug builds also with `set DEBUG_NO_DISPLAY_ACCUMULATOR=1`.
-class display_accumulator
-{
-public:
-                    display_accumulator();
-                    ~display_accumulator();
-    void            end();
-    bool            synchronized_output() const { return s_synchronize_output; }
-    static void     flush();
-private:
-    static void     fwrite_proc(FILE*, const char*, int32);
-    static void     fflush_proc(FILE*);
-    static void (*s_saved_fwrite)(FILE*, const char*, int32);
-    static void (*s_saved_fflush)(FILE*);
-    static int32    s_nested;
-    static bool     s_active;
-    static bool     s_synchronize_output;
-    bool            m_active = false;
-};
+void init_display_accumulator();
 
 //------------------------------------------------------------------------------
 extern FILE* const thunk_null_stream;
@@ -124,18 +113,6 @@ void terminal_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
 void terminal_log_fwrite_thunk(FILE* stream, const char* chars, int32 char_count);
 void terminal_fflush_thunk(FILE* stream);
 void init_rl_terminal_thunks();
-void clink_write(const char* chars, int32 char_count);
-void clink_flush();
-
-//------------------------------------------------------------------------------
-class terminal_fwrite_context
-{
-public:
-    terminal_fwrite_context(const char* ctx);
-    ~terminal_fwrite_context();
-private:
-    const char* const m_old;
-};
 
 //------------------------------------------------------------------------------
 // Transient prompt context.

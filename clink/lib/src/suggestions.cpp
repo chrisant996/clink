@@ -387,8 +387,6 @@ bool suggestion_manager::can_suggest(const line_state& line)
     // line editor is considering whether to generate a new suggestion.
     m_endword_offset = line.get_end_word_offset();
 
-    // The buffers are not necessarily nul terminated!  Because of how
-    // hook_display() hacks suggestions into the Readline display.
     return diff;
 }
 

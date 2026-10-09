@@ -37,10 +37,10 @@
 #include <shellapi.h>
 
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-extern int _rl_last_v_pos;
 };
 
 class standalone_input;
@@ -354,7 +354,7 @@ private:
     module::context     get_context();
     bool                update_input();
 
-    terminal&           m_terminal;
+    tib_terminal_bridge& m_terminal;
     modules             m_modules;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
@@ -691,7 +691,6 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     if (!s_standalone && !clink_is_signaled())
     {
         _rl_refresh_line();
-        rl_display_fixed = 1;
     }
 
     lock_cursor(false);
@@ -978,7 +977,7 @@ find:
             {
                 if (!host_remove_dir_history(external_index))
                 {
-                    rl_ding();
+                    tib::ding();
                     break;
                 }
             }
@@ -986,7 +985,7 @@ find:
             {
                 if (!m_del_callback(external_index))
                 {
-                    rl_ding();
+                    tib::ding();
                     break;
                 }
             }
@@ -1409,7 +1408,6 @@ void textlist_impl::on_signal(int32 sig)
         {
             force_signaled_redisplay();
             _rl_refresh_line();
-            rl_display_fixed = 1;
         }
         m_active = true;
     }
@@ -1588,7 +1586,7 @@ void textlist_impl::update_display()
         resync_rl_cursor_pos resync;
         int32 up = 0;
 
-        display_accumulator coalesce;
+        tib::display_accumulator coalesce;
 
         // Move cursor to next line.  I.e. the list goes immediately below the
         // cursor line and may overlay some lines of input.

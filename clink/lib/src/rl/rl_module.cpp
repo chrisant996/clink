@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "rl_module.h"
+#include <tib.h>
 #include "rl_commands.h"
 #include "line_buffer.h"
 #include "line_state.h"
@@ -58,9 +59,6 @@ extern "C" {
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
 extern int32 _rl_get_inserted_char(void);
-extern char* tgetstr(const char*, char**);
-extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
-extern char* tgoto(const char* base, int32 x, int32 y);
 extern Keymap _rl_dispatching_keymap;
 extern int _rl_default_init_file_optional_set;
 }
@@ -100,9 +98,6 @@ extern "C" {
 extern char*        _rl_comment_begin;
 extern int          _rl_convert_meta_chars_to_ascii;
 extern int          _rl_output_meta_chars;
-#if defined(PLATFORM_WINDOWS)
-extern int          _rl_last_v_pos;
-#endif
 } // extern "C"
 
 extern bool get_command_bindings(const char* command, bool friendly, str_base& desc, str_base& category, std::vector<str_moveable>& keys);
@@ -344,19 +339,6 @@ extern setting_bool g_autosuggest_hint;
 
 
 //------------------------------------------------------------------------------
-#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
-static void __cdecl dummy_display_matches_hook(char**, int32, int32)
-{
-    // This exists purely to prevent rl_complete_internal from setting up
-    // _rl_complete_sigcleanup and freeing matches out from under Clink code.
-    // Clink uses rl_completion_display_matches_func, which isn't fully
-    // integrated into Readline.
-}
-#endif
-
-
-
-//------------------------------------------------------------------------------
 ignore_volatile_matches::ignore_volatile_matches(matches_impl& matches)
 : m_matches(matches)
 , m_volatile(matches.m_volatile)
@@ -412,7 +394,7 @@ public:
                             return true;
                         // Unreachable; gets handled by translate.
                         assert(!bindableEsc || strcmp(seq, bindableEsc) != 0);
-                        rl_ding();
+                        tib::ding();
                         return false;
                     }
     virtual bool    translate(const char* seq, int32 len, str_base& out) override
@@ -635,6 +617,8 @@ static const char* s_input_color = nullptr;
 static const char* s_selection_color = nullptr;
 static const char* s_argmatcher_color = nullptr;
 static const char* s_executable_color = nullptr;
+static const char* s_command_color = nullptr;
+static const char* s_alias_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
 static const char* s_unrecognized_color = nullptr;
@@ -645,47 +629,104 @@ int32 g_suggestion_offset = -1;
 bool g_suggestion_includes_hint = false;
 
 //------------------------------------------------------------------------------
-static char get_face_func(int32 in, int32 active_begin, int32 active_end)
+void rl_module::provide_faces(const tib::input_buffer& buffer, tib::cstring& faces)
 {
-    assertimplies(g_suggestion_offset != -1, g_autosuggest_enable.get());
-    if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
-    {
-#ifdef USE_SUGGESTION_HINT_INLINE
-        if (g_suggestion_includes_hint)
-        {
-            assert(s_suggestion_hint_text.length() == s_suggestion_hint_faces.length());
-            const int32 index = in - (rl_end - s_suggestion_hint_text.length());
-            if (0 <= index && index < s_suggestion_hint_text.length())
-                return s_suggestion_hint_faces[index];
-        }
-        else
-        {
-            assert(g_autosuggest_inline.get());
-        }
-#endif
-        return FACE_SUGGESTION;
-    }
-
-    if (in >= active_begin && in < active_end)
-        return FACE_STANDOUT;
-
-    if (cua_point_in_selection(in) || point_in_select_complete(in))
-        return FACE_SELECTION;
-
     if (s_classifications)
     {
-        char face = s_classifications->get_face(in);
-        if (face != FACE_SPACE)
-            return face;
+        for (uint32 i = 0; i < faces.length(); ++i)
+        {
+            char face = s_classifications->get_face(i);
+            if (face != FACE_SPACE)
+                faces.set_at(i, face);
+        }
     }
-
-    return s_input_color ? FACE_INPUT : FACE_NORMAL;
 }
 
 //------------------------------------------------------------------------------
 inline const char* fallback_color(const char* preferred, const char* fallback)
 {
     return preferred ? preferred : fallback;
+}
+
+//------------------------------------------------------------------------------
+const char* rl_module::get_face_def(char face)
+{
+    static const char c_normal[] = "\x1b[m";
+#ifdef TIB_TODO
+    static const char c_hyperlink[] = "\x1b]8;;";
+    static const char c_BEL[] = "\a";
+    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
+#ifdef USE_SUGGESTION_HINT_INLINE
+    static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
+#endif
+#endif
+
+    switch (face)
+    {
+    default:
+        if (s_classifications)
+        {
+            const char* color = s_classifications->get_face_output(face);
+            if (color)
+            {
+                static str<32> s_out;
+                s_out.clear();
+                s_out << "\x1b[";
+                if (color[0] != '0' || color[1] != ';')
+                    s_out << "0;";
+                s_out << color << "m";
+                return s_out.c_str();
+            }
+        }
+        // fall through
+    case FACE_NORMAL:           return c_normal;
+
+    case FACE_INPUT:            return fallback_color(s_input_color, c_normal);
+    case FACE_MODMARK:          return fallback_color(_rl_display_modmark_color, c_normal);
+    case FACE_MESSAGE:          return fallback_color(_rl_display_message_color, c_normal);
+
+    case tib::FACE_MARK:        return fallback_color(_rl_active_region_start_color, "\x1b[0;7m");
+    case tib::FACE_SCROLLER:    return fallback_color(_rl_display_horizscroll_color, c_normal);
+    case tib::FACE_SELECTION:   return fallback_color(s_selection_color, "\x1b[0;7m");
+
+    case FACE_HISTEXPAND1:
+    case FACE_HISTEXPAND2:
+#ifdef TIB_TODO
+        hyperlink.set(c_hyperlink);
+        hyperlink.append(c_doc_histexpand);
+        hyperlink.append(c_BEL);
+#endif
+        return fallback_color(s_histexpand_color, "\x1b[0;97;45m");
+
+    case FACE_SUGGESTION:
+        assert(g_autosuggest_enable.get());
+        if (s_suggestion_color)
+            return s_suggestion_color;
+#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
+        switch (get_console_theme())
+        {
+        case console_theme::light:
+        case console_theme::dark:
+            {
+                static str<32> s_out;
+                const uint8 faint = get_console_faint_text();
+                s_out.format("\x1b[0;38;2;%u;%u;%um", faint, faint, faint);
+                return s_out.c_str();
+            }
+        }
+#endif
+        return "\x1b[0;90m";
+
+    case FACE_OTHER:        return fallback_color(s_input_color, c_normal);
+    case FACE_UNRECOGNIZED: return fallback_color(s_unrecognized_color, fallback_color(s_input_color, c_normal));
+    case FACE_EXECUTABLE:   return fallback_color(s_executable_color, fallback_color(s_input_color, c_normal));
+    case FACE_COMMAND:      return fallback_color(s_command_color, c_normal);
+    case FACE_ALIAS:        return fallback_color(s_alias_color, c_normal);
+    case FACE_ARGMATCHER:   return fallback_color(s_argmatcher_color, c_normal);
+    case FACE_ARGUMENT:     return fallback_color(s_arg_color, fallback_color(s_input_color, c_normal));
+    case FACE_FLAG:         return fallback_color(s_flag_color, c_normal);
+    case FACE_NONE:         return fallback_color(s_none_color, c_normal);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -855,60 +896,6 @@ void set_suggestions(const char* line, uint32 endword_offset, suggestions* sugge
 bool get_suggestions(suggestions& out)
 {
     return s_suggestion.get(out);
-}
-
-//------------------------------------------------------------------------------
-static bool s_force_signaled_redisplay = false;
-void force_signaled_redisplay()
-{
-    s_force_signaled_redisplay = true;
-}
-
-//------------------------------------------------------------------------------
-static void hook_display()
-{
-    struct clear_want { ~clear_want() { _rl_want_redisplay = false; } } clear_want;
-
-    static bool s_busy = false;
-    if (s_busy)
-        return;
-    rollback<bool> rb(s_busy, true);
-
-    // Readline callback mode seems to have some problems with how redisplay
-    // works.  It shows the old buffer and shows the prompt at an inopportune
-    // time.  So just disable it so Clink can drive when redisplay happens.
-    if (clink_is_signaled())
-    {
-        if (!s_force_signaled_redisplay)
-            return;
-        s_force_signaled_redisplay = false;
-    }
-
-    if (!s_suggestion.more() || rl_point != rl_end)
-    {
-        display_readline();
-        return;
-    }
-
-    assert(g_autosuggest_enable.get());
-    assert(g_suggestion_offset < 0);
-    assert(!g_suggestion_includes_hint);
-
-    rollback<int32> rb_sugg_offset(g_suggestion_offset, rl_end);
-    rollback<bool> rb_sugg_includes_hint(g_suggestion_includes_hint, false);
-    rollback<char*> rb_buf(rl_line_buffer);
-    rollback<int32> rb_len(rl_line_buffer_len);
-    rollback<int32> rb_end(rl_end);
-
-    str_moveable tmp;
-    if (s_suggestion.get_visible(tmp, &g_suggestion_includes_hint))
-    {
-        rl_line_buffer = tmp.data();
-        rl_line_buffer_len = tmp.length();
-        rl_end = tmp.length();
-    }
-
-    display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -1135,6 +1122,32 @@ const char* get_last_prompt()
 }
 
 //------------------------------------------------------------------------------
+void init_prompt(const str_base& prompt, const str_base& rprompt)
+{
+// TODO-TIB: keep track of the prompt pieces better; set_left_text can't handle wrapping.
+    const char* last_line = strrchr(prompt.c_str(), '\n');
+    last_line = last_line ? last_line + 1 : prompt.c_str();
+    g_prompt_prefix.clear();
+    g_prompt.clear();
+    g_rprompt.clear();
+    g_prompt_prefix.concat(prompt.c_str(), int32(last_line - prompt.c_str()));
+    g_prompt = last_line;
+    g_rprompt.concat(rprompt.c_str(), rprompt.length());
+    g_tib->set_left_text(g_prompt.c_str(), uint16_t(min<uint32>(cell_count(g_prompt.c_str()), tib::int16_max)));
+    g_tib->set_right_text(g_rprompt.c_str(), cell_count(g_rprompt.c_str()));
+
+#if 0
+LOG("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+LOG("%s", transient ? "SET TRANSIENT PROMPT" : "SET NORMAL PROMPT");
+LOG("m_rl_prompt = \"%s\"", m_rl_prompt.c_str());
+LOG("m_rl_rprompt = \"%s\"", m_rl_rprompt.c_str());
+LOG("g_prompt_prefix = \"%s\"", g_prompt_prefix.c_str());
+LOG("g_prompt = \"%s\"", g_prompt.c_str());
+LOG("g_rprompt = \"%s\"", g_rprompt.c_str());
+#endif
+}
+
+//------------------------------------------------------------------------------
 static int can_concat_undo_hook(UNDO_LIST* undo, const char* string)
 {
     const double clock = os::clock();
@@ -1279,9 +1292,6 @@ static void buffer_changing(int32 event)
     // Lock against suggestions when rl_replace_text() is used.
     if (event == CHG_REPLACE || event == CHG_REPLACEEMPTY)
         lock_against_suggestions(event == CHG_REPLACE);
-
-    // When the buffer changes, rl_display_fixed is no longer accurate.
-    rl_display_fixed = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1664,11 +1674,6 @@ static void init_readline_hooks()
         return;
     s_first_time = false;
 
-    // Input line (and prompt) display hooks.
-    rl_redisplay_function = hook_display;
-    rl_get_face_func = get_face_func;
-    rl_puts_face_func = puts_face_func;
-
     // Input event hooks.
     rl_input_available_hook = input_available_hook;
     rl_read_key_hook = read_key_hook;
@@ -1696,10 +1701,6 @@ static void init_readline_hooks()
     rl_postprocess_lcd_func = postprocess_lcd;
 
     // Match display.
-#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
-    rl_completion_display_matches_func = display_matches;
-    rl_completion_display_matches_hook = dummy_display_matches_hook;
-#endif
     rl_is_exec_func = is_exec_ext;
 
     // Macro hooks (for "luafunc:" support).
@@ -1959,12 +1960,14 @@ void initialise_readline(bool no_user)
     const char* const state_dir = context.profile.empty() ? nullptr : context.profile.c_str();
     const char* const default_inputrc = context.default_inputrc.empty() ? nullptr : context.default_inputrc.c_str();
 
+#if 0
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output).
     // Because these affect key binding translations, these are set even before
     // calling rl_initialize() or binding any other keys.
     _rl_convert_meta_chars_to_ascii = 0;
     _rl_output_meta_chars = 1;
+#endif
 
     // "::" was already in use as a common idiom as a comment prefix.
     // Note:  Depending on the CMD parser state and what follows the :: there
@@ -1989,10 +1992,16 @@ void initialise_readline(bool no_user)
         init_readline_hooks();
         init_readline_funmap();
 
+        // Clink manages showing and hiding the cursor; tib should not.
+        tib::g_show_hide_cursor = false;
+
+        // Wait until after registering the editor commands, so it doesn't
+        // trigger auto-registering tib's list of commands.
+        g_tib = std::make_shared<tib::input_box>();
+
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.
         rl_catch_signals = 1;
-        _rl_echoctl = 1;
         _rl_intr_char = CTRL('C');
 
         // Do a first rl_initialize() before setting any key bindings or config
@@ -2452,17 +2461,12 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static void suppress_redisplay()
+void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient)
 {
-    // Do nothing.  This is used to suppress the rl_redisplay_function call in
-    // rl_message when set_prompt restores the readstr message prompt.
-}
-
-//------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt, const char* const rprompt, const bool _redisplay, const bool transient)
-{
-    assertimplies(transient, _redisplay);
-    const bool redisplay = _redisplay && (g_rl_buffer && g_printer);
+    assertimplies(transient, redisplay);
+#ifdef TIB_TODO
+    const bool redisplay = _redisplay && (g_rl_buffer && g_terminal);
+#endif
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -2489,9 +2493,10 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
                 leading_newlines.concat(prompt, 1);
                 ++prompt;
             }
-            m_rl_prompt.format("%s\x01%s\x02", leading_newlines.c_str(), prompt_color);
+            m_rl_prompt.concat(leading_newlines.c_str(), leading_newlines.length());
+            m_rl_prompt.concat(prompt_color);
             if (rprompt)
-                m_rl_rprompt.format("\x01%s\x02", prompt_color);
+                m_rl_rprompt.concat(prompt_color);
         }
     }
 
@@ -2503,9 +2508,9 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
     if (rprompt)
         ecma48_processor(rprompt, &m_rl_rprompt, nullptr/*cell_count*/, flags);
 
-    m_rl_prompt.concat("\x01\x1b[m\x02");
+    m_rl_prompt.concat("\x1b[m");
     if (rprompt)
-        m_rl_rprompt.concat("\x01\x1b[m\x02");
+        m_rl_rprompt.concat("\x1b[m");
 
     // Remember the prompt so the host can retrieve it.
     {
@@ -2520,30 +2525,35 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
         return;
 
     // Erase the existing prompt.
+    bool nested_coalesce = tib::display_accumulator::active();
     int32 was_visible = false;
     int32 clear_lines = 0;
     if (redisplay)
     {
-        was_visible = show_cursor(false);
+        was_visible = !nested_coalesce && show_cursor(false);
         lock_cursor(true);
 
         // Erase comment row if present and transient prompt.
         if (transient)
+// TODO-TIB: not the right way.
             clear_comment_row();
 
         // Count the number of lines the prompt takes to display.
-        int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
+// TODO-TIB: account for top border and wrapping of prompt left text.
+        int32 lines = count_prompt_lines(g_prompt_prefix.c_str());
 
         clear_lines = lines;
     }
 
     // Larger scope than the others to affect rl_forced_update_display().
+// TODO-TIB: this won't correctly remove the comment row.
     rollback<bool> dmncr(g_display_manager_no_comment_row, transient || g_display_manager_no_comment_row);
 
     // Update the prompt.
     if (transient)
     {
         // Make sure no mode strings in the transient prompt.
+#ifdef TIB_TODO
         rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
         rollback<char*> vims(_rl_vi_ins_mode_str, const_cast<char*>(""));
         rollback<char*> vcms(_rl_vi_cmd_mode_str, const_cast<char*>(""));
@@ -2551,27 +2561,32 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
         rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
         rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
         rollback<int32> mml(_rl_mark_modified_lines, 0);
-
-        rl_set_prompt(m_rl_prompt.c_str());
-        rl_set_rprompt(m_rl_rprompt.c_str());
+#endif
+        fixup_prompt(m_rl_prompt);
+        fixup_rprompt(m_rl_rprompt);
     }
     else
     {
-        rl_set_prompt(m_rl_prompt.c_str());
-        rl_set_rprompt(m_rl_rprompt.c_str());
+// TODO-TIB: expand prompt and inject mode string.
+        fixup_prompt(m_rl_prompt);
+        fixup_rprompt(m_rl_rprompt);
     }
 
+    init_prompt(m_rl_prompt, m_rl_rprompt);
+
     // Restore message during RL_STATE_READSTR.
+#ifdef TIB_TODO
     if (RL_ISSTATE(RL_STATE_READSTR))
     {
-        rollback<rl_voidfunc_t*> rdf(rl_redisplay_function, suppress_redisplay);
         char* p = _rl_make_prompt_for_search(_rl_readstr_pchar);
         rl_message_append("%s", p);
         xfree(p);
     }
+#endif
 
     // Display the prompt.
-    if (redisplay)
+// TODO-TIB: why was m_active added?
+    if (redisplay && m_active)
     {
         g_prompt_redisplay++;
         if (transient)
@@ -2585,10 +2600,11 @@ void rl_module::set_prompt(const char* prompt, const char* const rprompt, const 
             transient_prompt_context tpc(transient);
 
             force_redisplay_readline();
+            display_readline();
         }
 
         lock_cursor(false);
-        if (was_visible)
+        if (!nested_coalesce && was_visible)
             show_cursor(true);
     }
 }
@@ -2656,7 +2672,7 @@ void rl_module::on_begin_line(const context& context)
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up
     // until rl_callback_handler_install further below.  set_prompt() happens
-    // after g_printer and g_pager are set just in case it ever needs to print
+    // after g_terminal and g_pager are set just in case it ever needs to print
     // output with ANSI escape code support.
     assert(!g_rl_buffer);
     g_pager = &context.pager;
@@ -2667,32 +2683,42 @@ void rl_module::on_begin_line(const context& context)
         s_classifications = &context.classifications;
     g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
 
-    _rl_face_modmark = FACE_MODMARK;
-    _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
+#if 0
+// TODO-TIB: proper integration for the full prompt.
+    // Clink prints complete prompt lines; tib owns the final line so its
+    // width participates in input wrapping and final cursor placement.
+    const char* last_line = strrchr(m_rl_prompt.c_str(), '\n');
+    if (last_line)
+    {
+        clink_write(m_rl_prompt.c_str(), int32(last_line + 1 - m_rl_prompt.c_str()));
+    }
+#endif
 
-    _rl_face_horizscroll = FACE_SCROLL;
-    _rl_face_message = FACE_MESSAGE;
     s_input_color = build_color_sequence(g_color_input, m_input_color, true);
     s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
+    s_argmatcher_color = build_color_sequence(g_color_argmatcher, m_argmatcher_color, true);
+    s_executable_color = build_color_sequence(g_color_executable, m_executable_color, true);
+    s_command_color = build_color_sequence(g_color_cmd, m_command_color, true);
+    s_alias_color = build_color_sequence(g_color_doskey, m_alias_color, true);
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
     s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
     s_unrecognized_color = build_color_sequence(g_color_unrecognized, m_unrecognized_color, true);
-    s_executable_color = build_color_sequence(g_color_executable, m_executable_color, true);
     s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
-    s_argmatcher_color = build_color_sequence(g_color_argmatcher, m_argmatcher_color, true);
+    s_suggestion_color = build_color_sequence(g_color_suggestion, m_suggestion_color, true);
+    s_histexpand_color = build_color_sequence(g_color_histexpand, m_histexpand_color, true);
+
+    _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
     _rl_display_horizscroll_color = build_color_sequence(g_color_horizscroll, m_horizscroll_color, true);
     _rl_display_message_color = build_color_sequence(g_color_message, m_message_color, true);
-    _rl_pager_color = build_color_sequence(g_color_interact, m_pager_color);
-    _rl_hidden_color = build_color_sequence(g_color_hidden, m_hidden_color);
-    _rl_readonly_color = build_color_sequence(g_color_readonly, m_readonly_color);
-    _rl_command_color = build_color_sequence(g_color_cmd, m_command_color);
-    _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
+    _rl_pager_color = build_color_sequence(g_color_interact, m_sgr_pager_color);
+    _rl_hidden_color = build_color_sequence(g_color_hidden, m_sgr_hidden_color);
+    _rl_readonly_color = build_color_sequence(g_color_readonly, m_sgr_readonly_color);
+    _rl_command_color = build_color_sequence(g_color_cmd, m_sgr_command_color);
+    _rl_alias_color = build_color_sequence(g_color_doskey, m_sgr_alias_color);
     _rl_description_color = build_color_sequence(g_color_description, m_description_color, true);
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
     _rl_arginfo_color = build_color_sequence(g_color_arginfo, m_arginfo_color, true);
-    _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
-    s_suggestion_color = build_color_sequence(g_color_suggestion, m_suggestion_color, true);
-    s_histexpand_color = build_color_sequence(g_color_histexpand, m_histexpand_color, true);
+    _rl_selected_color = build_color_sequence(g_color_selected, m_sgr_selected_color);
 
     if (!s_selection_color && s_input_color)
     {
@@ -2702,8 +2728,8 @@ void rl_module::on_begin_line(const context& context)
 
     if (!_rl_selected_color)
     {
-        m_selected_color.format("0;7");
-        _rl_selected_color = m_selected_color.c_str();
+        m_sgr_selected_color.format("0;7");
+        _rl_selected_color = m_sgr_selected_color.c_str();
     }
 
     if (!_rl_display_message_color)
@@ -2712,18 +2738,92 @@ void rl_module::on_begin_line(const context& context)
     init_display_readline();
 
     lock_cursor(true); // Suppress cursor flicker.
+#ifdef TIB_TODO
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
     rl_callback_handler_install(m_rl_prompt.c_str(), handler);
+#else
+    init_prompt(m_rl_prompt, m_rl_rprompt);
+    force_redisplay_readline();
+    display_readline();
+#endif
     lock_cursor(false);
 
+#ifdef TIB_TODO
     // Apply the remembered history position from the previous command, if any.
     restore_sticky_search_position();
+#endif
 
     m_done = m_has_pending_line;
     m_eof = false;
 
+#ifdef TIB_TODO
     m_mouse.clear();
+#else
+    g_tib->initialize();
+    g_tib->set_bindings(s_emacs_standard_bindings);
+    g_tib->set_border(nullptr);
+    g_tib->set_max_width(tib::int16_max);
+    g_tib->set_max_height(tib::int16_max);
+    g_tib->set_variable_height(true);
+
+#if 0
+    static const char c_normal[] = "\x1b[m";
+    std::shared_ptr<tib::color_table> colors = std::make_shared<tib::color_table>();
+    colors->set_color(tib::color_element::base, c_normal);
+    colors->set_color(tib::color_element::border, c_normal);
+    colors->set_color(tib::color_element::message, fallback_color(_rl_display_message_color, c_normal));
+    colors->set_color(tib::color_element::input, fallback_color(s_input_color, c_normal));
+    colors->set_color(tib::color_element::input_selection, fallback_color(s_selection_color, "\x1b[0;7m"));
+    colors->set_color(tib::color_element::input_mark, fallback_color(_rl_active_region_start_color, "\x1b[0;7m"));
+    colors->set_color(tib::color_element::input_scroller, fallback_color(_rl_display_horizscroll_color, c_normal));
+
+    colors->set_color(tib::color_element::suggestion, "0;90");
+
+    case FACE_MODMARK:      return fallback_color(_rl_display_modmark_color, c_normal);
+
+    case FACE_HISTEXPAND1:
+    case FACE_HISTEXPAND2:
+        hyperlink.set(c_hyperlink);
+        hyperlink.append(c_doc_histexpand);
+        hyperlink.append(c_BEL);
+        return fallback_color(s_histexpand_color, "\x1b[0;97;45m");
+
+    case FACE_SUGGESTION:
+        assert(g_autosuggest_enable.get());
+        if (s_suggestion_color)
+            return s_suggestion_color;
+#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
+        switch (get_console_theme())
+        {
+        case console_theme::light:
+        case console_theme::dark:
+            {
+                static str<32> s_out;
+                const uint8 faint = get_console_faint_text();
+                s_out.format("\x1b[0;38;2;%u;%u;%um", faint, faint, faint);
+                return s_out.c_str();
+            }
+        }
+#endif
+        return "\x1b[0;90m";
+
+    case FACE_OTHER:        return fallback_color(s_input_color, c_normal);
+    case FACE_UNRECOGNIZED: return fallback_color(s_unrecognized_color, fallback_color(s_input_color, c_normal));
+    case FACE_EXECUTABLE:   return fallback_color(s_executable_color, fallback_color(s_input_color, c_normal));
+    case FACE_COMMAND:      return fallback_color(s_command_color, c_normal);
+    case FACE_ALIAS:        return fallback_color(s_alias_color, c_normal);
+    case FACE_ARGMATCHER:   return fallback_color(s_argmatcher_color, c_normal);
+    case FACE_ARGUMENT:     return fallback_color(s_arg_color, fallback_color(s_input_color, c_normal));
+    case FACE_FLAG:         return fallback_color(s_flag_color, c_normal);
+    case FACE_NONE:         return fallback_color(s_none_color, c_normal);
+#endif
+
+    reset_display_readline();
+
+    m_active = true;
+    m_previous_group = -1;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -2753,13 +2853,17 @@ void rl_module::on_end_line()
     s_classifications = nullptr;
     s_input_color = nullptr;
     s_selection_color = nullptr;
-    s_arg_color = nullptr;
     s_argmatcher_color = nullptr;
+    s_executable_color = nullptr;
+    s_command_color = nullptr;
+    s_alias_color = nullptr;
+    s_arg_color = nullptr;
     s_flag_color = nullptr;
     s_unrecognized_color = nullptr;
-    s_executable_color = nullptr;
     s_none_color = nullptr;
     s_suggestion_color = nullptr;
+    s_histexpand_color = nullptr;
+
     _rl_display_modmark_color = nullptr;
     _rl_display_horizscroll_color = nullptr;
     _rl_display_message_color = nullptr;
@@ -2776,6 +2880,8 @@ void rl_module::on_end_line()
     // next.  One case where this is necessary is CTRL-BREAK (not CTRL-C) at
     // the pager's "-- More --" prompt.
     RL_UNSETSTATE(RL_RESET_STATES);
+
+    m_terminal = nullptr;
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
@@ -2876,6 +2982,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     }
 
     g_result = &result;
+    s_matches = &context.matches;
 
     // Tell Readline about the input chord, and whether the binding resolver
     // has more bytes pending.
@@ -2884,8 +2991,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         shim_in(const char* input, int32 len) { rl_set_clink_input(input, len); }
         ~shim_in() { rl_set_clink_input(nullptr, 0); }
     } rl_in(input.keys, input.len);
-
-    s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
     rollback<bool> rb_input_more(s_input_more, input.more);

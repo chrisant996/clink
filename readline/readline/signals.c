@@ -90,10 +90,6 @@ int rl_catch_sigwinch = 0;	/* for the readline state struct in readline.c */
 int volatile _rl_caught_signal = 0;	/* should be sig_atomic_t, but that requires including <signal.h> everywhere */
 int volatile _rl_handling_signal = 0;
 
-/* If non-zero, print characters corresponding to received signals as long as
-   the user has indicated his desire to do so (_rl_echo_control_chars). */
-int _rl_echoctl = 0;
-
 int _rl_intr_char = 0;
 int _rl_quit_char = 0;
 int _rl_susp_char = 0;
@@ -286,10 +282,15 @@ _rl_handle_signal (int sig)
 #endif
 
 #if defined (READLINE_CALLBACKS)
-      if (RL_ISSTATE (RL_STATE_CALLBACK) == 0 || rl_persistent_signal_handlers)
+      if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
 #endif
       rl_echo_signal_char (sig);
-      rl_cleanup_after_signal ();
+
+      move_to_end_of_display (1);
+      fflush (rl_outstream);
+      rl_restart_output (1, 0);
+      rl_clear_pending_input ();
+      rl_clear_signals ();
 
       /* At this point, the application's signal handler, if any, is the
 	 current handler. */
@@ -593,24 +594,10 @@ rl_clear_signals (void)
   return 0;
 }
 
-/* Clean up the terminal and readline state after catching a signal, before
-   resending it to the calling application. */
-void
-rl_cleanup_after_signal (void)
-{
-  _rl_clean_up_for_exit ();
-  if (rl_deprep_term_function)
-    (*rl_deprep_term_function) ();
-  rl_clear_pending_input ();
-  rl_clear_signals ();
-}
-
 /* Reset the terminal and readline state after a signal handler returns. */
 void
 rl_reset_after_signal (void)
 {
-  if (rl_prep_term_function)
-    (*rl_prep_term_function) (_rl_meta_flag);
   rl_set_signals ();
 }
 
@@ -770,9 +757,6 @@ rl_echo_signal_char (int sig)
 {
   char cstr[3];
   int cslen, c;
-
-  if (_rl_echoctl == 0 || _rl_echo_control_chars == 0)
-    return;
 
   switch (sig)
     {

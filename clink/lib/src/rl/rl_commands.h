@@ -5,10 +5,7 @@
 
 #include <core/os.h> // Prevent S_IFLNK macro redefinition.
 
-extern "C" {
-#include <compat/config.h>
-#include <readline/readline.h> // For rl_command_func_t.
-}
+#include <tib.h>
 
 //------------------------------------------------------------------------------
 void    init_readline_funmap();

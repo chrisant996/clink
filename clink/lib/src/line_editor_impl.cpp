@@ -149,7 +149,6 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
 
     // Counteract auto-suggestion, but restore it afterwards.
     char* p = const_cast<char*>(buffer.get_buffer());
-    rollback<char> rb(p[buffer.get_length()], '\0');
 
     {
         // The history expansion library can have side effects on the global
@@ -339,6 +338,7 @@ void line_editor_impl::begin_line()
         s_discover_terminal = false;
         terminal_discover_config(m_terminal->get_in());
     }
+    init_display_accumulator();
 
     m_prev_generate.clear();
     m_prev_plain = false;
@@ -1188,17 +1188,25 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::provide_faces(const tib::input_buffer& buffer, tib::cstring& faces)
+{
+    m_module.provide_faces(buffer, faces);
+}
+
+//------------------------------------------------------------------------------
+const char* line_editor_impl::get_face_def(char face)
+{
+    return m_module.get_face_def(face);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::before_display_readline()
 {
     if (!is_display_readline_initialized())
         return;
 
-    // Temporarily strip off suggestions.
-    rollback<int32> rb_end(rl_end);
-    if (g_suggestion_offset >= 0)
-        rl_end = g_suggestion_offset;
-
     // Skip parsing if the line buffer hasn't changed.
+// TODO-TIB: special states.
     const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
     const bool plain_changed = (m_prev_plain != plain);
     const bool buffer_changed = (plain_changed || !m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()));
@@ -1439,7 +1447,7 @@ void line_editor_impl::reclassify(reclassify_reason why)
 
         if (why == reclassify_reason::lazy_force)
         {
-            _rl_want_redisplay = true;
+            want_redisplay_readline();
             return;
         }
     }

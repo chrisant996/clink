@@ -189,6 +189,8 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     tib_terminal_bridge::get()->begin();
     assert(g_terminal);
 
+    g_tib = std::make_shared<tib::input_box>();
+
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
 }
@@ -197,6 +199,9 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 line_editor_tester::~line_editor_tester()
 {
     line_editor_destroy(m_editor);
+
+    g_tib = nullptr;
+
     uninit_terminal();
 }
 
@@ -557,7 +562,7 @@ bool line_editor_tester::get_line(str_base& line)
         return false;
 
     if (line.empty())
-        line = rl_line_buffer;
+        line = g_tib->get_text().c_str();
     return true;
 }
 

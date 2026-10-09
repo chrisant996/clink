@@ -67,7 +67,6 @@
 #define SF_CHGKMAP		0x08
 #define SF_PATTERN		0x10
 #define SF_NOCASE		0x20		/* unused so far */
-#define SF_FREEPMT		0x40		/* saved prompt separately, need to free it */
 
 typedef struct  __rl_search_context
 {
@@ -113,7 +112,6 @@ typedef struct  __rl_search_context
 
 /* readstr flags */
 #define READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
-#define READSTR_FREEPMT	0x02	/* called rl_save_prompt, need to free it ourselves */
 
 typedef struct  __rl_readstr_context
 {
@@ -237,9 +235,6 @@ extern int rl_byte_oriented;
 #endif
 /* end_clink_change */
 
-/* display.c */
-extern int rl_display_fixed;
-
 /* parens.c */
 extern int rl_blink_matching_paren;
 
@@ -309,34 +304,19 @@ extern int stat_from_match_type (int, const char*, struct stat*, struct stat*);
 #else
 extern int stat_from_match_type (int, const char*, struct stat*);
 #endif
-#if defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 extern int _rl_display_matches_prompted;
-#endif
 /* end_clink_change */
 
 /* display.c */
 extern char *_rl_strip_prompt (char *);
 extern void _rl_reset_prompt (void);
-extern void _rl_move_vert (int);
-extern void _rl_save_prompt (void);
-extern void _rl_restore_prompt (void);
 extern char *_rl_make_prompt_for_search (int);
 extern void _rl_erase_at_end_of_line (int);
-#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-extern void _rl_clear_to_eol (int);
-#endif
 extern void _rl_clear_screen (int);
-extern void _rl_update_final (void);
-extern void _rl_optimize_redisplay (void);
 extern void _rl_redisplay_after_sigwinch (void);
-extern void _rl_clean_up_for_exit (void);
 extern void _rl_erase_entire_line (void);
 extern int _rl_current_display_line (void);
 extern void _rl_refresh_line (void);
-/* begin_clink_change */
-extern int rl_get_forced_display (void);
-extern void rl_set_forced_display (int force);
-/* end_clink_change */
 
 /* input.c */
 extern int _rl_any_typein (void);
@@ -437,11 +417,6 @@ extern void _rl_set_insert_mode (int, int);
 
 extern void _rl_revert_previous_lines (void);
 extern void _rl_revert_all_lines (void);
-
-/* nls.c */
-extern char *_rl_init_locale (void);
-extern int _rl_init_eightbit (void);
-extern void _rl_reset_locale (void);
 
 /* parens.c */
 extern void _rl_enable_paren_matching (int);
@@ -622,10 +597,6 @@ extern int _rl_menu_complete_wraparound;
 /* end_clink_change */
 
 /* display.c */
-extern int _rl_vis_botlin;
-extern int _rl_last_c_pos;
-extern int _rl_last_v_pos;
-extern int _rl_suppress_redisplay;
 extern int _rl_want_redisplay;
 
 extern char *_rl_emacs_mode_str;
@@ -654,7 +625,6 @@ extern _rl_arg_cxt _rl_argcxt;
 extern int _rl_utf8locale;
 
 /* readline.c */
-extern int _rl_echoing_p;
 extern int _rl_horizontal_scroll_mode;
 extern int _rl_mark_modified_lines;
 extern int _rl_bell_preference;
@@ -663,7 +633,6 @@ extern int _rl_convert_meta_chars_to_ascii;
 extern int _rl_output_meta_chars;
 extern int _rl_bind_stty_chars;
 extern int _rl_revert_all_at_newline;
-extern int _rl_echo_control_chars;
 extern int _rl_show_mode_in_prompt;
 extern int _rl_enable_bracketed_paste;
 extern int _rl_enable_active_region;
@@ -700,8 +669,6 @@ extern int volatile _rl_handling_signal;
 
 extern _rl_sigcleanup_func_t *_rl_sigcleanup;
 extern void *_rl_sigcleanarg;
-
-extern int _rl_echoctl;
 
 extern int _rl_intr_char;
 extern int _rl_quit_char;

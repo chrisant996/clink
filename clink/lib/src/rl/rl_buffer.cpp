@@ -1,43 +1,30 @@
 // Copyright (c) 2016 Martin Ridgers
+// Portions Copyright (c) 2026 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
 #include "rl_buffer.h"
 #include "line_state.h"
+#ifdef TIB_TODO
 #include "rl_commands.h"
+#else
+#include "rl_integration.h"
+#include "display_readline.h"
+#endif
 
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str_tokeniser.h>
 
-extern "C" {
-#include <readline/history.h>
-#include <readline/readline.h>
-#include <readline/rlprivate.h> // for _rl_want_redisplay
-}
-
-// NOTE:  rl_buffer used to have a m_need_draw member, but it was independent
-// from Readline's own _rl_want_redisplay variable.  That led to redundant
-// display requests, which then got dynamically optimized away at runtime.
-// It's more accurate and efficient to directly use _rl_want_redisplay.
-
-//------------------------------------------------------------------------------
-static uint32 s_line_generation_id = 0;
-
-//------------------------------------------------------------------------------
-void increment_line_generation_id()
-{
-    ++s_line_generation_id;
-    if (!s_line_generation_id)
-        ++s_line_generation_id;
-}
+#include <tib.h>
 
 //------------------------------------------------------------------------------
 void rl_buffer::reset()
 {
     assert(m_attached);
     clear_override();
+#ifdef TIB_TODO
     rl_maybe_replace_line();
 
     if (_rl_saved_line_for_history)
@@ -66,15 +53,17 @@ void rl_buffer::reset()
     remove(0, ~0u);
     assert(!rl_point);
     assert(!rl_end);
+#else
+    g_tib->initialize();
+#endif
 }
 
 //------------------------------------------------------------------------------
 void rl_buffer::begin_line()
 {
     m_attached = true;
-    _rl_want_redisplay = true;
+    g_tib->invalidate();
     clear_override();
-    increment_line_generation_id();
 }
 
 //------------------------------------------------------------------------------
@@ -90,7 +79,7 @@ const char* rl_buffer::get_buffer() const
     assert(m_attached);
     if (m_override_line)
         return m_override_line;
-    return rl_line_buffer;
+    return g_tib->get_text().c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -99,7 +88,7 @@ uint32 rl_buffer::get_length() const
     assert(m_attached);
     if (m_override_line)
         return m_override_len;
-    return rl_end;
+    return uint32(g_tib->get_length());
 }
 
 //------------------------------------------------------------------------------
@@ -108,29 +97,32 @@ uint32 rl_buffer::get_cursor() const
     assert(m_attached);
     if (m_override_line)
         return m_override_pos;
-    return rl_point;
+    return uint32(g_tib->get_caret());
 }
 
 //------------------------------------------------------------------------------
 int32 rl_buffer::get_anchor() const
 {
     assert(m_attached);
-    assert(!m_override_pos || cua_get_anchor() < 0);
-    return cua_get_anchor();
+    const tib::textpos_t anchor = (g_tib->has_selection() ? g_tib->get_anchor() : -1);
+    assert(!m_override_pos || anchor < 0);
+    return anchor;
 }
 
 //------------------------------------------------------------------------------
 uint32 rl_buffer::set_cursor(uint32 pos)
 {
     assert(m_attached);
+    pos = min(pos, get_length());
     if (m_override_line)
     {
+#ifdef TIB_TODO
         assert(cua_get_anchor() < 0);
-        return m_override_pos = min<uint32>(pos, m_override_len);
+#endif
+        return m_override_pos = pos;
     }
-    if (cua_clear_selection())
-        _rl_want_redisplay = true;
-    return rl_point = min<uint32>(pos, rl_end);
+    g_tib->set_caret(tib::textpos_t(pos));
+    return get_cursor();
 }
 
 //------------------------------------------------------------------------------
@@ -140,8 +132,10 @@ void rl_buffer::set_selection(uint32 anchor, uint32 pos)
     assert(!m_override_line);
     if (m_override_line)
         return;
-    if (cua_set_selection(anchor, pos))
-        _rl_want_redisplay = true;
+// TODO-TIB: maybe input_box::set_selection should clamp.
+    anchor = min(anchor, get_length());
+    pos = min(pos, get_length());
+    g_tib->set_selection(tib::textpos_t(anchor), tib::textpos_t(pos));
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +145,7 @@ void rl_buffer::insert(const char* text)
     assert(!m_override_line);
     if (m_override_line)
         return;
-    _rl_want_redisplay = (text[rl_insert_text(text)] == '\0');
+    g_tib->insert_text(text);
 }
 
 //------------------------------------------------------------------------------
@@ -161,9 +155,11 @@ void rl_buffer::remove(uint32 from, uint32 to)
     assert(!m_override_line);
     if (m_override_line)
         return;
+    from = min(from, get_length());
     to = min(to, get_length());
-    _rl_want_redisplay = !!rl_delete_text(from, to);
-    set_cursor(get_cursor());
+    const tib::textpos_t begin = min(from, to);
+    const tib::textpos_t end = max(from, to);
+    g_tib->remove_text(begin, end);
 }
 
 //------------------------------------------------------------------------------
@@ -173,11 +169,7 @@ void rl_buffer::draw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    if (_rl_want_redisplay)
-    {
-        (*rl_redisplay_function)();
-        _rl_want_redisplay = false;
-    }
+    display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -187,9 +179,8 @@ void rl_buffer::redraw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    _rl_cr();
-    _rl_last_c_pos = 0;
-    rl_forced_update_display();
+    want_redisplay_readline();
+    display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -199,7 +190,7 @@ void rl_buffer::set_need_draw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    _rl_want_redisplay = true;
+    want_redisplay_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -209,7 +200,7 @@ void rl_buffer::begin_undo_group()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    rl_begin_undo_group();
+    g_tib->begin_undo_group();
 }
 
 //------------------------------------------------------------------------------
@@ -219,7 +210,7 @@ void rl_buffer::end_undo_group()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    rl_end_undo_group();
+    g_tib->end_undo_group();
 }
 
 //------------------------------------------------------------------------------
@@ -229,7 +220,7 @@ bool rl_buffer::undo()
     assert(!m_override_line);
     if (m_override_line)
         return false;
-    return !!rl_do_undo();
+    return g_tib->undo();
 }
 
 //------------------------------------------------------------------------------
@@ -265,6 +256,6 @@ line_buffer_fingerprint rl_buffer::get_fingerprint(bool include_cursor) const
 {
     line_buffer_fingerprint fp;
     fp.m_cursor = include_cursor ? get_cursor() : 0;
-    fp.m_gen_id = s_line_generation_id;
+    fp.m_gen_id = g_tib->get_change_counter();
     return fp;
 }

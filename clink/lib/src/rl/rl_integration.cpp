@@ -25,8 +25,14 @@ extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 }
 
+#include <tib.h>
+
 //------------------------------------------------------------------------------
 extern editor_module::result* g_result;
+std::shared_ptr<tib::input_box> g_tib;
+str_moveable g_prompt_prefix;
+str_moveable g_prompt;
+str_moveable g_rprompt;
 static bool s_force_reload_scripts = false;
 
 //------------------------------------------------------------------------------
@@ -256,19 +262,13 @@ bool rl_has_queued_input()
 //------------------------------------------------------------------------------
 resync_rl_cursor_pos::resync_rl_cursor_pos()
     : m_resync(!!g_terminal)
-    , m_vpos(_rl_last_v_pos)
-    , m_cpos(_rl_last_c_pos)
+    , m_vpos(get_relative_cursor_row())
+    , m_cpos(get_relative_cursor_column())
 {
+    assert(g_tib);
     assert(g_terminal);
     if (m_resync)
-    {
-        int16 unused;
-        if (!m_printer->get_cursor_pos(m_cursor_x, unused))
-        {
-            assert(false);
-            m_printer = nullptr;
-        }
-    }
+        m_cursor_x = g_tib->get_origin().x + m_cpos;
 }
 
 //------------------------------------------------------------------------------
@@ -280,7 +280,7 @@ resync_rl_cursor_pos::~resync_rl_cursor_pos()
 //------------------------------------------------------------------------------
 void resync_rl_cursor_pos::clear()
 {
-    m_printer = nullptr;
+    m_resync = false;
 }
 
 //------------------------------------------------------------------------------
@@ -289,20 +289,7 @@ void resync_rl_cursor_pos::resync(bool update_rl_last_pos)
     if (m_resync)
     {
         if (update_rl_last_pos)
-        {
-            assert(m_vpos == _rl_last_v_pos);
-            assert(m_cpos == _rl_last_c_pos);
-            _rl_move_vert(m_vpos);
-            _rl_last_c_pos = m_cpos;
-        }
-
-        str<> tmp;
-        tmp.format("\x1b[%uG", m_cursor_x + 1);
-        if (m_use_rl_fwrite)
-        {
-            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-            rl_fflush_function(_rl_out_stream);
-        }
+            move_to_caret_position(true/*force_column*/);
         else
             clink_write(tib::term_col(m_cursor_x));
 
@@ -336,8 +323,8 @@ bool is_terminal_scrolled()
 
     // Consider the terminal to be scrolled if the prompt isn't fully visible
     // or the input line isn't fully visible.
-    const DWORD top_y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-    const DWORD bot_y = top_y + _rl_vis_botlin;
+    const DWORD top_y = csbi.dwCursorPosition.Y - get_relative_cursor_row();
+    const DWORD bot_y = top_y + (g_tib ? g_tib->get_extent().y : 0);
     return csbi.srWindow.Top > top_y || csbi.srWindow.Bottom < bot_y;
 }
 

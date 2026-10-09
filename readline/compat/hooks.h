@@ -3,12 +3,6 @@
 
 #pragma once
 
-// Define this to omit Readline's default display routines for the Readline input buffer.
-#define OMIT_DEFAULT_DISPLAY_READLINE
-
-// Define this to omit Readline's match display routines.
-#define OMIT_DEFAULT_DISPLAY_MATCHES
-
 #if !defined(S_IFLNK)
 static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
 static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
@@ -49,6 +43,7 @@ struct hooked_stat
 };
 
 void reset_display_readline(void);
+void move_to_end_of_display(int cr);
 void end_prompt(int crlf);
 void lock_against_suggestions(int lock);
 void clear_suggestion_list_index(void);

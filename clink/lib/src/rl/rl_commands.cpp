@@ -748,7 +748,7 @@ int32 clink_paste(int32 count, int32 invoking_key)
     enqueue_lines(overflow);
     if (done)
     {
-        (*rl_redisplay_function)();
+        display_readline();
         rl_newline(1, invoking_key);
     }
 
@@ -769,7 +769,7 @@ int32 clink_copy_word(int32 count, int32 invoking_key)
     if (count < 0 || !g_rl_buffer)
     {
 Nope:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -888,17 +888,15 @@ static int32 do_expand_line(int32 flags)
 
     if (!expanded)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
     g_rl_buffer->begin_undo_group();
-    g_rl_buffer->remove(0, rl_end);
-    rl_point = 0;
+    g_rl_buffer->remove(0, ~0);
     if (!out.empty())
         g_rl_buffer->insert(out.c_str());
-    if (point >= 0 && point <= rl_end)
-        g_rl_buffer->set_cursor(point);
+    g_rl_buffer->set_cursor(point);
     g_rl_buffer->end_undo_group();
 
     return 0;
@@ -983,7 +981,7 @@ int32 clink_toggle_slashes(int32 count, int32 invoking_key)
     if (count < 0 || !g_rl_buffer)
     {
 Nope:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1075,7 +1073,7 @@ int32 clink_find_conhost(int32 count, int32 invoking_key)
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1092,7 +1090,7 @@ int32 clink_mark_conhost(int32 count, int32 invoking_key)
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1120,7 +1118,7 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1128,7 +1126,7 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
     {
         s_cua_anchor = 0;
         rl_point = rl_end;
-        (*rl_redisplay_function)();
+        display_readline();
     }
 
     // Invoke conhost's Select All command via the system menu.
@@ -1149,7 +1147,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
     if (!history || !total)
     {
         free(history);
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1162,7 +1160,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
     case popup_result::cancel:
         break;
     case popup_result::error:
-        rl_ding();
+        tib::ding();
         break;
     case popup_result::select:
     case popup_result::use:
@@ -1196,7 +1194,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
                 rl_insert_text(dir.c_str());
             }
             rl_end_undo_group();
-            (*rl_redisplay_function)();
+            display_readline();
             if (use)
                 rl_newline(1, invoking_key);
         }
@@ -1214,7 +1212,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 int32 clink_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1222,7 +1220,7 @@ int32 clink_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1230,7 +1228,7 @@ int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers_backward"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1238,7 +1236,7 @@ int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1246,7 +1244,7 @@ int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers_backward"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1254,7 +1252,7 @@ int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_complete_numbers"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1262,7 +1260,7 @@ int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 int32 clink_popup_show_help(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_show_help"))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1273,7 +1271,7 @@ int32 clink_select_complete(int32 count, int32 invoking_key)
 {
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
     if (!g_result || !activate_select_complete(*g_result, rl_last_func == clink_select_complete))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1284,7 +1282,7 @@ int32 clink_toggle_suggestion_list(int32 count, int32 invoking_key)
 {
     extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
     if (!g_result || !toggle_suggestion_list(*g_result, -1/*toggles on/off*/))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1293,7 +1291,7 @@ int32 clink_show_suggestion_list(int32 count, int32 invoking_key)
 {
     extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
     if (!g_result || !toggle_suggestion_list(*g_result, true/*turns on*/))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1302,7 +1300,7 @@ int32 clink_cancel_suggestion_list(int32 count, int32 invoking_key)
 {
     extern bool toggle_suggestion_list(editor_module::result& result, int8 mode);
     if (!g_result || !toggle_suggestion_list(*g_result, false/*turns off*/))
-        rl_ding();
+        tib::ding();
     return 0;
 }
 
@@ -1655,7 +1653,7 @@ int32 clink_end_of_line(int32 count, int32 invoking_key)
 int32 clink_insert_suggested_line(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_to_end))
-        rl_ding();
+        tib::ding();
 
     return 0;
 }
@@ -1664,7 +1662,7 @@ int32 clink_insert_suggested_line(int32 count, int32 invoking_key)
 int32 clink_insert_suggested_full_word(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_next_full_word))
-        rl_ding();
+        tib::ding();
 
     return 0;
 }
@@ -1673,7 +1671,7 @@ int32 clink_insert_suggested_full_word(int32 count, int32 invoking_key)
 int32 clink_insert_suggested_word(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_next_word))
-        rl_ding();
+        tib::ding();
 
     return 0;
 }
@@ -1684,7 +1682,7 @@ int32 clink_accept_suggested_line(int32 count, int32 invoking_key)
     if (insert_suggestion(suggestion_action::insert_to_end))
         return rl_newline(count, invoking_key);
 
-    rl_ding();
+    tib::ding();
     return 0;
 }
 
@@ -1699,7 +1697,7 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
     if (!hi.make(g_rl_buffer->get_buffer(), search_len, orig_pos))
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -1723,7 +1721,7 @@ ding:
             rl_point = point_at_end ? rl_end : search_len;
             rl_mark = point_at_end ? search_len : rl_end;
 
-            (*rl_redisplay_function)();
+            display_readline();
             if (results.m_result == popup_result::use)
                 rl_newline(1, 0);
         }
@@ -1967,7 +1965,7 @@ int32 win_f1(int32 count, int32 invoking_key)
     if (!prev_buffer)
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -2007,7 +2005,7 @@ static int32 finish_win_f2()
     char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -2049,7 +2047,7 @@ int32 _win_f2_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f2();
 }
@@ -2118,7 +2116,7 @@ int32 _win_f4_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f4();
 }
@@ -2166,7 +2164,7 @@ int32 win_f7(int32 count, int32 invoking_key)
     if (!total)
     {
 ding:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -2185,7 +2183,7 @@ ding:
             rl_replace_from_history(current_history(), 0);
             suppress_suggestions();
 
-            (*rl_redisplay_function)();
+            display_readline();
             if (results.m_result == popup_result::use)
                 rl_newline(1, 0);
         }
@@ -2292,7 +2290,7 @@ int32 _win_f9_callback(_rl_callback_generic_arg *data)
 
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
-    _rl_want_redisplay = 1;
+    want_redisplay_readline();
 
     return finish_win_f9();
 }
@@ -2382,7 +2380,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
         HIST_ENTRY* h = history_get(count);
         if (!h)
         {
-            rl_ding();
+            tib::ding();
             return 0;
         }
         line = h->line;
@@ -2392,7 +2390,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
         line.concat(rl_line_buffer, rl_end);
         if (!host_add_history(0, line.c_str()))
         {
-            rl_ding();
+            tib::ding();
             return 0;
         }
     }
@@ -2402,7 +2400,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
     if (!file)
     {
 LDing:
-        rl_ding();
+        tib::ding();
         return 0;
     }
 
@@ -2859,11 +2857,15 @@ static void do_clink_diagnostics(bool include_settings=false)
 
     // Check for known potential ambiguous character width issues.
 
+    str_moveable display_prompt;
+    display_prompt.concat(g_prompt_prefix.c_str());
+    display_prompt.concat(g_prompt.c_str());
+
     {
         std::vector<alert_char> cjk;
 
-        analyze_char_widths(rl_display_prompt, cjk);
-        analyze_char_widths(rl_rprompt, cjk);
+        analyze_char_widths(display_prompt.c_str(), cjk);
+        analyze_char_widths(g_rprompt.c_str(), cjk);
 
         if (cjk.size())
         {
@@ -2883,7 +2885,7 @@ static void do_clink_diagnostics(bool include_settings=false)
 
     {
         std::vector<prompt_problem_details> problems;
-        prompt_contains_problem_codes(rl_display_prompt, &problems);
+        prompt_contains_problem_codes(display_prompt.c_str(), &problems);
 
         if (!problems.empty())
         {

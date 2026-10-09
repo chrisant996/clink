@@ -5,6 +5,8 @@
 
 #include <core/base.h>
 
+#include <tib.h>
+
 class matches;
 class matches_iter;
 typedef int rl_command_func_t (int, int);
@@ -16,6 +18,15 @@ class printer;
 // functions help bridge that gap.
 
 //------------------------------------------------------------------------------
+extern std::shared_ptr<tib::input_box> g_tib;
+extern str_moveable g_prompt_prefix;
+extern str_moveable g_prompt;
+extern str_moveable g_rprompt;
+
+//------------------------------------------------------------------------------
+#define clink_write tib::term_out
+
+//------------------------------------------------------------------------------
 bool    is_force_reload_scripts();
 void    clear_force_reload_scripts();
 int32   force_reload_scripts();
@@ -25,9 +36,7 @@ void    update_rl_modes_from_matches(const matches* matches, const matches_iter&
 
 //------------------------------------------------------------------------------
 const char* get_last_prompt();
-
-//------------------------------------------------------------------------------
-void    increment_line_generation_id();
+void init_prompt(const str_base& prompt, const str_base& rprompt);
 
 //------------------------------------------------------------------------------
 void    set_prev_inputline(const char* line, uint32 length=-1);

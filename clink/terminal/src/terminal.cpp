@@ -12,6 +12,7 @@
 
 //------------------------------------------------------------------------------
 static bool s_has_synchronize_output = false;
+tib_terminal_bridge* g_terminal = nullptr;
 
 //------------------------------------------------------------------------------
 void terminal_discover_config(terminal_in* in)

@@ -7,6 +7,7 @@
 
 #include <core/str_iter.h>
 #include <lib/line_buffer.h>
+#include <lib/rl_integration.h>
 #include <lib/suggestions.h>
 #include <lib/display_readline.h>
 
@@ -76,7 +77,7 @@ rl_buffer_lua::~rl_buffer_lua()
     {
         // Set flag to force redisplay when the dispatch loop gets back to an
         // appropriate point.
-        rl_set_forced_display(true);
+        force_redisplay_readline();
         s_began_output = false;
     }
 }
@@ -271,7 +272,8 @@ int32 rl_buffer_lua::begin_output(lua_State* state)
 int32 rl_buffer_lua::refresh_line(lua_State* state)
 {
     // Get height of prompt.
-    const int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
+// TODO-TIB: also account for the top border.
+    const int32 lines = count_prompt_lines(g_prompt_prefix.c_str());
 
     // Move up to top of prompt and prepare to clear subsequent lines.
     defer_clear_lines(lines, false);
@@ -281,6 +283,7 @@ int32 rl_buffer_lua::refresh_line(lua_State* state)
     // display after that.  So it has to do a full redraw instead of a normal
     // optimized redraw.
     force_redisplay_readline();
+    display_readline();
     return 0;
 }
 
@@ -405,6 +408,6 @@ int32 rl_buffer_lua::set_comment_row(lua_State* state)
 /// <code>visible</code> then it flashes the cursor instead.
 int32 rl_buffer_lua::ding(lua_State* state)
 {
-    rl_ding();
+    tib::ding();
     return 0;
 }

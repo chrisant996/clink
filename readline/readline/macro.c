@@ -342,7 +342,6 @@ rl_print_last_kbd_macro (int count, int ignore)
   rl_crlf ();
   FREE (m);
   rl_forced_update_display ();
-  rl_display_fixed = 1;
 
   return 0;
 }

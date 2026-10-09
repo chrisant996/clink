@@ -4,6 +4,7 @@
 #pragma once
 
 #include "line_buffer.h"
+#include <memory>
 
 //------------------------------------------------------------------------------
 class rl_buffer

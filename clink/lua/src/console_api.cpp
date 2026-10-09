@@ -24,7 +24,6 @@
 
 extern "C" {
 #include <readline/readline.h>
-extern "C" int _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------
@@ -77,7 +76,8 @@ static int16 GetConsoleNumLines()
     {
         g_terminal->get_cursor_pos(cursor.X, cursor.Y);
     }
-    cursor.Y -= _rl_last_v_pos;
+// TODO-TIB: test this.
+    cursor.Y -= get_relative_cursor_row();
     return cursor.Y + 1;
 }
 

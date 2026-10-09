@@ -37,7 +37,6 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/colors.h>
-extern int _rl_last_v_pos;
 };
 
 
@@ -736,7 +735,7 @@ void suggestionlist_impl::update_layout(bool refreshing_display)
                      !g_suggestionlist_hide_hints.get() &&
                      g_comment_row_show_hints.get());
 
-    const int32 input_height = (_rl_vis_botlin + 1 + m_input_hints);
+    const int32 input_height = get_input_height();
     const int32 header_row = 1;
     const int32 tooltip_row = 1;
     int32 available_rows = m_screen_rows - input_height - header_row - tooltip_row;
@@ -850,16 +849,17 @@ void suggestionlist_impl::update_display()
 #endif
 
     // Hide cursor.
-    const bool was_visible = show_cursor(false);
+    const bool nested_coalesce = tib::display_accumulator::active();
+    const bool was_visible = !nested_coalesce && show_cursor(false);
 
     // Remember the cursor position so it can be restored later to stay
     // consistent with Readline's view of the world.
     resync_rl_cursor_pos resync;
 
-    display_accumulator coalesce;
+    tib::display_accumulator coalesce;
 
-    // Move cursor after the input line.
-    _rl_move_vert(_rl_vis_botlin);
+    // Move cursor to bottom of the input line area.
+    g_tib->move_to_end_of_display(true);
 
     // Make room for input hints.
     int32 up = 0;
@@ -1049,14 +1049,16 @@ void suggestionlist_impl::update_display()
     }
     resync.resync();
 
-    clink_flush();
-    coalesce.end();
+    coalesce.flush();   // Must flush otherwise get_cursor_pos() is wrong.
+    coalesce.end();     // Must end before show_cursor().
+
     COORD cursor;
     m_terminal->get_cursor_pos(cursor.X, cursor.Y);
     m_mouse_offset = cursor.Y + !!m_input_hints + 2/*to top item*/;
 
     // Restore cursor.
-    show_cursor(was_visible);
+    if (!nested_coalesce)
+        show_cursor(was_visible);
 }
 
 //------------------------------------------------------------------------------
@@ -1333,8 +1335,6 @@ void suggestionlist_impl::apply_suggestion(int32 index)
         assert(!is_locked_against_suggestions());
     }
 
-    const int32 old_botlin = _rl_vis_botlin;
-
     if (index >= 0 && index < m_suggestions.size())
     {
         const suggestion& suggestion = m_suggestions[index];
@@ -1350,9 +1350,8 @@ void suggestionlist_impl::apply_suggestion(int32 index)
 
     m_buffer->draw();
 
-    // NOTE:  This doesn't need to clear the screen or update layout and
-    // display when _rl_vis_botlin changes, because display_manager (inside
-    // the draw() call above) calls update_suggestion_list to redisplay it.
+    // NOTE:  The display_readline() call inside the draw() call automatically
+    // clears and/or redraws the suggestion list as needed.
 }
 
 //------------------------------------------------------------------------------
