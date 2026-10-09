@@ -101,6 +101,7 @@ public:
     size_t              capacity() const noexcept { return m_capacity; }
     const T*            c_str() const noexcept;
     bool                equals(const cstring_t<T>& s) const noexcept;
+    bool                equals(const T* s, size_t len) const noexcept;
 
 private:
     bool                raw_set(const T* s, size_t len);
@@ -144,7 +145,7 @@ template<class T>
 bool cstring_t<T>::operator==(const T* s) const noexcept
 {
     size_t const len = str_len(s);
-    return (length() == len) && (memcmp(m_text, s, m_len) == 0);
+    return (length() == len) && (memcmp(m_text, s, m_len * sizeof(T)) == 0);
 }
 
 template<class T>
@@ -156,7 +157,15 @@ bool cstring_t<T>::operator==(const cstring_t<T>& s) const noexcept
 template<class T>
 bool cstring_t<T>::equals(const cstring_t<T>& s) const noexcept
 {
-    return (length() == s.length()) && (memcmp(m_text, s.m_text, m_len) == 0);
+    return (length() == s.length()) && (memcmp(m_text, s.m_text, m_len * sizeof(T)) == 0);
+}
+
+template<class T>
+bool cstring_t<T>::equals(const T* s, size_t len) const noexcept
+{
+    if (len == c_auto_length)
+        return equals(s);
+    return (length() == len) && (memcmp(m_text, s, m_len * sizeof(T)) == 0);
 }
 
 template<class T>

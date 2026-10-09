@@ -85,6 +85,7 @@ constexpr char FACE_SELECTION   = 0x1f;
 constexpr char FACE_MARK        = 0x1e;
 constexpr char FACE_SCROLLER    = 0x1d;
 constexpr char FACE_SUGGESTION  = 0x1c;
+constexpr char FACE_INPUT       = 0x1b;
 constexpr char FACE_EMPTY       = 0;
 struct editor_callbacks;
 

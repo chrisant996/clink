@@ -35,6 +35,22 @@ const char* color_table::get_color(color_element color) const
 
 void color_table::set_color(color_element color, const char* sgr_params)
 {
+    if (sgr_params && sgr_params[0] == 0x1b && sgr_params[1] == '[')
+    {
+        size_t len = strlen(sgr_params);
+        if (len > 1)
+        {
+            --len;
+            if (sgr_params[len] == 'm')
+            {
+                sgr_params += 2;
+                len -= 2;
+                m_colors[size_t(color)].set(sgr_params, len);
+                return;
+            }
+        }
+    }
+
     m_colors[size_t(color)].set(sgr_params);
 }
 
