@@ -3229,7 +3229,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     m_terminal->set_chord(input.keys, input.len);
     while (m_terminal->has_chord() && !m_done)
     {
-        const int32 key = tib::term_in();
+        const int32 key = m_terminal->read();
         if (g_debug_log_input_pipeline)
         {
             LOG("INPUT rl.on_input key=%d (0x%02x '%c') has_chord=%d",
