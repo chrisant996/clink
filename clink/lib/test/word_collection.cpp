@@ -12,7 +12,6 @@
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <lib/cmd_tokenisers.h>
-#include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <readline/readline.h>
@@ -22,7 +21,6 @@
 TEST_CASE("Word collection")
 {
     lua_state lua;
-    lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, dir);
 
     cmd_command_tokeniser command_tokeniser;
@@ -32,7 +30,6 @@ TEST_CASE("Word collection")
     desc.command_tokeniser = &command_tokeniser;
     desc.word_tokeniser = &word_tokeniser;
     line_editor_tester tester(desc, nullptr, nullptr);
-    tester.get_editor()->set_generator(lua_generator);
 
     tester.set_input(">ab^ cd jkl mno ");
     tester.set_expected_words("ab^ cd", "jkl", "mno", "");
