@@ -1242,6 +1242,20 @@ void line_editor_impl::before_display_readline()
     if (!is_display_readline_initialized())
         return;
 
+    str<> suffix;
+    const char* usage;
+    uint16 width;
+    if (get_visible_suggestion(suffix, &usage, &width))
+    {
+        g_tib->set_suggestion_text(suffix.c_str(), suffix.length());
+        g_tib->set_usage_text(usage, width);
+    }
+    else
+    {
+        g_tib->set_suggestion_text(nullptr);
+        g_tib->set_usage_text(nullptr, 0);
+    }
+
     // Skip parsing if the line buffer hasn't changed.
 // TODO-TIB: special states.
     const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR);
@@ -1271,7 +1285,7 @@ void line_editor_impl::before_display_readline()
 
         if (plain)
         {
-            m_classifications.apply_face(false, 0, m_buffer.get_length(), FACE_NORMAL, true);
+            m_classifications.apply_face(false, 0, m_buffer.get_length(), tib::FACE_DEFAULT, true);
         }
         else
         {

@@ -235,11 +235,13 @@ bool suggestion_manager::more() const
 }
 
 //------------------------------------------------------------------------------
-bool suggestion_manager::get_visible(str_base& out) const
+bool suggestion_manager::get_visible(str_base& suffix, const char** usage, uint16* width) const
 {
     assert(g_autosuggest_enable.get());
 
-    out.clear();
+    suffix.clear();
+    if (usage)
+        *usage = nullptr;
     if (!g_rl_buffer)
         return false;
     if (is_suggestion_list_active(true/*even_if_hidden*/) || m_suggestions.empty())
@@ -262,21 +264,9 @@ bool suggestion_manager::get_visible(str_base& out) const
         return false;
 
     if (g_autosuggest_inline.get())
-    {
-        out.concat(g_rl_buffer->get_buffer(), uint32(orig.get_pointer() - g_rl_buffer->get_buffer()));
-        out.concat(sugg.get_pointer(), sugg.length());
-    }
-    else
-    {
-        out.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-    }
-
-    if (can_show_suggestion_hint())
-    {
-        const char* hint_text = get_suggestion_hint_text();
-        static const uint32 hint_cols = cell_count(hint_text) + 1;
-        g_tib->set_usage_text(hint_text, hint_cols);
-    }
+        suffix.concat(sugg.get_pointer(), sugg.length());
+    if (usage && can_show_suggestion_hint())
+        *usage = get_suggestion_hint_text(width);
 
     return true;
 }
@@ -285,7 +275,7 @@ bool suggestion_manager::get_visible(str_base& out) const
 bool suggestion_manager::has_suggestion() const
 {
     str<> tmp;
-    return get_visible(tmp);
+    return get_visible(tmp, nullptr, nullptr);
 }
 
 //------------------------------------------------------------------------------

@@ -114,8 +114,8 @@ static str<>        s_last_prompt;
 static str_moveable s_needle;
 
 static bool s_build_suggestion_hint = false;
-static str<32, false> s_suggestion_hint_text;
-static str<32, false> s_suggestion_hint_faces;
+static uint16 s_suggestion_hint_width = 0;
+static str_moveable s_suggestion_hint_text;
 static suggestion_manager s_suggestion;
 
 static std::shared_ptr<tib::key_table_list> s_emacs_standard_bindings;
@@ -643,7 +643,6 @@ static const char* s_none_color = nullptr;
 static const char* s_suggestion_color = nullptr;
 static const char* s_histexpand_color = nullptr;
 int32 g_suggestion_offset = -1;
-bool g_suggestion_includes_hint = false;
 
 //------------------------------------------------------------------------------
 void rl_module::provide_faces(const tib::input_buffer& buffer, tib::cstring& faces)
@@ -673,7 +672,6 @@ const char* rl_module::get_face_def(char face)
     static const char c_hyperlink[] = "\x1b]8;;";
     static const char c_BEL[] = "\a";
     static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
-    static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
 #endif
 
     switch (face)
@@ -693,16 +691,23 @@ const char* rl_module::get_face_def(char face)
                 return s_out.c_str();
             }
         }
-        // fall through
-    case FACE_NORMAL:           return c_normal;
+        return nullptr;
 
-    case FACE_INPUT:            return fallback_color(s_input_color, c_normal);
+    // case FACE_NORMAL:           return c_normal;
+
     case FACE_MODMARK:          return fallback_color(_rl_display_modmark_color, c_normal);
     case FACE_MESSAGE:          return fallback_color(_rl_display_message_color, c_normal);
 
+#if 0
+    case tib::FACE_INPUT:       return fallback_color(s_input_color, c_normal);
     case tib::FACE_MARK:        return fallback_color(_rl_active_region_start_color, "\x1b[0;7m");
     case tib::FACE_SCROLLER:    return fallback_color(_rl_display_horizscroll_color, c_normal);
     case tib::FACE_SELECTION:   return fallback_color(s_selection_color, "\x1b[0;7m");
+    case tib::FACE_SUGGESTION:
+        assert(g_autosuggest_enable.get());
+        assert(s_suggestion_color);
+        return s_suggestion_color;
+#endif
 
     case FACE_HISTEXPAND1:
     case FACE_HISTEXPAND2:
@@ -713,24 +718,6 @@ const char* rl_module::get_face_def(char face)
 #endif
         return fallback_color(s_histexpand_color, "\x1b[0;97;45m");
 
-    case FACE_SUGGESTION:
-        assert(g_autosuggest_enable.get());
-        if (s_suggestion_color)
-            return s_suggestion_color;
-#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
-        switch (get_console_theme())
-        {
-        case console_theme::light:
-        case console_theme::dark:
-            {
-                static str<32> s_out;
-                const uint8 faint = get_console_faint_text();
-                s_out.format("\x1b[0;38;2;%u;%u;%um", faint, faint, faint);
-                return s_out.c_str();
-            }
-        }
-#endif
-        return "\x1b[0;90m";
 
     case FACE_OTHER:        return fallback_color(s_input_color, c_normal);
     case FACE_UNRECOGNIZED: return fallback_color(s_unrecognized_color, fallback_color(s_input_color, c_normal));
@@ -742,149 +729,6 @@ const char* rl_module::get_face_def(char face)
     case FACE_FLAG:         return fallback_color(s_flag_color, c_normal);
     case FACE_NONE:         return fallback_color(s_none_color, c_normal);
     }
-}
-
-//------------------------------------------------------------------------------
-static void puts_face_func(const char* s, const char* face, int32 n)
-{
-    static const char c_normal[] = "\x1b[m";
-    static const char c_hyperlink[] = "\x1b]8;;";
-    static const char c_BEL[] = "\a";
-    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
-    static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
-
-    str<280> out;
-    const char* const other_color = fallback_color(s_input_color, c_normal);
-    char cur_face = FACE_NORMAL;
-    bool hyperlink = false;
-
-    while (n)
-    {
-        // Append face string if face changed.
-        if (cur_face != *face)
-        {
-            if (hyperlink)
-            {
-                out << c_hyperlink << c_BEL;
-                hyperlink = false;
-            }
-
-            cur_face = *face;
-            switch (cur_face)
-            {
-            default:
-                if (s_classifications)
-                {
-                    const char* color = s_classifications->get_face_output(cur_face);
-                    if (color)
-                    {
-                        out << "\x1b[";
-                        if (color[0] != '0' || color[1] != ';')
-                            out << "0;";
-                        out << color << "m";
-                        break;
-                    }
-                }
-                // fall through
-            case FACE_NORMAL:       out << c_normal; break;
-            case FACE_STANDOUT:     out << fallback_color(_rl_active_region_start_color, "\x1b[0;7m"); break;
-
-            case FACE_INPUT:        out << fallback_color(s_input_color, c_normal); break;
-            case FACE_MODMARK:      out << fallback_color(_rl_display_modmark_color, c_normal); break;
-            case FACE_MESSAGE:      out << fallback_color(_rl_display_message_color, c_normal); break;
-            case FACE_SCROLL:       out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
-            case FACE_SELECTION:    out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
-
-            case FACE_HISTEXPAND1:
-            case FACE_HISTEXPAND2:
-                out << fallback_color(s_histexpand_color, "\x1b[0;97;45m") << c_hyperlink << c_doc_histexpand << c_BEL;
-                hyperlink = true;
-                break;
-
-            case FACE_SUGGESTION:
-            case FACE_SUGGESTIONKEY:
-            case FACE_SUGGESTIONLINK:
-                assert(g_autosuggest_enable.get());
-                if (s_suggestion_color)
-                    out << s_suggestion_color;
-                else
-                {
-#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
-                    switch (get_console_theme())
-                    {
-                    case console_theme::light:
-                    case console_theme::dark:
-                        {
-                            str<16> faint;
-                            faint.format(";%u", get_console_faint_text());
-                            out << "\x1b[0;38;2" << faint << faint << faint << "m";
-                        }
-                        break;
-                    default:
-                        out << "\x1b[0;90m";
-                        break;
-                    }
-#else
-                    out << "\x1b[0;90m";
-#endif
-                }
-                if (cur_face == FACE_SUGGESTIONKEY)
-                    out << "\x1b[7m";
-                else if (cur_face == FACE_SUGGESTIONLINK)
-                {
-                    out << c_hyperlink << c_doc_autosuggest << c_BEL;
-                    hyperlink = true;
-                }
-                break;
-
-            case FACE_OTHER:        out << other_color; break;
-            case FACE_UNRECOGNIZED: out << fallback_color(s_unrecognized_color, other_color); break;
-            case FACE_EXECUTABLE:   out << fallback_color(s_executable_color, other_color); break;
-            case FACE_COMMAND:
-                if (_rl_command_color)
-                    out << "\x1b[" << _rl_command_color << "m";
-                else
-                    out << c_normal;
-                break;
-            case FACE_ALIAS:
-                if (_rl_alias_color)
-                    out << "\x1b[" << _rl_alias_color << "m";
-                else
-                    out << c_normal;
-                break;
-            case FACE_ARGMATCHER:
-                assert(s_argmatcher_color); // Shouldn't reach here otherwise.
-                if (s_argmatcher_color) // But avoid crashing, just in case.
-                    out << s_argmatcher_color;
-                break;
-            case FACE_ARGUMENT:     out << fallback_color(s_arg_color, fallback_color(s_input_color, c_normal)); break;
-            case FACE_FLAG:         out << fallback_color(s_flag_color, c_normal); break;
-            case FACE_NONE:         out << fallback_color(s_none_color, c_normal); break;
-            }
-        }
-
-        // Get run of characters with the same face.
-        const char* s_concat = s;
-        const char* face_concat = face;
-        while (n && cur_face == *face)
-        {
-            s++;
-            face++;
-            n--;
-        }
-
-        // Append the characters.
-        int32 len = int32(s - s_concat);
-        out.concat(s_concat, len);
-    }
-
-    if (hyperlink)
-        out << c_hyperlink << c_BEL;
-    if (cur_face != FACE_NORMAL)
-        out << c_normal;
-
-    terminal_fwrite_context ctx("PUTSFACE");
-    clink_write(out.c_str(), out.length());
 }
 
 
@@ -926,6 +770,12 @@ bool has_suggestion()
 }
 
 //------------------------------------------------------------------------------
+bool get_visible_suggestion(str_base& suffix, const char** usage, uint16* width)
+{
+    return s_suggestion.get_visible(suffix, usage, width);
+}
+
+//------------------------------------------------------------------------------
 bool insert_suggestion(suggestion_action action)
 {
     return s_suggestion.insert(action);
@@ -964,8 +814,10 @@ static void append_face(str_base& s, char face, uint32 count)
 }
 
 //------------------------------------------------------------------------------
-const char* get_suggestion_hint_text()
+const char* get_suggestion_hint_text(uint16* width)
 {
+    if (width)
+        *width = s_suggestion_hint_width;
     return s_suggestion_hint_text.c_str();
 }
 
@@ -975,9 +827,14 @@ bool can_show_suggestion_hint()
     if (s_build_suggestion_hint)
     {
         s_suggestion_hint_text.clear();
-        s_suggestion_hint_faces.clear();
+        s_suggestion_hint_width = 0;
         if (g_autosuggest_hint.get())
         {
+            static const char c_normal[] = "\x1b[m";
+            static const char c_hyperlink[] = "\x1b]8;;";
+            static const char c_BEL[] = "\a";
+            static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
+
             int32 type;
             str_moveable tmp;
 
@@ -1008,38 +865,31 @@ bool can_show_suggestion_hint()
             if (has_right || toggle_key_name)
             {
                 s_suggestion_hint_text.concat("    ");
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 4);
             }
             if (has_right)
             {
-                s_suggestion_hint_text.concat("Right=");
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, 5);
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
+                s_suggestion_hint_text << s_suggestion_color << "\x1b[7m" << "Right" << "\x1b[27m=";
+                s_suggestion_hint_text << c_hyperlink << c_doc_autosuggest << c_BEL;
                 if (toggle_key_name)
-                {
-                    s_suggestion_hint_text.concat("Insert ");
-                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 6);
-                    append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
-                }
+                    s_suggestion_hint_text << "Insert";
                 else
-                {
-                    s_suggestion_hint_text.concat("Insert Suggestion");
-                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 17);
-                }
+                    s_suggestion_hint_text << "Insert Suggestion";
+                s_suggestion_hint_text << c_hyperlink << c_BEL;
+                if (toggle_key_name)
+                    s_suggestion_hint_text << " ";
             }
             if (toggle_key_name)
             {
-                s_suggestion_hint_text.concat(toggle_key_name);
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONKEY, str_len(toggle_key_name));
-                s_suggestion_hint_text.concat("=List");
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTION, 1);
-                append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 4);
+                s_suggestion_hint_text << s_suggestion_color << "\x1b[7m" << toggle_key_name << "\x1b[27m=";
+                s_suggestion_hint_text << c_hyperlink << c_doc_autosuggest << c_BEL;
+                s_suggestion_hint_text << "List";
                 if (!has_right)
-                {
-                    s_suggestion_hint_text.concat(" Suggestions");
-                    append_face(s_suggestion_hint_faces, FACE_SUGGESTIONLINK, 12);
-                }
+                    s_suggestion_hint_text << " Suggestions";
+                s_suggestion_hint_text << c_hyperlink << c_BEL;
             }
+            s_suggestion_hint_width = cell_count(s_suggestion_hint_text.c_str());
+            if (s_suggestion_hint_width)
+                ++s_suggestion_hint_width;  // Pads it with trailing space to avoid wrap issues.
         }
         s_build_suggestion_hint = false;
     }
@@ -3029,6 +2879,29 @@ void rl_module::on_begin_line(const context& context)
         s_selection_color = m_selection_color.c_str();
     }
 
+    if (!s_suggestion_color)
+    {
+#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
+        switch (get_console_theme())
+        {
+        case console_theme::light:
+        case console_theme::dark:
+            {
+                static str<32> s_out;
+                const uint8 faint = get_console_faint_text();
+                s_out.format("\x1b[0;38;2;%u;%u;%um", faint, faint, faint);
+                s_suggestion_color = s_out.c_str();
+            }
+            break;
+        default:
+            s_suggestion_color = "\x1b[0;90m";
+            break;
+        }
+#else
+        s_suggestion_color = "\x1b[0;90m";
+#endif
+    }
+
     if (!_rl_selected_color)
     {
         m_sgr_selected_color.format("0;7");
@@ -3066,11 +2939,11 @@ void rl_module::on_begin_line(const context& context)
     g_tib->initialize();
     g_tib->set_bindings(s_emacs_standard_bindings);
     g_tib->set_border(nullptr);
+    // g_tib->set_border(&tib::c_light_border);
     g_tib->set_max_width(tib::int16_max);
     g_tib->set_max_height(tib::int16_max);
     g_tib->set_variable_height(true);
 
-#if 0
     static const char c_normal[] = "\x1b[m";
     std::shared_ptr<tib::color_table> colors = std::make_shared<tib::color_table>();
     colors->set_color(tib::color_element::base, c_normal);
@@ -3080,9 +2953,10 @@ void rl_module::on_begin_line(const context& context)
     colors->set_color(tib::color_element::input_selection, fallback_color(s_selection_color, "\x1b[0;7m"));
     colors->set_color(tib::color_element::input_mark, fallback_color(_rl_active_region_start_color, "\x1b[0;7m"));
     colors->set_color(tib::color_element::input_scroller, fallback_color(_rl_display_horizscroll_color, c_normal));
+    colors->set_color(tib::color_element::suggestion, s_suggestion_color);
+    g_tib->set_color_table(colors);
 
-    colors->set_color(tib::color_element::suggestion, "0;90");
-
+#if 0
     case FACE_MODMARK:      return fallback_color(_rl_display_modmark_color, c_normal);
 
     case FACE_HISTEXPAND1:
@@ -3091,25 +2965,6 @@ void rl_module::on_begin_line(const context& context)
         hyperlink.append(c_doc_histexpand);
         hyperlink.append(c_BEL);
         return fallback_color(s_histexpand_color, "\x1b[0;97;45m");
-
-    case FACE_SUGGESTION:
-        assert(g_autosuggest_enable.get());
-        if (s_suggestion_color)
-            return s_suggestion_color;
-#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
-        switch (get_console_theme())
-        {
-        case console_theme::light:
-        case console_theme::dark:
-            {
-                static str<32> s_out;
-                const uint8 faint = get_console_faint_text();
-                s_out.format("\x1b[0;38;2;%u;%u;%um", faint, faint, faint);
-                return s_out.c_str();
-            }
-        }
-#endif
-        return "\x1b[0;90m";
 
     case FACE_OTHER:        return fallback_color(s_input_color, c_normal);
     case FACE_UNRECOGNIZED: return fallback_color(s_unrecognized_color, fallback_color(s_input_color, c_normal));

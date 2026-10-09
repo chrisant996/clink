@@ -63,7 +63,7 @@ class suggestion_manager
 {
 public:
     bool            more() const;
-    bool            get_visible(str_base& out) const;
+    bool            get_visible(str_base& suffix, const char** usage, uint16* width) const;
     bool            has_suggestion() const;
     void            clear(bool redraw=true);
     bool            can_suggest(const line_state& line);
@@ -94,6 +94,7 @@ private:
 
 //------------------------------------------------------------------------------
 bool has_suggestion();
+bool get_visible_suggestion(str_base& suffix, const char** usage, uint16* width);
 bool is_locked_against_suggestions();
 extern "C" void lock_against_suggestions(int lock);
 extern "C" void clear_suggestion();

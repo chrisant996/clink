@@ -59,24 +59,24 @@ struct prompt_problem_details
 int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
 
 //------------------------------------------------------------------------------
-constexpr char FACE_INVALID         = ((char)1);
-constexpr char FACE_SPACE           = ' ';
-constexpr char FACE_NORMAL          = '0';
-constexpr char FACE_STANDOUT        = '1';
+// constexpr char FACE_INVALID         = ((char)1);
+constexpr char FACE_SPACE           = ' ';      // Which is tib::FACE_DEFAULT.
+// constexpr char FACE_NORMAL          = '0';
+// constexpr char FACE_STANDOUT        = '1';
 
 // WARNING:  PRE-DEFINED FACE IDS MUST BE IN 1..127; THE RANGE 128..255 IS FOR
 // CUSTOM LUA CLASSIFICATION FACE IDS.
 
-constexpr char FACE_INPUT           = '2';
+// constexpr char FACE_INPUT           = '2';
 constexpr char FACE_MODMARK         = '*';
 constexpr char FACE_MESSAGE         = '(';
-constexpr char FACE_SCROLL          = '<';
-constexpr char FACE_SELECTION       = '#';
+// constexpr char FACE_SCROLL          = '<';
+// constexpr char FACE_SELECTION       = '#';
 constexpr char FACE_HISTEXPAND1     = '!';
 constexpr char FACE_HISTEXPAND2     = '?';
-constexpr char FACE_SUGGESTION      = '-';
-constexpr char FACE_SUGGESTIONKEY   = char(0x1a); // In OEM 437 codepage, 0x1a is a right-arrow character.
-constexpr char FACE_SUGGESTIONLINK  = char(0x15); // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
+// constexpr char FACE_SUGGESTION      = '-';
+// constexpr char FACE_SUGGESTIONKEY   = char(0x1a); // In OEM 437 codepage, 0x1a is a right-arrow character.
+// constexpr char FACE_SUGGESTIONLINK  = char(0x15); // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
 
 constexpr char FACE_OTHER           = 'o';
 constexpr char FACE_UNRECOGNIZED    = 'u';

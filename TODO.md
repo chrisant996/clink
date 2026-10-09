@@ -6,8 +6,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
-- terminal_fwrite_context?
-
+- Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
 - Some Readline termcap strings need native replacement:
   - _rl_term_clrscroll
   - _rl_term_clreol
