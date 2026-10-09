@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include "clink_ctrlevent.h"
+#include "rl_integration.h"
 
 #include <signal.h>
 #include <assert.h>

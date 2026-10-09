@@ -1558,7 +1558,8 @@ bool line_editor_impl::maybe_handle_signal()
     }
     else
     {
-        const int32 sig = clink_maybe_handle_signal();
+// TODO-TIB: wait, what?
+        const int32 sig = clink_is_signaled();
         if (!sig)
             return false;
 
@@ -1567,8 +1568,14 @@ bool line_editor_impl::maybe_handle_signal()
         m_signaled = true;
 #endif
 
+// TODO-TIB: hmm...
+        clink_set_signaled(0);
+        rl_signal_event_hook = nullptr;
         if (tib::term_in_peek() == terminal_in::input_abort)
             tib::term_in();
+
+// TODO-TIB: wait what?  Why?  This is a change in behavior.
+        m_terminal->reset_dispatch();
 
         for (auto* module : m_modules)
             module->on_signal(sig);
@@ -1666,7 +1673,7 @@ void line_editor_impl::update_internal(bool force)
         // when the key sequence is finished.  For example, in a key sequence
         // like "\e[27;5;32~" (Ctrl-Space) this is called 10 times, and the
         // first 9 are redundant since the line can't have changed yet.
-        if (m_terminal.pending_input())
+        if (m_terminal->pending_input())
             return;     // The terminal is reading a multikey sequence.
         if (!m_bind_resolver.is_done())
             return;     // m_bind_resolver is reading a multikey sequence.

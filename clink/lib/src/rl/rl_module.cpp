@@ -3225,6 +3225,20 @@ void rl_module::on_end_line()
 //------------------------------------------------------------------------------
 void rl_module::on_need_input(int32& bind_group)
 {
+#if 0
+// TODO-TIB: ?
+    if (pending_input())
+    {
+        if (m_previous_group < 0)
+            m_previous_group = bind_group;
+        bind_group = m_catch_group;
+    }
+    else if (m_previous_group >= 0)
+    {
+        bind_group = m_previous_group;
+        m_previous_group = -1;
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
