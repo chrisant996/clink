@@ -614,37 +614,6 @@ rl_refresh_line (int ignore1, int ignore2)
   return 0;
 }
 
-/* C-l typed to a line without quoting clears the screen, and then reprints
-   the prompt and the current input line.  Given a numeric arg, redraw only
-   the current line. */
-int
-rl_clear_screen (int count, int key)
-{
-  if (rl_explicit_arg)
-    {
-      rl_refresh_line (count, key);
-      return 0;
-    }
-
-/* begin_clink_change */
-  reset_display_readline ();
-/* end_clink_change */
-  _rl_clear_screen (0);		/* calls termcap function to clear screen */
-  rl_keep_mark_active ();
-  rl_forced_update_display ();
-
-  return 0;
-}
-
-int
-rl_clear_display (int count, int key)
-{
-  _rl_clear_screen (1);		/* calls termcap function to clear screen and scrollback buffer */
-  rl_forced_update_display ();
-
-  return 0;
-}
-
 int
 rl_previous_screen_line (int count, int key)
 {

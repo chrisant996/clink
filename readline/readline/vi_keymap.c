@@ -44,7 +44,7 @@ KEYMAP_ENTRY_ARRAY vi_movement_keymap = {
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-i */
   { ISFUNC, rl_newline },			/* Control-j */
   { ISFUNC, rl_kill_line },			/* Control-k */
-  { ISFUNC, rl_clear_screen },			/* Control-l */
+  { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-l */
   { ISFUNC, rl_newline },			/* Control-m */
   { ISFUNC, rl_get_next_history },		/* Control-n */
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-o */

@@ -312,7 +312,6 @@ extern char *_rl_strip_prompt (char *);
 extern void _rl_reset_prompt (void);
 extern char *_rl_make_prompt_for_search (int);
 extern void _rl_erase_at_end_of_line (int);
-extern void _rl_clear_screen (int);
 extern void _rl_redisplay_after_sigwinch (void);
 extern void _rl_erase_entire_line (void);
 extern int _rl_current_display_line (void);
@@ -474,9 +473,7 @@ extern void _rl_output_character_function (int);
 #else
 extern int _rl_output_character_function (int);
 #endif
-extern void _rl_cr (void);
 extern void _rl_output_some_chars (const char *, int);
-extern int _rl_backspace (int);
 extern void _rl_enable_meta_key (void);
 extern void _rl_disable_meta_key (void);
 extern void _rl_control_keypad (int);
@@ -674,16 +671,12 @@ extern int _rl_susp_char;
 /* terminal.c */
 extern int _rl_enable_keypad;
 extern int _rl_enable_meta;
-extern char *_rl_term_clreol;
-extern char *_rl_term_clrpag;
-extern char *_rl_term_clrscroll;
 extern char *_rl_term_im;
 extern char *_rl_term_ic;
 extern char *_rl_term_ei;
 extern char *_rl_term_DC;
 extern char *_rl_term_up;
 extern char *_rl_term_dc;
-extern char *_rl_term_cr;
 extern char *_rl_term_IC;
 extern char *_rl_term_forward_char;
 /* begin_clink_change */

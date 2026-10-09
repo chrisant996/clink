@@ -8,12 +8,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 - Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
 - Some Readline termcap strings need native replacement:
-  - _rl_term_clrscroll
-  - _rl_term_clreol
-  - _rl_term_clrpag
   - _rl_term_mm, _rl_term_mo, _rl_enable_meta_key(), _rl_disable_meta_key()
   - _rl_term_vs, _rl_term_ve, _rl_set_cursor()
-  - rl_cr(), rl_crlf()
 - Reconnect `debug.log_terminal` support for logging read input.
 - Need to swap `\x08` and `\x7f` again, oops.
 - Internal states, for specialized behaviors that used to rely on RL_STATE flags.

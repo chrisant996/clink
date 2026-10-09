@@ -1782,7 +1782,7 @@ void selectcomplete_impl::update_display()
 
             if (show_more_comment_row || (m_visible_rows < m_match_rows))
             {
-                rl_crlf();
+                clink_write("\r\n", 2);
                 up++;
 
                 if (!m_comment_row_displayed)
@@ -1809,9 +1809,7 @@ void selectcomplete_impl::update_display()
             // Show match description.
             if (m_desc_below && m_matches.has_descriptions())
             {
-                rl_crlf();
-                clink_write("\x1b[m\x1b[J", 6);
-                rl_crlf();
+                clink_write("\r\n\x1b[m\x1b[J\r\n", 10);
                 up += 2;
 
                 static const char c_footer[] = "\x1b[7mF1\x1b[27m-InlineDescs";
@@ -1848,7 +1846,7 @@ void selectcomplete_impl::update_display()
             if (m_any_displayed)
             {
                 // Move cursor to next line, then clear to end of screen.
-                rl_crlf();
+                clink_write("\r\n", 2);
                 up++;
                 clink_write("\x1b[m\x1b[J", 6);
             }

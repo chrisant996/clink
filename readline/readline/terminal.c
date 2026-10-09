@@ -133,11 +133,7 @@ char PC, *BC, *UP;
 
 
 /* Some strings to control terminal actions.  These are output by tputs (). */
-char *_rl_term_clreol;
-char *_rl_term_clrpag;
-char *_rl_term_clrscroll;
 char *_rl_term_ho;
-char *_rl_term_cr;
 char *_rl_term_backspace;
 char *_rl_term_goto;
 char *_rl_term_pc;
@@ -164,9 +160,6 @@ char *_rl_term_ch;
 
 /* How to go up a line. */
 char *_rl_term_up;
-
-/* A visible bell; char if the terminal can be made to flash the screen. */
-static char *_rl_visible_bell;
 
 /* Non-zero means the terminal can auto-wrap lines. */
 int _rl_term_autowrap = -1;
@@ -458,46 +451,8 @@ struct _tc_string {
    search algorithm to something smarter. */
 static const struct _tc_string tc_strings[] =
 {
-  { "@7", &_rl_term_at7 },
-  { "BD", &_rl_term_BD },
-  { "BE", &_rl_term_BE },
-  { "DC", &_rl_term_DC },
-  { "E3", &_rl_term_clrscroll },
-  { "IC", &_rl_term_IC },
-  { "PE", &_rl_term_PE },
-  { "PS", &_rl_term_PS },
-  { "ce", &_rl_term_clreol },
-/* begin_clink_change */
-  { "ch", &_rl_term_ch },
-/* end_clink_change */
-  { "cl", &_rl_term_clrpag },
-  { "cr", &_rl_term_cr },
-  { "dc", &_rl_term_dc },
-  { "ei", &_rl_term_ei },
-  { "ho", &_rl_term_ho },
-  { "ic", &_rl_term_ic },
-  { "im", &_rl_term_im },
-  { "kD", &_rl_term_kD },	/* delete */
-  { "kH", &_rl_term_kH },	/* home down ?? */
-  { "kI", &_rl_term_kI },	/* insert */
-  { "kN", &_rl_term_kN },	/* page down */
-  { "kP", &_rl_term_kP },	/* page up */
-  { "kd", &_rl_term_kd },
-  { "ke", &_rl_term_ke },	/* end keypad mode */
-  { "kh", &_rl_term_kh },	/* home */
-  { "kl", &_rl_term_kl },
-  { "kr", &_rl_term_kr },
-  { "ks", &_rl_term_ks },	/* start keypad mode */
-  { "ku", &_rl_term_ku },
-  { "le", &_rl_term_backspace },
   { "mm", &_rl_term_mm },
   { "mo", &_rl_term_mo },
-  { "nd", &_rl_term_forward_char },
-  { "pc", &_rl_term_pc },
-  { "se", &_rl_term_se },
-  { "so", &_rl_term_so },
-  { "up", &_rl_term_up },
-  { "vb", &_rl_visible_bell },
   { "vs", &_rl_term_vs },
   { "ve", &_rl_term_ve },
 };
@@ -561,13 +516,12 @@ _rl_check_ansi_terminal (const char *terminal_name)
     if (STREQN (terminal_name, ansiterms[i].name, ansiterms[i].len))
       return 1;
 
-  if (_rl_term_clreol == 0 || _rl_term_forward_char == 0 ||
+  if (_rl_term_forward_char == 0 ||
       _rl_term_ho == 0 || _rl_term_up == 0)
     return 0;
 
   /* check some common capabilities */
-  if (((len = iscsi (_rl_term_clreol)) && _rl_term_clreol[len] == 'K') &&	/* ce */
-      ((len = iscsi (_rl_term_forward_char)) && _rl_term_forward_char[len] == 'C') &&	/* nd */
+  if (((len = iscsi (_rl_term_forward_char)) && _rl_term_forward_char[len] == 'C') &&	/* nd */
       ((len = iscsi (_rl_term_ho)) && _rl_term_ho[len] == 'H') &&	/* ho */
       ((len = iscsi (_rl_term_up)) && _rl_term_up[len] == 'A'))		/* up */
     return 1;
@@ -583,7 +537,6 @@ _rl_init_terminal_io (const char *terminal_name)
   int tty, tgetent_ret, dumbterm, reset_region_colors;
 
   term = terminal_name ? terminal_name : sh_get_env_value ("TERM");
-  _rl_term_clrpag = _rl_term_cr = _rl_term_clreol = _rl_term_clrscroll = (char *)NULL;
   tty = rl_instream ? fileno (rl_instream) : 0;
 
   if (term == 0)
@@ -598,11 +551,10 @@ _rl_init_terminal_io (const char *terminal_name)
 
 #ifdef __MSDOS__
   _rl_term_im = _rl_term_ei = _rl_term_ic = _rl_term_IC = (char *)NULL;
-  _rl_term_up = _rl_term_dc = _rl_term_DC = _rl_visible_bell = (char *)NULL;
+  _rl_term_up = _rl_term_dc = _rl_term_DC = (char *)NULL;
   _rl_term_ku = _rl_term_kd = _rl_term_kl = _rl_term_kr = (char *)NULL;
   _rl_term_mm = _rl_term_mo = (char *)NULL;
   _rl_terminal_can_insert = term_has_meta = _rl_term_autowrap = 0;
-  _rl_term_cr = "\r";
   _rl_term_backspace = (char *)NULL;
   _rl_term_ho = (char *)NULL;
   _rl_term_goto = _rl_term_pc = _rl_term_ip = (char *)NULL;
@@ -666,10 +618,9 @@ _rl_init_terminal_io (const char *terminal_name)
 
       /* Everything below here is used by the redisplay code (tputs). */
       _rl_screenchars = _rl_screenwidth * _rl_screenheight;
-      _rl_term_cr = "\r";
       _rl_term_ho = (char *)NULL;
       _rl_term_im = _rl_term_ei = _rl_term_ic = _rl_term_IC = (char *)NULL;
-      _rl_term_up = _rl_term_dc = _rl_term_DC = _rl_visible_bell = (char *)NULL;
+      _rl_term_up = _rl_term_dc = _rl_term_DC = (char *)NULL;
       _rl_term_ku = _rl_term_kd = _rl_term_kl = _rl_term_kr = (char *)NULL;
       _rl_term_kh = _rl_term_kH = _rl_term_kI = _rl_term_kD = (char *)NULL;
       _rl_term_ks = _rl_term_ke = _rl_term_at7 = (char *)NULL;
@@ -709,9 +660,6 @@ _rl_init_terminal_io (const char *terminal_name)
   PC = _rl_term_pc ? *_rl_term_pc : 0;
   BC = _rl_term_backspace;
   UP = _rl_term_up;
-
-  if (_rl_term_cr == 0)
-    _rl_term_cr = "\r";
 
   _rl_term_autowrap = TGETFLAG ("am") && TGETFLAG ("xn");
 
@@ -798,71 +746,19 @@ _rl_output_some_chars (const char *string, int count)
   fwrite (string, 1, count, _rl_out_stream);
 }
 
-/* Move the cursor back. */
-int
-_rl_backspace (int count)
-{
-  register int i;
-
-#ifndef __MSDOS__
-  if (_rl_term_backspace)
-    for (i = 0; i < count; i++)
-      tputs (_rl_term_backspace, 1, _rl_output_character_function);
-  else
-#endif
-    for (i = 0; i < count; i++)
-      putc ('\b', _rl_out_stream);
-  return 0;
-}
-
 /* Move to the start of the next line. */
 int
 rl_crlf (void)
 {
-#if defined (NEW_TTY_DRIVER) || defined (__MINT__)
-  if (_rl_term_cr)
-    tputs (_rl_term_cr, 1, _rl_output_character_function);
-#endif /* NEW_TTY_DRIVER || __MINT__ */
-  putc ('\n', _rl_out_stream);
+  tputs ("\r\n", 1, _rl_output_character_function);
   return 0;
-}
-
-void
-_rl_cr (void)
-{
-#if defined (__MSDOS__)
-  putc ('\r', rl_outstream);
-#else
-  tputs (_rl_term_cr, 1, _rl_output_character_function);
-#endif
 }
 
 /* Ring the terminal bell. */
 int
 rl_ding (void)
 {
-      switch (_rl_bell_preference)
-        {
-	case NO_BELL:
-	default:
-	  break;
-	case VISIBLE_BELL:
-	  if (_rl_visible_bell)
-	    {
-#ifdef __DJGPP__
-	      ScreenVisualBell ();
-#else
-	      tputs (_rl_visible_bell, 1, _rl_output_character_function);
-#endif
-	      break;
-	    }
-	  /* FALLTHROUGH */
-	case AUDIBLE_BELL:
-	  fprintf (stderr, "\007");
-	  fflush (stderr);
-	  break;
-        }
-      return (0);
+  return 0;
 }
 
 /* **************************************************************** */

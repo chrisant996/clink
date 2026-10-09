@@ -1739,8 +1739,8 @@ void textlist_impl::update_display()
                 line << left << m_color.border << "\xe2\x94\x8c";       // ┌
                 line << horzline;                                       // ─
                 line << "\xe2\x94\x90" << "\x1b[m";                     // ┐
-                if (clear_eol && _rl_term_clreol)
-                    line << _rl_term_clreol;
+                if (clear_eol)
+                    line << tib::term_erase_to_eol();
                 clink_write(line.c_str(), line.length());
             }
 
@@ -1756,7 +1756,7 @@ void textlist_impl::update_display()
                 if (i >= count)
                     break;
 
-                rl_crlf();
+                clink_write("\r\n", 2);
                 up++;
 
                 move_to_end = true;
@@ -1854,8 +1854,8 @@ void textlist_impl::update_display()
 #endif
                         line << "\xe2\x94\x82";                         // │
                     line << "\x1b[m";
-                    if (clear_eol && _rl_term_clreol)
-                        line << _rl_term_clreol;
+                    if (clear_eol)
+                        line << tib::term_erase_to_eol();
                     clink_write(line.c_str(), line.length());
                 }
             }
@@ -1863,15 +1863,15 @@ void textlist_impl::update_display()
             // Display border.
             if (draw_border)
             {
-                rl_crlf();
+                clink_write("\r\n", 2);
                 up++;
                 make_horz_border(footer.empty() ? nullptr : footer.c_str(), content_width, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
                 line.clear();
                 line << left << m_color.border << "\xe2\x94\x94";       // └
                 line << horzline;                                       // ─
                 line << "\xe2\x94\x98" << "\x1b[m";                     // ┘
-                if (clear_eol && _rl_term_clreol)
-                    line << _rl_term_clreol;
+                if (clear_eol)
+                    line << tib::term_erase_to_eol();
                 clink_write(line.c_str(), line.length());
             }
 

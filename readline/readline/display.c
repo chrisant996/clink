@@ -373,21 +373,3 @@ _rl_make_prompt_for_search (int pchar)
 /* end_clink_change */
   return pmt;
 }
-
-void
-_rl_clear_screen (int clrscr)
-{
-#if defined (__DJGPP__)
-  ScreenClear ();
-  ScreenSetCursor (0, 0);
-#else
-  if (_rl_term_clrpag)
-    {
-      tputs (_rl_term_clrpag, 1, _rl_output_character_function);
-      if (clrscr && _rl_term_clrscroll)
-	tputs (_rl_term_clrscroll, 1, _rl_output_character_function);
-    }
-  else
-    rl_crlf ();
-#endif /* __DJGPP__ */
-}

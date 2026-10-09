@@ -59,6 +59,8 @@ extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 
 #include "../../../clink/app/src/version.h" // Ugh.
 
+#define CSI(x) "\x1b[" #x
+
 extern "C" const int32 c_clink_version = CLINK_VERSION_ENCODED;
 
 extern bool is_test_harness();
@@ -2586,14 +2588,25 @@ int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* na
 //------------------------------------------------------------------------------
 int32_t clear_display(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_clear_display(0, 0);
+    // Cursor to top-left, clear screen, clear scrollback buffer.
+    tib::term_out(CSI(H) CSI(2J) CSI(3J));
+
+    reset_display_readline();
+    refresh_input_line();
     return 0;
 }
 
 //------------------------------------------------------------------------------
 int32_t clear_screen(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_clear_screen(0, 0);
+    if (ctx.has_numeric_argument())
+        return refresh_line(ctx, 0, nullptr, nullptr);
+
+    // Cursor to top-left, clear screen.
+    tib::term_out(CSI(H) CSI(2J));
+
+    reset_display_readline();
+    refresh_input_line();
     return 0;
 }
 

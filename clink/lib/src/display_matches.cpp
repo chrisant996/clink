@@ -1029,7 +1029,7 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
         }
 
         flush_tmpbuf();
-        rl_crlf();
+        clink_write("\r\n", 2);
 #if defined(SIGWINCH)
         if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
 #else
@@ -1056,7 +1056,7 @@ static int32 prompt_display_matches(int32 len)
     fflush(rl_outstream);
     if (__get_y_or_n(0) == 0)
     {
-        rl_crlf();
+        clink_write("\r\n", 2);
         return 0;
     }
 

@@ -107,8 +107,6 @@ extern int rl_end_of_line (int, int);
 extern int rl_forward_word (int, int);
 extern int rl_backward_word (int, int);
 extern int rl_refresh_line (int, int);
-extern int rl_clear_screen (int, int);
-extern int rl_clear_display (int, int);
 extern int rl_skip_csi_sequence (int, int);
 extern int rl_arrow_keys (int, int);
 

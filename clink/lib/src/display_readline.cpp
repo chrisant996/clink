@@ -1420,9 +1420,15 @@ extern "C" void end_prompt_lf()
 //------------------------------------------------------------------------------
 extern "C" void _rl_refresh_line(void)
 {
+    refresh_input_line();
+}
+
+//------------------------------------------------------------------------------
+void refresh_input_line()
+{
     force_redisplay_readline();
     display_readline();
-    rl_keep_mark_active();
+    g_tib->clear_auto_deactivate_mark();
 }
 
 //------------------------------------------------------------------------------
