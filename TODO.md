@@ -28,6 +28,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] Activate.
   - [ ] Overlay key bindings.  This would need a way to tell the dispatcher to forward the binding as though a miss had occurred, even though it didn't miss.  But that could get weird:  what if the fallback produces a miss?  The design might not be generalized enough yet to replace Clink's `bind_resolver` with tib's binding framework.
 - Popup lists in general.
+- Self-insert needs to queue up bytes for a codepoint.
+  - [ ] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).
+  - [ ] Readline doesn't handle graphemes, but it would be nice if tib supported whole graphemes.  Except I don't see how it could do so without a timeout.  I suppose a 500 ms timeout could actually be reasonable _when count > 1 AND non-ASCII input was entered_.
+  - Readline's `quoted-insert` is very literal and doesn't directly handle UTF8 codepoints like `self-insert` does.  That seems ok since quoted-insert kind of only makes sense for inserting control characters or the leading ESC of a VT key sequence, so it seems fine for tib to also be literal about quoted insert.
 - Bracketed paste.
 - VI mode.
 - `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
