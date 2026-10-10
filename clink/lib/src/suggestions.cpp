@@ -17,11 +17,13 @@
 #include <rl/rl_commands.h>
 #include <terminal/ecma48_iter.h>
 
+#if 0
 extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 }
+#endif
 
 //------------------------------------------------------------------------------
 setting_bool g_autosuggest_async(
@@ -196,14 +198,14 @@ void suggestions::add(const char* text, uint32 offset, const char* source,
 }
 
 //------------------------------------------------------------------------------
-void suggestions::remove(uint32 index)
+void suggestions::remove(size_t index)
 {
     m_items.erase(m_items.begin() + index);
     m_dirtied = true;
 }
 
 //------------------------------------------------------------------------------
-void suggestions::remove_if_history_index(uint32 history_index)
+void suggestions::remove_if_history_index(int32 history_index)
 {
     assert(history_index >= 0);
     for (auto it = m_items.begin(); it != m_items.end();)
@@ -314,8 +316,13 @@ bool suggestion_manager::can_suggest(const line_state& line)
     // is not for the command line.  Disable suggestions during macro playback
     // or recording because suggestions are generated asynchronously so
     // recorded keys won't behave as expected.
-    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR|RL_STATE_MACRODEF) ||
-        (RL_ISSTATE(RL_STATE_MACROINPUT) && _rl_peek_macro_key()))
+    if (
+#ifdef TIB_TODO
+        RL_ISSTATE(RL_STATE_NSEARCH|        // incremental search
+                   RL_STATE_READSTR|        // readstr
+                   RL_STATE_MACRODEF) ||    // recording macro
+#endif
+        tib::term_has_macro_input())
     {
         clear();
         return false;
@@ -340,9 +347,10 @@ bool suggestion_manager::can_suggest(const line_state& line)
     // can clear the flag.
     if (is_suppressing_suggestions())
     {
-        if (rl_last_func == rl_rubout ||
-            rl_last_func == rl_backward_kill_word ||
-            rl_last_func == rl_backward_kill_line)
+        const auto last_func = g_tib->get_last_command_func();
+        if (last_func == tib::del_char_left ||
+            last_func == backward_kill_word ||
+            last_func == backward_kill_line)
         {
             suppress_suggestions();
             return false;
@@ -707,7 +715,7 @@ bool suggestion_manager::insert(suggestion_action action)
         else if (action == suggestion_action::insert_next_word)
         {
             // Skip forward a word.
-            rl_forward_word(1, 0);
+            clink_forward_word(*g_tib, 0, nullptr, nullptr);
 
             // Resync the suggestion iterator.
             resync_suggestion_iterator(end_offset);

@@ -46,10 +46,10 @@ public:
     void            add(const char* text, uint32 offset, const char* source,
                         int32 highlight_offset, int32 highlight_length,
                         const char* tooltip, int32 history_index);
-    const suggestion& operator [] (uint32 index) const { return m_items[index]; }
-    const suggestion& get(uint32 index) const { return m_items[index]; }
-    void            remove(uint32 index);
-    void            remove_if_history_index(uint32 history_index);
+    const suggestion& operator [] (size_t index) const { return m_items[index]; }
+    const suggestion& get(size_t index) const { return m_items[index]; }
+    void            remove(size_t index);
+    void            remove_if_history_index(int32 history_index);
     uint32          get_generation_id() const { return m_generation_id; }
 private:
     str_moveable    m_line;         // Input line off which suggestions are based.
