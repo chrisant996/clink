@@ -43,9 +43,10 @@ void init_prompt(const str_base& prompt, const str_base& rprompt);
 //------------------------------------------------------------------------------
 void    set_prev_inputline(const char* line, uint32 length=-1);
 void    set_pending_luafunc(const char* macro);
-void    override_last_command(const char* name, bool force_when_null=false);
+void    override_last_command(const char* name, tib::editor_command_func_t func, bool force_when_null=false);
 const char* get_last_luafunc();
-const char* get_effective_last_command();
+const char* get_effective_last_command_name();
+void*   get_effective_last_command_func();
 uint32  get_last_func_override_counter();
 bool    is_luafunc_command(const char* name, str_base* out=nullptr);
 bool    luafunc_hook_func(const char* name);

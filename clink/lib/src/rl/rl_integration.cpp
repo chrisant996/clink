@@ -103,7 +103,8 @@ static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_last_command = false;
 static uint32       s_last_func_override_counter = 0;
-static str_moveable s_override_last_command;
+static str_moveable s_override_last_command_name;
+static tib::editor_command_func_t s_override_last_command_func = nullptr;
 static str_moveable s_last_luafunc;
 static bool         s_ignore_last_command_hook = false;
 
@@ -130,15 +131,18 @@ void set_pending_luafunc(const char* macro)
 }
 
 //------------------------------------------------------------------------------
-void override_last_command(const char* name, bool force_when_null)
+void override_last_command(const char* name, tib::editor_command_func_t func, bool force_when_null)
 {
+    assertimplies(name, *name);
+    assert(!name == !func);
     ++s_last_func_override_counter;
     s_has_override_last_command = true;
-    s_override_last_command = name;
+    s_override_last_command_name = name;
+    s_override_last_command_func = func;
     if (name || force_when_null)
     {
         rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
-        g_tib->set_last_command(name);
+        g_tib->set_last_command(name, func);
 #ifdef TIB_TODO
         // TODO-TIB: seems unnecessary anymore.
         cua_after_command();
@@ -153,12 +157,22 @@ const char* get_last_luafunc()
 }
 
 //------------------------------------------------------------------------------
-const char* get_effective_last_command()
+const char* get_effective_last_command_name()
 {
     if (s_has_override_last_command)
-        return s_override_last_command.c_str();
+        return s_override_last_command_name.c_str();
     if (g_tib)
-        return g_tib->get_last_command();
+        return g_tib->get_last_command_name();
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+void* get_effective_last_command_func()
+{
+    if (s_has_override_last_command)
+        return s_override_last_command_func;
+    if (g_tib)
+        return g_tib->get_last_command_func();
     return nullptr;
 }
 
@@ -233,10 +247,9 @@ void last_command_hook_func(int32 dispatched)
         return;
     rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
 
-// TODO-TIB: the shape of this integration may need to change?
     if (s_has_override_last_command)
     {
-        g_tib->set_last_command(s_override_last_command.c_str());
+        g_tib->set_last_command(s_override_last_command_name.c_str(), s_override_last_command_func);
         s_has_override_last_command = false;
     }
 
@@ -267,7 +280,7 @@ void apply_pending_lastfunc()
         if (g_tib)
         {
             rollback<bool> rb_ignore(s_ignore_last_command_hook, true);
-            g_tib->set_last_command(s_override_last_command.c_str());
+            g_tib->set_last_command(s_override_last_command_name.c_str(), s_override_last_command_func);
         }
         s_has_override_last_command = false;
     }
@@ -283,7 +296,8 @@ void clear_pending_lastfunc()
 {
     s_pending_luafunc.clear();
     s_has_override_last_command = false;
-    s_override_last_command.clear();
+    s_override_last_command_name.clear();
+    s_override_last_command_func = nullptr;
 }
 
 

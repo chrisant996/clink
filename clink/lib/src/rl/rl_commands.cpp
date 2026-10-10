@@ -1254,7 +1254,7 @@ int32 clink_popup_show_help(int32 count, int32 invoking_key)
 int32_t clink_select_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
-    if (!g_result || !activate_select_complete(*g_result, stricmp(ctx.get_last_command(), "clink-select-complete")))
+    if (!g_result || !activate_select_complete(*g_result, ctx.get_last_command_func() == clink_select_complete))
         tib::ding();
     return 0;
 }
@@ -2503,8 +2503,8 @@ int32_t yank_pop(tib::editor_context& ctx, int32_t key, const char* name, const 
 {
     const auto index = tib::get_kill_ring_index();
     const auto len = tib::get_kill_ring_text_length(index);
-    const char* last_command = ctx.get_last_command();
-    if (!len || (stricmp(last_command, "yank") && stricmp(last_command, "yank-pop")))
+    tib::editor_command_func_t last_command = ctx.get_last_command_func();
+    if (!len || (last_command != yank && last_command != yank_pop))
     {
 nope:
         tib::abort(ctx, key, name, params);

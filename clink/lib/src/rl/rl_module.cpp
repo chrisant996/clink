@@ -1228,7 +1228,7 @@ stop:
                 g_rl_buffer->end_undo_group();
                 // Force the menu-complete family of commands to regenerate
                 // matches, otherwise they'll have no matches.
-                override_last_command(nullptr, true/*force_when_null*/);
+                override_last_command(nullptr, nullptr, true/*force_when_null*/);
                 return nullptr;
             }
             else

@@ -608,14 +608,11 @@ static int32 invoke_command(lua_State* state)
         return 1;
     }
 
-    // TIB COMPATIBILITY NOTE:  self-insert is not supported here, but also it
-    // never worked very well here even with Readline.
-
     auto func = tib::editor_context::lookup_command(command);
     if (func == nullptr)
         return 0;
 
-    const auto last_command = get_effective_last_command();
+    const auto last_command = get_effective_last_command_func();
     const auto counter = get_last_func_override_counter();
 
     int32 isnum;
@@ -630,11 +627,11 @@ static int32 invoke_command(lua_State* state)
     // fails, to ensure it can prompt the next time activation is attempted.
     if (counter == get_last_func_override_counter())
     {
-        const auto effective_last = g_tib ? g_tib->get_last_command() : nullptr;
+        const auto effective_last = g_tib ? g_tib->get_last_command_func() : nullptr;
         if ((!last_command && !effective_last) ||
-            (stricmp(last_command, effective_last) == 0))
+            (last_command == effective_last))
         {
-            override_last_command(command);
+            override_last_command(command, func);
         }
     }
 
@@ -664,7 +661,7 @@ static int32 get_last_command(lua_State* state)
     if (!g_tib)
         return 0;
 
-    lua_pushstring(state, g_tib->get_last_command());
+    lua_pushstring(state, g_tib->get_last_command_name());
     lua_pushstring(state, get_last_luafunc());
     return 2;
 }
