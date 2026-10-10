@@ -1592,6 +1592,10 @@ static void init_emacs_standard_binds(bool force=false)
         { "\\M-7",          "digit-argument" },         // Alt-7
         { "\\M-8",          "digit-argument" },         // Alt-8
         { "\\M-9",          "digit-argument" },         // Alt-9
+        { "\\M-<",          "beginning-of-history" },   // Alt-<
+        { "\\M-=",          "possible-completions" },   // Alt-=
+        { "\\M->",          "end-of-history" },         // Alt->
+        { "\\M-?",          "possible-completions" },   // Alt-?
         { "\\M-A",          "do-lowercase-version" },   // Alt-A
         { "\\M-B",          "do-lowercase-version" },   // Alt-B
         { "\\M-C",          "do-lowercase-version" },   // Alt-C
