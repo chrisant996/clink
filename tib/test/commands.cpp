@@ -22,6 +22,12 @@ static void invoke_command(tib::editor_context& context, const char* name)
     REQUIRE(command(context, 0, name, nullptr) == 0);
 }
 
+static int32_t dummy_command(tib::editor_context& context, int32_t key, const char* name, const tib::binding_params* params)
+{
+    PREVENT_COMDAT_FOLDING();
+    return 0;
+}
+
 TEST_CASE("Abort command resets editor state")
 {
     tib::editor_context context;
@@ -33,7 +39,7 @@ TEST_CASE("Abort command resets editor state")
     context.set_overwrite_mode(true);
     context.set_named_value("operation", "pending");
     context.set_numeric_argument(-12);
-    context.set_last_command("previous-command");
+    context.set_last_command("dummy-command", dummy_command);
 
     invoke_command(context, "abort");
 
@@ -44,7 +50,8 @@ TEST_CASE("Abort command resets editor state")
     REQUIRE(context.get_border() == &border);
     REQUIRE(context.get_named_value("operation") == nullptr);
     REQUIRE(!context.has_numeric_argument());
-    REQUIRE(!strcmp(context.get_last_command(), ""));
+    REQUIRE(!strcmp(context.get_last_command_name(), ""));
+    REQUIRE(context.get_last_command_func() == nullptr);
 }
 
 TEST_CASE("Abort command interrupts pending overwrite input")
@@ -340,7 +347,7 @@ TEST_CASE("Screen line cursor column continuation")
     }
 
     REQUIRE(stream.empty());
-    REQUIRE(!strcmp(context->get_last_command(), "cua-screen-line-down"));
+    REQUIRE(context->get_last_command_func() == tib::cua_screen_line_down);
     REQUIRE(context->get_selection_state().get_anchor() == 11);
     REQUIRE(context->get_selection_state().get_caret() == 19);
 }

@@ -28,6 +28,12 @@ static const char c_last_click_tick[] = "mouse_input_last_click_tick";
 
 uint32_t g_add_to_kill_ring = 0;
 
+static const char* s_trick_the_linker = 0;
+extern "C" void prevent_COMDAT_folding(const char* str)
+{
+    s_trick_the_linker = str;
+}
+
 static bool is_in_string_list(const char* s, const char* const* list)
 {
     while (*list)
@@ -45,8 +51,8 @@ static int16_t cursor_column_continuation(editor_context& ctx, const char* comma
 
     const char* const have_operation = ctx.get_named_value(c_cursor_column_operation_var_name);
     const bool continuing = ((!operation || (operation && have_operation && !strcmp(have_operation, operation))) &&
-                             (!strcmp(ctx.get_last_command(), command_name) ||
-                              (alt_command_names && is_in_string_list(ctx.get_last_command(), alt_command_names))));
+                             (!strcmp(ctx.get_last_command_name(), command_name) ||
+                              (alt_command_names && is_in_string_list(ctx.get_last_command_name(), alt_command_names))));
 
     int32_t cursor_column;
     if (continuing)
@@ -406,6 +412,79 @@ int32_t copy(editor_context& ctx, int32_t key, const char* name, const binding_p
 int32_t paste(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
 {
     ctx.paste_from_clipboard();
+    return 0;
+}
+
+int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    if (!is_self_insertable(key))
+    {
+        ding();
+        return 0;
+    }
+
+    char c = char(key);
+    bool handled = false;
+
+    // The self-insert optimization collects as much raw insertable input as
+    // possible into a single insert operation, requiring only a single
+    // display refresh operation for the whole batch.
+    //
+    // However, the optimization may be turned off globally.  It may also be
+    // suppressed for some scope in a specific input box, for example to
+    // ensure that within some scope (perhaps for an extensibility framework)
+    // any invocations of the self_insert editor command insert only a single
+    // character without reading any further input from the terminal.
+    if (!ctx.has_numeric_argument() && g_optimize_self_insert && ctx.get_allow_optimized_self_insert())
+    {
+        // Yield to the editor periodically even when input keeps arriving.
+        const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
+        int32_t peek = term_in_peek();
+        if (is_self_insertable(peek))
+        {
+            cstring input(&c, 1);
+            while (is_self_insertable(peek) && std::chrono::steady_clock::now() < batch_deadline)
+            {
+                const int32_t cin = term_in();
+                assert(cin == peek);
+                suppress_unused_var(cin);
+
+                c = char(peek);
+                input.append(&c, 1);
+                peek = term_in_peek();
+            }
+
+            if (hook_input_trace)
+            {
+                for (size_t i = 0; i < input.length(); ++i)
+                    hook_input_trace("insert batch byte", uint8_t(input.c_str()[i]), i);
+            }
+
+            ctx.insert_text(input.c_str(), input.length(), ctx.get_overwrite_mode());
+            handled = true;
+        }
+    }
+
+    if (!handled)
+    {
+// TODO-TIB: this needs to collect a full codepoint, not just a raw byte, and
+// it should do so via a state machine to immunize it against timing issues.
+// TODO-TIB: and if n > 1 and c & 0x80 then it should collect a full grapheme,
+// but it's ok to use a 500 ms timeout for that.
+        int32_t n = ctx.get_numeric_argument();
+        if (n > 0)
+        {
+            ctx.begin_undo_group();
+            while (n-- > 0)
+            {
+                if (hook_input_trace)
+                    hook_input_trace("insert char", uint8_t(c), n);
+                ctx.insert_char(c, ctx.get_overwrite_mode());
+            }
+            ctx.end_undo_group();
+        }
+    }
+
     return 0;
 }
 
@@ -800,64 +879,6 @@ int32_t lorem_ipsum(editor_context& ctx, int32_t key, const char* name, const bi
         "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla "
         "pariatur.  Excepteur sint occaecat cupidatat non proident, sunt in "
         "culpa qui officia deserunt mollit anim id est laborum.");
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-
-int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
-{
-    if (key < 0)
-        return -1;
-
-    int32_t n = ctx.get_numeric_argument();
-    if (n <= 0)
-        return 0;
-
-    if (key <= 0xff)
-    {
-        ctx.begin_undo_group();
-        while (n-- > 0)
-            ctx.insert_char(char(key), ctx.get_overwrite_mode());
-        ctx.end_undo_group();
-        return 0;
-    }
-
-    // Interpret key as UTF32 and convert it to UTF8.
-    char utf8[4];
-    size_t length;
-    if (key <= 0x7ff)
-    {
-        utf8[0] = char(0xc0 | (key >> 6));
-        utf8[1] = char(0x80 | (key & 0x3f));
-        length = 2;
-    }
-    else if (key <= 0xffff)
-    {
-        if (key >= 0xd800 && key <= 0xdfff)
-            return -1;
-        utf8[0] = char(0xe0 | (key >> 12));
-        utf8[1] = char(0x80 | ((key >> 6) & 0x3f));
-        utf8[2] = char(0x80 | (key & 0x3f));
-        length = 3;
-    }
-    else if (key <= 0x10ffff)
-    {
-        utf8[0] = char(0xf0 | (key >> 18));
-        utf8[1] = char(0x80 | ((key >> 12) & 0x3f));
-        utf8[2] = char(0x80 | ((key >> 6) & 0x3f));
-        utf8[3] = char(0x80 | (key & 0x3f));
-        length = 4;
-    }
-    else
-        return -1;
-
-    // Insert the converted UTF8 characters.
-    ctx.begin_undo_group();
-    while (n-- > 0)
-        ctx.insert_text(utf8, length, ctx.get_overwrite_mode());
-    ctx.end_undo_group();
-
     return 0;
 }
 

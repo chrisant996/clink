@@ -69,6 +69,7 @@ int32_t exchange_caret_and_mark(tib::editor_context& ctx, int32_t key, const cha
 int32_t cut(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t copy(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t paste(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t self_insert(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t quoted_insert(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t toggle_overwrite_mode(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 
@@ -90,5 +91,10 @@ int32_t redisplay(tib::editor_context& ctx, int32_t key, const char* name, const
 int32_t lorem_ipsum(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 
 std::shared_ptr<tib::key_table_list> make_default_key_table(bool numeric_argument=false);
+
+// Use this in a function to prevent it from being COMDAT-folded with another
+// identical function.
+extern "C" void prevent_COMDAT_folding(const char*);
+#define PREVENT_COMDAT_FOLDING() tib::prevent_COMDAT_folding(__FUNCTION__)
 
 }

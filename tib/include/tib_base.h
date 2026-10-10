@@ -55,6 +55,8 @@ size_t resolve_auto_length(size_t len, const char* s) noexcept;
 size_t resolve_auto_length(size_t len, const WCHAR* s) noexcept;
 #endif
 
+template <class T> inline void suppress_unused_var(T var) {}
+
 typedef int32_t textpos_t;
 
 struct coord
@@ -86,6 +88,7 @@ public:
     bool                set_at(size_t index, char c) noexcept;
     bool                append(const T* s, size_t len=c_auto_length);
     bool                append_char(char c, size_t n=1);
+    bool                append_utf32(int32_t c, size_t n=1);
     bool                append_spaces(size_t n);
     bool                append_color(const T* sgr_params);
     bool                delete_range(size_t index, size_t len) noexcept;
@@ -218,6 +221,45 @@ bool cstring_t<T>::append_char(char c, size_t n)
             return false;
         --n;
     }
+    return true;
+}
+
+template<class T>
+bool cstring_t<T>::append_utf32(int32_t c, size_t n)
+{
+    if (c < 0 || !n)
+        return false;
+
+    char utf8[4];
+    size_t length;
+    if (c <= 0x7ff)
+    {
+        utf8[0] = char(0xc0 | (c >> 6));
+        utf8[1] = char(0x80 | (c & 0x3f));
+        length = 2;
+    }
+    else if (c <= 0xffff)
+    {
+        if (c >= 0xd800 && c <= 0xdfff)
+            return false;
+        utf8[0] = char(0xe0 | (c >> 12));
+        utf8[1] = char(0x80 | ((c >> 6) & 0x3f));
+        utf8[2] = char(0x80 | (c & 0x3f));
+        length = 3;
+    }
+    else if (c <= 0x10ffff)
+    {
+        utf8[0] = char(0xf0 | (c >> 18));
+        utf8[1] = char(0x80 | ((c >> 12) & 0x3f));
+        utf8[2] = char(0x80 | ((c >> 6) & 0x3f));
+        utf8[3] = char(0x80 | (c & 0x3f));
+        length = 4;
+    }
+    else
+        return false;
+
+    while (n--)
+        append(utf8, length);
     return true;
 }
 

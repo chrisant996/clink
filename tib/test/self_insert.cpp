@@ -99,7 +99,8 @@ TEST_CASE("Quoted insert")
 
             REQUIRE(byte_input->get_text().length() == 1);
             REQUIRE(uint8_t(byte_input->get_text().c_str()[0]) == c);
-            REQUIRE(!strcmp(byte_input->get_last_command(), "self-insert"));
+            REQUIRE(!strcmp(byte_input->get_last_command_name(), "quoted-insert"));
+            REQUIRE(byte_input->get_last_command_func() == tib::quoted_insert);
         }
     }
 

@@ -140,8 +140,9 @@ public:
     void                set_overwrite_mode(bool overwrite) noexcept;
     void                toggle_overwrite_mode() noexcept { set_overwrite_mode(!m_overwrite_mode); }
 
-    const char*         get_last_command() const noexcept { return m_last_command.c_str(); }
-    void                set_last_command(const char* name);
+    const char*         get_last_command_name() const noexcept { return m_last_command_name.c_str(); }
+    editor_command_func_t get_last_command_func() const noexcept { return m_last_command_func; }
+    void                set_last_command(const char* name, editor_command_func_t func);
     const char*         get_named_value(const char* name) const;
     int32_t             get_named_value_int(const char* name, int32_t def=0) const;
     void                set_named_value(const char* name, const char* value);
@@ -182,6 +183,9 @@ public:
 
     void                transfer_text(cstring& out);
 
+    bool                get_allow_optimized_self_insert() const { return m_allow_optimized_self_insert; }
+    void                set_allow_optimized_self_insert(bool allow) { m_allow_optimized_self_insert = allow; }
+
 #ifdef DEBUG
     void                dump_undo_stack();
 #endif
@@ -204,10 +208,6 @@ public:
                         // Methods on the tib::dispatcher_target interface.
     int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept override;
     void                on_binding_fallback() noexcept override;
-
-protected:
-    bool                get_allow_optimized_self_insert() const { return m_allow_optimized_self_insert; }
-    void                set_allow_optimized_self_insert(bool allow) { m_allow_optimized_self_insert = allow; }
 
 private:
     void                init_undo();
@@ -253,7 +253,8 @@ private:
     selection_state     m_overwrite_input_original_selection;
     uint32_t            m_overwrite_input_change_counter = 0;
     uint32_t            m_overwrite_input_navigation_counter = 0;
-    cstring             m_last_command;
+    cstring             m_last_command_name;
+    editor_command_func_t m_last_command_func = nullptr;
     std::map<cstring, cstring, cstring_less> m_named_values;
     bool                m_in_on_dispatched = false;
 

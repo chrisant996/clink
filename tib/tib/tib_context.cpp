@@ -288,7 +288,8 @@ void editor_context::reset_state() noexcept
     m_named_values.clear();
     clear_numeric_argument();
 
-    m_last_command.clear();
+    m_last_command_name.clear();
+    m_last_command_func = nullptr;
     if (m_callbacks)
         m_callbacks->on_dispatched(nullptr);
 
@@ -776,9 +777,16 @@ void editor_context::replace_from_history(const cstring& s, bool keep_undo)
 }
 #endif
 
-void editor_context::set_last_command(const char* name)
+void editor_context::set_last_command(const char* name, editor_command_func_t func)
 {
-    m_last_command.set(name);
+    assert(name && *name);
+    assert(func);
+
+    if (!name || !*name || !func)
+        return;
+
+    m_last_command_name.set(name);
+    m_last_command_func = func;
 
     if (m_callbacks && !m_in_on_dispatched)
     {
@@ -1449,20 +1457,20 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                     ret = func(*this, key, name, params);
                     if (ret == c_dispatch_request_quoted_insert)
                         m_quoted_insert_count = get_numeric_argument();
+                    set_last_command(name, func);
                 }
                 else
                 {
                     ret = 0;
                     ding();
                 }
-                set_last_command(name);
             }
             break;
 
         case binding_type::quoted_insert:
             {
                 ret = 0;
-                set_last_command("self-insert");
+                set_last_command("quoted-insert", quoted_insert);
                 const char c = binding->get_char();
                 int32_t repeat = m_quoted_insert_count;
                 if (repeat < 0)
@@ -1492,63 +1500,13 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
     {
         if (is_self_insertable(key))
         {
-            const char c = char(key);
-            bool handled = false;
-            set_last_command("self-insert");
-
-            // The self-insert optimization collects as much raw insertable
-            // input as possible into a single insert operation, requiring
-            // only a single display refresh operation for the whole batch.
-            //
-            // However, the optimization may be turned off globally.  It may
-            // also be suppressed for some scope in a specific input box, for
-            // example to ensure that within some scope (perhaps for an
-            // extensibility framework) any invocations of the self_insert
-            // editor command insert only a single character without reading
-            // any further input from the terminal.
-            if (!has_numeric_argument() && g_optimize_self_insert && m_allow_optimized_self_insert)
+            const char* name = "self-insert";
+            if (!m_callbacks || !m_callbacks->on_dispatch(name))
             {
-                // Yield to the editor periodically even when input keeps arriving.
-                const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
-                int32_t peek = term_in_peek();
-                if (is_self_insertable(peek))
-                {
-                    cstring input(&c, 1);
-                    while (is_self_insertable(peek) && std::chrono::steady_clock::now() < batch_deadline)
-                    {
-                        const int32_t cin = term_in();
-                        assert(cin == peek);
-                        (void)cin;
-                        const char next = char(peek);
-                        input.append(&next, 1);
-                        peek = term_in_peek();
-                    }
-                    if (hook_input_trace)
-                    {
-                        for (size_t i = 0; i < input.length(); ++i)
-                            hook_input_trace("insert batch byte", uint8_t(input.c_str()[i]), i);
-                    }
-                    insert_text(input.c_str(), input.length(), get_overwrite_mode());
-                    handled = true;
-                }
+                editor_command_func_t func = self_insert;
+                ret = func(*this, key, name, params);
+                set_last_command(name, func);
             }
-
-            if (!handled)
-            {
-                int32_t n = get_numeric_argument();
-                if (n > 0)
-                {
-                    begin_undo_group();
-                    while (n-- > 0)
-                    {
-                        if (hook_input_trace)
-                            hook_input_trace("insert char", uint8_t(c), n);
-                        insert_char(c, get_overwrite_mode());
-                    }
-                    end_undo_group();
-                }
-            }
-            ret = 0;
         }
         else
         {

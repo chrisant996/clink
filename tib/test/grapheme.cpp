@@ -898,8 +898,9 @@ TEST_CASE("Display multiline scroll markers")
 
         REQUIRE(fixture.m_display.display() == true);
         tib::cstring expected;
-        expected.set("abc");
-        expected.append_char(' ', 7 - tib::c_horz_scroll_indicator_chars);
+        expected.set("abc ");
+        expected.set("\x1b[m");
+        expected.append_char(' ', 6 - tib::c_horz_scroll_indicator_chars);
         expected.append("\x1b[1m");
         expected.append_char('>', tib::c_horz_scroll_indicator_chars);
         REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
