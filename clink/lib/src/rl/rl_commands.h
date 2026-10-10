@@ -69,7 +69,7 @@ int32_t clink_menu_complete_numbers(tib::editor_context& ctx, int32_t key, const
 int32_t clink_menu_complete_numbers_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clink_old_menu_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clink_old_menu_complete_numbers_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
-int32   clink_popup_complete_numbers(int32 count, int32 invoking_key);
+int32_t clink_popup_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clink_popup_show_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
@@ -143,6 +143,7 @@ int32_t menu_complete(tib::editor_context& ctx, int32_t key, const char* name, c
 int32_t backward_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t backward_old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t tab_insert(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;

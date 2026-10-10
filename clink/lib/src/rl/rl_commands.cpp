@@ -1347,7 +1347,7 @@ int32_t clink_old_menu_complete_numbers_backward(tib::editor_context& ctx, int32
 }
 
 //------------------------------------------------------------------------------
-int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
+int32_t clink_popup_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_complete_numbers"))
         tib::ding();
@@ -2769,7 +2769,12 @@ int32_t backward_old_menu_complete(tib::editor_context& ctx, int32_t key, const 
     return do_rl_command(rl_backward_old_menu_complete, key);
 }
 
-
+//------------------------------------------------------------------------------
+int32_t tab_insert(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    ctx.insert_text(" ", 1);
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept

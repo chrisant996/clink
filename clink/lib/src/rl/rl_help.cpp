@@ -252,9 +252,7 @@ static const func_desc c_func_descriptions[] =
     { "set-mark", tib::set_mark, keycat_misc, "Set the mark to the cursor point.  If a numeric argument is supplied, sets the mark to that position" },
     // { "skip-csi-sequence", rl_skip_csi_sequence, keycat_misc, "" },
     // { "start-kbd-macro", rl_start_kbd_macro, keycat_misc, "Begin saving the characters typed into the current keyboard macro" },
-#if 0
-    { "tab-insert", nullptr, keycat_basic, "Insert a tab character" }, // Not supported by CMD.
-#endif
+    { "tab-insert", tab_insert, keycat_basic, "Insert a tab character" },
     { "tilde-expand", clink_tilde_expand, keycat_completion, "Perform tilde expansion on the current word" },
     { "transpose-chars", tib::transpose_chars, keycat_basic, "Drag the character before the cursor point forward over the character at the cursor, moving the cursor forward as well.  If the cursor point is at the end of the line, then this transposes the last two characters of the line" },
     { "transpose-words", tib::transpose_words, keycat_basic, "Drag the word before the cursor point past the word after the cursor, moving the cursor past that word as well.  If the cursor point is at the end of the line, this transposes the last two words on the line" },
@@ -359,7 +357,7 @@ static const func_desc c_func_descriptions[] =
     { "clink-old-menu-complete-numbers", clink_old_menu_complete_numbers, keycat_completion, "Like 'old-menu-complete' using numbers from the current screen" },
     { "clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen" },
     { "clink-paste", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
-    // { "clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform interactive completion from a list of numbers from the current screen" },
+    { "clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform interactive completion from a list of numbers from the current screen" },
     { "clink-popup-directories", clink_popup_directories, keycat_misc, "Show recent directories in a popup list.  In the popup, use Enter to 'cd /d' to the selected directory" },
     // { "clink-popup-history", clink_popup_history, keycat_history, "Show history entries in a popup list.  Filters using any text before the cursor point.  In the popup, use Enter to execute the selected history entry" },
     { "clink-popup-show-help", clink_popup_show_help, keycat_misc, "Show all key bindings in a searchable popup list.  In the popup, use Enter to invoke the selected key binding.  If a numeric argument of 4 is supplied, includes unbound commands" },
