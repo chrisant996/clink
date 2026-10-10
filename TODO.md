@@ -36,6 +36,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - VI mode.
 - `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
 - `_rl_show_mode_in_prompt` and emacs and vi modes.
+- Open Issue:  Why does any abort in Readline clear the recorded keyboard macro??
+- By Design:  Readline hides the numeric argument message as soon as a non-digit-argument chord begins.  That seems undesirable to me, and tib allows the message to stay until the chord is completed, so that you can see what argument you'll send to the command you're about to invoke.
 
 ## Mystery Issue
 

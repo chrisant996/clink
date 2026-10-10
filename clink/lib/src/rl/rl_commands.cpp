@@ -2822,6 +2822,27 @@ int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* nam
     }
 }
 
+//------------------------------------------------------------------------------
+int32_t start_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
+{
+    assert(&ctx == g_tib.get());
+    return g_tib->start_kbd_macro();
+}
+
+//------------------------------------------------------------------------------
+int32_t end_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
+{
+    assert(&ctx == g_tib.get());
+    return g_tib->end_kbd_macro();
+}
+
+//------------------------------------------------------------------------------
+int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
+{
+    assert(&ctx == g_tib.get());
+    return g_tib->call_last_kbd_macro();
+}
+
 
 
 //------------------------------------------------------------------------------

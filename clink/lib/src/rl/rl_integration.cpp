@@ -29,11 +29,114 @@ extern void (*rl_fflush_function)(FILE*);
 
 //------------------------------------------------------------------------------
 extern editor_module::result* g_result;
-std::shared_ptr<tib::input_box> g_tib;
+std::shared_ptr<clink_input_box> g_tib;
 str_moveable g_prompt_prefix;
 str_moveable g_prompt;
 str_moveable g_rprompt;
 static bool s_force_reload_scripts = false;
+
+//------------------------------------------------------------------------------
+int32_t clink_input_box::dispatch(const tib::cstring& sequence,
+                                  int32_t key,
+                                  const tib::binding_target* binding,
+                                  const tib::binding_params* params) noexcept
+{
+    const bool was_recording = m_recording_macro;
+    size_t recording_length;
+
+    // Record the keys that reached the editor, including self insertion and
+    // quoted insertion.  Bound text macros feed their expansion back through
+    // the resolver, so their resulting keys are recorded here as well.
+    if (m_recording_macro)
+    {
+        recording_length = m_recording.length();
+        if (!binding || (!binding->is_func_name("start-kbd-macro") &&
+                         !binding->is_func_name("end-kbd-macro") &&
+                         !binding->is_func_name("call-last-kbd-macro")))
+        {
+            if (!m_recording.append(sequence.c_str(), sequence.length()))
+                tib::ding();
+        }
+    }
+
+    const auto ret = base::dispatch(sequence, key, binding, params);
+
+    // If some other command ended the recording, then truncate the recording
+    // to omit this last sequence.  This accommodates execute-named-command,
+    // clink-popup-show-help, and Lua functions using rl.invokecommand, etc
+    // being used to invoke end-kbd-macro.
+    if (was_recording && !m_recording_macro)
+    {
+        assert(m_recording.empty());
+        assert(m_last_macro.length() >= recording_length);
+        if (m_last_macro.length() >= recording_length)
+            m_last_macro.set_length(recording_length);
+    }
+
+    return ret;
+}
+
+int32_t clink_input_box::start_kbd_macro() noexcept
+{
+    if (m_recording_macro)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    const bool append = has_numeric_argument();
+    m_recording.clear();
+    m_recording_macro = true;
+    if (append && m_has_last_macro && !m_last_macro.empty())
+        tib::term_push_macro_text(m_last_macro.c_str(), m_last_macro.length());
+    return 0;
+}
+
+int32_t clink_input_box::end_kbd_macro() noexcept
+{
+    if (!m_recording_macro)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    const int32_t count = get_numeric_argument();
+    m_recording_macro = false;
+    m_last_macro = m_recording;
+    m_has_last_macro = true;
+    m_recording.clear();
+    return play_kbd_macro(count > 1 ? count - 1 : 0);
+}
+
+int32_t clink_input_box::call_last_kbd_macro() noexcept
+{
+    if (m_recording_macro)
+    {
+        tib::ding();
+        return 0;
+    }
+    return play_kbd_macro(get_numeric_argument());
+}
+
+int32_t clink_input_box::play_kbd_macro(int32_t count) noexcept
+{
+    if (!m_has_last_macro)
+    {
+        tib::ding();
+        return 0;
+    }
+    if (m_last_macro.empty())
+        return 0;
+    while (count-- > 0)
+    {
+        if (!tib::term_push_macro_text(m_last_macro.c_str(), m_last_macro.length()))
+        {
+            tib::ding();
+            break;
+        }
+    }
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 bool is_force_reload_scripts()

@@ -8,6 +8,7 @@
 #include "editor_module.h"
 #include "line_state.h"
 #include "word_collector.h"
+#include "rl_integration.h"
 
 #include <core/array.h>
 
@@ -88,4 +89,40 @@ TEST_CASE("editor")
         tester.run(true);
         REQUIRE(module.delim == '=');
     }
+}
+
+TEST_CASE("keyboard macro recording")
+{
+    line_editor_tester tester;
+    auto& box = *g_tib;
+
+    auto command = [&](const char* sequence, const char* name)
+    {
+        const auto target = tib::binding_target_func(name);
+        REQUIRE(box.dispatch(tib::cstring(sequence), 0, &target, nullptr) == 0);
+    };
+    auto insert = [&](char c)
+    {
+        const char sequence[] = { c, 0 };
+        REQUIRE(box.dispatch(tib::cstring(sequence, 1), uint8_t(c), nullptr, nullptr) == 0);
+    };
+
+    command("\x18(", "start-kbd-macro");
+    insert('a');
+    insert('b');
+    command("\x18)", "end-kbd-macro");
+    REQUIRE(strcmp(box.get_text().c_str(), "ab") == 0);
+
+    box.set_numeric_argument(2);
+    command("\x18" "e", "call-last-kbd-macro");
+    REQUIRE(tib::term_in() == 'a');
+    REQUIRE(tib::term_in() == 'b');
+    REQUIRE(tib::term_in() == 'a');
+    REQUIRE(tib::term_in() == 'b');
+    REQUIRE(!tib::term_has_macro_input());
+
+    command("\x18(", "start-kbd-macro");
+    command("\x18)", "end-kbd-macro");
+    command("\x18" "e", "call-last-kbd-macro");
+    REQUIRE(!tib::term_has_macro_input());
 }

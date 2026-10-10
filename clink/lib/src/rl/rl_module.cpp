@@ -1650,8 +1650,8 @@ static void init_emacs_standard_binds(bool force=false)
         { "\\C-x\\C-r",     "re-read-init-file" },      // Ctrl-X,Ctrl-R
         { "\\C-x\\C-u",     "undo" },                   // Ctrl-X,Ctrl-U
         { "\\C-x\\C-x",     "exchange-point-and-mark" }, // Ctrl-X,Ctrl-X
-        { "\\C-x\\C-(",     "start-kbd-macro" },        // Ctrl-X,Ctrl-(
-        { "\\C-x\\C-)",     "end-kbd-macro" },          // Ctrl-X,Ctrl-)
+        { "\\C-x(",         "start-kbd-macro" },        // Ctrl-X,(
+        { "\\C-x)",         "end-kbd-macro" },          // Ctrl-X,)
         { "\\C-xA",         "do-lowercase-version" },   // Ctrl-X,A
         { "\\C-xB",         "do-lowercase-version" },   // Ctrl-X,B
         { "\\C-xC",         "do-lowercase-version" },   // Ctrl-X,C
@@ -2146,7 +2146,7 @@ void initialise_readline(bool no_user)
 
         // Wait until after registering the editor commands, so it doesn't
         // trigger auto-registering tib's list of commands.
-        g_tib = std::make_shared<tib::input_box>();
+        g_tib = std::make_shared<clink_input_box>();
 
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.
