@@ -241,7 +241,7 @@ static const func_desc c_func_descriptions[] =
     // { "operate-and-get-next", rl_operate_and_get_next, keycat_history, "Accept the current line, and fetch the next line relative to the current line from the history for editing.  A numeric argument, if supplied, specifies the history entry to use instead of the current line" },
     { "overwrite-mode", tib::toggle_overwrite_mode, keycat_basic, "Toggle overwrite mode.  This commands affects only 'emacs' mode.  Each input line always starts in insert mode" },
     { "paste-from-clipboard", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
-    // { "possible-completions", rl_possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },
+    { "possible-completions", possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },
     // { "previous-history", rl_get_previous_history, keycat_history, "Move 'back' through the history list, fetching the previous command" },
     { "previous-screen-line", tib::screen_line_up, keycat_cursor, "Attempt to move the cursor point to the same screen column on the previous screen line" },
     // { "print-last-kbd-macro", rl_print_last_kbd_macro, keycat_misc, "Print the last keboard macro defined in a format suitable for the INPUTRC file" },

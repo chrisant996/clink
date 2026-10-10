@@ -289,6 +289,58 @@ static void enqueue_lines(std::list<str_moveable>& lines)
 
 
 //------------------------------------------------------------------------------
+extern "C" const char* rl_complete_line_buffer = 0;
+extern "C" int rl_complete_end = 0;
+extern "C" int rl_complete_point = 0;
+void rl_sync_with_clink()
+{
+    rl_complete_line_buffer = g_tib->get_text().c_str();
+    rl_complete_end = g_tib->get_text().length();
+    rl_complete_point = g_tib->get_caret();
+
+    auto func = g_tib->get_last_command_func();
+    if (func == complete)                   rl_last_func = rl_complete;
+    else if (func == possible_completions)  rl_last_func = rl_possible_completions;
+// TODO-TIB: other commands...
+    else                                    rl_last_func = _rl_null_function;
+}
+static char* copystring(const char* s, size_t len=tib::c_auto_length)
+{
+    if (!s)
+        return nullptr;
+    len = tib::resolve_auto_length(len, s);
+    char* copy = (char*)malloc(len + 1);
+    memcpy(copy, s, len + 1);
+    return copy;
+}
+extern "C" char* rl_complete_copy_text(int start, int end)
+{
+    assert(start <= end);
+    return copystring(g_tib->get_text().c_str() + start, end - start);
+}
+extern "C" void rl_complete_begin_undo_group(void)
+{
+    g_tib->begin_undo_group();
+}
+extern "C" void rl_complete_end_undo_group(void)
+{
+    g_tib->end_undo_group();
+}
+extern "C" void rl_complete_replace_text(const char *text, int start, int end)
+{
+    assert(start <= end);
+
+    g_tib->begin_undo_group();
+    g_tib->remove_text(start, end);
+    g_tib->insert_text(text);
+    g_tib->end_undo_group();
+
+    rl_sync_with_clink();
+}
+
+
+
+//------------------------------------------------------------------------------
 int32 host_add_history(int32, const char* line, const char** out_timestamp)
 {
     // NOTE:  This intentionally does not send the "onhistory" Lua event.
@@ -2607,6 +2659,33 @@ int32_t clear_screen(tib::editor_context& ctx, int32_t key, const char* name, co
 
     reset_display_readline();
     refresh_input_line();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    if (rl_inhibit_completion)
+        return tib::self_insert(ctx, key, nullptr, nullptr);
+
+    rl_sync_with_clink();
+
+    rl_complete(0, 0);
+
+    assert(rl_complete_end == g_tib->get_text().length());
+    assert(rl_complete_point == g_tib->get_caret());
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t possible_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    rl_sync_with_clink();
+
+    rl_possible_completions(0, 0);
+
+    assert(rl_complete_end == g_tib->get_text().length());
+    assert(rl_complete_point == g_tib->get_caret());
     return 0;
 }
 

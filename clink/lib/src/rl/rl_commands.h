@@ -135,6 +135,7 @@ int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* na
 int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clear_display(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clear_screen(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t possible_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?

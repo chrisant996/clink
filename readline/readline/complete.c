@@ -187,6 +187,14 @@ static void _rl_export_completions (char **, char *, int, int);
 /*								    */
 /* **************************************************************** */
 
+extern char* rl_complete_copy_text (int start, int end);
+extern void rl_complete_begin_undo_group (void);
+extern void rl_complete_end_undo_group (void);
+extern void rl_complete_replace_text (const char* r, int start, int end);
+extern const char* rl_complete_line_buffer;
+extern int rl_complete_end;
+extern int rl_complete_point;
+
 /* Variables known only to the readline library. */
 
 /* If non-zero, non-unique completions always show the list of matches. */
@@ -323,7 +331,7 @@ rl_compentry_func_t *rl_menu_completion_entry_function = (rl_compentry_func_t *)
 
 /* Pointer to alternative function to create matches.
    Function is called with TEXT, START, and END.
-   START and END are indices in RL_LINE_BUFFER saying what the boundaries
+   START and END are indices in RL_ALT_LINE_BUFFER saying what the boundaries
    of TEXT are.
    If this function exists and returns NULL then call the value of
    rl_completion_entry_function to try to match, otherwise use the
@@ -377,7 +385,7 @@ rl_cpvfunc_t *rl_completion_word_break_hook = (rl_cpvfunc_t *)NULL;
 /* begin_clink_change */
 /* Hook function to allow an application to adjust the completion defaults
    before readline tries to perform completion.  This may even change
-   rl_line_buffer, rl_point, rl_end, or etc. */
+   rl_complete_line_buffer, rl_complete_point, rl_complete_end, or etc. */
 rl_voidfunc_t *rl_adjust_completion_defaults = (rl_voidfunc_t *)NULL;
 /* Hook function to allow an application to adjust the found completion
    word before readline tries to complete it. */
@@ -536,7 +544,7 @@ int rl_sort_completion_matches = 1;
 /* Variables local to this file. */
 
 /* Local variable states what happened during the last completion attempt. */
-static int completion_changed_buffer;
+static int completion_changed_buffer = 0;
 static int last_completion_failed = 0;
 
 /* The result of the query to the user about displaying completion matches */
@@ -559,12 +567,12 @@ rl_complete (int ignore, int invoking_key)
   rl_completion_invoking_key = invoking_key;
 
   if (rl_inhibit_completion)
-    return (_rl_insert_char (ignore, invoking_key));
-#if 0
-  else if (rl_last_func == rl_complete && completion_changed_buffer == 0 && last_completion_failed == 0)
-#else
-  else if (rl_last_func == rl_complete && completion_changed_buffer == 0)
-#endif
+    {
+      assert(0);
+      return 0;
+    }
+
+  if (rl_last_func == rl_complete && completion_changed_buffer == 0)
     return (rl_complete_internal ('?'));
   else if (_rl_complete_show_all)
     return (rl_complete_internal ('!'));
@@ -709,15 +717,15 @@ set_completion_defaults (int what_to_do)
 static void
 remember_orig_text (int start, int end)
 {
-  /* Unlike the rl_copy_text calls in rl_menu_complete,
+  /* Unlike the rl_complete_copy_text calls in rl_menu_complete,
      rl_old_menu_complete, and rl_complete_internal this saves the
      original text minus quotes.  And saves it in a global variable. */
-  while (start < end && strchr (rl_completer_quote_characters, rl_line_buffer[start])) start++;
-  while (end > start && strchr (rl_completer_quote_characters, rl_line_buffer[end - 1])) end--;
+  while (start < end && strchr (rl_completer_quote_characters, rl_complete_line_buffer[start])) start++;
+  while (end > start && strchr (rl_completer_quote_characters, rl_complete_line_buffer[end - 1])) end--;
 
   if (orig_text_for_completion)
     xfree (orig_text_for_completion);
-  orig_text_for_completion = rl_copy_text (start, end);
+  orig_text_for_completion = rl_complete_copy_text (start, end);
   orig_text_len_for_completion = (end - start);
 }
 
@@ -1164,7 +1172,7 @@ rl_quote_filename (char *s, int rtype, char *qcp)
 }
 
 /* Find the bounds of the current word for completion purposes, and leave
-   rl_point set to the end of the word.  This function skips quoted
+   rl_complete_point set to the end of the word.  This function skips quoted
    substrings (characters between matched pairs of characters in
    rl_completer_quote_characters).  First we try to find an unclosed
    quoted substring on which to do matching.  If one is not found, we use
@@ -1185,7 +1193,7 @@ _rl_find_completion_word (int *fp, int *dp)
   char quote_char;
   const char *brkchars;
 
-  end = rl_point;
+  end = rl_complete_point;
   found_quote = delimiter = 0;
   quote_char = '\0';
 
@@ -1213,7 +1221,7 @@ _rl_find_completion_word (int *fp, int *dp)
 	 quote substrings for the completer.  Try to find the start
 	 of an unclosed quoted substring. */
       /* FOUND_QUOTE is set so we know what kind of quotes we found. */
-      for (scan = pass_next = 0; scan < end; scan = MB_NEXTCHAR (rl_line_buffer, scan, 1, MB_FIND_ANY))
+      for (scan = pass_next = 0; scan < end; scan = MB_NEXTCHAR (rl_complete_line_buffer, scan, 1, MB_FIND_ANY))
 	{
 /* begin_clink_change
  * The following assumes we want to use backslashes to escape the next
@@ -1234,7 +1242,7 @@ _rl_find_completion_word (int *fp, int *dp)
 	     to quote anything in single quotes, especially not the closing
 	     quote.  If you don't like this, take out the check on the value
 	     of quote_char. */
-	  if (quote_char != '\'' && rl_line_buffer[scan] == '\\')
+	  if (quote_char != '\'' && rl_complete_line_buffer[scan] == '\\')
 	    {
 	      pass_next = 1;
 	      found_quote |= RL_QF_BACKSLASH;
@@ -1247,18 +1255,18 @@ _rl_find_completion_word (int *fp, int *dp)
 	  if (quote_char != '\0')
 	    {
 	      /* Ignore everything until the matching close quote char. */
-	      if (rl_line_buffer[scan] == quote_char)
+	      if (rl_complete_line_buffer[scan] == quote_char)
 		{
 		  /* Found matching close.  Abandon this substring. */
 		  quote_char = '\0';
-		  rl_point = end;
+		  rl_complete_point = end;
 		}
 	    }
-	  else if (strchr (rl_completer_quote_characters, rl_line_buffer[scan]))
+	  else if (strchr (rl_completer_quote_characters, rl_complete_line_buffer[scan]))
 	    {
 	      /* Found start of a quoted substring. */
-	      quote_char = rl_line_buffer[scan];
-	      rl_point = scan + 1;
+	      quote_char = rl_complete_line_buffer[scan];
+	      rl_complete_point = scan + 1;
 	      /* Shell-like quoting conventions. */
 	      if (quote_char == '\'')
 		found_quote |= RL_QF_SINGLE_QUOTE;
@@ -1270,14 +1278,14 @@ _rl_find_completion_word (int *fp, int *dp)
 	}
     }
 
-  if (rl_point == end && quote_char == '\0')
+  if (rl_complete_point == end && quote_char == '\0')
     {
       /* We didn't find an unclosed quoted substring upon which to do
          completion, so use the word break characters to find the
          substring on which to complete. */
-      while (rl_point = MB_PREVCHAR (rl_line_buffer, rl_point, MB_FIND_ANY))
+      while (rl_complete_point = MB_PREVCHAR (rl_complete_line_buffer, rl_complete_point, MB_FIND_ANY))
 	{
-	  scan = rl_line_buffer[rl_point];
+	  scan = rl_complete_line_buffer[rl_complete_point];
 
 	  if (strchr (brkchars, scan) == 0)
 	    continue;
@@ -1285,7 +1293,7 @@ _rl_find_completion_word (int *fp, int *dp)
 	  /* Call the application-specific function to tell us whether
 	     this word break character is quoted and should be skipped. */
 	  if (rl_char_is_quoted_p && found_quote &&
-	      (*rl_char_is_quoted_p) (rl_line_buffer, rl_point))
+	      (*rl_char_is_quoted_p) (rl_complete_line_buffer, rl_complete_point))
 	    continue;
 
 	  /* Convoluted code, but it avoids an n^2 algorithm with calls
@@ -1295,7 +1303,7 @@ _rl_find_completion_word (int *fp, int *dp)
     }
 
   /* If we are at an unquoted word break, then advance past it. */
-  scan = rl_line_buffer[rl_point];
+  scan = rl_complete_line_buffer[rl_complete_point];
 
   /* If there is an application-specific function to say whether or not
      a character is quoted and we found a quote character, let that
@@ -1306,7 +1314,7 @@ _rl_find_completion_word (int *fp, int *dp)
     {
       if (rl_char_is_quoted_p)
 	isbrk = (found_quote == 0 ||
-		(*rl_char_is_quoted_p) (rl_line_buffer, rl_point) == 0) &&
+		(*rl_char_is_quoted_p) (rl_complete_line_buffer, rl_complete_point) == 0) &&
 		strchr (brkchars, scan) != 0;
       else
 	isbrk = strchr (brkchars, scan) != 0;
@@ -1317,13 +1325,13 @@ _rl_find_completion_word (int *fp, int *dp)
 	     character, then remember it as the delimiter. */
 	  if (rl_basic_quote_characters &&
 	      strchr (rl_basic_quote_characters, scan) &&
-	      (end - rl_point) > 1)
+	      (end - rl_complete_point) > 1)
 	    delimiter = scan;
 
 	  /* If the character isn't needed to determine something special
 	     about what kind of completion to perform, then advance past it. */
 	  if (rl_special_prefixes == 0 || strchr (rl_special_prefixes, scan) == 0)
-	    rl_point++;
+	    rl_complete_point++;
 	}
     }
 
@@ -1359,11 +1367,7 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
   rl_completion_found_quote = found_quote;
   rl_completion_quote_character = quote_char;
 
-  /* If the user wants to TRY to complete, but then wants to give
-     up and use the default completion function, they set the
-     variable rl_attempted_completion_function. */
-  if (rl_attempted_completion_function)
-    {
+/* begin_clink_change */
       matches = (*rl_attempted_completion_function) (text, start, end);
       if (RL_SIG_RECEIVED())
 	{
@@ -1372,10 +1376,8 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
 	  RL_CHECK_SIGNALS ();
 	}
 
-      if (matches || rl_attempted_completion_over)
+      if (matches)
 	{
-	  rl_attempted_completion_over = 0;
-/* begin_clink_change */
 	  if (matches && !no_compute_lcd)
 	    {
 	      int len;
@@ -1385,23 +1387,9 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
 	      compute_lcd_of_matches(matches, len - 1, text);
 	      xfree (t);
 	    }
-/* end_clink_change */
-	  return (matches);
 	}
-    }
-
-  /* XXX -- filename dequoting moved into rl_filename_completion_function */
-
-  /* rl_completion_matches will check for signals as well to avoid a long
-     delay while reading a directory. */
-  matches = rl_completion_matches (text, our_func);
-  if (RL_SIG_RECEIVED())
-    {
-      _rl_free_match_list (matches);
-      matches = 0;
-      RL_CHECK_SIGNALS ();
-    }
-  return matches;  
+/* end_clink_change */
+  return matches;
 }
 
 /* Filter out duplicates in MATCHES.  This frees up the strings in
@@ -1876,15 +1864,15 @@ insert_match (char *match, int start, int mtype, char *qc)
 /* end_clink_change */
       rlen = strlen (replacement);
       /* Don't double an opening quote character. */
-      if (qc && *qc && start && rl_line_buffer[start - 1] == *qc &&
+      if (qc && *qc && start && rl_complete_line_buffer[start - 1] == *qc &&
 	    replacement[0] == *qc)
 	start--;
       /* If make_quoted_replacement changed the quoting character, remove
 	 the opening quote and insert the (fully-quoted) replacement. */
-      else if (qc && (*qc != oqc) && start && rl_line_buffer[start - 1] == oqc &&
+      else if (qc && (*qc != oqc) && start && rl_complete_line_buffer[start - 1] == oqc &&
 	    replacement[0] != oqc)
 	start--;
-      end = rl_point - 1;
+      end = rl_complete_point - 1;
 /* begin_clink_change */
       if (!_rl_complete_mark_directories)
 	{
@@ -1892,7 +1880,7 @@ insert_match (char *match, int start, int mtype, char *qc)
 	     matches with trailing directory marks.  Which is done for
 	     consistency and to optimize away file system calls to test
 	     whether matches are directories. */
-	  const char *orig = rl_line_buffer + start;
+	  const char *orig = rl_complete_line_buffer + start;
 	  const char *repl = replacement;
 	  int origlen = (end + 1) - start;
 	  int repllen = rlen;
@@ -1930,33 +1918,33 @@ insert_match (char *match, int start, int mtype, char *qc)
 	}
 /* end_clink_change */
       /* Don't double a closing quote character */
-      if (qc && *qc && end && rl_line_buffer[rl_point] == *qc && replacement[rlen - 1] == *qc)
+      if (qc && *qc && end && rl_complete_line_buffer[rl_complete_point] == *qc && replacement[rlen - 1] == *qc)
         end++;
       if (_rl_skip_completed_text)
 	{
 	  r = replacement;
-	  while (start < rl_end && *r && rl_line_buffer[start] == *r)
+	  while (start < rl_complete_end && *r && rl_complete_line_buffer[start] == *r)
 	    {
 	      start++;
 	      r++;
 	    }
 	  if (start <= end || *r)
-	    _rl_replace_text (r, start, end);
-	  rl_point = start + strlen (r);
+	    rl_complete_replace_text (r, start, end);
+	  rl_complete_point = start + strlen (r);
 	}
       else
-	_rl_replace_text (replacement, start, end);
+	rl_complete_replace_text (replacement, start, end);
       if (replacement != match)
         xfree (replacement);
 /* begin_clink_change */
       if (remove_dir_mark)
 	{
 	  start = end + 1;
-	  end = rl_point;
-	  while (rl_point > 0 && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
-	    rl_point--;
-	  if (rl_point < end)
-	    rl_delete_text (rl_point, end);
+	  end = rl_complete_point;
+	  while (rl_complete_point > 0 && rl_is_path_separator (rl_complete_line_buffer[rl_complete_point - 1]))
+	    rl_complete_point--;
+	  if (rl_complete_point < end)
+	    rl_delete_text (rl_complete_point, end);
 	}
 /* end_clink_change */
     }
@@ -1993,16 +1981,16 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 /* end_clink_change */
 
   temp_string_index = 0;
-  if (quote_char && rl_point && rl_completion_suppress_quote == 0 &&
-      rl_line_buffer[rl_point - 1] != quote_char)
+  if (quote_char && rl_complete_point && rl_completion_suppress_quote == 0 &&
+      rl_complete_line_buffer[rl_complete_point - 1] != quote_char)
     temp_string[temp_string_index++] = quote_char;
 
 /* begin_clink_change */
   /* Must not append closing quote_char if there's no opening quote.  If there
      was a typed quote it will be at orig_start-1, or if a quote was inserted
      it will be at orig_start. */
-  if (temp_string_index && rl_line_buffer[orig_start] != quote_char &&
-      (!orig_start || rl_line_buffer[orig_start-1] != quote_char))
+  if (temp_string_index && rl_complete_line_buffer[orig_start] != quote_char &&
+      (!orig_start || rl_complete_line_buffer[orig_start-1] != quote_char))
     temp_string_index--;
 /* end_clink_change */
 
@@ -2053,15 +2041,15 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 	      /* This is clumsy.  Avoid putting in a double slash if point
 		 is at the end of the line and the previous character is a
 		 slash. */
-	      if (rl_point && rl_line_buffer[rl_point] == '\0' && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	      if (rl_complete_point && rl_complete_line_buffer[rl_complete_point] == '\0' && rl_is_path_separator (rl_complete_line_buffer[rl_complete_point - 1]))
 #else
 	      /* This is clumsy.  Avoid putting in a double slash if the
 		 previous character is a slash. */
-	      if (rl_point && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	      if (rl_complete_point && rl_is_path_separator (rl_complete_line_buffer[rl_complete_point - 1]))
 #endif
 /* end_clink_change */
 		;
-	      else if (!rl_is_path_separator (rl_line_buffer[rl_point]))
+	      else if (!rl_is_path_separator (rl_complete_line_buffer[rl_complete_point]))
 		{
 		  char tmp_slash[2] = { rl_preferred_path_separator };
 		  rl_insert_text (tmp_slash);
@@ -2075,21 +2063,21 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 /* begin_clink_change */
 	//;
 	{
-	  if (rl_point && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	  if (rl_complete_point && rl_is_path_separator (rl_complete_line_buffer[rl_complete_point - 1]))
 	    _rl_rubout_char (0, 0);
 	}
 /* end_clink_change */
 #endif
       else
 	{
-	  if (rl_point == rl_end && temp_string_index)
+	  if (rl_complete_point == rl_complete_end && temp_string_index)
 	    rl_insert_text (temp_string);
 	}
       xfree (filename);
     }
   else
     {
-      if (rl_point == rl_end && temp_string_index)
+      if (rl_complete_point == rl_complete_end && temp_string_index)
 	rl_insert_text (temp_string);
     }
 
@@ -2119,13 +2107,13 @@ insert_all_matches (char **matches, int point, char *qc)
   char qs[2] = { '\0', '\0' };
 /* end_clink_change */
 
-  rl_begin_undo_group ();
+  rl_complete_begin_undo_group ();
   /* remove any opening quote character; make_quoted_replacement will add
      it back. */
-  if (qc && *qc && point && rl_line_buffer[point - 1] == *qc)
+  if (qc && *qc && point && rl_complete_line_buffer[point - 1] == *qc)
     point--;
-  rl_delete_text (point, rl_point);
-  rl_point = point;
+  rl_delete_text (point, rl_complete_point);
+  rl_complete_point = point;
 
 /* begin_clink_change */
   qc = qs;
@@ -2165,7 +2153,7 @@ insert_all_matches (char **matches, int point, char *qc)
       if (rp != matches[0])
 	xfree (rp);
     }
-  rl_end_undo_group ();
+  rl_complete_end_undo_group ();
 }
 
 void
@@ -2245,28 +2233,28 @@ rl_complete_internal (int what_to_do)
 
   set_completion_defaults (what_to_do);
 
-  saved_line_buffer = rl_line_buffer ? savestring (rl_line_buffer) : (char *)NULL;
+  saved_line_buffer = rl_complete_line_buffer ? savestring (rl_complete_line_buffer) : (char *)NULL;
   our_func = rl_completion_entry_function
 		? rl_completion_entry_function
 		: rl_filename_completion_function;
   /* We now look backwards for the start of a filename/variable word. */
-  end = rl_point;
+  end = rl_complete_point;
   found_quote = delimiter = 0;
   quote_char = '\0';
 
-  if (rl_point)
-    /* This (possibly) changes rl_point.  If it returns a non-zero char,
+  if (rl_complete_point)
+    /* This (possibly) changes rl_complete_point.  If it returns a non-zero char,
        we know we have an open quote. */
     quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
-  start = rl_point;
-  rl_point = end;
+  start = rl_complete_point;
+  rl_complete_point = end;
 
 /* begin_clink_change */
   remember_orig_text (start, end);
 /* end_clink_change */
 
-  text = rl_copy_text (start, end);
+  text = rl_complete_copy_text (start, end);
   matches = gen_completion_matches (text, start, end, our_func, found_quote, quote_char);
   /* If TEXT contains quote characters, it will be dequoted as part of
      generating the matches, and the matches will not contain any quote
@@ -2358,7 +2346,7 @@ rl_complete_internal (int what_to_do)
 	    {
 /* begin_clink_change */
 	      end_undo_group = 1;
-	      rl_begin_undo_group();
+	      rl_complete_begin_undo_group();
 	      force_quoting = quote_lcd;
 	      if (force_quoting && rl_completer_quote_characters)
 		quote_char = *rl_completer_quote_characters;
@@ -2370,7 +2358,7 @@ rl_complete_internal (int what_to_do)
 	{
 /* begin_clink_change */
 	  end_undo_group = 1;
-	  rl_begin_undo_group();
+	  rl_complete_begin_undo_group();
 	  force_quoting = quote_lcd;
 	  if (force_quoting && rl_completer_quote_characters)
 	    quote_char = *rl_completer_quote_characters;
@@ -2385,7 +2373,7 @@ rl_complete_internal (int what_to_do)
 	    {
 /* begin_clink_change */
 	      end_undo_group = 1;
-	      rl_begin_undo_group();
+	      rl_complete_begin_undo_group();
 	      force_quoting = quote_lcd;
 	      if (force_quoting && rl_completer_quote_characters)
 		quote_char = *rl_completer_quote_characters;
@@ -2437,7 +2425,7 @@ rl_complete_internal (int what_to_do)
 	{
 /* begin_clink_change */
 	  end_undo_group = 1;
-	  rl_begin_undo_group();
+	  rl_complete_begin_undo_group();
 	  force_quoting = quote_lcd;
 	  if (force_quoting && rl_completer_quote_characters)
 	    quote_char = *rl_completer_quote_characters;
@@ -2481,7 +2469,7 @@ rl_complete_internal (int what_to_do)
   if (end_undo_group)
     {
       end_undo_group = 0;
-      rl_end_undo_group();
+      rl_complete_end_undo_group();
     }
 /* end_clink_change */
 
@@ -2518,7 +2506,7 @@ rl_complete_internal (int what_to_do)
   /* Check to see if the line has changed through all of this manipulation. */
   if (saved_line_buffer)
     {
-      completion_changed_buffer = strcmp (rl_line_buffer, saved_line_buffer) != 0;
+      completion_changed_buffer = strcmp (rl_complete_line_buffer, saved_line_buffer) != 0;
       xfree (saved_line_buffer);
     }
 
@@ -3083,17 +3071,17 @@ rl_old_menu_complete (int count, int invoking_key)
 			: rl_filename_completion_function;
 
       /* We now look backwards for the start of a filename/variable word. */
-      orig_end = rl_point;
+      orig_end = rl_complete_point;
       found_quote = delimiter = 0;
       quote_char = '\0';
 
-      if (rl_point)
-	/* This (possibly) changes rl_point.  If it returns a non-zero char,
+      if (rl_complete_point)
+	/* This (possibly) changes rl_complete_point.  If it returns a non-zero char,
 	   we know we have an open quote. */
 	quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
-      orig_start = rl_point;
-      rl_point = orig_end;
+      orig_start = rl_complete_point;
+      rl_complete_point = orig_end;
 
 /* begin_clink_change */
       no_compute_lcd = 1;
@@ -3101,7 +3089,7 @@ rl_old_menu_complete (int count, int invoking_key)
       menu_complete_inserted = 0;
 /* end_clink_change */
 
-      orig_text = rl_copy_text (orig_start, orig_end);
+      orig_text = rl_complete_copy_text (orig_start, orig_end);
       matches = gen_completion_matches (orig_text, orig_start, orig_end,
 					our_func, found_quote, quote_char);
 
@@ -3154,7 +3142,7 @@ rl_old_menu_complete (int count, int invoking_key)
     }
 
   /* Now we have the list of matches.  Replace the text between
-     rl_line_buffer[orig_start] and rl_line_buffer[rl_point] with
+     rl_complete_line_buffer[orig_start] and rl_complete_line_buffer[rl_complete_point] with
      matches[match_list_index], and add any necessary closing char. */
 
   if (matches == 0 || match_list_size == 0) 
@@ -3197,7 +3185,7 @@ rl_old_menu_complete (int count, int invoking_key)
   else
     {
 /* begin_clink_change */
-      rl_begin_undo_group();
+      rl_complete_begin_undo_group();
 /* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
 /* begin_clink_change */
@@ -3205,7 +3193,7 @@ rl_old_menu_complete (int count, int invoking_key)
       //                 compare_match (orig_text, matches[match_list_index]));
       append_to_match (matches[match_list_index], orig_start, delimiter, quote_char,
 		       compare_match (orig_text, matches[match_list_index]));
-      rl_end_undo_group();
+      rl_complete_end_undo_group();
 /* end_clink_change */
     }
 
@@ -3283,24 +3271,24 @@ rl_menu_complete (int count, int ignore)
 			: rl_filename_completion_function;
 
       /* We now look backwards for the start of a filename/variable word. */
-      orig_end = rl_point;
+      orig_end = rl_complete_point;
       found_quote = delimiter = 0;
       quote_char = '\0';
 
-      if (rl_point)
-	/* This (possibly) changes rl_point.  If it returns a non-zero char,
+      if (rl_complete_point)
+	/* This (possibly) changes rl_complete_point.  If it returns a non-zero char,
 	   we know we have an open quote. */
 	quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
-      orig_start = rl_point;
-      rl_point = orig_end;
+      orig_start = rl_complete_point;
+      rl_complete_point = orig_end;
 
 /* begin_clink_change */
       remember_orig_text (orig_start, orig_end);
       menu_complete_inserted = 0;
 /* end_clink_change */
 
-      orig_text = rl_copy_text (orig_start, orig_end);
+      orig_text = rl_complete_copy_text (orig_start, orig_end);
       matches = gen_completion_matches (orig_text, orig_start, orig_end,
 					our_func, found_quote, quote_char);
 
@@ -3349,7 +3337,7 @@ rl_menu_complete (int count, int ignore)
 	{
 /* begin_clink_change */
 	  if (match_list_size <= 1)
-	    rl_begin_undo_group ();
+	    rl_complete_begin_undo_group ();
 /* end_clink_change */
 	  insert_match (matches[0], orig_start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	  orig_end = orig_start + strlen (matches[0]);
@@ -3385,7 +3373,7 @@ rl_menu_complete (int count, int ignore)
 	  //append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
 	  append_to_match (matches[0], orig_start, delimiter, quote_char, nontrivial_lcd);
 	  if (*matches[0])
-	    rl_end_undo_group ();
+	    rl_complete_end_undo_group ();
 /* end_clink_change */
 	  full_completion = 1;
 	  return (0);
@@ -3398,7 +3386,7 @@ rl_menu_complete (int count, int ignore)
     }
 
   /* Now we have the list of matches.  Replace the text between
-     rl_line_buffer[orig_start] and rl_line_buffer[rl_point] with
+     rl_complete_line_buffer[orig_start] and rl_complete_line_buffer[rl_complete_point] with
      matches[match_list_index], and add any necessary closing char. */
 
   if (matches == 0 || match_list_size == 0) 
@@ -3438,7 +3426,7 @@ rl_menu_complete (int count, int ignore)
   else
     {
 /* begin_clink_change */
-      rl_begin_undo_group();
+      rl_complete_begin_undo_group();
 /* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
 /* begin_clink_change */
@@ -3446,7 +3434,7 @@ rl_menu_complete (int count, int ignore)
       //                 compare_match (orig_text, matches[match_list_index]));
       append_to_match (matches[match_list_index], orig_start, delimiter, quote_char,
 		       compare_match (orig_text, matches[match_list_index]));
-      rl_end_undo_group();
+      rl_complete_end_undo_group();
 /* end_clink_change */
     }
 
@@ -3490,21 +3478,21 @@ rl_get_completions (int what_to_do, int* match_count, char** ot, int* os, int* o
                    : rl_filename_completion_function;
 
   /* We now look backwards for the start of a filename/variable word. */
-  orig_end = rl_point;
+  orig_end = rl_complete_point;
   found_quote = delimiter = 0;
   quote_char = '\0';
 
-  if (rl_point)
-    /* This (possibly) changes rl_point.  If it returns a non-zero char,
+  if (rl_complete_point)
+    /* This (possibly) changes rl_complete_point.  If it returns a non-zero char,
        we know we have an open quote. */
     quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
-  orig_start = rl_point;
-  rl_point = orig_end;
+  orig_start = rl_complete_point;
+  rl_complete_point = orig_end;
 
   no_compute_lcd = 1;
 
-  orig_text = rl_copy_text(orig_start, orig_end);
+  orig_text = rl_complete_copy_text(orig_start, orig_end);
   matches = gen_completion_matches (orig_text, orig_start, orig_end,
                                     our_func, found_quote, quote_char);
 
@@ -3561,13 +3549,13 @@ rl_insert_match (const char* match, char* orig_text, int orig_start, int delimit
 {
   int nontrivial_match = strcmp (orig_text, match);
 
-  rl_begin_undo_group();
+  rl_complete_begin_undo_group();
   insert_match ((char *)match, orig_start, SINGLE_MATCH, &quote_char);
 /* begin_clink_change */
   //append_to_match ((char *)match, delimiter, quote_char, nontrivial_match);
   append_to_match ((char *)match, orig_start, delimiter, quote_char, nontrivial_match);
 /* end_clink_change */
-  rl_end_undo_group();
+  rl_complete_end_undo_group();
 }
 
 void __set_completion_defaults (int what_to_do)
@@ -3595,12 +3583,12 @@ int __stat_char (const char *filename, char match_type)
    calling application via rl_outstream.
 
    MATCHES are the possible completions for TEXT, which is the text between
-   START and END in rl_line_buffer.
+   START and END in rl_complete_line_buffer.
 
    We print:
    	N - the number of matches
    	T - the word being completed
-   	S:E - the start and end offsets of T in rl_line_buffer
+   	S:E - the start and end offsets of T in rl_complete_line_buffer
    	then each match, one per line
 
   If there are no matches, MATCHES is NULL, N will be 0, and there will be
@@ -3642,8 +3630,8 @@ rl_export_completions (int count, int key)
   /* Clear the line buffer, currently requires a count argument. */
   if (count > 1)
     {
-      rl_delete_text (0, rl_end);		/* undoable */
-      rl_point = rl_mark = 0;
+      rl_delete_text (0, rl_complete_end);		/* undoable */
+      rl_complete_point = rl_mark = 0;
     }
 
   return 0;
