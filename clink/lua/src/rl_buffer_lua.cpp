@@ -15,9 +15,6 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <compat/config.h>
-#include <readline/readline.h>
-#include <readline/rlprivate.h>
 }
 
 #include <assert.h>
@@ -295,9 +292,9 @@ int32 rl_buffer_lua::refresh_line(lua_State* state)
 /// nil if no numeric argument has been entered.
 int32 rl_buffer_lua::get_argument(lua_State* state)
 {
-    if (rl_explicit_arg)
+    if (g_tib->has_numeric_argument())
     {
-        lua_pushinteger(state, rl_numeric_arg * rl_arg_sign);
+        lua_pushinteger(state, g_tib->get_numeric_argument());
         return 1;
     }
     return 0;
@@ -314,17 +311,13 @@ int32 rl_buffer_lua::get_argument(lua_State* state)
 /// from having 0 as the numeric argument).
 int32 rl_buffer_lua::set_argument(lua_State* state)
 {
-    _rl_reset_argument();
+    g_tib->clear_numeric_argument();
 
     if (!lua_isnoneornil(state, LUA_SELF + 1))
     {
         const auto arg = optinteger(state, LUA_SELF + 1, 0);
         if (arg.isnum())
-        {
-            rl_arg_sign = (arg < 0) ? -1 : 1;
-            rl_explicit_arg = 1;
-            rl_numeric_arg = abs(arg);
-        }
+            g_tib->set_numeric_argument(arg);
     }
     return 0;
 }

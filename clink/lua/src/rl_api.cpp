@@ -618,7 +618,10 @@ static int32 invoke_command(lua_State* state)
     int32 isnum;
     int32 count = int32(lua_tointegerx(state, 2, &isnum));
 
-    g_tib->set_numeric_argument(isnum ? count : 1);
+    if (isnum)
+        g_tib->set_numeric_argument(count);
+    else
+        g_tib->clear_numeric_argument();
 
     const auto err = func(*g_tib, 0, command, nullptr);
 

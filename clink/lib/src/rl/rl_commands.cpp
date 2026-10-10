@@ -2793,8 +2793,8 @@ static int32 glob_completion_internal(int32 what_to_do)
     if (!rl_explicit_arg)
         s_literal_wild = true;
 
-    rl_sync_with_clink();
     rl_complete_internal(what_to_do);
+
     rl_verify_still_in_sync();
     return 0;
 }
@@ -2808,20 +2808,22 @@ int32_t glob_complete_word(tib::editor_context& ctx, int32_t key, const char* na
         rl_explicit_arg = 1; /* force `*' append */
 
     glob_completion_internal(rl_completion_mode((rl_command_func_t*)glob_complete_word));
-
-    rl_verify_still_in_sync();
     return 0;
 }
 
 //------------------------------------------------------------------------------
 int32_t glob_expand_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
+    rl_sync_with_clink();
+
     return glob_completion_internal('*');
 }
 
 //------------------------------------------------------------------------------
 int32_t glob_list_expansions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
+    rl_sync_with_clink();
+
     return glob_completion_internal('?');
 }
 
