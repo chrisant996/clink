@@ -333,6 +333,13 @@ static void rl_verify_still_in_sync()
     assert(rl_complete_end == g_tib->get_text().length());
     assert(rl_complete_point == g_tib->get_caret());
 }
+static int32 do_rl_command(rl_command_func_t* func, int32 invoking_key)
+{
+    rl_sync_with_clink();
+    func(g_tib->get_numeric_argument(), invoking_key);
+    rl_verify_still_in_sync();
+    return 0;
+}
 static char* copystring(const char* s, size_t len=tib::c_auto_length)
 {
     if (!s)
@@ -2723,64 +2730,43 @@ int32_t complete(tib::editor_context& ctx, int32_t key, const char* name, const 
     if (rl_inhibit_completion)
         return tib::self_insert(ctx, key, nullptr, nullptr);
 
-    rl_sync_with_clink();
-    rl_complete(0, 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_complete, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t possible_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_possible_completions(0, 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_possible_completions, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t insert_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_insert_completions(0, 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_insert_completions, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_menu_complete(ctx.get_numeric_argument(), 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_menu_complete, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t backward_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_backward_menu_complete(ctx.get_numeric_argument(), 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_backward_menu_complete, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_old_menu_complete(ctx.get_numeric_argument(), 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_old_menu_complete, key);
 }
 
 //------------------------------------------------------------------------------
 int32_t backward_old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_sync_with_clink();
-    rl_backward_old_menu_complete(ctx.get_numeric_argument(), 0);
-    rl_verify_still_in_sync();
-    return 0;
+    return do_rl_command(rl_backward_old_menu_complete, key);
 }
 
 
