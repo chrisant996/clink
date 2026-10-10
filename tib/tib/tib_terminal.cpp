@@ -484,6 +484,11 @@ bool term_in_avail(const DWORD _timeout)
     return s_terminal_in->avail(_timeout);
 }
 
+bool term_has_macro_input()
+{
+    return !!s_macro_playback;
+}
+
 bool term_push_input(const char* text, size_t len)
 {
 #ifdef _WIN32

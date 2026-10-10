@@ -59,6 +59,7 @@ bool is_term_sigclose();
 int32_t term_in();
 int32_t term_in_peek();
 bool term_in_avail(DWORD timeout=0);
+bool term_has_macro_input();
 // Prepend text to the highest-priority pushed-input queue.
 bool term_push_input(const char* text, size_t len=-1);
 bool term_push_macro_text(const char* text, size_t len=-1);

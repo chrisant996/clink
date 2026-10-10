@@ -779,11 +779,14 @@ void editor_context::replace_from_history(const cstring& s, bool keep_undo)
 
 void editor_context::set_last_command(const char* name, editor_command_func_t func)
 {
-    assert(name && *name);
-    assert(func);
+    assert(!(name && *name) == !func);
 
-    if (!name || !*name || !func)
+    if (!(name && *name) || !func)
+    {
+        m_last_command_name.clear();
+        m_last_command_func = nullptr;
         return;
+    }
 
     m_last_command_name.set(name);
     m_last_command_func = func;
