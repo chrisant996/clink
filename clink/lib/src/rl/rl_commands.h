@@ -99,11 +99,11 @@ int32_t clink_accept_suggested_line(tib::editor_context& ctx, int32_t key, const
 int32   clink_popup_history(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
-int32   win_f1(int32 count, int32 invoking_key);
+int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   win_f2(int32 count, int32 invoking_key);
-int32   win_f3(int32 count, int32 invoking_key);
+int32_t win_f3(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   win_f4(int32 count, int32 invoking_key);
-int32   win_f6(int32 count, int32 invoking_key);
+int32_t win_f6(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32   win_f7(int32 count, int32 invoking_key);
 int32   win_f9(int32 count, int32 invoking_key);
 bool    win_fn_callback_pending();
@@ -149,6 +149,7 @@ int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, con
 int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t delete_or_show_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t delete_horizontal_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?

@@ -1791,20 +1791,17 @@ static char* get_previous_command()
 }
 
 //------------------------------------------------------------------------------
-int32 win_f1(int32 count, int32 invoking_key)
+int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-#ifdef TIB_TODO
-    const bool had_selection = (cua_get_anchor() >= 0);
+    const bool had_selection = ctx.has_selection();
 
     if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
 
-    if (count <= 0)
-        count = 1;
-
-    while (count && rl_point < rl_end)
+    auto count = max(ctx.get_numeric_argument(), 1);
+    while (count && ctx.get_caret() < ctx.get_length())
     {
-        rl_forward_char(1, invoking_key);
+        ctx.move_right();
         count--;
     }
 
@@ -1814,6 +1811,7 @@ int32 win_f1(int32 count, int32 invoking_key)
     if (had_selection)
         return 0;
 
+#ifdef TIB_TODO
     char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
@@ -1835,13 +1833,13 @@ ding:
     str<> more;
     more.concat(prev_buffer + old_point, end_point - old_point);
     rl_insert_text(more.c_str());
+#endif
 
     // Prevent generating a suggestion when inserting characters from the
     // previous command, otherwise it's often only possible to insert one
     // character before suggestions take over.
     suggestions suggestions;
-    set_suggestions(rl_line_buffer, 0, &suggestions);
-#endif
+    set_suggestions(ctx.get_text().c_str(), 0, &suggestions);
 
     return 0;
 }
@@ -1945,9 +1943,10 @@ int32 win_f2(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 win_f3(int32 count, int32 invoking_key)
+int32_t win_f3(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    return win_f1(999999, invoking_key);
+    ctx.set_numeric_argument(999999);
+    return win_f1(ctx, 0, nullptr, nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -2015,9 +2014,9 @@ int32 win_f4(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 win_f6(int32 count, int32 invoking_key)
+int32_t win_f6(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    rl_insert_text("\x1a");
+    ctx.insert_text("\x1a");
     return 0;
 }
 
@@ -2808,6 +2807,19 @@ int32_t delete_horizontal_space(tib::editor_context& ctx, int32_t key, const cha
     if (count)
         ctx.remove_text(caret - count, caret);
     return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    while (true)
+    {
+        const auto cin = tib::term_in();
+        if (cin < 0)
+            return 1;
+        if (cin < 0x20 || cin >= 0x40)
+            return 0;
+    }
 }
 
 
