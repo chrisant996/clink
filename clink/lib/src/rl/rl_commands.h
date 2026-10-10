@@ -147,6 +147,8 @@ int32_t tab_insert(tib::editor_context& ctx, int32_t key, const char* name, cons
 int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t delete_or_show_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t delete_horizontal_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?

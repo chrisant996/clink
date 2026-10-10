@@ -2783,6 +2783,33 @@ int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, 
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int32_t delete_or_show_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    if (g_tib->get_caret() && g_tib->get_caret() == g_tib->get_length())
+        return possible_completions(ctx, key, nullptr, nullptr);
+    else
+        return tib::del_char_right(ctx, key, nullptr, nullptr);
+}
+
+//------------------------------------------------------------------------------
+int32_t delete_horizontal_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    const auto line = ctx.get_text().c_str();
+    const auto end = ctx.get_text().length();
+    auto caret = ctx.get_caret();
+    auto count = 0;
+
+    while (caret && line[caret - 1] == ' ')
+        --caret;
+    while (caret < end && line[caret] == ' ')
+        ++caret, ++count;
+
+    if (count)
+        ctx.remove_text(caret - count, caret);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
