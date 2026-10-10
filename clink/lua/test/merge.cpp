@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "clatch.h" // (so that VSCode can parse the macros, since it parses the wrong pch.h file)
 
+#include "fs_fixture.h"
 #include "line_editor_tester.h"
 
 #include <core/path.h>
@@ -21,6 +22,8 @@ extern "C" {
 //------------------------------------------------------------------------------
 TEST_CASE("Merge argmatchers")
 {
+    fs_fixture fs; // Use an isolated file system, not the live %TEMP%.
+
     lua_state lua;
     lua_match_generator lua_generator(lua); // This loads the required lua scripts.
 
