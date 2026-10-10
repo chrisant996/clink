@@ -334,7 +334,7 @@ rl_print_last_kbd_macro (int count, int ignore)
     }
   m = _rl_untranslate_macro_value (current_macro, 1);
 /* begin_clink_change */
-  end_prompt (0/*crlf*/);
+  rl_end_prompt (0/*crlf*/);
 /* end_clink_change */
   rl_crlf ();
   printf ("%s", m);

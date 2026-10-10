@@ -29,6 +29,7 @@
 #include "rl_integration.h"
 #include "suggestionlist_impl.h"
 #include "hinter.h"
+#include "recognizer.h"
 #include "clink_ctrlevent.h"
 
 #include <core/base.h>
@@ -86,6 +87,7 @@ const uint32 c_horz_scroll_indicator_chars = 1;
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
+extern void end_task_manager();
 extern int32 g_prompt_redisplay;
 static uint32 s_defer_clear_lines = 0;
 static uint32 s_defer_erase_extra_lines = 0;
@@ -1416,6 +1418,50 @@ int32 get_relative_cursor_column()
 extern "C" void end_prompt_lf()
 {
     s_display_manager.end_prompt_lf();
+}
+
+//------------------------------------------------------------------------------
+void end_prompt(int32 crlf)
+{
+    allow_suggestion_list(0);
+    clear_suggestion();
+    clear_comment_row();
+
+    if (crlf < 0)
+    {
+        end_task_manager();
+        end_recognizer();
+    }
+
+    if (!is_display_readline_initialized())
+        return;
+
+    host_filter_transient_prompt(crlf);
+
+    move_to_end_of_display(0);
+    if (crlf != 0)
+        end_prompt_lf();
+#ifdef TIB_TODO
+    if (crlf > 0)
+        _rl_last_c_pos = 0;
+#endif
+
+    // Must ensure display_manager gets reset, so it doesn't try to optimize
+    // away printing the next prompt.
+    reset_display_readline();
+
+    // Block any further prompt display if this is final.
+    if (crlf < 0)
+        uninit_display_readline();
+
+    // Terminal shell integration.
+    terminal_begin_command();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void rl_end_prompt(int32 crlf)
+{
+    end_prompt(crlf);
 }
 
 //------------------------------------------------------------------------------

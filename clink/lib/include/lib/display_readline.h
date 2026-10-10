@@ -25,6 +25,7 @@ extern "C" void move_to_end_of_display(int cr);
 int get_input_height();
 int get_relative_cursor_row();
 int get_relative_cursor_column();
+void end_prompt(int32 crlf=1);
 void refresh_input_line();
 void refresh_terminal_size();
 void clear_to_end_of_screen_on_next_display();

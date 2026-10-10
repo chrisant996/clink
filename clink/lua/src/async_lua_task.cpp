@@ -406,7 +406,7 @@ void task_manager_on_idle(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void end_task_manager()
+void end_task_manager()
 {
     return s_manager.end_line();
 }

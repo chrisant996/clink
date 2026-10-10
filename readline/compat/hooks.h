@@ -44,7 +44,7 @@ struct hooked_stat
 
 void reset_display_readline(void);
 void move_to_end_of_display(int cr);
-void end_prompt(int crlf);
+void rl_end_prompt(int crlf);
 void lock_against_suggestions(int lock);
 void clear_suggestion_list_index(void);
 int get_suggestion_list_selected_history_index(int* index);

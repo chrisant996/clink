@@ -15,5 +15,5 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
 HANDLE get_recognizer_event();
 bool check_recognizer_refresh();
 
-extern "C" void end_recognizer();
+void end_recognizer();
 void shutdown_recognizer();

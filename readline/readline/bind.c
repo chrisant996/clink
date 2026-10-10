@@ -2689,7 +2689,7 @@ rl_dump_functions (int count, int key)
   if (rl_dispatching)
 /* begin_clink_change */
     //fprintf (rl_outstream, "\r\n");
-    end_prompt (0/*crlf*/);
+    rl_end_prompt (0/*crlf*/);
 /* end_clink_change */
   rl_function_dumper (rl_explicit_arg);
 /* begin_clink_change */
@@ -2784,7 +2784,7 @@ rl_dump_macros (int count, int key)
   if (rl_dispatching)
 /* begin_clink_change */
     //fprintf (rl_outstream, "\r\n");
-    end_prompt (1/*crlf*/);
+    rl_end_prompt (1/*crlf*/);
 /* end_clink_change */
   rl_macro_dumper (rl_explicit_arg);
 /* begin_clink_change */
@@ -2961,7 +2961,7 @@ rl_dump_variables (int count, int key)
   if (rl_dispatching)
 /* begin_clink_change */
     //fprintf (rl_outstream, "\r\n");
-    end_prompt (1/*crlf*/);
+    rl_end_prompt (1/*crlf*/);
 /* end_clink_change */
   rl_variable_dumper (rl_explicit_arg);
 /* begin_clink_change */

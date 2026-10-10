@@ -721,7 +721,7 @@ bool check_recognizer_refresh()
 }
 
 //------------------------------------------------------------------------------
-extern "C" void end_recognizer()
+void end_recognizer()
 {
     s_recognizer.end_line();
     s_recognizer.clear();

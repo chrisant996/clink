@@ -16,6 +16,7 @@
 #include <terminal/ecma48_wrapper.h>
 #include "rl_commands.h"
 #include "rl_integration.h"
+#include "display_readline.h"
 #include "editor_module.h"
 #include "pager.h"
 #include "ellipsify.h"
