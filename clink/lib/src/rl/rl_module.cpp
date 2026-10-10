@@ -3075,20 +3075,6 @@ void rl_module::on_end_line()
 //------------------------------------------------------------------------------
 void rl_module::on_need_input(int32& bind_group)
 {
-#if 0
-// TODO-TIB: ?
-    if (pending_input())
-    {
-        if (m_previous_group < 0)
-            m_previous_group = bind_group;
-        bind_group = m_catch_group;
-    }
-    else if (m_previous_group >= 0)
-    {
-        bind_group = m_previous_group;
-        m_previous_group = -1;
-    }
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3175,18 +3161,25 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = &result;
     s_matches = &context.matches;
 
-#ifdef TIB_TODO
     // Tell Readline about the input chord, and whether the binding resolver
     // has more bytes pending.
     struct shim_in
     {
+#ifdef TIB_TODO
         shim_in(const char* input, int32 len) { rl_set_clink_input(input, len); }
         ~shim_in() { rl_set_clink_input(nullptr, 0); }
-    } rl_in(input.keys, input.len);
+#else
+        shim_in(tib_terminal_bridge* terminal, const char* input, int32 len)
+                : m_terminal(terminal) { m_terminal->set_chord(input, len); }
+        ~shim_in() { m_terminal->set_chord(nullptr, 0); }
+    private:
+        tib_terminal_bridge* m_terminal;
+#endif
+    } rl_in(m_terminal, input.keys, input.len);
 
     // Call Readline's until there's no characters left.
     rollback<bool> rb_input_more(s_input_more, input.more);
-    while (rl_has_clink_input() && !m_done)
+    while (m_terminal->has_chord() && !m_done)
     {
         // Reset the scroll mode right before handling input so that "scroll
         // mode" can be deduced based on whether the most recently invoked
@@ -3203,8 +3196,20 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // history search position has been cached.
         capture_sticky_search_position();
 
+#ifdef TIB_TODO
         // Let Readline handle the next input char.
         rl_callback_read_char();
+#else
+        const int32 key = m_terminal->read();
+        if (g_debug_log_input_pipeline)
+        {
+            LOG("INPUT rl.on_input key=%d (0x%02x '%c') has_chord=%d",
+                key, key, key, m_terminal->has_chord());
+        }
+        m_terminal->dispatch(uint8(key));
+        if (g_tib->is_done())
+            done(g_tib->get_text().c_str());
+#endif
 
 #if 0
         // Readline allows rl_undo_list to be identical to a HISTENTRY's data.
@@ -3233,28 +3238,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // "stick" unless it's set after rl_callback_read_char() returns.
         apply_pending_lastfunc();
     }
-#else
-    // Expose the remaining chord to tib's self-insert lookahead before it
-    // reads new bytes from Clink's driver.  Keep the optimization enabled.
-    m_terminal->set_chord(input.keys, input.len);
-    while (m_terminal->has_chord() && !m_done)
-    {
-        const int32 key = m_terminal->read();
-        if (g_debug_log_input_pipeline)
-        {
-            LOG("INPUT rl.on_input key=%d (0x%02x '%c') has_chord=%d",
-                key, key, key, m_terminal->has_chord());
-        }
-        m_terminal->dispatch(uint8(key));
-        if (g_tib->is_done())
-            done(g_tib->get_text().c_str());
-    }
-    m_terminal->set_chord(nullptr, 0);
-
-    int32 group = result.set_bind_group(m_catch_group);
-    on_need_input(group);
-    result.set_bind_group(group);
-#endif
 
     g_result = nullptr;
     s_matches = nullptr;
