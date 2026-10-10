@@ -110,6 +110,7 @@ bool    win_fn_callback_pending();
 
 //------------------------------------------------------------------------------
 // Readline compatibility.
+void rl_sync_with_clink();
 int32_t backward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t forward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t backward_kill_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
@@ -135,6 +136,7 @@ int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* na
 int32_t clink_tilde_expand(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clear_display(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t clear_screen(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t possible_completions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------

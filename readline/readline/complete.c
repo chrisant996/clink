@@ -188,8 +188,12 @@ static void _rl_export_completions (char **, char *, int, int);
 /* **************************************************************** */
 
 extern char* rl_complete_copy_text (int start, int end);
+extern int rl_set_complete_point (int point);
+extern int rl_set_complete_mark (int mark);
 extern void rl_complete_begin_undo_group (void);
 extern void rl_complete_end_undo_group (void);
+extern void rl_complete_insert_text(const char *text);
+extern void rl_complete_delete_text(int start, int end);
 extern void rl_complete_replace_text (const char* r, int start, int end);
 extern const char* rl_complete_line_buffer;
 extern int rl_complete_end;
@@ -1259,14 +1263,14 @@ _rl_find_completion_word (int *fp, int *dp)
 		{
 		  /* Found matching close.  Abandon this substring. */
 		  quote_char = '\0';
-		  rl_complete_point = end;
+		  rl_set_complete_point (end);
 		}
 	    }
 	  else if (strchr (rl_completer_quote_characters, rl_complete_line_buffer[scan]))
 	    {
 	      /* Found start of a quoted substring. */
 	      quote_char = rl_complete_line_buffer[scan];
-	      rl_complete_point = scan + 1;
+	      rl_set_complete_point (scan + 1);
 	      /* Shell-like quoting conventions. */
 	      if (quote_char == '\'')
 		found_quote |= RL_QF_SINGLE_QUOTE;
@@ -1283,7 +1287,7 @@ _rl_find_completion_word (int *fp, int *dp)
       /* We didn't find an unclosed quoted substring upon which to do
          completion, so use the word break characters to find the
          substring on which to complete. */
-      while (rl_complete_point = MB_PREVCHAR (rl_complete_line_buffer, rl_complete_point, MB_FIND_ANY))
+      while (rl_set_complete_point (MB_PREVCHAR (rl_complete_line_buffer, rl_complete_point, MB_FIND_ANY)))
 	{
 	  scan = rl_complete_line_buffer[rl_complete_point];
 
@@ -1930,7 +1934,7 @@ insert_match (char *match, int start, int mtype, char *qc)
 	    }
 	  if (start <= end || *r)
 	    rl_complete_replace_text (r, start, end);
-	  rl_complete_point = start + strlen (r);
+	  rl_set_complete_point (start + strlen (r));
 	}
       else
 	rl_complete_replace_text (replacement, start, end);
@@ -1944,7 +1948,7 @@ insert_match (char *match, int start, int mtype, char *qc)
 	  while (rl_complete_point > 0 && rl_is_path_separator (rl_complete_line_buffer[rl_complete_point - 1]))
 	    rl_complete_point--;
 	  if (rl_complete_point < end)
-	    rl_delete_text (rl_complete_point, end);
+	    rl_complete_delete_text (rl_complete_point, end);
 	}
 /* end_clink_change */
     }
@@ -2052,7 +2056,7 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 	      else if (!rl_is_path_separator (rl_complete_line_buffer[rl_complete_point]))
 		{
 		  char tmp_slash[2] = { rl_preferred_path_separator };
-		  rl_insert_text (tmp_slash);
+		  rl_complete_insert_text (tmp_slash);
 		}
 	    }
 	}
@@ -2071,14 +2075,14 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
       else
 	{
 	  if (rl_complete_point == rl_complete_end && temp_string_index)
-	    rl_insert_text (temp_string);
+	    rl_complete_insert_text (temp_string);
 	}
       xfree (filename);
     }
   else
     {
       if (rl_complete_point == rl_complete_end && temp_string_index)
-	rl_insert_text (temp_string);
+	rl_complete_insert_text (temp_string);
     }
 
 /* begin_clink_change */
@@ -2112,8 +2116,8 @@ insert_all_matches (char **matches, int point, char *qc)
      it back. */
   if (qc && *qc && point && rl_complete_line_buffer[point - 1] == *qc)
     point--;
-  rl_delete_text (point, rl_complete_point);
-  rl_complete_point = point;
+  rl_complete_delete_text (point, rl_complete_point);
+  rl_set_complete_point (point);
 
 /* begin_clink_change */
   qc = qs;
@@ -2125,15 +2129,15 @@ insert_all_matches (char **matches, int point, char *qc)
       for (i = 1; matches[i]; i++)
 	{
 	  rp = make_quoted_replacement (matches[i], SINGLE_MATCH, qc);
-	  rl_insert_text (rp);
+	  rl_complete_insert_text (rp);
 /* begin_clink_change */
 	  if (*qc)
 	    {
-	      rl_insert_text (qs);
+	      rl_complete_insert_text (qs);
 	      *qc = '\0';
 	    }
 /* end_clink_change */
-	  rl_insert_text (" ");
+	  rl_complete_insert_text (" ");
 	  if (rp != matches[i])
 	    xfree (rp);
 	}
@@ -2141,15 +2145,15 @@ insert_all_matches (char **matches, int point, char *qc)
   else
     {
       rp = make_quoted_replacement (matches[0], SINGLE_MATCH, qc);
-      rl_insert_text (rp);
+      rl_complete_insert_text (rp);
 /* begin_clink_change */
       if (*qc)
 	{
-	  rl_insert_text (qs);
+	  rl_complete_insert_text (qs);
 	  *qc = '\0';
 	}
 /* end_clink_change */
-      rl_insert_text (" ");
+      rl_complete_insert_text (" ");
       if (rp != matches[0])
 	xfree (rp);
     }
@@ -2248,7 +2252,7 @@ rl_complete_internal (int what_to_do)
     quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
   start = rl_complete_point;
-  rl_complete_point = end;
+  rl_set_complete_point (end);
 
 /* begin_clink_change */
   remember_orig_text (start, end);
@@ -3081,7 +3085,7 @@ rl_old_menu_complete (int count, int invoking_key)
 	quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
       orig_start = rl_complete_point;
-      rl_complete_point = orig_end;
+      rl_set_complete_point (orig_end);
 
 /* begin_clink_change */
       no_compute_lcd = 1;
@@ -3281,7 +3285,7 @@ rl_menu_complete (int count, int ignore)
 	quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
       orig_start = rl_complete_point;
-      rl_complete_point = orig_end;
+      rl_set_complete_point (orig_end);
 
 /* begin_clink_change */
       remember_orig_text (orig_start, orig_end);
@@ -3488,7 +3492,7 @@ rl_get_completions (int what_to_do, int* match_count, char** ot, int* os, int* o
     quote_char = _rl_find_completion_word (&found_quote, &delimiter);
 
   orig_start = rl_complete_point;
-  rl_complete_point = orig_end;
+  rl_set_complete_point (orig_end);
 
   no_compute_lcd = 1;
 
@@ -3630,8 +3634,8 @@ rl_export_completions (int count, int key)
   /* Clear the line buffer, currently requires a count argument. */
   if (count > 1)
     {
-      rl_delete_text (0, rl_complete_end);		/* undoable */
-      rl_complete_point = rl_mark = 0;
+      rl_complete_delete_text (0, rl_complete_end);		/* undoable */
+      rl_set_complete_point (rl_set_complete_mark (0));
     }
 
   return 0;

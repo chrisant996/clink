@@ -188,7 +188,7 @@ static const func_desc c_func_descriptions[] =
     // { "character-search-backward", rl_backward_char_search, keycat_basic, "A character is read and the cursor point is moved to the previous occurrence of that character.  A negative count searches for subsequent occurrences" },
     { "clear-display", clear_display, keycat_misc, "Clear the terminal screen and the scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen" },
     { "clear-screen", clear_screen, keycat_misc, "Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen" },
-    // { "complete", rl_complete, keycat_completion, "Perform completion on the text before the cursor point" },
+    { "complete", complete, keycat_completion, "Perform completion on the text before the cursor point" },
     { "copy-backward-word", copy_backward_word, keycat_killyank, "Copy the word before the cursor point to the kill buffer.  The word boundaries are the same as 'backward-word'" },
     { "copy-forward-word", copy_forward_word, keycat_killyank, "Copy the word following the cursor point to the kill buffer.  The word boundaries are the same as 'forward-word'" },
     { "copy-region-as-kill", copy_region_to_kill, keycat_killyank, "Copy the text in the marked region to the kill buffer, so it can be yanked right away" },

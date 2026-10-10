@@ -310,13 +310,25 @@ static char* copystring(const char* s, size_t len=tib::c_auto_length)
         return nullptr;
     len = tib::resolve_auto_length(len, s);
     char* copy = (char*)malloc(len + 1);
-    memcpy(copy, s, len + 1);
+    memcpy(copy, s, len);
+    copy[len] = 0;
     return copy;
 }
 extern "C" char* rl_complete_copy_text(int start, int end)
 {
     assert(start <= end);
     return copystring(g_tib->get_text().c_str() + start, end - start);
+}
+extern "C" int rl_set_complete_point(int point)
+{
+    g_tib->set_caret(point);
+    rl_complete_point = g_tib->get_caret();
+    return rl_complete_point;
+}
+extern "C" int rl_set_complete_mark(int mark)
+{
+    g_tib->set_mark(mark);
+    return g_tib->get_mark();
 }
 extern "C" void rl_complete_begin_undo_group(void)
 {
@@ -326,12 +338,26 @@ extern "C" void rl_complete_end_undo_group(void)
 {
     g_tib->end_undo_group();
 }
+extern "C" void rl_complete_insert_text(const char *text)
+{
+    g_tib->insert_text(text);
+
+    rl_sync_with_clink();
+}
+extern "C" void rl_complete_delete_text(int start, int end)
+{
+    assert(start <= end);
+
+    g_tib->remove_text(start, end);
+
+    rl_sync_with_clink();
+}
 extern "C" void rl_complete_replace_text(const char *text, int start, int end)
 {
     assert(start <= end);
 
     g_tib->begin_undo_group();
-    g_tib->remove_text(start, end);
+    g_tib->remove_text(start, end + 1);
     g_tib->insert_text(text);
     g_tib->end_undo_group();
 
