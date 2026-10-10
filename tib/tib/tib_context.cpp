@@ -1232,8 +1232,11 @@ void editor_context::insert_text(const char* s, size_t available, bool overwrite
     end_undo_group();
 }
 
-void editor_context::remove_text(textpos_t begin, textpos_t end)
+void editor_context::remove_text(const textpos_t _begin, const textpos_t _end)
 {
+    const auto begin = min(max(min(_begin, _end), 0), textpos_t(m_text.length()));
+    const auto end = min(max(max(_begin, _end), 0), textpos_t(m_text.length()));
+
     begin_undo_group();
 
     m_selection.reset_word_anchor();
