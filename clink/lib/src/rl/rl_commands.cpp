@@ -313,9 +313,19 @@ void rl_sync_with_clink()
         rl_last_func = rl_old_menu_complete;
     else if (func == backward_old_menu_complete)
         rl_last_func = rl_backward_old_menu_complete;
+    else if (func == glob_complete_word)
+        rl_last_func = (rl_command_func_t*)glob_complete_word;
+    else if (func == glob_expand_word)
+        rl_last_func = (rl_command_func_t*)glob_expand_word;
+    else if (func == glob_list_expansions)
+        rl_last_func = (rl_command_func_t*)glob_list_expansions;
 // TODO-TIB: other commands...
     else
         rl_last_func = _rl_null_function;
+
+    rl_explicit_arg = g_tib->has_numeric_argument();
+    rl_numeric_arg = g_tib->get_numeric_argument();
+    rl_arg_sign = g_tib->get_argument_sign();
 }
 static void rl_verify_still_in_sync()
 {
@@ -839,7 +849,7 @@ int32_t clink_paste(tib::editor_context& ctx, int32_t key, const char* name, con
 }
 
 //------------------------------------------------------------------------------
-int32 clink_copy_line(int32 count, int32 invoking_key)
+int32_t clink_copy_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     os::set_clipboard_text(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
@@ -847,9 +857,9 @@ int32 clink_copy_line(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_copy_word(int32 count, int32 invoking_key)
+int32_t clink_copy_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    if (count < 0 || !g_rl_buffer)
+    if (ctx.get_numeric_argument() < 0 || !g_rl_buffer)
     {
 Nope:
         tib::ding();
@@ -861,7 +871,7 @@ Nope:
     if (words.empty())
         goto Nope;
 
-    if (!rl_explicit_arg)
+    if (!ctx.has_numeric_argument())
     {
         uint32 line_cursor = g_rl_buffer->get_cursor();
         for (auto const& word : words)
@@ -876,7 +886,7 @@ Nope:
     }
     else
     {
-        count = rl_numeric_arg;
+        auto count = ctx.get_numeric_argument();
         for (auto const& word : words)
         {
             if (count-- == 0)
@@ -891,7 +901,7 @@ Nope:
 }
 
 //------------------------------------------------------------------------------
-int32 clink_copy_cwd(int32 count, int32 invoking_key)
+int32_t clink_copy_cwd(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     str<> cwd;
     if (os::get_current_dir(cwd))
@@ -904,7 +914,7 @@ int32 clink_copy_cwd(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_expand_env_var(int32 count, int32 invoking_key)
+int32_t clink_expand_env_var(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     // Extract the word under the cursor.
     int32 word_left, word_right;
@@ -933,7 +943,7 @@ static int32 do_expand_line(int32 flags)
     bool expanded = false;
     str<> in;
     str<> out;
-    int32 point = rl_point;
+    int32 point = g_rl_buffer->get_cursor();
 
     in = g_rl_buffer->get_buffer();
 
@@ -987,46 +997,46 @@ static int32 do_expand_line(int32 flags)
 
 //------------------------------------------------------------------------------
 // Expands a doskey alias (but only the first line, if $T is present).
-int32 clink_expand_doskey_alias(int32 count, int32 invoking_key)
+int32_t clink_expand_doskey_alias(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return do_expand_line(el_alias);
 }
 
 //------------------------------------------------------------------------------
 // Performs history expansion.
-int32 clink_expand_history(int32 count, int32 invoking_key)
+int32_t clink_expand_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return do_expand_line(el_history);
 }
 
 //------------------------------------------------------------------------------
 // Performs history and doskey alias expansion.
-int32 clink_expand_history_and_alias(int32 count, int32 invoking_key)
+int32_t clink_expand_history_and_alias(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return do_expand_line(el_history|el_alias);
 }
 
 //------------------------------------------------------------------------------
 // Performs history, doskey alias, and environment variable expansion.
-int32 clink_expand_line(int32 count, int32 invoking_key)
+int32_t clink_expand_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return do_expand_line(el_history|el_alias|el_envvar);
 }
 
 //------------------------------------------------------------------------------
-int32 clink_up_directory(int32 count, int32 invoking_key)
+int32_t clink_up_directory(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     g_rl_buffer->begin_undo_group();
     g_rl_buffer->remove(0, ~0u);
     g_rl_buffer->insert(" cd ..");
     g_rl_buffer->end_undo_group();
-    clink_newline(1, invoking_key);
+    clink_accept_line(ctx, key, nullptr, nullptr);
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_insert_dot_dot(int32 count, int32 invoking_key)
+int32_t clink_insert_dot_dot(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     str<> str;
 
@@ -1045,13 +1055,13 @@ int32 clink_insert_dot_dot(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_shift_space(int32 count, int32 invoking_key)
+int32_t clink_shift_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    return _rl_dispatch(' ', _rl_keymap);
+    return tib::self_insert(ctx, ' ', nullptr, nullptr);
 }
 
 //------------------------------------------------------------------------------
-int32 clink_magic_suggest_space(int32 count, int32 invoking_key)
+int32_t clink_magic_suggest_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     insert_suggestion(suggestion_action::insert_next_full_word);
     g_rl_buffer->insert(" ");
@@ -1059,9 +1069,9 @@ int32 clink_magic_suggest_space(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_toggle_slashes(int32 count, int32 invoking_key)
+int32_t clink_toggle_slashes(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-    if (count < 0 || !g_rl_buffer)
+    if (ctx.get_numeric_argument() < 0 || !g_rl_buffer)
     {
 Nope:
         tib::ding();
@@ -1073,7 +1083,7 @@ Nope:
     if (words.empty())
         goto Nope;
 
-    if (!rl_explicit_arg)
+    if (!ctx.has_numeric_argument())
     {
         uint32 line_cursor = g_rl_buffer->get_cursor();
         for (auto const& word : words)
@@ -1089,7 +1099,7 @@ Nope:
     }
     else
     {
-        count = rl_numeric_arg;
+        auto count = ctx.get_numeric_argument();
         for (auto const& word : words)
         {
             if (count-- == 0)
@@ -1107,42 +1117,42 @@ Nope:
 
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_line_up(int32 count, int32 invoking_key)
+int32_t clink_scroll_line_up(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYLINE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_line_down(int32 count, int32 invoking_key)
+int32_t clink_scroll_line_down(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYLINE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_page_up(int32 count, int32 invoking_key)
+int32_t clink_scroll_page_up(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYPAGE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_page_down(int32 count, int32 invoking_key)
+int32_t clink_scroll_page_down(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYPAGE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_top(int32 count, int32 invoking_key)
+int32_t clink_scroll_top(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_TOEND);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 clink_scroll_bottom(int32 count, int32 invoking_key)
+int32_t clink_scroll_bottom(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_TOEND);
     return 0;
@@ -1151,7 +1161,7 @@ int32 clink_scroll_bottom(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-int32 clink_find_conhost(int32 count, int32 invoking_key)
+int32_t clink_find_conhost(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
@@ -1168,7 +1178,7 @@ int32 clink_find_conhost(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_mark_conhost(int32 count, int32 invoking_key)
+int32_t clink_mark_conhost(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
@@ -1219,7 +1229,7 @@ int32_t clink_selectall_conhost(tib::editor_context& ctx, int32_t key, const cha
 
 
 //------------------------------------------------------------------------------
-int32 clink_popup_directories(int32 count, int32 invoking_key)
+int32_t clink_popup_directories(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     // Copy the directory list (just a shallow copy of the dir pointers).
     int32 total = 0;
@@ -1261,22 +1271,23 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
             dir.format("%s%s%s", qs, results.m_text.c_str(), qs);
 
             bool use = (results.m_result == popup_result::use);
-            g_tib->begin_undo_group();
+            g_rl_buffer->begin_undo_group();
             if (use)
             {
                 if (!end_sep)
                     dir.concat(PATH_SEP);
-                rl_replace_line(dir.c_str(), 0);
-                g_tib->set_caret(g_tib->get_length());
+                g_rl_buffer->remove(0, ~0);
+                g_rl_buffer->insert(dir.c_str());
+                g_rl_buffer->set_cursor(g_rl_buffer->get_length());
             }
             else
             {
-                g_tib->insert_text(dir.c_str());
+                g_rl_buffer->insert(dir.c_str());
             }
-            g_tib->end_undo_group();
+            g_rl_buffer->end_undo_group();
             display_readline();
             if (use)
-                clink_newline(1, invoking_key);
+                clink_accept_line(ctx, 0, nullptr, nullptr);
         }
         break;
     }
@@ -1289,7 +1300,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-int32 clink_complete_numbers(int32 count, int32 invoking_key)
+int32_t clink_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._complete_numbers"))
         tib::ding();
@@ -1297,7 +1308,7 @@ int32 clink_complete_numbers(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
+int32_t clink_menu_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers"))
         tib::ding();
@@ -1305,7 +1316,7 @@ int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
+int32_t clink_menu_complete_numbers_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._menu_complete_numbers_backward"))
         tib::ding();
@@ -1313,7 +1324,7 @@ int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
+int32_t clink_old_menu_complete_numbers(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers"))
         tib::ding();
@@ -1321,7 +1332,7 @@ int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
+int32_t clink_old_menu_complete_numbers_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._old_menu_complete_numbers_backward"))
         tib::ding();
@@ -1337,7 +1348,7 @@ int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int32 clink_popup_show_help(int32 count, int32 invoking_key)
+int32_t clink_popup_show_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!host_call_lua_rl_global_function("clink._internal._popup_show_help"))
         tib::ding();
@@ -2787,26 +2798,34 @@ static int32 glob_completion_internal(int32 what_to_do)
     if (!rl_explicit_arg)
         s_literal_wild = true;
 
-    return rl_complete_internal(what_to_do);
+    rl_sync_with_clink();
+    rl_complete_internal(what_to_do);
+    rl_verify_still_in_sync();
+    return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 glob_complete_word(int32 count, int32 invoking_key)
+int32_t glob_complete_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
+    rl_sync_with_clink();
+
     if (rl_editing_mode == emacs_mode)
         rl_explicit_arg = 1; /* force `*' append */
 
-    return glob_completion_internal(rl_completion_mode(glob_complete_word));
+    glob_completion_internal(rl_completion_mode((rl_command_func_t*)glob_complete_word));
+
+    rl_verify_still_in_sync();
+    return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 glob_expand_word(int32 count, int32 invoking_key)
+int32_t glob_expand_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return glob_completion_internal('*');
 }
 
 //------------------------------------------------------------------------------
-int32 glob_list_expansions(int32 count, int32 invoking_key)
+int32_t glob_list_expansions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     return glob_completion_internal('?');
 }
@@ -2814,13 +2833,12 @@ int32 glob_list_expansions(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-int32 edit_and_execute_command(int32 count, int32 invoking_key)
+int32_t edit_and_execute_command(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-#ifdef TIB_TODO
     str<> line;
-    if (rl_explicit_arg)
+    if (ctx.has_numeric_argument())
     {
-        HIST_ENTRY* h = history_get(count);
+        HIST_ENTRY* h = history_get(ctx.get_numeric_argument());
         if (!h)
         {
             tib::ding();
@@ -2830,7 +2848,7 @@ int32 edit_and_execute_command(int32 count, int32 invoking_key)
     }
     else
     {
-        line.concat(rl_line_buffer, rl_end);
+        line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
         if (!host_add_history(0, line.c_str()))
         {
             tib::ding();
@@ -2921,8 +2939,7 @@ LUnlinkFile:
 
     // Replace the input line with the content from the temp file.
     g_rl_buffer->begin_undo_group();
-    g_rl_buffer->remove(0, rl_end);
-    rl_point = 0;
+    g_rl_buffer->remove(0, ~0);
     if (!line.empty())
         g_rl_buffer->insert(line.c_str());
     g_rl_buffer->end_undo_group();
@@ -2932,32 +2949,30 @@ LUnlinkFile:
 
     // Accept the input and execute it.
     display_readline();
-    clink_newline(1, invoking_key);
-#endif
+    clink_accept_line(ctx, 0, nullptr, nullptr);
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 magic_space(int32 count, int32 invoking_key)
+int32_t magic_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
-#ifdef TIB_TODO
     str<> in;
     str<> out;
 
-    in.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_cursor());
+    const auto caret = g_rl_buffer->get_cursor();
+    in.concat(g_rl_buffer->get_buffer(), caret);
     if (expand_history(in.c_str(), out))
     {
         g_rl_buffer->begin_undo_group();
-        g_rl_buffer->remove(0, rl_point);
-        rl_point = 0;
+        g_rl_buffer->remove(0, caret);
+        g_rl_buffer->set_cursor(0);
         if (!out.empty())
             g_rl_buffer->insert(out.c_str());
         g_rl_buffer->end_undo_group();
     }
-#endif
 
-    rl_insert(1, ' ');
+    tib::self_insert(ctx, ' ', nullptr, nullptr);
     return 0;
 }
 

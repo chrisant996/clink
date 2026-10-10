@@ -336,53 +336,53 @@ static const func_desc c_func_descriptions[] =
     { "clink-accept-suggested-line", clink_accept_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line and accept the input line" },
     { "clink-backward-bigword", tib::backward_bigword, keycat_cursor, "Move back to the start of the current or previous space delimited word" },
     { "clink-cancel-suggestion-list", clink_cancel_suggestion_list, keycat_misc, "Turn off suggestion list mode" },
-    // { "clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen" },
-    // { "clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard" },
-    // { "clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard" },
-    // { "clink-copy-word", clink_copy_word, keycat_misc, "Copies the word at the cursor point to the clipboard, or copies the Nth word if a numeric argument is provided" },
+    { "clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen" },
+    { "clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard" },
+    { "clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard" },
+    { "clink-copy-word", clink_copy_word, keycat_misc, "Copies the word at the cursor point to the clipboard, or copies the Nth word if a numeric argument is provided" },
     { "clink-ctrl-c", clink_ctrl_c, keycat_basic, "Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one" },
     { "clink-dump-functions", clink_dump_functions, keycat_misc, "Print all of the functions and their key bindings.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
     { "clink-dump-macros", clink_dump_macros, keycat_misc, "Print all of the key names bound to macros and the strings they output.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
     { "clink-exit", clink_exit, keycat_misc, "Replaces the input line with 'exit' and executes it (exits the CMD instance)" },
-    // { "clink-expand-doskey-alias", clink_expand_doskey_alias, keycat_misc, "Expands doskey aliases in the input line" },
-    // { "clink-expand-env-var", clink_expand_env_var, keycat_misc, "Expands environment variables in the word at the cursor point" },
-    // { "clink-expand-history", clink_expand_history, keycat_misc, "Performs history expansion in the input line" },
-    // { "clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line" },
-    // { "clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line" },
-    // { "clink-find-conhost", clink_find_conhost, keycat_misc, "Invokes the 'Find...' command in a standalone CMD window" },
+    { "clink-expand-doskey-alias", clink_expand_doskey_alias, keycat_misc, "Expands doskey aliases in the input line" },
+    { "clink-expand-env-var", clink_expand_env_var, keycat_misc, "Expands environment variables in the word at the cursor point" },
+    { "clink-expand-history", clink_expand_history, keycat_misc, "Performs history expansion in the input line" },
+    { "clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line" },
+    { "clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line" },
+    { "clink-find-conhost", clink_find_conhost, keycat_misc, "Invokes the 'Find...' command in a standalone CMD window" },
     { "clink-forward-bigword", clink_forward_bigword, keycat_cursor, "Move forward to the beginning of the next space delimited word, or insert the next full suggested word up to a space" },
-    // { "clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point" },
+    { "clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point" },
     { "clink-insert-suggested-full-word", clink_insert_suggested_full_word, keycat_misc, "If there is a suggestion, insert the next full word from the suggested line" },
     { "clink-insert-suggested-line", clink_insert_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line" },
     { "clink-insert-suggested-word", clink_insert_suggested_word, keycat_misc, "If there is a suggestion, insert the next word from the suggested line" },
-    // { "clink-magic-suggest-space", clink_magic_suggest_space, keycat_misc, "Insert the next full suggested word (if any) up to a space, and insert a space" },
-    // { "clink-mark-conhost", clink_mark_conhost, keycat_misc, "Invokes the 'Mark' command in a standalone CMD window" },
-    // { "clink-menu-complete-numbers", clink_menu_complete_numbers, keycat_completion, "Like 'menu-complete' using numbers from the current screen" },
-    // { "clink-menu-complete-numbers-backward", clink_menu_complete_numbers_backward, keycat_completion, "Like 'menu-complete-backward' using numbers from the current screen" },
-    // { "clink-old-menu-complete-numbers", clink_old_menu_complete_numbers, keycat_completion, "Like 'old-menu-complete' using numbers from the current screen" },
-    // { "clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen" },
+    { "clink-magic-suggest-space", clink_magic_suggest_space, keycat_misc, "Insert the next full suggested word (if any) up to a space, and insert a space" },
+    { "clink-mark-conhost", clink_mark_conhost, keycat_misc, "Invokes the 'Mark' command in a standalone CMD window" },
+    { "clink-menu-complete-numbers", clink_menu_complete_numbers, keycat_completion, "Like 'menu-complete' using numbers from the current screen" },
+    { "clink-menu-complete-numbers-backward", clink_menu_complete_numbers_backward, keycat_completion, "Like 'menu-complete-backward' using numbers from the current screen" },
+    { "clink-old-menu-complete-numbers", clink_old_menu_complete_numbers, keycat_completion, "Like 'old-menu-complete' using numbers from the current screen" },
+    { "clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen" },
     { "clink-paste", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
     // { "clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform interactive completion from a list of numbers from the current screen" },
-    // { "clink-popup-directories", clink_popup_directories, keycat_misc, "Show recent directories in a popup list.  In the popup, use Enter to 'cd /d' to the selected directory" },
+    { "clink-popup-directories", clink_popup_directories, keycat_misc, "Show recent directories in a popup list.  In the popup, use Enter to 'cd /d' to the selected directory" },
     // { "clink-popup-history", clink_popup_history, keycat_history, "Show history entries in a popup list.  Filters using any text before the cursor point.  In the popup, use Enter to execute the selected history entry" },
-    // { "clink-popup-show-help", clink_popup_show_help, keycat_misc, "Show all key bindings in a searchable popup list.  In the popup, use Enter to invoke the selected key binding.  If a numeric argument of 4 is supplied, includes unbound commands" },
+    { "clink-popup-show-help", clink_popup_show_help, keycat_misc, "Show all key bindings in a searchable popup list.  In the popup, use Enter to invoke the selected key binding.  If a numeric argument of 4 is supplied, includes unbound commands" },
     { "clink-reload", clink_reload, keycat_misc, "Reload Lua scripts and the .inputrc file" },
     { "clink-reset-line", clink_reset_line, keycat_basic, "Clear the input line.  Can be undone, unlike 'revert-line'" },
-    // { "clink-scroll-bottom", clink_scroll_bottom, keycat_scroll, "Scroll to the bottom of the terminal's scrollback buffer" },
-    // { "clink-scroll-line-down", clink_scroll_line_down, keycat_scroll, "Scroll down one line" },
-    // { "clink-scroll-line-up", clink_scroll_line_up, keycat_scroll, "Scroll up one line" },
-    // { "clink-scroll-page-down", clink_scroll_page_down, keycat_scroll, "Scroll down one page" },
-    // { "clink-scroll-page-up", clink_scroll_page_up, keycat_scroll, "Scroll up one page" },
-    // { "clink-scroll-top", clink_scroll_top, keycat_scroll, "Scroll to the top of the terminal's scrollback buffer" },
+    { "clink-scroll-bottom", clink_scroll_bottom, keycat_scroll, "Scroll to the bottom of the terminal's scrollback buffer" },
+    { "clink-scroll-line-down", clink_scroll_line_down, keycat_scroll, "Scroll down one line" },
+    { "clink-scroll-line-up", clink_scroll_line_up, keycat_scroll, "Scroll up one line" },
+    { "clink-scroll-page-down", clink_scroll_page_down, keycat_scroll, "Scroll down one page" },
+    { "clink-scroll-page-up", clink_scroll_page_up, keycat_scroll, "Scroll up one page" },
+    { "clink-scroll-top", clink_scroll_top, keycat_scroll, "Scroll to the top of the terminal's scrollback buffer" },
     { "clink-select-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it" },
     { "clink-selectall-conhost", clink_selectall_conhost, keycat_misc, "Invokes the 'Select All' command in a standalone CMD window" },
-    // { "clink-shift-space", clink_shift_space, keycat_misc, "Invoke the normal Space key binding, so that Shift-Space behaves the same as Space" },
+    { "clink-shift-space", clink_shift_space, keycat_misc, "Invoke the normal Space key binding, so that Shift-Space behaves the same as Space" },
     { "clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions:  0=neither, 1=categories, 2=descriptions, 3=both (default).  Add 4 to include unbound commands" },
     { "clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings" },
     { "clink-show-suggestion-list", clink_show_suggestion_list, keycat_misc, "Turn on suggestion list mode" },
-    // { "clink-toggle-slashes", clink_toggle_slashes, keycat_misc, "Toggle between forward and backslashes in the word at the cursor point, or in the Nth word if a numeric argument is provided" },
+    { "clink-toggle-slashes", clink_toggle_slashes, keycat_misc, "Toggle between forward and backslashes in the word at the cursor point, or in the Nth word if a numeric argument is provided" },
     { "clink-toggle-suggestion-list", clink_toggle_suggestion_list, keycat_misc, "Toggle suggestion list mode on or off" },
-    // { "clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory" },
+    { "clink-up-directory", clink_up_directory, keycat_misc, "Execute 'cd ..' to move up one directory" },
     { "clink-what-is", clink_what_is, keycat_misc, "Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name" },
     { "cua-backward-bigword", tib::cua_backward_word, keycat_select, "Extend the selection backward one space delimited word" },
     { "cua-backward-char", tib::cua_backward_char, keycat_select, "Extend the selection backward one character" },
@@ -406,24 +406,24 @@ static const func_desc c_func_descriptions[] =
     // { "win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line" },
     // { "win-history-list", win_f7, keycat_history, "Executes a history entry from a list" },
     // { "win-insert-eof", win_f6, keycat_misc, "Insert ^Z" },
-    // { "edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order" },
-    // { "glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended" },
-    // { "glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion" },
-    // { "glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion" },
-    // { "magic-space", magic_space, keycat_history, "Perform history expansion on the text before the cursor position and insert a space" },
+    { "edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order" },
+    { "glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended" },
+    { "glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion" },
+    { "glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion" },
+    { "magic-space", magic_space, keycat_history, "Perform history expansion on the text before the cursor position and insert a space" },
     { "clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information" },
     { "clink-diagnostics-output", clink_diagnostics_output, keycat_misc, "Write internal diagnostic information to a file" },
     { "lorem-ipsum", tib::lorem_ipsum, keycat_misc, "Inserts lorem ipsum text" },
 
     // Alias some Clink commands.
-    // { "clink-popup-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it" },
+    { "clink-popup-complete", clink_select_complete },
 
     // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
-    // { "alias-expand-line", clink_expand_doskey_alias },
-    // { "history-and-alias-expand-line", clink_expand_history_and_alias },
-    // { "history-expand-line", clink_expand_history },
+    { "alias-expand-line", clink_expand_doskey_alias },
+    { "history-and-alias-expand-line", clink_expand_history_and_alias },
+    { "history-expand-line", clink_expand_history },
     // { "insert-last-argument", rl_yank_last_arg },
-    // { "shell-expand-line", clink_expand_line },
+    { "shell-expand-line", clink_expand_line },
 };
 
 //------------------------------------------------------------------------------
@@ -445,44 +445,62 @@ static bool maybe_exclude_function(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static void clink_add_funmap_entry(const char *name, tib::editor_command_func_t func, keycat cat, const char* desc)
-{
-    assert(name);
-    // assert(func); // Because "do-lowercase-version" has no func address.
-    assert(desc || maybe_exclude_function(name));
-
-    tib::editor_context::register_command(name, func);
-
-    if (!s_pmap_keydesc)
-        s_pmap_keydesc = new keydesc_map;
-
-    auto const& iter = s_pmap_keydesc->lower_bound(name);
-    if (iter == s_pmap_keydesc->end() || stricmp(iter->first, name) != 0)
-    {
-        // Not in map yet.
-        s_pmap_keydesc->emplace_hint(iter, name, std::move(Keydesc(name, func, cat, desc)));
-    }
-    else
-    {
-        // A command's name and category should not change, but its
-        // description and function address can change.
-        assert(!iter->second.name || !strcmp(iter->second.name, name));
-        assert(!iter->second.cat || iter->second.cat == cat);
-        iter->second.name = name;
-        iter->second.func = func;
-        iter->second.cat = cat;
-        iter->second.desc = desc;
-    }
-}
-
-//------------------------------------------------------------------------------
 void init_editor_commands()
 {
     assert(tib::editor_context::get_registered_commands().empty() || tib::is_test_harness());
     tib::editor_context::clear_all_commands();
 
+    keydesc_map* map = nullptr;
+    if (!s_pmap_keydesc)
+    {
+        s_pmap_keydesc = new keydesc_map;
+        map = s_pmap_keydesc;
+    }
+
     for (const auto& d : c_func_descriptions)
-        clink_add_funmap_entry(d.name, d.func, d.cat, d.desc);
+    {
+        assert(d.name);
+        assert(d.func || strcmp(d.name, "do-lowercase-version") == 0);
+
+        tib::editor_context::register_command(d.name, d.func);
+
+        if (map)
+        {
+            auto cat = d.cat;
+            auto desc = d.desc;
+            if (!desc && !maybe_exclude_function(d.name))
+            {
+                for (const auto find : *map)
+                {
+                    if (find.second.func == d.func)
+                    {
+                        cat = keycat_misc; // Put all the aliases in "Miscellaneous".
+                        desc = find.second.desc;
+                        break;
+                    }
+                }
+                assert(desc && "missing description and not an alias");
+            }
+
+            auto const& iter = map->lower_bound(d.name);
+            if (iter == s_pmap_keydesc->end() || stricmp(iter->first, d.name) != 0)
+            {
+                // Not in map yet.
+                s_pmap_keydesc->emplace_hint(iter, d.name, std::move(Keydesc(d.name, d.func, cat, desc)));
+            }
+            else
+            {
+                // A command's name and category should not change, but its
+                // description and function address can change.
+                assert(!iter->second.name || !strcmp(iter->second.name, d.name));
+                assert(!iter->second.cat || iter->second.cat == cat);
+                iter->second.name = d.name;
+                iter->second.func = d.func;
+                iter->second.cat = cat;
+                iter->second.desc = desc;
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
