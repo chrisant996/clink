@@ -143,6 +143,9 @@ int32_t menu_complete(tib::editor_context& ctx, int32_t key, const char* name, c
 int32_t backward_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 int32_t backward_old_menu_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
+int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept;
 
 //------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?

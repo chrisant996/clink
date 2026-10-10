@@ -2772,6 +2772,15 @@ int32_t backward_old_menu_complete(tib::editor_context& ctx, int32_t key, const 
 
 
 //------------------------------------------------------------------------------
+int32_t dump_variables(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    do_rl_command(rl_dump_variables, key);
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
 static bool s_globbing_wild = false;
 static bool s_literal_wild = false;
 bool is_globbing_wild() { return s_globbing_wild; }

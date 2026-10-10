@@ -199,9 +199,9 @@ static const func_desc c_func_descriptions[] =
     { "digit-argument", tib::digit_argument, keycat_misc, "Start or accumulate a numeric argument to a command.  Alt+- starts a negative argument" },
     { "do-lowercase-version", nullptr, keycat_misc, "If the metafied character X is upper case, run the command that is bound to the corresponding metafied lower case character.  The behavior is undefined if X is already lower case" },
     { "downcase-word", tib::lower_case, keycat_misc, "Lowercase the current (or following) word.  With a negative argument, lowercases the previous word, but does not move the cursor point" },
-    // { "dump-functions", rl_dump_functions, keycat_misc, "Print all of the functions and their key bindings to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
-    // { "dump-macros", rl_dump_macros, keycat_misc, "Print all of the key sequences bound to macros and the strings they output.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
-    // { "dump-variables", rl_dump_variables, keycat_misc, "Print all of the Readline variables and their values to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
+    { "dump-functions", dump_functions, keycat_misc, "Print all of the functions and their key bindings to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
+    { "dump-macros", dump_macros, keycat_misc, "Print all of the key sequences bound to macros and the strings they output.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
+    { "dump-variables", dump_variables, keycat_misc, "Print all of the Readline variables and their values to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
     // { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "When in 'vi' command mode, this causes a switch to 'emacs' editing mode" },
     // { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "Stop saving the characters typed into the current keyboard macro and save the definition" },
     // { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e. the line currently being entered" },
@@ -1633,13 +1633,17 @@ static bool is_macro_entry(const Keyentry* entry)
 }
 
 //------------------------------------------------------------------------------
-static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros)
+static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros, bool friendly=true)
 {
-    static const char norm[] = "\x1b[m";
-    static const char bold[] = "\x1b[1m";
+    static const char c_norm[] = "\x1b[m";
+    static const char c_bold[] = "\x1b[1m";
     // Can't use Faint because Windows Terminal always blends with Black
     // instead of blending with the background color.
-    static const char dim[] = "";//"\x1b[2m";
+    static const char c_dim[] = "";//"\x1b[2m";
+
+    const char* norm = friendly ? c_norm : "";
+    const char* bold = friendly ? c_bold : "";
+    const char* dim = friendly ? c_dim : "";
 
     int32 offset = 1;
     int32 max_collect = 64;
@@ -1652,7 +1656,7 @@ static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros)
     auto bindings = g_tib->get_bindings();
     std::vector<str_moveable> warnings;
     const bool explicit_arg = ctx.has_numeric_argument();
-    collector = collect_keymap(bindings, collector, &offset, &max_collect, !explicit_arg/*friendly*/, true, (bindings = get_emacs_standard_bindings()) ? &warnings : nullptr);
+    collector = collect_keymap(bindings, collector, &offset, &max_collect, friendly && !explicit_arg, true, (bindings = get_emacs_standard_bindings()) ? &warnings : nullptr);
     if (!macros)
         collector = collect_functions(collector, &offset, &max_collect, false);
 
@@ -1796,6 +1800,22 @@ int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* 
 int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
 {
     if (!funcmac_dumper_internal(ctx, true/*macros*/))
+        tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    if (!funcmac_dumper_internal(ctx, false/*macros*/, false/*friendly*/))
+        tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+{
+    if (!funcmac_dumper_internal(ctx, true/*macros*/, false/*friendly*/))
         tib::ding();
     return 0;
 }
