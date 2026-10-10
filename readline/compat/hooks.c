@@ -341,10 +341,3 @@ void wait_for_input(unsigned long timeout)
             show_cursor(0);
     }
 }
-
-//------------------------------------------------------------------------------
-static const char* s_trick_the_linker = 0;
-void prevent_COMDAT_folding(const char* str)
-{
-    s_trick_the_linker = str;
-}

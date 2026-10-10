@@ -250,9 +250,7 @@ static const func_desc c_func_descriptions[] =
     { "redraw-current-line", refresh_line, keycat_misc, "Refresh the current line" },
     // { "reverse-search-history", rl_reverse_search_history, keycat_history, "Incremental search backward starting at the current line and moving 'up' through the history as necessary.  Sets the marked region to the matched text" },
     { "revert-line", tib::undo_all, keycat_basic, "Undo all changes made to this line.  This is like executing the 'undo' command enough times to get back to the beginning" },
-#if 0
-    { "self-insert", rl_insert },
-#endif
+    { "self-insert", tib::self_insert },
     { "set-mark", tib::set_mark, keycat_misc, "Set the mark to the cursor point.  If a numeric argument is supplied, sets the mark to that position" },
     // { "skip-csi-sequence", rl_skip_csi_sequence, keycat_misc, "" },
     // { "start-kbd-macro", rl_start_kbd_macro, keycat_misc, "Begin saving the characters typed into the current keyboard macro" },
@@ -429,11 +427,29 @@ static const func_desc c_func_descriptions[] =
 };
 
 //------------------------------------------------------------------------------
+static bool maybe_exclude_function(const char* name)
+{
+    static const char* const c_exclude[] = {
+        "self-insert",
+        "do-lowercase-version",
+        "bracketed-paste-begin",
+    };
+
+    for (const auto& walk : c_exclude)
+    {
+        if (stricmp(walk, name) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static void clink_add_funmap_entry(const char *name, tib::editor_command_func_t func, keycat cat, const char* desc)
 {
     assert(name);
     // assert(func); // Because "do-lowercase-version" has no func address.
-    assert(desc);
+    assert(desc || maybe_exclude_function(name));
 
     tib::editor_context::register_command(name, func);
 
@@ -685,24 +701,6 @@ tib::resolved_binding lookup_keyseq(tib::editor_context& ctx, const char* keyseq
 
 nope:
     return {};
-}
-
-//------------------------------------------------------------------------------
-static bool maybe_exclude_function(const char* name)
-{
-    static const char* const c_exclude[] = {
-        "self-insert",
-        "do-lowercase-version",
-        "bracketed-paste-begin",
-    };
-
-    for (const auto& walk : c_exclude)
-    {
-        if (stricmp(walk, name) == 0)
-            return true;
-    }
-
-    return false;
 }
 
 //------------------------------------------------------------------------------

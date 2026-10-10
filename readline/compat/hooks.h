@@ -78,4 +78,6 @@ extern unsigned int clink_wcswidth(const char* str, unsigned int len);
 // Use this in a function to prevent it from being COMDAT-folded with another
 // identical function.  E.g. rl_undo_command() versus vi_undo().
 extern void prevent_COMDAT_folding(const char*);
+#ifndef PREVENT_COMDAT_FOLDING
 #define PREVENT_COMDAT_FOLDING() prevent_COMDAT_folding(__FUNCTION__)
+#endif
