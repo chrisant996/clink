@@ -1135,6 +1135,7 @@ void display_manager::measure(measure_columns& mc)
 {
     assert(m_initialized);
 
+    assert(false && "display_manager::measure was reached");
 #ifdef TIB_TODO
     // FUTURE:  Ideally this would remember what prompt it displayed and use
     // that here, rather than using whatever is the current prompt content.
@@ -1426,7 +1427,6 @@ extern "C" void _rl_refresh_line(void)
 //------------------------------------------------------------------------------
 void refresh_input_line()
 {
-    force_redisplay_readline();
     display_readline();
     g_tib->clear_auto_deactivate_mark();
 }

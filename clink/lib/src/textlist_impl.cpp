@@ -690,7 +690,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     if (!s_standalone && !clink_is_signaled())
     {
-        _rl_refresh_line();
+        refresh_input_line();
     }
 
     lock_cursor(false);
