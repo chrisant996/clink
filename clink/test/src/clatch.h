@@ -8,6 +8,7 @@
 #include <exception>
 #include <functional>
 
+#include <core/str.h>
 #include <core/os.h>
 #include <core/callstack.h>
 
@@ -139,6 +140,13 @@ inline bool run(const char* prefix="", bool times=false)
     auto previous_assertion_hook = g_assertion_hook;
     g_assertion_hook = record_assertion_section;
 
+    str<> temp_dir;
+    if (!os::get_temp_dir(temp_dir))
+    {
+        printf("%sUnable to get temporary directory.%s\r\n", colors::get_error(), colors::get_normal());
+        return false;
+    }
+
     for (test* test = test::get_head(); test != nullptr; test = test->m_next)
     {
         // Cheap lower-case prefix test.
@@ -152,6 +160,9 @@ inline bool run(const char* prefix="", bool times=false)
 
         section root;
         const double clock = os::clock();
+
+        // Ensure consistent test results even when filtering tests by prefix.
+        os::set_current_dir(temp_dir.c_str());
 
         try
         {
