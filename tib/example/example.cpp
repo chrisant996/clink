@@ -163,6 +163,8 @@ void make_key_tables()
 
     s_normal_bindings = tib::make_default_key_table(true/*numeric_argument*/);
     {
+        s_normal_bindings->at(0)->remove("\030");   // Avoid shadowing Ctrl-X.
+
         auto t = std::make_shared<tib::key_table>();
         t->add("\033", tib::binding_target_func("del-line"));           // ESC by itself
 
@@ -175,6 +177,9 @@ void make_key_tables()
 
         t->add("\030\001", tib::binding_target_func("movement-mode"));              // Ctrl-X,Ctrl-A
         t->add("\030\030", tib::binding_target_func("exchange-caret-and-mark"));    // Ctrl-X,Ctrl-X
+        t->add("\030(", tib::binding_target_func("start-kbd-macro"));               // Ctrl-X,(
+        t->add("\030)", tib::binding_target_func("end-kbd-macro"));                 // Ctrl-X,)
+        t->add("\030e", tib::binding_target_func("call-last-kbd-macro"));           // Ctrl-X,e
 
         s_normal_bindings->emplace_back(t);
     }
@@ -485,24 +490,28 @@ no_border:
                 {
                     tib->set_empty_face(tib::FACE_DEFAULT);
                     colors->set_color(tib::color_element::base, c_norm_base);
+                    colors->set_color(tib::color_element::input, c_norm_base);
                     border = &tib::c_light_border;
                 }
                 else if (_stricmp(argv[i], "padding") == 0)
                 {
                     tib->set_empty_face(tib::FACE_DEFAULT);
                     colors->set_color(tib::color_element::base, c_padding_base);
+                    colors->set_color(tib::color_element::input, c_padding_base);
                     border = &c_padding_border;
                 }
                 else if (_stricmp(argv[i], "bar-padding") == 0)
                 {
                     tib->set_empty_face(tib::FACE_DEFAULT);
                     colors->set_color(tib::color_element::base, c_padding_base);
+                    colors->set_color(tib::color_element::input, c_padding_base);
                     border = &c_bar_padding_border;
                 }
                 else if (_stricmp(argv[i], "first-line") == 0)
                 {
                     tib->set_empty_face(tib::FACE_DEFAULT);
                     colors->set_color(tib::color_element::base, c_padding_base);
+                    colors->set_color(tib::color_element::input, c_padding_base);
                     border = &c_first_line_border;
                 }
                 else if (_stricmp(argv[i], "none") == 0)
@@ -834,6 +843,22 @@ no_border:
 
     auto update_sequence_after_step = [&](tib::dispatch_outcome outcome)
     {
+        if (tib->count_error_messages())
+        {
+            tib->end_display_lf();
+            tib::term_out("\r\n", 2);
+            for (int32_t index = 0; const char* msg = tib->get_error_message(index); ++index)
+            {
+                tib::term_out(msg);
+                tib::term_out("\r\n", 2);
+            }
+            tib::term_out("\r\n", 2);
+            tib->clear_error_messages();
+            if (origin_x > 0)
+                tib->set_origin(origin_x);  // Cleared by end_display_lf().
+            tib->begin_display();
+        }
+
         if (!s_show_keys)
             return;
         switch (outcome)

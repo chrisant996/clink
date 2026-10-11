@@ -435,7 +435,9 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
     // ensure that within some scope (perhaps for an extensibility framework)
     // any invocations of the self_insert editor command insert only a single
     // character without reading any further input from the terminal.
-    if (!ctx.has_numeric_argument() && g_optimize_self_insert && ctx.get_allow_optimized_self_insert())
+    if (!ctx.has_numeric_argument() &&
+        g_optimize_self_insert &&
+        ctx.get_allow_optimized_self_insert())
     {
         // Yield to the editor periodically even when input keeps arriving.
         const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
@@ -461,6 +463,9 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
             }
 
             ctx.insert_text(input.c_str(), input.length(), ctx.get_overwrite_mode());
+            if (!ctx.m_recording.append(input.c_str(), input.length()))
+                tib::ding();
+
             handled = true;
         }
     }
@@ -480,6 +485,8 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
                 if (hook_input_trace)
                     hook_input_trace("insert char", uint8_t(c), n);
                 ctx.insert_char(c, ctx.get_overwrite_mode());
+                if (!ctx.m_recording.append(&c, 1))
+                    tib::ding();
             }
             ctx.end_undo_group();
         }
@@ -649,6 +656,51 @@ int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* na
 {
     if (!ctx.universal_argument())
         ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+
+int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    const bool append = ctx.has_numeric_argument();
+    if (!ctx.start_kbd_macro(append))
+    {
+        ctx.discard_last_recorded_keyseq();
+        tib::ding();
+        return 0;
+    }
+
+    if (append && ctx.has_last_kbd_macro() && !ctx.get_last_kbd_macro().empty())
+        tib::term_push_macro_text(ctx.get_last_kbd_macro().c_str(), ctx.get_last_kbd_macro().length());
+    return 0;
+}
+
+int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    const int32_t count = ctx.get_numeric_argument();
+    if (!ctx.end_kbd_macro())
+    {
+        tib::ding();
+        return 0;
+    }
+
+    if (!ctx.play_last_kbd_macro(count > 1 ? count - 1 : 0))
+        ctx.reset_state();
+    return 0;
+}
+
+int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+{
+    if (ctx.is_recording_kbd_macro())
+    {
+        ctx.discard_last_recorded_keyseq();
+        tib::ding();
+        return 0;
+    }
+
+    if (!ctx.play_last_kbd_macro(ctx.get_numeric_argument()))
+        ctx.reset_state();
     return 0;
 }
 
@@ -960,6 +1012,7 @@ static const editor_command c_commands[] =
     { "backward-char", backward_char },
     { "backward-word", backward_word },
     { "begin-of-line", begin_of_line },
+    { "call-last-kbd-macro", call_last_kbd_macro },
     { "capitalize", capitalize },
     { "clear-selection", clear_selection },
     { "copy", copy },
@@ -980,6 +1033,7 @@ static const editor_command c_commands[] =
     { "del-word-left", del_word_left },
     { "del-word-right", del_word_right },
     { "digit-argument", digit_argument },
+    { "end-kbd-macro", end_kbd_macro },
     { "end-of-line", end_of_line },
     { "exchange-caret-and-mark", exchange_caret_and_mark },
     { "forward-bigword", forward_bigword },
@@ -998,6 +1052,7 @@ static const editor_command c_commands[] =
     { "select-bigword", select_bigword },
     { "select-word", select_word },
     { "set-mark", set_mark },
+    { "start-kbd-macro", start_kbd_macro },
     { "toggle-case", toggle_case },
     { "toggle-overwrite-mode", toggle_overwrite_mode },
     { "transpose-bigwords", transpose_bigwords },

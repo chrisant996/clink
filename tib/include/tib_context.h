@@ -181,10 +181,22 @@ public:
     bool                undo_all();
     bool                redo();
 
+    bool                start_kbd_macro(bool append);
+    bool                end_kbd_macro();
+    bool                play_last_kbd_macro(int32_t count=1);
+    bool                is_recording_kbd_macro() const { return m_recording_macro; }
+    void                discard_last_recorded_keyseq() { m_discard_last_recorded_keyseq = true; }
+    bool                has_last_kbd_macro() const { return m_has_last_macro; }
+    const cstring&      get_last_kbd_macro() const { return m_last_macro; } // Can contain NUL chars.
+
     void                transfer_text(cstring& out);
 
     bool                get_allow_optimized_self_insert() const { return m_allow_optimized_self_insert; }
     void                set_allow_optimized_self_insert(bool allow) { m_allow_optimized_self_insert = allow; }
+
+    const char*         get_error_message(int32_t index) const;
+    int32_t             count_error_messages() const { return int32_t(m_error_messages.size()); }
+    void                clear_error_messages() { m_error_messages.clear(); }
 
 #ifdef DEBUG
     void                dump_undo_stack();
@@ -208,6 +220,7 @@ public:
                         // Methods on the tib::dispatcher_target interface.
     int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept override;
     void                on_binding_fallback() noexcept override;
+    void                report_error(const char* msg) noexcept override;
 
 private:
     void                init_undo();
@@ -264,6 +277,13 @@ private:
     int32_t             m_numeric_argument = 0;
     int32_t             m_quoted_insert_count = 0;
 
+    // Keyboard macro recording.
+    cstring             m_recording;
+    cstring             m_last_macro;
+    bool                m_recording_macro = false;
+    bool                m_has_last_macro = false;
+    bool                m_discard_last_recorded_keyseq = false;
+
     // Display.
     display_manager     m_display;
 
@@ -281,9 +301,15 @@ private:
     cstring             m_curr_input_history;
 #endif
 
+    // Error messages.
+    std::vector<cstring> m_error_messages;
+
     // Commands.
     static std::vector<cstring> s_command_names;
     static std::map<const char*, editor_command_func_t, stricmp_less> s_commands;
+
+    // Friends.
+    friend int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept; // For m_recording.
 };
 
 } // namespace tib

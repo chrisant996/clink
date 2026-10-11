@@ -165,6 +165,10 @@ public:
     // fallback bindings after the override bindings missed.
     virtual void        on_binding_fallback() noexcept {}
 
+    // Called to report error messages; the dispatcher_target gets to choose
+    // how/whether to present them to a user.
+    virtual void        report_error(const char* msg) noexcept {}
+
 private:
     std::shared_ptr<const key_table_list> m_bindings;
     std::shared_ptr<const key_table_list> m_override_bindings;

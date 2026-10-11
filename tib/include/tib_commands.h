@@ -84,6 +84,10 @@ int32_t toggle_case(tib::editor_context& ctx, int32_t key, const char* name, con
 int32_t digit_argument(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 
+int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
+
 int32_t mouse_input(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;
 
 int32_t redisplay(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept;

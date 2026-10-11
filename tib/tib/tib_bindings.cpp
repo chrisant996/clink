@@ -409,7 +409,14 @@ bool resolved_binding::dispatch()
 
                 assert(self_insert == (!target || !*target));
                 if (target && target->get_type() == binding_type::macro)
-                    term_push_macro_text(target->get_text(), target->get_length());
+                {
+                    if (term_push_macro_text(target->get_text(), target->get_length()) < 0)
+                    {
+                        cstring msg;
+                        msg.printf("Maximum macro execution depth exceeded (%d).", c_max_macro_depth);
+                        ctx->report_error(msg.c_str());
+                    }
+                }
                 else
                 {
                     const int32_t result = ctx->dispatch(sequence, key, target, &params);

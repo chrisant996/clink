@@ -28,6 +28,7 @@ struct macro_playback
 
 static pushed_input s_pushed;
 static macro_playback* s_macro_playback = nullptr;
+static int32_t s_macro_depth = 0;
 
 static terminal_in* s_terminal_in = nullptr;
 static terminal_out* s_terminal_out = nullptr;
@@ -388,6 +389,8 @@ int32_t term_in()
         {
             macro_playback* d = s_macro_playback;
             s_macro_playback = s_macro_playback->m_next;
+            assert(s_macro_depth > 0);
+            --s_macro_depth;
             delete d;
         }
         return uint8_t(c);
@@ -504,13 +507,16 @@ bool term_push_input(const char* text, size_t len)
     return pushed;
 }
 
-bool term_push_macro_text(const char* text, size_t len)
+int32_t term_push_macro_text(const char* text, size_t len)
 {
 #ifdef _WIN32
 #ifdef DEBUG
     assert(GetMainThreadId() == GetCurrentThreadId());
 #endif
 #endif
+
+    if (s_macro_depth >= c_max_macro_depth)
+        return -1;
 
     macro_playback* m = new macro_playback;
     if (!m)
@@ -524,9 +530,20 @@ bool term_push_macro_text(const char* text, size_t len)
 
     m->m_next = s_macro_playback;
     s_macro_playback = m;
+    ++s_macro_depth;
     if (hook_input_trace)
         hook_input_trace("push macro", m->m_text.length() ? uint8_t(m->m_text.c_str()[0]) : -1, m->m_text.length());
     return true;
+}
+
+void term_clear_macro_input()
+{
+    while (auto* m = s_macro_playback)
+    {
+        s_macro_playback = m->m_next;
+        delete m;
+    }
+    s_macro_depth = 0;
 }
 
 bool enable_mouse_input(mouse_input_mode mode, bool sgr_encoding)

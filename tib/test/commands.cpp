@@ -22,6 +22,85 @@ static void invoke_command(tib::editor_context& context, const char* name)
     REQUIRE(command(context, 0, name, nullptr) == 0);
 }
 
+static void dispatch_macro_command(tib::editor_context& context, const char* sequence, const char* name)
+{
+    const tib::binding_target binding = tib::binding_target_func(name);
+    REQUIRE(context.dispatch(sequence, 0, &binding, nullptr) == 0);
+}
+
+TEST_CASE("Keyboard macro records commands and omits recording controls")
+{
+    tib::editor_context context;
+    context.initialize();
+
+    dispatch_macro_command(context, "\030(", "start-kbd-macro");
+    REQUIRE(context.is_recording_kbd_macro());
+    REQUIRE(!context.has_last_kbd_macro());
+
+    REQUIRE(context.dispatch("a", 'a', nullptr, nullptr) == 0);
+    dispatch_macro_command(context, "\030)", "end-kbd-macro");
+    REQUIRE(!context.is_recording_kbd_macro());
+    REQUIRE(context.has_last_kbd_macro());
+    REQUIRE(context.get_last_kbd_macro() == "a");
+    REQUIRE(context.get_text() == "a");
+}
+
+TEST_CASE("Keyboard macro replays the recorded input")
+{
+    tib::editor_context context;
+    context.initialize();
+    MAKE_CLEANUP([]() { tib::term_clear_macro_input(); });
+
+    REQUIRE(context.start_kbd_macro(false));
+    REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
+    REQUIRE(context.end_kbd_macro());
+    REQUIRE(context.get_last_kbd_macro() == "x");
+
+    context.set_numeric_argument(2);
+    dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
+    REQUIRE(tib::term_has_macro_input());
+    for (int32_t repeat = 0; repeat < 2; ++repeat)
+    {
+        const int32_t key = tib::term_in();
+        REQUIRE(key == 'x');
+        REQUIRE(context.dispatch("x", key, nullptr, nullptr) == 0);
+    }
+    REQUIRE(!tib::term_has_macro_input());
+    REQUIRE(context.get_text() == "xxx");
+}
+
+TEST_CASE("Keyboard macro records all batched self insert bytes")
+{
+    const bool optimize_self_insert = tib::g_optimize_self_insert;
+    MAKE_CLEANUP([optimize_self_insert]() { tib::g_optimize_self_insert = optimize_self_insert; });
+    tib::g_optimize_self_insert = true;
+
+    tib::editor_context context;
+    context.initialize();
+    REQUIRE(context.start_kbd_macro(false));
+    test_input_stream stream("bc");
+    REQUIRE(context.dispatch("a", 'a', nullptr, nullptr) == 0);
+    REQUIRE(context.get_text() == "abc");
+    REQUIRE(context.end_kbd_macro());
+    REQUIRE(context.get_last_kbd_macro() == "abc");
+}
+
+TEST_CASE("Keyboard macro depth limit discards pending playback")
+{
+    tib::editor_context context;
+    context.initialize();
+    MAKE_CLEANUP([]() { tib::term_clear_macro_input(); });
+    REQUIRE(context.start_kbd_macro(false));
+    REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
+    REQUIRE(context.end_kbd_macro());
+
+    context.set_numeric_argument(tib::c_max_macro_depth + 1);
+    dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
+    REQUIRE(!tib::term_has_macro_input());
+    REQUIRE(context.count_error_messages() == 1);
+    REQUIRE(strstr(context.get_error_message(0), "Maximum macro execution depth exceeded") != nullptr);
+}
+
 static int32_t dummy_command(tib::editor_context& context, int32_t key, const char* name, const tib::binding_params* params)
 {
     PREVENT_COMDAT_FOLDING();

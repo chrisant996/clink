@@ -295,6 +295,8 @@ void editor_context::reset_state() noexcept
 
     clear_was_kill_command();
     g_add_to_kill_ring = 0;
+
+    term_clear_macro_input();
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -1232,10 +1234,11 @@ void editor_context::insert_text(const char* s, size_t available, bool overwrite
     end_undo_group();
 }
 
-void editor_context::remove_text(const textpos_t _begin, const textpos_t _end)
+void editor_context::remove_text(const textpos_t _begin, textpos_t end)
 {
-    const auto begin = min(max(min(_begin, _end), 0), textpos_t(m_text.length()));
-    const auto end = min(max(max(_begin, _end), 0), textpos_t(m_text.length()));
+    const auto begin = min(max(_begin, 0), textpos_t(m_text.length()));
+    if (end <= begin)
+        end = -1;
 
     begin_undo_group();
 
@@ -1433,10 +1436,64 @@ bool editor_context::redo()
     return true;
 }
 
+bool editor_context::start_kbd_macro(bool append)
+{
+    if (m_recording_macro)
+        return false;
+
+    if (!append)
+        m_recording.clear();
+    m_recording_macro = true;
+    return true;
+}
+
+bool editor_context::end_kbd_macro()
+{
+    if (!m_recording_macro)
+        return false;
+
+    m_recording_macro = false;
+    m_last_macro = m_recording;
+    m_has_last_macro = true;
+    m_recording.clear();
+    return true;
+}
+
+bool editor_context::play_last_kbd_macro(int32_t count)
+{
+    if (m_recording_macro)
+        return false;
+    if (!m_has_last_macro)
+        return false;
+    if (!m_last_macro.empty())
+    {
+        while (count-- > 0)
+        {
+            const auto pushed = term_push_macro_text(m_last_macro.c_str(), m_last_macro.length());
+            if (pushed < 0)
+            {
+                cstring msg;
+                msg.printf("Maximum macro execution depth exceeded (%d).", c_max_macro_depth);
+                report_error(msg.c_str());
+            }
+            if (pushed <= 0)
+                return false;
+        }
+    }
+    return true;
+}
+
 void editor_context::transfer_text(cstring& out)
 {
     out = std::move(m_text);
     initialize();
+}
+
+const char* editor_context::get_error_message(int32_t index) const
+{
+    if (size_t(index) < m_error_messages.size())
+        return m_error_messages[index].c_str();
+    return nullptr;
 }
 
 int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept
@@ -1444,11 +1501,22 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
     int32_t ret = -1;
 
     set_auto_clear_numeric_argument();
+    clear_error_messages();
 
     const auto was_kill_command = get_was_kill_command();
+    const bool was_recording = m_recording_macro;
+    size_t recording_length;
 
     if (binding && *binding)
     {
+        if (m_recording_macro)
+        {
+            m_discard_last_recorded_keyseq = false;
+            recording_length = m_recording.length();
+            if (!m_recording.append(sequence.c_str(), sequence.length()))
+                tib::ding();
+        }
+
         switch (binding->get_type())
         {
         case binding_type::func:
@@ -1520,6 +1588,21 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
         }
     }
 
+    if (was_recording && (!m_recording_macro || m_discard_last_recorded_keyseq))
+    {
+        if (m_recording_macro)
+        {
+            if (m_recording.length() > recording_length)
+                m_recording.set_length(recording_length);
+        }
+        else
+        {
+            assert(m_recording.empty());
+            if (m_last_macro.length() > recording_length)
+                m_last_macro.set_length(recording_length);
+        }
+    }
+
     if (was_kill_command >= get_was_kill_command())
         clear_was_kill_command();
 
@@ -1542,6 +1625,13 @@ void editor_context::on_binding_fallback() noexcept
         apply_override_bindings();
         apply_message_text();
     }
+}
+
+void editor_context::report_error(const char* msg) noexcept
+{
+    if (m_error_messages.size() >= 8)
+        m_error_messages.resize(8 - 1);
+    m_error_messages.insert(m_error_messages.begin(), msg);
 }
 
 #ifdef DEBUG
