@@ -242,7 +242,7 @@ static const func_desc c_func_descriptions[] =
     { "possible-completions", possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },
     // { "previous-history", rl_get_previous_history, keycat_history, "Move 'back' through the history list, fetching the previous command" },
     { "previous-screen-line", tib::screen_line_up, keycat_cursor, "Attempt to move the cursor point to the same screen column on the previous screen line" },
-    // { "print-last-kbd-macro", rl_print_last_kbd_macro, keycat_misc, "Print the last keboard macro defined in a format suitable for the INPUTRC file" },
+    { "print-last-kbd-macro", print_last_kbd_macro, keycat_misc, "Print the last keyboard macro defined in a format suitable for the INPUTRC file" },
     { "quoted-insert", tib::quoted_insert, keycat_basic, "Add the next character typed to the line verbatim" },
     { "re-read-init-file", re_read_init_file, keycat_misc, "Read in the contents of the INPUTRC file, and incorporate any bindings or variable assignments found there" },
     { "redraw-current-line", refresh_line, keycat_misc, "Refresh the current line" },

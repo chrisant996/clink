@@ -2843,6 +2843,13 @@ int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t, const char*, cons
     return g_tib->call_last_kbd_macro();
 }
 
+//------------------------------------------------------------------------------
+int32_t print_last_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
+{
+    assert(&ctx == g_tib.get());
+    return g_tib->print_last_kbd_macro();
+}
+
 
 
 //------------------------------------------------------------------------------

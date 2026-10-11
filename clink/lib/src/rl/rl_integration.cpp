@@ -23,6 +23,8 @@ extern "C" {
 #include <readline/rlprivate.h>
 extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
+extern char* _rl_untranslate_macro_value(char* seq, int use_escapes);
+extern int rl_reset_line_state(void);
 }
 
 #include <tib.h>
@@ -116,6 +118,25 @@ int32_t clink_input_box::call_last_kbd_macro() noexcept
         return 0;
     }
     return play_kbd_macro(get_numeric_argument());
+}
+
+int32_t clink_input_box::print_last_kbd_macro() noexcept
+{
+    if (!m_has_last_macro)
+    {
+        tib::ding();
+        return 0;
+    }
+
+    char* text = _rl_untranslate_macro_value((char*)m_last_macro.c_str(), 1);
+
+    end_prompt(true/*crlf*/);
+    tib::term_out(text, strlen(text));
+    tib::term_out("\n");
+    rl_reset_line_state();
+
+    free(text);
+    return 0;
 }
 
 int32_t clink_input_box::play_kbd_macro(int32_t count) noexcept

@@ -17,6 +17,7 @@ public:
     int32_t start_kbd_macro() noexcept;
     int32_t end_kbd_macro() noexcept;
     int32_t call_last_kbd_macro() noexcept;
+    int32_t print_last_kbd_macro() noexcept;
 
 private:
     int32_t play_kbd_macro(int32_t count) noexcept;
