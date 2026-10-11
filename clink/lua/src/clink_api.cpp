@@ -49,7 +49,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 static bool s_test_harness = false;
-void set_test_harness() { s_test_harness = true; }
+void set_test_harness() { s_test_harness = true; g_use_gui_assertions = false; }
 bool is_test_harness() { return s_test_harness; }
 
 

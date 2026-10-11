@@ -24,6 +24,8 @@ clink.argmatcher(args[1])
 	{ "/x86",			"Run clink_test_x86.exe" },
 	{ "/rel",			"Run release version (runs debug version by default)" },
 	{ "-d",				"Load Lua debugger" },
+	{ "-dd",			"Force break on Lua errors" },
+	{ "-o",				"Use stdout for native assertions instead of GUI" },
 	{ "-t",				"Show execution time" },
 })
 :addarg(test_names)

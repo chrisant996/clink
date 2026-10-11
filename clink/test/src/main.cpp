@@ -24,6 +24,7 @@ extern "C" {
 };
 
 #include <list>
+#include <io.h>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -79,6 +80,7 @@ int32 main(int32 argc, char** argv)
 
     extern bool g_direct_lua_fwrite;
     g_direct_lua_fwrite = true; // Otherwise Lua print() is swallowed by test_terminal_out.
+    g_use_gui_assertions = _isatty(_fileno(stdout));
 
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
@@ -94,6 +96,7 @@ int32 main(int32 argc, char** argv)
                  "  -?        Show this help.\n"
                  "  -d        Load Lua debugger.\n"
                  "  -dd       Force break on Lua errors.\n"
+                 "  -o        Use stdout for native assertions instead of GUI.\n"
                  "  -t        Show individual test times.");
             return 1;
         }
@@ -107,6 +110,10 @@ int32 main(int32 argc, char** argv)
         {
             d_flag = 2;
             g_force_break_on_error = true;
+        }
+        else if (!strcmp(argv[0], "-o"))
+        {
+            g_use_gui_assertions = true;
         }
         else if (!strcmp(argv[0], "-t"))
         {

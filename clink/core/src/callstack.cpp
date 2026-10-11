@@ -21,6 +21,10 @@
 
 //#define DBGHELP_DEBUG_OUTPUT
 
+bool g_use_gui_assertions = true;
+void (*g_assertion_hook)() = nullptr;
+static volatile long s_num_assertions = 0;
+
 using func_SymInitialize_t = BOOL (WINAPI *)(HANDLE hProcess, LPSTR UserSearchPath, BOOL fInvadeProcess);
 using func_SymSetOptions_t = BOOL (WINAPI *)(DWORD SymOptions);
 using func_SymRegisterCallback_t = BOOL (WINAPI *)(HANDLE hProcess, PSYMBOL_REGISTERED_CALLBACK CallbackFunction, ULONG_PTR UserContext);
@@ -803,6 +807,11 @@ CALLSTACK_EXTERN_C size_t format_frames(int32 total_frames, void* const* frames,
     return buffer - orig_buffer;
 }
 
+long get_num_assertions()
+{
+    return s_num_assertions;
+}
+
 struct ignore_tuple
 {
     wstr_moveable message;
@@ -811,7 +820,7 @@ struct ignore_tuple
 };
 
 static std::vector<ignore_tuple> s_ignore;
-static void do_ignore(wchar_t const* message, wchar_t const* file, unsigned line)
+static void do_ignore_always(wchar_t const* message, wchar_t const* file, unsigned line)
 {
     if (GetKeyState(VK_CONTROL) < 0)
     {
@@ -824,7 +833,7 @@ static void do_ignore(wchar_t const* message, wchar_t const* file, unsigned line
         s_ignore.emplace_back(std::move(ignore));
     }
 }
-static bool is_ignore(wchar_t const* message, wchar_t const* file, unsigned line)
+static bool is_ignore_always(wchar_t const* message, wchar_t const* file, unsigned line)
 {
     for (const auto& t : s_ignore)
     {
@@ -836,7 +845,7 @@ static bool is_ignore(wchar_t const* message, wchar_t const* file, unsigned line
 
 extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned line)
 {
-    if (is_ignore(message, file, line))
+    if (is_ignore_always(message, file, line))
         return;
 
     char stack[4096];
@@ -847,34 +856,67 @@ extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned l
     wchar_t tmp[32];
     _itow_s(line, tmp, 10);
 
+    const auto num = InterlockedIncrement(&s_num_assertions);
+    if (!g_use_gui_assertions)
+        wprintf_s(L"<<<<assertion #%u\r\n", num); // Effectively two newlines.
+
     wchar_t wbuffer[4096];
-    wcscpy_s(wbuffer, L"ASSERT:  ");
-    wcscat_s(wbuffer, file);
-    wcscat_s(wbuffer, L" @li");
-    wcscat_s(wbuffer, tmp);
-    wcscat_s(wbuffer, L":  ");
-    wcscat_s(wbuffer, message);
-    wcscat_s(wbuffer, L"\r\n");
+
+    if (g_use_gui_assertions)
+    {
+        wcscpy_s(wbuffer, L"ASSERT:  ");
+        wcscat_s(wbuffer, file);
+        wcscat_s(wbuffer, L" @li");
+        wcscat_s(wbuffer, tmp);
+        wcscat_s(wbuffer, L":  ");
+        wcscat_s(wbuffer, message);
+        wcscat_s(wbuffer, L"\r\n");
 #ifdef TRACE_ASSERT_STACK
-    wcscat_s(wbuffer, _countof(wbuffer), wstack);
+        wcscat_s(wbuffer, _countof(wbuffer), wstack);
 #endif
+        OutputDebugStringW(wbuffer);
+    }
 
-    OutputDebugStringW(wbuffer);
-
-    wcscpy_s(wbuffer, _countof(wbuffer), message);
-    wcscat_s(wbuffer, L"\r\n\r\n\r\nFile: ");
+    wbuffer[0] = 0;
+    if (!g_use_gui_assertions)
+        wcscat_s(wbuffer, L"ASSERT:  ");
+    wcscat_s(wbuffer, _countof(wbuffer), message);
+    if (g_use_gui_assertions)
+        wcscat_s(wbuffer, L"\r\n");
+    wcscat_s(wbuffer, L"\r\n\r\nFile: ");
     wcscat_s(wbuffer, file);
     wcscat_s(wbuffer, L"\r\nLine: ");
     wcscat_s(wbuffer, tmp);
     wcscat_s(wbuffer, L"\r\n\r\n");
     wcscat_s(wbuffer, _countof(wbuffer), wstack);
-    wcscat_s(wbuffer, L"\r\n\r\nCtrl-Ignore to ignore this assert for the rest of the session.");
+    if (g_use_gui_assertions)
+        wcscat_s(wbuffer, L"\r\n\r\nCtrl-Ignore to ignore this assert for the rest of the session.");
 
-    switch (MessageBoxW(nullptr, wbuffer, L"ASSERT", MB_ICONEXCLAMATION|MB_ABORTRETRYIGNORE|MB_DEFBUTTON3))
+    int outcome = IDOK;
+    if (g_use_gui_assertions)
+    {
+        outcome = MessageBoxW(nullptr, wbuffer, L"ASSERT", MB_ICONEXCLAMATION|MB_ABORTRETRYIGNORE|MB_DEFBUTTON3);
+        if (outcome == IDIGNORE && GetKeyState(VK_CONTROL) >= 0)
+            outcome = IDOK;
+    }
+    else
+    {
+        _putws(wbuffer);
+        if (num >= 99)
+        {
+            wprintf_s(L"ABORTING EXECUTION; TOO MANY ASSERTIONS (%u)!\r\n", num);
+            outcome = IDABORT;
+        }
+        fflush(stdout);
+        if (g_assertion_hook)
+            g_assertion_hook();
+    }
+
+    switch (outcome)
     {
     case IDABORT:   TerminateProcess(GetCurrentProcess(), -1); break;
     case IDRETRY:   DebugBreak(); break;
-    case IDIGNORE:  do_ignore(message, file, line); break;
+    case IDIGNORE:  do_ignore_always(message, file, line); break;
     }
 }
 

@@ -510,13 +510,13 @@ newaction {
             print_reverse("Run Clink tests")
         end
         if x86_ok then
-            test_exe = path_normalize(src.."/clink_test_x86.exe")
+            test_exe = path_normalize(src.."/clink_test_x86.exe") .. " -o"
             if not exec(test_exe) then
                 error("x86 tests failed")
             end
         end
         if x64_ok then
-            test_exe = path_normalize(src.."/clink_test_x64.exe")
+            test_exe = path_normalize(src.."/clink_test_x64.exe") .. " -o"
             if not exec(test_exe) then
                 error("x64 tests failed")
             end
