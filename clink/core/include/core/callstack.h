@@ -30,4 +30,8 @@ CALLSTACK_EXTERN_C int32 get_callstack_frames(int32 skip_frames, int32 total_fra
 // frames are delimited with slashes or newlines.
 CALLSTACK_EXTERN_C size_t format_frames(int32 total_frames, void* const* frames, DWORD hash, char* buffer, size_t capacity, int32 newlines);
 
+extern bool g_use_gui_assertions;
+extern long get_num_assertions();
+extern void (*g_assertion_hook)();
+
 #endif // _MSC_VER

@@ -49,7 +49,7 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
-void set_test_harness() { tib::set_test_harness(); }
+void set_test_harness() { tib::set_test_harness(); g_use_gui_assertions = false; }
 bool is_test_harness() { return tib::is_test_harness(); }
 
 

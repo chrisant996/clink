@@ -9,8 +9,12 @@
 #include <functional>
 
 #include <core/os.h>
+#include <core/callstack.h>
 
 namespace clatch {
+
+struct section;
+inline void fail_no_throw(section* failed_section, const char* expr, const char* file, int32 line);
 
 //------------------------------------------------------------------------------
 struct colors
@@ -42,6 +46,7 @@ struct section
 
     void enter(section*& tree_iter, const char* name) {
         m_name = name;
+        m_native_assert_count = 0;
 
         if (m_parent == nullptr)
             if (section* parent = get_outer_store())
@@ -62,12 +67,18 @@ struct section
     section*            m_child = nullptr;
     section*            m_sibling = nullptr;
     uint32              m_assert_count = 0;
+    uint32              m_native_assert_count = 0;
     bool                m_active = false;
 
     struct scope
     {
                         scope(section*& tree_iter, section& section, const char* name) : m_section(&section) { m_section->enter(tree_iter, name); }
-                        ~scope() { m_section->leave(); }
+                        ~scope()
+                        {
+                            if (m_section->m_native_assert_count)
+                                fail_no_throw(m_section, nullptr, nullptr, 0);
+                            m_section->leave();
+                        }
         explicit        operator bool () { return bool(*m_section); }
         section*        m_section;
     };
@@ -112,11 +123,21 @@ inline void list()
 }
 
 //------------------------------------------------------------------------------
+inline void record_assertion_section()
+{
+    section* const current = section::get_outer_store();
+    if (current)
+        ++current->m_native_assert_count;
+}
+
+//------------------------------------------------------------------------------
 inline bool run(const char* prefix="", bool times=false)
 {
     int32 fail_count = 0;
     int32 test_count = 0;
     int32 assert_count = 0;
+    auto previous_assertion_hook = g_assertion_hook;
+    g_assertion_hook = record_assertion_section;
 
     for (test* test = test::get_head(); test != nullptr; test = test->m_next)
     {
@@ -139,7 +160,12 @@ inline bool run(const char* prefix="", bool times=false)
             {
                 section::scope x = section::scope(tree_iter, root, test->m_name);
 
+                const auto num_assertions = get_num_assertions();
+
                 (test->m_func)(tree_iter);
+
+                if (num_assertions < get_num_assertions())
+                    throw std::exception();
 
                 for (section* parent; parent = tree_iter->m_parent; tree_iter = parent)
                 {
@@ -175,24 +201,39 @@ inline bool run(const char* prefix="", bool times=false)
            failed_color, fail_count, colors::get_normal(),
            assert_count);
 
+    g_assertion_hook = previous_assertion_hook;
     return (fail_count == 0);
+}
+
+//------------------------------------------------------------------------------
+inline void fail_no_throw(section* failed_section, const char* expr, const char* file, int32 line)
+{
+    const bool has_expr = (expr && file);
+    if (has_expr)
+        puts("");
+    printf(colors::get_error());
+    if (has_expr)
+    {
+        printf(" expr; %s\n", expr);
+        printf("where; %s(%d)\n", file, line);
+    }
+    else
+    {
+        puts("failed;");
+    }
+    printf("trace; ");
+    for (; failed_section != nullptr; failed_section = failed_section->m_parent)
+        printf("%s\n       ", failed_section->m_name);
+    printf(colors::get_normal());
+    puts("");
+    fflush(stdout);
 }
 
 //------------------------------------------------------------------------------
 inline void fail(const char* expr, const char* file, int32 line)
 {
     section* failed_section = clatch::section::get_outer_store();
-
-    puts("\n");
-    printf(colors::get_error());
-    printf(" expr; %s\n", expr);
-    printf("where; %s(%d)\n", file, line);
-    printf("trace; ");
-    for (; failed_section != nullptr; failed_section = failed_section->m_parent)
-        printf("%s\n       ", failed_section->m_name);
-    printf(colors::get_normal());
-    puts("");
-
+    fail_no_throw(failed_section, expr, file, line);
     throw std::exception();
 }
 
@@ -200,7 +241,7 @@ inline void fail(const char* expr, const char* file, int32 line)
 template <typename callback>
 void fail(const char* expr, const char* file, int32 line, callback&& cb)
 {
-    puts("\n");
+    puts("");
     printf(colors::get_error());
     cb();
     printf(colors::get_normal());
