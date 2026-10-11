@@ -902,17 +902,6 @@ static void collect_command_bindings(
 }
 
 //------------------------------------------------------------------------------
-static char* copystring(const char* s)
-{
-    if (!s)
-        return nullptr;
-    const size_t len = strlen(s);
-    char* copy = (char*)malloc(len + 1);
-    memcpy(copy, s, len + 1);
-    return copy;
-}
-
-//------------------------------------------------------------------------------
 static Keyentry* collect_functions(
     Keyentry* collector,
     int32* offset,
@@ -1013,7 +1002,7 @@ static Keyentry* collect_functions(
         memset(&out, 0, sizeof(out));
         out.sort = MAKELONG(999, 999);
         out.key_name = (char*)calloc(1, 1);
-        out.func_name = copystring(macro_desc.first);
+        out.func_name = macro_desc.first;
         out.func_desc = macro_desc.second.c_str();
         out.cat = categories ? keycat_macros : keycat_none;
 
