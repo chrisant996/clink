@@ -46,10 +46,11 @@ TEST_CASE("File match generator")
     {
         const char* mode = inputrc_vars[v + 1];
         str<> setvar(inputrc_vars[v]);
-        REQUIRE(rl_parse_and_bind(setvar.data()) == 0);
-
         line_editor_tester tester;
         tester.get_editor()->set_generator(lua_generator);
+
+        // Editor construction resets Readline variables.
+        REQUIRE(rl_parse_and_bind(setvar.data()) == 0);
 
         SECTION(dyn_section("File system matches", mode))
         {
