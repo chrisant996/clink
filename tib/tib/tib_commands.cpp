@@ -70,13 +70,13 @@ static int16_t cursor_column_continuation(editor_context& ctx, const char* comma
     return int16_t(cursor_column);
 }
 
-int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const binding_params* params, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags) noexcept
+int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved, editor_command_func_t inverted, std::function<bool(void)> doit, uint8_t flags) noexcept
 {
     int32_t n = ctx.get_numeric_argument();
     if (inverted && n < 0)
     {
         ctx.invert_argument_sign();
-        return inverted(ctx, key, name, params);
+        return inverted(ctx, key, name, nullptr);
     }
 
     bool did = false;
@@ -114,13 +114,13 @@ int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* n
 
 //------------------------------------------------------------------------------
 
-int32_t abort(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t abort(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.reset_state();
     return 0;
 }
 
-int32_t accept_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t accept_line(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.set_done();
     if (ctx.is_mark_active())
@@ -142,91 +142,91 @@ static const char* const c_screen_line_commands[] =
     nullptr
 };
 
-int32_t begin_of_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t begin_of_line(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.begin_of_input();
     return 0;
 }
 
-int32_t end_of_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t end_of_line(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.end_of_input();
     return 0;
 }
 
-int32_t backward_char(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t backward_char(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, forward_char, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, forward_char, [&]() {
         return ctx.move_left();
     });
 }
 
-int32_t forward_char(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t forward_char(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, backward_char, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, backward_char, [&]() {
         return ctx.move_right();
     });
 }
 
-int32_t backward_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t backward_word(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, forward_word, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, forward_word, [&]() {
         return ctx.move_left(true/*word*/);
     }, NO_DING);
 }
 
-int32_t forward_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t forward_word(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, backward_word, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, backward_word, [&]() {
         return ctx.move_right(true/*word*/);
     }, NO_DING);
 }
 
-int32_t backward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t backward_bigword(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, forward_bigword, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, forward_bigword, [&]() {
         return ctx.move_left(2/*bigword*/);
     }, NO_DING);
 }
 
-int32_t forward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t forward_bigword(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, backward_bigword, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, backward_bigword, [&]() {
         return ctx.move_right(2/*bigword*/);
     }, NO_DING);
 }
 
-int32_t screen_line_down(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t screen_line_down(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, screen_line_up, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, screen_line_up, [&]() {
         return ctx.move_caret_vertically(1, cursor_column_continuation(ctx, "screen-line-down", nullptr, c_screen_line_commands));
     });
 }
 
-int32_t screen_line_up(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t screen_line_up(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, screen_line_down, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, screen_line_down, [&]() {
         return ctx.move_caret_vertically(-1, cursor_column_continuation(ctx, "screen-line-up", nullptr, c_screen_line_commands));
     });
 }
 
 //------------------------------------------------------------------------------
 
-int32_t del_char_left(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_char_left(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_char_right, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_char_right, [&]() {
         return ctx.backspace();
     }, UNDO_GROUP|KILL_RING_MULTI);
 }
 
-int32_t del_char_right(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_char_right(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_char_left, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_char_left, [&]() {
         return ctx.del();
     }, NO_DING|UNDO_GROUP|KILL_RING_MULTI);
 }
 
-int32_t del_line(editor_context& ctx, int32_t, const char*, const binding_params*) noexcept
+int32_t del_line(editor_context& ctx, int32_t, const char*, const resolved_binding*) noexcept
 {
     ++g_add_to_kill_ring;
     ctx.del_line();
@@ -234,51 +234,51 @@ int32_t del_line(editor_context& ctx, int32_t, const char*, const binding_params
     return 0;
 }
 
-int32_t del_word_left(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_word_left(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_word_right, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_word_right, [&]() {
         return ctx.backspace(true/*word*/);
     }, NO_DING|UNDO_GROUP|KILL_RING);
 }
 
-int32_t del_word_right(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_word_right(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_word_left, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_word_left, [&]() {
         return ctx.del(true/*word*/);
     }, NO_DING|UNDO_GROUP|KILL_RING);
 }
 
-int32_t del_bigword_left(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_bigword_left(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_bigword_right, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_bigword_right, [&]() {
         return ctx.backspace(2/*bigword*/);
     }, NO_DING|UNDO_GROUP|KILL_RING);
 }
 
-int32_t del_bigword_right(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t del_bigword_right(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, del_bigword_left, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, del_bigword_left, [&]() {
         return ctx.del(2/*bigword*/);
     }, NO_DING|UNDO_GROUP|KILL_RING);
 }
 
 //------------------------------------------------------------------------------
 
-int32_t redo(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t redo(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, undo, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, undo, [&]() {
         return ctx.redo();
     });
 }
 
-int32_t undo(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t undo(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, redo, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, redo, [&]() {
         return ctx.undo();
     });
 }
 
-int32_t undo_all(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t undo_all(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.undo_all();
     return 0;
@@ -286,101 +286,101 @@ int32_t undo_all(editor_context& ctx, int32_t key, const char* name, const bindi
 
 //------------------------------------------------------------------------------
 
-int32_t clear_selection(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t clear_selection(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.clear_selection();
     return 0;
 }
 
-int32_t select_all(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t select_all(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.set_selection(0, uint16_t(ctx.get_text().length()));
     return 0;
 }
 
-int32_t select_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t select_word(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.select_word();
     return 0;
 }
 
-int32_t select_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t select_bigword(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.select_word(true/*bigword*/);
     return 0;
 }
 
-int32_t cua_begin_of_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_begin_of_line(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.begin_of_input(true/*select*/);
     return 0;
 }
 
-int32_t cua_end_of_line(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_end_of_line(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.end_of_input(true/*select*/);
     return 0;
 }
 
-int32_t cua_backward_char(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_backward_char(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_forward_char, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_forward_char, [&]() {
         return ctx.move_left(false/*word*/, true/*select*/);
     });
 }
 
-int32_t cua_forward_char(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_forward_char(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_backward_char, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_backward_char, [&]() {
         return ctx.move_right(false/*word*/, true/*select*/);
     });
 }
 
-int32_t cua_backward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_backward_bigword(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_forward_bigword, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_forward_bigword, [&]() {
         return ctx.move_left(2/*bigword*/, true/*select*/);
     }, false/*ding*/);
 }
 
-int32_t cua_forward_bigword(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_forward_bigword(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_backward_bigword, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_backward_bigword, [&]() {
         return ctx.move_right(2/*bigword*/, true/*select*/);
     }, false/*ding*/);
 }
 
-int32_t cua_backward_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_backward_word(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_forward_word, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_forward_word, [&]() {
         return ctx.move_left(true/*word*/, true/*select*/);
     }, false/*ding*/);
 }
 
-int32_t cua_forward_word(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_forward_word(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_backward_word, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_backward_word, [&]() {
         return ctx.move_right(true/*word*/, true/*select*/);
     }, false/*ding*/);
 }
 
-int32_t cua_screen_line_down(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_screen_line_down(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_screen_line_up, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_screen_line_up, [&]() {
         return ctx.move_caret_vertically(1, cursor_column_continuation(ctx, "screen-line-down", nullptr, c_screen_line_commands), true/*select*/);
     });
 }
 
-int32_t cua_screen_line_up(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cua_screen_line_up(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, cua_screen_line_down, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, cua_screen_line_down, [&]() {
         return ctx.move_caret_vertically(-1, cursor_column_continuation(ctx, "screen-line-up", nullptr, c_screen_line_commands), true/*select*/);
     });
 }
 
 //------------------------------------------------------------------------------
 
-int32_t set_mark(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t set_mark(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     const textpos_t mark = ctx.has_numeric_argument() ? ctx.get_numeric_argument() : ctx.get_caret();
     if (!ctx.set_mark(mark))
@@ -388,7 +388,7 @@ int32_t set_mark(editor_context& ctx, int32_t key, const char* name, const bindi
     return 0;
 }
 
-int32_t exchange_caret_and_mark(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t exchange_caret_and_mark(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     if (!ctx.exchange_caret_and_mark())
         ding();
@@ -397,25 +397,25 @@ int32_t exchange_caret_and_mark(editor_context& ctx, int32_t key, const char* na
 
 //------------------------------------------------------------------------------
 
-int32_t cut(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t cut(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.cut_to_clipboard();
     return 0;
 }
 
-int32_t copy(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t copy(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.copy_to_clipboard();
     return 0;
 }
 
-int32_t paste(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t paste(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.paste_from_clipboard();
     return 0;
 }
 
-int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     if (!is_self_insertable(key))
     {
@@ -441,12 +441,19 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
     {
         // Yield to the editor periodically even when input keeps arriving.
         const auto batch_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
-        int32_t peek = term_in_peek();
-        if (is_self_insertable(peek))
+        if (resolved)
         {
+            binding_resolver probe(resolved);
             cstring input(&c, 1);
-            while (is_self_insertable(peek) && std::chrono::steady_clock::now() < batch_deadline)
+            int32_t peek = term_in_peek();
+            while (is_self_insertable(peek) &&
+                   std::chrono::steady_clock::now() < batch_deadline)
             {
+                const auto next = probe.step(uint8_t(peek));
+                if (next.outcome != dispatch_outcome::self_insert ||
+                    next.dispatcher_target.lock().get() != &ctx)
+                    break;
+
                 const int32_t cin = term_in();
                 assert(cin == peek);
                 suppress_unused_var(cin);
@@ -456,17 +463,20 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
                 peek = term_in_peek();
             }
 
-            if (hook_input_trace)
+            if (input.length() > 1)
             {
-                for (size_t i = 0; i < input.length(); ++i)
-                    hook_input_trace("insert batch byte", uint8_t(input.c_str()[i]), i);
+                if (hook_input_trace)
+                {
+                    for (size_t i = 0; i < input.length(); ++i)
+                        hook_input_trace("insert batch byte", uint8_t(input.c_str()[i]), i);
+                }
+
+                ctx.insert_text(input.c_str(), input.length(), ctx.get_overwrite_mode());
+                if (!ctx.m_recording.append(input.c_str(), input.length()))
+                    tib::ding();
+
+                handled = true;
             }
-
-            ctx.insert_text(input.c_str(), input.length(), ctx.get_overwrite_mode());
-            if (!ctx.m_recording.append(input.c_str(), input.length()))
-                tib::ding();
-
-            handled = true;
         }
     }
 
@@ -495,12 +505,12 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const bi
     return 0;
 }
 
-int32_t quoted_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t quoted_insert(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     return c_dispatch_request_quoted_insert;
 }
 
-int32_t toggle_overwrite_mode(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t toggle_overwrite_mode(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.toggle_overwrite_mode();
     return 0;
@@ -508,23 +518,23 @@ int32_t toggle_overwrite_mode(editor_context& ctx, int32_t key, const char* name
 
 //------------------------------------------------------------------------------
 
-int32_t transpose_chars(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t transpose_chars(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, nullptr, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, nullptr, [&]() {
         return ctx.transpose();
     });
 }
 
-int32_t transpose_words(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t transpose_words(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, nullptr, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, nullptr, [&]() {
         return ctx.transpose(true/*word*/);
     });
 }
 
-int32_t transpose_bigwords(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t transpose_bigwords(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    return do_with_numeric_argument(ctx, key, name, params, nullptr, [&]() {
+    return do_with_numeric_argument(ctx, key, name, resolved, nullptr, [&]() {
         return ctx.transpose(2/*bigword*/);
     });
 }
@@ -623,36 +633,36 @@ static int32_t transform_case(editor_context& ctx, transform_mode mode, bool tog
     return 0;
 }
 
-int32_t upper_case(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t upper_case(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     return transform_case(ctx, transform_mode::upper, false/*toggle*/);
 }
 
-int32_t lower_case(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t lower_case(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     return transform_case(ctx, transform_mode::lower, false/*toggle*/);
 }
 
-int32_t capitalize(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t capitalize(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     return transform_case(ctx, transform_mode::title, false/*toggle*/);
 }
 
-int32_t toggle_case(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t toggle_case(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     return transform_case(ctx, transform_mode::upper, true/*toggle*/);
 }
 
 //------------------------------------------------------------------------------
 
-int32_t digit_argument(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t digit_argument(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     if (!ctx.numeric_digit(key))
         ding();
     return 0;
 }
 
-int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     if (!ctx.universal_argument())
         ding();
@@ -661,7 +671,7 @@ int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* na
 
 //------------------------------------------------------------------------------
 
-int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     const bool append = ctx.has_numeric_argument();
     if (!ctx.start_kbd_macro(append))
@@ -676,7 +686,7 @@ int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name,
     return 0;
 }
 
-int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     const int32_t count = ctx.get_numeric_argument();
     if (!ctx.end_kbd_macro())
@@ -690,7 +700,7 @@ int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, c
     return 0;
 }
 
-int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     if (ctx.is_recording_kbd_macro())
     {
@@ -743,18 +753,18 @@ static uint32_t get_scroll_chars(const editor_context& ctx)
     return scroll_chars;
 }
 
-int32_t mouse_input(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t mouse_input(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
-    if (!params || params->size() < 3)
+    if (!resolved || resolved->params.size() < 3)
     {
         ctx.clear_named_value(c_cursor_column_operation_var_name);
         return -1;
     }
 
-    const uint32_t button = uint32_t(strtoul((*params)[0].c_str(), nullptr, 10));
+    const uint32_t button = uint32_t(strtoul(resolved->params[0].c_str(), nullptr, 10));
     const uint32_t base_button = button & ~uint32_t(4 | 8 | 16);
-    const uint32_t x = uint32_t(strtoul((*params)[1].c_str(), nullptr, 10));
-    const uint32_t y = uint32_t(strtoul((*params)[2].c_str(), nullptr, 10));
+    const uint32_t x = uint32_t(strtoul(resolved->params[1].c_str(), nullptr, 10));
+    const uint32_t y = uint32_t(strtoul(resolved->params[2].c_str(), nullptr, 10));
 
     bool double_click = false;
     bool double_click_scrolled = false;
@@ -911,7 +921,7 @@ unhandled:
 
 //------------------------------------------------------------------------------
 
-int32_t redisplay(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t redisplay(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.force_redisplay();
     ctx.invalidate_border();
@@ -921,7 +931,7 @@ int32_t redisplay(editor_context& ctx, int32_t key, const char* name, const bind
 
 //------------------------------------------------------------------------------
 
-int32_t lorem_ipsum(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept
+int32_t lorem_ipsum(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.insert_text(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do "

@@ -22,7 +22,7 @@ extern bool g_optimize_self_insert;
 // Returning negative from an editor_command_func_t signals that the binding
 // was not handled and implies permission for something else to choose to
 // handle the binding.
-typedef int32_t (*editor_command_func_t)(editor_context& ctx, int32_t key, const char* name, const binding_params* params);
+typedef int32_t (*editor_command_func_t)(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved);
 
 struct editor_command
 {
@@ -218,7 +218,7 @@ public:
     static editor_command_func_t lookup_command(const char* name);
 
                         // Methods on the tib::dispatcher_target interface.
-    int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept override;
+    int32_t             dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept override;
     void                on_binding_fallback() noexcept override;
     void                report_error(const char* msg) noexcept override;
 
@@ -309,7 +309,7 @@ private:
     static std::map<const char*, editor_command_func_t, stricmp_less> s_commands;
 
     // Friends.
-    friend int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const binding_params* params) noexcept; // For m_recording.
+    friend int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept; // For m_recording.
 };
 
 } // namespace tib

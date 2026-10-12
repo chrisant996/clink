@@ -11,17 +11,17 @@ class self_insert_tester : public tib::editor_context
     typedef tib::editor_context base;
 
 public:
-    int32_t             dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::binding_params* params) noexcept override;
+    int32_t             dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::resolved_binding* resolved) noexcept override;
     uint32_t            get_dispatch_count() const noexcept { return m_dispatch_count; }
 
 private:
     uint32_t            m_dispatch_count = 0;
 };
 
-int32_t self_insert_tester::dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::binding_params* params) noexcept
+int32_t self_insert_tester::dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::resolved_binding* resolved) noexcept
 {
     ++m_dispatch_count;
-    return base::dispatch(sequence, key, binding, params);
+    return base::dispatch(sequence, key, binding, resolved);
 }
 
 static void dispatch_macro(const char* text, std::shared_ptr<self_insert_tester>& input, tib::binding_resolver& resolver)
@@ -644,6 +644,88 @@ TEST_CASE("Self insert optimization")
         dispatch_macro(utf8, input, resolver);
         REQUIRE(input->get_dispatch_count() == 1);
         REQUIRE(input->get_text() == tib::cstring(utf8));
+    }
+}
+
+TEST_CASE("Self insert optimization respects bindings")
+{
+    const bool optimize_self_insert = tib::g_optimize_self_insert;
+    MAKE_CLEANUP([optimize_self_insert]() { tib::g_optimize_self_insert = optimize_self_insert; });
+    tib::g_optimize_self_insert = true;
+
+    SECTION("Stops before a bound printable byte")
+    {
+        test_input_stream stream("abx");
+        auto input = std::make_shared<self_insert_tester>();
+        input->initialize();
+        auto tables = tib::make_default_key_table();
+        REQUIRE(tables->back()->add("x", tib::binding_target_func("toggle-overwrite-mode")));
+        input->set_bindings(tables);
+
+        tib::binding_resolver resolver;
+        resolver.add_target(input);
+        auto resolved = resolver.step(uint8_t(tib::term_in()));
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(input->get_text() == "ab");
+        REQUIRE(tib::term_in_peek() == 'x');
+        REQUIRE(tib::term_in() == 'x');
+        REQUIRE(input->get_dispatch_count() == 1);
+    }
+
+    SECTION("Stops before a printable binding prefix")
+    {
+        test_input_stream stream("abc");
+        auto input = std::make_shared<self_insert_tester>();
+        input->initialize();
+        auto tables = tib::make_default_key_table();
+        REQUIRE(tables->back()->add("bc", tib::binding_target_func("toggle-overwrite-mode")));
+        input->set_bindings(tables);
+
+        tib::binding_resolver resolver;
+        resolver.add_target(input);
+        auto resolved = resolver.step(uint8_t(tib::term_in()));
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+
+        tib::binding_resolver probe(&resolved);
+        REQUIRE(probe.step('b').outcome == tib::dispatch_outcome::more);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(input->get_text() == "a");
+        REQUIRE(tib::term_in_peek() == 'b');
+        REQUIRE(tib::term_in() == 'b');
+        REQUIRE(input->get_dispatch_count() == 1);
+    }
+
+    SECTION("Stops batching when the producing resolver has expired")
+    {
+        test_input_stream stream("b");
+        auto input = std::make_shared<self_insert_tester>();
+        input->initialize();
+        input->set_bindings(tib::make_default_key_table());
+
+        tib::resolved_binding resolved;
+        {
+            tib::binding_resolver resolver;
+            resolver.add_target(input);
+            resolved = resolver.step('a');
+        }
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+
+        tib::binding_resolver probe(&resolved);
+        REQUIRE(probe.step('b').outcome == tib::dispatch_outcome::miss);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(input->get_text() == "a");
+        REQUIRE(tib::term_in() == 'b');
+    }
+
+    SECTION("A forwarded command without a resolved binding does not read ahead")
+    {
+        test_input_stream stream("b");
+        tib::editor_context input;
+        input.initialize();
+        REQUIRE(input.dispatch("a", 'a', nullptr, nullptr) == 0);
+        REQUIRE(input.get_text() == "a");
+        REQUIRE(tib::term_in() == 'b');
     }
 }
 

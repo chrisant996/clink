@@ -419,7 +419,7 @@ bool resolved_binding::dispatch()
                 }
                 else
                 {
-                    const int32_t result = ctx->dispatch(sequence, key, target, &params);
+                    const int32_t result = ctx->dispatch(sequence, key, target, this);
                     if (result == c_dispatch_request_quoted_insert && m_resolver_state)
                         m_resolver_state->quoted_insert_target = ctx;
                 }
@@ -449,20 +449,45 @@ resolved_binding::probe_result resolved_binding::get_probe_result() const
 }
 
 binding_resolver::binding_resolver()
-    : m_state(std::make_shared<binding_resolver_state>())
+    : m_registrants(std::make_shared<binding_registrants>())
+    , m_state(std::make_shared<binding_resolver_state>())
 {
+}
+
+binding_resolver::binding_resolver(const resolved_binding* resolved)
+    : m_state(std::make_shared<binding_resolver_state>())
+    , m_borrowed_registrants(true)
+{
+    if (resolved)
+        m_registrants = resolved->m_registrants.lock();
+    if (!m_registrants)
+        m_registrants = std::make_shared<binding_registrants>();
+}
+
+binding_resolver::binding_resolver(const binding_resolver* resolver)
+    : m_state(std::make_shared<binding_resolver_state>())
+    , m_borrowed_registrants(true)
+{
+    if (resolver)
+        m_registrants = resolver->m_registrants;
+    if (!m_registrants)
+        m_registrants = std::make_shared<binding_registrants>();
 }
 
 void binding_resolver::clear_targets()
 {
-    m_registrants.clear();
+    assert(!m_borrowed_registrants);
+    if (!m_borrowed_registrants)
+        m_registrants->clear();
     m_state->quoted_insert_target.reset();
     m_fallback_targets.clear();
 }
 
 void binding_resolver::add_target(std::weak_ptr<dispatcher_target> target)
 {
-    m_registrants.emplace_back(target);
+    assert(!m_borrowed_registrants);
+    if (!m_borrowed_registrants)
+        m_registrants->emplace_back(target);
     reset();
 }
 
@@ -485,16 +510,21 @@ resolved_binding binding_resolver::step(uint8_t c)
         resolved.key = c;
         resolved.dispatcher_target = weak;
         resolved.outcome = dispatch_outcome::quoted_insert;
+        resolved.m_registrants = m_registrants;
         return resolved;
     }
 
     m_sequence.append(reinterpret_cast<const char*>(&c), 1);
-    return resolve(false);
+    auto resolved = resolve(false);
+    resolved.m_registrants = m_registrants;
+    return resolved;
 }
 
 resolved_binding binding_resolver::resolve_pending()
 {
-    return resolve(true);
+    auto resolved = resolve(true);
+    resolved.m_registrants = m_registrants;
+    return resolved;
 }
 
 bool binding_resolver::quoted_insert_pending() const
@@ -512,8 +542,7 @@ bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) co
     // Clone a resolver, minus m_state so that this operation cannot perturb
     // the real m_state.  This implies that the resolved_binding from step()
     // is not properly dispatchable, which is ok since it isn't exposed.
-    binding_resolver probe;
-    probe.m_registrants = m_registrants;
+    binding_resolver probe(*this);
     probe.m_sequence = m_sequence;
     probe.m_fallback_targets = m_fallback_targets;
     for (size_t i = 0; i < len; ++i)
@@ -597,7 +626,7 @@ retry_sequence:
     // tables) looking for the longest complete match and for any binding that
     // can consume more input.  Equal-length matches retain priority order.
     step_state state;
-    for (auto& weak : m_registrants)
+    for (auto& weak : *m_registrants)
     {
         std::shared_ptr<dispatcher_target> target = weak.lock();
         if (!target)

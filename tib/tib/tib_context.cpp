@@ -1496,7 +1496,7 @@ const char* editor_context::get_error_message(int32_t index) const
     return nullptr;
 }
 
-int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept
+int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept
 {
     int32_t ret = -1;
 
@@ -1528,7 +1528,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                 editor_command_func_t func = lookup_command(name);
                 if (func)
                 {
-                    ret = func(*this, key, name, params);
+                    ret = func(*this, key, name, resolved);
                     if (ret == c_dispatch_request_quoted_insert)
                         m_quoted_insert_count = get_numeric_argument();
                     set_last_command(name, func);
@@ -1578,7 +1578,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             if (!m_callbacks || !m_callbacks->on_dispatch(name))
             {
                 editor_command_func_t func = self_insert;
-                ret = func(*this, key, name, params);
+                ret = func(*this, key, name, resolved);
                 set_last_command(name, func);
             }
         }

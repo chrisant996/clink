@@ -75,14 +75,19 @@ TEST_CASE("Keyboard macro records all batched self insert bytes")
     MAKE_CLEANUP([optimize_self_insert]() { tib::g_optimize_self_insert = optimize_self_insert; });
     tib::g_optimize_self_insert = true;
 
-    tib::editor_context context;
-    context.initialize();
-    REQUIRE(context.start_kbd_macro(false));
+    auto context = std::make_shared<tib::editor_context>();
+    context->initialize();
+    context->set_bindings(tib::make_default_key_table());
+    tib::binding_resolver resolver;
+    resolver.add_target(context);
+    REQUIRE(context->start_kbd_macro(false));
     test_input_stream stream("bc");
-    REQUIRE(context.dispatch("a", 'a', nullptr, nullptr) == 0);
-    REQUIRE(context.get_text() == "abc");
-    REQUIRE(context.end_kbd_macro());
-    REQUIRE(context.get_last_kbd_macro() == "abc");
+    auto resolved = resolver.step('a');
+    REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+    REQUIRE(resolved.dispatch());
+    REQUIRE(context->get_text() == "abc");
+    REQUIRE(context->end_kbd_macro());
+    REQUIRE(context->get_last_kbd_macro() == "abc");
 }
 
 TEST_CASE("Keyboard macro depth limit discards pending playback")
@@ -101,7 +106,7 @@ TEST_CASE("Keyboard macro depth limit discards pending playback")
     REQUIRE(strstr(context.get_error_message(0), "Maximum macro execution depth exceeded") != nullptr);
 }
 
-static int32_t dummy_command(tib::editor_context& context, int32_t key, const char* name, const tib::binding_params* params)
+static int32_t dummy_command(tib::editor_context& context, int32_t key, const char* name, const tib::resolved_binding* params)
 {
     PREVENT_COMDAT_FOLDING();
     return 0;

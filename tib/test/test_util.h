@@ -84,7 +84,7 @@ class dispatcher_tester : public tib::dispatcher_target
 public:
                         ~dispatcher_tester() = default;
                         dispatcher_tester() = default;
-    int32_t             dispatch(const tib::cstring &sequence, int32_t key, const tib::binding_target* binding, const tib::binding_params* params) noexcept { ++m_dispatch_count; return -1; }
+    int32_t             dispatch(const tib::cstring &sequence, int32_t key, const tib::binding_target* binding, const tib::resolved_binding* respolved) noexcept { ++m_dispatch_count; return -1; }
     uint32_t            get_dispatch_count() const noexcept { return m_dispatch_count; }
 
 private:

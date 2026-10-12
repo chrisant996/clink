@@ -137,19 +137,19 @@ static const bar_padding_border_definition c_first_line_border("> ", " HH:MM");
 std::shared_ptr<tib::key_table_list> s_normal_bindings;
 std::shared_ptr<tib::key_table_list> s_movement_bindings;
 
-int32_t insert_newline(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t insert_newline(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
     ctx.insert_char('\n');
     return 0;
 }
 
-int32_t normal_mode(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t normal_mode(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
     ctx.set_bindings(s_normal_bindings);
     return 0;
 }
 
-int32_t movement_mode(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t movement_mode(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
     ctx.set_bindings(s_movement_bindings);
     return 0;

@@ -14,6 +14,8 @@
 namespace tib {
 
 class editor_context;
+class binding_resolver;
+struct resolved_binding;
 
 enum class binding_type : uint8_t
 {
@@ -159,7 +161,7 @@ public:
     // Returning c_dispatch_request_quoted_insert asks the binding_resolver to
     // send the next input byte back to this dispatcher_target as a quoted
     // insert i.e. as literal input not translated through key bindings.
-    virtual int32_t     dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const binding_params* params) noexcept = 0;
+    virtual int32_t     dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept = 0;
 
     // Called by resolved_binding::dispatch() when resolution used the
     // fallback bindings after the override bindings missed.
@@ -174,6 +176,8 @@ private:
     std::shared_ptr<const key_table_list> m_override_bindings;
     bool                m_fall_back_on_miss = false;
 };
+
+using binding_registrants = std::vector<std::weak_ptr<dispatcher_target>>;
 
 struct resolved_binding
 {
@@ -202,6 +206,7 @@ private:
 
 private:
     std::shared_ptr<binding_resolver_state> m_resolver_state;
+    std::weak_ptr<binding_registrants> m_registrants;
     cstring             m_replay;
     bool                m_ambiguous = false;
     std::vector<std::weak_ptr<tib::dispatcher_target>> m_fallback_targets;
@@ -212,6 +217,8 @@ class binding_resolver
 public:
                         ~binding_resolver() = default;
                         binding_resolver();
+                        binding_resolver(const binding_resolver* resolver);
+                        binding_resolver(const resolved_binding* resolved);
 
     void                clear_targets();
     void                add_target(std::weak_ptr<dispatcher_target> target);
@@ -232,7 +239,8 @@ public:
 private:
     resolved_binding    resolve(bool force);
 
-    std::vector<std::weak_ptr<dispatcher_target>> m_registrants;
+    std::shared_ptr<binding_registrants> m_registrants;
+    bool                m_borrowed_registrants = false;
     cstring             m_sequence;
     std::shared_ptr<binding_resolver_state> m_state;
     std::vector<std::weak_ptr<dispatcher_target>> m_fallback_targets;
