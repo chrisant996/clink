@@ -50,6 +50,8 @@ public:
     void                        set_expected_hint(const char* expected);
     void                        set_expected_output(const char* expected);
     void                        set_tab_binding(const char* tab_binding=nullptr);
+    void                        capture_command_output(bool capture=true);
+    const char*                 get_command_output() const;
     void                        run(bool expectationless=false);
 
 private:

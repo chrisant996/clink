@@ -45,7 +45,7 @@ class test_terminal_out
 public:
     virtual void    begin() override {}
     virtual void    end() override {}
-    virtual void    write(const char* chars, int32 length) override {}
+    virtual void    write(const char* chars, int32 length) override;
     virtual void    flush() override {}
     virtual int32   get_columns() const override { return 80; }
     virtual int32   get_rows() const override { return max<int32>(25, uint32(m_lines.size())); }
@@ -58,7 +58,11 @@ public:
     virtual void    set_attributes(const attributes attr) {}
 
     void            set_line_text(int32 line, const char* text);
+    void            capture_command_output(bool capture);
+    const char*     get_command_output() const;
 
 private:
     std::vector<str_moveable> m_lines;
+    str_moveable    m_output;
+    bool            m_capture_command_output = false;
 };

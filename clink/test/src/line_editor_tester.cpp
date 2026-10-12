@@ -189,7 +189,7 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     tib_terminal_bridge::get()->begin();
     assert(g_terminal);
 
-    g_tib = std::make_shared<clink_input_box>();
+    g_tib = std::make_shared<tib::input_box>();
 
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
@@ -277,7 +277,7 @@ void line_editor_tester::run(bool expectationless)
     {
         REQUIRE(m_editor->update());
     }
-    while (m_terminal_in.available(0));
+    while (tib::term_in_avail(0));
 
     m_editor->update_matches();
 
@@ -486,6 +486,10 @@ void line_editor_tester::run(bool expectationless)
         });
     }
 
+    // Stop command output capture but don't clear it; tests need access to it
+    // after the run completes.
+    capture_command_output(false);
+
     m_input = nullptr;
     m_expected_output = nullptr;
     m_expected_matches.clear();
@@ -597,4 +601,16 @@ void line_editor_tester::set_expected_hint(const char* hint)
 {
     m_expected_hint = hint;
     m_has_hint = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::capture_command_output(bool capture)
+{
+    m_terminal_out.capture_command_output(capture);
+}
+
+//------------------------------------------------------------------------------
+const char* line_editor_tester::get_command_output() const
+{
+    return m_terminal_out.get_command_output();
 }

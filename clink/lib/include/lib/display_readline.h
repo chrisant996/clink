@@ -14,6 +14,7 @@ bool has_modmark();
 extern "C" void init_display_readline(void);
 extern "C" void uninit_display_readline(void);
 extern "C" int32 is_display_readline_initialized(void);
+extern "C" int32 is_display_readline_displayed(void);
 
 #ifdef DEBUG
 void ignore_column_in_uninit_display_readline();

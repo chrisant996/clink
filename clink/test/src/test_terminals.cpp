@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "test_terminals.h"
+#include <lib/display_readline.h>
 #include <assert.h>
 
 class input_idle;
@@ -93,6 +94,13 @@ void test_terminal_in::push_input(const char* input, int32 length)
 
 
 //------------------------------------------------------------------------------
+void test_terminal_out::write(const char* chars, int32 length)
+{
+    if (m_capture_command_output && !is_display_readline_displayed())
+        m_output.concat(chars, length);
+}
+
+//------------------------------------------------------------------------------
 bool test_terminal_out::get_line_text(int32 line, str_base& out) const
 {
     if (line < 0 || line >= get_rows())
@@ -115,4 +123,18 @@ void test_terminal_out::set_line_text(int32 line, const char* text)
         m_lines.emplace_back();
 
     m_lines[line] = text;
+}
+
+//------------------------------------------------------------------------------
+void test_terminal_out::capture_command_output(bool capture)
+{
+    if (capture)
+        m_output.clear();
+    m_capture_command_output = capture;
+}
+
+//------------------------------------------------------------------------------
+const char* test_terminal_out::get_command_output() const
+{
+    return m_output.c_str();
 }

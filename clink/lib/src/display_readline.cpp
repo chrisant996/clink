@@ -95,6 +95,7 @@ static bool s_want_redisplay = false;
 static bool s_force_redisplay = false;
 static bool s_ever_input_hint = false;
 static bool s_transient_prompt_context = false;
+static bool s_displayed = false;
 bool g_display_manager_no_comment_row = false;
 
 //------------------------------------------------------------------------------
@@ -620,7 +621,7 @@ public:
     void                initialize() { m_initialized = true; assert(g_tib); }
     void                uninitialize() { m_initialized = false; }
     bool                is_initialized() const { return m_initialized; }
-    bool                is_displayed() const { return is_initialized() && g_tib->is_displayed(); }
+    bool                is_displayed() const { return is_initialized() && s_displayed; }
 
     void                begin_display();
     void                display();
@@ -667,6 +668,8 @@ void display_manager::begin_display()
 {
     assert(!s_defer_clear_lines);
     assert(!s_defer_erase_extra_lines);
+
+    s_displayed = true;
 
 // TODO-TIB: ?
 #ifdef TIB_TODO
@@ -733,6 +736,8 @@ void display_manager::display()
             return;
         s_force_signaled_redisplay = false;
     }
+
+    s_displayed = true;
 
     // Terminal shell integration.  The caller doesn't have to worry about
     // redundant calls; the terminal_begin_command and terminal_end_command
@@ -1415,12 +1420,6 @@ int32 get_relative_cursor_column()
 }
 
 //------------------------------------------------------------------------------
-extern "C" void end_prompt_lf()
-{
-    s_display_manager.end_prompt_lf();
-}
-
-//------------------------------------------------------------------------------
 void end_prompt(int32 crlf)
 {
     allow_suggestion_list(0);
@@ -1440,7 +1439,7 @@ void end_prompt(int32 crlf)
 
     move_to_end_of_display(0);
     if (crlf != 0)
-        end_prompt_lf();
+        s_display_manager.end_prompt_lf();
 #ifdef TIB_TODO
     if (crlf > 0)
         _rl_last_c_pos = 0;
@@ -1450,12 +1449,13 @@ void end_prompt(int32 crlf)
     // away printing the next prompt.
     reset_display_readline();
 
+    // Terminal shell integration.
+    terminal_begin_command();
+
     // Block any further prompt display if this is final.
     if (crlf < 0)
         uninit_display_readline();
-
-    // Terminal shell integration.
-    terminal_begin_command();
+    s_displayed = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1580,6 +1580,12 @@ extern "C" void uninit_display_readline(void)
 extern "C" int32 is_display_readline_initialized(void)
 {
     return s_display_manager.is_initialized();
+}
+
+//------------------------------------------------------------------------------
+extern "C" int32 is_display_readline_displayed(void)
+{
+    return s_display_manager.is_displayed();
 }
 
 //------------------------------------------------------------------------------

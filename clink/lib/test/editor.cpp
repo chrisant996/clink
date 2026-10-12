@@ -91,38 +91,38 @@ TEST_CASE("editor")
     }
 }
 
-TEST_CASE("keyboard macro recording")
+//------------------------------------------------------------------------------
+TEST_CASE("keyboard macro : record")
 {
     line_editor_tester tester;
-    auto& box = *g_tib;
 
-    auto command = [&](const char* sequence, const char* name)
-    {
-        const auto target = tib::binding_target_func(name);
-        REQUIRE(box.dispatch(tib::cstring(sequence), 0, &target, nullptr) == 0);
-    };
-    auto insert = [&](char c)
-    {
-        const char sequence[] = { c, 0 };
-        REQUIRE(box.dispatch(tib::cstring(sequence, 1), uint8_t(c), nullptr, nullptr) == 0);
-    };
+    // Record a kbd macro.
+    tester.set_input("\x18(" "ab" "\x18)");
+    tester.set_expected_output("ab");
+    tester.run();
 
-    command("\x18(", "start-kbd-macro");
-    insert('a');
-    insert('b');
-    command("\x18)", "end-kbd-macro");
-    REQUIRE(strcmp(box.get_text().c_str(), "ab") == 0);
+    // Verify number argument with call-last-kbd-macro.
+    tester.set_input(/*ALT-2 arg*/ "\x1b" "2" /*call-last-kbd-macro*/ "\x18" "e");
+    tester.set_expected_output("abab");
+    tester.run();
 
-    box.set_numeric_argument(2);
-    command("\x18" "e", "call-last-kbd-macro");
-    REQUIRE(tib::term_in() == 'a');
-    REQUIRE(tib::term_in() == 'b');
-    REQUIRE(tib::term_in() == 'a');
-    REQUIRE(tib::term_in() == 'b');
-    REQUIRE(!tib::term_has_macro_input());
+    // Verify calling an empty kbd macro has no effect.
+    tester.set_input("\x18(" "\x18)" "\x18" "e");
+    tester.set_expected_output("");
+    tester.run();
+}
 
-    command("\x18(", "start-kbd-macro");
-    command("\x18)", "end-kbd-macro");
-    command("\x18" "e", "call-last-kbd-macro");
-    REQUIRE(!tib::term_has_macro_input());
+//------------------------------------------------------------------------------
+TEST_CASE("keyboard macro : print")
+{
+    line_editor_tester tester;
+
+    clink_bind("\\eZ", "print-last-kbd-macro", emacs_table);
+
+    tester.set_input("\x18(" "a" "\x11" "\x01" "\x18)" "\x1bZ");
+    tester.set_expected_output("a\x01");
+    tester.capture_command_output();
+    tester.run();
+
+    REQUIRE(strcmp(tester.get_command_output(), "a\\C-q\\C-a\n") == 0);
 }
