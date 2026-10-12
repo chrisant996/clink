@@ -2823,31 +2823,23 @@ int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* nam
 }
 
 //------------------------------------------------------------------------------
-int32_t start_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
-{
-    assert(&ctx == g_tib.get());
-    return g_tib->start_kbd_macro();
-}
-
-//------------------------------------------------------------------------------
-int32_t end_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
-{
-    assert(&ctx == g_tib.get());
-    return g_tib->end_kbd_macro();
-}
-
-//------------------------------------------------------------------------------
-int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
-{
-    assert(&ctx == g_tib.get());
-    return g_tib->call_last_kbd_macro();
-}
-
-//------------------------------------------------------------------------------
 int32_t print_last_kbd_macro(tib::editor_context& ctx, int32_t, const char*, const tib::binding_params*) noexcept
 {
-    assert(&ctx == g_tib.get());
-    return g_tib->print_last_kbd_macro();
+    if (!ctx.has_last_kbd_macro())
+    {
+        tib::ding();
+        return 0;
+    }
+
+    char* text = _rl_untranslate_macro_value((char*)ctx.get_last_kbd_macro().c_str(), 1);
+
+    end_prompt(true/*crlf*/);
+    tib::term_out(text, strlen(text));
+    tib::term_out("\n");
+    // rl_reset_line_state();
+
+    free(text);
+    return 0;
 }
 
 

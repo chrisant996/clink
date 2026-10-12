@@ -6,7 +6,6 @@
 #include <core/base.h>
 
 #include <tib.h>
-#include "clink_input_box.h"
 
 class matches;
 class matches_iter;
@@ -21,7 +20,7 @@ class tib_terminal_bridge;
 // functions help bridge that gap.
 
 //------------------------------------------------------------------------------
-extern std::shared_ptr<clink_input_box> g_tib;
+extern std::shared_ptr<tib::input_box> g_tib;
 extern str_moveable g_prompt_prefix;
 extern str_moveable g_prompt;
 extern str_moveable g_rprompt;

@@ -2146,7 +2146,7 @@ void initialise_readline(bool no_user)
 
         // Wait until after registering the editor commands, so it doesn't
         // trigger auto-registering tib's list of commands.
-        g_tib = std::make_shared<clink_input_box>();
+        g_tib = std::make_shared<tib::input_box>();
 
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.
@@ -3207,6 +3207,17 @@ void rl_module::on_input(const input& input, result& result, const context& cont
                 key, key, key, m_terminal->has_chord());
         }
         m_terminal->dispatch(uint8(key));
+
+        if (g_tib->count_error_messages())
+        {
+            end_prompt(true/*crlf*/);
+            puts("");
+            for (int32 i = 0; const char* msg = g_tib->get_error_message(i); ++i)
+                puts(msg);
+            puts("");
+            g_tib->clear_error_messages();
+        }
+
         if (g_tib->is_done())
             done(g_tib->get_text().c_str());
 #endif
