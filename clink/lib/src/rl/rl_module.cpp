@@ -2377,8 +2377,6 @@ void initialise_readline(bool no_user)
     clink_bind_list(vi_movement_key_binds, vi_movement_table);
 #endif
 
-    g_tib->set_bindings(s_emacs_standard_bindings);
-
     // Finally, load the inputrc file.
     load_user_inputrc(state_dir, no_user);
 
@@ -2394,6 +2392,9 @@ void initialise_readline(bool no_user)
     // Override the effect of any 'set keymap' assignments in the inputrc file.
     // This mimics what rl_initialize() does.
     rl_set_keymap_from_edit_mode();
+
+    if (g_tib) // Can be nullptr in the tests.
+        g_tib->set_bindings(s_emacs_standard_bindings);
 }
 
 

@@ -31,12 +31,6 @@ TEST_CASE("File match generator")
 {
     fs_fixture fs;
 
-    static const char* env_inputrc[] = {
-        "clink_inputrc", "dummy_to_use_defaults",
-        nullptr
-    };
-    env_fixture env(env_inputrc);
-
     setting* setting = settings::find("match.translate_slashes");
     setting->set("system");
 

@@ -189,6 +189,9 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     tib_terminal_bridge::get()->begin();
     assert(g_terminal);
 
+    extern void initialise_readline(bool no_user=false);
+    initialise_readline(); // Creates a g_tib the first time.
+
     g_tib = std::make_shared<tib::input_box>();
 
     m_editor = line_editor_create(inner_desc);

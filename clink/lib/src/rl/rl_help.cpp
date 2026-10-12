@@ -1594,7 +1594,7 @@ bool get_command_bindings(const char* command, bool friendly, str_base& _desc, s
 }
 
 //------------------------------------------------------------------------------
-int32_t show_rl_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t show_rl_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     int32 mode = ctx.has_numeric_argument() ? ctx.get_numeric_argument() : 3;
     show_key_bindings(true/*friendly*/, mode);
@@ -1602,7 +1602,7 @@ int32_t show_rl_help(tib::editor_context& ctx, int32_t key, const char* name, co
 }
 
 //------------------------------------------------------------------------------
-int32_t show_rl_help_raw(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t show_rl_help_raw(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     int32 mode = ctx.has_numeric_argument() ? ctx.get_numeric_argument() : 3;
     show_key_bindings(false/*friendly*/, mode);
@@ -1772,7 +1772,7 @@ static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros, bool 
 }
 
 //------------------------------------------------------------------------------
-int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     if (!funcmac_dumper_internal(ctx, false/*macros*/))
         tib::ding();
@@ -1780,7 +1780,7 @@ int32_t clink_dump_functions(tib::editor_context& ctx, int32_t key, const char* 
 }
 
 //------------------------------------------------------------------------------
-int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     if (!funcmac_dumper_internal(ctx, true/*macros*/))
         tib::ding();
@@ -1788,7 +1788,7 @@ int32_t clink_dump_macros(tib::editor_context& ctx, int32_t key, const char* nam
 }
 
 //------------------------------------------------------------------------------
-int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     if (!funcmac_dumper_internal(ctx, false/*macros*/, false/*friendly*/))
         tib::ding();
@@ -1796,7 +1796,7 @@ int32_t dump_functions(tib::editor_context& ctx, int32_t key, const char* name, 
 }
 
 //------------------------------------------------------------------------------
-int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     if (!funcmac_dumper_internal(ctx, true/*macros*/, false/*friendly*/))
         tib::ding();
@@ -1804,7 +1804,7 @@ int32_t dump_macros(tib::editor_context& ctx, int32_t key, const char* name, con
 }
 
 //------------------------------------------------------------------------------
-int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, const tib::binding_params* params) noexcept
+int32_t clink_what_is(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     // Move cursor past the input line.
     end_prompt(true/*crlf*/);

@@ -231,25 +231,23 @@ TEST_CASE("Match type : lcd")
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
 
-// TODO-TIB: use "complete" command.
-    // clink_bind("\xe2\x84\xa2", "complete", emacs_table);
-    clink_bind("\xe2\x84\xa2", "end-of-line", emacs_table);
+    clink_bind("\\\xCF\x80", "complete", emacs_table);
 
     SECTION("pathish readline")
     {
-        tester.set_input("plugh dir\\\xe2\x84\xa2");
+        tester.set_input("plugh dir\\\xCF\x80");
         tester.set_expected_output("plugh dir\\b");
         tester.run();
     }
 
     SECTION("non-pathish readline")
     {
-        tester.set_input("xyzzy foo/\xe2\x84\xa2");
+        tester.set_input("xyzzy foo/\xCF\x80");
         tester.set_expected_output("xyzzy foo/b");
         tester.run();
     }
 
-    clink_bind("\xe2\x84\xa2", nullptr, emacs_table);
+    clink_bind("\xCF\x80", nullptr, emacs_table);
 }
 
 //------------------------------------------------------------------------------
