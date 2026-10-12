@@ -1050,7 +1050,7 @@ static char adjust_completion_word(char quote_char, int32 *found_quote, int32 *d
         {
             const auto old_caret = g_tib->get_caret();
             g_tib->set_caret(min<tib::textpos_t>(s_matches->get_word_break_position(), g_tib->get_length()));
-            rl_sync_with_clink();
+            rl_sync_with_clink::sync();
 
             const char* pqc = nullptr;
             if (g_tib->get_caret() > 0)

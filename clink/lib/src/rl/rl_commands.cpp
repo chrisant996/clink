@@ -292,7 +292,7 @@ static void enqueue_lines(std::list<str_moveable>& lines)
 extern "C" const char* rl_complete_line_buffer = 0;
 extern "C" int rl_complete_end = 0;
 extern "C" int rl_complete_point = 0;
-void rl_sync_with_clink()
+void rl_sync_with_clink::sync()
 {
     rl_complete_line_buffer = g_tib->get_text().c_str();
     rl_complete_end = g_tib->get_text().length();
@@ -327,7 +327,7 @@ void rl_sync_with_clink()
     rl_numeric_arg = g_tib->get_numeric_argument();
     rl_arg_sign = g_tib->get_argument_sign();
 }
-static void rl_verify_still_in_sync()
+void rl_sync_with_clink::verify()
 {
     assert(rl_complete_line_buffer == g_tib->get_text().c_str());
     assert(rl_complete_end == g_tib->get_text().length());
@@ -335,9 +335,8 @@ static void rl_verify_still_in_sync()
 }
 static int32 do_rl_command(rl_command_func_t* func, int32 invoking_key)
 {
-    rl_sync_with_clink();
+    rl_sync_with_clink sync;
     func(g_tib->get_numeric_argument(), invoking_key);
-    rl_verify_still_in_sync();
     return 0;
 }
 static char* copystring(const char* s, size_t len=tib::c_auto_length)
@@ -2849,15 +2848,13 @@ static int32 glob_completion_internal(int32 what_to_do)
         s_literal_wild = true;
 
     rl_complete_internal(what_to_do);
-
-    rl_verify_still_in_sync();
     return 0;
 }
 
 //------------------------------------------------------------------------------
 int32_t glob_complete_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    rl_sync_with_clink();
+    rl_sync_with_clink sync;
 
     if (rl_editing_mode == emacs_mode)
         rl_explicit_arg = 1; /* force `*' append */
@@ -2869,16 +2866,14 @@ int32_t glob_complete_word(tib::editor_context& ctx, int32_t key, const char* na
 //------------------------------------------------------------------------------
 int32_t glob_expand_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    rl_sync_with_clink();
-
+    rl_sync_with_clink sync;
     return glob_completion_internal('*');
 }
 
 //------------------------------------------------------------------------------
 int32_t glob_list_expansions(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    rl_sync_with_clink();
-
+    rl_sync_with_clink sync;
     return glob_completion_internal('?');
 }
 
