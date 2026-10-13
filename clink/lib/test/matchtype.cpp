@@ -231,6 +231,7 @@ TEST_CASE("Match type : lcd")
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
 
+    MAKE_CLEANUP([](){ clink_bind("\\\xCF\x80", nullptr, emacs_table); });
     clink_bind("\\\xCF\x80", "complete", emacs_table);
 
     SECTION("pathish readline")
@@ -246,8 +247,6 @@ TEST_CASE("Match type : lcd")
         tester.set_expected_output("xyzzy foo/b");
         tester.run();
     }
-
-    clink_bind("\xCF\x80", nullptr, emacs_table);
 }
 
 //------------------------------------------------------------------------------

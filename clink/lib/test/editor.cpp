@@ -117,6 +117,7 @@ TEST_CASE("keyboard macro : print")
 {
     line_editor_tester tester;
 
+    MAKE_CLEANUP([](){ clink_bind("\\eZ", nullptr, emacs_table); });
     clink_bind("\\eZ", "print-last-kbd-macro", emacs_table);
 
     tester.set_input("\x18(" "a" "\x11" "\x01" "\x18)" "\x1bZ");

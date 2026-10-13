@@ -1741,7 +1741,6 @@ extern "C" void clink_bind(const char* keyseq, const char* target, int table)
 
     const size_t need = 1 + (2 * strlen(keyseq));
     char* keys = (char*)malloc(need);
-    char* macro = nullptr;
     if (!keys)
         return;
 
@@ -1749,13 +1748,12 @@ extern "C" void clink_bind(const char* keyseq, const char* target, int table)
     if (rl_translate_keyseq(keyseq, keys, &keys_len))
     {
         assert(false);
-        free(keys);
-        return;
+        goto out;
     }
 
     clink_bind_translated(false, keys, keys_len, target, table);
 
-    free(macro);
+out:
     free(keys);
 }
 
@@ -1774,10 +1772,10 @@ extern "C" void clink_bind_macro(const char* keyseq, const char* target, int tab
     if (rl_translate_keyseq(keyseq, keys, &keys_len))
     {
         assert(false);
-        free(keys);
-        return;
+        goto out;
     }
 
+    if (target)
     {
         int macro_len;
         macro = (char*)malloc((2 * strlen(target)) + 1);
