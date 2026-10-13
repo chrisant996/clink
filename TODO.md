@@ -6,42 +6,39 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
-- Self-insert needs to queue up bytes for a codepoint.
-  - [ ] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).
-  - [ ] Readline doesn't handle graphemes, but it would be nice if tib supported whole graphemes.  Except I don't see how it could do so without a timeout.  I suppose a 500 ms timeout could actually be reasonable _when count > 1 AND non-ASCII input was entered_.
-  - Readline's `quoted-insert` is very literal and doesn't directly handle UTF8 codepoints like `self-insert` does.  That seems ok since quoted-insert kind of only makes sense for inserting control characters or the leading ESC of a VT key sequence, so it seems fine for tib to also be literal about quoted insert.
-- Reconnect `debug.log_terminal` support for logging read input.
-- Command groups:
-  - [x] Kill ring.
-  - [x] Completion.
-  - [ ] win_f2, win_f4, win_f9.
-  - [ ] History.
-  - [ ] Suggestion list full functionality.
-  - [ ] Non-incremental search.
-  - [ ] Execute named command.
-  - [ ] Miscellaneous.
-- Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
-- Internal states, for specialized behaviors that used to rely on RL_STATE flags.
-- Some Readline termcap strings need native replacement:
-  - _rl_term_mm, _rl_term_mo, _rl_enable_meta_key(), _rl_disable_meta_key()
-  - _rl_term_vs, _rl_term_ve, _rl_set_cursor()
-- Strip down remaining Readline code.
-- `clink-select-complete`:
-  - [x] Activate.
-  - [ ] Overlay key bindings.  This would need a way to tell the dispatcher to forward the binding as though a miss had occurred, even though it didn't miss.  But that could get weird:  what if the fallback produces a miss?  The design might not be generalized enough yet to replace Clink's `bind_resolver` with tib's binding framework.
-- Need to swap `\x08` and `\x7f` again, oops.
-- Bracketed paste.
-- VI mode.
-- `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
-- `_rl_show_mode_in_prompt` and emacs and vi modes.
+- [ ] Reconnect `debug.log_terminal` support for logging read input.
+- [ ] win_f2, win_f4, win_f9.
+- [ ] Bracketed paste.
+- [ ] `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
+- [ ] Self-insert count (numeric argument) could apply to graphemes.  Will require the ambiguous input timeout.  Can be constrained to apply only _when count > 1 AND non-ASCII input was entered_.  Or maybe even constrain based on presence of a joiner or variant selector or etc.
+- [ ] History commands.
+- [ ] Suggestion list full functionality.
+  - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
+- [ ] Non-incremental search commands.
+- [ ] Execute named command.
+- [ ] Miscellaneous commands.
+- [ ] Internal states, for specialized behaviors that used to rely on RL_STATE flags.
+- [ ] Some Readline termcap strings need native replacement:
+  - [ ] _rl_term_mm, _rl_term_mo, _rl_enable_meta_key(), _rl_disable_meta_key()
+  - [ ] _rl_term_vs, _rl_term_ve, _rl_set_cursor()
+- [ ] Strip down remaining Readline code.
+- [ ] Use tib binding resolver and overlay key bindings for `clink-select-complete`.  This would need a way to tell the dispatcher to forward the binding as though a miss had occurred, even though it didn't miss.  But that could get weird:  what if the fallback produces a miss?  The design might not be generalized enough yet to replace Clink's `bind_resolver` with tib's binding framework.
+- [ ] Need to swap `\x08` and `\x7f` again, oops.
+- [ ] VI mode.
+- [ ] `_rl_show_mode_in_prompt` and emacs and vi modes.
 
 ### Done
 
+- [x] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).
+- [x] Readline's `quoted-insert` is very literal and doesn't directly handle UTF8 codepoints like `self-insert` does.  That seems ok since quoted-insert kind of only makes sense for inserting control characters or the leading ESC of a VT key sequence, so it seems fine for tib to also be literal about quoted insert.
+- [x] Activate `clink-select-complete` mode.
 - [x] Suggestions:
   - [x] Inline suggestions.
   - [x] Suggestion usage hint.
   - [x] Suggestion list basic functionality.
   - [x] Suggestion list has an extra blank line below it that doesn't get cleared correctly.
+- [x] Kill ring commands.
+- [x] Completion commands.  _[Will need follow-up cleanup adjustments later.]_
 - [x] Popup lists in general.
 - [x] Open Issue:  Why does any abort in Readline clear the recorded keyboard macro?  _[Clink does not clear the recorded keyboard macro.]_
 - [x] By Design:  Readline hides the numeric argument message as soon as a non-digit-argument chord begins.  That seems undesirable to me, and tib allows the message to stay until the chord is completed, so that you can see what argument you'll send to the command you're about to invoke.
