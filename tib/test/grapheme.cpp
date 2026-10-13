@@ -171,7 +171,7 @@ public:
         return any_updates;
     }
 
-    const char* get_face_def(char face) override
+    const char* get_face_def(const tib::input_buffer& buffer, char face) override
     {
         const auto def = m_face_defs.find(face);
         if (def != m_face_defs.end())

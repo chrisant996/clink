@@ -175,13 +175,14 @@ public:
     bool                undo_all();
     bool                redo();
 
-    bool                start_kbd_macro(bool append);
+    int32_t             start_kbd_macro(bool append); // Returns -1 on overflow.
     bool                end_kbd_macro();
-    bool                play_last_kbd_macro(int32_t count=1);
+    int32_t             play_last_kbd_macro(int32_t count=1); // Returns -1 on overflow.
     bool                is_recording_kbd_macro() const { return m_recording_macro; }
     void                discard_last_recorded_keyseq() { m_discard_last_recorded_keyseq = true; }
     bool                has_last_kbd_macro() const { return m_has_last_macro; }
     const cstring&      get_last_kbd_macro() const { return m_last_macro; } // Can contain NUL chars.
+    void                clear_kbd_macro();
 
     void                transfer_text(cstring& out);
 
@@ -263,6 +264,7 @@ private:
     cstring             m_last_command_name;
     editor_command_func_t m_last_command_func = nullptr;
     std::map<cstring, cstring, cstring_less> m_named_values;
+    int32_t             m_dispatching = 0;
     bool                m_in_on_dispatched = false;
 
     // Numeric argument.

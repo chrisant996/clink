@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "maybe_windows.h"
 #include "tib.h"
+#include "tib_private.h"
 #include "wcwidth.h"
 #include <cctype>
 #include <chrono>
@@ -296,7 +297,7 @@ void editor_context::reset_state() noexcept
     clear_was_kill_command();
     g_add_to_kill_ring = 0;
 
-    term_clear_macro_input();
+    term_clear_playback();
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -1436,13 +1437,19 @@ bool editor_context::redo()
     return true;
 }
 
-bool editor_context::start_kbd_macro(bool append)
+int32_t editor_context::start_kbd_macro(bool append)
 {
     if (m_recording_macro)
         return false;
+    assert(m_recording.empty());
 
-    if (!append)
-        m_recording.clear();
+    if (append)
+    {
+        const auto pushed = play_last_kbd_macro(1);
+        if (pushed < 0)
+            return pushed;
+    }
+
     m_recording_macro = true;
     return true;
 }
@@ -1459,7 +1466,7 @@ bool editor_context::end_kbd_macro()
     return true;
 }
 
-bool editor_context::play_last_kbd_macro(int32_t count)
+int32_t editor_context::play_last_kbd_macro(int32_t count)
 {
     if (m_recording_macro)
         return false;
@@ -1469,18 +1476,27 @@ bool editor_context::play_last_kbd_macro(int32_t count)
     {
         while (count-- > 0)
         {
-            const auto pushed = term_push_macro_text(m_last_macro.c_str(), m_last_macro.length());
+            const auto pushed = term_push_playback(true/*is_macro*/, m_last_macro.c_str(), m_last_macro.length());
             if (pushed < 0)
             {
                 cstring msg;
-                msg.printf("Maximum macro execution depth exceeded (%d).", c_max_macro_depth);
+                msg.printf("Maximum macro execution depth exceeded (%d).", c_max_playback_depth);
+                term_clear_playback();
                 report_error(msg.c_str());
             }
             if (pushed <= 0)
-                return false;
+                return pushed;
         }
     }
     return true;
+}
+
+void editor_context::clear_kbd_macro()
+{
+    m_recording_macro = false;
+    m_recording.clear();
+    m_last_macro.clear();
+    m_has_last_macro = false;
 }
 
 void editor_context::transfer_text(cstring& out)
@@ -1499,6 +1515,12 @@ const char* editor_context::get_error_message(int32_t index) const
 int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept
 {
     int32_t ret = -1;
+
+    if (!m_dispatching)
+        clear_error_messages();
+
+    cleanup cleanup([this]() { --m_dispatching; });
+    ++m_dispatching;
 
     set_auto_clear_numeric_argument();
     clear_error_messages();

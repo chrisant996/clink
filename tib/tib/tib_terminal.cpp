@@ -8,6 +8,7 @@
 #include "tib_base.h"
 #include "tib_terminal.h"
 #include "tib_termcap.h"
+#include "tib_private.h"
 #include "wcwidth.h"
 #include <assert.h>
 
@@ -19,16 +20,17 @@ hook_new_terminal_in_func_t hook_new_terminal_in = nullptr;
 hook_new_terminal_out_func_t hook_new_terminal_out = nullptr;
 hook_input_trace_func_t hook_input_trace = nullptr;
 
-struct macro_playback
+struct playback
 {
     cstring             m_text;
     size_t              m_index = 0;
-    macro_playback*     m_next = nullptr;
+    bool                m_is_macro = true;
+    playback*           m_next = nullptr;
 };
 
 static pushed_input s_pushed;
-static macro_playback* s_macro_playback = nullptr;
-static int32_t s_macro_depth = 0;
+static playback* s_playback = nullptr;
+static int32_t s_playback_depth[2/*is_macro*/] = {};
 
 static terminal_in* s_terminal_in = nullptr;
 static terminal_out* s_terminal_out = nullptr;
@@ -366,34 +368,34 @@ int32_t term_in()
     if (!s_terminal_in)
         return c_input_eof;
 
+    if (s_playback)
+    {
+        assert(s_playback->m_index < s_playback->m_text.length());
+        const char c = s_playback->m_text.c_str()[s_playback->m_index++];
+
+        if (hook_input_trace)
+        {
+            const size_t remaining = s_playback->m_text.length() - s_playback->m_index;
+            hook_input_trace(s_playback->m_is_macro ? "read macro" : "read replay", uint8_t(c), remaining);
+        }
+
+        if (s_playback->m_index >= s_playback->m_text.length())
+        {
+            playback* d = s_playback;
+            s_playback = s_playback->m_next;
+            assert(s_playback_depth[d->m_is_macro] > 0);
+            --s_playback_depth[d->m_is_macro];
+            delete d;
+        }
+        return uint8_t(c);
+    }
+
     if (!s_pushed.empty())
     {
         const int32_t c = s_pushed.read();
         if (hook_input_trace)
             hook_input_trace("read pushed", c, s_pushed.size());
         return c;
-    }
-
-    if (s_macro_playback)
-    {
-        assert(s_macro_playback->m_index < s_macro_playback->m_text.length());
-        const char c = s_macro_playback->m_text.c_str()[s_macro_playback->m_index++];
-
-        if (hook_input_trace)
-        {
-            const size_t remaining = s_macro_playback->m_text.length() - s_macro_playback->m_index;
-            hook_input_trace("read macro", uint8_t(c), remaining);
-        }
-
-        if (s_macro_playback->m_index >= s_macro_playback->m_text.length())
-        {
-            macro_playback* d = s_macro_playback;
-            s_macro_playback = s_macro_playback->m_next;
-            assert(s_macro_depth > 0);
-            --s_macro_depth;
-            delete d;
-        }
-        return uint8_t(c);
     }
 
     const int32_t c = s_terminal_in->read();
@@ -415,21 +417,21 @@ int32_t term_in_peek()
     if (!s_terminal_in)
         return c_input_eof;
 
+    if (s_playback)
+    {
+        assert(s_playback->m_index < s_playback->m_text.length());
+        const char c = s_playback->m_text.c_str()[s_playback->m_index];
+        if (hook_input_trace)
+            hook_input_trace(s_playback->m_is_macro ? "peek macro" : "peek replay", uint8_t(c), s_playback->m_text.length() - s_playback->m_index);
+        return uint8_t(c);
+    }
+
     if (!s_pushed.empty())
     {
         const int32_t c = s_pushed.peek();
         if (hook_input_trace)
             hook_input_trace("peek pushed", c, s_pushed.size());
         return c;
-    }
-
-    if (s_macro_playback)
-    {
-        assert(s_macro_playback->m_index < s_macro_playback->m_text.length());
-        const char c = s_macro_playback->m_text.c_str()[s_macro_playback->m_index];
-        if (hook_input_trace)
-            hook_input_trace("peek macro", uint8_t(c), s_macro_playback->m_text.length() - s_macro_playback->m_index);
-        return uint8_t(c);
     }
 
     if (!term_in_avail())
@@ -446,7 +448,7 @@ int32_t term_in_peek()
         return c;
     }
 
-    assert(!s_macro_playback);
+    assert(!s_playback);
 
     const int32_t c = term_in();
     if (c < 0)
@@ -471,16 +473,16 @@ bool term_in_avail(const DWORD _timeout)
     if (!s_terminal_in)
         return false;
 
+    if (s_playback)
+    {
+        if (hook_input_trace)
+            hook_input_trace(s_playback->m_is_macro ? "avail macro" : "avail replay", 1, s_playback->m_text.length() - s_playback->m_index);
+        return true;
+    }
     if (!s_pushed.empty())
     {
         if (hook_input_trace)
             hook_input_trace("avail pushed", 1, s_pushed.size());
-        return true;
-    }
-    if (s_macro_playback)
-    {
-        if (hook_input_trace)
-            hook_input_trace("avail macro", 1, s_macro_playback->m_text.length() - s_macro_playback->m_index);
         return true;
     }
 
@@ -489,10 +491,10 @@ bool term_in_avail(const DWORD _timeout)
 
 bool term_has_macro_input()
 {
-    return !!s_macro_playback;
+    return s_playback_depth[true/*is_macro*/] > 0;
 }
 
-bool term_push_input(const char* text, size_t len)
+int32_t term_push_playback(bool is_macro, const char* text, size_t len)
 {
 #ifdef _WIN32
 #ifdef DEBUG
@@ -500,25 +502,10 @@ bool term_push_input(const char* text, size_t len)
 #endif
 #endif
 
-    len = resolve_auto_length(len, text);
-    const bool pushed = s_pushed.push_front(text, len);
-    if (hook_input_trace && pushed && len)
-        hook_input_trace("push front", uint8_t(text[0]), len);
-    return pushed;
-}
-
-int32_t term_push_macro_text(const char* text, size_t len)
-{
-#ifdef _WIN32
-#ifdef DEBUG
-    assert(GetMainThreadId() == GetCurrentThreadId());
-#endif
-#endif
-
-    if (s_macro_depth >= c_max_macro_depth)
+    if (s_playback_depth[is_macro] >= c_max_playback_depth)
         return -1;
 
-    macro_playback* m = new macro_playback;
+    playback* m = new playback;
     if (!m)
         return false;
 
@@ -528,22 +515,24 @@ int32_t term_push_macro_text(const char* text, size_t len)
         return false;
     }
 
-    m->m_next = s_macro_playback;
-    s_macro_playback = m;
-    ++s_macro_depth;
+    m->m_is_macro = is_macro;
+    m->m_next = s_playback;
+    s_playback = m;
+    ++s_playback_depth[is_macro];
     if (hook_input_trace)
-        hook_input_trace("push macro", m->m_text.length() ? uint8_t(m->m_text.c_str()[0]) : -1, m->m_text.length());
+        hook_input_trace(is_macro ? "push macro" : "push replay", m->m_text.length() ? uint8_t(m->m_text.c_str()[0]) : -1, m->m_text.length());
     return true;
 }
 
-void term_clear_macro_input()
+void term_clear_playback()
 {
-    while (auto* m = s_macro_playback)
+    while (auto* m = s_playback)
     {
-        s_macro_playback = m->m_next;
+        s_playback = m->m_next;
         delete m;
     }
-    s_macro_depth = 0;
+    s_playback_depth[false] = 0;
+    s_playback_depth[true] = 0;
 }
 
 bool enable_mouse_input(mouse_input_mode mode, bool sgr_encoding)

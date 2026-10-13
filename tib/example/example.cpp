@@ -258,7 +258,7 @@ public:
 protected:
                         // Methods on the tib::editor_callbacks interface.
     void                provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
-    const char*         get_face_def(char face) override;
+    const char*         get_face_def(const tib::input_buffer& buffer, char face) override;
 
 private:
     std::map<char, tib::cstring> m_face_defs;
@@ -323,7 +323,7 @@ void custom_input_box::provide_faces(const tib::input_buffer& buffer, tib::cstri
     }
 }
 
-const char* custom_input_box::get_face_def(char face)
+const char* custom_input_box::get_face_def(const tib::input_buffer& buffer, char face)
 {
     const auto def = m_face_defs.find(face);
     if (def != m_face_defs.end())

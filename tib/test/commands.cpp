@@ -7,6 +7,7 @@
 #include "test.h"
 #include "test_util.h"
 #include "tib.h"
+#include "tib_private.h"
 
 static void initialize_context(tib::editor_context& context, const char* text,
                                tib::textpos_t caret)
@@ -49,7 +50,7 @@ TEST_CASE("Keyboard macro replays the recorded input")
 {
     tib::editor_context context;
     context.initialize();
-    MAKE_CLEANUP([]() { tib::term_clear_macro_input(); });
+    MAKE_CLEANUP([]() { tib::term_clear_playback(); });
 
     REQUIRE(context.start_kbd_macro(false));
     REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
@@ -94,12 +95,12 @@ TEST_CASE("Keyboard macro depth limit discards pending playback")
 {
     tib::editor_context context;
     context.initialize();
-    MAKE_CLEANUP([]() { tib::term_clear_macro_input(); });
+    MAKE_CLEANUP([]() { tib::term_clear_playback(); });
     REQUIRE(context.start_kbd_macro(false));
     REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
     REQUIRE(context.end_kbd_macro());
 
-    context.set_numeric_argument(tib::c_max_macro_depth + 1);
+    context.set_numeric_argument(tib::c_max_playback_depth + 1);
     dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
     REQUIRE(!tib::term_has_macro_input());
     REQUIRE(context.count_error_messages() == 1);

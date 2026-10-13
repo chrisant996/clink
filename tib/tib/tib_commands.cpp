@@ -9,6 +9,7 @@
 #include "tib_bindings.h"
 #include "tib_commands.h"
 #include "tib_context.h"
+#include "tib_private.h"
 #include <algorithm>
 #include <assert.h>
 #include <chrono>
@@ -674,15 +675,12 @@ int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* na
 int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     const bool append = ctx.has_numeric_argument();
-    if (!ctx.start_kbd_macro(append))
+    if (ctx.start_kbd_macro(append) <= 0)
     {
         ctx.discard_last_recorded_keyseq();
         tib::ding();
         return 0;
     }
-
-    if (append && ctx.has_last_kbd_macro() && !ctx.get_last_kbd_macro().empty())
-        tib::term_push_macro_text(ctx.get_last_kbd_macro().c_str(), ctx.get_last_kbd_macro().length());
     return 0;
 }
 
@@ -695,8 +693,8 @@ int32_t end_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, c
         return 0;
     }
 
-    if (!ctx.play_last_kbd_macro(count > 1 ? count - 1 : 0))
-        ctx.reset_state();
+    if (ctx.play_last_kbd_macro(count > 1 ? count - 1 : 0) <= 0)
+        tib::ding();
     return 0;
 }
 
@@ -709,8 +707,8 @@ int32_t call_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* n
         return 0;
     }
 
-    if (!ctx.play_last_kbd_macro(ctx.get_numeric_argument()))
-        ctx.reset_state();
+    if (ctx.play_last_kbd_macro(ctx.get_numeric_argument()) <= 0)
+        tib::ding();
     return 0;
 }
 

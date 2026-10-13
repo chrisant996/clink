@@ -5,6 +5,7 @@
 #include "test.h"
 #include "test_util.h"
 #include "tib.h"
+#include "tib_private.h"
 
 class self_insert_tester : public tib::editor_context
 {
@@ -28,7 +29,7 @@ static void dispatch_macro(const char* text, std::shared_ptr<self_insert_tester>
 {
     tib::cstring macro(text);
     macro.append("\r");
-    REQUIRE(tib::term_push_macro_text(macro.c_str(), macro.length()));
+    REQUIRE(tib::term_push_playback(true/*is_macro*/, macro.c_str(), macro.length()));
 
     for (;;)
     {

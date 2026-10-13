@@ -12,6 +12,7 @@
 #include <vector>
 #include <assert.h>
 #include <limits>
+#include <functional>
 
 #include <maybe_windows.h>
 
@@ -65,6 +66,16 @@ struct coord
     bool                operator!=(const coord& other) const { return x != other.x || y != other.y; }
     int32_t             x;
     int32_t             y;
+};
+
+class cleanup
+{
+public:
+                        ~cleanup() { if (m_func) m_func(); }
+                        cleanup(std::function<void(void)>&& func) : m_func(std::move(func)) {}
+                        void cancel() { m_func = nullptr; }
+private:
+    std::function<void(void)> m_func;
 };
 
 // A counted string that can optionally contain embedded NUL characters.

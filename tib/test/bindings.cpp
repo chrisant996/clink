@@ -498,7 +498,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(tib::term_in() == 'x');
     }
 
-    SECTION("Replayed suffix retains pushed-input priority")
+    SECTION("Macro fallback precedes replayed suffix")
     {
         auto table = std::make_shared<tib::key_table>();
         REQUIRE(table->add("a", tib::binding_target_macro("M")));
@@ -514,10 +514,14 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(resolved.outcome == tib::dispatch_outcome::match);
         REQUIRE(resolved.binding_target.get_type() == tib::binding_type::macro);
         REQUIRE(resolved.dispatch());
+        REQUIRE(tib::term_has_macro_input());
+        REQUIRE(tib::term_in_peek() == 'M');
+        REQUIRE(tib::term_in() == 'M');
+        REQUIRE(!tib::term_has_macro_input());
+        REQUIRE(tib::term_in_peek() == 'b');
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(tib::term_in() == 'x');
         REQUIRE(tib::term_in() == 'P');
-        REQUIRE(tib::term_in() == 'M');
     }
 
     SECTION("Pattern binding can be the fallback")

@@ -9,6 +9,7 @@
 #include "tib_bindings.h"
 #include "tib_context.h"
 #include "tib_terminal.h"
+#include "tib_private.h"
 #include <algorithm>
 #include <assert.h>
 
@@ -388,12 +389,15 @@ bool resolved_binding::dispatch()
             if (m_replay.length())
             {
                 // Anything in m_replay is surplus following the selected
-                // shadow fallback.  Put it back at the head of pushed input
-                // before dispatching, so it precedes both previously pushed
-                // input and any macro text that dispatching the fallback may
-                // enqueue.
-                if (!term_push_input(m_replay.c_str(), m_replay.length()))
+                // shadow fallback.  Push it into the playback queue before
+                // dispatching, so any macro text from the fallback runs
+                // first, followed by this suffix, then older pending input.
+                if (term_push_playback(false/*is_macro*/, m_replay.c_str(), m_replay.length()) <= 0)
+                {
+                    term_clear_playback();
+                    ding();
                     return false;
+                }
             }
 
             auto ctx = dispatcher_target.lock();
@@ -410,10 +414,11 @@ bool resolved_binding::dispatch()
                 assert(self_insert == (!target || !*target));
                 if (target && target->get_type() == binding_type::macro)
                 {
-                    if (term_push_macro_text(target->get_text(), target->get_length()) < 0)
+                    if (term_push_playback(true/*is_macro*/, target->get_text(), target->get_length()) < 0)
                     {
                         cstring msg;
-                        msg.printf("Maximum macro execution depth exceeded (%d).", c_max_macro_depth);
+                        msg.printf("Maximum macro execution depth exceeded (%d).", c_max_playback_depth);
+                        term_clear_playback();
                         ctx->report_error(msg.c_str());
                     }
                 }

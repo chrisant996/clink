@@ -11,8 +11,6 @@ namespace tib {
 
 extern bool g_coalesce_output;
 
-constexpr int32_t c_max_macro_depth     = 32;
-
 constexpr int16_t c_input_error         = -1;
 constexpr int16_t c_input_eof           = 0x0100;
 constexpr int16_t c_input_resize        = 0x0200;
@@ -61,10 +59,6 @@ int32_t term_in();
 int32_t term_in_peek();
 bool term_in_avail(DWORD timeout=0);
 bool term_has_macro_input();
-// Prepend text to the highest-priority pushed-input queue.
-bool term_push_input(const char* text, size_t len=-1);
-int32_t term_push_macro_text(const char* text, size_t len=-1);
-void term_clear_macro_input();
 bool enable_mouse_input(mouse_input_mode mode, bool sgr_encoding=true);
 
 void term_out(const char* s, size_t len=c_auto_length);
