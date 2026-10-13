@@ -1330,7 +1330,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
             if (has_mode)
                 fix_console_output_mode(m_stdout, modeExpected);
 
-            if (!callback && waited == WAIT_TIMEOUT)
+            if (_timeout != INFINITE && waited == WAIT_TIMEOUT)
                 return;
         }
 
