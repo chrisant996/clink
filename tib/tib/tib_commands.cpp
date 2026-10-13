@@ -424,7 +424,10 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
         return 0;
     }
 
-    char c = char(key);
+    const char c = char(key);
+    const bool resolved_self_insert = resolved && resolved->outcome == dispatch_outcome::self_insert;
+    const char* const sequence = resolved_self_insert ? resolved->sequence.c_str() : &c;
+    const size_t sequence_length = resolved_self_insert ? resolved->sequence.length() : 1;
     bool handled = false;
 
     // The self-insert optimization collects as much raw insertable input as
@@ -445,26 +448,46 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
         if (resolved)
         {
             binding_resolver probe(resolved);
-            cstring input(&c, 1);
+            cstring input(sequence, sequence_length);
+            cstring pending;
             int32_t peek = term_in_peek();
             while (is_self_insertable(peek) &&
                    std::chrono::steady_clock::now() < batch_deadline)
             {
                 const auto next = probe.step(uint8_t(peek));
+                if (next.more() && (pending.length() || uint8_t(peek) >= 0x80))
+                {
+                    const int32_t cin = term_in();
+                    assert(cin == peek);
+                    suppress_unused_var(cin);
+                    const char byte = char(peek);
+                    pending.append(&byte, 1);
+                    peek = term_in_peek();
+                    continue;
+                }
+
                 if (next.outcome != dispatch_outcome::self_insert ||
-                    next.dispatcher_target.lock().get() != &ctx)
+                    next.dispatcher_target.lock().get() != &ctx ||
+                    next.sequence.length() != pending.length() + 1 ||
+                    memcmp(next.sequence.c_str(), pending.c_str(), pending.length()) != 0 ||
+                    uint8_t(next.sequence.c_str()[pending.length()]) != peek)
                     break;
 
                 const int32_t cin = term_in();
                 assert(cin == peek);
                 suppress_unused_var(cin);
 
-                c = char(peek);
-                input.append(&c, 1);
+                input.append(next.sequence.c_str(), next.sequence.length());
+                pending.clear();
                 peek = term_in_peek();
             }
 
-            if (input.length() > 1)
+            // If lookahead did not finish as self-insert, restore the bytes
+            // already read so the normal resolver can handle them.
+            if (pending.length() && term_push_playback(false/*is_macro*/, pending.c_str(), pending.length()) <= 0)
+                ding();
+
+            if (input.length() > sequence_length)
             {
                 if (hook_input_trace)
                 {
@@ -483,8 +506,6 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
 
     if (!handled)
     {
-// TODO-TIB: this needs to collect a full codepoint, not just a raw byte, and
-// it should do so via a state machine to immunize it against timing issues.
 // TODO-TIB: and if n > 1 and c & 0x80 then it should collect a full grapheme,
 // but it's ok to use a 500 ms timeout for that.
         int32_t n = ctx.get_numeric_argument();
@@ -494,9 +515,15 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
             while (n-- > 0)
             {
                 if (hook_input_trace)
-                    hook_input_trace("insert char", uint8_t(c), n);
-                ctx.insert_char(c, ctx.get_overwrite_mode());
-                if (!ctx.m_recording.append(&c, 1))
+                {
+                    for (size_t i = 0; i < sequence_length; ++i)
+                        hook_input_trace("insert char", uint8_t(sequence[i]), n);
+                }
+                if (sequence_length == 1)
+                    ctx.insert_char(c, ctx.get_overwrite_mode());
+                else
+                    ctx.insert_text(sequence, sequence_length, ctx.get_overwrite_mode());
+                if (!ctx.m_recording.append(sequence, sequence_length))
                     tib::ding();
             }
             ctx.end_undo_group();

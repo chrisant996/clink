@@ -618,7 +618,7 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(tib::term_in() == 'x');
     }
 
-    SECTION("UTF8 suffix is replayed before unread terminal input")
+    SECTION("UTF8 self insert waits for the complete codepoint")
     {
         auto table = std::make_shared<tib::key_table>();
         table->set_can_self_insert(true);
@@ -627,15 +627,14 @@ TEST_CASE("Shadowed key bindings")
         auto resolver = make_resolver(std::move(table), tester);
         test_input_stream remaining("\x80", 1);
 
-        REQUIRE(resolver.step(0xf0).ambiguous());
-        REQUIRE(resolver.step(0x9f).ambiguous());
-        auto resolved = resolver.step(0x98);
+        REQUIRE(resolver.step(0xf0).more());
+        REQUIRE(resolver.step(0x9f).more());
+        REQUIRE(resolver.step(0x98).more());
+        auto resolved = resolver.step(uint8_t(tib::term_in()));
         REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
-        REQUIRE(resolved.sequence == tib::cstring("\xf0", 1));
+        REQUIRE(resolved.sequence == tib::cstring("\xf0\x9f\x98\x80", 4));
         REQUIRE(resolved.dispatch());
-        REQUIRE(tib::term_in() == 0x9f);
-        REQUIRE(tib::term_in() == 0x98);
-        REQUIRE(tib::term_in() == 0x80);
+        REQUIRE(remaining.empty());
     }
 
     SECTION("Reset discards an ambiguous sequence")
@@ -668,14 +667,20 @@ TEST_CASE("UTF8 multi-byte input")
         resolver.add_target(input);
 
         const char utf8[] = "\xf0\x9f\x98\x80";
+        size_t index = 0;
         for (const char c : utf8)
         {
             if (c)
             {
                 auto resolved = resolver.step(c);
-                REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
-                resolved.dispatch();
-                REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+                if (++index < sizeof(utf8) - 1)
+                    REQUIRE(resolved.more());
+                else
+                {
+                    REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+                    REQUIRE(resolved.sequence == tib::cstring(utf8));
+                    REQUIRE(resolved.dispatch());
+                }
             }
         }
         REQUIRE(input->get_text() == tib::cstring(utf8));

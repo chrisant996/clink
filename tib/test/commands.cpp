@@ -29,82 +29,85 @@ static void dispatch_macro_command(tib::editor_context& context, const char* seq
     REQUIRE(context.dispatch(sequence, 0, &binding, nullptr) == 0);
 }
 
-TEST_CASE("Keyboard macro records commands and omits recording controls")
+TEST_CASE("Keyboard macros")
 {
-    tib::editor_context context;
-    context.initialize();
-
-    dispatch_macro_command(context, "\030(", "start-kbd-macro");
-    REQUIRE(context.is_recording_kbd_macro());
-    REQUIRE(!context.has_last_kbd_macro());
-
-    REQUIRE(context.dispatch("a", 'a', nullptr, nullptr) == 0);
-    dispatch_macro_command(context, "\030)", "end-kbd-macro");
-    REQUIRE(!context.is_recording_kbd_macro());
-    REQUIRE(context.has_last_kbd_macro());
-    REQUIRE(context.get_last_kbd_macro() == "a");
-    REQUIRE(context.get_text() == "a");
-}
-
-TEST_CASE("Keyboard macro replays the recorded input")
-{
-    tib::editor_context context;
-    context.initialize();
-    MAKE_CLEANUP([]() { tib::term_clear_playback(); });
-
-    REQUIRE(context.start_kbd_macro(false));
-    REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
-    REQUIRE(context.end_kbd_macro());
-    REQUIRE(context.get_last_kbd_macro() == "x");
-
-    context.set_numeric_argument(2);
-    dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
-    REQUIRE(tib::term_has_macro_input());
-    for (int32_t repeat = 0; repeat < 2; ++repeat)
+    SECTION("records commands and omits recording controls")
     {
-        const int32_t key = tib::term_in();
-        REQUIRE(key == 'x');
-        REQUIRE(context.dispatch("x", key, nullptr, nullptr) == 0);
+        tib::editor_context context;
+        context.initialize();
+
+        dispatch_macro_command(context, "\030(", "start-kbd-macro");
+        REQUIRE(context.is_recording_kbd_macro());
+        REQUIRE(!context.has_last_kbd_macro());
+
+        REQUIRE(context.dispatch("a", 'a', nullptr, nullptr) == 0);
+        dispatch_macro_command(context, "\030)", "end-kbd-macro");
+        REQUIRE(!context.is_recording_kbd_macro());
+        REQUIRE(context.has_last_kbd_macro());
+        REQUIRE(context.get_last_kbd_macro() == "a");
+        REQUIRE(context.get_text() == "a");
     }
-    REQUIRE(!tib::term_has_macro_input());
-    REQUIRE(context.get_text() == "xxx");
-}
 
-TEST_CASE("Keyboard macro records all batched self insert bytes")
-{
-    const bool optimize_self_insert = tib::g_optimize_self_insert;
-    MAKE_CLEANUP([optimize_self_insert]() { tib::g_optimize_self_insert = optimize_self_insert; });
-    tib::g_optimize_self_insert = true;
+    SECTION("replays the recorded input")
+    {
+        tib::editor_context context;
+        context.initialize();
+        MAKE_CLEANUP([]() { tib::term_clear_playback(); });
 
-    auto context = std::make_shared<tib::editor_context>();
-    context->initialize();
-    context->set_bindings(tib::make_default_key_table());
-    tib::binding_resolver resolver;
-    resolver.add_target(context);
-    REQUIRE(context->start_kbd_macro(false));
-    test_input_stream stream("bc");
-    auto resolved = resolver.step('a');
-    REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
-    REQUIRE(resolved.dispatch());
-    REQUIRE(context->get_text() == "abc");
-    REQUIRE(context->end_kbd_macro());
-    REQUIRE(context->get_last_kbd_macro() == "abc");
-}
+        REQUIRE(context.start_kbd_macro(false));
+        REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
+        REQUIRE(context.end_kbd_macro());
+        REQUIRE(context.get_last_kbd_macro() == "x");
 
-TEST_CASE("Keyboard macro depth limit discards pending playback")
-{
-    tib::editor_context context;
-    context.initialize();
-    MAKE_CLEANUP([]() { tib::term_clear_playback(); });
-    REQUIRE(context.start_kbd_macro(false));
-    REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
-    REQUIRE(context.end_kbd_macro());
+        context.set_numeric_argument(2);
+        dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
+        REQUIRE(tib::term_has_macro_input());
+        for (int32_t repeat = 0; repeat < 2; ++repeat)
+        {
+            const int32_t key = tib::term_in();
+            REQUIRE(key == 'x');
+            REQUIRE(context.dispatch("x", key, nullptr, nullptr) == 0);
+        }
+        REQUIRE(!tib::term_has_macro_input());
+        REQUIRE(context.get_text() == "xxx");
+    }
 
-    context.set_numeric_argument(tib::c_max_playback_depth + 1);
-    dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
-    REQUIRE(!tib::term_has_macro_input());
-    REQUIRE(context.count_error_messages() == 1);
-    REQUIRE(strstr(context.get_error_message(0), "Maximum macro execution depth exceeded") != nullptr);
+    SECTION("records all batched self insert bytes")
+    {
+        const bool optimize_self_insert = tib::g_optimize_self_insert;
+        MAKE_CLEANUP([optimize_self_insert]() { tib::g_optimize_self_insert = optimize_self_insert; });
+        tib::g_optimize_self_insert = true;
+
+        auto context = std::make_shared<tib::editor_context>();
+        context->initialize();
+        context->set_bindings(tib::make_default_key_table());
+        tib::binding_resolver resolver;
+        resolver.add_target(context);
+        REQUIRE(context->start_kbd_macro(false));
+        test_input_stream stream("bc");
+        auto resolved = resolver.step('a');
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_text() == "abc");
+        REQUIRE(context->end_kbd_macro());
+        REQUIRE(context->get_last_kbd_macro() == "abc");
+    }
+
+    SECTION("depth limit discards pending playback")
+    {
+        tib::editor_context context;
+        context.initialize();
+        MAKE_CLEANUP([]() { tib::term_clear_playback(); });
+        REQUIRE(context.start_kbd_macro(false));
+        REQUIRE(context.dispatch("x", 'x', nullptr, nullptr) == 0);
+        REQUIRE(context.end_kbd_macro());
+
+        context.set_numeric_argument(tib::c_max_playback_depth + 1);
+        dispatch_macro_command(context, "\030e", "call-last-kbd-macro");
+        REQUIRE(!tib::term_has_macro_input());
+        REQUIRE(context.count_error_messages() == 1);
+        REQUIRE(strstr(context.get_error_message(0), "Maximum macro execution depth exceeded") != nullptr);
+    }
 }
 
 static int32_t dummy_command(tib::editor_context&, int32_t, const char*, const tib::resolved_binding*)
@@ -113,45 +116,48 @@ static int32_t dummy_command(tib::editor_context&, int32_t, const char*, const t
     return 0;
 }
 
-TEST_CASE("Abort command resets editor state")
+TEST_CASE("Abort command")
 {
-    tib::editor_context context;
-    tib::border_definition border;
-    border.left = "|";
-    initialize_context(context, "abc", 2);
-    context.set_border(&border);
-    context.set_selection(0, 2);
-    context.set_overwrite_mode(true);
-    context.set_named_value("operation", "pending");
-    context.set_numeric_argument(-12);
-    context.set_last_command("dummy-command", dummy_command);
+    SECTION("resets editor state")
+    {
+        tib::editor_context context;
+        tib::border_definition border;
+        border.left = "|";
+        initialize_context(context, "abc", 2);
+        context.set_border(&border);
+        context.set_selection(0, 2);
+        context.set_overwrite_mode(true);
+        context.set_named_value("operation", "pending");
+        context.set_numeric_argument(-12);
+        context.set_last_command("dummy-command", dummy_command);
 
-    invoke_command(context, "abort");
+        invoke_command(context, "abort");
 
-    REQUIRE(context.get_text() == "abc");
-    REQUIRE(context.get_selection_state().get_anchor() == 0);
-    REQUIRE(context.get_selection_state().get_caret() == 2);
-    REQUIRE(context.get_overwrite_mode());
-    REQUIRE(context.get_border() == &border);
-    REQUIRE(context.get_named_value("operation") == nullptr);
-    REQUIRE(!context.has_numeric_argument());
-    REQUIRE(!strcmp(context.get_last_command_name(), ""));
-    REQUIRE(context.get_last_command_func() == nullptr);
-}
+        REQUIRE(context.get_text() == "abc");
+        REQUIRE(context.get_selection_state().get_anchor() == 0);
+        REQUIRE(context.get_selection_state().get_caret() == 2);
+        REQUIRE(context.get_overwrite_mode());
+        REQUIRE(context.get_border() == &border);
+        REQUIRE(context.get_named_value("operation") == nullptr);
+        REQUIRE(!context.has_numeric_argument());
+        REQUIRE(!strcmp(context.get_last_command_name(), ""));
+        REQUIRE(context.get_last_command_func() == nullptr);
+    }
 
-TEST_CASE("Abort command interrupts pending overwrite input")
-{
-    tib::editor_context context;
-    initialize_context(context, "ab", 0);
-    context.set_overwrite_mode(true);
-    context.insert_char(char(0xc2), true);
+    SECTION("interrupts pending overwrite input")
+    {
+        tib::editor_context context;
+        initialize_context(context, "ab", 0);
+        context.set_overwrite_mode(true);
+        context.insert_char(char(0xc2), true);
 
-    invoke_command(context, "abort");
-    context.insert_char(char(0xa2), true);
-    REQUIRE(context.get_text() == "\xc2\xa2" "b");
+        invoke_command(context, "abort");
+        context.insert_char(char(0xa2), true);
+        REQUIRE(context.get_text() == "\xc2\xa2" "b");
 
-    REQUIRE(context.undo());
-    REQUIRE(context.get_text() == "\xc2" "b");
+        REQUIRE(context.undo());
+        REQUIRE(context.get_text() == "\xc2" "b");
+    }
 }
 
 TEST_CASE("Commands honor numeric arguments")

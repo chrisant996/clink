@@ -27,6 +27,38 @@ enum class binding_match
     complete,
 };
 
+static binding_match match_self_insert_codepoint(const char* input, size_t input_length, size_t& length)
+{
+    assert(input_length > 0);
+    const uint8_t lead = uint8_t(input[0]);
+    if (lead >= ' ' && lead < 0x80)
+        length = 1;
+    else if (lead == 0xc0 || (lead >= 0xc2 && lead <= 0xdf))
+        length = 2;
+    else if (lead >= 0xe0 && lead <= 0xef)
+        length = 3;
+    else if (lead >= 0xf0 && lead <= 0xf4)
+        length = 4;
+    else
+        return binding_match::none;
+
+    for (size_t i = 1; i < min(length, input_length); ++i)
+    {
+        const uint8_t c = uint8_t(input[i]);
+        if ((c & 0xc0) != 0x80)
+            return binding_match::none;
+        if (i == 1 &&
+            ((lead == 0xc0 && c != 0x80) ||
+             (lead == 0xe0 && c < 0xa0) ||
+             (lead == 0xed && c >= 0xa0) ||
+             (lead == 0xf0 && c < 0x90) ||
+             (lead == 0xf4 && c >= 0x90)))
+            return binding_match::none;
+    }
+
+    return input_length < length ? binding_match::prefix : binding_match::complete;
+}
+
 struct pattern_match
 {
     binding_match       match = binding_match::none;
@@ -377,7 +409,8 @@ bool resolved_binding::dispatch()
     const bool quoted_insert = (outcome == dispatch_outcome::quoted_insert);
     const bool literal_insert = self_insert || quoted_insert;
     assert(implies(self_insert, is_self_insertable(key)));
-    assert(implies(literal_insert, sequence.length() == 1));
+    assert(implies(literal_insert, sequence.length() >= 1));
+    assert(implies(quoted_insert, sequence.length() == 1));
     assert(implies(literal_insert, uint8_t(sequence.c_str()[0]) == key));
 
     switch (outcome)
@@ -655,18 +688,24 @@ retry_target:
             if (state.can_self_insert < 0)
                 state.can_self_insert = (*table)->can_self_insert();
 
-            // Self-insert acts as an implicit one-byte binding for the first
-            // input byte.  Record it as a complete fallback here so a longer
-            // binding can shadow it, and so a fallback is not selected for
-            // an ultimately self-insertable sequence.
+            // Self-insert acts as an implicit binding for the first complete
+            // UTF8 codepoint.  An incomplete codepoint remains a prefix, so
+            // it cannot be dispatched or timed out as a single byte.
             // The can_self_insert bookkeeping above preserves the rule that
             // the highest-priority table which explicitly sets self-insert
             // policy decides whether this fallback is available.
-            if (state.can_self_insert > 0 && is_self_insertable(input[0]))
+            if (state.can_self_insert > 0)
             {
-                binding_params no_params;
-                consider_best(state, 1, input, uint8_t(input[0]),
-                              nullptr, weak, std::move(no_params), true);
+                size_t length = 0;
+                const auto match = match_self_insert_codepoint(input, input_length, length);
+                if (match == binding_match::prefix)
+                    state.is_prefix = true;
+                else if (match == binding_match::complete)
+                {
+                    binding_params no_params;
+                    consider_best(state, length, input, uint8_t(input[0]),
+                                  nullptr, weak, std::move(no_params), true);
+                }
             }
 
             const auto& bindings = (*table)->m_bindings;

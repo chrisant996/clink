@@ -496,159 +496,162 @@ TEST_CASE("Display differential updates")
     }
 }
 
-TEST_CASE("Display left text")
+TEST_CASE("Display text components")
 {
-    SECTION("Participates in wrapping")
+    SECTION("Left text")
     {
-        display_test_fixture fixture(5, false, 3, true);
-        fixture.m_display.set_left_text("> ", 2);
-        fixture.m_buffer.set_text("abcd", 4);
+        SECTION("Participates in wrapping")
+        {
+            display_test_fixture fixture(5, false, 3, true);
+            fixture.m_display.set_left_text("> ", 2);
+            fixture.m_buffer.set_text("abcd", 4);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "> ") != nullptr);
-        const tib::coord expected = { 1, 1 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "> ") != nullptr);
+            const tib::coord expected = { 1, 1 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        }
+
+        SECTION("Is omitted unless an input column remains")
+        {
+            display_test_fixture fixture(5, false, 3, true);
+            fixture.m_display.set_left_text("12345", 5);
+            fixture.m_buffer.set_text("abcd", 4);
+
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "12345") == nullptr);
+            const tib::coord expected = { 4, 0 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        }
+
+        SECTION("Is omitted when horizontally scrolled")
+        {
+            display_test_fixture fixture(8, true);
+            fixture.m_display.set_left_text("1234567", 7);
+            fixture.m_buffer.set_text("abcdefghijkl", 12);
+
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(fixture.m_display.get_left() > 0);
+            REQUIRE(strstr(s_display_output.c_str(), "1234567") == nullptr);
+        }
+
+        SECTION("Is displayed before horizontal scrolling starts")
+        {
+            display_test_fixture fixture(8, true);
+            fixture.m_display.set_left_text("> ", 2);
+            fixture.m_buffer.set_text("abc", 3);
+
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(fixture.m_display.get_left() == 0);
+            REQUIRE(strstr(s_display_output.c_str(), "> ") != nullptr);
+        }
+
+        SECTION("Is not displayed when the first logical line is scrolled away")
+        {
+            display_test_fixture fixture(5, false, 2);
+            fixture.m_display.set_left_text("> ", 2);
+            fixture.m_buffer.set_text("abcdefghijkl", 12);
+
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(fixture.m_display.get_top() > 0);
+            REQUIRE(strstr(s_display_output.c_str(), "> ") == nullptr);
+        }
     }
 
-    SECTION("Is omitted unless an input column remains")
+    SECTION("Suggestion text")
     {
-        display_test_fixture fixture(5, false, 3, true);
-        fixture.m_display.set_left_text("12345", 5);
-        fixture.m_buffer.set_text("abcd", 4);
+        SECTION("Is rendered after input with the suggestion face")
+        {
+            display_test_fixture fixture(10, false, 3, true);
+            fixture.m_face_defs.emplace(tib::FACE_SUGGESTION, "35");
+            fixture.m_display.set_suggestion_text("def", 3);
+            fixture.m_buffer.set_text("abc", 3);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "12345") == nullptr);
-        const tib::coord expected = { 4, 0 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "\x1b[35mdef") != nullptr);
+            const tib::coord expected_cursor = { 3, 0 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected_cursor);
+            REQUIRE(fixture.m_buffer.get_text() == "abc");
+        }
+
+        SECTION("Wraps without moving the real caret onto the suggestion row")
+        {
+            display_test_fixture fixture(5, false, 3, true);
+            fixture.m_display.set_suggestion_text("\xe4\xb8\xad", 3);
+            fixture.m_buffer.set_text("abcd", 4);
+
+            REQUIRE(fixture.m_display.display() == true);
+            const tib::coord expected_cursor = { 0, 1 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected_cursor);
+            const tib::coord expected_extent = { 5, 2 };
+            REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
+            REQUIRE(strstr(s_display_output.c_str(), "\xe4\xb8\xad") != nullptr);
+        }
+
+        SECTION("Clearing removes suggestion-only height")
+        {
+            display_test_fixture fixture(5, false, 3, true);
+            fixture.m_display.set_suggestion_text("def", 3);
+            REQUIRE(fixture.display_initial("abc", 3) == true);
+            const tib::coord initial_extent = { 5, 2 };
+            REQUIRE(fixture.m_display.get_inner_extent() == initial_extent);
+
+            fixture.m_display.set_suggestion_text(nullptr, 0);
+            REQUIRE(fixture.m_display.display() == true);
+            const tib::coord final_extent = { 5, 1 };
+            REQUIRE(fixture.m_display.get_inner_extent() == final_extent);
+        }
     }
 
-    SECTION("Is omitted when horizontally scrolled")
+    SECTION("Usage text")
     {
-        display_test_fixture fixture(8, true);
-        fixture.m_display.set_left_text("1234567", 7);
-        fixture.m_buffer.set_text("abcdefghijkl", 12);
+        SECTION("Supersedes right text and uses the final input row")
+        {
+            display_test_fixture fixture(10, false, 3, true);
+            fixture.m_display.set_right_text("right", 5);
+            fixture.m_display.set_usage_text("use", 3);
+            fixture.m_buffer.set_text("1234567890\nabc", 14);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(fixture.m_display.get_left() > 0);
-        REQUIRE(strstr(s_display_output.c_str(), "1234567") == nullptr);
-    }
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
+            REQUIRE(strstr(s_display_output.c_str(), "right") == nullptr);
+        }
 
-    SECTION("Is displayed before horizontal scrolling starts")
-    {
-        display_test_fixture fixture(8, true);
-        fixture.m_display.set_left_text("> ", 2);
-        fixture.m_buffer.set_text("abc", 3);
+        SECTION("Adds a row when the final input row is too full")
+        {
+            display_test_fixture fixture(10, false, 3, true);
+            fixture.m_display.set_usage_text("use", 3);
+            fixture.m_buffer.set_text("12345678", 8);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(fixture.m_display.get_left() == 0);
-        REQUIRE(strstr(s_display_output.c_str(), "> ") != nullptr);
-    }
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
+            const tib::coord expected_extent = { 10, 2 };
+            REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
+        }
 
-    SECTION("Is not displayed when the first logical line is scrolled away")
-    {
-        display_test_fixture fixture(5, false, 2);
-        fixture.m_display.set_left_text("> ", 2);
-        fixture.m_buffer.set_text("abcdefghijkl", 12);
+        SECTION("Uses a fixed-height padding row")
+        {
+            display_test_fixture fixture(10, false, 3, false);
+            fixture.m_display.set_usage_text("use", 3);
+            fixture.m_buffer.set_text("12345678", 8);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(fixture.m_display.get_top() > 0);
-        REQUIRE(strstr(s_display_output.c_str(), "> ") == nullptr);
-    }
-}
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
+            const tib::coord expected_extent = { 10, 3 };
+            REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
+        }
 
-TEST_CASE("Display suggestion text")
-{
-    SECTION("Is rendered after input with the suggestion face")
-    {
-        display_test_fixture fixture(10, false, 3, true);
-        fixture.m_face_defs.emplace(tib::FACE_SUGGESTION, "35");
-        fixture.m_display.set_suggestion_text("def", 3);
-        fixture.m_buffer.set_text("abc", 3);
+        SECTION("Is omitted at maximum height while still superseding right text")
+        {
+            display_test_fixture fixture(10);
+            fixture.m_display.set_right_text("right", 5);
+            fixture.m_display.set_usage_text("use", 3);
+            fixture.m_buffer.set_text("12345678", 8);
 
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "\x1b[35mdef") != nullptr);
-        const tib::coord expected_cursor = { 3, 0 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected_cursor);
-        REQUIRE(fixture.m_buffer.get_text() == "abc");
-    }
-
-    SECTION("Wraps without moving the real caret onto the suggestion row")
-    {
-        display_test_fixture fixture(5, false, 3, true);
-        fixture.m_display.set_suggestion_text("\xe4\xb8\xad", 3);
-        fixture.m_buffer.set_text("abcd", 4);
-
-        REQUIRE(fixture.m_display.display() == true);
-        const tib::coord expected_cursor = { 0, 1 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected_cursor);
-        const tib::coord expected_extent = { 5, 2 };
-        REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
-        REQUIRE(strstr(s_display_output.c_str(), "\xe4\xb8\xad") != nullptr);
-    }
-
-    SECTION("Clearing removes suggestion-only height")
-    {
-        display_test_fixture fixture(5, false, 3, true);
-        fixture.m_display.set_suggestion_text("def", 3);
-        REQUIRE(fixture.display_initial("abc", 3) == true);
-        const tib::coord initial_extent = { 5, 2 };
-        REQUIRE(fixture.m_display.get_inner_extent() == initial_extent);
-
-        fixture.m_display.set_suggestion_text(nullptr, 0);
-        REQUIRE(fixture.m_display.display() == true);
-        const tib::coord final_extent = { 5, 1 };
-        REQUIRE(fixture.m_display.get_inner_extent() == final_extent);
-    }
-}
-
-TEST_CASE("Display usage text")
-{
-    SECTION("Supersedes right text and uses the final input row")
-    {
-        display_test_fixture fixture(10, false, 3, true);
-        fixture.m_display.set_right_text("right", 5);
-        fixture.m_display.set_usage_text("use", 3);
-        fixture.m_buffer.set_text("1234567890\nabc", 14);
-
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
-        REQUIRE(strstr(s_display_output.c_str(), "right") == nullptr);
-    }
-
-    SECTION("Adds a row when the final input row is too full")
-    {
-        display_test_fixture fixture(10, false, 3, true);
-        fixture.m_display.set_usage_text("use", 3);
-        fixture.m_buffer.set_text("12345678", 8);
-
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
-        const tib::coord expected_extent = { 10, 2 };
-        REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
-    }
-
-    SECTION("Uses a fixed-height padding row")
-    {
-        display_test_fixture fixture(10, false, 3, false);
-        fixture.m_display.set_usage_text("use", 3);
-        fixture.m_buffer.set_text("12345678", 8);
-
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "use") != nullptr);
-        const tib::coord expected_extent = { 10, 3 };
-        REQUIRE(fixture.m_display.get_inner_extent() == expected_extent);
-    }
-
-    SECTION("Is omitted at maximum height while still superseding right text")
-    {
-        display_test_fixture fixture(10);
-        fixture.m_display.set_right_text("right", 5);
-        fixture.m_display.set_usage_text("use", 3);
-        fixture.m_buffer.set_text("12345678", 8);
-
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "use") == nullptr);
-        REQUIRE(strstr(s_display_output.c_str(), "right") == nullptr);
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "use") == nullptr);
+            REQUIRE(strstr(s_display_output.c_str(), "right") == nullptr);
+        }
     }
 }
 
@@ -669,87 +672,6 @@ TEST_CASE("Display vertical caret movement")
                 -1, cursor_column, fixture.m_buffer));
     REQUIRE(fixture.m_buffer.get_selection_state().get_anchor() == 1);
     REQUIRE(fixture.m_buffer.get_selection_state().get_caret() == 1);
-}
-
-TEST_CASE("Display horizontal scrolling")
-{
-    display_test_fixture fixture(40, true);
-    const tib::textpos_t expected_left[][3] =
-    {
-        { 1, 7, 9 },
-        { 1, 8, 10 },
-        { 7, 9, 11 },
-    };
-    const int32_t expected_cursor[][3] =
-    {
-        { 37, 37, 36 },
-        { 38, 37, 36 },
-        { 38, 37, 36 },
-    };
-    const size_t marker_index = tib::c_horz_scroll_indicator_chars - 1;
-    tib::cstring text;
-    text.set("x\xe2\x9c\x94\xef\xb8\x8fy"); // x + U+2714 U+FE0F + y.
-    for (uint32_t i = 0; i < 35; ++i)
-        text.append("x");
-
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
-    REQUIRE(fixture.m_display.get_left() == expected_left[0][marker_index]);
-    REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[0][marker_index]);
-
-    text.append("x");
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) ==
-            (tib::c_horz_scroll_indicator_chars == 1));
-    REQUIRE(fixture.m_display.get_left() == expected_left[1][marker_index]);
-    REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[1][marker_index]);
-
-    text.append("x");
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) ==
-            (tib::c_horz_scroll_indicator_chars == 1));
-    REQUIRE(fixture.m_display.get_left() == expected_left[2][marker_index]);
-    REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[2][marker_index]);
-}
-
-TEST_CASE("Display horizontal scroll marker placement")
-{
-    display_test_fixture fixture(10, true);
-    fixture.m_buffer.set_text("abcdefghijk", 0);
-
-    REQUIRE(fixture.m_display.display() == true);
-    tib::cstring expected;
-    expected.set("abcdefghijk", 10 - tib::c_horz_scroll_indicator_chars);
-    expected.append("\x1b[1m");
-    expected.append_char('>', tib::c_horz_scroll_indicator_chars);
-    REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
-}
-
-TEST_CASE("Display horizontal scrolling keeps caret out of right marker")
-{
-    constexpr uint16_t max_width = 10;
-    constexpr uint16_t left_text_width = 2;
-    display_test_fixture fixture(max_width, true);
-    fixture.m_display.set_left_text("> ", left_text_width);
-    const tib::textpos_t caret = max_width - tib::c_horz_scroll_indicator_chars - left_text_width;
-    fixture.m_buffer.set_text("abcdefghijk", caret);
-
-    REQUIRE(fixture.m_display.display() == true);
-    REQUIRE(fixture.m_display.get_left() == 1);
-    REQUIRE(fixture.m_display.get_relative_cursor().x <
-            max_width - tib::c_horz_scroll_indicator_chars);
-}
-
-TEST_CASE("Display horizontal scrolling keeps caret out of left marker")
-{
-    display_test_fixture fixture(10, true);
-    fixture.m_display.set_left_text("> ", 2);
-    fixture.m_display.set_scroll_offsets(2, 0);
-    REQUIRE(fixture.display_initial("abcdefghijk", 6) == true);
-    REQUIRE(fixture.m_display.get_left() == 2);
-
-    fixture.m_buffer.set_selection(2, 2);
-    REQUIRE(fixture.m_display.display() == true);
-    REQUIRE(fixture.m_display.get_left() == 0);
-    const tib::coord expected = { 4, 0 };
-    REQUIRE(fixture.m_display.get_relative_cursor() == expected);
 }
 
 TEST_CASE("Display multiline wrapping")
@@ -773,184 +695,176 @@ TEST_CASE("Display multiline wrapping")
     REQUIRE(fixture.m_display.get_relative_cursor().y == 1);
 }
 
-TEST_CASE("Display full-width pending wrap")
+TEST_CASE("Display pending wrap")
 {
-    const char* const pending_wrap_suffix = tib::is_autowrap_bug_present() ? "\r" : "\x1b[m \x08";
-
-    SECTION("Finishes pending wrap after a final text cell")
+    SECTION("Full-width pending wrap")
     {
-        display_test_fixture fixture(tib::int16_max, false, 3, true);
-        tib::cstring text;
-        text.append_char('x', tib::get_terminal_size().x);
-        fixture.m_buffer.set_text(text.c_str(), tib::textpos_t(text.length()));
+        const char* const pending_wrap_suffix = tib::is_autowrap_bug_present() ? "\r" : "\x1b[m \x08";
 
-        REQUIRE(fixture.m_display.display() == true);
-        tib::cstring expected_output(text);
-        expected_output.append(pending_wrap_suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected_output.c_str()) != nullptr);
-        const tib::coord expected = { 0, 1 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        SECTION("Finishes pending wrap after a final text cell")
+        {
+            display_test_fixture fixture(tib::int16_max, false, 3, true);
+            tib::cstring text;
+            text.append_char('x', tib::get_terminal_size().x);
+            fixture.m_buffer.set_text(text.c_str(), tib::textpos_t(text.length()));
+
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected_output(text);
+            expected_output.append(pending_wrap_suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected_output.c_str()) != nullptr);
+            const tib::coord expected = { 0, 1 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        }
+
+        SECTION("Finishes pending wrap after a final space cell")
+        {
+            display_test_fixture fixture(tib::int16_max, false, 3, true);
+            tib::cstring text;
+            text.append_char('x', tib::get_terminal_size().x - 1);
+            text.append(" ");
+            fixture.m_buffer.set_text(text.c_str(), tib::textpos_t(text.length()));
+
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected_output(text);
+            expected_output.append(pending_wrap_suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected_output.c_str()) != nullptr);
+            const tib::coord expected = { 0, 1 };
+            REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        }
     }
 
-    SECTION("Finishes pending wrap after a final space cell")
+    SECTION("Border pending wrap")
     {
-        display_test_fixture fixture(tib::int16_max, false, 3, true);
-        tib::cstring text;
-        text.append_char('x', tib::get_terminal_size().x - 1);
-        text.append(" ");
-        fixture.m_buffer.set_text(text.c_str(), tib::textpos_t(text.length()));
+        tib::border_definition border;
+        border.top = "-";
+        border.bottom = "=";
+        border.left = "||";
+        border.right = "||";
+        border.right_2 = "!!";
+        border.top_width = 1;
+        border.bottom_width = 1;
+        border.left_width = 2;
+        border.right_width = 2;
+        const char* const suffix = tib::is_autowrap_bug_present() ? "\r" : "\x1b[m \x08";
 
-        REQUIRE(fixture.m_display.display() == true);
-        tib::cstring expected_output(text);
-        expected_output.append(pending_wrap_suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected_output.c_str()) != nullptr);
-        const tib::coord expected = { 0, 1 };
-        REQUIRE(fixture.m_display.get_relative_cursor() == expected);
+        SECTION("Finishes wraps at the terminal edge with an offset origin")
+        {
+            display_test_fixture fixture(tib::int16_max, false, 2, false, &border, 5);
+            fixture.m_buffer.set_text("abc", 3);
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected("||");
+            expected.append(suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+            expected.set("!!");
+            expected.append(suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+            expected.set("-");
+            expected.append(suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+            expected.set("=");
+            expected.append(suffix);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+            const char* const border_end = strstr(s_display_output.c_str(), "\x1b[4A");
+            REQUIRE(border_end != nullptr);
+            const char* const newline = strstr(s_display_output.c_str(), "\r\n");
+            REQUIRE((!newline || newline > border_end));
+        }
+
+        SECTION("Leaves borders short of the terminal edge unchanged")
+        {
+            display_test_fixture fixture(10, false, 2, false, &border, 5);
+            fixture.m_buffer.set_text("abc", 3);
+            REQUIRE(fixture.m_display.display() == true);
+            REQUIRE(strstr(s_display_output.c_str(), "||\r\n") != nullptr);
+            REQUIRE(strstr(s_display_output.c_str(), "!!\r\n") != nullptr);
+            REQUIRE(strstr(s_display_output.c_str(), "\x1b[m \x08") == nullptr);
+            REQUIRE(strstr(s_display_output.c_str(), "\x1b[3A") != nullptr);
+        }
     }
 }
 
-TEST_CASE("Display border pending wrap")
+TEST_CASE("Display horizontal scrolling")
 {
-    tib::border_definition border;
-    border.top = "-";
-    border.bottom = "=";
-    border.left = "||";
-    border.right = "||";
-    border.right_2 = "!!";
-    border.top_width = 1;
-    border.bottom_width = 1;
-    border.left_width = 2;
-    border.right_width = 2;
-    const char* const suffix = tib::is_autowrap_bug_present() ? "\r" : "\x1b[m \x08";
-
-    SECTION("Finishes wraps at the terminal edge with an offset origin")
+    SECTION("Basic")
     {
-        display_test_fixture fixture(tib::int16_max, false, 2, false, &border, 5);
-        fixture.m_buffer.set_text("abc", 3);
-        REQUIRE(fixture.m_display.display() == true);
-        tib::cstring expected("||");
-        expected.append(suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
-        expected.set("!!");
-        expected.append(suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
-        expected.set("-");
-        expected.append(suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
-        expected.set("=");
-        expected.append(suffix);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
-        const char* const border_end = strstr(s_display_output.c_str(), "\x1b[4A");
-        REQUIRE(border_end != nullptr);
-        const char* const newline = strstr(s_display_output.c_str(), "\r\n");
-        REQUIRE((!newline || newline > border_end));
+        display_test_fixture fixture(40, true);
+        const tib::textpos_t expected_left[][3] =
+        {
+            { 1, 7, 9 },
+            { 1, 8, 10 },
+            { 7, 9, 11 },
+        };
+        const int32_t expected_cursor[][3] =
+        {
+            { 37, 37, 36 },
+            { 38, 37, 36 },
+            { 38, 37, 36 },
+        };
+        const size_t marker_index = tib::c_horz_scroll_indicator_chars - 1;
+        tib::cstring text;
+        text.set("x\xe2\x9c\x94\xef\xb8\x8fy"); // x + U+2714 U+FE0F + y.
+        for (uint32_t i = 0; i < 35; ++i)
+            text.append("x");
+
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
+        REQUIRE(fixture.m_display.get_left() == expected_left[0][marker_index]);
+        REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[0][marker_index]);
+
+        text.append("x");
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) ==
+                (tib::c_horz_scroll_indicator_chars == 1));
+        REQUIRE(fixture.m_display.get_left() == expected_left[1][marker_index]);
+        REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[1][marker_index]);
+
+        text.append("x");
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) ==
+                (tib::c_horz_scroll_indicator_chars == 1));
+        REQUIRE(fixture.m_display.get_left() == expected_left[2][marker_index]);
+        REQUIRE(fixture.m_display.get_relative_cursor().x == expected_cursor[2][marker_index]);
     }
 
-    SECTION("Leaves borders short of the terminal edge unchanged")
+    SECTION("Scroll marker placement")
     {
-        display_test_fixture fixture(10, false, 2, false, &border, 5);
-        fixture.m_buffer.set_text("abc", 3);
-        REQUIRE(fixture.m_display.display() == true);
-        REQUIRE(strstr(s_display_output.c_str(), "||\r\n") != nullptr);
-        REQUIRE(strstr(s_display_output.c_str(), "!!\r\n") != nullptr);
-        REQUIRE(strstr(s_display_output.c_str(), "\x1b[m \x08") == nullptr);
-        REQUIRE(strstr(s_display_output.c_str(), "\x1b[3A") != nullptr);
-    }
-}
-
-TEST_CASE("Display multiline scroll markers")
-{
-    SECTION("Preserves line width when replacing trailing text")
-    {
-        tib::display_lines lines;
-        lines.m_lines.emplace_back(std::make_unique<tib::display_line>(1));
-        auto line = std::make_unique<tib::display_line>(1);
-        line->append("abc ", 4, 4, tib::FACE_DEFAULT);
-        lines.m_lines.emplace_back(std::move(line));
-
-        lines.apply_scroll_markers(4, 2, 3);
-        tib::cstring expected;
-        expected.set("abc ", 4 - tib::c_horz_scroll_indicator_chars);
-        expected.append_char('>', tib::c_horz_scroll_indicator_chars);
-        REQUIRE(lines.m_lines.back()->m_text.equals(expected.c_str()));
-        REQUIRE(lines.m_lines.back()->width() == 4);
-    }
-
-    SECTION("Pads only the bottom row that needs a marker")
-    {
-        tib::display_lines lines;
-        auto first = std::make_unique<tib::display_line>(1);
-        first->append("x", 1, 1, tib::FACE_DEFAULT);
-        lines.m_lines.emplace_back(std::move(first));
-        auto bottom = std::make_unique<tib::display_line>(1);
-        bottom->append("abc ", 4, 4, tib::FACE_DEFAULT);
-        lines.m_lines.emplace_back(std::move(bottom));
-
-        lines.apply_scroll_markers(10, 2, 3);
-        REQUIRE(lines.m_lines.front()->width() == 1);
-        REQUIRE(lines.m_lines.back()->width() == 10);
-    }
-
-    SECTION("Pads newline-terminated rows before applying the marker")
-    {
-        display_test_fixture fixture(10, false, 2);
-        fixture.m_buffer.set_text("x\nabc \ndef", 2);
+        display_test_fixture fixture(10, true);
+        fixture.m_buffer.set_text("abcdefghijk", 0);
 
         REQUIRE(fixture.m_display.display() == true);
         tib::cstring expected;
-        expected.set("abc ");
-        expected.set("\x1b[m");
-        expected.append_char(' ', 6 - tib::c_horz_scroll_indicator_chars);
+        expected.set("abcdefghijk", 10 - tib::c_horz_scroll_indicator_chars);
         expected.append("\x1b[1m");
         expected.append_char('>', tib::c_horz_scroll_indicator_chars);
         REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
     }
 
-    SECTION("Applies a marker to a blank newline-delimited row")
+    SECTION("Scrolling keeps caret out of right marker")
     {
-        display_test_fixture fixture(10, false, 2);
-        fixture.m_buffer.set_text("x\n\nz", 4);
+        constexpr uint16_t max_width = 10;
+        constexpr uint16_t left_text_width = 2;
+        display_test_fixture fixture(max_width, true);
+        fixture.m_display.set_left_text("> ", left_text_width);
+        const tib::textpos_t caret = max_width - tib::c_horz_scroll_indicator_chars - left_text_width;
+        fixture.m_buffer.set_text("abcdefghijk", caret);
 
         REQUIRE(fixture.m_display.display() == true);
-        tib::cstring expected;
-        expected.set("\x1b[1m");
-        expected.append_char('<', tib::c_horz_scroll_indicator_chars);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+        REQUIRE(fixture.m_display.get_left() == 1);
+        REQUIRE(fixture.m_display.get_relative_cursor().x <
+                max_width - tib::c_horz_scroll_indicator_chars);
     }
 
-    SECTION("Pads rows when the next grapheme does not fit")
+    SECTION("Scrolling keeps caret out of left marker")
     {
-        display_test_fixture fixture(10, false, 2);
-        fixture.m_buffer.set_text("x\n123456789\xe4\xb8\xadz", 2);
+        display_test_fixture fixture(10, true);
+        fixture.m_display.set_left_text("> ", 2);
+        fixture.m_display.set_scroll_offsets(2, 0);
+        REQUIRE(fixture.display_initial("abcdefghijk", 6) == true);
+        REQUIRE(fixture.m_display.get_left() == 2);
 
+        fixture.m_buffer.set_selection(2, 2);
         REQUIRE(fixture.m_display.display() == true);
-        tib::cstring expected;
-        expected.set("123456789 ", 10 - tib::c_horz_scroll_indicator_chars);
-        expected.append("\x1b[1m");
-        expected.append_char('>', tib::c_horz_scroll_indicator_chars);
-        REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+        REQUIRE(fixture.m_display.get_left() == 0);
+        const tib::coord expected = { 4, 0 };
+        REQUIRE(fixture.m_display.get_relative_cursor() == expected);
     }
-}
-
-TEST_CASE("Display variable height scrolling")
-{
-    display_test_fixture fixture(10, false, 3, true);
-    tib::cstring text;
-    text.append("xxxxxxxxxx", 10);
-    text.append("xxxxxxxxxx", 10);
-    text.append("xxxxxxxxxx", 10);
-    text.append("xxxxxxxxxx", 10);
-
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
-    REQUIRE(fixture.m_display.get_top() == 2);
-
-    text.set_length(31);
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
-    REQUIRE(fixture.m_display.get_top() == 1);
-
-    text.set_length(15);
-    REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
-    REQUIRE(fixture.m_display.get_top() == 0);
 }
 
 static void make_matching_display_line_data(tib::cstring& text, tib::cstring& matching_text,
@@ -961,6 +875,104 @@ static void make_matching_display_line_data(tib::cstring& text, tib::cstring& ma
     matching_text = text;
     faces.append_spaces(text.length());
     matching_faces = faces;
+}
+
+TEST_CASE("Display vertical scrolling")
+{
+    SECTION("Multiline scroll markers")
+    {
+        SECTION("Preserves line width when replacing trailing text")
+        {
+            tib::display_lines lines;
+            lines.m_lines.emplace_back(std::make_unique<tib::display_line>(1));
+            auto line = std::make_unique<tib::display_line>(1);
+            line->append("abc ", 4, 4, tib::FACE_DEFAULT);
+            lines.m_lines.emplace_back(std::move(line));
+
+            lines.apply_scroll_markers(4, 2, 3);
+            tib::cstring expected;
+            expected.set("abc ", 4 - tib::c_horz_scroll_indicator_chars);
+            expected.append_char('>', tib::c_horz_scroll_indicator_chars);
+            REQUIRE(lines.m_lines.back()->m_text.equals(expected.c_str()));
+            REQUIRE(lines.m_lines.back()->width() == 4);
+        }
+
+        SECTION("Pads only the bottom row that needs a marker")
+        {
+            tib::display_lines lines;
+            auto first = std::make_unique<tib::display_line>(1);
+            first->append("x", 1, 1, tib::FACE_DEFAULT);
+            lines.m_lines.emplace_back(std::move(first));
+            auto bottom = std::make_unique<tib::display_line>(1);
+            bottom->append("abc ", 4, 4, tib::FACE_DEFAULT);
+            lines.m_lines.emplace_back(std::move(bottom));
+
+            lines.apply_scroll_markers(10, 2, 3);
+            REQUIRE(lines.m_lines.front()->width() == 1);
+            REQUIRE(lines.m_lines.back()->width() == 10);
+        }
+
+        SECTION("Pads newline-terminated rows before applying the marker")
+        {
+            display_test_fixture fixture(10, false, 2);
+            fixture.m_buffer.set_text("x\nabc \ndef", 2);
+
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected;
+            expected.set("abc ");
+            expected.set("\x1b[m");
+            expected.append_char(' ', 6 - tib::c_horz_scroll_indicator_chars);
+            expected.append("\x1b[1m");
+            expected.append_char('>', tib::c_horz_scroll_indicator_chars);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+        }
+
+        SECTION("Applies a marker to a blank newline-delimited row")
+        {
+            display_test_fixture fixture(10, false, 2);
+            fixture.m_buffer.set_text("x\n\nz", 4);
+
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected;
+            expected.set("\x1b[1m");
+            expected.append_char('<', tib::c_horz_scroll_indicator_chars);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+        }
+
+        SECTION("Pads rows when the next grapheme does not fit")
+        {
+            display_test_fixture fixture(10, false, 2);
+            fixture.m_buffer.set_text("x\n123456789\xe4\xb8\xadz", 2);
+
+            REQUIRE(fixture.m_display.display() == true);
+            tib::cstring expected;
+            expected.set("123456789 ", 10 - tib::c_horz_scroll_indicator_chars);
+            expected.append("\x1b[1m");
+            expected.append_char('>', tib::c_horz_scroll_indicator_chars);
+            REQUIRE(strstr(s_display_output.c_str(), expected.c_str()) != nullptr);
+        }
+    }
+
+    SECTION("Variable height scrolling")
+    {
+        display_test_fixture fixture(10, false, 3, true);
+        tib::cstring text;
+        text.append("xxxxxxxxxx", 10);
+        text.append("xxxxxxxxxx", 10);
+        text.append("xxxxxxxxxx", 10);
+        text.append("xxxxxxxxxx", 10);
+
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
+        REQUIRE(fixture.m_display.get_top() == 2);
+
+        text.set_length(31);
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
+        REQUIRE(fixture.m_display.get_top() == 1);
+
+        text.set_length(15);
+        REQUIRE(fixture.display_initial(text.c_str(), tib::textpos_t(text.length())) == true);
+        REQUIRE(fixture.m_display.get_top() == 0);
+    }
 }
 
 PERF_CASE("PERF, compare matching display line with memcmp")

@@ -152,7 +152,7 @@ public:
     //
     //  1.  The input sequence matched a key binding.
     //  2.  A key_table has self-insert enabled and the input sequence is a
-    //      single self-insert character.
+    //      complete UTF8-encoded codepoint.
     //  3.  The input is literal, i.e. a quoted insert.
     //
     // Returning negative means the input sequence was not handled, and

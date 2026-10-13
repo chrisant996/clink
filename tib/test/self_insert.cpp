@@ -39,6 +39,8 @@ static void dispatch_macro(const char* text, std::shared_ptr<self_insert_tester>
             break;
 
         auto resolved = resolver.step(uint8_t(c));
+        if (resolved.more())
+            continue;
         REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
         REQUIRE(resolved.dispatch());
     }
@@ -635,7 +637,7 @@ TEST_CASE("Self insert optimization")
     SECTION("Disabled")
     {
         dispatch_macro(utf8, input, resolver);
-        REQUIRE(input->get_dispatch_count() == sizeof(utf8) - 1);
+        REQUIRE(input->get_dispatch_count() == 7);
         REQUIRE(input->get_text() == tib::cstring(utf8));
     }
 
@@ -646,6 +648,68 @@ TEST_CASE("Self insert optimization")
         REQUIRE(input->get_dispatch_count() == 1);
         REQUIRE(input->get_text() == tib::cstring(utf8));
     }
+}
+
+TEST_CASE("Numeric self insert repeats a complete UTF8 codepoint")
+{
+    const char* const codepoints[] = { "\xc2\xa2", "\xe2\x82\xac", "\xf0\x9f\x98\x80" };
+    for (const char* const codepoint : codepoints)
+    {
+        auto input = std::make_shared<self_insert_tester>();
+        input->initialize();
+        input->set_bindings(tib::make_default_key_table(true/*numeric_argument*/));
+
+        tib::binding_resolver resolver;
+        resolver.add_target(input);
+
+        REQUIRE(resolver.step('\x1b').more());
+        auto argument = resolver.step('2');
+        REQUIRE(argument.is_func_name("digit-argument"));
+        REQUIRE(argument.dispatch());
+        REQUIRE(input->get_numeric_argument() == 2);
+
+        const size_t length = strlen(codepoint);
+        for (size_t i = 0; i < length; ++i)
+        {
+            auto resolved = resolver.step(uint8_t(codepoint[i]));
+            if (i + 1 < length)
+            {
+                REQUIRE(resolved.more());
+                REQUIRE(!resolved.ambiguous());
+                REQUIRE(resolver.resolve_pending().more());
+            }
+            else
+            {
+                REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+                REQUIRE(resolved.sequence == tib::cstring(codepoint));
+                REQUIRE(resolved.dispatch());
+            }
+        }
+
+        tib::cstring expected(codepoint);
+        expected.append(codepoint);
+        REQUIRE(input->get_text() == expected);
+        REQUIRE(input->get_dispatch_count() == 2);
+        REQUIRE(!input->has_numeric_argument());
+        input->undo();
+        REQUIRE(input->get_text().empty());
+    }
+}
+
+TEST_CASE("Malformed UTF8 self insert does not stall subsequent input")
+{
+    auto input = std::make_shared<self_insert_tester>();
+    input->initialize();
+    input->set_bindings(tib::make_default_key_table());
+    tib::binding_resolver resolver;
+    resolver.add_target(input);
+
+    REQUIRE(resolver.step(0xf0).more());
+    REQUIRE(resolver.step(0x80).outcome == tib::dispatch_outcome::miss);
+    auto resolved = resolver.step('x');
+    REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+    REQUIRE(resolved.dispatch());
+    REQUIRE(input->get_text() == "x");
 }
 
 TEST_CASE("Self insert optimization respects bindings")
@@ -695,6 +759,31 @@ TEST_CASE("Self insert optimization respects bindings")
         REQUIRE(tib::term_in_peek() == 'b');
         REQUIRE(tib::term_in() == 'b');
         REQUIRE(input->get_dispatch_count() == 1);
+    }
+
+    SECTION("Replays UTF8 lookahead when a codepoint is bound")
+    {
+        test_input_stream stream("a\xc2\xa2");
+        auto input = std::make_shared<self_insert_tester>();
+        input->initialize();
+        auto tables = tib::make_default_key_table();
+        REQUIRE(tables->back()->add("\xc2\xa2", tib::binding_target_func("toggle-overwrite-mode")));
+        input->set_bindings(tables);
+
+        tib::binding_resolver resolver;
+        resolver.add_target(input);
+        auto resolved = resolver.step(uint8_t(tib::term_in()));
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(input->get_text() == "a");
+        REQUIRE(tib::term_in() == 0xc2);
+        resolved = resolver.step(0xc2);
+        REQUIRE(resolved.more());
+        resolved = resolver.step(uint8_t(tib::term_in()));
+        REQUIRE(resolved.is_func_name("toggle-overwrite-mode"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(input->get_text() == "a");
+        REQUIRE(input->get_overwrite_mode());
     }
 
     SECTION("Stops batching when the producing resolver has expired")
