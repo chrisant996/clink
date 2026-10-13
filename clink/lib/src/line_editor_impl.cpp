@@ -481,7 +481,7 @@ bool line_editor_impl::edit(str_base& out, bool edit)
     {
         // Update first so the init state goes through.
         while (update())
-            wait_for_input(m_idle);
+            select(m_idle);
     }
     else
     {
@@ -831,7 +831,7 @@ void line_editor_impl::dispatch(int32 bind_group)
 
     do
     {
-        wait_for_input();
+        select();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -896,6 +896,30 @@ bool line_editor_impl::update_input()
 {
     if (maybe_handle_signal())
         return true;
+
+    if (m_terminal->timeout_pending())
+    {
+        if (m_terminal->dispatch_timeout())
+        {
+// TODO-TIB: this shouldn't need to directly check g_tib.  clink_accept_line
+// is still missing the analog to the rl_callback_handler_install handle which
+// called `rl_module::get()->done(line);`.
+            if (g_tib->is_done())
+            {
+                m_module.accept_line();
+                if (!m_dispatching)
+                {
+                    // Timeout dispatch runs outside on_input(), so no module
+                    // result will finish the line for us.
+                    before_display_readline();
+                    end_line();
+                }
+            }
+            else
+                m_buffer.draw();
+        }
+        return true;
+    }
 
     // Give modules a chance to reassert themselves.  For example, the
     // suggestionlist_impl responds by re-enabling itself after having been
@@ -1904,21 +1928,8 @@ const input_hint* line_editor_impl::get_input_hint() const
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::wait_for_input(input_idle* idle)
+void line_editor_impl::select(input_idle* idle)
 {
     assert(!m_module.is_done());
-
-    if (m_terminal->wait_for_input(idle))
-    {
-        // The terminal host has already resolved and dispatched the binding.
-        // Observe this editor's target separately from that shared machinery.
-// TODO-TIB: why is the terminal host dispatching anything?  This seems wrong.
-        if (g_tib->is_done())
-        {
-            assert(false);
-            m_module.accept_line();
-        }
-        else
-            m_buffer.draw();
-    }
+    m_terminal->select(idle);
 }

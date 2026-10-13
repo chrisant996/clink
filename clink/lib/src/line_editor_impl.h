@@ -154,7 +154,7 @@ private:
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal(bool force=false);
     bool                update_input();
-    void                wait_for_input(input_idle* idle=nullptr);
+    void                select(input_idle* idle=nullptr);
     module::context     get_context() const;
     line_state          get_linestate() const;
     line_states         get_linestates() const;

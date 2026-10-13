@@ -2425,7 +2425,7 @@ void standalone_input::dispatch(int32 bind_group)
 
     do
     {
-        m_terminal.wait_for_input();
+        m_terminal.select();
         m_invalid_dispatch = false;
     }
     while (!update_input() || m_invalid_dispatch);
@@ -2470,6 +2470,12 @@ bool standalone_input::update_input()
             module->on_signal(sig);
         if (!m_dispatching)
             exit(-1);
+        return true;
+    }
+
+    if (m_terminal.timeout_pending())
+    {
+        m_terminal.dispatch_timeout();
         return true;
     }
 

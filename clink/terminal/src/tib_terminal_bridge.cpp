@@ -397,9 +397,10 @@ int32 tib_terminal_bridge::get_rows() const
     return m_out->get_rows();
 }
 
-bool tib_terminal_bridge::wait_for_input(input_idle* idle)
+void tib_terminal_bridge::select(input_idle* idle)
 {
     assert(m_began);
+    assert(!m_timeout_pending);
 
     if (g_debug_log_input_pipeline)
         LOG("INPUT bridge.wait begin pending=%d ambiguous=%d chord=%u", m_resolver.pending(), m_ambiguous, m_chord_len);
@@ -410,28 +411,39 @@ bool tib_terminal_bridge::wait_for_input(input_idle* idle)
     {
         if (g_debug_log_input_pipeline)
             LOG("INPUT bridge.wait queued input ready");
-        return false;
+        return;
     }
 
     if (m_ambiguous)
     {
-        // Timeout and fallback dispatch apply to every registered tib target.
         // Pure prefixes (without a complete fallback) continue waiting.
         m_in->select(idle, g_ambiguous_keyseq_timeout);
         if (!tib::term_in_avail(0))
         {
-            auto resolved = m_resolver.resolve_pending();
-            m_ambiguous = resolved.ambiguous();
             if (g_debug_log_input_pipeline)
-                LOG("INPUT bridge.wait timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
-            return resolved.dispatch();
+                LOG("INPUT bridge.wait timeout pending");
+            m_timeout_pending = true;
+            return;
         }
     }
     else
         m_in->select(idle);
     if (g_debug_log_input_pipeline)
         LOG("INPUT bridge.wait select returned");
-    return false;
+}
+
+bool tib_terminal_bridge::dispatch_timeout()
+{
+    assert(m_timeout_pending);
+    if (!m_timeout_pending)
+        return false;
+    m_timeout_pending = false;
+
+    auto resolved = m_resolver.resolve_pending();
+    m_ambiguous = resolved.ambiguous();
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
+    return resolved.dispatch();
 }
 
 bool tib_terminal_bridge::get_cursor_pos(int16& x, int16& y) const
@@ -452,6 +464,7 @@ void tib_terminal_bridge::reset_dispatch()
 {
     m_resolver.reset();
     m_ambiguous = false;
+    m_timeout_pending = false;
 }
 
 bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
@@ -535,6 +548,7 @@ bool tib_terminal_bridge::quoted_insert_pending() const
 
 void tib_terminal_bridge::dispatch(uint8 key)
 {
+    assert(!m_timeout_pending);
     if (g_debug_log_input_pipeline)
         LOG("INPUT bridge.dispatch step key=%u (0x%02x '%c') pending=%d", key, key, key, m_resolver.pending());
     auto resolved = m_resolver.step(key);

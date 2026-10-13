@@ -92,6 +92,38 @@ TEST_CASE("editor")
 }
 
 //------------------------------------------------------------------------------
+TEST_CASE("editor ambiguous binding")
+{
+    line_editor_tester tester;
+    line_editor* editor = tester.get_editor();
+
+    REQUIRE(editor->update());
+
+    MAKE_CLEANUP([](){
+        clink_bind_macro("a", nullptr, emacs_table);
+        clink_bind_macro("aa", nullptr, emacs_table);
+    });
+    clink_bind_macro("a", "ABC", emacs_table);
+    clink_bind_macro("aa", "XYZ", emacs_table);
+
+    SECTION("no timeout")
+    {
+        tester.set_input("aa");
+        tester.set_expected_output("XYZ");
+        tester.run();
+    }
+
+    SECTION("ambiguous timeout")
+    {
+        tester.set_simulate_timeouts();
+        tester.feed_input("a");
+        tester.set_input("a");
+        tester.set_expected_output("ABCABC");
+        tester.run();
+    }
+}
+
+//------------------------------------------------------------------------------
 TEST_CASE("keyboard macro : record")
 {
     line_editor_tester tester;

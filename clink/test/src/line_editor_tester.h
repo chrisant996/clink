@@ -41,6 +41,8 @@ public:
                                 ~line_editor_tester();
     line_editor*                get_editor() const;
     void                        set_input(const char* input);
+    void                        set_simulate_timeouts(bool simulate=true) { m_simulate_timeouts = simulate; }
+    void                        feed_input(const char* input);
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
     void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
     template <class ...T> void  set_expected_words(T... t); // T must be const char*
@@ -81,6 +83,7 @@ private:
     bool                        m_has_faces = false;
     bool                        m_has_hint = false;
     bool                        m_mark_argmatchers = false;
+    bool                        m_simulate_timeouts = false;
     const char*                 m_tab_binding = nullptr;
 };
 

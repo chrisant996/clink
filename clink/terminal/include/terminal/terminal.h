@@ -74,18 +74,21 @@ public:
     void                end(bool can_show_cursor=true);
     void                redirect(terminal_out* redirect);
 
-    // Returns true when a pending binding was dispatched during the wait,
-    // so the host can observe target completion and refresh its display.
-    bool                wait_for_input(input_idle* idle=nullptr);
     void                add_target(std::weak_ptr<tib::dispatcher_target> target);
     bool                is_bound(const char* seq, int32 len);
     bool                pending_input() const;
     bool                quoted_insert_pending() const;
+    bool                timeout_pending() const { return m_timeout_pending; }
+    bool                dispatch_timeout();
     void                dispatch(uint8 key);
     void                reset_dispatch();
 
     void                set_chord(const char* keys, uint32 len);
     bool                has_chord() const { return m_chord_len != 0; }
+
+    // Waits for input or an ambiguous binding timeout; never dispatches.
+    // The caller must dispatch a timeout before waiting or reading again.
+    void                select(input_idle* idle=nullptr);
     int32               read();
     int32               peek();
     bool                available(uint32 timeout);
@@ -117,6 +120,7 @@ private:
     // Shared by all tib targets, independently of Clink's module routing.
     tib::binding_resolver m_resolver;
     bool                m_ambiguous = false;
+    bool                m_timeout_pending = false;
     const char*         m_chord = nullptr;
     uint32              m_chord_len = 0;
     int32               m_began = 0;

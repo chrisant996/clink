@@ -264,7 +264,6 @@ void line_editor_tester::run(bool expectationless)
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
-    m_terminal_in.set_input(m_input);
 
     // If we're expecting some matches then add a module to catch the
     // matches object.
@@ -273,14 +272,7 @@ void line_editor_tester::run(bool expectationless)
         match_catch.set_need_line_state(true);
     m_editor->add_module(match_catch);
 
-    // First update doesn't read input. We do however want to read at least one
-    // character before bailing on the loop.
-    REQUIRE(m_editor->update());
-    do
-    {
-        REQUIRE(m_editor->update());
-    }
-    while (tib::term_in_avail(0));
+    feed_input(m_input);
 
     m_editor->update_matches();
 
@@ -508,6 +500,34 @@ void line_editor_tester::run(bool expectationless)
     m_has_hint = false;
 
     reset_lines();
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::feed_input(const char* input)
+{
+    m_terminal_in.set_input(input);
+
+    // The editor may need to begin the line before it can read input.  Even
+    // an empty chunk must get an input update after that.
+    REQUIRE(m_editor->update());
+    while (true)
+    {
+        REQUIRE(m_editor->update());
+
+        if (!tib::term_in_avail(0))
+        {
+            if (m_simulate_timeouts)
+            {
+                // Exhausting input represents a pause by the user.  Any macro
+                // scheduled by its timeout must finish before allowing a test
+                // to feed more input.
+                g_terminal->select();
+                if (g_terminal->timeout_pending())
+                    continue;
+            }
+            break;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
