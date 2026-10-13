@@ -1219,19 +1219,25 @@ void line_editor_impl::provide_faces(const tib::input_buffer& buffer, tib::cstri
 }
 
 //------------------------------------------------------------------------------
-const char* line_editor_impl::get_face_def(char face)
+const char* line_editor_impl::get_face_def(const tib::input_buffer& buffer, char face)
 {
     return m_module.get_face_def(face);
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::on_dispatch(const char* name)
+void line_editor_impl::do_display(tib::editor_context& ctx)
+{
+    display_readline();
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::on_dispatch(tib::editor_context& ctx, const char* name)
 {
     return luafunc_hook_func(name);
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::on_dispatched(const char* name)
+void line_editor_impl::on_dispatched(tib::editor_context& ctx, const char* name)
 {
     last_command_hook_func(!!name);
 }
