@@ -319,10 +319,10 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (
 #ifdef TIB_TODO
         RL_ISSTATE(RL_STATE_NSEARCH|        // incremental search
-                   RL_STATE_READSTR|        // readstr
-                   RL_STATE_MACRODEF) ||    // recording macro
+                   RL_STATE_READSTR) ||     // readstr
 #endif
-        tib::term_has_macro_input())
+        g_tib->is_recording_kbd_macro() ||  // recording macro
+        tib::term_has_macro_input())        // macro playback
     {
         clear();
         return false;
