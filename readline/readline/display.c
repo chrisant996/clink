@@ -121,12 +121,6 @@ static void _rl_move_cursor_relative (int, const char *, const char *);
 rl_voidfunc_t *rl_redisplay_function = NULL;
 
 /* begin_clink_change */
-/* Application-specific function to be called before displaying the
-   input line. */
-rl_voidfunc_t *rl_before_display_function = (rl_voidfunc_t *)NULL;
-/* end_clink_change */
-
-/* begin_clink_change */
 const char *_rl_display_modmark_color = NULL;
 const char *_rl_display_horizscroll_color = NULL;
 const char *_rl_display_message_color = NULL;

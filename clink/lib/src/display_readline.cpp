@@ -865,8 +865,7 @@ void display_manager::display()
 // TODO-TIB: how to fit this into the display optimizations properly?
     // Let the application have a chance to do processing; for example to parse
     // the input line and update font faces for the line.
-    if (rl_before_display_function)
-        rl_before_display_function();
+    before_display_readline();
 
 // TODO-TIB: modmark.
 #ifdef TIB_TODO

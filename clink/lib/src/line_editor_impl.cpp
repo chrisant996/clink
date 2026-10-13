@@ -371,8 +371,6 @@ void line_editor_impl::begin_line()
     m_override_words.clear();
     m_override_command_line_states.clear();
 
-    rl_before_display_function = ::before_display_readline;
-
     defer_refilter(false);
 
     editor_module::context context = get_context();
@@ -387,8 +385,6 @@ void line_editor_impl::end_line()
 
     for (auto i = m_modules.rbegin(), n = m_modules.rend(); i != n; ++i)
         i->on_end_line();
-
-    rl_before_display_function = nullptr;
 
     m_bind_resolver.set_group(m_binder.get_group()); // TODO-TIB: why?
     m_buffer.end_line();
@@ -1062,8 +1058,6 @@ bool line_editor_impl::update_input()
         }
         else
         {
-            before_display_readline();
-
             if (result.flags & result_impl::flag_done)
             {
                 end_line();
