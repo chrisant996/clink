@@ -1367,6 +1367,7 @@ int32_t clink_popup_show_help(tib::editor_context& ctx, int32_t key, const char*
 int32_t clink_select_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
+    rl_sync_with_clink sync;
     if (!g_result || !activate_select_complete(*g_result, ctx.get_last_command_func() == clink_select_complete))
         tib::ding();
     return 0;

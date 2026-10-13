@@ -1969,6 +1969,7 @@ void selectcomplete_impl::insert_match(int32 final)
         bool append_space = false;
         // UGLY: __append_to_match() circumvents the m_buffer abstraction.
         set_matches_lookaside_oneoff(match, type, append_char, flags);
+        rl_sync_with_clink::sync();
         __append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
         clear_matches_lookaside_oneoff();
         m_point = m_buffer->get_cursor();
@@ -2068,6 +2069,8 @@ void selectcomplete_impl::insert_match(int32 final)
         m_comment_row_displayed = false;
         update_layout();
     }
+
+    rl_sync_with_clink::sync();
 }
 
 //------------------------------------------------------------------------------
