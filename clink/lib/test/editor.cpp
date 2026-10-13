@@ -113,6 +113,13 @@ TEST_CASE("editor ambiguous binding")
         tester.run();
     }
 
+    SECTION("binding miss")
+    {
+        tester.set_input("ab");
+        tester.set_expected_output("ABCb");
+        tester.run();
+    }
+
     SECTION("ambiguous timeout")
     {
         tester.set_simulate_timeouts();
