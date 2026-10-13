@@ -106,7 +106,7 @@ TEST_CASE("Keyboard macro depth limit discards pending playback")
     REQUIRE(strstr(context.get_error_message(0), "Maximum macro execution depth exceeded") != nullptr);
 }
 
-static int32_t dummy_command(tib::editor_context& context, int32_t key, const char* name, const tib::resolved_binding* params)
+static int32_t dummy_command(tib::editor_context&, int32_t, const char*, const tib::resolved_binding*)
 {
     PREVENT_COMDAT_FOLDING();
     return 0;

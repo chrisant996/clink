@@ -1701,7 +1701,7 @@ const char* display_manager::get_face_def(char face) const
 {
     if (m_callbacks)
     {
-        const auto def = m_callbacks->get_face_def(face);
+        const auto def = m_callbacks->get_face_def(*m_buffer, face);
         if (def)
             return def;
     }

@@ -32,13 +32,7 @@ struct editor_command
 
 textpos_t pos_mover(const char* s, const size_t _len, textpos_t& pos, const bool forward, const uint8_t word);
 
-struct editor_callbacks
-{
-    virtual void        provide_faces(const input_buffer& buffer, cstring& faces) {}
-    virtual const char* get_face_def(char face) { return nullptr; }
-    virtual bool        on_dispatch(const char* name) { return false; }
-    virtual void        on_dispatched(const char* name) {}
-};
+struct editor_callbacks;
 
 struct editor_quirks
 {
@@ -310,6 +304,15 @@ private:
 
     // Friends.
     friend int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept; // For m_recording.
+};
+
+struct editor_callbacks
+{
+    virtual void        provide_faces(const input_buffer& ctx, cstring& faces) {}
+    virtual const char* get_face_def(const input_buffer& ctx, char face) { return nullptr; }
+    virtual void        do_display(editor_context& ctx) { ctx.display(); }
+    virtual bool        on_dispatch(editor_context& ctx, const char* name) { return false; }
+    virtual void        on_dispatched(editor_context& ctx, const char* name) {}
 };
 
 } // namespace tib

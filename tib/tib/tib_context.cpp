@@ -291,7 +291,7 @@ void editor_context::reset_state() noexcept
     m_last_command_name.clear();
     m_last_command_func = nullptr;
     if (m_callbacks)
-        m_callbacks->on_dispatched(nullptr);
+        m_callbacks->on_dispatched(*this, nullptr);
 
     clear_was_kill_command();
     g_add_to_kill_ring = 0;
@@ -796,7 +796,7 @@ void editor_context::set_last_command(const char* name, editor_command_func_t fu
     if (m_callbacks && !m_in_on_dispatched)
     {
         m_in_on_dispatched = true;
-        m_callbacks->on_dispatched(name);
+        m_callbacks->on_dispatched(*this, name);
         m_in_on_dispatched = false;
     }
 }
@@ -1522,7 +1522,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
         case binding_type::func:
             {
                 const char* const name = binding->get_text();
-                if (m_callbacks && m_callbacks->on_dispatch(name))
+                if (m_callbacks && m_callbacks->on_dispatch(*this, name))
                     break;
 
                 editor_command_func_t func = lookup_command(name);
@@ -1575,7 +1575,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
         if (is_self_insertable(key))
         {
             const char* name = "self-insert";
-            if (!m_callbacks || !m_callbacks->on_dispatch(name))
+            if (!m_callbacks || !m_callbacks->on_dispatch(*this, name))
             {
                 editor_command_func_t func = self_insert;
                 ret = func(*this, key, name, resolved);
@@ -1624,6 +1624,10 @@ void editor_context::on_binding_fallback() noexcept
         m_numflags &= ~NUMFLAG_ARGUMENT_MODE;
         apply_override_bindings();
         apply_message_text();
+        if (m_callbacks)
+            m_callbacks->do_display(*this);
+        else
+            display();
     }
 }
 
