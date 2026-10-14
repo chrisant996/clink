@@ -3,11 +3,30 @@
 --
 -- Run this via:
 --      lua52.exe findhighbit.lua
+--      lua52.exe findhighbit.lua --fix
 
 local bad = 0
+local fixed = 0
 local total = 0
 
-local bom_pattern = "^\xef\xbb\xbf"
+local noflags
+local fix
+for _, name in ipairs(arg) do
+    if not noflags and name:find('^%-%-') then
+        if name == '--' then
+            noflags = true
+        elseif name:lower() == '--fix' then
+            fix = true
+        else
+            error('Unrecognized flag \''..name..'\'.')
+        end
+    else
+        error('Too many arguments.')
+    end
+end
+
+local bom = "\xef\xbb\xbf"
+local bom_pattern = "^"..bom
 local highbit_pattern = "[\x80-\xff]"
 
 local function scan(name, dolines)
@@ -18,12 +37,25 @@ local function scan(name, dolines)
 
     total = total + 1
 
+    local missing
     if not dolines then
         -- This "*a" optimization saves around 5-10% elapsed time.
         local content = f:read("*a")
+        f:close()
         if not content:find(bom_pattern) and content:find(highbit_pattern) then
             total = total - 1
-            scan(name, true)
+            if scan(name, true) and fix then
+                f = io.open(name, "wb")
+                if not f then
+                    print("\x1b[91mError trying to fix missing BOM.\x1b[m")
+                else
+                    f:write(bom)
+                    f:write(content)
+                    f:close()
+                    print("\x1b[92mFixed.\x1b[m")
+                    fixed = fixed + 1
+                end
+            end
         end
     else
         local n = 0
@@ -36,16 +68,20 @@ local function scan(name, dolines)
             if pos then
                 print(name.." -- \x1b[91mline "..n..", pos "..pos.."\x1b[m")
                 bad = bad + 1
+                missing = true
                 break
             end
         end
+        f:close()
     end
 
-    f:close()
+    return missing
 end
 
 local function can_scan(name)
-    return not name:find("\\%.[^\\]*\\") and not name:find("\\examples\\")
+    return not name:find("\\%.[^\\]*\\") and
+        not name:find("\\examples\\") and
+        not name:find("\\readline\\readline\\")
 end
 
 local function traverse(dir)
@@ -81,7 +117,15 @@ local function analyze()
     print(string.format("%u file(s) scanned in %.2f sec.", total, elapsed))
 
     if bad > 0 then
-        print("\x1b[91m"..bad.." file(s) missing UTF8 BOM.\x1b[m")
+        print("\x1b["..(fix and "93" or "91").."m"..bad.." file(s) missing UTF8 BOM.\x1b[m")
+        if not fix then
+            print("\x1b[91mRun again with --fix to add missing BOMs.\x1b[m")
+        end
+        if bad > fixed then
+            print("\x1b[91mOne or more files were not fixed.\x1b[m")
+        else
+            print("\x1b[92mAll files fixed.\x1b[m")
+        end
     else
         print("\x1b[92mAll files ok.\x1b[m")
     end
