@@ -176,7 +176,11 @@ inline bool run(const char* prefix="", bool times=false)
                 (test->m_func)(tree_iter);
 
                 if (num_assertions < get_num_assertions())
+                {
+                    if (g_use_gui_assertions)
+                        printf("\r%sassert%s \n", colors::get_error(), colors::get_normal());
                     throw std::exception();
+                }
 
                 for (section* parent; parent = tree_iter->m_parent; tree_iter = parent)
                 {
