@@ -96,11 +96,7 @@ bool init_terminal(terminal_in* in, terminal_out* out)
 
 bool uninit_terminal()
 {
-    const bool was_init = !!tib_terminal_bridge::get();
-    assert(tib_terminal_bridge::get());
-    delete tib_terminal_bridge::get();
-    assert(!tib_terminal_bridge::get());
-    return was_init;
+    return tib_terminal_bridge::uninit_terminal();
 }
 
 //------------------------------------------------------------------------------
@@ -133,6 +129,15 @@ bool tib_terminal_bridge::init_terminal(terminal_in* in, terminal_out* out)
 
     new tib_terminal_bridge(in, out);
     return true;
+}
+
+bool tib_terminal_bridge::uninit_terminal()
+{
+    const bool was_init = !!get();
+    assert(get());
+    delete get();
+    assert(!get());
+    return was_init;
 }
 
 tib_terminal_bridge::tib_terminal_bridge()
@@ -270,6 +275,129 @@ void tib_terminal_bridge::redirect(terminal_out* redirect)
     }
 }
 
+void tib_terminal_bridge::add_target(std::weak_ptr<tib::dispatcher_target> target)
+{
+    m_resolver.add_target(target);
+    m_ambiguous = false;
+}
+
+bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
+{
+    if (!len)
+    {
+nope:
+        reset_dispatch();
+        ding();
+        return false;
+    }
+
+#ifdef TIB_TODO
+    // `quoted-insert` must accept all input (that's its whole purpose).
+    if (rl_is_insert_next_callback_pending())
+        return true;
+#else
+    if (quoted_insert_pending())
+        return true;
+#endif
+
+#ifdef TIB_TODO
+    // The F2, F4, and F9 console compatibility implementations can accept
+    // input, but extended keys are meaningless so don't accept them.  The
+    // intent is to allow printable textual input, control characters, and ESC.
+    if (win_fn_callback_pending())
+    {
+        const char* bindableEsc = get_bindable_esc();
+        if (bindableEsc && strcmp(seq, bindableEsc) == 0)
+            return true;
+        if (len > 1 && seq[0] == '\x1b')
+            goto LNope;
+        return true;
+    }
+
+    // Various states should only accept "simple" input, i.e. not CSI sequences,
+    // so that unrecognized portions of key sequences don't bleed in as textual
+    // input.
+    if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES))
+    {
+        if (seq[0] == '\x1b')
+            goto LNope;
+        return true;
+    }
+#endif
+
+    // The intent here is to accept all UTF8 input (not sure why readline
+    // reports them as not bound, but this seems good enough for now).
+    if (len > 1 && seq[0] >= ' ' && terminal_in::is_input_byte(uint8(seq[0])))
+        return true;
+
+    // NOTE:  Checking readline's keymap is incorrect when a special bind group
+    // is active that should block on_input from reaching readline.  But the way
+    // that blocking is achieved is by adding a "" binding that matches
+    // everything not explicitly bound in the keymap.  So it works out
+    // naturally, without additional effort.
+
+#ifdef TIB_TODO
+    // Using nullptr for the keymap starts from the root of the current keymap,
+    // but in a multi key sequence this needs to use the current dispatching
+    // node of the current keymap.
+    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
+    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
+        return true;
+#endif
+
+    if (m_resolver.is_keyseq_recognized(seq, size_t(len)))
+        return true;
+    goto nope;
+}
+
+bool tib_terminal_bridge::pending_input() const
+{
+    return m_resolver.pending() || quoted_insert_pending();
+}
+
+bool tib_terminal_bridge::quoted_insert_pending() const
+{
+    return m_resolver.quoted_insert_pending();
+}
+
+bool tib_terminal_bridge::dispatch_timeout()
+{
+    assert(m_timeout_pending);
+    if (!m_timeout_pending)
+        return false;
+    m_timeout_pending = false;
+
+    auto resolved = m_resolver.resolve_pending();
+    m_ambiguous = resolved.ambiguous();
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
+    return resolved.dispatch();
+}
+
+void tib_terminal_bridge::dispatch(uint8 key)
+{
+    assert(!m_timeout_pending);
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.dispatch step key=%u (0x%02x '%c') pending=%d", key, key, key, m_resolver.pending());
+    auto resolved = m_resolver.step(key);
+    m_ambiguous = resolved.ambiguous();
+    if (g_debug_log_input_pipeline)
+    {
+        str<80> bytes;
+        format_input_bytes(bytes, resolved.sequence.c_str(), uint32(resolved.sequence.length()));
+        LOG("INPUT bridge.dispatch resolved outcome=%d bytes=(%s) len=%zu pending=%d ambiguous=%d",
+            int32(resolved.outcome), bytes.c_str(), resolved.sequence.length(), m_resolver.pending(), m_ambiguous);
+    }
+    resolved.dispatch();
+}
+
+void tib_terminal_bridge::reset_dispatch()
+{
+    m_resolver.reset();
+    m_ambiguous = false;
+    m_timeout_pending = false;
+}
+
 void tib_terminal_bridge::set_chord(const char* keys, uint32 len)
 {
     assert(m_in);
@@ -288,6 +416,41 @@ void tib_terminal_bridge::set_chord(const char* keys, uint32 len)
 // TODO-TIB: this borrows the keys pointer; is that safe?
     m_chord = keys;
     m_chord_len = len;
+}
+
+void tib_terminal_bridge::select(input_idle* idle)
+{
+    assert(m_began);
+    assert(!m_timeout_pending);
+
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.wait begin pending=%d ambiguous=%d chord=%u", m_resolver.pending(), m_ambiguous, m_chord_len);
+
+    // Must go through tib::term_in_avail because of pushed input.
+// TODO-TIB: is this correctly integrated with m_chord_len?
+    if (tib::term_in_avail(0))
+    {
+        if (g_debug_log_input_pipeline)
+            LOG("INPUT bridge.wait queued input ready");
+        return;
+    }
+
+    if (m_ambiguous)
+    {
+        // Pure prefixes (without a complete fallback) continue waiting.
+        m_in->select(idle, g_ambiguous_keyseq_timeout);
+        if (!tib::term_in_avail(0))
+        {
+            if (g_debug_log_input_pipeline)
+                LOG("INPUT bridge.wait timeout pending");
+            m_timeout_pending = true;
+            return;
+        }
+    }
+    else
+        m_in->select(idle);
+    if (g_debug_log_input_pipeline)
+        LOG("INPUT bridge.wait select returned");
 }
 
 int32 tib_terminal_bridge::read()
@@ -397,168 +560,10 @@ int32 tib_terminal_bridge::get_rows() const
     return m_out->get_rows();
 }
 
-void tib_terminal_bridge::select(input_idle* idle)
-{
-    assert(m_began);
-    assert(!m_timeout_pending);
-
-    if (g_debug_log_input_pipeline)
-        LOG("INPUT bridge.wait begin pending=%d ambiguous=%d chord=%u", m_resolver.pending(), m_ambiguous, m_chord_len);
-
-    // Must go through tib::term_in_avail because of pushed input.
-// TODO-TIB: is this correctly integrated with m_chord_len?
-    if (tib::term_in_avail(0))
-    {
-        if (g_debug_log_input_pipeline)
-            LOG("INPUT bridge.wait queued input ready");
-        return;
-    }
-
-    if (m_ambiguous)
-    {
-        // Pure prefixes (without a complete fallback) continue waiting.
-        m_in->select(idle, g_ambiguous_keyseq_timeout);
-        if (!tib::term_in_avail(0))
-        {
-            if (g_debug_log_input_pipeline)
-                LOG("INPUT bridge.wait timeout pending");
-            m_timeout_pending = true;
-            return;
-        }
-    }
-    else
-        m_in->select(idle);
-    if (g_debug_log_input_pipeline)
-        LOG("INPUT bridge.wait select returned");
-}
-
-bool tib_terminal_bridge::dispatch_timeout()
-{
-    assert(m_timeout_pending);
-    if (!m_timeout_pending)
-        return false;
-    m_timeout_pending = false;
-
-    auto resolved = m_resolver.resolve_pending();
-    m_ambiguous = resolved.ambiguous();
-    if (g_debug_log_input_pipeline)
-        LOG("INPUT bridge.timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
-    return resolved.dispatch();
-}
-
 bool tib_terminal_bridge::get_cursor_pos(int16& x, int16& y) const
 {
     assert(m_out);
     if (!m_out)
         return false;
     return m_out->get_cursor_pos(x, y);
-}
-
-void tib_terminal_bridge::add_target(std::weak_ptr<tib::dispatcher_target> target)
-{
-    m_resolver.add_target(target);
-    m_ambiguous = false;
-}
-
-void tib_terminal_bridge::reset_dispatch()
-{
-    m_resolver.reset();
-    m_ambiguous = false;
-    m_timeout_pending = false;
-}
-
-bool tib_terminal_bridge::is_bound(const char* seq, int32 len)
-{
-    if (!len)
-    {
-nope:
-        reset_dispatch();
-        ding();
-        return false;
-    }
-
-#ifdef TIB_TODO
-    // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_is_insert_next_callback_pending())
-        return true;
-#else
-    if (quoted_insert_pending())
-        return true;
-#endif
-
-#ifdef TIB_TODO
-    // The F2, F4, and F9 console compatibility implementations can accept
-    // input, but extended keys are meaningless so don't accept them.  The
-    // intent is to allow printable textual input, control characters, and ESC.
-    if (win_fn_callback_pending())
-    {
-        const char* bindableEsc = get_bindable_esc();
-        if (bindableEsc && strcmp(seq, bindableEsc) == 0)
-            return true;
-        if (len > 1 && seq[0] == '\x1b')
-            goto LNope;
-        return true;
-    }
-
-    // Various states should only accept "simple" input, i.e. not CSI sequences,
-    // so that unrecognized portions of key sequences don't bleed in as textual
-    // input.
-    if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES))
-    {
-        if (seq[0] == '\x1b')
-            goto LNope;
-        return true;
-    }
-#endif
-
-    // The intent here is to accept all UTF8 input (not sure why readline
-    // reports them as not bound, but this seems good enough for now).
-    if (len > 1 && seq[0] >= ' ' && terminal_in::is_input_byte(uint8(seq[0])))
-        return true;
-
-    // NOTE:  Checking readline's keymap is incorrect when a special bind group
-    // is active that should block on_input from reaching readline.  But the way
-    // that blocking is achieved is by adding a "" binding that matches
-    // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.
-
-#ifdef TIB_TODO
-    // Using nullptr for the keymap starts from the root of the current keymap,
-    // but in a multi key sequence this needs to use the current dispatching
-    // node of the current keymap.
-    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
-    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
-        return true;
-#endif
-
-    if (m_resolver.is_keyseq_recognized(seq, size_t(len)))
-        return true;
-    goto nope;
-}
-
-bool tib_terminal_bridge::pending_input() const
-{
-    return m_resolver.pending() || quoted_insert_pending();
-}
-
-bool tib_terminal_bridge::quoted_insert_pending() const
-{
-    return m_resolver.quoted_insert_pending();
-}
-
-void tib_terminal_bridge::dispatch(uint8 key)
-{
-    assert(!m_timeout_pending);
-    if (g_debug_log_input_pipeline)
-        LOG("INPUT bridge.dispatch step key=%u (0x%02x '%c') pending=%d", key, key, key, m_resolver.pending());
-    auto resolved = m_resolver.step(key);
-    m_ambiguous = resolved.ambiguous();
-    if (g_debug_log_input_pipeline)
-    {
-        str<80> bytes;
-        format_input_bytes(bytes, resolved.sequence.c_str(), uint32(resolved.sequence.length()));
-        LOG("INPUT bridge.dispatch resolved outcome=%d bytes=(%s) len=%zu pending=%d ambiguous=%d",
-            int32(resolved.outcome), bytes.c_str(), resolved.sequence.length(), m_resolver.pending(), m_ambiguous);
-    }
-    resolved.dispatch();
 }

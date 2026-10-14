@@ -66,7 +66,7 @@ public:
     static bool         init_terminal();
     static bool         init_terminal(bool cursor_visibility);
     static bool         init_terminal(terminal_in* in, terminal_out* out);
-    static void         uninit_terminal();
+    static bool         uninit_terminal();
 
                         ~tib_terminal_bridge();
 
