@@ -15,8 +15,8 @@ char32_t str_iter_impl<char>::next()
 
     // https://en.wikipedia.org/wiki/UTF-8
     //
-    //  - Bytes that never appear in UTF-8: 0xC0, 0xC1, 0xF5–0xFF,
-    //  - A "continuation byte" (0x80–0xBF) at the start of a character,
+    //  - Bytes that never appear in UTF-8: 0xC0, 0xC1, 0xF5..0xFF,
+    //  - A "continuation byte" (0x80..0xBF) at the start of a character,
     //  - A non-continuation byte (or the string ending) before the end of a
     //    character.
     //  - An overlong encoding (0xE0 followed by less than 0xA0, or 0xF0
@@ -60,7 +60,7 @@ invalid_preceding_data:
         }
         else if (c >= 0xF5 || c == 0xC1)
         {
-            // Bytes that never appear in UTF-8: 0xC1, 0xF5–0xFF.
+            // Bytes that never appear in UTF-8: 0xC1, 0xF5..0xFF.
             if (!(length == expected))
                 goto invalid_preceding_data;
 invalid_current_data:
@@ -111,7 +111,7 @@ invalid_current_data:
             // Continuation byte.
             assert(c >= 0b10000000);
 
-            // A "continuation byte" (0x80–0xBF) cannot appear at the start of a
+            // A "continuation byte" (0x80..0xBF) cannot appear at the start of a
             // character.
             if (length == expected)
                 goto invalid_current_data;

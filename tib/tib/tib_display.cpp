@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Christopher Antos
+﻿// Copyright (c) 2026 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 // vim: set et ts=4 sw=4 cino={0s:
@@ -29,9 +29,9 @@ constexpr textpos_t c_padding_row_offset = int32_max;
 
 const border_definition c_light_border =
 {
-    "┌",    "─",    "┐",
-    "│",            "│",
-    "└",    "─",    "┘",
+    u8"┌",  u8"─",  u8"┐",
+    u8"│",          u8"│",
+    u8"└",  u8"─",  u8"┘",
 
     1,      1,      1,
     1,              1,

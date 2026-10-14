@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Christopher Antos
+﻿// Copyright (c) 2026 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 // vim: set et ts=4 sw=4 cino={0s:
@@ -49,9 +49,9 @@ constexpr char FACE_RAINBOW = '\x80';
 
 static const tib::border_definition c_padding_border =
 {
-    nullptr,    "▄",    nullptr,
-    "██",               "██",
-    nullptr,    "▀",    nullptr,
+    nullptr,    u8"▄",  nullptr,
+    u8"██",             u8"██",
+    nullptr,    u8"▀",  nullptr,
 
     0,          1,      0,
     2,                  2,
@@ -62,16 +62,16 @@ struct bar_padding_border_definition : public tib::border_definition
 {
     bar_padding_border_definition(const char* first_left=nullptr, const char* first_right=nullptr)
     {
-        make_bar("▗▄", custom_top_left, top_left, top_left_width);
-        make_bar("▐█", custom_left, left, left_width);
-        make_bar("▝▀", custom_bottom_left, bottom_left, bottom_left_width);
+        make_bar(u8"▗▄", custom_top_left, top_left, top_left_width);
+        make_bar(u8"▐█", custom_left, left, left_width);
+        make_bar(u8"▝▀", custom_bottom_left, bottom_left, bottom_left_width);
 
-        top_right = "▖";        top_right_width = 1;
-        right = "█▌";           right_width = 2;
-        bottom_right = "▘";     bottom_right_width = 1;
+        top_right = u8"▖";      top_right_width = 1;
+        right = u8"█▌";         right_width = 2;
+        bottom_right = u8"▘";   bottom_right_width = 1;
 
-        top = "▄";              top_width = 1;
-        bottom = "▀";           bottom_width = 1;
+        top = u8"▄";            top_width = 1;
+        bottom = u8"▀";         bottom_width = 1;
 
         if (first_left)
         {
