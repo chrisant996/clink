@@ -29,7 +29,8 @@ static void dispatch_macro(const char* text, std::shared_ptr<self_insert_tester>
 {
     tib::cstring macro(text);
     macro.append("\r");
-    REQUIRE(tib::term_push_playback(true/*is_macro*/, macro.c_str(), macro.length()));
+    REQUIRE(input->push_macro_text(macro.c_str(), macro.length()) > 0);
+    REQUIRE(!input->count_error_messages());
 
     for (;;)
     {

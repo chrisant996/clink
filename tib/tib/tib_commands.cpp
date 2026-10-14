@@ -118,6 +118,7 @@ int32_t do_with_numeric_argument(editor_context& ctx, int32_t key, const char* n
 int32_t abort(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
     ctx.reset_state();
+    term_clear_playback();
     return 0;
 }
 

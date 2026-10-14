@@ -371,6 +371,19 @@ void dispatcher_target::override_bindings(std::shared_ptr<const key_table_list> 
     m_fall_back_on_miss = bool(bindings) && fall_back_on_miss;
 }
 
+int32_t dispatcher_target::push_macro_text(const char* macro, size_t len)
+{
+    const auto pushed = term_push_playback(true/*is_macro*/, macro, len);
+    if (pushed < 0)
+    {
+        cstring msg;
+        msg.printf("Maximum macro execution depth exceeded (%d).", c_max_playback_depth);
+        term_clear_playback();
+        report_error(msg.c_str());
+    }
+    return pushed;
+}
+
 resolved_binding::resolved_binding(std::shared_ptr<binding_resolver_state> state)
 : m_resolver_state(state)
 {
@@ -447,13 +460,7 @@ bool resolved_binding::dispatch()
                 assert(self_insert == (!target || !*target));
                 if (target && target->get_type() == binding_type::macro)
                 {
-                    if (term_push_playback(true/*is_macro*/, target->get_text(), target->get_length()) < 0)
-                    {
-                        cstring msg;
-                        msg.printf("Maximum macro execution depth exceeded (%d).", c_max_playback_depth);
-                        term_clear_playback();
-                        ctx->report_error(msg.c_str());
-                    }
+                    ctx->push_macro_text(target->get_text(), target->get_length());
                 }
                 else
                 {

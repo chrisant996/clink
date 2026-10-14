@@ -147,6 +147,7 @@ public:
     std::shared_ptr<const key_table_list> get_bindings(bool fallback_requested=false) const;
     void                set_bindings(std::shared_ptr<const key_table_list> bindings);
     void                override_bindings(std::shared_ptr<const key_table_list> bindings, bool fall_back_on_miss=false);
+    int32_t             push_macro_text(const char* macro, size_t len);
 
     // The binding_resolver::step() produces a resolved_binding in three cases:
     //
