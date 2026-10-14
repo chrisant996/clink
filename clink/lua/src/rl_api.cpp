@@ -569,7 +569,16 @@ static int32 invoke_command(lua_State* state)
     LUA_ONLYONMAIN(state, "rl.invokecommand");
 
     if (!lua_state::is_in_luafunc())
-        return luaL_error(state, LUA_QL("rl.invokecommand") " may only be used in a " LUA_QL("luafunc:") " key binding");
+    {
+#ifdef DEBUG
+        str<16> tmp;
+        const bool allow = (os::get_env("DEBUG_UNRESTRICTED_RL_INVOKECOMMAND", tmp) && atoi(tmp.c_str()) > 0);
+#else
+        const bool allow = false;
+#endif
+        if (!allow)
+            return luaL_error(state, LUA_QL("rl.invokecommand") " may only be used in a " LUA_QL("luafunc:") " key binding");
+    }
 
     if (!g_tib)
         return 0;
@@ -601,7 +610,8 @@ static int32 invoke_command(lua_State* state)
                 free(macro);
                 return 0;
             }
-            tib::term_push_macro_text(macro);
+
+            g_tib->push_macro_text(macro, len);
         }
 
         lua_pushinteger(state, true);
