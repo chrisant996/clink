@@ -3306,6 +3306,8 @@ void rl_module::on_signal(int32)
 {
 #ifdef TIB_TODO
     rl_callback_handler_remove();
+#else
+    g_tib->initialize();
 #endif
 }
 
