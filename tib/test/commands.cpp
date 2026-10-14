@@ -70,6 +70,13 @@ TEST_CASE("Keyboard macros")
         }
         REQUIRE(!tib::term_has_macro_input());
         REQUIRE(context.get_text() == "xxx");
+
+        REQUIRE(context.dispatch("y", 'y', nullptr, nullptr) == 0);
+        dispatch_macro_command(context, "\030(", "start-kbd-macro");
+        REQUIRE(context.dispatch("z", 'z', nullptr, nullptr) == 0);
+        dispatch_macro_command(context, "\030)", "end-kbd-macro");
+        REQUIRE(context.get_last_kbd_macro() == "z");
+        REQUIRE(context.get_text() == "xxxyz");
     }
 
     SECTION("records all batched self insert bytes")
@@ -91,6 +98,15 @@ TEST_CASE("Keyboard macros")
         REQUIRE(context->get_text() == "abc");
         REQUIRE(context->end_kbd_macro());
         REQUIRE(context->get_last_kbd_macro() == "abc");
+
+        test_input_stream unrecorded("ef");
+        resolved = resolver.step('d');
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_text() == "abcdef");
+        REQUIRE(context->start_kbd_macro(false));
+        REQUIRE(context->end_kbd_macro());
+        REQUIRE(context->get_last_kbd_macro().empty());
     }
 
     SECTION("depth limit discards pending playback")

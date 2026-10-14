@@ -497,7 +497,7 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
                 }
 
                 ctx.insert_text(input.c_str(), input.length(), ctx.get_overwrite_mode());
-                if (!ctx.m_recording.append(input.c_str(), input.length()))
+                if (ctx.is_recording_kbd_macro() && !ctx.m_recording.append(input.c_str(), input.length()))
                     tib::ding();
 
                 handled = true;
@@ -524,7 +524,7 @@ int32_t self_insert(editor_context& ctx, int32_t key, const char* name, const re
                     ctx.insert_char(c, ctx.get_overwrite_mode());
                 else
                     ctx.insert_text(sequence, sequence_length, ctx.get_overwrite_mode());
-                if (!ctx.m_recording.append(sequence, sequence_length))
+                if (ctx.is_recording_kbd_macro() && !ctx.m_recording.append(sequence, sequence_length))
                     tib::ding();
             }
             ctx.end_undo_group();
