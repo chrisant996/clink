@@ -482,7 +482,9 @@ function completion_suggester:suggest(line, matches, limit) -- luacheck: no unus
                 local m = matches:getmatch(i)
                 if not m then
                     break
-                elseif m ~= typed and (limit or info.quoted or no_quotes or not rl.needquotes(m)) then
+                elseif m ~= typed and (limit or
+                        ((info.quoted or no_quotes or not rl.needquotes(m)) and
+                         (string.matchlen(m, typed) == #typed))) then
                     local append_quote = info.quoted
                     local hofs, matchlen = internal._find_match_highlight(m, typed)
                     hofs = hofs or 0
