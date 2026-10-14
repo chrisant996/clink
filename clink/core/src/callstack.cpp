@@ -845,6 +845,8 @@ static bool is_ignore_always(wchar_t const* message, wchar_t const* file, unsign
 
 extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned line)
 {
+    const auto num = InterlockedIncrement(&s_num_assertions);
+
     if (is_ignore_always(message, file, line))
         return;
 
@@ -856,7 +858,6 @@ extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned l
     wchar_t tmp[32];
     _itow_s(line, tmp, 10);
 
-    const auto num = InterlockedIncrement(&s_num_assertions);
     if (!g_use_gui_assertions)
         wprintf_s(L"<<<<assertion #%u\r\n", num); // Effectively two newlines.
 

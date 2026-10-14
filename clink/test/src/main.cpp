@@ -113,7 +113,7 @@ int32 main(int32 argc, char** argv)
         }
         else if (!strcmp(argv[0], "-o"))
         {
-            g_use_gui_assertions = true;
+            g_use_gui_assertions = false;
         }
         else if (!strcmp(argv[0], "-t"))
         {
