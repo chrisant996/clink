@@ -3289,6 +3289,8 @@ void rl_module::done(const char* line)
 
 #ifdef TIB_TODO
     rl_callback_handler_remove();
+#else
+    g_tib->initialize();
 #endif
 }
 
