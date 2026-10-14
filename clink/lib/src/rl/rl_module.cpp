@@ -3160,6 +3160,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = &result;
     s_matches = &context.matches;
 
+// TODO-TIB: something is goofy here -- for both Readline and tib, the input
+// length here seems to always be 1.  Is there any way to actually get a chord
+// here?  What purpose is the loop and the m_terminal->read() actually
+// serving?  Can it become simply m_terminal->dispatch(uint8(input.keys[0]))?
     // Tell Readline about the input chord, and whether the binding resolver
     // has more bytes pending.
     struct shim_in

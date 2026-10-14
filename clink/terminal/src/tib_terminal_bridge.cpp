@@ -29,9 +29,6 @@ static_assert(terminal_in::input_terminal_resize == tib::c_input_resize);
 
 //------------------------------------------------------------------------------
 
-namespace
-{
-
 static void format_input_bytes(str_base& out, const char* bytes, uint32 len)
 {
     out.clear();
@@ -43,27 +40,45 @@ static void format_input_bytes(str_base& out, const char* bytes, uint32 len)
         out.trim();
 }
 
+static void terminal_log_read_key(int32 key, const char* _src)
+{
+    str<16> src;
+    if (_src)
+        src << "  (" << _src << ")";
+
+    if (key >= 0 && key < 0x80)
+        LOG("INPUT 0x%02x \"%c\"%s", key, key, src.c_str());
+    else
+        LOG("INPUT 0x%02x%s", key, src.c_str());
+}
+
+static void terminal_log_input_pipeline(const char* event, int32_t value, size_t count)
+{
+    LOG("INPUT tib.%s value=%d (0x%02x '%c') count=%zu", event, value, value, value, count);
+}
+
 class input_adapter : public tib::terminal_in
 {
 public:
-    explicit input_adapter(tib_terminal_bridge& bridge) : m_bridge(bridge) {}
+// TODO-TIB: why doesn't this use the passed-in tib::pushed_input at all?
+    static tib::terminal_in* make_terminal_in(tib::pushed_input&) { return new input_adapter(*g_terminal); }
     int32_t read() noexcept override { return m_bridge.read(); }
     bool avail(uint32_t timeout) noexcept override { return m_bridge.available(timeout); }
 private:
+    explicit input_adapter(tib_terminal_bridge& bridge) : m_bridge(bridge) {}
     tib_terminal_bridge& m_bridge;
 };
 
 class output_adapter : public tib::terminal_out
 {
 public:
-    explicit output_adapter(tib_terminal_bridge& bridge) : m_bridge(bridge) {}
+    static tib::terminal_out* make_terminal_out() { return new output_adapter(*g_terminal); }
     void write(const char* text, size_t len) noexcept override { m_bridge.write(text, len); }
     void ding() noexcept override { m_bridge.ding(); }
 private:
+    explicit output_adapter(tib_terminal_bridge& bridge) : m_bridge(bridge) {}
     tib_terminal_bridge& m_bridge;
 };
-
-} // namespace
 
 //------------------------------------------------------------------------------
 
@@ -201,17 +216,14 @@ void tib_terminal_bridge::begin(bool can_hide_cursor)
 
         m_old_input_hook = tib::hook_new_terminal_in;
         m_old_output_hook = tib::hook_new_terminal_out;
+        m_old_log_read_key_hook = tib::hook_log_read_key;
         m_old_input_trace_hook = tib::hook_input_trace;
-        tib::hook_new_terminal_in = [](tib::pushed_input&) -> tib::terminal_in* {
-            return new input_adapter(*g_terminal);
-        };
-        tib::hook_new_terminal_out = []() -> tib::terminal_out* {
-            return new output_adapter(*g_terminal);
-        };
-        tib::hook_input_trace = g_debug_log_input_pipeline ? +[](const char* event, int32_t value, size_t count) {
-            if (g_debug_log_input_pipeline)
-                LOG("INPUT tib.%s value=%d (0x%02x '%c') count=%zu", event, value, value, value, count);
-        } : nullptr;
+        tib::hook_new_terminal_in = input_adapter::make_terminal_in;
+        tib::hook_new_terminal_out = output_adapter::make_terminal_out;
+        if (g_debug_log_terminal.get())
+            tib::hook_log_read_key = terminal_log_read_key;
+        if (g_debug_log_input_pipeline)
+            tib::hook_input_trace = terminal_log_input_pipeline;
 
         reset_dispatch();
     }
@@ -255,6 +267,7 @@ void tib_terminal_bridge::end(bool can_show_cursor)
 
         tib::hook_new_terminal_in = m_old_input_hook;
         tib::hook_new_terminal_out = m_old_output_hook;
+        tib::hook_log_read_key = m_old_log_read_key_hook;
         tib::hook_input_trace = m_old_input_trace_hook;
 
         g_terminal = nullptr;
@@ -369,8 +382,10 @@ bool tib_terminal_bridge::dispatch_timeout()
 
     auto resolved = m_resolver.resolve_pending();
     m_ambiguous = resolved.ambiguous();
+
     if (g_debug_log_input_pipeline)
         LOG("INPUT bridge.timeout outcome=%d len=%zu ambiguous=%d", int32(resolved.outcome), resolved.sequence.length(), m_ambiguous);
+
     return resolved.dispatch();
 }
 
@@ -379,8 +394,10 @@ void tib_terminal_bridge::dispatch(uint8 key)
     assert(!m_timeout_pending);
     if (g_debug_log_input_pipeline)
         LOG("INPUT bridge.dispatch step key=%u (0x%02x '%c') pending=%d", key, key, key, m_resolver.pending());
+
     auto resolved = m_resolver.step(key);
     m_ambiguous = resolved.ambiguous();
+
     if (g_debug_log_input_pipeline)
     {
         str<80> bytes;
@@ -388,6 +405,7 @@ void tib_terminal_bridge::dispatch(uint8 key)
         LOG("INPUT bridge.dispatch resolved outcome=%d bytes=(%s) len=%zu pending=%d ambiguous=%d",
             int32(resolved.outcome), bytes.c_str(), resolved.sequence.length(), m_resolver.pending(), m_ambiguous);
     }
+
     resolved.dispatch();
 }
 

@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
-- [ ] Reconnect `debug.log_terminal` support for logging read input.
 - [ ] win_f2, win_f4, win_f9.
 - [ ] Bracketed paste.
 - [ ] `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
@@ -29,6 +28,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ### Done
 
+- [x] Reconnect `debug.log_terminal` support for logging read input.
 - [x] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).
 - [x] Readline's `quoted-insert` is very literal and doesn't directly handle UTF8 codepoints like `self-insert` does.  That seems ok since quoted-insert kind of only makes sense for inserting control characters or the leading ESC of a VT key sequence, so it seems fine for tib to also be literal about quoted insert.
 - [x] Activate `clink-select-complete` mode.

@@ -126,5 +126,6 @@ private:
     int32               m_began = 0;
     tib::hook_new_terminal_in_func_t m_old_input_hook = nullptr;
     tib::hook_new_terminal_out_func_t m_old_output_hook = nullptr;
+    tib::hook_log_read_key_func_t m_old_log_read_key_hook = nullptr;
     tib::hook_input_trace_func_t m_old_input_trace_hook = nullptr;
 };
