@@ -1802,7 +1802,6 @@ int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const ti
     if (had_selection)
         return 0;
 
-#ifdef TIB_TODO
     char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
@@ -1812,7 +1811,7 @@ ding:
     }
 
     int32 old_point = 0;
-    adjust_point_point(old_point, rl_point, prev_buffer);
+    adjust_point_point(old_point, ctx.get_caret(), prev_buffer);
     if (!prev_buffer[old_point])
         goto ding;
 
@@ -1823,8 +1822,7 @@ ding:
 
     str<> more;
     more.concat(prev_buffer + old_point, end_point - old_point);
-    rl_insert_text(more.c_str());
-#endif
+    ctx.insert_text(more.c_str());
 
     // Prevent generating a suggestion when inserting characters from the
     // previous command, otherwise it's often only possible to insert one
