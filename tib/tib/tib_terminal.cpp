@@ -19,6 +19,7 @@ bool g_coalesce_output = true;
 hook_new_terminal_in_func_t hook_new_terminal_in = nullptr;
 hook_new_terminal_out_func_t hook_new_terminal_out = nullptr;
 hook_input_trace_func_t hook_input_trace = nullptr;
+hook_log_read_key_func_t hook_log_read_key = nullptr;
 
 struct playback
 {
@@ -378,6 +379,8 @@ int32_t term_in()
             const size_t remaining = s_playback->m_text.length() - s_playback->m_index;
             hook_input_trace(s_playback->m_is_macro ? "read macro" : "read replay", uint8_t(c), remaining);
         }
+        if (hook_log_read_key)
+            hook_log_read_key(uint8_t(c), s_playback->m_is_macro ? "macro" : "replay");
 
         if (s_playback->m_index >= s_playback->m_text.length())
         {
@@ -395,13 +398,17 @@ int32_t term_in()
         const int32_t c = s_pushed.read();
         if (hook_input_trace)
             hook_input_trace("read pushed", c, s_pushed.size());
+        if (hook_log_read_key)
+            hook_log_read_key(c, "pushed");
         return c;
     }
 
     const int32_t c = s_terminal_in->read();
     assert(c < 0 || is_input_byte(c) || is_input_event(c));
     if (hook_input_trace)
-        hook_input_trace("read adapter", c, 0);
+        hook_input_trace("direct", c, 0);
+    if (hook_log_read_key)
+        hook_log_read_key(c, "direct");
     return c;
 }
 
@@ -450,7 +457,21 @@ int32_t term_in_peek()
 
     assert(!s_playback);
 
-    const int32_t c = term_in();
+    // Suppress logging; this is not a consuming read, it only fetches in
+    // order to facilitate a peek.  A later read will consume it, and that's
+    // when to log it.
+    int32_t c;
+    if (hook_log_read_key)
+    {
+        const auto old_log_hook = hook_log_read_key;
+        hook_log_read_key = nullptr;
+        c = term_in();
+        hook_log_read_key = old_log_hook;
+    }
+    else
+    {
+        c = term_in();
+    }
     if (c < 0)
         return c;
     assert(is_input_byte(c) || is_input_event(c));

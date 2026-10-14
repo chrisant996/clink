@@ -5,6 +5,46 @@
 #include "test.h"
 #include "test_util.h"
 #include "tib.h"
+#include "tib_private.h"
+
+static int32_t s_logged_key = -1;
+static int32_t s_logged_key_count = 0;
+
+static void log_read_key(int32_t key, const char* src)
+{
+    s_logged_key = key;
+    ++s_logged_key_count;
+}
+
+TEST_CASE("Terminal read key logging")
+{
+    struct restore_log_hook
+    {
+        tib::hook_log_read_key_func_t old = tib::hook_log_read_key;
+        ~restore_log_hook() { tib::hook_log_read_key = old; }
+    } restore;
+    tib::hook_log_read_key = log_read_key;
+    s_logged_key = -1;
+    s_logged_key_count = 0;
+
+    test_input_stream input("ab");
+    REQUIRE(tib::term_in_peek() == 'a');
+    REQUIRE(tib::term_in_peek() == 'a');
+    REQUIRE(s_logged_key_count == 0);
+    REQUIRE(tib::term_in() == 'a');
+    REQUIRE(s_logged_key == 'a');
+    REQUIRE(s_logged_key_count == 1);
+    REQUIRE(tib::term_in() == 'b');
+    REQUIRE(s_logged_key == 'b');
+    REQUIRE(s_logged_key_count == 2);
+
+    REQUIRE(tib::term_push_playback(true/*is_macro*/, "M", 1) > 0);
+    REQUIRE(tib::term_in_peek() == 'M');
+    REQUIRE(s_logged_key_count == 2);
+    REQUIRE(tib::term_in() == 'M');
+    REQUIRE(s_logged_key == 'M');
+    REQUIRE(s_logged_key_count == 3);
+}
 
 TEST_CASE("Terminal output interface")
 {

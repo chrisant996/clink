@@ -42,9 +42,12 @@ public:
 typedef terminal_in* (*hook_new_terminal_in_func_t)(pushed_input& pushed);
 typedef terminal_out* (*hook_new_terminal_out_func_t)();
 typedef void (*hook_input_trace_func_t)(const char* event, int32_t value, size_t count);
+// Called for consumed input, not for peeks.
+typedef void (*hook_log_read_key_func_t)(int32_t key, const char* src);
 extern hook_new_terminal_in_func_t hook_new_terminal_in;
 extern hook_new_terminal_out_func_t hook_new_terminal_out;
 extern hook_input_trace_func_t hook_input_trace;
+extern hook_log_read_key_func_t hook_log_read_key;
 
 void term_begin();
 void term_end();
