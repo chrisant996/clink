@@ -226,6 +226,7 @@ void tib_terminal_bridge::begin(bool can_hide_cursor)
             tib::hook_input_trace = terminal_log_input_pipeline;
 
         reset_dispatch();
+        m_only_simple = false;
     }
 
     if (m_in)
@@ -263,6 +264,7 @@ void tib_terminal_bridge::end(bool can_show_cursor)
     if (!m_began)
     {
         reset_dispatch();
+        m_only_simple = false;
         set_chord(nullptr, 0);
 
         tib::hook_new_terminal_in = m_old_input_hook;
@@ -304,29 +306,23 @@ nope:
         return false;
     }
 
-#ifdef TIB_TODO
-    // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_is_insert_next_callback_pending())
-        return true;
-#else
     if (quoted_insert_pending())
         return true;
-#endif
 
-#ifdef TIB_TODO
     // The F2, F4, and F9 console compatibility implementations can accept
-    // input, but extended keys are meaningless so don't accept them.  The
-    // intent is to allow printable textual input, control characters, and ESC.
-    if (win_fn_callback_pending())
+    // input, but extended keys are meaningless so don't accept them.  Allow
+    // printable textual input, control characters, and ESC.
+    if (m_only_simple)
     {
         const char* bindableEsc = get_bindable_esc();
         if (bindableEsc && strcmp(seq, bindableEsc) == 0)
             return true;
         if (len > 1 && seq[0] == '\x1b')
-            goto LNope;
+            goto nope;
         return true;
     }
 
+#ifdef TIB_TODO
     // Various states should only accept "simple" input, i.e. not CSI sequences,
     // so that unrecognized portions of key sequences don't bleed in as textual
     // input.
@@ -343,20 +339,11 @@ nope:
     if (len > 1 && seq[0] >= ' ' && terminal_in::is_input_byte(uint8(seq[0])))
         return true;
 
-    // NOTE:  Checking readline's keymap is incorrect when a special bind group
-    // is active that should block on_input from reaching readline.  But the way
-    // that blocking is achieved is by adding a "" binding that matches
-    // everything not explicitly bound in the keymap.  So it works out
+    // NOTE:  Checking tib's keymap is incorrect when a special bind group
+    // is active that should block on_input from reaching readline.  The way
+    // that blocking is achieved is by adding a "" catchall binding that
+    // matches everything not explicitly bound in the keymap.  So it works out
     // naturally, without additional effort.
-
-#ifdef TIB_TODO
-    // Using nullptr for the keymap starts from the root of the current keymap,
-    // but in a multi key sequence this needs to use the current dispatching
-    // node of the current keymap.
-    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
-    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
-        return true;
-#endif
 
     if (m_resolver.is_keyseq_recognized(seq, size_t(len)))
         return true;

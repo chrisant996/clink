@@ -288,8 +288,6 @@ void detect_console_theme()
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
-    assert(!is_test_harness());
-
     static str<48> s_popup;
 
     str<48> tmp;
@@ -299,6 +297,8 @@ const char* get_popup_colors()
         s_popup.format("0;%s", tmp.c_str());
         return s_popup.c_str();
     }
+
+    assert(!is_test_harness());
 
     static HMODULE hmod = GetModuleHandle("kernel32.dll");
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");

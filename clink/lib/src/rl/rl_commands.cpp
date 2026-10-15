@@ -19,6 +19,7 @@
 #include "clink_rl_signal.h"
 #include "rl_integration.h"
 #include "line_editor_integration.h"
+#include "char_reader.h"
 #include "suggestions.h"
 #include "line_queue.h"
 
@@ -1577,7 +1578,7 @@ ding:
 
 
 //------------------------------------------------------------------------------
-static int32 adjust_point_delta(int32& point, int32 delta, char* buffer)
+static int32 adjust_point_delta(int32& point, int32 delta, const char* buffer)
 {
     if (delta <= 0)
         return 0;
@@ -1592,40 +1593,20 @@ static int32 adjust_point_delta(int32& point, int32 delta, char* buffer)
         return 0;
     }
 
-    if (delta > length - point)
-        delta = length - point;
-
-    int32 tmp = point;
     int32 count = 0;
-
-#if defined (HANDLE_MULTIBYTE)
-    if (MB_CUR_MAX == 1 || rl_byte_oriented)
-#endif
+    while (delta-- && point < length)
     {
-        tmp += delta;
-        count += delta;
+        const int32 next = tib::forward_one_grapheme(buffer, length, point);
+        if (next <= point)
+            break;
+        point = next;
+        ++count;
     }
-#if defined (HANDLE_MULTIBYTE)
-    else
-    {
-        while (delta)
-        {
-            int32 was = tmp;
-            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
-            if (tmp <= was)
-                break;
-            count++;
-            delta--;
-        }
-    }
-#endif
-
-    point = tmp;
     return count;
 }
 
 //------------------------------------------------------------------------------
-static int32 adjust_point_point(int32& point, int32 target, char* buffer)
+static int32 adjust_point_point(int32& point, int32 target, const char* buffer)
 {
     if (target <= point)
         return 0;
@@ -1643,36 +1624,20 @@ static int32 adjust_point_point(int32& point, int32 target, char* buffer)
     if (target > length)
         target = length;
 
-    int32 tmp = point;
     int32 count = 0;
-
-#if defined (HANDLE_MULTIBYTE)
-    if (MB_CUR_MAX == 1 || rl_byte_oriented)
-#endif
+    while (point < target)
     {
-        count = target - tmp;
-        tmp = target;
+        const int32 next = tib::forward_one_grapheme(buffer, length, point);
+        if (next <= point)
+            break;
+        point = next;
+        ++count;
     }
-#if defined (HANDLE_MULTIBYTE)
-    else
-    {
-        while (tmp < target)
-        {
-            int32 was = tmp;
-            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
-            if (tmp <= was)
-                break;
-            count++;
-        }
-    }
-#endif
-
-    point = tmp;
-    return true;
+    return count;
 }
 
 //------------------------------------------------------------------------------
-static int32 adjust_point_keyseq(int32& point, const char* keyseq, char* buffer)
+static int32 adjust_point_keyseq(int32& point, const char* keyseq, const char* buffer)
 {
     if (!keyseq || !*keyseq)
         return 0;
@@ -1687,76 +1652,20 @@ static int32 adjust_point_keyseq(int32& point, const char* keyseq, char* buffer)
         return 0;
     }
 
-    int32 tmp = point;
     int32 count = 0;
-
-#if defined (HANDLE_MULTIBYTE)
-    if (MB_CUR_MAX == 1 || rl_byte_oriented)
-#endif
+    const int32 keyseq_len = int32(strlen(keyseq));
+    while (point < length)
     {
-        const char* found = strstr(buffer + tmp, keyseq);
-        int32 delta = found ? int32(found - (buffer + tmp)) : length - tmp;
-        tmp += delta;
-        count += delta;
+        if (point + keyseq_len <= length &&
+            memcmp(buffer + point, keyseq, keyseq_len) == 0)
+            break;
+        const int32 next = tib::forward_one_grapheme(buffer, length, point);
+        if (next <= point)
+            break;
+        point = next;
+        ++count;
     }
-#if defined (HANDLE_MULTIBYTE)
-    else
-    {
-        int32 keyseq_len = int32(strlen(keyseq));
-        while (buffer[tmp] && strncmp(buffer + tmp, keyseq, keyseq_len) != 0)
-        {
-            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
-            count++;
-        }
-    }
-#endif
-
-    if (tmp > length)
-        tmp = length;
-
-    point = tmp;
     return count;
-}
-
-//------------------------------------------------------------------------------
-static str<16, false> s_win_fn_input_buffer;
-static bool read_win_fn_input_char()
-{
-    int32 c;
-
-    RL_SETSTATE(RL_STATE_MOREINPUT);
-    c = rl_read_key();
-    RL_UNSETSTATE(RL_STATE_MOREINPUT);
-
-    if (c < 0)
-        return false;
-
-    if (RL_ISSTATE(RL_STATE_MACRODEF))
-        _rl_add_macro_char(c);
-
-#if defined (HANDLE_SIGNALS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
-        _rl_restore_tty_signals ();
-#endif
-
-    if (c == 27/*Esc*/ || c == 7/*^G*/)
-    {
-nope:
-        s_win_fn_input_buffer.clear();
-        return true;
-    }
-
-    s_win_fn_input_buffer.concat(reinterpret_cast<const char*>(&c), 1);
-
-    WCHAR_T wc;
-    mbstate_t mbs = {};
-    size_t validate = MBRTOWC(&wc, s_win_fn_input_buffer.c_str(), s_win_fn_input_buffer.length(), &mbs);
-
-    if (MB_NULLWCH(validate))
-        goto nope;
-
-    // Once there's a valid UTF8 character, the input is complete.
-    return !MB_INVALIDCH(validate);
 }
 
 //------------------------------------------------------------------------------
@@ -1834,101 +1743,67 @@ ding:
 }
 
 //------------------------------------------------------------------------------
-static int32 finish_win_f2()
+static void finish_win_f2(char_reader_result result)
 {
 #ifdef TIB_TODO
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
         _rl_restore_tty_signals();
 #endif
+#endif
 
-    rl_clear_message();
+    auto& ctx = *g_tib;
+    ctx.set_message_text(nullptr, 0);
+    if (!result.success)
+        return;
 
-    char* prev_buffer = get_previous_command();
-    if (!prev_buffer)
+    const char* previous = get_previous_command();
+    if (!previous)
+    {
+        tib::ding();
+        return;
+    }
+
+    int32 old_point = 0;
+    adjust_point_point(old_point, ctx.get_caret(), previous);
+    if (!previous[old_point])
+        return;
+
+    int32 end_point = old_point;
+    const int32 count = adjust_point_keyseq(end_point, result.utf8.c_str(), previous);
+    if (end_point <= old_point)
+        return;
+
+    int32 del_point = ctx.get_caret();
+    adjust_point_delta(del_point, count, ctx.get_text().c_str());
+
+    str_moveable copy;
+    copy.concat(previous + old_point, end_point - old_point);
+    ctx.begin_undo_group();
+    ctx.remove_text(ctx.get_caret(), del_point);
+    ctx.insert_text(copy.c_str());
+    ctx.end_undo_group();
+}
+
+//------------------------------------------------------------------------------
+int32_t win_f2(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    if (!g_result)
+        return 0;
+
+    if (!read_one_codepoint(*g_result, finish_win_f2))
     {
         tib::ding();
         return 0;
     }
 
-    if (s_win_fn_input_buffer.empty())
-        return 0;
-
-    int32 old_point = 0;
-    adjust_point_point(old_point, rl_point, prev_buffer);
-    if (prev_buffer[old_point])
-    {
-        int32 end_point = old_point;
-        int32 count = adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), prev_buffer);
-        if (end_point > old_point)
-        {
-            // How much to delete.
-            int32 del_point = rl_point;
-            adjust_point_delta(del_point, count, rl_line_buffer);
-
-            // What to insert.
-            str<> more;
-            more.concat(prev_buffer + old_point, end_point - old_point);
-
-            rl_begin_undo_group();
-            rl_delete_text(rl_point, del_point);
-            rl_insert_text(more.c_str());
-            rl_end_undo_group();
-        }
-    }
-#endif
-
+    tib::cstring msg;
+    msg.append_color(get_popup_colors());
+    msg.append("(enter char to copy up to: )");
+    msg.append_color(ctx.get_color_table()->get_color(tib::color_element::base));
+    msg.append(" ");
+    ctx.set_message_text(msg.c_str(), cell_count(msg.c_str()));
     return 0;
-}
-
-//------------------------------------------------------------------------------
-#if defined (READLINE_CALLBACKS)
-int32 _win_f2_callback(_rl_callback_generic_arg *data)
-{
-#ifdef TIB_TODO
-    if (!read_win_fn_input_char())
-        return 0;
-
-    /* Deregister function, let rl_callback_read_char deallocate data */
-    _rl_callback_func = 0;
-    want_redisplay_readline();
-
-    return finish_win_f2();
-#else
-    return 0;
-#endif
-}
-#endif
-
-//------------------------------------------------------------------------------
-static const char c_normal[] = "\001\x1b[m\002";
-int32 win_f2(int32 count, int32 invoking_key)
-{
-#ifdef TIB_TODO
-    s_win_fn_input_buffer.clear();
-    rl_message("\x01\x1b[%sm\x02(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
-
-#if defined (HANDLE_SIGNALS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
-        _rl_disable_tty_signals ();
-#endif
-
-#if defined (READLINE_CALLBACKS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK))
-    {
-        _rl_callback_data = _rl_callback_data_alloc(count);
-        _rl_callback_func = _win_f2_callback;
-        return 0;
-    }
-#endif
-
-    while (!read_win_fn_input_char())
-        ;
-
-    return finish_win_f2();
-#else
-    return 0;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1939,67 +1814,46 @@ int32_t win_f3(tib::editor_context& ctx, int32_t key, const char* name, const ti
 }
 
 //------------------------------------------------------------------------------
-static int32 finish_win_f4()
+static void finish_win_f4(char_reader_result result)
 {
 #ifdef TIB_TODO
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
         _rl_restore_tty_signals();
 #endif
-
-    rl_clear_message();
-
-    if (s_win_fn_input_buffer.empty())
-        return 0;
-
-    int32 end_point = rl_point;
-    adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), rl_line_buffer);
-    if (end_point > rl_point)
-        rl_delete_text(rl_point, end_point);
 #endif
 
-    return 0;
+    auto& ctx = *g_tib;
+    ctx.set_message_text(nullptr, 0);
+    if (!result.success)
+        return;
+
+    const int32 caret = ctx.get_caret();
+    int32 end_point = caret;
+    adjust_point_keyseq(end_point, result.utf8.c_str(), ctx.get_text().c_str());
+    if (end_point > caret)
+        ctx.remove_text(caret, end_point);
 }
 
 //------------------------------------------------------------------------------
-#if defined (READLINE_CALLBACKS)
-int32 _win_f4_callback(_rl_callback_generic_arg *data)
+int32_t win_f4(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    if (!read_win_fn_input_char())
+    if (!g_result)
         return 0;
 
-    /* Deregister function, let rl_callback_read_char deallocate data */
-    _rl_callback_func = 0;
-    want_redisplay_readline();
-
-    return finish_win_f4();
-}
-#endif
-
-//------------------------------------------------------------------------------
-int32 win_f4(int32 count, int32 invoking_key)
-{
-    s_win_fn_input_buffer.clear();
-    rl_message("\x01\x1b[%sm\x02(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
-
-#if defined (HANDLE_SIGNALS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
-        _rl_disable_tty_signals ();
-#endif
-
-#if defined (READLINE_CALLBACKS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK))
+    if (!read_one_codepoint(*g_result, finish_win_f4))
     {
-        _rl_callback_data = _rl_callback_data_alloc(count);
-        _rl_callback_func = _win_f4_callback;
+        tib::ding();
         return 0;
     }
-#endif
 
-    while (!read_win_fn_input_char())
-        ;
-
-    return finish_win_f4();
+    tib::cstring msg;
+    msg.append_color(get_popup_colors());
+    msg.append("(enter char to delete up to: )");
+    msg.append_color(ctx.get_color_table()->get_color(tib::color_element::base));
+    msg.append(" ");
+    ctx.set_message_text(msg.c_str(), cell_count(msg.c_str()));
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -2048,154 +1902,55 @@ ding:
 }
 
 //------------------------------------------------------------------------------
-static int32 s_history_number = -1;
-static int32 finish_win_f9()
+static void update_win_f9_message(int32 number)
+{
+    tib::cstring msg;
+    msg.append_color(get_popup_colors());
+    msg.append("(enter history number: ");
+    if (number >= 0)
+    {
+        str<16> digits;
+        digits.format("%d", number);
+        msg.append(digits.c_str(), digits.length());
+    }
+    msg.append(")");
+    msg.append_color(g_tib->get_color_table()->get_color(tib::color_element::base));
+    msg.append(" ");
+    g_tib->set_message_text(msg.c_str(), cell_count(msg.c_str()));
+}
+
+//------------------------------------------------------------------------------
+static void finish_win_f9(read_number_result result)
 {
 #ifdef TIB_TODO
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
         _rl_restore_tty_signals();
 #endif
-
-    rl_clear_message();
-
-    if (s_history_number >= 1)
-    {
-        --s_history_number;
-        if (s_history_number >= history_length)
-            s_history_number = history_length - 1;
-        if (history_length > 0)
-        {
-            rl_begin_undo_group();
-            rl_delete_text(0, rl_end);
-            rl_point = 0;
-            rl_insert_text(get_history(s_history_number));
-            rl_end_undo_group();
-        }
-    }
 #endif
 
+    g_tib->set_message_text(nullptr, 0);
+    if (!result.success || result.number <= 0 || history_length <= 0)
+        return;
+
+    const int32 index = min(result.number - 1, history_length - 1);
+    HIST_ENTRY** entries = history_list();
+    if (!entries || !entries[index])
+        return;
+
+    g_tib->begin_undo_group();
+    g_tib->remove_text(0, g_tib->get_length());
+    g_tib->set_caret(0);
+    g_tib->insert_text(entries[index]->line);
+    g_tib->end_undo_group();
+}
+
+//------------------------------------------------------------------------------
+int32_t win_f9(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    if (!g_result || !read_number(*g_result, finish_win_f9, update_win_f9_message))
+        tib::ding();
     return 0;
-}
-
-//------------------------------------------------------------------------------
-static void set_f9_message()
-{
-#ifdef TIB_TODO
-    if (s_history_number >= 0)
-        rl_message("\x01\x1b[%sm\x02(enter history number: %d)%s ", get_popup_colors(), s_history_number, c_normal);
-    else
-        rl_message("\x01\x1b[%sm\x02(enter history number: )%s ", get_popup_colors(), c_normal);
-#endif
-}
-
-//------------------------------------------------------------------------------
-#ifdef TIB_TODO
-static bool read_history_digit()
-{
-    int32 c;
-
-    RL_SETSTATE(RL_STATE_MOREINPUT);
-    c = rl_read_key();
-    RL_UNSETSTATE(RL_STATE_MOREINPUT);
-
-    if (c < 0)
-        return false;
-
-    if (RL_ISSTATE(RL_STATE_MACRODEF))
-        _rl_add_macro_char(c);
-
-#if defined (HANDLE_SIGNALS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
-        _rl_restore_tty_signals ();
-#endif
-
-    if (c >= '0' && c <= '9')
-    {
-        if (s_history_number < 0)
-            s_history_number = 0;
-        if (s_history_number <= 99999)
-        {
-            s_history_number *= 10;
-            s_history_number += c - '0';
-        }
-    }
-    else if (c == 27/*Esc*/ || c == 7/*^G*/)
-    {
-        s_history_number = -1;
-        return true;
-    }
-    else if (c == 13/*Enter*/)
-    {
-        return true;
-    }
-    else if (c == 8/*Backspace*/)
-    {
-        s_history_number /= 10;
-        if (s_history_number == 0)
-            s_history_number = -1;
-    }
-
-    set_f9_message();
-    return false;
-}
-#endif
-
-//------------------------------------------------------------------------------
-#if defined (READLINE_CALLBACKS)
-int32 _win_f9_callback(_rl_callback_generic_arg *data)
-{
-#ifdef TIB_TODO
-    if (!read_history_digit())
-        return 0;
-
-    /* Deregister function, let rl_callback_read_char deallocate data */
-    _rl_callback_func = 0;
-    want_redisplay_readline();
-
-    return finish_win_f9();
-#else
-    return 0;
-#endif
-}
-#endif
-
-//------------------------------------------------------------------------------
-int32 win_f9(int32 count, int32 invoking_key)
-{
-#ifdef TIB_TODO
-    s_history_number = -1;
-    set_f9_message();
-
-#if defined (HANDLE_SIGNALS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
-        _rl_disable_tty_signals ();
-#endif
-
-#if defined (READLINE_CALLBACKS)
-    if (RL_ISSTATE(RL_STATE_CALLBACK))
-    {
-        _rl_callback_data = _rl_callback_data_alloc(count);
-        _rl_callback_func = _win_f9_callback;
-        return 0;
-    }
-#endif
-
-    while (!read_history_digit())
-        ;
-
-    return finish_win_f9();
-#else
-    return 0;
-#endif
-}
-
-//------------------------------------------------------------------------------
-bool win_fn_callback_pending()
-{
-    return (_rl_callback_func == _win_f2_callback ||
-            _rl_callback_func == _win_f4_callback ||
-            _rl_callback_func == _win_f9_callback);
 }
 
 

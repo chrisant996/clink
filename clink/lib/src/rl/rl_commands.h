@@ -97,13 +97,12 @@ int32   clink_popup_history(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
-int32   win_f2(int32 count, int32 invoking_key);
+int32_t win_f2(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t win_f3(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
-int32   win_f4(int32 count, int32 invoking_key);
+int32_t win_f4(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t win_f6(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32   win_f7(int32 count, int32 invoking_key);
-int32   win_f9(int32 count, int32 invoking_key);
-bool    win_fn_callback_pending();
+int32_t win_f9(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
 // Readline compatibility.

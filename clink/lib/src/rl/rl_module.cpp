@@ -2538,7 +2538,7 @@ bool rl_module::accepts_mouse_input(mouse_input_type)
 
     // The F2, F4, and F9 console compatibility implementations only accept
     // keyboard input.
-    if (win_fn_callback_pending())
+    if (is_char_reader_active())
         return false;
 
     // Various states should only accept "simple" input.
@@ -2592,7 +2592,7 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
     }
     else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
              rl_is_insert_next_callback_pending() ||
-             win_fn_callback_pending())
+             is_char_reader_active())
 #else
     if (quoted_insert_pending())
 #endif

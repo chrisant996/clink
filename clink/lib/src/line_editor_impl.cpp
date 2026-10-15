@@ -248,6 +248,7 @@ line_editor_impl::line_editor_impl(const desc& desc)
     add_module(m_selectcomplete);
     add_module(m_textlist);
     add_module(m_suggestionlist);
+    add_module(m_codepoint_reader);
 
     assert(g_terminal);
 

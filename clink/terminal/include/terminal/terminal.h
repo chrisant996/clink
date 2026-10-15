@@ -73,6 +73,7 @@ public:
     void                begin(bool can_hide_cursor=true);
     void                end(bool can_show_cursor=true);
     void                redirect(terminal_out* redirect);
+    void                only_simple_input(bool only_simple) { m_only_simple = only_simple; }
 
     void                add_target(std::weak_ptr<tib::dispatcher_target> target);
     bool                is_bound(const char* seq, int32 len);
@@ -121,6 +122,7 @@ private:
     tib::binding_resolver m_resolver;
     bool                m_ambiguous = false;
     bool                m_timeout_pending = false;
+    bool                m_only_simple = false;
     const char*         m_chord = nullptr;
     uint32              m_chord_len = 0;
     int32               m_began = 0;

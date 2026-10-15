@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "suggestionlist_impl.h"
 #include "selectcomplete_impl.h" // For is_select_complete_active().
+#include "char_reader_impl.h" // For is_char_reader_active().
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
@@ -357,7 +358,9 @@ void suggestionlist_impl::on_end_line()
 //------------------------------------------------------------------------------
 void suggestionlist_impl::on_need_input(int32& bind_group)
 {
-    if (m_disabled || is_select_complete_active())
+    if (m_disabled ||
+        is_select_complete_active() ||
+        is_char_reader_active())
         return;
 
     if (m_index >= 0 && !is_locked_against_suggestions())

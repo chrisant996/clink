@@ -10,6 +10,7 @@
 #include "terminal/input_idle.h"
 #include "terminal/key_tester.h"
 #include "pager_impl.h"
+#include "char_reader_impl.h"
 #include "selectcomplete_impl.h"
 #include "textlist_impl.h"
 #include "suggestionlist_impl.h"
@@ -184,6 +185,7 @@ private:
     matches_impl        m_regen_matches;
     matches_impl        m_matches;
     pager_impl          m_pager;
+    char_reader_impl m_codepoint_reader;
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;
     suggestionlist_impl m_suggestionlist;
