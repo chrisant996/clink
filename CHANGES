@@ -6,6 +6,8 @@
 
 - Improved terminal display updates by using DECSET Synchronize Output when available, for displaying the prompt, the input line, the suggestions list, popup lists, and `clink-select-complete`.
 - Added an optimization for display updates in `clink-select-complete` and popup lists.
+- Fixed an inline suggestion being empty by mistake if `autosuggest.strategy` has `complete` before `history` and the last word has a substring match for completion, but no prefix match.
+- Fixed an obscure edge case that could potentially result in out of order input.
 
 #### v1.9.34
 
