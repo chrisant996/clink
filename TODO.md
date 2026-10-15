@@ -6,10 +6,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
-- [ ] win_f2, win_f4, win_f9.
 - [ ] Bracketed paste.
 - [ ] `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
-- [ ] Self-insert count (numeric argument) could apply to graphemes.  Will require the ambiguous input timeout.  Can be constrained to apply only _when count > 1 AND non-ASCII input was entered_.  Or maybe even constrain based on presence of a joiner or variant selector or etc.
 - [ ] History commands.
 - [ ] Suggestion list full functionality.
   - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
@@ -25,9 +23,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Need to swap `\x08` and `\x7f` again, oops.
 - [ ] VI mode.
 - [ ] `_rl_show_mode_in_prompt` and emacs and vi modes.
+- [ ] Self-insert count (numeric argument) could apply to graphemes.  Will require the ambiguous input timeout.  Could be constrained to apply only when count > 1, but everything else requires stateful inspection of _future_ input (e.g. A followed by a diacritic, or a codepoint followed by a ZWJ, or etc).
 
 ### Done
 
+- [x] win_f2, win_f4, win_f9.
 - [x] Reconnect `debug.log_terminal` support for logging read input.
 - [x] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).
 - [x] Readline's `quoted-insert` is very literal and doesn't directly handle UTF8 codepoints like `self-insert` does.  That seems ok since quoted-insert kind of only makes sense for inserting control characters or the leading ESC of a VT key sequence, so it seems fine for tib to also be literal about quoted insert.
