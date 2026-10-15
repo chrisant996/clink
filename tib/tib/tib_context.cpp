@@ -1528,6 +1528,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
 
     const auto was_kill_command = get_was_kill_command();
     const bool was_recording = m_recording_macro;
+    bool prefix_meta_dispatched = false;
     size_t recording_length;
 
     if (binding && *binding)
@@ -1554,7 +1555,9 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                     ret = func(*this, key, name, resolved);
                     if (ret == c_dispatch_request_quoted_insert)
                         m_quoted_insert_count = get_numeric_argument();
-                    set_last_command(name, func);
+                    prefix_meta_dispatched = (func == prefix_meta);
+                    if (!prefix_meta_dispatched)
+                        set_last_command(name, func);
                 }
                 else
                 {
@@ -1624,6 +1627,12 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
             if (m_last_macro.length() > recording_length)
                 m_last_macro.set_length(recording_length);
         }
+    }
+
+    if (prefix_meta_dispatched)
+    {
+        set_auto_clear_numeric_argument(false);
+        return ret;
     }
 
     if (was_kill_command >= get_was_kill_command())

@@ -698,6 +698,14 @@ int32_t universal_argument(tib::editor_context& ctx, int32_t key, const char* na
     return 0;
 }
 
+int32_t prefix_meta(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
+{
+    static const char prefix = 0x1b;
+    if (term_push_playback(false/*is_macro*/, &prefix, 1) <= 0)
+        ding();
+    return 0;
+}
+
 //------------------------------------------------------------------------------
 
 int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
@@ -1079,6 +1087,7 @@ static const editor_command c_commands[] =
     { "lower-case", lower_case },
     { "mouse-input", mouse_input },
     { "paste", paste },
+    { "prefix-meta", prefix_meta },
     { "quoted-insert", quoted_insert },
     { "redisplay", redisplay },
     { "redo", redo },

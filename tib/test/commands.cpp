@@ -132,6 +132,24 @@ static int32_t dummy_command(tib::editor_context&, int32_t, const char*, const t
     return 0;
 }
 
+TEST_CASE("Prefix meta command")
+{
+    tib::editor_context context;
+    context.initialize("abc");
+    context.set_last_command("dummy-command", dummy_command);
+    context.set_numeric_argument(3);
+    context.set_mark_active();
+    MAKE_CLEANUP([]() { tib::term_clear_playback(); });
+
+    const tib::binding_target binding = tib::binding_target_func("prefix-meta");
+    REQUIRE(context.dispatch("\030p", 'p', &binding, nullptr) == 0);
+    REQUIRE(context.get_last_command_func() == dummy_command);
+    REQUIRE(context.get_numeric_argument() == 3);
+    REQUIRE(context.has_numeric_argument());
+    REQUIRE(context.is_mark_active());
+    REQUIRE(tib::term_in() == 0x1b);
+}
+
 TEST_CASE("Abort command")
 {
     SECTION("resets editor state")
