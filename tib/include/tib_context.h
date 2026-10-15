@@ -98,6 +98,7 @@ public:
     void                set_right_text(const char* right, uint16_t width);
     void                set_suggestion_text(const char* suggestion, size_t len=c_auto_length);
     void                set_usage_text(const char* usage, uint16_t width);
+    void                set_message_text(const char* message, uint16_t width);
     void                set_additional_lines(const std::vector<additional_display_line>& lines);
     void                clear_additional_lines();
 
@@ -262,6 +263,7 @@ private:
     uint32_t            m_overwrite_input_change_counter = 0;
     uint32_t            m_overwrite_input_navigation_counter = 0;
     cstring             m_last_command_name;
+    text_and_width      m_message_text;
     editor_command_func_t m_last_command_func = nullptr;
     std::map<cstring, cstring, cstring_less> m_named_values;
     int32_t             m_dispatching = 0;

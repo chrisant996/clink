@@ -287,6 +287,7 @@ void editor_context::reset_state() noexcept
     m_can_drag = false;
     clear_overwrite_input();
     m_named_values.clear();
+    m_message_text.clear();
     clear_numeric_argument();
 
     m_last_command_name.clear();
@@ -339,6 +340,15 @@ void editor_context::set_suggestion_text(const char* suggestion, size_t len)
 void editor_context::set_usage_text(const char* usage, uint16_t width)
 {
     m_display.set_usage_text(usage, width);
+}
+
+void editor_context::set_message_text(const char* message, uint16_t width)
+{
+    if (message && *message)
+        m_message_text.set(message, width);
+    else
+        m_message_text.clear();
+    apply_message_text();
 }
 
 void editor_context::set_additional_lines(const std::vector<additional_display_line>& lines)
@@ -1061,7 +1071,7 @@ void editor_context::apply_message_text()
     }
     else
     {
-        m_display.set_message_text(nullptr, 0);
+        m_display.set_message_text(m_message_text.c_str(), m_message_text.width());
     }
 }
 
