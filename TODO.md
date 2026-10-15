@@ -6,8 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## TIB
 
-- [ ] Bracketed paste.
-- [ ] `prefix-meta` should not affect dispatch state (no last command, no numeric argument, etc) but should push pending input of `\x27`.
 - [ ] History commands.
 - [ ] Suggestion list full functionality.
   - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
@@ -23,10 +21,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Need to swap `\x08` and `\x7f` again, oops.
 - [ ] VI mode.
 - [ ] `_rl_show_mode_in_prompt` and emacs and vi modes.
+- [ ] Bracketed paste:  ON: `\x1b[?2004h`, OFF: `\x1b[?2004l`, BEGIN: `\x1b[200~`, END: `\x1b[201~`.  Supporting this everywhere correctly is non-trivial.
 - [ ] Self-insert count (numeric argument) could apply to graphemes.  Will require the ambiguous input timeout.  Could be constrained to apply only when count > 1, but everything else requires stateful inspection of _future_ input (e.g. A followed by a diacritic, or a codepoint followed by a ZWJ, or etc).
 
 ### Done
 
+- [x] `prefix-meta` preserves dispatch state and pushes pending input of 0x1b.
 - [x] win_f2, win_f4, win_f9.
 - [x] Reconnect `debug.log_terminal` support for logging read input.
 - [x] Readline handles _counted self insert for codepoints_, not just bytes.  Tib needs to handle that as well.  Read-ahead is unreasonable because (1) I don't want any non-zero timeout and (2) there's no guarantee of additional input and (3) the Windows console input subsystem has known issues where it briefly says no input is available even though there's lots of queued input.  **SO**, I think tib has to use a state machine across multiple self-insert inputs (yeesh).

@@ -11,6 +11,10 @@ namespace tib {
 
 extern bool g_coalesce_output;
 
+#ifdef INCLUDE_BRACKETED_PASTE
+extern bool g_bracketed_paste;
+#endif
+
 constexpr int16_t c_input_error         = -1;
 constexpr int16_t c_input_eof           = 0x0100;
 constexpr int16_t c_input_resize        = 0x0200;

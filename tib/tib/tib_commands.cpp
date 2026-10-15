@@ -706,6 +706,17 @@ int32_t prefix_meta(editor_context& ctx, int32_t key, const char* name, const re
     return 0;
 }
 
+#ifdef INCLUDE_BRACKETED_PASTE
+#error NYI.
+int32_t bracketed_paste_begin(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
+{
+    // TODO: this specific command is trivial to implement, but the hard part
+    // is making bracketed paste work correctly for all input scenarios, not
+    // just this one.  Hosts will need help hooking up support everywhere.
+    return 0;
+}
+#endif
+
 //------------------------------------------------------------------------------
 
 int32_t start_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
@@ -1056,6 +1067,9 @@ static const editor_command c_commands[] =
     { "backward-char", backward_char },
     { "backward-word", backward_word },
     { "begin-of-line", begin_of_line },
+#ifdef INCLUDE_BRACKETED_PASTE
+    { "bracketed-paste-begin", bracketed_paste_begin },
+#endif
     { "call-last-kbd-macro", call_last_kbd_macro },
     { "capitalize", capitalize },
     { "clear-selection", clear_selection },

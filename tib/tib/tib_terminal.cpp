@@ -16,6 +16,10 @@ namespace tib {
 
 bool g_coalesce_output = true;
 
+#ifdef INCLUDE_BRACKETED_PASTE
+bool g_bracketed_paste = false;
+#endif
+
 hook_new_terminal_in_func_t hook_new_terminal_in = nullptr;
 hook_new_terminal_out_func_t hook_new_terminal_out = nullptr;
 hook_input_trace_func_t hook_input_trace = nullptr;
@@ -38,6 +42,10 @@ static terminal_out* s_terminal_out = nullptr;
 static terminal_out* s_terminal_old_out = nullptr;
 static int32_t s_term_began = 0;
 static bool s_term_zombie = false;
+
+#ifdef INCLUDE_BRACKETED_PASTE
+static bool s_bracketed_paste = false;
+#endif
 
 #ifdef _WIN32
 #ifdef DEBUG
@@ -253,7 +261,8 @@ void term_begin()
         s_term_began = 0;
     }
 
-    if (!s_term_began)
+    const bool begin = !s_term_began;
+    if (begin)
     {
         static bool s_init_wcwidths = true;
         if (s_init_wcwidths)
@@ -270,6 +279,17 @@ void term_begin()
     }
 
     ++s_term_began;
+
+    if (begin)
+    {
+#ifdef INCLUDE_BRACKETED_PASTE
+        if (g_bracketed_paste)
+        {
+            s_bracketed_paste = true;
+            term_out("\x1b[?2004h", 8);
+        }
+#endif
+    }
 }
 
 void term_end()
@@ -287,6 +307,14 @@ void term_end()
     if (s_term_began == 1)
     {
         display_accumulator coalesce;
+
+#ifdef INCLUDE_BRACKETED_PASTE
+        if (s_bracketed_paste)
+        {
+            s_bracketed_paste = false;
+            term_out("\x1b[?2004l", 8);
+        }
+#endif
 
         term_out(c_show_cursor);
         // FUTURE: cursor shape.
