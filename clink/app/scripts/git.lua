@@ -797,10 +797,10 @@ end
 --- <li><code>"rebase"</code>: a rebase is in progress (includes step and total).
 --- <li><code>"am"</code>: a "git am" is in progress (includes step and total).
 --- <li><code>"am/rebase"</code>: a "git am" is in progress (includes step and total).
---- <li><code>"merge"</code>: a merge is in progress.
---- <li><code>"cherry-pick"</code>: a cherry-pick is in progress.
---- <li><code>"revert"</code>: a revert is in progress.
---- <li><code>"bisect"</code>: a bisect is in progress.
+--- <li><code>"merging"</code>: a merge is in progress.
+--- <li><code>"cherry-picking"</code>: a cherry-pick is in progress.
+--- <li><code>"reverting"</code>: a revert is in progress.
+--- <li><code>"bisecting"</code>: a bisect is in progress.
 --- </ul>
 ---
 --- -show:  local action, step, total = git.getaction()
