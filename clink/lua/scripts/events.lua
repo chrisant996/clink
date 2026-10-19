@@ -25,7 +25,7 @@ local thresholds = {
 --------------------------------------------------------------------------------
 local elapsed_this_event
 local force_diag_events
-local function log_cost(tick, c, event)
+local function log_cost(tick, c, event) -- luacheck: ignore event
     local elapsed = (os.clock() - tick) * 1000
     local cost = c.cost
     if not cost then
