@@ -525,6 +525,10 @@ end
 --- </ol>
 ---
 --- Or when unsuccessful it returns nil.
+---
+--- <strong>Compatibility Note:</strong> The return values were backwards in
+--- v1.9.34 and older.  The return values are in the correct order (ahead,
+--- behind) in v1.9.35 and newer.
 function git.getaheadbehind()
     local ahead, behind
 
@@ -532,7 +536,7 @@ function git.getaheadbehind()
         ahead = git._fake.status and git._fake.status.ahead
         behind = git._fake.status and git._fake.status.behind
     else
-        local file = io.popen(git.makecommand("rev-list --count --left-right @{upstream}...HEAD"))
+        local file = io.popen(git.makecommand("rev-list --count --left-right HEAD...@{upstream}"))
         if not file then return end
 
         for line in file:lines() do
