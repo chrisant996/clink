@@ -73,6 +73,10 @@ int32 main(int32 argc, char** argv)
     settings::TEST_set_ever_loaded();
 #endif
 
+    // Set a controlled PATH to inhibit system configuration from affecting
+    // the unit tests.
+    os::set_env("PATH", "%SystemRoot%\\system32");
+
     os::set_shellname(L"clink_test_harness");
     set_noasync_recognizer();
     set_test_harness();
