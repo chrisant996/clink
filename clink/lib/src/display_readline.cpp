@@ -26,6 +26,7 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "line_editor_integration.h"
+#include "selectcomplete_impl.h"
 #include "suggestionlist_impl.h"
 #include "hinter.h"
 
@@ -2367,10 +2368,11 @@ void display_manager::display()
         }
     }
 
-    if (invalidate_display ||
-        m_curr.has_comment_row() != next->has_comment_row() ||
-        strcmp(m_curr.get_comment_row(), next->get_comment_row()) ||
-        new_botlin != old_botlin)
+    if (!is_select_complete_active() &&
+        (invalidate_display ||
+         m_curr.has_comment_row() != next->has_comment_row() ||
+         strcmp(m_curr.get_comment_row(), next->get_comment_row()) ||
+         new_botlin != old_botlin))
     {
         bool reset_col = false;
 
