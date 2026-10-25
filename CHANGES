@@ -11,6 +11,7 @@
 - Fixed an inline suggestion being empty by mistake if `autosuggest.strategy` has `complete` before `history` and the last word has a substring match for completion, but no prefix match.
 - Fixed `git.getaheadbehind()` return values, which were backwards.
 - Fixed an obscure edge case that could potentially result in out of order input.
+- Fixed [#913](https://github.com/chrisant996/clink/issues/913); Clink command sometimes resolves to a nonexistent executable in the DLL cache folder.
 
 #### v1.9.34
 
