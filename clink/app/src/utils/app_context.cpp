@@ -102,16 +102,49 @@ bool set_installed_scripts(const char* in)
 //------------------------------------------------------------------------------
 app_context::desc::desc()
 {
+    bin_dir[0] = '\0';
     state_dir[0] = '\0';
     script_path[0] = '\0';
 }
 
+//------------------------------------------------------------------------------
+bool app_context::desc::init_binaries_dir()
+{
+    if (!bin_dir[0])
+    {
+        WCHAR wmodule[280];
+        DWORD len = GetModuleFileNameW(nullptr, wmodule, sizeof_array(wmodule));
+        if (!len || len >= sizeof_array(wmodule))
+        {
+            const DWORD err = GetLastError();
+            fprintf(stderr, "Unable to get binaries directory (%d).\n", err);
+            return false;
+        }
+
+        wmodule[len] = 0;
+        str_moveable module(wmodule);
+        path::get_directory(module);
+
+        static_assert(sizeof_array(bin_dir) > 1);
+        if (module.length() >= sizeof_array(bin_dir) - 1)
+        {
+            fprintf(stderr, "Binaries directory is too long.\n");
+            return false;
+        }
+
+        str_base out(bin_dir);
+        out.copy(module.c_str());
+    }
+    return true;
+}
 
 
-//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 app_context::app_context(const desc& desc)
 : m_desc(desc)
 {
+    str_base bin_dir(m_desc.bin_dir);
     str_base state_dir(m_desc.state_dir);
     str_base script_path(m_desc.script_path);
 
@@ -135,13 +168,15 @@ app_context::app_context(const desc& desc)
             path::tilde_expand(env.c_str(), state_dir, true/*use_appdata_local*/);
     }
 
-    // Look for a state directory that's been inherited in our environment.
-    if (state_dir.empty())
-        os::get_env("=clink.profile", state_dir);
-
-    // Look for a script directory that's been inherited in our environment.
-    if (script_path.empty())
-        os::get_env("=clink.scripts", script_path);
+    // Look for directories that have been inherited in our environment.
+    {
+        if (bin_dir.empty())
+            os::get_env("=clink.bin", bin_dir);
+        if (state_dir.empty())
+            os::get_env("=clink.profile", state_dir);
+        if (script_path.empty())
+            os::get_env("=clink.scripts", script_path);
+    }
 
     // Still no state directory set? Derive one.
     if (state_dir.empty())
@@ -198,7 +233,7 @@ bool app_context::is_quiet() const
 //------------------------------------------------------------------------------
 void app_context::get_binaries_dir(str_base& out) const
 {
-    out = m_binaries.c_str();
+    out.copy(m_desc.bin_dir);
 }
 
 //------------------------------------------------------------------------------
@@ -391,36 +426,7 @@ void app_context::get_default_file(const char* name, str_base& out) const
 //-----------------------------------------------------------------------------
 void app_context::init_binaries_dir()
 {
-    void* base = vm().get_alloc_base((void*)"");
-    if (base == nullptr)
-        return;
-
-    wstr<280> wout;
-    DWORD wout_len = GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
-    if (!wout_len || wout_len >= wout.size())
-        return;
-
-    // Check for a .origin suffix indicating that we're using a copied DLL.
-    int32 out_length = wout_len;
-    wout << L".origin";
-    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
-        OPEN_EXISTING, 0, nullptr);
-    if (origin != INVALID_HANDLE_VALUE)
-    {
-        DWORD read;
-        int32 size = GetFileSize(origin, nullptr);
-        m_binaries.reserve(size);
-        ReadFile(origin, m_binaries.data(), size, &read, nullptr);
-        CloseHandle(origin);
-        m_binaries.truncate(size);
-    }
-    else
-    {
-        wout.truncate(out_length);
-        m_binaries = wout.c_str();
-    }
-
-    path::get_directory(m_binaries);
+    m_desc.init_binaries_dir();
 }
 
 //-----------------------------------------------------------------------------

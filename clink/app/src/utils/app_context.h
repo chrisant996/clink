@@ -14,11 +14,13 @@ public:
     struct desc
     {
                 desc();
+        bool    init_binaries_dir();
         int32   id = 0;             // 0 auto-detects id.
         bool    quiet = false;
         bool    log = true;
         bool    inherit_id = false; // Allow auto-detecting id from environment.
         bool    force = false;      // Skip host check (for testbed).
+        char    bin_dir[510];       // = {}; (this crashes cl.exe v18.00.21005.1)
         char    state_dir[510];     // = {}; (this crashes cl.exe v18.00.21005.1)
         char    script_path[510];   // = {}; (this crashes cl.exe v18.00.21005.1)
         uint32  tick = 0;           // Tick when inject began.
@@ -47,7 +49,6 @@ private:
     void        get_default_file(const char* name, str_base& out) const;
     void        init_binaries_dir();
     desc        m_desc;
-    str<288>    m_binaries;
     str<16>     m_host_name;
     mutable str_moveable m_validated;
 };
