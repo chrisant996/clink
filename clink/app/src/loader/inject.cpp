@@ -85,21 +85,19 @@ static void copy_dll(str_base& dll_path)
     bool always = false;
 #endif
 
-    // Write out origin path to a file so we can backtrack from the cached DLL.
+    // The salted cache path fixes the origin, even when refreshing a debug DLL.
+    // Only take exclusive access when creating the origin file.
     int32 target_length = target_path.length();
     target_path << ".origin";
-    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
+    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
     {
         wstr<280> wcopy_path(target_path.c_str());
         HANDLE out = CreateFileW(wcopy_path.c_str(), GENERIC_WRITE, 0, nullptr,
-            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (out == INVALID_HANDLE_VALUE)
         {
-            bool sharing_violation = (GetLastError() == ERROR_SHARING_VIOLATION);
             ERR("Failed to create origin file at '%s'", target_path.c_str());
-            if (!always || !sharing_violation)
-                return;
-            always = false;
+            return;
         }
         else
         {

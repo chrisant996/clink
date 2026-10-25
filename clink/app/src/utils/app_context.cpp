@@ -403,7 +403,7 @@ void app_context::init_binaries_dir()
     // Check for a .origin suffix indicating that we're using a copied DLL.
     int32 out_length = wout_len;
     wout << L".origin";
-    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
+    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
         OPEN_EXISTING, 0, nullptr);
     if (origin != INVALID_HANDLE_VALUE)
     {
