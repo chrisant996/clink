@@ -38,11 +38,15 @@ for /f %%a in ('where msbuild.exe 2^>nul') do (
 	goto :gotmsbuild
 )
 
+set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+if exist %__MSBUILD% goto gotmsbuild
+set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2026\BuildTools\MSBuild\18.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\MSBuild\17.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
@@ -65,6 +69,12 @@ rem -- Try to find solution file.
 if exist *.sln (
 	for %%a in (*.sln) do (
 		set __SLN="%%a"
+		goto :gotsln
+	)
+) else if exist .build\vs2026\*.sln (
+	for %%a in (.build\vs2026\*.sln) do (
+		set __SLN="%%a"
+		set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 		goto :gotsln
 	)
 ) else if exist .build\vs2022\*.sln (
@@ -96,6 +106,14 @@ if exist %__SLN% (
 	goto :nextarg
 ) else if exist %__SLN%.sln (
 	set __SLN="%__SLN%.sln"
+	goto :nextarg
+) else if exist .build\vs2026\%__SLN% (
+	set __SLN=".build\vs2026\%__SLN%"
+	set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+	goto :nextarg
+) else if exist .build\vs2026\%__SLN%.sln (
+	set __SLN=".build\vs2026\%__SLN%.sln"
+	set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 	goto :nextarg
 ) else if exist .build\vs2022\%__SLN% (
 	set __SLN=".build\vs2022\%__SLN%"
