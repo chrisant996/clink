@@ -44,7 +44,9 @@ local function git_getaheadbehind(mode, left, right)
     end
     file:close()
 
-    return ahead or "0", behind or "0"
+    if ahead or behind then
+        return ahead or "0", behind or "0"
+    end
 end
 
 local function get_aheadbehind_mode()
@@ -637,15 +639,17 @@ function git.getaheadbehind()
             c.mode ~= mode then
         c = { repo=repo, upstream=upstream, head=head, mode=mode }
         c.ahead, c.behind = git_getaheadbehind(mode, head, upstream)
-        c.timestamp = os.time()
-        ab_cache[key] = c
+        if c.ahead or c.behind then
+            c.timestamp = os.time()
+            ab_cache[key] = c
 
-        -- Keep the newest 64 entries; purge the rest.
-        local count = 0
-        for _, k in spairs(ab_cache, timestamp_order) do
-            count = count + 1
-            if count > 64 then
-                ab_cache[k] = nil
+            -- Keep the newest 64 entries; purge the rest.
+            local count = 0
+            for _, k in spairs(ab_cache, timestamp_order) do
+                count = count + 1
+                if count > 64 then
+                    ab_cache[k] = nil
+                end
             end
         end
     else
