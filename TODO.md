@@ -7,6 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## TIB
 
 - [ ] History commands.
+  - [ ] History itself is easy; the undo stack saving/restoring is the unclear part.
+  - [ ] And the non-incremental mode needs an alternative input line.
 - [ ] Suggestion list full functionality.
   - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
 - [ ] Non-incremental search commands.
