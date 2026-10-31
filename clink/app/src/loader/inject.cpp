@@ -631,6 +631,11 @@ int32 inject(int32 argc, char** argv, app_context::desc& app_desc)
         return exit_code_nonfatal;
     }
 
+    // Initialize the binaries directory in the app_desc.
+    if (!app_desc.init_binaries_dir())
+        return exit_code_fatal;
+
+    // Create the app_context.
     std::unique_ptr<app_context> context = std::make_unique<app_context>(app_desc);
 
     // Start a log file.

@@ -8,6 +8,88 @@ git = {}
 
 
 --------------------------------------------------------------------------------
+-- Caching for git ahead/behind counts.
+
+local ab_cache = {}
+
+local function make_ab_key(repo, head, upstream, mode)
+    if type(repo) == "string" and
+            type(head) == "string" and
+            type(upstream) == "string" and
+            type(mode) == "string" then
+        return repo.."_"..head.."_"..upstream.."_"..mode
+    end
+end
+
+local function git_revparse(arg)
+    local file = io.popen(git.makecommand('rev-parse "'..arg..'"'))
+    if file then
+        local value = file:read()
+        file:close()
+        return value
+    end
+end
+
+local function git_getaheadbehind(mode, left, right)
+    if not mode then return end
+
+    local flags = mode
+    local command = string.format("rev-list --count --left-right %s...%s %s", left, right, flags)
+    local file = io.popen(git.makecommand(command))
+    if not file then return end
+
+    local ahead, behind
+    for line in file:lines() do
+        ahead, behind = string.match(line, "(%d+)[^%d]+(%d+)")
+    end
+    file:close()
+
+    if ahead or behind then
+        return ahead or "0", behind or "0"
+    end
+end
+
+local function get_aheadbehind_mode()
+    local mode = os.getenv("CLINK_GIT_AHEADBEHIND_MODE")
+    if mode == "--first-parent" or mode == "first-parent" then
+        return "--first-parent"
+    elseif mode == "--no-ahead-behind" or mode == "no-ahead-behind" or mode == "none" then
+        return nil
+    else
+        return ""
+    end
+end
+
+local function spairs(t, order)
+    local keys = {}
+    local num = 0
+    for k in pairs(t) do
+        num = num + 1
+        keys[num] = k
+    end
+
+    if order then
+        table.sort(keys, function(a, b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
+end
+
+local function timestamp_order(t, a, b)
+    return t[a].timestamp > t[b].timestamp
+end
+
+--------------------------------------------------------------------------------
+-- General helper functions.
+
 local function nilwhenzero(x)
     if x and tonumber(x) > 0 then
         return x
@@ -525,23 +607,56 @@ end
 --- </ol>
 ---
 --- Or when unsuccessful it returns nil.
+---
+--- <strong>Compatibility Note:</strong> The return values were backwards in
+--- v1.9.34 and older.  The return values are in the correct order (ahead,
+--- behind) in v1.9.35 and newer.
 function git.getaheadbehind()
-    local ahead, behind
-
     if git._fake then
-        ahead = git._fake.status and git._fake.status.ahead
-        behind = git._fake.status and git._fake.status.behind
-    else
-        local file = io.popen(git.makecommand("rev-list --count --left-right @{upstream}...HEAD"))
-        if not file then return end
-
-        for line in file:lines() do
-            ahead, behind = string.match(line, "(%d+)[^%d]+(%d+)")
-        end
-        file:close()
+        local ahead = git._fake.status and git._fake.status.ahead or "0"
+        local behind = git._fake.status and git._fake.status.behind or "0"
+        return ahead, behind
     end
 
-    return ahead or "0", behind or "0"
+    local git_dir = git.getgitdir()
+    if not git_dir then return end
+
+    local head = git_revparse("HEAD")
+    local upstream = git_revparse("@{upstream}")
+    if head == upstream then
+        return "0", "0"
+    end
+
+    local repo = clink.lower(git_dir)
+    local mode = get_aheadbehind_mode()
+    local key = make_ab_key(repo, head, upstream, mode)
+    if not key then return end
+
+    local c = ab_cache[key]
+    if not c or
+            c.upstream ~= upstream or
+            c.head ~= head or
+            c.mode ~= mode then
+        c = { repo=repo, upstream=upstream, head=head, mode=mode }
+        c.ahead, c.behind = git_getaheadbehind(mode, head, upstream)
+        if c.ahead or c.behind then
+            c.timestamp = os.time()
+            ab_cache[key] = c
+
+            -- Keep the newest 64 entries; purge the rest.
+            local count = 0
+            for _, k in spairs(ab_cache, timestamp_order) do
+                count = count + 1
+                if count > 64 then
+                    ab_cache[k] = nil
+                end
+            end
+        end
+    else
+        c.timestamp = os.time()
+    end
+
+    return c.ahead, c.behind
 end
 
 -- luacheck: push
@@ -626,6 +741,7 @@ function git.getstatus(no_untracked, include_submodules)
     if include_submodules then
         flags = flags .. "--ignore-submodules=none "
     end
+    flags = flags .. "--no-ahead-behind "
 
     local git_dir, wks_dir = git.getgitdir()
     if not git_dir then return end
@@ -635,6 +751,10 @@ function git.getstatus(no_untracked, include_submodules)
         submodule = (git_dir:lower():find(path.join(wks_dir:lower(), "modules\\"), 1, true) == 1)
         submodule = submodule and true or nil
     end
+
+    -- FUTURE: option/setting for limited status in a sparse checkout that's
+    -- in merge or certain other states where the index may be expanded and
+    -- degrade performance significantly.
 
     local file = io.popen(git.makecommand("status "..flags.." --branch --porcelain=v2"))
     if not file then return end
@@ -762,8 +882,6 @@ function git.getstatus(no_untracked, include_submodules)
     local oid = header.oid and header.oid:find("^[0-9a-fA-F]") and header.oid:sub(1, 7) or header.oid
     status.dirty = (working or staged) and true or nil
     status.unpublished = not header.upstream
-    status.ahead = nilwhenzero(header.ab and header.ab:match("%+(%d+)"))
-    status.behind = nilwhenzero(header.ab and header.ab:match("%-(%d+)"))
     status.detached = (header.head == "(detached)") and true or nil
     status.branch = status.detached and oid or header.head or nil
     status.submodule = submodule
@@ -776,6 +894,15 @@ function git.getstatus(no_untracked, include_submodules)
     status.tracked = (w_add + w_mod + w_del + w_con > 0) and (w_add + w_mod + w_del + w_con) or nil
     status.untracked = (w_unt > 0) and w_unt or nil
     status.conflict = (w_con > 0) and w_con or nil
+
+    -- FUTURE: an option to disable aheadbehind in git.getstatus().
+    if not status.detached then
+        -- This retrieves counts from the ab_cache when available.
+        local a, b = git.getaheadbehind()
+        status.ahead = nilwhenzero(a)
+        status.behind = nilwhenzero(b)
+    end
+
     return status
 end
 -- luacheck: pop
@@ -797,10 +924,10 @@ end
 --- <li><code>"rebase"</code>: a rebase is in progress (includes step and total).
 --- <li><code>"am"</code>: a "git am" is in progress (includes step and total).
 --- <li><code>"am/rebase"</code>: a "git am" is in progress (includes step and total).
---- <li><code>"merge"</code>: a merge is in progress.
---- <li><code>"cherry-pick"</code>: a cherry-pick is in progress.
---- <li><code>"revert"</code>: a revert is in progress.
---- <li><code>"bisect"</code>: a bisect is in progress.
+--- <li><code>"merging"</code>: a merge is in progress.
+--- <li><code>"cherry-picking"</code>: a cherry-pick is in progress.
+--- <li><code>"reverting"</code>: a revert is in progress.
+--- <li><code>"bisecting"</code>: a bisect is in progress.
 --- </ul>
 ---
 --- -show:  local action, step, total = git.getaction()

@@ -27,6 +27,7 @@
 #include "ellipsify.h"
 #include "line_editor_integration.h"
 #include "rl_integration.h"
+#include "selectcomplete_impl.h"
 #include "suggestionlist_impl.h"
 #include "hinter.h"
 #include "recognizer.h"
