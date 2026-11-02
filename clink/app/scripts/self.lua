@@ -590,6 +590,7 @@ local update = clink.argmatcher()
 :adddescriptions({
     ["--help"]      = "Show help",
     ["--check"]     = "Do nothing; check for an update, but don't install it",
+    ["--no-verify"] = "Do not verify digital signatures",
 })
 :nofiles()
 
