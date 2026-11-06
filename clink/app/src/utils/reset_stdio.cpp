@@ -141,7 +141,9 @@ static void reset_handle(intptr_t& h, int32 fh)
     //printf("lowio %s handle is 0x%p; should be 0x%p\n", c_handle_name[fh], (void*)osfhnd, (void*)curr);
     if (h != curr)
     {
+#ifdef DEBUG
         LOG("resetting mismatched %s handle", c_handle_name[fh]);
+#endif
         _free_osfhnd(fh);
         __acrt_lowio_set_os_handle(fh, curr);
         h = curr;
