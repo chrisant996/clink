@@ -4,6 +4,7 @@
 
 #### v1.9.36
 
+- Fixed `console.settitle` to preserve an Administrator prefix, if present.
 - Fixed an edge case that could cache failed ahead/behind counts (regression introduced in v1.9.35).
 - Fixed [#915](https://github.com/chrisant996/clink/issues/915); 500 ms startup delay in conhost on Windows 10 (regression introduced in v1.9.35).
 
