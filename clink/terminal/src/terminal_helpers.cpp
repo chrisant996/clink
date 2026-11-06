@@ -10,7 +10,10 @@
 
 #include <core/settings.h>
 #include <core/os.h>
+#include <core/linear_allocator.h>
 #include <core/log.h>
+#include <core/str_compare.h>
+#include <core/str_unordered_set.h>
 
 #include <assert.h>
 
@@ -281,6 +284,101 @@ void detect_console_theme()
         s_console_theme = console_theme::unknown;
         s_faint_text = 0x80;
     }
+}
+
+
+
+//------------------------------------------------------------------------------
+static wstr_unordered_set s_old_prefixes;
+static linear_allocator s_old_prefix_store(1024);
+constexpr DWORD ADMINISTRATOR_TITLE_PREFIX = 0x40002748;
+
+//------------------------------------------------------------------------------
+static bool get_mui_string(int32 id, wstr_base& out)
+{
+    DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_IGNORE_INSERTS;
+    return !!FormatMessageW(flags, nullptr, id, 0, out.data(), out.size(), nullptr);
+}
+
+//------------------------------------------------------------------------------
+static const wchar_t* get_input_title(const wchar_t* title, wstr_base& storage)
+{
+    if (!title)
+    {
+        wstr<16> current;
+        current.reserve(4096);
+
+        const DWORD len = GetConsoleTitleW(current.data(), current.size());
+        if (len || GetLastError() == ERROR_SUCCESS)
+        {
+            // GetConsoleTitleW doesn't necessarily NUL terminate the buffer.
+            // For example, if the title is an empty string.
+            storage.clear();
+            storage.concat(current.c_str(), len);
+            return storage.c_str();
+        }
+
+        ERR("Unable to get console title.");
+    }
+
+    return title;
+}
+
+//------------------------------------------------------------------------------
+bool adjust_console_title(const wchar_t* const _title, wstr_base& out)
+{
+    wstr<32> cmd_prefix;
+    if (!get_mui_string(ADMINISTRATOR_TITLE_PREFIX, cmd_prefix))
+        return false;
+
+    wstr<64> storage;
+    const wchar_t* const title = get_input_title(_title, storage);
+    if (!title)
+        return false;
+
+    str<32> tmp;
+    setting* pfx = settings::find("cmd.admin_title_prefix");
+    if (pfx)
+        pfx->get(tmp);
+
+    wstr<32> clink_prefix(tmp.c_str());
+    const wchar_t* base_title = title;
+
+    // Strip recognized administrator prefixes.
+    str_compare_scope _(str_compare_scope::caseless, false);
+    while (true)
+    {
+        const LPCWSTR orig = base_title;
+        if (cmd_prefix.length() && str_compare(base_title, cmd_prefix.c_str()) == cmd_prefix.length())
+            base_title += cmd_prefix.length();
+        if (clink_prefix.length() && str_compare(base_title, clink_prefix.c_str()) == clink_prefix.length())
+            base_title += clink_prefix.length();
+        for (auto& old : s_old_prefixes)
+        {
+            const int32 len = str_compare(base_title, old);
+            if (len > 0 && old[len] == '\0')
+                base_title += len;
+        }
+        if (orig == base_title)
+            break;
+    }
+
+    // Remember prefix.
+    if (clink_prefix.length() && s_old_prefixes.find(clink_prefix.c_str()) == s_old_prefixes.end())
+    {
+        const uint32 cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
+        wchar_t* ptr = (wchar_t*)s_old_prefix_store.alloc(cb);
+        memcpy(ptr, clink_prefix.c_str(), cb);
+        s_old_prefixes.emplace(ptr);
+    }
+
+    // Construct the title.
+    out.clear();
+    if (os::is_elevated())
+        out.concat(clink_prefix.length() ? clink_prefix.c_str() : cmd_prefix.c_str());
+    out.concat(base_title);
+
+    return !out.equals(title);
 }
 
 

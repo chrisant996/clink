@@ -466,6 +466,8 @@ static int32 get_original_title(lua_State* state)
 /// -ver:   1.1.32
 /// -arg:   title:string
 /// Sets the console title text.
+/// <strong>Compatibility Note:</strong> Starting in v1.9.36 this respects and
+/// preserves an Administrator prefix, if present.
 static int32 set_title(lua_State* state)
 {
     assert(!is_test_harness());
