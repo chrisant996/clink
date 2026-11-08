@@ -1,0 +1,18 @@
+{
+    "files.exclude": {
+        ".build/**": true,
+        ".history/**": true
+    },
+    "search.exclude": {
+        ".build/**": true,
+        ".history/**": true
+    },
+    "files.watcherExclude": {
+        ".build/**": true,
+        ".history/**": true
+    }
+    "C_Cpp.files.exclude": {
+        ".build/**": true,
+        ".history/**": true
+    }
+}
