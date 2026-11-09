@@ -7,7 +7,9 @@
 - Fixed `console.settitle` to preserve an Administrator prefix, if present.
 - Fixed an edge case that could cache failed ahead/behind counts (regression introduced in v1.9.35).
 - Fixed [#915](https://github.com/chrisant996/clink/issues/915); 500 ms startup delay in conhost on Windows 10 (regression introduced in v1.9.35).
-- Reduced logging noise by suppressing log entries about resetting mismatched stdout/stderr handles; it's normal and frequent, and doesn't need log entries.
+- Reduced logging noise in the `clink.log` file:
+  - Suppress log entries about resetting mismatched stdout/stderr handles; it's normal and frequent, and doesn't need log entries.
+  - Only log history statistics when trimming to fit `history.max_lines` or when compacting history to remove lines marked for deletion.
 
 #### v1.9.35
 
