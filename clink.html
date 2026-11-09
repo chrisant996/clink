@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" as="style">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap" type="text/css">
-<title>Clink v1.9.35</title>
+<title>Clink v1.9.36</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 @font-face {
@@ -1002,7 +1002,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.9.35</div>
+                <div id="title">Clink v1.9.36</div>
                 <div id="branch"></div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
@@ -8343,7 +8343,7 @@ print(ellipsify("c:/abcd/wxyz", 5, "path", ""))
     end
 end</code></pre></div></div><hr/>
 
-<div class="function"><div class="header"> <div id="console.settitle" class="name"><a class="wlink" href="#console.settitle"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.settitle</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> title</span>:string ) : nil<br/><div class="version">v 1.1.32</div></div></div><div class="body"><p class="desc">Sets the console title text.</p></div></div><hr/>
+<div class="function"><div class="header"> <div id="console.settitle" class="name"><a class="wlink" href="#console.settitle"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><span>console.settitle</span> <span class="uplinks"><a href="#console">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></div> <div class="signature">( <span class="arg_name"> title</span>:string ) : nil<br/><div class="version">v 1.1.32</div></div></div><div class="body"><p class="desc">Sets the console title text. <strong>Compatibility Note:</strong> Starting in v1.9.36 this respects and preserves an Administrator prefix, if present.</p></div></div><hr/>
 
 </div><div class="group">
 <h5 id="git" class="group_name"><a class="wlink" href="#git"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>git. <span class="uplinks"><a href="#lua-api-groups">up</a> <a href="#lua-api">apis</a> <a href="#toc">top</a></span></h5>
@@ -9470,6 +9470,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes <span class="uplinks"><a href="#toc">top</a></span></h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork <span class="uplinks"><a href="#changes">up</a> <a href="#toc">top</a></span></h3>
+<h4 id="v1936"><a class="wlink" href="#v1936"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.36 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
+<ul>
+<li>Fixed <code>console.settitle</code> to preserve an Administrator prefix, if present.</li>
+<li>Fixed an edge case that could cache failed ahead/behind counts (regression introduced in v1.9.35).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/915">#915</a>; 500 ms startup delay in conhost on Windows 10 (regression introduced in v1.9.35).</li>
+<li>Reduced logging noise in the <code>clink.log</code> file:<ul>
+<li>Suppress log entries about resetting mismatched stdout/stderr handles; it&#39;s normal and frequent, and doesn&#39;t need log entries.</li>
+<li>Only log history statistics when trimming to fit <code>history.max_lines</code> or when compacting history to remove lines marked for deletion.</li>
+</ul>
+</li>
+<li>Log beginning and end of input prompt while <code>debug.log_terminal</code> is enabled.</li>
+</ul>
 <h4 id="v1935"><a class="wlink" href="#v1935"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.9.35 <span class="uplinks"><a href="#releases-from-chrisant996clink-fork">up</a> <a href="#toc">top</a></span></h4>
 <ul>
 <li>Improved terminal display updates by using DECSET Synchronize Output when available, for displaying the prompt, the input line, the suggestions list, popup lists, and <code>clink-select-complete</code>.</li>
