@@ -10,6 +10,7 @@
 - Reduced logging noise in the `clink.log` file:
   - Suppress log entries about resetting mismatched stdout/stderr handles; it's normal and frequent, and doesn't need log entries.
   - Only log history statistics when trimming to fit `history.max_lines` or when compacting history to remove lines marked for deletion.
+- Log beginning and end of input prompt while `debug.log_terminal` is enabled.
 
 #### v1.9.35
 
