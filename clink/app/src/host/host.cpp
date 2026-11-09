@@ -961,6 +961,9 @@ force_reload_lua:
             }
         }
 
+        if (g_debug_log_terminal.get())
+            LOG(">>>> begin editing -----------------------------");
+
         // Maybe load a color theme into memory.  Load it BEFORE activating a
         // clinkprompt module, so the module can see the current colors in
         // effect during its onactivate callback.
@@ -1324,38 +1327,36 @@ force_reload_lua:
 #endif
 
     std::list<str_moveable> more_out;
+    if (send_event)
     {
-        if (send_event)
-        {
-            // Terminal shell integration.  Happens before any Lua scripts so
-            // that it corresponds most cleanly to beginning of command output.
-            terminal_begin_command();
-        }
+        // Terminal shell integration.  Happens before any Lua scripts so
+        // that it corresponds most cleanly to beginning of command output.
+        terminal_begin_command();
 
         // Temporarily install ctrlevent handler so Lua scripts have the option
         // to detect Ctrl-Break with os.issignaled() and respond accordingly.
         clink_install_ctrlevent();
 
-        if (send_event)
+        lua_state& state = lua;
+
         {
-            lua_state& state = lua;
             assert_stack_top ast_onendedit(state.get_state());
             lua_pushlstring(state.get_state(), out.c_str(), out.length());
             lua.send_event("onendedit", 1);
         }
 
-        if (send_event)
         {
-            lua_state& state = lua;
             assert_stack_top ast_onfilterinput(state.get_state());
             lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out, &more_out);
         }
+
+        if (g_debug_log_terminal.get())
+            LOG("<<<< end editing -------------------------------");
 
         clink_shutdown_ctrlevent();
     }
 
     std::list<queued_line> queue;
-
     if (!resolved)
     {
         str_moveable next;
