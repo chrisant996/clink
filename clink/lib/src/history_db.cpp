@@ -1615,13 +1615,13 @@ bool history_db::compact(bool force, bool uniq, int32 _limit)
     // this loop can't remove entries, and rewrite_master_bank() does instead.
     if (limit > 0 && !force)
     {
-        LOG("History:  %zu active, %zu deleted", m_master_len, m_master_deleted_count);
         DIAG("... prune:  lines active %zu / limit %zu\n", m_master_len, limit);
 
         // Delete oldest history entries that exceed it.  This only marks them as
         // deleted; compacting is a separate operation.
         if (m_master_len > limit)
         {
+            const size_t orig_master_len = m_master_len;
             uint32 removed = 0;
             while (m_master_len > limit)
             {
@@ -1635,26 +1635,27 @@ bool history_db::compact(bool force, bool uniq, int32 _limit)
                 //LOG("remove bank %u, offset %u, active %u (master len was %u)", id.bank_index, id.offset, id.active, m_master_len);
                 if (!remove(id))
                 {
-                    LOG("failed to remove");
+                    LOG("failed to remove history line at offset %u", id.offset);
                     DIAG("... ... failed to remove line at offset %u\n", id.offset);
                     break;
                 }
                 removed++;
             }
-            LOG("History:  removed %u", removed);
+            LOG("History:  lines active %zu / limit %zu / removed %u", orig_master_len, limit, removed);
             DIAG("... ... lines removed %u\n", removed);
         }
     }
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 5000);
+    const size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 5000);
     if (!(force || m_master_deleted_count > threshold))
     {
         DIAG("... skip compact; threshold is %zu, actual marked for delete is %zu\n", threshold, m_master_deleted_count);
         return false;
     }
 
+    LOG("Compact history:  %zu marked for deletion, threshold is %zu", m_master_deleted_count, threshold);
     DIAG("... compact:  rewrite master bank\n");
 
     size_t kept, deleted, dups;
