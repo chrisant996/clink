@@ -9,6 +9,7 @@
 
 class terminal_in;
 class terminal_out;
+class wstr_base;
 
 //------------------------------------------------------------------------------
 extern "C" int32 is_locked_cursor();
@@ -76,6 +77,9 @@ void detect_console_theme();
 uint8 get_console_faint_text();
 uint8 get_console_default_attr();
 console_theme get_console_theme();
+
+//------------------------------------------------------------------------------
+bool adjust_console_title(const wchar_t* const _title, wstr_base& out);
 
 //------------------------------------------------------------------------------
 typedef const RGB_t (&PALETTE_t)[16];

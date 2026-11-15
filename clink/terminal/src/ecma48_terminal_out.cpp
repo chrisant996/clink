@@ -7,7 +7,6 @@
 #include "ecma48_terminal_out.h"
 #include "ecma48_iter.h"
 #include "screen_buffer.h"
-#include "terminal.h"
 #include "terminal_helpers.h"
 
 #include <core/settings.h>
@@ -24,9 +23,16 @@ static uint8 s_rgb_cube[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
 //------------------------------------------------------------------------------
 void set_console_title(const char* title)
 {
+    wstr<> tmp;
     wstr<> out;
-    to_utf16(out, title);
-    SetConsoleTitleW(out.c_str());
+
+    to_utf16(tmp, title);
+    const WCHAR* t = tmp.c_str();
+
+    if (adjust_console_title(t, out))
+        t = out.c_str();
+
+    SetConsoleTitleW(t);
 }
 
 
