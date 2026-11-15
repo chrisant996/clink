@@ -8,6 +8,7 @@
 #include "test_util.h"
 
 #include <list>
+#include <io.h>
 #include <assert.h>
 #include <crtdbg.h>
 
@@ -42,6 +43,8 @@ int main(int argc, char** argv)
 
     reset_wcwidths();
 
+    test::g_use_gui_assertions = _isatty(_fileno(stdout));
+
     tib::set_test_harness();
     install_test_terminal();
     tib::term_begin();
@@ -55,10 +58,15 @@ int main(int argc, char** argv)
         {
             puts(  "Options:\n"
                    "  -?                Show this help.\n"
+                   "  -o                Use stdout for native assertions instead of GUI.\n"
                    "  -t                Show individual test times.\n"
                    "  --list            List test names.\n"
                    "  --performance     Include performance tests.");
             return 1;
+        }
+        else if (!strcmp(argv[0], "-o"))
+        {
+            test::g_use_gui_assertions = false;
         }
         else if (!strcmp(argv[0], "-t"))
         {

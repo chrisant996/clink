@@ -98,7 +98,7 @@ int32_t redisplay(tib::editor_context& ctx, int32_t key, const char* name, const
 
 int32_t lorem_ipsum(tib::editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept;
 
-std::shared_ptr<tib::key_table_list> make_default_key_table(bool numeric_argument=false);
+std::shared_ptr<tib::key_table> make_default_key_table(bool numeric_argument=false);
 
 // Use this in a function to prevent it from being COMDAT-folded with another
 // identical function.

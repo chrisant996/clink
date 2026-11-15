@@ -15,6 +15,8 @@ namespace tib {
 
 class editor_context;
 class binding_resolver;
+class dispatcher_target;
+class binding_handle;
 struct resolved_binding;
 
 enum class binding_type : uint8_t
@@ -121,9 +123,51 @@ private:
     int8_t              m_can_self_insert = -1;
 };
 
-class key_table_list : public std::vector<std::shared_ptr<key_table>>, public std::enable_shared_from_this<key_table_list>
+// A supplier owns this list and may change its tables while it is registered.
+// Later tables have priority over earlier tables within the list.
+// Tables are read-only through the list; owners may retain mutable pointers.
+class key_table_list : public std::vector<std::shared_ptr<const key_table>>, public std::enable_shared_from_this<key_table_list>
 {
 };
+
+enum class binding_policy : uint8_t
+{
+    overlay,            // Search this group together with groups below it.
+    fallback,           // Search below only when this group misses.
+    exclusive,          // Do not search below this group, even on a miss.
+};
+
+// Registrations remain active until explicitly removed or the target dies.
+// Copies identify the same registration.  A handle owns neither its target
+// nor its tables; destroying a handle does not remove its bindings.
+class binding_handle
+{
+public:
+                        binding_handle() = default;
+                        operator bool() const noexcept;
+    bool                operator==(const binding_handle& other) const noexcept;
+    bool                operator!=(const binding_handle& other) const noexcept { return !(*this == other); }
+    std::shared_ptr<dispatcher_target> get_target() const noexcept;
+    void                remove() noexcept;
+
+private:
+    friend class dispatcher_target;
+                        binding_handle(std::weak_ptr<dispatcher_target> target, uint64_t id) noexcept : m_target(std::move(target)), m_id(id) {}
+
+    std::weak_ptr<dispatcher_target> m_target;
+    uint64_t            m_id = 0;
+};
+
+// A group of key binding tables registered with a policy that controls when
+// to fall back to other binding groups in the binding stack.
+struct binding_group
+{
+    std::shared_ptr<const key_table_list> tables;
+    binding_policy      policy;
+    binding_handle      handle;
+};
+
+typedef std::vector<binding_group> binding_stack;
 
 enum class dispatch_outcome
 {
@@ -142,11 +186,20 @@ struct binding_resolver_state;
 class dispatcher_target : public std::enable_shared_from_this<dispatcher_target>
 {
 public:
-    // The fallback_requested argument allows probing potential fallback
-    // bindings after a miss in override bindings.
-    std::shared_ptr<const key_table_list> get_bindings(bool fallback_requested=false) const;
-    void                set_bindings(std::shared_ptr<const key_table_list> bindings);
-    void                override_bindings(std::shared_ptr<const key_table_list> bindings, bool fall_back_on_miss=false);
+    virtual             ~dispatcher_target() = default;
+                        dispatcher_target() = default;
+                        dispatcher_target(const dispatcher_target&) = delete;
+    dispatcher_target&  operator=(const dispatcher_target&) = delete;
+
+    // Each registration is an explicit group with one policy.  A supplied
+    // list is retained as-is; the single-table overload creates a new list.
+    // Suppliers may edit their lists without re-registering them.  Retain
+    // the returned handle if needed for inspection or explicit removal.
+    // get_bindings() exposes a copy of the binding stack for inspection.
+    const binding_stack& get_bindings() const noexcept { return m_bindings; }
+    void                clear_all_bindings();
+    binding_handle      add_bindings(std::shared_ptr<const key_table> table, binding_policy policy=binding_policy::overlay);
+    binding_handle      add_bindings(std::shared_ptr<const key_table_list> tables, binding_policy policy=binding_policy::overlay);
     int32_t             push_macro_text(const char* macro, size_t len);
 
     // The binding_resolver::step() produces a resolved_binding in three cases:
@@ -164,21 +217,26 @@ public:
     // insert i.e. as literal input not translated through key bindings.
     virtual int32_t     dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept = 0;
 
-    // Called by resolved_binding::dispatch() when resolution used the
-    // fallback bindings after the override bindings missed.
-    virtual void        on_binding_fallback() noexcept {}
+    // Called only at dispatch, for each crossed boundary still registered, in
+    // the order crossed.  The handle identifies the original registration,
+    // even if the host discarded all its copies.
+    virtual void        on_binding_fallback(const binding_handle& handle_crossed) noexcept {}
 
     // Called to report error messages; the dispatcher_target gets to choose
     // how/whether to present them to a user.
     virtual void        report_error(const char* msg) noexcept {}
 
 private:
-    std::shared_ptr<const key_table_list> m_bindings;
-    std::shared_ptr<const key_table_list> m_override_bindings;
-    bool                m_fall_back_on_miss = false;
+    friend class binding_handle;
+    bool                has_bindings(const binding_handle& handle) const noexcept;
+    void                remove_bindings(const binding_handle& handle) noexcept;
+
+private:
+    binding_stack       m_bindings;
+    uint64_t            m_next_binding_id = 0;
 };
 
-using binding_registrants = std::vector<std::weak_ptr<dispatcher_target>>;
+typedef std::vector<std::weak_ptr<dispatcher_target>> binding_registrants;
 
 struct resolved_binding
 {
@@ -210,7 +268,7 @@ private:
     std::weak_ptr<binding_registrants> m_registrants;
     cstring             m_replay;
     bool                m_ambiguous = false;
-    std::vector<std::weak_ptr<tib::dispatcher_target>> m_fallback_targets;
+    std::vector<binding_handle> m_fallbacks;
 };
 
 class binding_resolver
@@ -244,7 +302,7 @@ private:
     bool                m_borrowed_registrants = false;
     cstring             m_sequence;
     std::shared_ptr<binding_resolver_state> m_state;
-    std::vector<std::weak_ptr<dispatcher_target>> m_fallback_targets;
+    std::vector<binding_handle> m_fallbacks;
 };
 
 bool is_self_insertable(char c);

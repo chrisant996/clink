@@ -356,7 +356,7 @@ void display_manager::init_layout(const layout_info* layout)
 {
     m_layout = layout;
     m_displayed.clear();
-    m_top = 0;
+    m_presentation.m_top = 0;
     invalidate();
     invalidate_border();
 }
@@ -364,7 +364,7 @@ void display_manager::init_layout(const layout_info* layout)
 void display_manager::init_buffer(const input_buffer* buffer)
 {
     m_buffer = buffer;
-    m_top = 0;
+    m_presentation.m_top = 0;
     invalidate();
 }
 
@@ -406,7 +406,7 @@ void display_manager::set_color_table(std::shared_ptr<const color_table> colors)
 
 void display_manager::set_left_text(const char* left, uint16_t width)
 {
-    if (m_left_text.set(left, width))
+    if (m_presentation.m_left_text.set(left, width))
     {
         m_hwheel_exclusion = false;
         invalidate();
@@ -415,26 +415,26 @@ void display_manager::set_left_text(const char* left, uint16_t width)
 
 void display_manager::set_right_text(const char* right, uint16_t width)
 {
-    if (m_right_text.set(right, width))
+    if (m_presentation.m_right_text.set(right, width))
         invalidate();
 }
 
 void display_manager::set_suggestion_text(const char* suggestion, size_t len)
 {
-    if (!m_suggestion_text.equals(suggestion, len) &&
-        m_suggestion_text.set(suggestion, len))
+    if (!m_presentation.m_suggestion_text.equals(suggestion, len) &&
+        m_presentation.m_suggestion_text.set(suggestion, len))
         invalidate();
 }
 
 void display_manager::set_usage_text(const char* usage, uint16_t width)
 {
-    if (m_usage_text.set(usage, width))
+    if (m_presentation.m_usage_text.set(usage, width))
         invalidate();
 }
 
 void display_manager::set_message_text(const char* message, uint16_t width)
 {
-    if (m_message_text.set(message, width))
+    if (m_presentation.m_message_text.set(message, width))
     {
         m_hwheel_exclusion = false;
         invalidate();
@@ -443,12 +443,44 @@ void display_manager::set_message_text(const char* message, uint16_t width)
 
 void display_manager::set_additional_lines(const std::vector<additional_display_line>& lines)
 {
-    m_additional_lines = lines;
+    m_presentation.m_additional_lines = lines;
 }
 
 void display_manager::clear_additional_lines()
 {
-    m_additional_lines.clear();
+    m_presentation.m_additional_lines.clear();
+}
+
+void display_manager::override_input_presentation(const char* override_prompt) noexcept
+{
+    if (override_prompt)
+    {
+        assert(!m_saved_input_presentation);
+        if (!m_saved_input_presentation)
+        {
+            cstring left_text;
+            uint16_t left_width = m_presentation.m_left_text.width();
+            left_text.set(m_presentation.m_left_text.c_str());
+            m_colors->append_color(left_text, color_element::base, color_element::message);
+            left_text.append(override_prompt);
+            left_width += cell_count(override_prompt, -1);
+
+            m_saved_input_presentation = std::make_unique<input_presentation>(std::move(m_presentation));
+
+            input_presentation presentation;
+            presentation.m_left_text.set(left_text.c_str(), left_width);
+            m_presentation = std::move(presentation);
+        }
+    }
+    else
+    {
+        if (!m_saved_input_presentation)
+            return;
+        m_presentation = std::move(*m_saved_input_presentation);
+        m_saved_input_presentation.reset();
+    }
+    m_hwheel_exclusion = false;
+    force_redisplay();
 }
 
 coord display_manager::get_effective_max_size(bool omit_scroll_markers)
@@ -517,21 +549,21 @@ void display_manager::clear_scroll_offsets()
 
 void display_manager::set_scroll_offsets(textpos_t left, uint32_t top)
 {
-    m_left = left;
-    m_top = top;
+    m_presentation.m_left = left;
+    m_presentation.m_top = top;
     m_hwheel_exclusion = false;
 }
 
-bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column, input_buffer& buffer, bool exclude_auto_scroll)
+bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column, textpos_t& caret)
 {
     if (!columns || get_effective_max_size().y != 1)
         return false;
 
     cursor_column -= m_displayed.m_inner_offset.x;
 
-    const cstring& text = m_buffer->get_text();
+    const cstring& text = m_buffer->m_text;
     const textpos_t length = textpos_t(text.length());
-    textpos_t left = m_left;
+    textpos_t left = m_presentation.m_left;
     uint32_t remaining = uint32_t(columns < 0 ? -columns : columns);
 
     if (columns > 0)
@@ -576,7 +608,7 @@ bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column
         }
     }
 
-    textpos_t caret = left;
+    caret = left;
     uint32_t screen_column = 0;
     if (left && m_style->horiz_scroll_markers)
     {
@@ -594,12 +626,8 @@ bool display_manager::scroll_horizontally(int32_t columns, int32_t cursor_column
         screen_column += width;
     }
 
-    const bool changed = left != m_left || caret != buffer.get_caret();
-    m_left = left;
-    buffer.set_caret(caret);
-    if (exclude_auto_scroll)
-        suppress_auto_horizontal_scroll(buffer.get_selection_state());
-    return changed;
+    m_presentation.m_left = left;
+    return true;
 }
 
 void display_manager::suppress_auto_horizontal_scroll(const selection_state& selection)
@@ -608,12 +636,12 @@ void display_manager::suppress_auto_horizontal_scroll(const selection_state& sel
         return;
 
     m_hwheel_exclusion = true;
-    m_hwheel_exclusion_left = m_left;
+    m_hwheel_exclusion_left = m_presentation.m_left;
     m_hwheel_exclusion_caret = selection.get_caret();
-    m_hwheel_exclusion_change_counter = m_buffer->get_change_counter();
+    m_hwheel_exclusion_change_counter = m_buffer->m_change_counter;
 }
 
-bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column, input_buffer& buffer, bool select)
+bool display_manager::get_pos_vertically(int32_t rows, int32_t cursor_column, textpos_t& caret)
 {
     const coord max_size = get_effective_max_size();
     if (!rows || max_size.y <= 1 || !m_displayed.m_change_counter)
@@ -623,12 +651,12 @@ bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column,
 
     const int32_t current_row = m_displayed.m_top + m_displayed.m_cursor.y;
     const int32_t wanted_row = max(current_row + rows, 0);
-    const cstring& text = m_buffer->get_text();
+    const cstring& text = m_buffer->m_text;
     display_row_start target = { 0, false };
     display_row_start last = target;
     int32_t row = 0;
     const uint16_t left_text_width =
-        (m_left_text.length() && m_left_text.width() < max_size.x) ? m_left_text.width() : 0;
+        (m_presentation.m_left_text.length() && m_presentation.m_left_text.width() < max_size.x) ? m_presentation.m_left_text.width() : 0;
     uint16_t row_width = left_text_width;
     wcwidth_iter scan(text.c_str(), text.length());
 
@@ -688,7 +716,7 @@ bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column,
     }
 
     cursor_column = max(cursor_column - m_displayed.m_inner_offset.x, 0);
-    textpos_t caret = target.offset;
+    caret = target.offset;
     uint32_t screen_column = (wanted_row == 0) ? left_text_width : 0;
     if (target.pending)
     {
@@ -711,12 +739,7 @@ bool display_manager::move_caret_vertically(int32_t rows, int32_t cursor_column,
         screen_column += width;
     }
 
-    const bool changed = caret != buffer.get_caret();
-    if (select)
-        buffer.set_selection(buffer.get_anchor(), caret);
-    else
-        buffer.set_caret(caret);
-    return changed;
+    return true;
 }
 
 bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos, screen_scroll_info* scroll)
@@ -728,17 +751,22 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
     int32_t screen_origin_x = m_origin.x;
     int32_t screen_origin_y = m_origin.y;
 #ifdef _WIN32
-    // BUGBUG: when the console wrapping is off and the console window is
-    // narrower than the console buffer, the origin X is handled wrongly.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
-        return false;
-    screen_origin_x = csbi.dwCursorPosition.X - csbi.srWindow.Left + 1 - m_relative_cursor.x;
-    screen_origin_y = csbi.dwCursorPosition.Y - csbi.srWindow.Top + 1 - m_relative_cursor.y;
-#else
+    // The test terminal does not move the physical console cursor.  Use its
+    // configured display origin instead of consulting the host console.
+    if (!is_test_harness())
+    {
+        // BUGBUG: when the console wrapping is off and the console window is
+        // narrower than the console buffer, the origin X is handled wrongly.
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+            return false;
+        screen_origin_x = csbi.dwCursorPosition.X - csbi.srWindow.Left + 1 - m_relative_cursor.x;
+        screen_origin_y = csbi.dwCursorPosition.Y - csbi.srWindow.Top + 1 - m_relative_cursor.y;
+    }
+#endif
     if (screen_origin_y <= 0)
         return false;
-#endif
+
     const int32_t left = screen_origin_x + m_displayed.m_inner_offset.x;
     const int32_t top = screen_origin_y + m_displayed.m_inner_offset.y;
     const int32_t width = m_displayed.m_extent.x - m_displayed.m_inner_offset.x - border->get_right_width();
@@ -763,7 +791,7 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
         if (!multiline)
         {
             row = 0;
-            const bool over_left_indicator = m_left && m_style && m_style->horiz_scroll_markers &&
+            const bool over_left_indicator = m_presentation.m_left && m_style && m_style->horiz_scroll_markers &&
                                              column < c_horz_scroll_indicator_chars;
             if (column < 0 || over_left_indicator)
             {
@@ -795,7 +823,7 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
     if (column < 0 || column >= width || row < 0 || row >= height || size_t(row) >= m_displayed.m_rows.size())
         return false;
 
-    const cstring& text = m_buffer->get_text();
+    const cstring& text = m_buffer->m_text;
     const display_row_start& start = m_displayed.m_rows[row];
 
     // If the row contains no input text, return the end of the input text.
@@ -822,7 +850,7 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
         pos = forward_one_grapheme(text.c_str(), text.length(), pos);
         screen_column = 1;
     }
-    else if (m_left && m_style && m_style->horiz_scroll_markers)
+    else if (m_presentation.m_left && m_style && m_style->horiz_scroll_markers)
     {
         if (column < c_horz_scroll_indicator_chars)
             return true;
@@ -848,15 +876,6 @@ bool display_manager::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos
     return true;
 }
 
-bool display_manager::set_caret_from_screen(uint32_t x, uint32_t y, input_buffer& buffer, uint32_t drag_scroll_chars, bool word_drag)
-{
-    textpos_t pos;
-    if (!get_pos_from_screen(x, y, pos))
-        return false;
-    buffer.set_caret(pos);
-    return true;
-}
-
 void display_manager::ensure_left()
 {
     // REVIEW: this smells overly complicated; I suspect that Codex may have
@@ -865,17 +884,17 @@ void display_manager::ensure_left()
     const coord max_size = get_effective_max_size(true/*omit_scroll_markers*/);
     if (max_size.y != 1)
     {
-        m_left = 0;
+        m_presentation.m_left = 0;
         return;
     }
 
-    const selection_state& selection = m_buffer->get_selection_state();
+    const selection_state& selection = m_buffer->m_selection;
     bool suppress_auto_scroll = false;
     if (m_hwheel_exclusion)
     {
-        if (m_left == m_hwheel_exclusion_left &&
+        if (m_presentation.m_left == m_hwheel_exclusion_left &&
             selection.get_caret() == m_hwheel_exclusion_caret &&
-            m_buffer->get_change_counter() == m_hwheel_exclusion_change_counter)
+            m_buffer->m_change_counter == m_hwheel_exclusion_change_counter)
         {
             suppress_auto_scroll = true;
         }
@@ -885,23 +904,23 @@ void display_manager::ensure_left()
         }
     }
 
-    m_left = min(m_left, selection.get_caret());
+    m_presentation.m_left = min(m_presentation.m_left, selection.get_caret());
 
     const coord full_max_size = get_effective_max_size();
-    const uint16_t left_text_width = (m_left_text.length() && m_left_text.width() < full_max_size.x) ? m_left_text.width() : 0;
-    const cstring& text = m_buffer->get_text();
+    const uint16_t left_text_width = (m_presentation.m_left_text.length() && m_presentation.m_left_text.width() < full_max_size.x) ? m_presentation.m_left_text.width() : 0;
+    const cstring& text = m_buffer->m_text;
 
     // Auto-scroll horizontally backward.
     if (!suppress_auto_scroll)
     {
         const textpos_t backup_left = back_up_by_amount(selection.get_caret(), text.c_str(), selection.get_caret(), 4);
-        if (m_left > backup_left)
-            m_left = backup_left;
+        if (m_presentation.m_left > backup_left)
+            m_presentation.m_left = backup_left;
     }
 
     // Auto-scroll horizontally forward.
-    const uint32_t caret_offset = uint32_t(selection.get_caret() - m_left);
-    parse_graphemes(text.c_str() + m_left, text.length() - m_left, caret_offset, m_tmp_graphemes);
+    const uint32_t caret_offset = uint32_t(selection.get_caret() - m_presentation.m_left);
+    parse_graphemes(text.c_str() + m_presentation.m_left, text.length() - m_presentation.m_left, caret_offset, m_tmp_graphemes);
 
     int16_t width = 0;
     uint32_t line_width = left_text_width;
@@ -915,21 +934,21 @@ void display_manager::ensure_left()
 
     for (auto g = m_tmp_graphemes.cbegin(); true; ++g)
     {
-        const uint16_t current_left_text_width = m_left ? 0 : left_text_width;
+        const uint16_t current_left_text_width = m_presentation.m_left ? 0 : left_text_width;
         // Reserve the right marker when the unscrolled line needs one;
         // otherwise reserve only the terminal cell needed by the caret.
-        const int16_t caret_max_width = (m_left || unscrolled_right_marker) ? max_size.x : full_max_size.x - 1;
+        const int16_t caret_max_width = (m_presentation.m_left || unscrolled_right_marker) ? max_size.x : full_max_size.x - 1;
         int16_t display_width = width;
-        if (m_left && m_style->horiz_scroll_markers && g != m_tmp_graphemes.cend())
+        if (m_presentation.m_left && m_style->horiz_scroll_markers && g != m_tmp_graphemes.cend())
             display_width = get_horiz_scrolled_width(width, g->width);
         if (display_width + current_left_text_width < caret_max_width)
             break;
 
         assert(g != m_tmp_graphemes.cend());
         width -= g->width;
-        m_left += g->length;
+        m_presentation.m_left += g->length;
     }
-    assert(selection.get_caret() >= m_left);
+    assert(selection.get_caret() >= m_presentation.m_left);
 }
 
 void display_manager::begin_display()
@@ -961,7 +980,7 @@ bool display_manager::display()
     }
 
     // Is there nothing to display?
-    if (m_display_ended || !m_buffer->get_change_counter())
+    if (m_display_ended || !m_buffer->m_change_counter)
     {
         ++s_display.nop;
         return false;
@@ -1013,11 +1032,28 @@ void display_manager::force_redisplay()
 
 void display_manager::print_text_with_faces(coord& cursor, const char* t, const char* f, size_t len)
 {
-    char face = 0;
+    static const char c_hyperlink[] = "\x1b]8;;";
+    static const char c_BEL[] = "\a";
+
+    char face = FACE_EMPTY;
+    bool hyperlink = false;
     while (len > 0)
     {
         if (*f != face)
         {
+            if (hyperlink)
+            {
+                output(c_hyperlink);
+                output(c_BEL);
+            }
+            const char* uri = get_face_hyperlink(*f);
+            hyperlink = (uri && *uri);
+            if (hyperlink)
+            {
+                output(c_hyperlink);
+                output(uri);
+                output(c_BEL);
+            }
             output_color(get_face_def(*f));
             face = *f;
         }
@@ -1040,6 +1076,11 @@ void display_manager::print_text_with_faces(coord& cursor, const char* t, const 
         len -= clen;
         cursor.x += iter.character_wcwidth_twoctrl();
     }
+    if (hyperlink)
+    {
+        output(c_hyperlink);
+        output(c_BEL);
+    }
 }
 
 bool display_manager::try_update_caret_only()
@@ -1047,21 +1088,21 @@ bool display_manager::try_update_caret_only()
     if (m_invalidated ||
         m_force_redisplay ||
         !m_displayed.m_change_counter ||
-        m_buffer->get_change_counter() != m_displayed.m_change_counter ||
+        m_buffer->m_change_counter != m_displayed.m_change_counter ||
         m_displayed.m_anchor != m_displayed.m_pos ||
-        m_left != m_displayed.m_left ||
-        int32_t(m_top) != m_displayed.m_top ||
-        m_additional_lines != m_displayed.m_additional_lines ||
+        m_presentation.m_left != m_displayed.m_left ||
+        int32_t(m_presentation.m_top) != m_displayed.m_top ||
+        m_presentation.m_additional_lines != m_displayed.m_additional_lines ||
         m_displayed.m_rows.empty())
         return false;
 
-    const selection_state& selection = m_buffer->get_selection_state();
+    const selection_state& selection = m_buffer->m_selection;
     const textpos_t caret = selection.get_caret();
     if (selection.has_selection() ||
         caret == m_displayed.m_pos)
         return false;
 
-    const cstring& text = m_buffer->get_text();
+    const cstring& text = m_buffer->m_text;
     if (size_t(caret) > text.length())
         return false;
 
@@ -1115,10 +1156,10 @@ bool display_manager::try_update_caret_only()
         pos = next;
     }
 
-    if (!multiline && m_left && m_style->horiz_scroll_markers)
+    if (!multiline && m_presentation.m_left && m_style->horiz_scroll_markers)
     {
         uint16_t replaced_width;
-        forward_one_grapheme(text.c_str(), text.length(), m_left, &replaced_width);
+        forward_one_grapheme(text.c_str(), text.length(), m_presentation.m_left, &replaced_width);
         column = get_horiz_scrolled_width(uint16_t(column), replaced_width);
     }
     if (column >= uint32_t(max_size.x))
@@ -1289,23 +1330,34 @@ bool display_manager::display_internal(display_lines& lines)
                 const size_t limit_forward_skip = min(displayed->m_text.length(), line->m_text.length());
 
                 // Walk forward past a leading portion that exactly matches.
-                size_t displayed_begin = 0;
+                size_t candidate_begin = 0;
+                uint16_t candidate_width = 0;
+                char face = FACE_EMPTY;
+                bool hyperlink = false;
                 const size_t displayed_length = displayed->m_text.length();
-                while (reuse_left_text && begin < end && displayed_begin < limit_forward_skip)
+                while (reuse_left_text && candidate_begin < limit_forward_skip)
                 {
                     uint16_t width;
-                    const size_t next = forward_one_grapheme(line->m_text.c_str(), end, uint32_t(begin), &width);
-                    const size_t displayed_next = forward_one_grapheme(displayed->m_text.c_str(), displayed_length, uint32_t(displayed_begin));
-                    const size_t length = next - begin;
-                    const size_t displayed_grapheme_length = displayed_next - displayed_begin;
-                    if (length != displayed_grapheme_length ||
-                        memcmp(line->m_text.c_str() + begin, displayed->m_text.c_str() + displayed_begin, length) != 0 ||
-                        memcmp(line->m_faces.c_str() + begin, displayed->m_faces.c_str() + displayed_begin, length) != 0)
+                    const size_t next = forward_one_grapheme(line->m_text.c_str(), end, uint32_t(candidate_begin), &width);
+                    const size_t displayed_next = forward_one_grapheme(displayed->m_text.c_str(), displayed_length, uint32_t(candidate_begin));
+                    const size_t length = next - candidate_begin;
+                    if (next != displayed_next ||
+                        memcmp(line->m_text.c_str() + candidate_begin, displayed->m_text.c_str() + candidate_begin, length) != 0 ||
+                        memcmp(line->m_faces.c_str() + candidate_begin, displayed->m_faces.c_str() + candidate_begin, length) != 0)
                         break;
 
-                    begin = next;
-                    displayed_begin = displayed_next;
-                    begin_width += width;
+                    candidate_begin = next;
+                    candidate_width += width;
+                    if (face != line->m_faces.c_str()[next - 1])
+                    {
+                        face = line->m_faces.c_str()[next - 1];
+                        hyperlink = get_face_hyperlink(face) != nullptr;
+                    }
+                    if (!hyperlink || next == end || line->m_faces.c_str()[next] != face)
+                    {
+                        begin = candidate_begin;
+                        begin_width = candidate_width;
+                    }
                 }
 
                 // Walk backward past a trailing portion that exactly matches.
@@ -1324,20 +1376,30 @@ bool display_manager::display_internal(display_lines& lines)
                 // could reduce the number of bytes printed to the terminal.
                 if (displayed->m_x2 == line->m_x2)
                 {
+                    size_t candidate_end = end;
                     size_t displayed_end = displayed_length;
-                    while (end > begin && displayed_end > displayed_begin)
+                    face = FACE_EMPTY;
+                    hyperlink = false;
+                    while (candidate_end > begin && displayed_end > candidate_begin)
                     {
-                        const size_t previous = backward_one_grapheme(line->m_text.c_str(), line->m_text.length(), uint32_t(end));
+                        const size_t previous = backward_one_grapheme(line->m_text.c_str(), line->m_text.length(), uint32_t(candidate_end));
                         const size_t displayed_previous = backward_one_grapheme(displayed->m_text.c_str(), displayed_length, uint32_t(displayed_end));
-                        const size_t length = end - previous;
+                        const size_t length = candidate_end - previous;
                         const size_t displayed_grapheme_length = displayed_end - displayed_previous;
                         if (length != displayed_grapheme_length ||
                             memcmp(line->m_text.c_str() + previous, displayed->m_text.c_str() + displayed_previous, length) != 0 ||
                             memcmp(line->m_faces.c_str() + previous, displayed->m_faces.c_str() + displayed_previous, length) != 0)
                             break;
 
-                        end = previous;
+                        candidate_end = previous;
                         displayed_end = displayed_previous;
+                        if (face != line->m_faces.c_str()[previous])
+                        {
+                            face = line->m_faces.c_str()[previous];
+                            hyperlink = get_face_hyperlink(face) != nullptr;
+                        }
+                        if (!hyperlink || !previous || line->m_faces.c_str()[previous - 1] != face)
+                            end = candidate_end;
                     }
                 }
             }
@@ -1542,7 +1604,7 @@ bool display_manager::display_internal(display_lines& lines)
 
     ++s_display.action;
 
-    m_top = lines.m_top;
+    m_presentation.m_top = lines.m_top;
     m_displayed = std::move(lines);
     m_relative_cursor = cursor;
     m_invalidated = false;
@@ -1697,6 +1759,19 @@ void display_manager::move_to_column(coord& cursor, int16_t x, uint16_t inner_of
     cursor.x = x;
 }
 
+const char* display_manager::get_face_hyperlink(char face) const
+{
+    if (!(face == FACE_EMPTY) &&
+        m_callbacks &&
+        !(m_style && face == m_style->empty_face))
+    {
+        const char* uri = m_callbacks->get_face_hyperlink(face);
+        if (uri && *uri)
+            return uri;
+    }
+    return nullptr;
+}
+
 const char* display_manager::get_face_def(char face) const
 {
     if (m_callbacks)
@@ -1718,6 +1793,37 @@ const char* display_manager::get_face_def(char face) const
     return m_colors->get_color(tib::color_element::base);
 }
 
+namespace {
+
+// Rendering-only exception to read-only buffer access.  Reuse the input's
+// allocation for suggestions and restore its logical length on every exit.
+class scoped_raw_append
+{
+public:
+    scoped_raw_append(const cstring& text, const char* suffix)
+        : m_text(const_cast<cstring&>(text))
+        , m_orig_len(text.length())
+        , m_mutated(suffix && *suffix)
+    {
+        if (m_mutated)
+            m_text.append(suffix);
+    }
+    ~scoped_raw_append()
+    {
+        if (m_mutated)
+            m_text.set_length(m_orig_len);
+    }
+    scoped_raw_append(const scoped_raw_append&) = delete;
+    scoped_raw_append& operator=(const scoped_raw_append&) = delete;
+
+private:
+    cstring&            m_text;
+    const size_t        m_orig_len;
+    const bool          m_mutated;
+};
+
+} // namespace
+
 bool display_manager::build(display_lines& out)
 {
     ++s_build.total;
@@ -1735,26 +1841,26 @@ bool display_manager::build(display_lines& out)
     // but even the default input routine will at least allow redisplay the
     // next time some input becomes available.
 
-    const uint32_t change_counter = m_buffer->get_change_counter();
-    const selection_state& sel_state = m_buffer->get_selection_state();
+    const uint32_t change_counter = m_buffer->m_change_counter;
+    const selection_state& sel_state = m_buffer->m_selection;
     const textpos_t sel_begin = sel_state.get_sel_begin();
     const textpos_t sel_end = sel_state.get_sel_end();
     const textpos_t pos = sel_state.get_caret();
     const textpos_t anchor = sel_state.get_anchor();
-    const textpos_t left = m_left;
+    const textpos_t left = m_presentation.m_left;
 
     if (!m_invalidated &&
         change_counter == m_displayed.m_change_counter &&
         pos == m_displayed.m_pos &&
         anchor == m_displayed.m_anchor &&
         left == m_displayed.m_left &&
-        m_additional_lines == m_displayed.m_additional_lines)
+        m_presentation.m_additional_lines == m_displayed.m_additional_lines)
     {
         ++s_build.nop;
         return false;
     }
 
-    const cstring& text = m_buffer->get_text();
+    const cstring& text = m_buffer->m_text;
     const size_t real_text_len = text.length();
 
     cstring faces;
@@ -1768,8 +1874,8 @@ bool display_manager::build(display_lines& out)
             faces.append_spaces(text.length() - faces.length());
     }
 
-    // If a suggestion string has been provided, temporarily append it now.
-    const auto tmp_suggest = m_buffer->scoped_raw_append(m_suggestion_text.c_str());
+    // Temporarily append suggestions in place to avoid copying the input.
+    const scoped_raw_append tmp_suggest(text, m_presentation.m_suggestion_text.c_str());
     if (text.length() > real_text_len)
     {
         const size_t old_length = faces.length();
@@ -1826,19 +1932,19 @@ bool display_manager::build(display_lines& out)
     // REVIEW: should message be displayed regardless of left offset?
     if (!left)
     {
-        if ((m_message_text.length() && m_message_text.width() < max_size.x) ||
-            (m_left_text.length() && m_left_text.width() < max_size.x))
+        if ((m_presentation.m_message_text.length() && m_presentation.m_message_text.width() < max_size.x) ||
+            (m_presentation.m_left_text.length() && m_presentation.m_left_text.width() < max_size.x))
         {
-            if (m_message_text.length())
+            if (m_presentation.m_message_text.length())
             {
                 cstring tmp_text;
                 m_colors->append_color(tmp_text, color_element::base, color_element::message);
-                tmp_text.append(m_message_text.c_str());
-                tmp.m_left_text.set(std::move(tmp_text), m_message_text.width());
+                tmp_text.append(m_presentation.m_message_text.c_str());
+                tmp.m_left_text.set(std::move(tmp_text), m_presentation.m_message_text.width());
             }
             else
             {
-                tmp.m_left_text = m_left_text;
+                tmp.m_left_text = m_presentation.m_left_text;
             }
             left_text_width = tmp.m_left_text.width();
         }
@@ -1946,7 +2052,7 @@ bool display_manager::build(display_lines& out)
     {
         rows.push_back({ textpos_t(text.length()), false, text.length() > real_text_len });
         row_width = 0;
-        if (m_layout->variable_height && !m_style->border && m_additional_lines.empty())
+        if (m_layout->variable_height && !m_style->border && m_presentation.m_additional_lines.empty())
             tmp.m_phantom_last_row = true;
     }
     assert(implies(!multiline, rows.size() == 1));
@@ -1955,15 +2061,15 @@ bool display_manager::build(display_lines& out)
     // logical input row.  If it cannot fit there, use one more input row
     // when the configured maximum height permits it.
     int32_t usage_text_row = -1;
-    if (m_usage_text.length())
+    if (m_presentation.m_usage_text.length())
     {
-        if (row_width + c_right_text_padding + m_usage_text.width() <= max_size.x)
+        if (row_width + c_right_text_padding + m_presentation.m_usage_text.width() <= max_size.x)
         {
             usage_text_row = int32_t(rows.size() - 1);
             tmp.m_phantom_last_row = false;
         }
         else if (multiline &&
-                 c_right_text_padding + m_usage_text.width() <= max_size.x &&
+                 c_right_text_padding + m_presentation.m_usage_text.width() <= max_size.x &&
                  int32_t(rows.size()) < max_size.y)
         {
             rows.push_back({ textpos_t(text.length()), false, true });
@@ -1982,7 +2088,7 @@ bool display_manager::build(display_lines& out)
     // Calculate the visible range before constructing its display lines.
     const int32_t min_top = max<int32_t>(tmp.m_cursor.y - (y_extent - 1), 0);
     const int32_t max_top = min<int32_t>(tmp.m_cursor.y, max<int32_t>(total_rows - y_extent, 0));
-    tmp.m_top = clamp<int32_t>(m_top, min_top, max_top);
+    tmp.m_top = clamp<int32_t>(m_presentation.m_top, min_top, max_top);
 
     // Lambda for building a display line.
     char pending = 0;
@@ -2146,18 +2252,18 @@ again:
     // Usage text supersedes ordinary right text and is attached only when its
     // target logical row is visible.  Without usage text, place right text on
     // the first displayed row when it fits.
-    if (m_usage_text.length())
+    if (m_presentation.m_usage_text.length())
     {
         if (usage_text_row >= tmp.m_top && usage_text_row < end)
         {
-            tmp.m_right_text = m_usage_text;
+            tmp.m_right_text = m_presentation.m_usage_text;
             tmp.m_right_text_row = usage_text_row - tmp.m_top;
         }
     }
-    else if (!tmp.m_lines.empty() && m_right_text.width() &&
-             tmp.m_lines.front()->width() + c_right_text_padding + m_right_text.width() <= max_size.x)
+    else if (!tmp.m_lines.empty() && m_presentation.m_right_text.width() &&
+             tmp.m_lines.front()->width() + c_right_text_padding + m_presentation.m_right_text.width() <= max_size.x)
     {
-        tmp.m_right_text = m_right_text;
+        tmp.m_right_text = m_presentation.m_right_text;
         tmp.m_right_text_row = 0;
     }
 
@@ -2174,7 +2280,7 @@ again:
 
     tmp.m_extent.x += max_size.x;
     tmp.m_extent.y += y_extent;
-    tmp.m_additional_lines = m_additional_lines;
+    tmp.m_additional_lines = m_presentation.m_additional_lines;
     tmp.m_extent.y += int32_t(tmp.m_additional_lines.size());
 
     if (m_final_display && tmp.m_phantom_last_row)
@@ -2425,8 +2531,17 @@ void display_manager::finish_pending_wrap(coord& cursor)
             bytes = uint32_t(iter.get_pointer() - d.m_text.c_str());
             if (bytes)
             {
-                coord dummy;
+                // Forcing a wrap must also repaint the whole linked face run.
+                const char face = d.m_faces.c_str()[bytes - 1];
+                if (get_face_hyperlink(face))
+                {
+                    while (bytes < d.m_text.length() && d.m_faces.c_str()[bytes] == face)
+                        ++bytes;
+                }
+                coord dummy = { 0, 0 };
                 print_text_with_faces(dummy, d.m_text.c_str(), d.m_faces.c_str(), bytes);
+                if (m_autowrap_bug && dummy.x >= m_term_size.x)
+                    output(term_move_up(1));
                 output("\r", 1);
             }
         }

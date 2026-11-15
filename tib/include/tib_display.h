@@ -203,7 +203,17 @@ struct display_lines
     bool                m_erase = false;
 };
 
-class input_buffer;
+struct input_presentation
+{
+    text_and_width      m_left_text;
+    text_and_width      m_right_text;
+    text_and_width      m_message_text;
+    cstring             m_suggestion_text;
+    text_and_width      m_usage_text;
+    std::vector<additional_display_line> m_additional_lines;
+    uint32_t            m_top = 0;
+    textpos_t           m_left = 0;
+};
 
 class display_manager
 {
@@ -237,14 +247,13 @@ public:
     coord               get_extent() const;
     coord               get_inner_extent() const;
 
-    textpos_t           get_left() const { return m_left; }
-    uint32_t            get_top() const { return m_top; }
+    textpos_t           get_left() const { return m_presentation.m_left; }
+    uint32_t            get_top() const { return m_presentation.m_top; }
     void                set_scroll_offsets(textpos_t left, uint32_t top);
     void                clear_scroll_offsets();
-    bool                scroll_horizontally(int32_t columns, int32_t cursor_column, input_buffer& buffer, bool exclude_auto_scroll=true);
-    bool                move_caret_vertically(int32_t rows, int32_t cursor_column, input_buffer& buffer, bool select=false);
+    bool                scroll_horizontally(int32_t columns, int32_t cursor_column, textpos_t& caret);
+    bool                get_pos_vertically(int32_t rows, int32_t cursor_column, textpos_t& pos);
     bool                get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos, screen_scroll_info* scroll=nullptr);
-    bool                set_caret_from_screen(uint32_t x, uint32_t y, input_buffer& buffer, uint32_t drag_scroll_chars=0, bool word_drag=false);
     void                suppress_auto_horizontal_scroll(const selection_state& selection);
 
     void                begin_display();
@@ -259,10 +268,13 @@ public:
     void                erase_display();
     void                end_display_lf();
 
+    void                override_input_presentation(const char* override_prompt) noexcept;
+
 private:
     void                move_to_row(coord& cursor, int16_t y, uint16_t inner_offset);
     void                move_to_column(coord& cursor, int16_t x, uint16_t inner_offset, bool force=false);
     void                print_text_with_faces(coord& cursor, const char* text, const char* faces, size_t len);
+    const char*         get_face_hyperlink(char face) const;
     const char*         get_face_def(char face) const;
     bool                try_update_caret_only();
     bool                display_internal(display_lines& lines);
@@ -293,14 +305,7 @@ private:
     coord               m_term_size;
     std::shared_ptr<const color_table> m_colors;
     display_lines       m_displayed;
-    text_and_width      m_left_text;
-    text_and_width      m_right_text;
-    text_and_width      m_message_text;
-    cstring             m_suggestion_text;
-    text_and_width      m_usage_text;
-    std::vector<additional_display_line> m_additional_lines;
-    uint32_t            m_top = 0;                  // Vertical scroll top.
-    textpos_t           m_left = 0;                 // Horizontal scroll left.
+    input_presentation  m_presentation;
     bool                m_display_ended = false;
     bool                m_final_display = false;
     bool                m_border_dirty = false;
@@ -321,6 +326,8 @@ private:
 #endif
 
     std::vector<grapheme_info> m_tmp_graphemes;
+
+    std::unique_ptr<input_presentation> m_saved_input_presentation;
 };
 
 void show_display_manager_statistics(bool show);

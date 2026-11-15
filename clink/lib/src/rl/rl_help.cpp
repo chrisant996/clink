@@ -42,7 +42,7 @@ extern int _rl_print_completions_horizontally;
 //------------------------------------------------------------------------------
 extern pager* g_pager;
 extern setting_bool g_terminal_raw_esc;
-extern std::shared_ptr<const tib::key_table_list> get_emacs_standard_bindings();
+extern std::shared_ptr<const tib::key_table> get_emacs_standard_bindings();
 
 
 //------------------------------------------------------------------------------
@@ -1234,6 +1234,15 @@ static bool print_warnings(const std::vector<str_moveable>& warnings, int32 max_
 }
 
 //------------------------------------------------------------------------------
+static std::shared_ptr<const tib::key_table_list> get_current_bindings()
+{
+    // Clink always puts the primary key binding group at the beginning.
+    // Transient editing modes made add more binding groups, but they should
+    // not participate in being exposed to the user via Help or etc.
+    return g_tib->get_bindings().front().tables;
+}
+
+//------------------------------------------------------------------------------
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>* out=nullptr)
 {
@@ -1251,8 +1260,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
         const int32 m_step;
     };
 
-// TODO-TIB: iterate over tib bindings instead.
-    std::shared_ptr<const tib::key_table_list> bindings = g_tib->get_bindings();
+    std::shared_ptr<const tib::key_table_list> bindings = get_current_bindings();
     int32 offset = 1;
     int32 max_collect = 64;
     Keyentry* collector = (Keyentry*)malloc(sizeof(Keyentry) * max_collect);
@@ -1262,7 +1270,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
 
     // Collect the functions in the active keymap.
     std::vector<str_moveable> warnings;
-    collector = collect_keymap(bindings, collector, &offset, &max_collect, friendly, show_categories, (bindings == get_emacs_standard_bindings()) ? &warnings : nullptr);
+    collector = collect_keymap(bindings, collector, &offset, &max_collect, friendly, show_categories, (get_key_table() == emacs_table) ? &warnings : nullptr);
 
     // Maybe include unbound commands.
     if (mode & 4)
@@ -1583,7 +1591,7 @@ bool get_command_bindings(const char* command, bool friendly, str_base& _desc, s
 
     str<32> keyseq;
     std::vector<command_binding> bindings;
-    collect_command_bindings(g_tib->get_bindings(), filter, friendly, keyseq, bindings);
+    collect_command_bindings(get_current_bindings(), filter, friendly, keyseq, bindings);
 
     std::sort(bindings.begin(), bindings.end(), cmp_sort_command_bindings);
 
@@ -1636,10 +1644,10 @@ static bool funcmac_dumper_internal(tib::editor_context& ctx, bool macros, bool 
     memset(&collector[0], 0, sizeof(collector[0]));
 
     // Collect the functions or macros in the active keymap.
-    auto bindings = g_tib->get_bindings();
+    auto bindings = get_current_bindings();
     std::vector<str_moveable> warnings;
     const bool explicit_arg = ctx.has_numeric_argument();
-    collector = collect_keymap(bindings, collector, &offset, &max_collect, friendly && !explicit_arg, true, (bindings = get_emacs_standard_bindings()) ? &warnings : nullptr);
+    collector = collect_keymap(bindings, collector, &offset, &max_collect, friendly && !explicit_arg, true, (get_key_table() == emacs_table) ? &warnings : nullptr);
     if (!macros)
         collector = collect_functions(collector, &offset, &max_collect, false);
 

@@ -134,8 +134,9 @@ static const bar_padding_border_definition c_bar_padding_border;
 static const bar_padding_border_definition c_first_line_border("> ", " HH:MM");
 #pragma endregion // Example customizations.
 
-std::shared_ptr<tib::key_table_list> s_normal_bindings;
-std::shared_ptr<tib::key_table_list> s_movement_bindings;
+std::vector<std::shared_ptr<tib::key_table>> s_normal_bindings;
+std::shared_ptr<tib::key_table> s_movement_bindings;
+tib::binding_handle s_movement_handle;
 
 int32_t insert_newline(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
@@ -145,13 +146,47 @@ int32_t insert_newline(tib::editor_context& ctx, int32_t, const char*, const tib
 
 int32_t normal_mode(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
-    ctx.set_bindings(s_normal_bindings);
+    s_movement_handle.remove();
     return 0;
 }
 
 int32_t movement_mode(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
-    ctx.set_bindings(s_movement_bindings);
+    if (!s_movement_handle)
+        s_movement_handle = ctx.add_bindings(s_movement_bindings, tib::binding_policy::exclusive);
+    return 0;
+}
+
+static int32_t print_parameter_result(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
+{
+    tib::cstring text;
+    if (!ctx.accept_read_parameter(text))
+    {
+        tib::ding();
+        return 0;
+    }
+    const auto origin_x = ctx.get_origin().x;
+    ctx.end_display_lf();
+    tib::term_out(text.c_str(), text.length());
+    tib::term_out("\r\n", 2);
+    ctx.set_origin(origin_x);
+    ctx.begin_display();
+    return 0;
+}
+
+int32_t print_parameter(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
+{
+    static const auto commands = std::make_shared<const tib::command_table>(tib::command_table{
+        { "print-parameter-result", print_parameter_result },
+    });
+    auto bindings = std::make_shared<tib::key_table>();
+    bindings->add("\r", tib::binding_target_func("print-parameter-result"));
+    tib::parameter_request request;
+    request.prompt.set("Text: ", 6);
+    request.bindings.push_back(std::move(bindings));
+    request.commands = commands;
+    if (!ctx.start_read_parameter(std::move(request)))
+        tib::ding();
     return 0;
 }
 
@@ -160,35 +195,34 @@ void make_key_tables()
     tib::editor_context::register_command("insert-newline", insert_newline);
     tib::editor_context::register_command("normal-mode", normal_mode);
     tib::editor_context::register_command("movement-mode", movement_mode);
+    tib::editor_context::register_command("print-parameter", print_parameter);
 
-    s_normal_bindings = tib::make_default_key_table(true/*numeric_argument*/);
+    s_normal_bindings.clear();
     {
-        s_normal_bindings->at(0)->remove("\030");   // Avoid shadowing Ctrl-X.
+        auto t = tib::make_default_key_table(true/*numeric_argument*/);
+        t->remove("\030");   // Avoid shadowing Ctrl-X.
+        s_normal_bindings.emplace_back(std::move(t));
 
-        auto t = std::make_shared<tib::key_table>();
+        t = std::make_shared<tib::key_table>();
         t->add("\033", tib::binding_target_func("del-line"));           // ESC by itself
-
         t->add("\021", tib::binding_target_func("quoted-insert"));      // Ctrl-Q
         t->add("\022", tib::binding_target_func("lorem-ipsum"));        // Ctrl-R
         t->add("\025", tib::binding_target_func("universal-argument")); // Ctrl-U
         t->add("\033m", tib::binding_target_func("insert-newline"));    // Alt-M
         t->add("\033T", tib::binding_target_macro("Macro Text"));       // Alt-Shift-T
+        t->add("\033x", tib::binding_target_func("print-parameter"));   // Alt-X
         t->add("\033\022", tib::binding_target_func("lorem-ipsum"));    // Alt-Ctrl-R
-
         t->add("\030\001", tib::binding_target_func("movement-mode"));              // Ctrl-X,Ctrl-A
         t->add("\030\030", tib::binding_target_func("exchange-caret-and-mark"));    // Ctrl-X,Ctrl-X
         t->add("\030(", tib::binding_target_func("start-kbd-macro"));               // Ctrl-X,(
         t->add("\030)", tib::binding_target_func("end-kbd-macro"));                 // Ctrl-X,)
         t->add("\030e", tib::binding_target_func("call-last-kbd-macro"));           // Ctrl-X,e
-
-        s_normal_bindings->emplace_back(t);
+        s_normal_bindings.emplace_back(t);
     }
 
-    s_movement_bindings = std::make_shared<tib::key_table_list>();
     {
         auto t = std::make_shared<tib::key_table>();
         t->add("\033", tib::binding_target_func("normal-mode"));        // ESC by itself
-
         t->add("\001", tib::binding_target_func("begin-of-line"));      // Ctrl-A
         t->add("\002", tib::binding_target_func("backward-char"));      // Ctrl-B
         t->add("\004", tib::binding_target_func("del-char-right"));     // Ctrl-D
@@ -198,7 +232,6 @@ void make_key_tables()
         t->add("\r", tib::binding_target_func("accept-line"));          // Ctrl-M / Enter
         t->add("\021", tib::binding_target_func("screen-line-up"));     // Ctrl-Q
         t->add("\032", tib::binding_target_func("screen-line-down"));   // Ctrl-Z
-
         t->add("b", tib::binding_target_func("backward-char"));
         t->add("B", tib::binding_target_func("backward-word"));
         t->add("d", tib::binding_target_func("del-char-right"));
@@ -209,13 +242,11 @@ void make_key_tables()
         t->add("H", tib::binding_target_func("del-word-left"));
         t->add("q", tib::binding_target_func("screen-line-up"));
         t->add("z", tib::binding_target_func("screen-line-down"));
-
         t->add("\000", 1, tib::binding_target_func("set-mark"));        // Ctrl-@ (Ctrl-2)
         t->add("\001", tib::binding_target_func("select-all"));         // Ctrl-A
         t->add("\003", tib::binding_target_func("copy"));               // Ctrl-C
         t->add("\007", tib::binding_target_func("abort"));              // Ctrl-G
         t->add("\027", tib::binding_target_func("select-word"));        // Ctrl-W
-
         t->add("\033[H", tib::binding_target_func("begin-of-line"));    // Home
         t->add("\033[F", tib::binding_target_func("end-of-line"));      // End
         t->add("\033[D", tib::binding_target_func("backward-char"));    // Left
@@ -224,7 +255,6 @@ void make_key_tables()
         t->add("\033[1;5C", tib::binding_target_func("forward-word"));  // Ctrl-Right
         t->add("\033[B", tib::binding_target_func("screen-line-down")); // Down
         t->add("\033[A", tib::binding_target_func("screen-line-up"));   // Up
-
         t->add("\033[1;2H", tib::binding_target_func("cua-begin-of-line"));     // Shift-Home
         t->add("\033[1;2F", tib::binding_target_func("cua-end-of-line"));       // Shift-End
         t->add("\033[1;2D", tib::binding_target_func("cua-backward-char"));     // Shift-Left
@@ -233,17 +263,13 @@ void make_key_tables()
         t->add("\033[1;6C", tib::binding_target_func("cua-forward-word"));      // Shift-Ctrl-Right
         t->add("\033[1;2B", tib::binding_target_func("cua-screen-line-down"));  // Shift-Down
         t->add("\033[1;2A", tib::binding_target_func("cua-screen-line-up"));    // Shift-Up
-
         t->add("\033[<%#;%#;%#M", tib::binding_target_func("mouse-input"), true); // Mouse press
         t->add("\033[<%#;%#;%#m", tib::binding_target_func("mouse-input"), true); // Mouse release
-
         for (char seq[3] = { '\033', '0', 0 }; seq[1] <= '9'; ++seq[1])
             t->add(seq, tib::binding_target_func("digit-argument"));
         t->add("-", tib::binding_target_func("digit-argument"));
-
         t->add("\030\001", tib::binding_target_func("normal-mode"));    // Ctrl-X,Ctrl-A
-
-        s_movement_bindings->emplace_back(t);
+        s_movement_bindings = std::move(t);
     }
 }
 
@@ -300,7 +326,7 @@ void custom_input_box::provide_faces(const tib::input_buffer& buffer, tib::cstri
     {
         uint8_t c = 0;
         bool space = true;
-        const tib::cstring& text = buffer.get_text();
+        const tib::cstring& text = buffer.m_text;
         const char* s = text.c_str();
         const size_t len = text.length();
         assert(len == faces.length());
@@ -368,10 +394,13 @@ static void add_feedback_line(const char* color, const char* text, std::vector<t
 
 static void display_feedback(tib::editor_context& ctx, const tib::cstring& show_sequence)
 {
+    if (ctx.is_read_parameter())
+        return; // Skip because read-parameter mode omits additional lines.
+
     tib::cstring tmp;
     std::vector<tib::additional_display_line> additional;
 
-    if (ctx.get_bindings() == s_movement_bindings)
+    if (s_movement_handle)
     {
         add_feedback_line("96;44", "^A=begline  ^B=left  ^E=endline  ^F=right  ^Q=up  ^Z=down", additional);
         add_feedback_line("96;44", "b/B=left-char/word  f/F=right-char/word  q/z=line-up/down", additional);
@@ -418,7 +447,8 @@ int main(int argc, const char** argv)
 
     std::shared_ptr<custom_input_box> tib = std::make_shared<custom_input_box>();
     make_key_tables();  // BUGBUG: should not require an editor_context to have been created.
-    tib->set_bindings(s_normal_bindings);
+    for (const auto& table : s_normal_bindings)
+        tib->add_bindings(table);
     tib->set_max_width(40);
 
 #pragma region Example customizations.

@@ -118,7 +118,9 @@ static uint16 s_suggestion_hint_width = 0;
 static str_moveable s_suggestion_hint_text;
 static suggestion_manager s_suggestion;
 
-static std::shared_ptr<tib::key_table_list> s_emacs_standard_bindings;
+static tib::binding_handle s_main_bindings_handle;
+static std::shared_ptr<tib::key_table_list> s_main_bindings;
+static std::shared_ptr<tib::key_table> s_emacs_standard_bindings;
 
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
@@ -338,7 +340,7 @@ extern bool g_debug_log_input_pipeline;
 
 
 //------------------------------------------------------------------------------
-std::shared_ptr<const tib::key_table_list> get_emacs_standard_bindings()
+std::shared_ptr<const tib::key_table> get_emacs_standard_bindings()
 {
     return s_emacs_standard_bindings;
 }
@@ -1683,21 +1685,33 @@ static void init_emacs_standard_binds(bool force=false)
         {}
     };
 
-    auto t = std::make_shared<tib::key_table>(true/*can_self_insert*/);
-    bind_keyseq_list(emacs_standard_binds, t);
-
-    s_emacs_standard_bindings = std::make_shared<tib::key_table_list>();
-    s_emacs_standard_bindings->emplace_back(std::move(t));
+    if (!s_emacs_standard_bindings)
+        s_emacs_standard_bindings = std::make_shared<tib::key_table>(true/*can_self_insert*/);
+    else
+        s_emacs_standard_bindings->clear();
+    bind_keyseq_list(emacs_standard_binds, s_emacs_standard_bindings);
 }
 
 //------------------------------------------------------------------------------
 extern "C" void set_key_table(int table)
 {
+    std::shared_ptr<tib::key_table> t;
+
     switch (table)
     {
-    case emacs_table:   g_tib->set_bindings(s_emacs_standard_bindings); break;
+    case emacs_table:   t = s_emacs_standard_bindings; break;
     default:            assert(false); return;
     }
+
+    if (!s_main_bindings_handle)
+    {
+        s_main_bindings = std::make_shared<tib::key_table_list>();
+        s_main_bindings->emplace_back(s_emacs_standard_bindings);
+        s_main_bindings_handle = g_tib->add_bindings(s_main_bindings);
+    }
+
+    s_main_bindings->clear();
+    s_main_bindings->emplace_back(std::move(t));
 }
 
 //------------------------------------------------------------------------------
@@ -1709,16 +1723,16 @@ extern "C" int get_key_table(void)
 //------------------------------------------------------------------------------
 extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
 {
-    assert(s_emacs_standard_bindings);
-    if (!s_emacs_standard_bindings)
-        return;
-
     std::shared_ptr<tib::key_table> t;
     switch (table)
     {
-    case emacs_table:   t = s_emacs_standard_bindings->at(0); break;
+    case emacs_table:   t = s_emacs_standard_bindings; break;
     default:            return;
     }
+
+    assert(t);
+    if (!t)
+        return;
 
     if (!is_macro || !target)
     {
@@ -2126,10 +2140,10 @@ void initialise_readline(bool no_user)
     // it cannot escape a space).
     history_host_backslash_escape = 0;
 
-    // Add commands.
+    // Initialize globals.
     static bool s_rl_initialized = false;
     const bool initialized = s_rl_initialized;
-    if (!s_rl_initialized)
+    if (!initialized)
     {
         s_rl_initialized = true;
 
@@ -2141,11 +2155,15 @@ void initialise_readline(bool no_user)
 
         // Clink manages showing and hiding the cursor; tib should not.
         tib::g_show_hide_cursor = false;
-
+    }
+    if (!g_tib)
+    {
         // Wait until after registering the editor commands, so it doesn't
         // trigger auto-registering tib's list of commands.
         g_tib = std::make_shared<tib::input_box>();
-
+    }
+    if (!initialized)
+    {
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.
         rl_catch_signals = 1;
@@ -2391,8 +2409,7 @@ void initialise_readline(bool no_user)
     // This mimics what rl_initialize() does.
     rl_set_keymap_from_edit_mode();
 
-    if (g_tib) // Can be nullptr in the tests.
-        g_tib->set_bindings(s_emacs_standard_bindings);
+    set_key_table(emacs_table);
 }
 
 
@@ -2946,7 +2963,7 @@ void rl_module::on_begin_line(const context& context)
     m_mouse.clear();
 #else
     g_tib->initialize();
-    g_tib->set_bindings(s_emacs_standard_bindings);
+    set_key_table(emacs_table);
     g_tib->set_border(nullptr);
     // g_tib->set_border(&tib::c_light_border);
     g_tib->set_max_width(tib::int16_max);

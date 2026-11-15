@@ -190,9 +190,8 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     assert(g_terminal);
 
     extern void initialise_readline(bool no_user=false);
-    initialise_readline(); // Creates a g_tib the first time.
-
-    g_tib = std::make_shared<tib::input_box>();
+    g_tib = nullptr; // Force creating a fresh instance (for test stability).
+    initialise_readline(); // Creates a fresh g_tib because nullptr.
 
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
@@ -202,8 +201,6 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 line_editor_tester::~line_editor_tester()
 {
     line_editor_destroy(m_editor);
-
-    g_tib = nullptr;
 
     uninit_terminal();
 }

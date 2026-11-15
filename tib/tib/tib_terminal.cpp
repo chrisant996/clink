@@ -378,10 +378,16 @@ bool is_term_sigclose()
 }
 #endif
 
+static bool s_term_ended = false;
 class auto_term_end
 {
 public:
-    ~auto_term_end() { if (!s_term_zombie) term_sigint(); }
+    ~auto_term_end()
+    {
+        if (!s_term_zombie)
+            term_sigint();
+        s_term_ended = true;
+    }
 };
 static auto_term_end s_auto_term_end;
 
@@ -630,8 +636,11 @@ display_accumulator::display_accumulator()
     {
         assert(!s_active);
         assert(!s_synchronized_output);
-        assert(s_acc.empty());
-        s_acc.empty();
+        if (!s_term_ended)
+        {
+            assert(s_acc.empty());
+            s_acc.empty();
+        }
     }
 
     assert(m_active);
@@ -639,7 +648,7 @@ display_accumulator::display_accumulator()
 
     if (s_nested == 1)
     {
-        if (!g_coalesce_output)
+        if (!g_coalesce_output || s_term_ended)
             return;
 
         s_synchronized_output = s_can_synchronize_output;
@@ -665,6 +674,8 @@ void display_accumulator::end()
 
     if (s_active && s_nested == 0)
     {
+        assert(!s_term_ended); // Should be impossible here.
+
         cancel();
         assert(!s_active);
         assert(!s_synchronized_output);
@@ -676,6 +687,8 @@ void display_accumulator::cancel()
 {
     if (s_active)
     {
+        assert(!s_term_ended); // Should be impossible here.
+
         flush();
         s_active = false;
         s_synchronized_output = false;
@@ -693,6 +706,8 @@ void display_accumulator::flush()
     static int32_t s_in_flush = 0;
     if (s_active && s_in_flush <= 0)
     {
+        assert(!s_term_ended); // Should be impossible here.
+
         ++s_in_flush;
         assert(s_in_flush <= 3);
         if (s_synchronized_output)
@@ -718,6 +733,8 @@ void display_accumulator::flush()
 
 void display_accumulator::append(const char* s, size_t len)
 {
+    assert(!s_term_ended); // Should be impossible here.
+
     s_acc.append(s, len);
 }
 

@@ -33,6 +33,7 @@ private:
 //------------------------------------------------------------------------------
 extern "C" uint32 clink_wcswidth(const char* s, uint32 len);
 extern "C" uint32 clink_wcswidth_expandctrl(const char* s, uint32 len);
+uint32 cell_count(const char*, int32 len, int32* end_offset=nullptr);
 
 //------------------------------------------------------------------------------
 class wcwidth_iter

@@ -5,6 +5,8 @@
 #include "test.h"
 #include "test_util.h"
 #include "tib.h"
+#include "tib_private.h"
+#include <type_traits>
 
 #ifdef _WIN32
 TEST_CASE("Repeated key input")
@@ -86,6 +88,21 @@ TEST_CASE("Repeated key input")
 }
 #endif
 
+TEST_CASE("Key tables expose shared ownership to hosts")
+{
+    auto table = std::make_shared<tib::key_table>();
+    auto host_reference = table.get()->shared_from_this();
+    REQUIRE(host_reference == table);
+    REQUIRE(!host_reference.owner_before(table));
+    REQUIRE(!table.owner_before(host_reference));
+
+    std::weak_ptr<tib::key_table> lifetime = table;
+    table.reset();
+    REQUIRE(!lifetime.expired());
+    host_reference.reset();
+    REQUIRE(lifetime.expired());
+}
+
 TEST_CASE("Adding a key binding moves its sequence storage")
 {
     tib::key_table table;
@@ -96,38 +113,33 @@ TEST_CASE("Adding a key binding moves its sequence storage")
     REQUIRE(table.begin()->sequence.c_str() == sequence_storage);
 }
 
+namespace tib {
+
 class binding_fallback_tester : public dispatcher_tester
 {
 public:
-    uint32_t            get_fallback_count() const noexcept { return m_fallback_count; }
-    void                on_binding_fallback() noexcept override;
-
-private:
-    uint32_t            m_fallback_count = 0;
+    uint32_t            get_fallback_count() const noexcept { return uint32_t(fallbacks.size()); }
+    void                on_binding_fallback(const binding_handle& handle_crossed) noexcept override { fallbacks.push_back(handle_crossed); }
+    std::vector<binding_handle> fallbacks;
 };
 
-void binding_fallback_tester::on_binding_fallback() noexcept
-{
-    ++m_fallback_count;
-}
+} // namespace tib
+
+using tib::binding_fallback_tester;
 
 TEST_CASE("Partial match suppresses later binding fallback")
 {
     auto prefix_table = std::make_shared<tib::key_table>();
     REQUIRE(prefix_table->add("ab", tib::binding_target_func("prefix-command")));
-    auto prefix_tables = std::make_shared<tib::key_table_list>();
-    prefix_tables->emplace_back(std::move(prefix_table));
     auto prefix_target = std::make_shared<dispatcher_tester>();
-    prefix_target->set_bindings(std::move(prefix_tables));
+    prefix_target->add_bindings(std::move(prefix_table), tib::binding_policy::exclusive);
 
     auto miss_table = std::make_shared<tib::key_table>();
     REQUIRE(miss_table->add("z", tib::binding_target_func("miss-command")));
-    auto miss_tables = std::make_shared<tib::key_table_list>();
-    miss_tables->emplace_back(std::move(miss_table));
 
     auto miss_target = std::make_shared<binding_fallback_tester>();
-    miss_target->set_bindings(std::move(miss_tables));
-    miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
+    miss_target->add_bindings(std::move(miss_table), tib::binding_policy::exclusive);
+    miss_target->add_bindings(std::make_shared<tib::key_table>(), tib::binding_policy::fallback);
 
     tib::binding_resolver resolver;
     resolver.add_target(prefix_target);
@@ -146,17 +158,13 @@ TEST_CASE("Binding fallback commits only on dispatch")
 {
     auto base = std::make_shared<tib::key_table>();
     REQUIRE(base->add("ab", tib::binding_target_func("base-command")));
-    auto base_tables = std::make_shared<tib::key_table_list>();
-    base_tables->emplace_back(std::move(base));
 
     auto argument = std::make_shared<tib::key_table>();
     REQUIRE(argument->add("1", tib::binding_target_func("argument-digit")));
-    auto argument_tables = std::make_shared<tib::key_table_list>();
-    argument_tables->emplace_back(std::move(argument));
 
     auto target = std::make_shared<binding_fallback_tester>();
-    target->set_bindings(std::move(base_tables));
-    target->override_bindings(std::move(argument_tables), true);
+    target->add_bindings(std::move(base), tib::binding_policy::exclusive);
+    auto argument_handle = target->add_bindings(argument, tib::binding_policy::fallback);
 
     tib::binding_resolver resolver;
     resolver.add_target(target);
@@ -171,7 +179,7 @@ TEST_CASE("Binding fallback commits only on dispatch")
     REQUIRE(target->get_fallback_count() == 0);
     REQUIRE(resolved.dispatch());
     REQUIRE(target->get_fallback_count() == 1);
-    target->override_bindings(nullptr);
+    argument_handle.remove();
     REQUIRE(!resolver.is_keyseq_recognized("z", 1));
 }
 
@@ -179,17 +187,13 @@ TEST_CASE("Binding fallback is reported on a final miss")
 {
     auto base = std::make_shared<tib::key_table>();
     REQUIRE(base->add("a", tib::binding_target_func("base-command")));
-    auto base_tables = std::make_shared<tib::key_table_list>();
-    base_tables->emplace_back(std::move(base));
 
     auto argument = std::make_shared<tib::key_table>();
     REQUIRE(argument->add("1", tib::binding_target_func("argument-digit")));
-    auto argument_tables = std::make_shared<tib::key_table_list>();
-    argument_tables->emplace_back(std::move(argument));
 
     auto target = std::make_shared<binding_fallback_tester>();
-    target->set_bindings(std::move(base_tables));
-    target->override_bindings(std::move(argument_tables), true);
+    target->add_bindings(std::move(base), tib::binding_policy::exclusive);
+    target->add_bindings(argument, tib::binding_policy::fallback);
 
     tib::binding_resolver resolver;
     resolver.add_target(target);
@@ -198,6 +202,512 @@ TEST_CASE("Binding fallback is reported on a final miss")
     REQUIRE(target->get_fallback_count() == 0);
     REQUIRE(!resolved.dispatch());
     REQUIRE(target->get_fallback_count() == 1);
+}
+
+TEST_CASE("Binding stack registrations")
+{
+    auto target = std::make_shared<dispatcher_tester>();
+    auto table = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*table, "x", "shared"));
+    auto first = target->add_bindings(table);
+    auto second = target->add_bindings(table);
+    auto top = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*top, "x", "top"));
+    auto third = target->add_bindings(top);
+    REQUIRE(first != second);
+    REQUIRE(second != third);
+    REQUIRE(first);
+
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("Explicit removal expires every owner and preserves priority")
+    {
+        auto second_copy = second;
+        second = {};
+        REQUIRE(second_copy);
+        REQUIRE(target->get_bindings().size() == 3);
+        auto second_observer = second_copy;
+        second_copy.remove();
+        REQUIRE(!second_copy);
+        REQUIRE(!second_observer);
+        second_observer.remove();
+        second_copy.remove(); // Already removed: no effect.
+        REQUIRE(target->get_bindings().size() == 2);
+        REQUIRE(target->get_bindings().front().tables->front() == table);
+        REQUIRE(target->get_bindings().back().tables->front() == top);
+        REQUIRE(resolver.step('x').is_func_name("top"));
+        third.remove();
+        REQUIRE(!third);
+        REQUIRE(resolver.step('x').is_func_name("shared"));
+        std::weak_ptr<tib::key_table> lifetime = table;
+        table.reset();
+        REQUIRE(!lifetime.expired());
+        const auto first_copy = first;
+        const std::weak_ptr<const tib::key_table_list> first_tables = target->get_bindings().front().tables;
+        first.remove();
+        REQUIRE(!first);
+        REQUIRE(!first_copy);
+        REQUIRE(first_tables.expired());
+        REQUIRE(lifetime.expired());
+        REQUIRE(target->get_bindings().empty());
+        REQUIRE(resolver.step('x').outcome == tib::dispatch_outcome::miss);
+    }
+
+    SECTION("Default and moved-from handles are expired")
+    {
+        tib::binding_handle empty;
+        REQUIRE(!empty);
+        empty.remove();
+        auto moved = std::move(first);
+        REQUIRE(!first);
+        REQUIRE(moved);
+        first.remove();
+        REQUIRE(target->get_bindings().size() == 3);
+        moved.remove();
+        REQUIRE(!moved);
+        REQUIRE(target->get_bindings().size() == 2);
+    }
+
+    SECTION("Outstanding handles expire without keeping the target or tables alive")
+    {
+        std::weak_ptr<dispatcher_tester> target_lifetime = target;
+        std::weak_ptr<tib::key_table> table_lifetime = table;
+        const std::weak_ptr<const tib::key_table_list> first_tables = target->get_bindings().front().tables;
+        table.reset();
+        target.reset();
+        REQUIRE(target_lifetime.expired());
+        REQUIRE(first_tables.expired());
+        REQUIRE(table_lifetime.expired());
+        REQUIRE(!first);
+        REQUIRE(!second);
+        REQUIRE(!third);
+        // Removing or destroying expired handles cannot access former entries.
+        first.remove();
+        first = {};
+        second = {};
+        third = {};
+    }
+
+    SECTION("Discarded handles leave their registrations active")
+    {
+        auto discarded = std::make_shared<tib::key_table>();
+        REQUIRE(add_binding(*discarded, "y", "discarded"));
+        target->add_bindings(std::move(discarded));
+        first = {};
+        second = {};
+        third = {};
+        REQUIRE(target->get_bindings().size() == 4);
+        REQUIRE(resolver.step('x').is_func_name("top"));
+        REQUIRE(resolver.step('y').is_func_name("discarded"));
+    }
+}
+
+TEST_CASE("Binding table list ownership and single-table convenience")
+{
+    auto target = std::make_shared<dispatcher_tester>();
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*base, "x", "base"));
+    auto tables = std::make_shared<tib::key_table_list>();
+    tables->push_back(base);
+    const auto handle = target->add_bindings(tables);
+    REQUIRE(target->get_bindings().back().tables == tables);
+    static_assert(std::is_same_v<decltype(*target->get_bindings().back().tables->front()), const tib::key_table&>);
+    REQUIRE(tables->shared_from_this() == tables);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("A single table is wrapped in a separate list for each registration")
+    {
+        auto single = target->add_bindings(base);
+        REQUIRE(target->get_bindings().back().tables != tables);
+        REQUIRE(target->get_bindings().back().tables->size() == 1);
+        REQUIRE(target->get_bindings().back().tables->front() == base);
+        const auto other = target->add_bindings(base);
+        REQUIRE(target->get_bindings()[1].tables != target->get_bindings()[2].tables);
+        single.remove();
+        REQUIRE(handle);
+        REQUIRE(other);
+        REQUIRE(resolver.step('x').is_func_name("base"));
+    }
+
+    SECTION("Const tables can be registered directly or added to a list")
+    {
+        std::shared_ptr<const tib::key_table> read_only = base;
+        auto single = target->add_bindings(read_only);
+        tables->push_back(read_only);
+        REQUIRE(target->get_bindings().back().tables->front() == read_only);
+        REQUIRE(resolver.step('x').is_func_name("base"));
+        single.remove();
+        REQUIRE(resolver.step('x').is_func_name("base"));
+    }
+
+    SECTION("Owners can edit tables while dispatchers retain const pointers")
+    {
+        REQUIRE(base->remove("x"));
+        REQUIRE(add_binding(*base, "y", "updated"));
+        REQUIRE(resolver.step('x').outcome == tib::dispatch_outcome::miss);
+        REQUIRE(resolver.step('y').is_func_name("updated"));
+    }
+
+    SECTION("Suppliers can add remove and replace tables in a registered list")
+    {
+        auto overlay = std::make_shared<tib::key_table>();
+        REQUIRE(add_binding(*overlay, "x", "overlay"));
+        REQUIRE(add_binding(*overlay, "y", "overlay"));
+        tables->push_back(overlay);
+        REQUIRE(resolver.step('x').is_func_name("overlay"));
+        REQUIRE(resolver.step('y').is_func_name("overlay"));
+        tables->pop_back();
+        REQUIRE(resolver.step('x').is_func_name("base"));
+        REQUIRE(resolver.step('y').outcome == tib::dispatch_outcome::miss);
+        tables->front() = overlay;
+        REQUIRE(resolver.step('x').is_func_name("overlay"));
+        tables->clear();
+        REQUIRE(handle);
+        REQUIRE(resolver.step('x').outcome == tib::dispatch_outcome::miss);
+        REQUIRE(target->get_bindings().size() == 1);
+    }
+
+    SECTION("A shared list stays shared across independently removable registrations")
+    {
+        auto other = std::make_shared<dispatcher_tester>();
+        auto other_handle = other->add_bindings(tables);
+        tib::binding_resolver other_resolver;
+        other_resolver.add_target(other);
+        auto replacement = std::make_shared<tib::key_table>();
+        REQUIRE(add_binding(*replacement, "x", "replacement"));
+        tables->front() = replacement;
+        REQUIRE(resolver.step('x').is_func_name("replacement"));
+        REQUIRE(other_resolver.step('x').is_func_name("replacement"));
+        other_handle.remove();
+        REQUIRE(handle);
+        REQUIRE(resolver.step('x').is_func_name("replacement"));
+        REQUIRE(other_resolver.step('x').outcome == tib::dispatch_outcome::miss);
+    }
+}
+
+TEST_CASE("Binding table lists define policy boundaries")
+{
+    auto target = std::make_shared<binding_fallback_tester>();
+    auto base = std::make_shared<tib::key_table>(true);
+    REQUIRE(add_binding(*base, "abc", "base"));
+    target->add_bindings(base);
+    auto mode = std::make_shared<tib::key_table>(false);
+    REQUIRE(add_binding(*mode, "a", "mode"));
+    auto overlay = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*overlay, "x", "overlay"));
+    auto tables = std::make_shared<tib::key_table_list>();
+    tables->push_back(mode);
+    tables->push_back(overlay);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("Fallback applies to the whole list and survives removal of its first table")
+    {
+        const auto handle = target->add_bindings(tables, tib::binding_policy::fallback);
+        REQUIRE(resolver.step('a').is_func_name("mode"));
+        REQUIRE(resolver.step('x').is_func_name("overlay"));
+        REQUIRE(target->fallbacks.empty());
+        tables->erase(tables->begin());
+        REQUIRE(resolver.step('a').ambiguous());
+        REQUIRE(resolver.step('b').ambiguous());
+        auto resolved = resolver.step('c');
+        REQUIRE(resolved.is_func_name("base"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == handle);
+        REQUIRE(target->get_bindings().back().tables == tables);
+    }
+
+    SECTION("An empty exclusive list still excludes lower groups")
+    {
+        const auto handle = target->add_bindings(tables, tib::binding_policy::exclusive);
+        tables->clear();
+        REQUIRE(handle);
+        REQUIRE(resolver.step('a').outcome == tib::dispatch_outcome::miss);
+        REQUIRE(target->fallbacks.empty());
+    }
+
+    SECTION("An empty fallback list still notifies for its registration")
+    {
+        const auto handle = target->add_bindings(tables, tib::binding_policy::fallback);
+        tables->clear();
+        auto resolved = resolver.step('x');
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == handle);
+    }
+}
+
+TEST_CASE("Binding stack search policies")
+{
+    auto target = std::make_shared<binding_fallback_tester>();
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*base, "abc", "long"));
+    REQUIRE(add_binding(*base, "x", "base"));
+    target->add_bindings(base);
+    auto mode = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*mode, "a", "short"));
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("Overlays share longest-match resolution")
+    {
+        target->add_bindings(mode);
+        REQUIRE(resolver.step('a').ambiguous());
+        REQUIRE(resolver.step('b').more());
+        REQUIRE(resolver.step('c').is_func_name("long"));
+        REQUIRE(resolver.step('x').is_func_name("base"));
+        REQUIRE(target->fallbacks.empty());
+    }
+
+    SECTION("Fallback hides lower prefixes until the group misses")
+    {
+        const auto boundary = target->add_bindings(mode, tib::binding_policy::fallback);
+        REQUIRE(resolver.step('a').is_func_name("short"));
+        auto resolved = resolver.step('x');
+        REQUIRE(resolved.is_func_name("base"));
+        REQUIRE(target->fallbacks.empty());
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == boundary);
+        REQUIRE(boundary);
+    }
+
+    SECTION("Exclusive groups exclude lower tables but not other targets")
+    {
+        target->add_bindings(mode, tib::binding_policy::exclusive);
+        REQUIRE(resolver.step('a').is_func_name("short"));
+        REQUIRE(resolver.step('x').outcome == tib::dispatch_outcome::miss);
+        auto other = std::make_shared<dispatcher_tester>();
+        other->add_bindings(base);
+        resolver.add_target(other);
+        REQUIRE(resolver.step('x').is_func_name("base"));
+        REQUIRE(target->fallbacks.empty());
+    }
+}
+
+TEST_CASE("Nested binding fallback boundaries")
+{
+    auto target = std::make_shared<binding_fallback_tester>();
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*base, "abc", "base"));
+    target->add_bindings(base, tib::binding_policy::exclusive);
+    auto middle = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*middle, "abq", "middle"));
+    const auto middle_handle = target->add_bindings(middle, tib::binding_policy::fallback);
+    auto top = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*top, "ax", "top"));
+    auto overlay = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*overlay, "t", "overlay"));
+    auto top_tables = std::make_shared<tib::key_table_list>();
+    top_tables->push_back(top);
+    top_tables->push_back(overlay);
+    auto top_handle = target->add_bindings(top_tables, tib::binding_policy::fallback);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("Each miss retries the whole sequence and notifies in search order")
+    {
+        REQUIRE(resolver.is_keyseq_recognized("abc", 3));
+        REQUIRE(target->fallbacks.empty());
+        REQUIRE(resolver.step('a').more());
+        REQUIRE(resolver.step('b').more());
+        REQUIRE(target->fallbacks.empty());
+        auto resolved = resolver.step('c');
+        REQUIRE(resolved.is_func_name("base"));
+        REQUIRE(target->fallbacks.empty());
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 2);
+        REQUIRE(target->fallbacks[0] == top_handle);
+        REQUIRE(target->fallbacks[1] == middle_handle);
+        // Notifications do not implicitly end either mode.
+        REQUIRE(resolver.step('t').is_func_name("overlay"));
+    }
+
+    SECTION("A final miss still commits every crossed boundary")
+    {
+        auto resolved = resolver.step('z');
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::miss);
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 2);
+        REQUIRE(target->fallbacks[0] == top_handle);
+        REQUIRE(target->fallbacks[1] == middle_handle);
+    }
+
+    SECTION("Removed registrations cannot receive stale notifications")
+    {
+        auto resolved = resolver.step('z');
+        const auto removed_copy = top_handle;
+        top_handle.remove();
+        REQUIRE(!removed_copy);
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == middle_handle);
+    }
+
+    SECTION("Removing and readding a group cancels its old queued notification")
+    {
+        auto resolved = resolver.step('z');
+        top_handle.remove();
+        const auto replacement = target->add_bindings(top_tables, tib::binding_policy::fallback);
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == middle_handle);
+        REQUIRE(replacement);
+        REQUIRE(!top_handle);
+
+        target->fallbacks.clear();
+        resolved = resolver.step('z');
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 2);
+        REQUIRE(target->fallbacks[0] == replacement);
+        REQUIRE(target->fallbacks[1] == middle_handle);
+    }
+
+    SECTION("Discarding a queued handle preserves a valid callback handle")
+    {
+        auto resolved = resolver.step('z');
+        top_handle = {};
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 2);
+        REQUIRE(target->fallbacks[0]);
+        REQUIRE(target->fallbacks[1] == middle_handle);
+    }
+
+    SECTION("Pending fallback handles do not keep their target alive")
+    {
+        auto resolved = resolver.step('z');
+        std::weak_ptr<binding_fallback_tester> lifetime = target;
+        target.reset();
+        REQUIRE(lifetime.expired());
+        REQUIRE(!top_handle);
+        REQUIRE(!middle_handle);
+        REQUIRE(!resolved.dispatch());
+    }
+
+    SECTION("Callbacks can remove or discard another crossed handle")
+    {
+        class removing_target : public binding_fallback_tester
+        {
+        public:
+            void on_binding_fallback(const tib::binding_handle& handle_crossed) noexcept override
+            {
+                binding_fallback_tester::on_binding_fallback(handle_crossed);
+                if (discard_only)
+                    remove_on_fallback = {};
+                else
+                    remove_on_fallback.remove();
+            }
+            tib::binding_handle remove_on_fallback;
+            bool discard_only = false;
+        };
+        auto removing = std::make_shared<removing_target>();
+        removing->add_bindings(base);
+        removing->remove_on_fallback = removing->add_bindings(middle, tib::binding_policy::fallback);
+        const auto first = removing->add_bindings(top, tib::binding_policy::fallback);
+        tib::binding_resolver other_resolver;
+        other_resolver.add_target(removing);
+        SECTION("Removal cancels the later callback")
+        {
+            auto resolved = other_resolver.step('z');
+            REQUIRE(!resolved.dispatch());
+            REQUIRE(removing->fallbacks.size() == 1);
+            REQUIRE(removing->fallbacks[0] == first);
+        }
+
+        SECTION("Discarding preserves the later callback")
+        {
+            removing->discard_only = true;
+            auto resolved = other_resolver.step('z');
+            REQUIRE(!resolved.dispatch());
+            REQUIRE(removing->fallbacks.size() == 2);
+            REQUIRE(removing->fallbacks[0] == first);
+            REQUIRE(removing->fallbacks[1]);
+        }
+    }
+
+    SECTION("A crossed group stays crossed while lower input remains pending")
+    {
+        REQUIRE(resolver.step('a').more());
+        REQUIRE(resolver.step('b').more());
+        REQUIRE(add_binding(*top, "abc", "new-top"));
+        auto resolved = resolver.step('c');
+        REQUIRE(resolved.is_func_name("base"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 2);
+    }
+}
+
+TEST_CASE("Discarded handles preserve fallback notifications")
+{
+    auto target = std::make_shared<binding_fallback_tester>();
+    auto base = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*base, "abc", "base"));
+    target->add_bindings(base, tib::binding_policy::exclusive);
+    auto middle = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*middle, "abq", "middle"));
+    target->add_bindings(middle, tib::binding_policy::fallback);
+    auto top = std::make_shared<tib::key_table>();
+    REQUIRE(add_binding(*top, "ax", "top"));
+    target->add_bindings(top, tib::binding_policy::fallback);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    REQUIRE(resolver.step('a').more());
+    REQUIRE(resolver.step('x').is_func_name("top"));
+    REQUIRE(resolver.step('a').more());
+    REQUIRE(resolver.step('b').more());
+    auto resolved = resolver.step('c');
+    REQUIRE(resolved.is_func_name("base"));
+    REQUIRE(target->fallbacks.empty());
+    REQUIRE(resolved.dispatch());
+    REQUIRE(target->fallbacks.size() == 2);
+    REQUIRE(target->fallbacks[0]);
+    REQUIRE(target->fallbacks[1]);
+    REQUIRE(target->fallbacks[0] != target->fallbacks[1]);
+    REQUIRE(target->get_bindings().size() == 3);
+    REQUIRE(resolver.step('a').more());
+    REQUIRE(resolver.step('b').more());
+    REQUIRE(resolver.step('c').is_func_name("base"));
+
+    // A callback handle can remove bindings whose original handle was discarded.
+    auto top_handle = target->fallbacks[0];
+    top_handle.remove();
+    REQUIRE(!target->fallbacks[0]);
+    REQUIRE(target->get_bindings().size() == 2);
+}
+
+TEST_CASE("Binding fallback self-insert policy")
+{
+    auto target = std::make_shared<binding_fallback_tester>();
+    target->add_bindings(std::make_shared<tib::key_table>(true));
+    auto mode = std::make_shared<tib::key_table>(false);
+    const auto handle = target->add_bindings(mode, tib::binding_policy::fallback);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("A missed group's self-insert prohibition does not affect its fallback")
+    {
+        auto resolved = resolver.step('x');
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.size() == 1);
+        REQUIRE(target->fallbacks[0] == handle);
+    }
+
+    SECTION("Self-insert in the upper group prevents fallback")
+    {
+        mode->set_can_self_insert(true);
+        REQUIRE(resolver.step(0xc3).more());
+        auto resolved = resolver.step(0xa9);
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
+        REQUIRE(resolved.sequence == "\xc3\xa9");
+        REQUIRE(resolved.dispatch());
+        REQUIRE(target->fallbacks.empty());
+    }
 }
 
 TEST_CASE("Key bindings")
@@ -212,11 +722,10 @@ TEST_CASE("Key bindings")
         auto overlay = std::make_shared<tib::key_table>();
         add_binding(*overlay, "\x1b[A", "command-override");
 
-        std::shared_ptr<tib::key_table_list> bindings = std::make_shared<tib::key_table_list>();
-        bindings->emplace_back(base);
-
+        auto tables = std::make_shared<tib::key_table_list>();
+        tables->push_back(base);
         std::shared_ptr<dispatcher_tester> tester = std::make_shared<dispatcher_tester>();
-        tester->set_bindings(bindings);
+        tester->add_bindings(tables, tib::binding_policy::exclusive);
 
         tib::binding_resolver resolver;
 
@@ -284,7 +793,7 @@ TEST_CASE("Key bindings")
         SECTION("Overlay table")
         {
             assert(base->can_self_insert() <= 0);
-            bindings->emplace_back(overlay);
+            tables->push_back(overlay);
             resolver.add_target(tester);
 
             {
@@ -378,10 +887,8 @@ TEST_CASE("Shadowed key bindings")
 {
     const auto make_resolver = [](std::shared_ptr<tib::key_table> table,
                                   std::shared_ptr<dispatcher_tester>& tester) {
-        auto tables = std::make_shared<tib::key_table_list>();
-        tables->emplace_back(std::move(table));
         tester = std::make_shared<dispatcher_tester>();
-        tester->set_bindings(std::move(tables));
+        tester->add_bindings(std::move(table), tib::binding_policy::exclusive);
         tib::binding_resolver resolver;
         resolver.add_target(tester);
         return resolver;
@@ -478,11 +985,9 @@ TEST_CASE("Shadowed key bindings")
 
         auto miss_table = std::make_shared<tib::key_table>();
         REQUIRE(add_binding(*miss_table, "z", "miss"));
-        auto miss_tables = std::make_shared<tib::key_table_list>();
-        miss_tables->emplace_back(std::move(miss_table));
         auto miss_target = std::make_shared<binding_fallback_tester>();
-        miss_target->set_bindings(std::move(miss_tables));
-        miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
+        miss_target->add_bindings(std::move(miss_table), tib::binding_policy::exclusive);
+        miss_target->add_bindings(std::make_shared<tib::key_table>(), tib::binding_policy::fallback);
         resolver.add_target(miss_target);
 
         REQUIRE(resolver.step('a').ambiguous());
@@ -551,11 +1056,11 @@ TEST_CASE("Shadowed key bindings")
         REQUIRE(add_binding(*base, "a", "base"));
         auto overlay = std::make_shared<tib::key_table>();
         REQUIRE(add_binding(*overlay, "abc", "overlay"));
-        auto tables = std::make_shared<tib::key_table_list>();
-        tables->emplace_back(std::move(base));
-        tables->emplace_back(std::move(overlay));
         auto tester = std::make_shared<dispatcher_tester>();
-        tester->set_bindings(std::move(tables));
+        auto tables = std::make_shared<tib::key_table_list>();
+        tables->push_back(std::move(base));
+        tables->push_back(std::move(overlay));
+        tester->add_bindings(std::move(tables), tib::binding_policy::exclusive);
         tib::binding_resolver resolver;
         resolver.add_target(tester);
 
@@ -591,18 +1096,14 @@ TEST_CASE("Shadowed key bindings")
         auto prefix_table = std::make_shared<tib::key_table>();
         REQUIRE(add_binding(*prefix_table, "a", "short"));
         REQUIRE(add_binding(*prefix_table, "abc", "long"));
-        auto prefix_tables = std::make_shared<tib::key_table_list>();
-        prefix_tables->emplace_back(std::move(prefix_table));
         auto prefix_target = std::make_shared<dispatcher_tester>();
-        prefix_target->set_bindings(std::move(prefix_tables));
+        prefix_target->add_bindings(std::move(prefix_table), tib::binding_policy::exclusive);
 
         auto miss_table = std::make_shared<tib::key_table>();
         REQUIRE(add_binding(*miss_table, "z", "miss"));
-        auto miss_tables = std::make_shared<tib::key_table_list>();
-        miss_tables->emplace_back(std::move(miss_table));
         auto miss_target = std::make_shared<binding_fallback_tester>();
-        miss_target->set_bindings(std::move(miss_tables));
-        miss_target->override_bindings(std::make_shared<tib::key_table_list>(), true);
+        miss_target->add_bindings(std::move(miss_table), tib::binding_policy::exclusive);
+        miss_target->add_bindings(std::make_shared<tib::key_table>(), tib::binding_policy::fallback);
 
         tib::binding_resolver resolver;
         resolver.add_target(prefix_target);
@@ -661,7 +1162,7 @@ TEST_CASE("UTF8 multi-byte input")
 
         auto input = std::make_shared<tib::editor_context>();
         input->initialize();
-        input->set_bindings(tib::make_default_key_table());
+        input->add_bindings(tib::make_default_key_table(), tib::binding_policy::exclusive);
 
         tib::binding_resolver resolver;
         resolver.add_target(input);
@@ -814,11 +1315,8 @@ PERF_CASE("PERF, resolve 26000 bindings")
         for (const char* sequence : c_sequences)
             REQUIRE(add_binding(*table, sequence, "command-one"));
 
-        std::shared_ptr<tib::key_table_list> bindings = std::make_shared<tib::key_table_list>();
-        bindings->emplace_back(table);
-
         std::shared_ptr<dispatcher_tester> tester = std::make_shared<dispatcher_tester>();
-        tester->set_bindings(bindings);
+        tester->add_bindings(table, tib::binding_policy::exclusive);
 
         tib::binding_resolver resolver;
         resolver.add_target(tester);
@@ -885,10 +1383,8 @@ PERF_CASE("PERF, resolve 1000 pathological shadowed sequences")
         long_sequence[c_long_length] = '\0';
         REQUIRE(add_binding(*table, long_sequence, "long"));
 
-        auto bindings = std::make_shared<tib::key_table_list>();
-        bindings->emplace_back(table);
         auto tester = std::make_shared<dispatcher_tester>();
-        tester->set_bindings(bindings);
+        tester->add_bindings(table, tib::binding_policy::exclusive);
         tib::binding_resolver resolver;
         resolver.add_target(tester);
 

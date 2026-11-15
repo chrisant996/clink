@@ -29,6 +29,445 @@ static void dispatch_macro_command(tib::editor_context& context, const char* seq
     REQUIRE(context.dispatch(sequence, 0, &binding, nullptr) == 0);
 }
 
+static int32_t accept_test_parameter(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
+{
+    tib::cstring parameter;
+    if (!ctx.accept_read_parameter(parameter))
+        return -1;
+    ctx.insert_text(parameter.c_str());
+    return 0;
+}
+
+TEST_CASE("Parameter request commands")
+{
+    auto context = std::make_shared<tib::editor_context>();
+    context->initialize("original");
+    context->add_bindings(tib::make_default_key_table(), tib::binding_policy::exclusive);
+    tib::parameter_request request;
+    request.initial_text = "abc";
+    request.bindings = { std::make_shared<tib::key_table>() };
+
+    SECTION("request commands shadow globals without changing other editors")
+    {
+        auto other_owner = std::make_shared<tib::editor_context>();
+        auto& other = *other_owner;
+        other.initialize();
+        tib::parameter_request other_request;
+        other_request.bindings = { std::make_shared<tib::key_table>() };
+        other_request.commands = std::make_shared<const tib::command_table>(tib::command_table{
+            { "parameter-end", tib::begin_of_line },
+        });
+        REQUIRE(other.start_read_parameter(std::move(other_request)));
+
+        request.commands = std::make_shared<const tib::command_table>(tib::command_table{
+            { "parameter-end", tib::end_of_line },
+            { "FORWARD-CHAR", tib::begin_of_line },
+        });
+        request.bindings.front()->add("\t", tib::binding_target_func("PARAMETER-END"));
+        request.bindings.front()->add("\006", tib::binding_target_func("forward-char"));
+        REQUIRE(context->find_available_command("parameter-end") == nullptr);
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(context->find_available_command("PaRaMeTeR-EnD") == tib::end_of_line);
+        REQUIRE(context->find_available_command("forward-char") == tib::begin_of_line);
+        REQUIRE(context->find_available_command("backward-char") == tib::backward_char);
+        REQUIRE(context->find_available_command(nullptr) == nullptr);
+        REQUIRE(context->find_available_command("missing-command") == nullptr);
+        REQUIRE(tib::editor_context::lookup_command("parameter-end") == nullptr);
+        REQUIRE(tib::editor_context::lookup_command("forward-char") == tib::forward_char);
+        REQUIRE(other.find_available_command("parameter-end") == tib::begin_of_line);
+        REQUIRE(other.find_available_command("forward-char") == tib::forward_char);
+
+        tib::binding_resolver resolver;
+        resolver.add_target(context);
+        auto resolved = resolver.step('\t');
+        REQUIRE(resolved.is_func_name("parameter-end"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+        REQUIRE(context->get_last_command_func() == tib::end_of_line);
+        resolved = resolver.step('\006');
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 0);
+        // This binding comes from the normal parameter editing table.
+        REQUIRE(resolver.step('\033').more());
+        REQUIRE(resolver.step('[').more());
+        resolved = resolver.step('F');
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+
+        context->cancel_read_parameter();
+        REQUIRE(context->find_available_command("parameter-end") == nullptr);
+        REQUIRE(context->find_available_command("forward-char") == tib::forward_char);
+        REQUIRE(context->get_text() == "original");
+        REQUIRE(other.find_available_command("parameter-end") == tib::begin_of_line);
+    }
+
+    SECTION("a shared owner keeps dynamic names alive until acceptance")
+    {
+        struct command_storage
+        {
+            tib::cstring name;
+            tib::command_table commands;
+        };
+        auto storage = std::make_shared<command_storage>();
+        storage->name = "parameter-accept";
+        storage->commands.push_back({ storage->name.c_str(), accept_test_parameter });
+        std::weak_ptr<command_storage> lifetime = storage;
+        request.commands = std::shared_ptr<const tib::command_table>(storage, &storage->commands);
+        request.bindings.front()->add("\r", tib::binding_target_func(storage->name.c_str()));
+        storage.reset();
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(!lifetime.expired());
+        REQUIRE(context->find_available_command("parameter-accept") == accept_test_parameter);
+
+        tib::binding_resolver resolver;
+        resolver.add_target(context);
+        auto resolved = resolver.step('\r');
+        REQUIRE(resolved.is_func_name("parameter-accept"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(!context->is_read_parameter());
+        REQUIRE(lifetime.expired());
+        REQUIRE(context->find_available_command("parameter-accept") == nullptr);
+        REQUIRE(context->get_text() == "originalabc");
+        REQUIRE(!context->is_done());
+    }
+
+    SECTION("one table can be reused and released by each request independently")
+    {
+        auto commands = std::make_shared<const tib::command_table>(tib::command_table{
+            { "parameter-end", tib::end_of_line },
+        });
+        std::weak_ptr<const tib::command_table> lifetime = commands;
+        auto other_owner = std::make_shared<tib::editor_context>();
+        auto& other = *other_owner;
+        other.initialize();
+        tib::parameter_request other_request;
+        other_request.bindings = { std::make_shared<tib::key_table>() };
+        other_request.commands = commands;
+        request.commands = commands;
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(other.start_read_parameter(std::move(other_request)));
+        commands.reset();
+        context->reset_state();
+        REQUIRE(!context->is_read_parameter());
+        REQUIRE(context->find_available_command("parameter-end") == nullptr);
+        REQUIRE(!lifetime.expired());
+        REQUIRE(other.find_available_command("parameter-end") == tib::end_of_line);
+        other.set_done();
+        REQUIRE(!other.is_read_parameter());
+        REQUIRE(other.find_available_command("parameter-end") == nullptr);
+        REQUIRE(lifetime.expired());
+    }
+
+    SECTION("additional tables share resolution and later tables override earlier tables")
+    {
+        auto first = request.bindings.front();
+        REQUIRE(first->add("\t", tib::binding_target_func("begin-of-line")));
+        REQUIRE(first->add("\006", tib::binding_target_func("end-of-line")));
+        REQUIRE(first->add("\033x", tib::binding_target_func("begin-of-line")));
+        auto second = std::make_shared<tib::key_table>();
+        REQUIRE(second->add("\t", tib::binding_target_func("end-of-line")));
+        REQUIRE(second->add("\033[F", tib::binding_target_func("begin-of-line")));
+        REQUIRE(second->add("\033xy", tib::binding_target_func("end-of-line")));
+        request.bindings.push_back(second);
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        tib::binding_resolver resolver;
+        resolver.add_target(context);
+
+        auto resolved = resolver.step('\t');
+        REQUIRE(resolved.is_func_name("end-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+        REQUIRE(resolver.step('\033').more());
+        REQUIRE(resolver.step('[').more());
+        resolved = resolver.step('F');
+        REQUIRE(resolved.is_func_name("begin-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 0);
+        resolved = resolver.step('\006');
+        REQUIRE(resolved.is_func_name("end-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+        REQUIRE(resolver.step('\033').more());
+        REQUIRE(resolver.step('[').more());
+        resolved = resolver.step('D');
+        REQUIRE(resolved.is_func_name("backward-char"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 2);
+        REQUIRE(resolver.step('\033').more());
+        REQUIRE(resolver.step('x').ambiguous());
+        resolved = resolver.step('y');
+        REQUIRE(resolved.is_func_name("end-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+    }
+
+    SECTION("a supplied accept binding preserves the built-in parameter bindings")
+    {
+        request.commands = std::make_shared<const tib::command_table>(tib::command_table{
+            { "parameter-accept", accept_test_parameter },
+        });
+        REQUIRE(request.bindings.front()->add("\r", tib::binding_target_func("parameter-accept")));
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        tib::binding_resolver resolver;
+        resolver.add_target(context);
+        REQUIRE(resolver.step('\033').more());
+        REQUIRE(resolver.step('[').more());
+        auto resolved = resolver.step('C');
+        REQUIRE(resolved.is_func_name("forward-char"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 1);
+        resolved = resolver.step('\r');
+        REQUIRE(resolved.is_func_name("parameter-accept"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(!context->is_read_parameter());
+        REQUIRE(context->get_text() == "originalabc");
+    }
+
+    SECTION("requests without additional commands keep global lookup")
+    {
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(context->find_available_command("forward-char") == tib::forward_char);
+        context->cancel_read_parameter();
+        request.bindings = { std::make_shared<tib::key_table>() };
+        request.commands = std::make_shared<const tib::command_table>();
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(context->find_available_command("forward-char") == tib::forward_char);
+    }
+}
+
+TEST_CASE("Ending a parameter request removes only its binding group")
+{
+    auto context = std::make_shared<tib::editor_context>();
+    context->initialize("original");
+    auto normal = tib::make_default_key_table();
+    normal->add("!", tib::binding_target_func("accept-line"));
+    const auto normal_handle = context->add_bindings(normal, tib::binding_policy::exclusive);
+    tib::parameter_request request;
+    request.initial_text = "abc";
+    request.bindings = { std::make_shared<tib::key_table>(), std::make_shared<tib::key_table>() };
+    const std::weak_ptr<tib::key_table> first_table = request.bindings.front();
+    const std::weak_ptr<tib::key_table> second_table = request.bindings.back();
+    REQUIRE(context->start_read_parameter(std::move(request)));
+    const auto request_handle = context->get_bindings().back().handle;
+    const std::weak_ptr<const tib::key_table_list> request_tables = context->get_bindings().back().tables;
+
+    auto later = std::make_shared<tib::key_table>();
+    later->add("\006", tib::binding_target_func("begin-of-line"));
+    const auto later_handle = context->add_bindings(later);
+    tib::binding_resolver resolver;
+    resolver.add_target(context);
+    REQUIRE(resolver.step('!').outcome == tib::dispatch_outcome::self_insert);
+
+    const auto verify_request_ended = [&]()
+    {
+        REQUIRE(!context->is_read_parameter());
+        REQUIRE(!request_handle);
+        REQUIRE(request_tables.expired());
+        REQUIRE(first_table.expired());
+        REQUIRE(second_table.expired());
+        REQUIRE(normal_handle);
+        REQUIRE(later_handle);
+        REQUIRE(context->get_bindings().size() == 2);
+        REQUIRE(resolver.step('!').is_func_name("accept-line"));
+        REQUIRE(resolver.step('\006').is_func_name("begin-of-line"));
+    };
+
+    SECTION("Cancel")
+    {
+        context->cancel_read_parameter();
+        verify_request_ended();
+    }
+
+    SECTION("Accept")
+    {
+        tib::cstring parameter;
+        REQUIRE(context->accept_read_parameter(parameter));
+        REQUIRE(parameter == "abc");
+        verify_request_ended();
+    }
+
+    SECTION("Reset")
+    {
+        context->reset_state();
+        verify_request_ended();
+    }
+
+    SECTION("Done")
+    {
+        context->set_done();
+        verify_request_ended();
+    }
+
+    SECTION("Initialize")
+    {
+        context->initialize("replacement");
+        verify_request_ended();
+    }
+}
+
+class completion_context : public tib::editor_context, public tib::editor_callbacks
+{
+public:
+    completion_context() { set_callbacks(this); }
+
+    static int32_t start_completion(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*)
+    {
+        auto& self = static_cast<completion_context&>(ctx);
+        self.completion = self.add_bindings(self.table, self.policy);
+        return 0;
+    }
+
+    static int32_t end_completion(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*)
+    {
+        auto& self = static_cast<completion_context&>(ctx);
+        self.completion.remove();
+        return 0;
+    }
+
+    void on_binding_fallback(tib::editor_context& ctx, const tib::binding_handle& handle_crossed) override
+    {
+        REQUIRE(handle_crossed == completion);
+        fallbacks.push_back(handle_crossed);
+        completion.remove();
+    }
+
+    void do_display(tib::editor_context&) override {}
+
+    std::shared_ptr<tib::key_table> table = std::make_shared<tib::key_table>();
+    tib::binding_policy policy = tib::binding_policy::fallback;
+    tib::binding_handle completion;
+    std::vector<tib::binding_handle> fallbacks;
+};
+
+TEST_CASE("Parameter request binding sub-modes")
+{
+    auto context = std::make_shared<completion_context>();
+    context->initialize("original");
+    auto normal = tib::make_default_key_table(true);
+    normal->add("\t", tib::binding_target_func("test-start-completion"));
+    const auto normal_handle = context->add_bindings(normal);
+    auto outer = std::make_shared<tib::key_table>();
+    outer->add("!", tib::binding_target_func("accept-line"));
+    const auto outer_handle = context->add_bindings(outer);
+    tib::editor_context::register_command("test-start-completion", completion_context::start_completion);
+    tib::editor_context::register_command("test-end-completion", completion_context::end_completion);
+    context->table->add("\006", tib::binding_target_func("begin-of-line"));
+    context->table->add("\r", tib::binding_target_func("test-end-completion"));
+    tib::parameter_request request;
+    request.initial_text = "abc";
+    request.bindings = { std::make_shared<tib::key_table>() };
+    request.bindings.front()->add("\t", tib::binding_target_func("test-start-completion"));
+    request.bindings.front()->add("\006", tib::binding_target_func("end-of-line"));
+    request.bindings.front()->add("\005", tib::binding_target_func("end-of-line"));
+    request.bindings.front()->add("\r", tib::binding_target_func("test-accept-parameter"));
+    request.commands = std::make_shared<const tib::command_table>(tib::command_table{
+        { "test-accept-parameter", accept_test_parameter },
+    });
+    REQUIRE(context->start_read_parameter(std::move(request)));
+    tib::binding_resolver resolver;
+    resolver.add_target(context);
+
+    SECTION("A global command enters completion and receives fallback by handle")
+    {
+        auto resolved = resolver.step('\t');
+        REQUIRE(resolved.is_func_name("test-start-completion"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->completion);
+        context->set_caret(3);
+        resolved = resolver.step('\006');
+        REQUIRE(resolved.is_func_name("begin-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 0);
+        REQUIRE(context->fallbacks.empty());
+        // The request's binding must be used after the completion group misses.
+        resolved = resolver.step('\005');
+        REQUIRE(resolved.is_func_name("end-of-line"));
+        REQUIRE(context->fallbacks.empty());
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 3);
+        REQUIRE(context->is_read_parameter());
+        REQUIRE(!context->completion);
+        REQUIRE(context->fallbacks.size() == 1);
+        REQUIRE(!context->fallbacks[0]);
+        // The normal host binding is still hidden by the parameter boundary.
+        REQUIRE(resolver.step('!').outcome == tib::dispatch_outcome::self_insert);
+    }
+
+    SECTION("An exclusive completion mode can prohibit fallthrough")
+    {
+        context->policy = tib::binding_policy::exclusive;
+        REQUIRE(resolver.step('\t').dispatch());
+        REQUIRE(resolver.step('\005').outcome == tib::dispatch_outcome::miss);
+        REQUIRE(context->fallbacks.empty());
+        context->completion.remove();
+        REQUIRE(resolver.step('\005').is_func_name("end-of-line"));
+    }
+
+    SECTION("Enter exits completion before it can accept the request")
+    {
+        REQUIRE(resolver.step('\t').dispatch());
+        REQUIRE(resolver.step('\r').dispatch());
+        REQUIRE(!context->completion);
+        REQUIRE(context->is_read_parameter());
+        REQUIRE(context->get_text() == "abc");
+        REQUIRE(resolver.step('\r').dispatch());
+        REQUIRE(!context->is_read_parameter());
+        REQUIRE(context->get_text() == "originalabc");
+        REQUIRE(normal_handle);
+        REQUIRE(outer_handle);
+        // The same global completion command also works in normal editing.
+        REQUIRE(resolver.step('\t').dispatch());
+        REQUIRE(context->completion);
+    }
+}
+
+TEST_CASE("Numeric argument bindings restore outer registrations")
+{
+    auto context = std::make_shared<completion_context>();
+    context->initialize();
+    auto tables = std::make_shared<tib::key_table_list>();
+    tables->push_back(tib::make_default_key_table(true));
+    auto host = std::make_shared<tib::key_table>();
+    host->add("x", tib::binding_target_func("begin-of-line"));
+    tables->push_back(host);
+    const auto host_handle = context->add_bindings(tables);
+    tib::binding_resolver resolver;
+    resolver.add_target(context);
+
+    SECTION("Switching argument tables and ending argument mode preserves outer bindings")
+    {
+        REQUIRE(context->universal_argument());
+        REQUIRE(context->numeric_digit('2'));
+        REQUIRE(context->get_numeric_argument() == 2);
+        context->clear_numeric_argument();
+        REQUIRE(context->get_bindings().size() == 1);
+        REQUIRE(host_handle);
+        REQUIRE(resolver.step('x').is_func_name("begin-of-line"));
+    }
+
+    SECTION("Numeric fallback only retires its own group")
+    {
+        REQUIRE(context->universal_argument());
+        auto resolved = resolver.step('x');
+        REQUIRE(resolved.is_func_name("begin-of-line"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_bindings().size() == 1);
+        REQUIRE(host_handle);
+        REQUIRE(context->fallbacks.empty());
+    }
+
+    SECTION("A request hides and restores an existing host mode")
+    {
+        tib::parameter_request request;
+        request.bindings = { std::make_shared<tib::key_table>() };
+        REQUIRE(context->start_read_parameter(std::move(request)));
+        REQUIRE(resolver.step('x').outcome == tib::dispatch_outcome::self_insert);
+        context->cancel_read_parameter();
+        REQUIRE(host_handle);
+        REQUIRE(resolver.step('x').is_func_name("begin-of-line"));
+    }
+}
+
 TEST_CASE("Keyboard macros")
 {
     SECTION("records commands and omits recording controls")
@@ -87,7 +526,7 @@ TEST_CASE("Keyboard macros")
 
         auto context = std::make_shared<tib::editor_context>();
         context->initialize();
-        context->set_bindings(tib::make_default_key_table());
+        context->add_bindings(tib::make_default_key_table(), tib::binding_policy::exclusive);
         tib::binding_resolver resolver;
         resolver.add_target(context);
         REQUIRE(context->start_kbd_macro(false));
@@ -161,7 +600,7 @@ TEST_CASE("Abort command")
         context.set_border(&border);
         context.set_selection(0, 2);
         context.set_overwrite_mode(true);
-        context.set_named_value("operation", "pending");
+        context.set_named_value("operation", "pending", false);
         context.set_numeric_argument(-12);
         context.set_last_command("dummy-command", dummy_command);
 
@@ -456,7 +895,7 @@ TEST_CASE("Screen line cursor column continuation")
     context->set_max_height(3);
     context->set_variable_height(true);
     initialize_context(*context, "abcdefgh\nxy\nabcdefgh", 7);
-    context->set_bindings(tib::make_default_key_table());
+    context->add_bindings(tib::make_default_key_table(), tib::binding_policy::exclusive);
 
     tib::binding_resolver resolver;
     resolver.add_target(context);
@@ -705,5 +1144,161 @@ TEST_CASE("Transpose words command")
         context.undo();
         REQUIRE(context.get_text() == "one two");
         REQUIRE(context.get_caret() == 4);
+    }
+}
+
+TEST_CASE("Named value pinning")
+{
+    tib::editor_context context;
+    context.initialize("abc");
+
+    SECTION("pinned values expire and unpinned values survive edits")
+    {
+        context.set_named_value("text", "pending", true);
+        context.set_named_value_int("number", 42, true);
+        context.set_named_value("persistent", "saved", false);
+        context.set_named_value_int("persistent-number", 7, false);
+        REQUIRE(!strcmp(context.get_named_value("text"), "pending"));
+        REQUIRE(context.get_named_value_int("number") == 42);
+        context.insert_char('d');
+        REQUIRE(context.get_named_value("text") == nullptr);
+        REQUIRE(context.get_named_value_int("number", -1) == -1);
+        REQUIRE(!strcmp(context.get_named_value("persistent"), "saved"));
+        REQUIRE(context.get_named_value_int("persistent-number") == 7);
+    }
+
+    SECTION("setters replace stale values and replace their pins")
+    {
+        context.set_named_value("text", "old", true);
+        context.set_named_value_int("number", 1, true);
+        context.inc_change_counter();
+        context.set_named_value("text", "new", true);
+        context.set_named_value_int("number", 2, true);
+        REQUIRE(!strcmp(context.get_named_value("text"), "new"));
+        REQUIRE(context.get_named_value_int("number") == 2);
+        context.inc_change_counter();
+        REQUIRE(context.get_named_value("text") == nullptr);
+        REQUIRE(context.get_named_value_int("number", -1) == -1);
+        context.set_named_value("text", "unpinned", false);
+        context.set_named_value_int("number", 3, false);
+        context.inc_change_counter();
+        REQUIRE(!strcmp(context.get_named_value("text"), "unpinned"));
+        REQUIRE(context.get_named_value_int("number") == 3);
+        context.set_named_value("text", "pinned", true);
+        context.set_named_value_int("number", 4, true);
+        context.inc_change_counter();
+        REQUIRE(context.get_named_value("text") == nullptr);
+        REQUIRE(context.get_named_value_int("number", -1) == -1);
+        context.clear_named_value("text");
+        context.clear_named_value("number");
+        REQUIRE(context.get_named_value("text") == nullptr);
+        REQUIRE(context.get_named_value_int("number", -1) == -1);
+    }
+}
+
+static int32_t dispatch_mouse(tib::editor_context& context, uint32_t button,
+                              char key, uint32_t x, uint32_t y=1)
+{
+    tib::resolved_binding resolved;
+    resolved.params.resize(3);
+    resolved.params[0].printf("%u", button);
+    resolved.params[1].printf("%u", x);
+    resolved.params[2].printf("%u", y);
+    tib::cstring sequence;
+    sequence.printf("\x1b[<%u;%u;%u%c", button, x, y, key);
+    const auto binding = tib::binding_target_func("mouse-input");
+    return context.dispatch(sequence, key, &binding, &resolved);
+}
+
+TEST_CASE("Mouse state pinning")
+{
+    tib::editor_context context;
+    context.initialize("one two three");
+    context.set_max_width(20);
+    context.set_origin(1, 1);
+    context.display();
+
+    SECTION("drag requires an accepted press and stops at release")
+    {
+        REQUIRE(dispatch_mouse(context, 32, 'M', 6) == 0);
+        REQUIRE(!context.get_selection_state().has_selection());
+        REQUIRE(dispatch_mouse(context, 0, 'M', 2) == 0);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 6) == 0);
+        REQUIRE(context.get_selection_state().get_anchor() == 1);
+        REQUIRE(context.get_caret() == 6);
+        REQUIRE(dispatch_mouse(context, 0, 'm', 6) == -1);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 8) == 0);
+        REQUIRE(context.get_caret() == 6);
+        REQUIRE(dispatch_mouse(context, 0, 'M', 9) == 0);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 11) == 0);
+        REQUIRE(context.get_selection_state().get_anchor() == 8);
+        REQUIRE(context.get_caret() == 11);
+        REQUIRE(dispatch_mouse(context, 0, 'M', 30) == -1);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 12) == 0);
+        REQUIRE(context.get_caret() == 11);
+    }
+
+    SECTION("buffer edits invalidate a held press")
+    {
+        REQUIRE(dispatch_mouse(context, 0, 'M', 2) == 0);
+        context.insert_char('x');
+        context.display();
+        const auto caret = context.get_caret();
+        REQUIRE(dispatch_mouse(context, 32, 'M', 6) == 0);
+        REQUIRE(context.get_caret() == caret);
+        REQUIRE(!context.get_selection_state().has_selection());
+        REQUIRE(dispatch_mouse(context, 0, 'M', 4) == 0);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 6) == 0);
+        REQUIRE(context.get_selection_state().get_anchor() == 3);
+        REQUIRE(context.get_caret() == 6);
+    }
+
+    SECTION("double clicks and word drags continue only on the same baseline")
+    {
+        REQUIRE(dispatch_mouse(context, 0, 'M', 2) == 0);
+        REQUIRE(dispatch_mouse(context, 0, 'm', 2) == -1);
+        REQUIRE(dispatch_mouse(context, 0, 'M', 2) == 0);
+        REQUIRE(context.get_selection_state().get_sel_begin() == 0);
+        REQUIRE(context.get_selection_state().get_sel_end() == 3);
+        REQUIRE(dispatch_mouse(context, 32, 'M', 6) == 0);
+        REQUIRE(context.get_selection_state().get_sel_begin() == 0);
+        REQUIRE(context.get_selection_state().get_sel_end() == 7);
+        context.inc_change_counter();
+        REQUIRE(dispatch_mouse(context, 0, 'M', 2) == 0);
+        REQUIRE(!context.get_selection_state().has_selection());
+        REQUIRE(context.get_caret() == 1);
+    }
+}
+
+TEST_CASE("Cursor column pinning")
+{
+    tib::editor_context context;
+    context.set_max_width(10);
+    context.set_max_height(4);
+    context.set_variable_height(true);
+    initialize_context(context, "abcdefgh\nxy\nabcdefgh\nabcdefgh", 7);
+    context.set_origin(1, 1);
+    context.display();
+
+    SECTION("keyboard continuation captures a new column after the baseline changes")
+    {
+        dispatch_macro_command(context, "\x1b[B", "screen-line-down");
+        REQUIRE(context.get_caret() == 11);
+        context.display();
+        const auto column = context.get_relative_cursor().x;
+        context.inc_change_counter();
+        dispatch_macro_command(context, "\x1b[B", "screen-line-down");
+        REQUIRE(context.get_caret() == 12 + column);
+    }
+
+    SECTION("wheel continuation captures a new column after the baseline changes")
+    {
+        REQUIRE(dispatch_mouse(context, 65, 'M', 1) == 0);
+        context.set_caret(13);
+        context.display();
+        const auto column = context.get_relative_cursor().x;
+        context.inc_change_counter();
+        REQUIRE(dispatch_mouse(context, 65, 'M', 1) == 0);
+        REQUIRE(context.get_named_value_int("cursor_column_continuation", -1) == column);
     }
 }

@@ -18,6 +18,7 @@
 namespace tib {
 
 static const char c_cursor_column_operation_var_name[] = "cursor_column_operation";
+static const char c_mouse_left_down[] = "mouse_input_left_down";
 static const char c_mouse_x[] = "mouse_input_x";
 static const char c_mouse_y[] = "mouse_input_y";
 static const char c_mouse_top[] = "mouse_input_top";
@@ -51,7 +52,8 @@ static int16_t cursor_column_continuation(editor_context& ctx, const char* comma
     static const char c_continuation_var_name[] = "cursor_column_continuation";
 
     const char* const have_operation = ctx.get_named_value(c_cursor_column_operation_var_name);
-    const bool continuing = ((!operation || (operation && have_operation && !strcmp(have_operation, operation))) &&
+    const bool continuing = (ctx.get_named_value(c_continuation_var_name) &&
+                             (!operation || (operation && have_operation && !strcmp(have_operation, operation))) &&
                              (!strcmp(ctx.get_last_command_name(), command_name) ||
                               (alt_command_names && is_in_string_list(ctx.get_last_command_name(), alt_command_names))));
 
@@ -867,10 +869,13 @@ int32_t mouse_input(editor_context& ctx, int32_t key, const char* name, const re
         // Left click.  Clicking within the inner extents sets the caret;
         // clicking outside is ignored (and returns -1 so something else can
         // opt to provide a fallback handler).
+        if (key == 'M' || key == 'm')
+            ctx.set_named_value_int(c_mouse_left_down, 0);
         if (key == 'M')
         {
             if (!ctx.set_caret_from_screen(x, y))
                 goto unhandled;
+            ctx.set_named_value_int(c_mouse_left_down, 1);
 
             const bool word_click = double_click && !double_click_scrolled;
             ctx.set_named_value_int(c_mouse_x, x);
@@ -892,7 +897,8 @@ int32_t mouse_input(editor_context& ctx, int32_t key, const char* name, const re
     case 32:
         if (key == 'M')
         {
-            // TODO: only do anything here if left button is held.
+            if (!ctx.get_named_value_int(c_mouse_left_down))
+                return 0;
 
             // No-op unless mouse actually moved.  Windows console can send
             // the sequence if the mouse moves even 1 pixel after clicking,
@@ -991,7 +997,7 @@ int32_t lorem_ipsum(editor_context& ctx, int32_t key, const char* name, const re
 
 //------------------------------------------------------------------------------
 
-std::shared_ptr<key_table_list> make_default_key_table(bool numeric_argument)
+std::shared_ptr<key_table> make_default_key_table(bool numeric_argument)
 {
     auto t = std::make_shared<key_table>(true/*can_self_insert*/);
 
@@ -1052,9 +1058,7 @@ std::shared_ptr<key_table_list> make_default_key_table(bool numeric_argument)
         t->add("\033-", binding_target_func("digit-argument"));
     }
 
-    auto tables = std::make_shared<key_table_list>();
-    tables->emplace_back(std::move(t));
-    return tables;
+    return t;
 }
 
 //------------------------------------------------------------------------------
@@ -1177,6 +1181,23 @@ editor_command_func_t editor_context::lookup_command(const char* name)
         return nullptr;
 
     return found->second;
+}
+
+editor_command_func_t editor_context::find_available_command(const char* name) const
+{
+    if (!name)
+        return nullptr;
+
+    if (m_reading_parameter && m_reading_parameter->request.commands)
+    {
+        for (const auto& command : *m_reading_parameter->request.commands)
+        {
+            if (_stricmp(command.name, name) == 0)
+                return command.func;
+        }
+    }
+
+    return lookup_command(name);
 }
 
 std::vector<cstring> editor_context::s_command_names;

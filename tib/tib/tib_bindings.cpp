@@ -351,24 +351,70 @@ void key_table::clear()
     m_bindings.clear();
 }
 
-std::shared_ptr<const key_table_list> dispatcher_target::get_bindings(bool fallback_requested) const
+binding_handle::operator bool() const noexcept
 {
-    if (fallback_requested)
-        return (m_override_bindings && m_fall_back_on_miss) ? m_bindings : nullptr;
-    if (m_override_bindings)
-        return m_override_bindings;
-    return m_bindings;
+    return bool(get_target());
 }
 
-void dispatcher_target::set_bindings(std::shared_ptr<const key_table_list> bindings)
+bool binding_handle::operator==(const binding_handle& other) const noexcept
 {
-    m_bindings = bindings;
+    return (m_id == other.m_id &&
+            !m_target.owner_before(other.m_target) &&
+            !other.m_target.owner_before(m_target));
 }
 
-void dispatcher_target::override_bindings(std::shared_ptr<const key_table_list> bindings, bool fall_back_on_miss)
+std::shared_ptr<dispatcher_target> binding_handle::get_target() const noexcept
 {
-    m_override_bindings = bindings;
-    m_fall_back_on_miss = bool(bindings) && fall_back_on_miss;
+    auto target = m_target.lock();
+    if (!target || !target->has_bindings(*this))
+        return nullptr;
+    return target;
+}
+
+void binding_handle::remove() noexcept
+{
+    if (auto target = m_target.lock())
+        target->remove_bindings(*this);
+    m_target.reset();
+    m_id = 0;
+}
+
+bool dispatcher_target::has_bindings(const binding_handle& handle) const noexcept
+{
+    return std::any_of(m_bindings.begin(), m_bindings.end(),
+        [&](const binding_group& group) { return group.handle == handle; });
+}
+
+void dispatcher_target::remove_bindings(const binding_handle& handle) noexcept
+{
+    auto found = std::find_if(m_bindings.begin(), m_bindings.end(),
+        [&](const binding_group& group) { return group.handle == handle; });
+    if (found != m_bindings.end())
+        m_bindings.erase(found);
+}
+
+void dispatcher_target::clear_all_bindings()
+{
+    m_bindings.clear();
+}
+
+binding_handle dispatcher_target::add_bindings(std::shared_ptr<const key_table> table, binding_policy policy)
+{
+    assert(table);
+    auto tables = std::make_shared<key_table_list>();
+    tables->push_back(std::move(table));
+    return add_bindings(std::move(tables), policy);
+}
+
+binding_handle dispatcher_target::add_bindings(std::shared_ptr<const key_table_list> tables, binding_policy policy)
+{
+    assert(tables);
+    auto id = ++m_next_binding_id;
+    if (!id) // Reserve 0 as an invalid ID.
+        id = ++m_next_binding_id;
+    const binding_handle handle(shared_from_this(), id);
+    m_bindings.push_back({ std::move(tables), policy, handle });
+    return handle;
 }
 
 int32_t dispatcher_target::push_macro_text(const char* macro, size_t len)
@@ -404,18 +450,18 @@ bool resolved_binding::is_func_name(const char* name) const
 
 bool resolved_binding::dispatch()
 {
-    // Resolution defers override-to-fallback switches until dispatch, since
-    // dispatch might not happen at all (for example when probing with
-    // is_keyseq_recognized).  Finalize any deferred switches at the beginning
-    // of a dispatch.
-    if (!m_fallback_targets.empty())
+    // Resolution defers fallback switches until dispatch, since dispatch
+    // might not happen at all (e.g. when probing with is_keyseq_recognized).
+    // Finalize any deferred switches at the beginning of a dispatch.
+    auto fallbacks = std::move(m_fallbacks);
+    m_fallbacks.clear();
+    for (const auto& handle : fallbacks)
     {
-        for (auto& weak : m_fallback_targets)
-        {
-            if (auto target = weak.lock())
-                target->on_binding_fallback();
-        }
-        m_fallback_targets.clear();
+        // Handles own neither the tables nor the target.  Removing a group
+        // cancels its pending notification, even if an earlier callback
+        // removes it or the original handle was discarded.
+        if (auto target = handle.get_target())
+            target->on_binding_fallback(handle);
     }
 
     const bool self_insert = (outcome == dispatch_outcome::self_insert);
@@ -486,7 +532,7 @@ bool resolved_binding::dispatch()
 
 resolved_binding::probe_result resolved_binding::get_probe_result() const
 {
-    if (!m_fallback_targets.empty())
+    if (!m_fallbacks.empty())
         return probe_result::recognized;
     if (outcome == dispatch_outcome::miss || !m_replay.empty())
         return probe_result::unrecognized;
@@ -525,7 +571,7 @@ void binding_resolver::clear_targets()
     if (!m_borrowed_registrants)
         m_registrants->clear();
     m_state->quoted_insert_target.reset();
-    m_fallback_targets.clear();
+    m_fallbacks.clear();
 }
 
 void binding_resolver::add_target(std::weak_ptr<dispatcher_target> target)
@@ -540,12 +586,12 @@ void binding_resolver::reset()
 {
     m_state->quoted_insert_target.reset();
     m_sequence.clear();
-    m_fallback_targets.clear();
+    m_fallbacks.clear();
 }
 
 resolved_binding binding_resolver::step(uint8_t c)
 {
-    if (!m_state->quoted_insert_target.expired())
+    if (quoted_insert_pending())
     {
         const std::weak_ptr<dispatcher_target> weak = m_state->quoted_insert_target;
         reset();
@@ -589,7 +635,7 @@ bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) co
     // is not properly dispatchable, which is ok since it isn't exposed.
     binding_resolver probe(*this);
     probe.m_sequence = m_sequence;
-    probe.m_fallback_targets = m_fallback_targets;
+    probe.m_fallbacks = m_fallbacks;
     for (size_t i = 0; i < len; ++i)
     {
         auto resolved = probe.step(uint8_t(sequence[i]));
@@ -618,8 +664,8 @@ resolved_binding binding_resolver::resolve(bool force)
         // Resolution cannot return the first complete match: it must retain
         // enough information to construct a resolved_binding after every
         // table has had a chance to provide a longer match or prefix.  The
-        // saved_state below copies this once per dispatcher target so a
-        // fallback retry can discard candidates from the override bindings.
+        // saved_state below copies this once per group so a fallback retry
+        // can discard the missed group's self-insert policy.
         struct candidate
         {
             size_t          length = 0;
@@ -677,178 +723,181 @@ retry_sequence:
         if (!target)
             continue;
 
-retry_target:
+        const auto& groups = target->get_bindings();
         const step_state saved_state = state;
-
-        const bool fell_back = std::find_if(m_fallback_targets.begin(), m_fallback_targets.end(),
-            [&](const std::weak_ptr<dispatcher_target>& item) { return item.lock() == target; }) != m_fallback_targets.end();
-        const auto bindings_list = target->get_bindings(fell_back);
-        if (!bindings_list)
-            continue;
-
-        for (auto& table = bindings_list->rbegin(); table != bindings_list->rend(); ++table)
+        for (auto group = groups.rbegin(); group != groups.rend(); ++group)
         {
-            // Only one table can accept self-insert input; the last one in
-            // the bindings list from the first dispatcher_target with a
-            // self-insert table wins.
-            assert(state.can_self_insert <= 0);
-            if (state.can_self_insert < 0)
-                state.can_self_insert = (*table)->can_self_insert();
+            if (std::find(m_fallbacks.begin(), m_fallbacks.end(), group->handle) != m_fallbacks.end())
+                continue;
 
-            // Self-insert acts as an implicit binding for the first complete
-            // UTF8 codepoint.  An incomplete codepoint remains a prefix, so
-            // it cannot be dispatched or timed out as a single byte.
-            // The can_self_insert bookkeeping above preserves the rule that
-            // the highest-priority table which explicitly sets self-insert
-            // policy decides whether this fallback is available.
-            if (state.can_self_insert > 0)
+            const auto& tables = *group->tables;
+            for (auto entry = tables.rbegin(); entry != tables.rend(); ++entry)
             {
-                size_t length = 0;
-                const auto match = match_self_insert_codepoint(input, input_length, length);
-                if (match == binding_match::prefix)
-                    state.is_prefix = true;
-                else if (match == binding_match::complete)
-                {
-                    binding_params no_params;
-                    consider_best(state, length, input, uint8_t(input[0]),
-                                  nullptr, weak, std::move(no_params), true);
-                }
-            }
+                const auto& table = *entry;
+                assert(table);
+                // Only one table can accept self-insert input; the last one in
+                // the bindings list from the first dispatcher_target with a
+                // self-insert table wins.
+                assert(state.can_self_insert <= 0);
+                if (state.can_self_insert < 0)
+                    state.can_self_insert = table->can_self_insert();
 
-            const auto& bindings = (*table)->m_bindings;
-            const auto patterns = std::partition_point(bindings.begin(), bindings.end(), [](const key_binding& binding) {
-                return !binding.pattern;
-            });
-            const auto find_literal = [&](const char* sequence, size_t length) {
-                return std::lower_bound(bindings.begin(), patterns, sequence, [&](const key_binding& candidate, const char* sequence) {
-                    const size_t common_length = min(candidate.sequence.length(), length);
-                    const int comparison = memcmp(candidate.sequence.c_str(), sequence, common_length);
-                    return comparison < 0 || (comparison == 0 && candidate.sequence.length() < length);
-                });
-            };
-
-            // Independently determine whether the whole accumulated input is
-            // still the prefix of a strictly longer literal binding (versus
-            // pattern bindings).  The complete-fallback search below cannot
-            // answer that when an exact binding also exists for the current
-            // input.
-            const auto found = find_literal(input, input_length);
-            if (found != patterns &&
-                found->sequence.length() >= input_length &&
-                memcmp(found->sequence.c_str(), input, input_length) == 0)
-            {
-                auto longer = found;
-                if (longer->sequence.length() == input_length)
+                // Self-insert acts as an implicit binding for the first complete
+                // UTF8 codepoint.  An incomplete codepoint remains a prefix, so
+                // it cannot be dispatched or timed out as a single byte.
+                // The can_self_insert bookkeeping above preserves the rule that
+                // the highest-priority table which explicitly sets self-insert
+                // policy decides whether this fallback is available.
+                if (state.can_self_insert > 0)
                 {
-                    // Skip the exact binding: only a strict extension means
-                    // the resolver needs another byte.  Since the literal
-                    // bindings are in sorted order, any binding extending it
-                    // is immediately next.
-                    ++longer;
-                }
-                if (longer != patterns &&
-                    longer->sequence.length() > input_length &&
-                    memcmp(longer->sequence.c_str(), input, input_length) == 0)
-                {
-                    state.is_prefix = true;
-                }
-            }
-
-            // Find the longest literal binding in this table that is a prefix
-            // of the accumulated input.  It becomes the fallback if a longer
-            // binding eventually mismatches or the host resolves a timeout.
-            // Stop after the first match in this table, but keep scanning
-            // other tables: a globally longer fallback beats table priority,
-            // while equal lengths retain the earlier table's priority.
-            for (size_t length = input_length; length; --length)
-            {
-                // Look for an exact literal binding for input[0..length).
-                // On a miss, continue reaches the loop's --length expression,
-                // which tries the next-shorter prefix.  This visits at most
-                // input_length prefixes; each visit performs one binary
-                // search of the table's sorted literal bindings.
-                auto matched = find_literal(input, length);
-                if (matched == patterns ||
-                    matched->sequence.length() != length ||
-                    memcmp(matched->sequence.c_str(), input, length) != 0)
-                    continue;
-
-                // A lowercase_version binding must check if the sequence
-                // matches a binding if the last byte in the sequence is
-                // converted to lowercase.
-                cstring matched_sequence(input, length);
-                int32_t matched_key = uint8_t(input[length - 1]);
-                if (matched->target.get_type() == binding_type::lowercase_version)
-                {
-                    const char last = input[length - 1];
-                    if (last >= 'A' && last <= 'Z')
+                    size_t length = 0;
+                    const auto match = match_self_insert_codepoint(input, input_length, length);
+                    if (match == binding_match::prefix)
+                        state.is_prefix = true;
+                    else if (match == binding_match::complete)
                     {
-                        matched_key = last + ('a' - 'A');
-                        matched_sequence.set_at(length - 1, char(matched_key));
-                        matched = find_literal(matched_sequence.c_str(), length);
+                        binding_params no_params;
+                        consider_best(state, length, input, uint8_t(input[0]),
+                                      nullptr, weak, std::move(no_params), true);
                     }
+                }
 
+                const auto& bindings = table->m_bindings;
+                const auto patterns = std::partition_point(bindings.begin(), bindings.end(), [](const key_binding& binding) {
+                    return !binding.pattern;
+                });
+                const auto find_literal = [&](const char* sequence, size_t length) {
+                    return std::lower_bound(bindings.begin(), patterns, sequence, [&](const key_binding& candidate, const char* sequence) {
+                        const size_t common_length = min(candidate.sequence.length(), length);
+                        const int comparison = memcmp(candidate.sequence.c_str(), sequence, common_length);
+                        return comparison < 0 || (comparison == 0 && candidate.sequence.length() < length);
+                    });
+                };
+
+                // Independently determine whether the whole accumulated input is
+                // still the prefix of a strictly longer literal binding (versus
+                // pattern bindings).  The complete-fallback search below cannot
+                // answer that when an exact binding also exists for the current
+                // input.
+                const auto found = find_literal(input, input_length);
+                if (found != patterns &&
+                    found->sequence.length() >= input_length &&
+                    memcmp(found->sequence.c_str(), input, input_length) == 0)
+                {
+                    auto longer = found;
+                    if (longer->sequence.length() == input_length)
+                    {
+                        // Skip the exact binding: only a strict extension means
+                        // the resolver needs another byte.  Since the literal
+                        // bindings are in sorted order, any binding extending it
+                        // is immediately next.
+                        ++longer;
+                    }
+                    if (longer != patterns &&
+                        longer->sequence.length() > input_length &&
+                        memcmp(longer->sequence.c_str(), input, input_length) == 0)
+                    {
+                        state.is_prefix = true;
+                    }
+                }
+
+                // Find the longest literal binding in this table that is a prefix
+                // of the accumulated input.  It becomes the fallback if a longer
+                // binding eventually mismatches or the host resolves a timeout.
+                // Stop after the first match in this table, but keep scanning
+                // other tables: a globally longer fallback beats table priority,
+                // while equal lengths retain the earlier table's priority.
+                for (size_t length = input_length; length; --length)
+                {
+                    // Look for an exact literal binding for input[0..length).
+                    // On a miss, continue reaches the loop's --length expression,
+                    // which tries the next-shorter prefix.  This visits at most
+                    // input_length prefixes; each visit performs one binary
+                    // search of the table's sorted literal bindings.
+                    auto matched = find_literal(input, length);
                     if (matched == patterns ||
                         matched->sequence.length() != length ||
-                        memcmp(matched->sequence.c_str(), matched_sequence.c_str(), length) != 0 ||
-                        matched->target.get_type() == binding_type::lowercase_version)
-                    {
-                        // If there's no matching lowercase binding, then
-                        // ignore the lowercase_version binding and just
-                        // continue searching the key_tables.
+                        memcmp(matched->sequence.c_str(), input, length) != 0)
                         continue;
+
+                    // A lowercase_version binding must check if the sequence
+                    // matches a binding if the last byte in the sequence is
+                    // converted to lowercase.
+                    cstring matched_sequence(input, length);
+                    int32_t matched_key = uint8_t(input[length - 1]);
+                    if (matched->target.get_type() == binding_type::lowercase_version)
+                    {
+                        const char last = input[length - 1];
+                        if (last >= 'A' && last <= 'Z')
+                        {
+                            matched_key = last + ('a' - 'A');
+                            matched_sequence.set_at(length - 1, char(matched_key));
+                            matched = find_literal(matched_sequence.c_str(), length);
+                        }
+
+                        if (matched == patterns ||
+                            matched->sequence.length() != length ||
+                            memcmp(matched->sequence.c_str(), matched_sequence.c_str(), length) != 0 ||
+                            matched->target.get_type() == binding_type::lowercase_version)
+                        {
+                            // If there's no matching lowercase binding, then
+                            // ignore the lowercase_version binding and just
+                            // continue searching the key_tables.
+                            continue;
+                        }
+                    }
+
+                    // Offer this complete literal binding to the global fallback
+                    // selection.  Its consumed length also identifies any suffix
+                    // that must later be replayed.  No shorter literal binding in
+                    // this table can win, so the table-local search is finished.
+                    binding_params no_params;
+                    consider_best(state, length, matched_sequence.c_str(), matched_key,
+                                  &matched->target, weak, std::move(no_params));
+                    break;
+                }
+
+                // Patterns are effectively unsorted, so check every pattern
+                // binding.  A complete result may consume only an initial portion
+                // of input and is therefore a fallback candidate; a prefix result
+                // means at least one pattern can still consume another byte.
+                for (auto pattern = patterns; pattern != bindings.end(); ++pattern)
+                {
+                    pattern_match result = match_pattern(&*pattern, input, input_length);
+                    if (result.match == binding_match::complete)
+                    {
+                        // Preserve the pattern's consumed length and captures in
+                        // case it is the longest fallback.  Any unconsumed input
+                        // becomes replay text when that fallback is selected.
+                        consider_best(state, result.length, input, uint8_t(input[result.length - 1]),
+                                      &pattern->target, weak, std::move(result.params));
+                    }
+                    else if (result.match == binding_match::prefix)
+                    {
+                        state.is_prefix = true;
                     }
                 }
 
-                // Offer this complete literal binding to the global fallback
-                // selection.  Its consumed length also identifies any suffix
-                // that must later be replayed.  No shorter literal binding in
-                // this table can win, so the table-local search is finished.
-                binding_params no_params;
-                consider_best(state, length, matched_sequence.c_str(), matched_key,
-                              &matched->target, weak, std::move(no_params));
-                break;
+                // Only one table gets to accept self-insert input.
+                if (state.can_self_insert > 0)
+                    state.can_self_insert = 0;
             }
 
-            // Patterns are effectively unsorted, so check every pattern
-            // binding.  A complete result may consume only an initial portion
-            // of input and is therefore a fallback candidate; a prefix result
-            // means at least one pattern can still consume another byte.
-            for (auto pattern = patterns; pattern != bindings.end(); ++pattern)
+            // A viable longer binding is not a miss, nor is input for which a
+            // complete fallback (including self-insert) has already been
+            // found.  The binding_policy determines whether resolution can
+            // continue past a fallback boundary.  Record the transition here,
+            // but tell the target only if and when the result is dispatched.
+            if (group->policy == binding_policy::overlay)
+                continue;
+            if (!state.is_prefix && !state.best.length && std::next(group) != groups.rend() &&
+                group->policy == binding_policy::fallback)
             {
-                pattern_match result = match_pattern(&*pattern, input, input_length);
-                if (result.match == binding_match::complete)
-                {
-                    // Preserve the pattern's consumed length and captures in
-                    // case it is the longest fallback.  Any unconsumed input
-                    // becomes replay text when that fallback is selected.
-                    consider_best(state, result.length, input, uint8_t(input[result.length - 1]),
-                                  &pattern->target, weak, std::move(result.params));
-                }
-                else if (result.match == binding_match::prefix)
-                {
-                    state.is_prefix = true;
-                }
+                state = saved_state;
+                m_fallbacks.push_back(group->handle);
+                continue;
             }
-
-            // Only one table gets to accept self-insert input.
-            if (state.can_self_insert > 0)
-                state.can_self_insert = 0;
-        }
-
-        // A viable longer binding is not a miss, nor is input for which a
-        // complete fallback (including self-insert) has already been found.
-        // A miss in an override can retry against fallback bindings.  Record
-        // the transition here, but tell the target only if and when the
-        // result is dispatched.
-        if (!state.is_prefix && !state.best.length && !fell_back &&
-            target->get_bindings(true))
-        {
-            state = saved_state;
-            // target stays alive in this loop.  Recording it makes fell_back
-            // true on the retry, so this branch runs at most once per target.
-            m_fallback_targets.emplace_back(weak);
-            goto retry_target;
+            break;
         }
     }
 
@@ -886,7 +935,7 @@ retry_target:
         resolved.outcome = state.best.self_insert ? dispatch_outcome::self_insert : dispatch_outcome::match;
         if (state.best.length < input_length)
             resolved.m_replay.set(input + state.best.length, input_length - state.best.length);
-        resolved.m_fallback_targets = std::move(m_fallback_targets);
+        resolved.m_fallbacks = std::move(m_fallbacks);
         reset();
         return resolved;
     }
@@ -912,7 +961,7 @@ retry_target:
     resolved.sequence = m_sequence;
     resolved.key = c;
     resolved.outcome = dispatch_outcome::miss;
-    resolved.m_fallback_targets = std::move(m_fallback_targets);
+    resolved.m_fallbacks = std::move(m_fallbacks);
     reset();
     return resolved;
 }

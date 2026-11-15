@@ -26,7 +26,7 @@ constexpr uint8_t NUMFLAG_HAS_ARG_DIGITS    = 0x08; // Because minus sign is not
 constexpr uint8_t NUMFLAG_UNIVERSAL_MODE    = 0x10; // Universal-argument mode; behaves slightly differently than digit-argument mode.
 constexpr uint8_t NUMFLAG_HAS_UNI_DIGITS    = 0x20; // Digits entered since the last universal-argument.
 
-static std::shared_ptr<const key_table_list> make_digit_argument_key_table(bool leading_minus=false)
+static std::shared_ptr<const key_table> make_digit_argument_key_table(bool leading_minus=false)
 {
     auto table = std::make_shared<key_table>(false/*can_self_insert*/);
     char seq[3] = { 0x1b, '0' };
@@ -43,21 +43,36 @@ static std::shared_ptr<const key_table_list> make_digit_argument_key_table(bool 
         table->add(seq + 1, binding_target_func("digit-argument"));
     }
 
-    auto table_list = std::make_shared<key_table_list>();
-    table_list->emplace_back(std::move(table));
-    return table_list;
+    return table;
 }
 
-static std::shared_ptr<const key_table_list> get_digit_argument_key_table()
+static std::shared_ptr<const key_table> make_parameter_key_table()
 {
-    static const auto s_digits_table_list = make_digit_argument_key_table();
-    return s_digits_table_list;
+    auto t = make_default_key_table();
+    t->remove("\r");
+#ifdef DEBUG
+    for (const auto b : *t)
+    {
+        assert(!b.target.is_func_name("accept-line"));
+        assert(!b.target.is_func_name("call-last-kbd-macro"));
+        assert(!b.target.is_func_name("end-kbd-macro"));
+        assert(!b.target.is_func_name("lorem-ipsum"));
+        assert(!b.target.is_func_name("start-kbd-macro"));
+    }
+#endif
+    return t;
 }
 
-static std::shared_ptr<const key_table_list> get_universal_argument_key_table()
+static std::shared_ptr<const key_table> get_digit_argument_key_table()
 {
-    static const auto s_universal_table_list = make_digit_argument_key_table(true/*leading_minus*/);
-    return s_universal_table_list;
+    static const auto s_digits_table = make_digit_argument_key_table();
+    return s_digits_table;
+}
+
+static std::shared_ptr<const key_table> get_universal_argument_key_table()
+{
+    static const auto s_universal_table = make_digit_argument_key_table(true/*leading_minus*/);
+    return s_universal_table;
 }
 
 undo_entry::~undo_entry()
@@ -202,18 +217,34 @@ textpos_t pos_mover(const char* s, const size_t _len, textpos_t& pos, const bool
     return moved;
 }
 
+undo_history::~undo_history()
+{
+    clear();
+}
+
+void undo_history::clear() noexcept
+{
+    while (m_head)
+    {
+        undo_entry* entry = m_head;
+        entry->unlink(m_head, m_tail);
+        delete entry;
+    }
+    m_current = nullptr;
+}
+
 editor_context::~editor_context()
 {
     clear_undo_internal();
 }
 
 editor_context::editor_context()
+    : m_edit(new editing_state)
 {
     ensure_commands();
 
     init_undo();
-    init_display(&m_display);
-    m_display.init_buffer(this);
+    m_display.init_buffer(&m_buffer);
     m_display.init_layout(&m_layout);
     m_display.init_style(&m_style);
 }
@@ -221,7 +252,7 @@ editor_context::editor_context()
 void editor_context::set_overwrite_mode(bool overwrite) noexcept
 {
     clear_overwrite_input();
-    m_overwrite_mode = overwrite;
+    m_edit->m_overwrite_mode = overwrite;
 }
 
 void editor_context::set_border(const border_definition* border)
@@ -244,7 +275,7 @@ void editor_context::set_history(std::vector<cstring>* history)
 void editor_context::initialize(const char* text, size_t len)
 {
     m_done = false;
-    m_overwrite_mode = false;
+    m_edit->m_overwrite_mode = false;
 
     reset_state();
 
@@ -259,23 +290,23 @@ void editor_context::initialize(const char* text, size_t len)
     }
 
     clear_undo_internal();
-    m_selection.set_caret(0);
-    m_selection.set_mark(0);
-    m_selection.set_mark_active(false);
-    m_auto_deactivate_mark = true;
-    m_text.clear();
+    m_buffer.m_selection.set_caret(0);
+    m_buffer.m_selection.set_mark(0);
+    m_buffer.m_selection.set_mark_active(false);
+    m_edit->m_auto_deactivate_mark = true;
+    m_buffer.m_text.clear();
     insert_text(text, len);
-    m_selection.clear_dirty();
+    m_buffer.m_selection.clear_dirty();
     m_display.clear_scroll_offsets();
     init_undo();
 
     m_quoted_insert_count = 0;
 
-    assert(!m_selection.is_dirty());
-    assert(m_selection.get_caret() == len);
-    assert(m_selection.get_anchor() == len);
-    assert(m_text.length() == len);
-    assert(!m_defer_init_undo);
+    assert(!m_buffer.m_selection.is_dirty());
+    assert(m_buffer.m_selection.get_caret() == len);
+    assert(m_buffer.m_selection.get_anchor() == len);
+    assert(m_buffer.m_text.length() == len);
+    assert(!m_edit->undo.m_defer_init);
 
 #if 0
     m_history_index = m_history ? m_history->size() : 0;
@@ -284,19 +315,27 @@ void editor_context::initialize(const char* text, size_t len)
 
 void editor_context::reset_state() noexcept
 {
+    cancel_read_parameter();
+
     m_can_drag = false;
     clear_overwrite_input();
-    m_named_values.clear();
-    m_message_text.clear();
+    m_edit->m_named_values.clear();
+    m_edit->m_message_text.clear();
     clear_numeric_argument();
 
-    m_last_command_name.clear();
-    m_last_command_func = nullptr;
+    m_edit->m_last_command_name.clear();
+    m_edit->m_last_command_func = nullptr;
     if (m_callbacks)
         m_callbacks->on_dispatched(*this, nullptr);
 
     clear_was_kill_command();
     g_add_to_kill_ring = 0;
+}
+
+void editor_context::set_done() noexcept
+{
+    cancel_read_parameter();
+    m_done = true;
 }
 
 void editor_context::set_callbacks(editor_callbacks* callbacks)
@@ -345,9 +384,9 @@ void editor_context::set_usage_text(const char* usage, uint16_t width)
 void editor_context::set_message_text(const char* message, uint16_t width)
 {
     if (message && *message)
-        m_message_text.set(message, width);
+        m_edit->m_message_text.set(message, width);
     else
-        m_message_text.clear();
+        m_edit->m_message_text.clear();
     apply_message_text();
 }
 
@@ -359,6 +398,132 @@ void editor_context::set_additional_lines(const std::vector<additional_display_l
 void editor_context::clear_additional_lines()
 {
     m_display.clear_additional_lines();
+}
+
+void editor_context::clear_selection()
+{
+    m_buffer.m_selection.clear_selection();
+}
+
+bool editor_context::set_caret(textpos_t caret)
+{
+    caret = clamp_in_range(caret);
+    return m_buffer.m_selection.set_caret(caret);
+}
+
+bool editor_context::set_selection(textpos_t anchor, textpos_t caret)
+{
+    anchor = clamp_in_range(anchor);
+    caret = clamp_in_range(caret);
+    if (!m_buffer.m_selection.set_selection(anchor, caret))
+        return false;
+    m_buffer.m_selection.reset_word_anchor();
+    return true;
+}
+
+bool editor_context::extend_selection(textpos_t pos, uint8_t word)
+{
+    textpos_t begin;
+    textpos_t end;
+    get_range_at_click(pos, word, begin, end);
+
+    textpos_t apply_begin;
+    textpos_t apply_end;
+    if (begin < m_buffer.m_selection.get_word_anchor_begin())
+    {
+        apply_begin = m_buffer.m_selection.get_word_anchor_end();
+        apply_end = begin;
+    }
+    else if (end > m_buffer.m_selection.get_word_anchor_end())
+    {
+        apply_begin = m_buffer.m_selection.get_word_anchor_begin();
+        apply_end = end;
+    }
+    else
+    {
+        apply_begin = m_buffer.m_selection.get_word_anchor_begin();
+        apply_end = m_buffer.m_selection.get_word_anchor_end();
+    }
+
+    return m_buffer.m_selection.set_selection(apply_begin, apply_end);
+}
+
+void editor_context::get_range_at_click(textpos_t pos, uint8_t word, textpos_t& begin, textpos_t& end)
+{
+    pos = clamp_in_range(pos);
+
+    const textpos_t orig_pos = pos;
+
+    // Look forward (for a word).
+    pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), pos, true/*forward*/, word);
+    end = pos;
+    pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), pos, false/*forward*/, word);
+    const textpos_t high_mid = pos;
+
+    // Look backward (for a word).
+    pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), pos, false/*forward*/, word);
+    begin = pos;
+    pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), pos, true/*forward*/, word);
+    const textpos_t low_mid = pos;
+
+    if (high_mid <= orig_pos)
+    {
+        begin = high_mid;
+    }
+    else if (low_mid > orig_pos)
+    {
+        end = low_mid;
+    }
+    else
+    {
+        // The position is in between (two words); select the text between.
+        begin = low_mid;
+        end = high_mid;
+    }
+}
+
+bool editor_context::select_word(bool bigword)
+{
+    textpos_t begin;
+    textpos_t end;
+
+    const uint8_t word = bigword ? 2 : 1;
+    get_range_at_click(m_buffer.m_selection.get_caret(), word, begin, end);
+
+    return set_selection(begin, end);
+}
+
+bool editor_context::set_mark(textpos_t mark)
+{
+    if (mark < 0 || size_t(mark) > get_text().length())
+        return false;
+    if (!m_buffer.m_selection.set_mark(mark))
+        return false;
+    if (m_buffer.m_selection.is_mark_active())
+        m_display.invalidate();
+    return true;
+}
+
+bool editor_context::set_mark_active(bool active)
+{
+    if (!m_buffer.m_selection.set_mark_active(active))
+        return false;
+    m_display.invalidate();
+    return true;
+}
+
+void editor_context::inc_change_counter()
+{
+    ++m_buffer.m_change_counter;
+    if (!m_buffer.m_change_counter)
+        ++m_buffer.m_change_counter;
+}
+
+textpos_t editor_context::clamp_in_range(textpos_t pos) const
+{
+    if (pos < 0)
+        pos = textpos_t(m_buffer.m_text.length());
+    return textpos_t(min<size_t>(pos, m_buffer.m_text.length()));
 }
 
 #if 0
@@ -384,7 +549,7 @@ int32_t editor_context::go(void* cookie)
 
 #ifdef DEBUG
     StrW prev_text(m_s);
-    uint32 prev_counter = m_change_counter;
+    uint32 prev_counter = m_buffer.m_change_counter;
 #endif
 
     while (true)
@@ -393,12 +558,12 @@ int32_t editor_context::go(void* cookie)
         print_visible();
 
 #ifdef DEBUG
-        // Verify any time m_s changes then m_change_counter also increases.
+        // Verify any time m_s changes then m_buffer.m_change_counter also increases.
         if (!prev_text.Equal(m_s))
         {
-            assert(int32(m_change_counter) - int32(prev_counter) > 0);
+            assert(int32(m_buffer.m_change_counter) - int32(prev_counter) > 0);
             prev_text.Set(m_s);
-            prev_counter = m_change_counter;
+            prev_counter = m_buffer.m_change_counter;
         }
 #endif
 
@@ -525,11 +690,11 @@ void editor_context::begin_of_input(bool select)
 void editor_context::end_of_input(bool select)
 {
     if (!select)
-        set_caret(textpos_t(m_text.length()));
+        set_caret(textpos_t(m_buffer.m_text.length()));
     else if (!has_selection())
-        set_selection(get_caret(), textpos_t(m_text.length()));
+        set_selection(get_caret(), textpos_t(m_buffer.m_text.length()));
     else
-        set_selection(get_anchor(), textpos_t(m_text.length()));
+        set_selection(get_anchor(), textpos_t(m_buffer.m_text.length()));
 
     if (!select)
         reset_word_anchor();
@@ -547,7 +712,7 @@ bool editor_context::move_left(uint8_t word, bool select)
     {
         textpos_t caret = get_caret();
         textpos_t anchor = get_anchor();
-        pos_mover(m_text.c_str(), m_text.length(), caret, false/*forward*/, word);
+        pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), caret, false/*forward*/, word);
         moved = set_selection(select ? anchor : caret, caret);
     }
     if (!select)
@@ -563,11 +728,11 @@ bool editor_context::move_right(uint8_t word, bool select)
         set_caret(get_sel_end());
         moved = true;
     }
-    else if (size_t(get_caret()) < m_text.length())
+    else if (size_t(get_caret()) < m_buffer.m_text.length())
     {
         textpos_t caret = get_caret();
         textpos_t anchor = get_anchor();
-        pos_mover(m_text.c_str(), m_text.length(), caret, true/*forward*/, word);
+        pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), caret, true/*forward*/, word);
         moved = set_selection(select ? anchor : caret, caret);
     }
     if (!select)
@@ -589,13 +754,13 @@ bool editor_context::backspace(uint8_t word)
         const textpos_t old_pos = get_caret();
 #endif
         textpos_t caret = get_caret();
-        const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), caret, false/*forward*/, word);
+        const textpos_t moved = pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), caret, false/*forward*/, word);
         set_caret(caret);
 #ifdef DEBUG
         assert(old_pos == get_caret() + moved);
 #endif
         if (g_add_to_kill_ring)
-            add_to_kill_ring(false, m_text.c_str() + get_caret(), moved);
+            add_to_kill_ring(false, m_buffer.m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -606,7 +771,7 @@ bool editor_context::backspace(uint8_t word)
 bool editor_context::del(uint8_t word)
 {
     reset_word_anchor();
-    if (!has_selection() && get_caret() >= textpos_t(m_text.length()))
+    if (!has_selection() && get_caret() >= textpos_t(m_buffer.m_text.length()))
         return false;
 
     begin_undo_group();
@@ -614,10 +779,10 @@ bool editor_context::del(uint8_t word)
     if (!elide_selected_text())
     {
         textpos_t del_pos = get_caret();
-        const textpos_t moved = pos_mover(m_text.c_str(), m_text.length(), del_pos, true/*forward*/, word);
+        const textpos_t moved = pos_mover(m_buffer.m_text.c_str(), m_buffer.m_text.length(), del_pos, true/*forward*/, word);
         set_caret(del_pos - moved);
         if (g_add_to_kill_ring)
-            add_to_kill_ring(true, m_text.c_str() + get_caret(), moved);
+            add_to_kill_ring(true, m_buffer.m_text.c_str() + get_caret(), moved);
         remove_text(get_caret(), get_caret() + moved);
     }
 
@@ -628,7 +793,7 @@ bool editor_context::del(uint8_t word)
 void editor_context::del_line()
 {
     if (g_add_to_kill_ring)
-        add_to_kill_ring(-1, m_text.c_str(), m_text.length());
+        add_to_kill_ring(-1, m_buffer.m_text.c_str(), m_buffer.m_text.length());
     remove_text(0, -1);
 
     assert(!get_caret());
@@ -639,7 +804,7 @@ void editor_context::del_line()
 
 void editor_context::clear_auto_deactivate_mark()
 {
-    m_auto_deactivate_mark = false;
+    m_edit->m_auto_deactivate_mark = false;
 }
 
 bool editor_context::exchange_caret_and_mark()
@@ -661,8 +826,8 @@ bool editor_context::exchange_caret_and_mark()
 
 bool editor_context::transpose(uint8_t word)
 {
-    const textpos_t anchor = m_selection.get_anchor();
-    const textpos_t caret = m_selection.get_caret();
+    const textpos_t anchor = m_buffer.m_selection.get_anchor();
+    const textpos_t caret = m_buffer.m_selection.get_caret();
 
     clear_selection();
     move_right(word);
@@ -682,7 +847,7 @@ bool editor_context::transpose(uint8_t word)
     }
 
     cstring transposed;
-    const char* const t = m_text.c_str();
+    const char* const t = m_buffer.m_text.c_str();
     transposed.append(t + second_begin, second_end - second_begin);
     transposed.append(t + first_end, second_begin - first_end);
     transposed.append(t + first_begin, first_end - first_begin);
@@ -702,15 +867,15 @@ bool editor_context::transpose(uint8_t word)
 #ifdef _WIN32
 bool editor_context::copy_to_clipboard()
 {
-    if (!m_selection.has_selection())
+    if (!m_buffer.m_selection.has_selection())
         return false;
 
-    const textpos_t begin = m_selection.get_sel_begin();
-    const textpos_t end = m_selection.get_sel_end();
+    const textpos_t begin = m_buffer.m_selection.get_sel_begin();
+    const textpos_t end = m_buffer.m_selection.get_sel_end();
     const textpos_t len = (end - begin);
 
     cstring_t<WCHAR> tmp;
-    if (!to_utf16(m_text.c_str() + begin, len, tmp))
+    if (!to_utf16(m_buffer.m_text.c_str() + begin, len, tmp))
         return false;
 
     HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (len + 1) * sizeof(WCHAR));
@@ -778,13 +943,13 @@ void editor_context::replace_from_history(const cstring& s, bool keep_undo)
 {
     inc_change_counter();
 
-    m_text.set(s);
-    m_selection.set_caret(m_text.Length());
-    m_defer_init_undo = !keep_undo;
+    m_buffer.m_text.set(s);
+    m_buffer.m_selection.set_caret(m_buffer.m_text.Length());
+    m_edit->undo.m_defer_init = !keep_undo;
 
     coord max_size = get_effective_max_size();
     max_size.x = max<int16_t>(2, max_size.x);
-    m_left = back_up_by_amount(get_caret(), m_text.c_str(), m_left, max_size.x - 1);
+    m_left = back_up_by_amount(get_caret(), m_buffer.m_text.c_str(), m_left, max_size.x - 1);
 }
 #endif
 
@@ -794,13 +959,13 @@ void editor_context::set_last_command(const char* name, editor_command_func_t fu
 
     if (!(name && *name) || !func)
     {
-        m_last_command_name.clear();
-        m_last_command_func = nullptr;
+        m_edit->m_last_command_name.clear();
+        m_edit->m_last_command_func = nullptr;
         return;
     }
 
-    m_last_command_name.set(name);
-    m_last_command_func = func;
+    m_edit->m_last_command_name.set(name);
+    m_edit->m_last_command_func = func;
 
     if (m_callbacks && !m_in_on_dispatched)
     {
@@ -812,8 +977,13 @@ void editor_context::set_last_command(const char* name, editor_command_func_t fu
 
 const char* editor_context::get_named_value(const char* name) const
 {
-    const auto found = m_named_values.find(name);
-    return (found == m_named_values.end()) ? nullptr : found->second.c_str();
+    const auto found = m_edit->m_named_values.find(name);
+    if (found == m_edit->m_named_values.end())
+        return nullptr;
+    const auto& value = found->second;
+    if (value.change_counter && value.change_counter != get_change_counter())
+        return nullptr;
+    return value.text.c_str();
 }
 
 int32_t editor_context::get_named_value_int(const char* name, int32_t def) const
@@ -824,30 +994,32 @@ int32_t editor_context::get_named_value_int(const char* name, int32_t def) const
     return atoi(value);
 }
 
-void editor_context::set_named_value(const char* name, const char* value)
+void editor_context::set_named_value(const char* name, const char* value, bool pin)
 {
-    auto found = m_named_values.find(name);
-    if (found == m_named_values.end())
-        m_named_values.emplace(cstring(name), cstring(value));
+    auto found = m_edit->m_named_values.find(name);
+    if (found == m_edit->m_named_values.end())
+        found = m_edit->m_named_values.emplace(cstring(name), editing_state::named_value{cstring(value)}).first;
     else
-        found->second.set(value);
+        found->second.text.set(value);
+    found->second.change_counter = pin ? get_change_counter() : 0;
 }
 
-void editor_context::set_named_value_int(const char* name, int32_t value)
+void editor_context::set_named_value_int(const char* name, int32_t value, bool pin)
 {
     cstring tmp;
     tmp.printf("%d", value);
 
-    auto found = m_named_values.find(name);
-    if (found == m_named_values.end())
-        m_named_values.emplace(cstring(name), std::move(tmp));
+    auto found = m_edit->m_named_values.find(name);
+    if (found == m_edit->m_named_values.end())
+        found = m_edit->m_named_values.emplace(cstring(name), editing_state::named_value{std::move(tmp)}).first;
     else
-        found->second = std::move(tmp);
+        found->second.text = std::move(tmp);
+    found->second.change_counter = pin ? get_change_counter() : 0;
 }
 
 void editor_context::clear_named_value(const char* name)
 {
-    m_named_values.erase(name);
+    m_edit->m_named_values.erase(name);
 }
 
 void editor_context::set_auto_clear_numeric_argument(bool clear)
@@ -863,7 +1035,7 @@ void editor_context::clear_numeric_argument()
     m_numflags = 0;
     m_sign_numeric_argument = 1;
     m_numeric_argument = 0;
-    apply_override_bindings();
+    apply_argument_bindings();
     apply_message_text();
 }
 
@@ -879,12 +1051,16 @@ int32_t editor_context::get_argument_sign() const
 
 void editor_context::set_argument_sign(int32_t sign)
 {
+    if (is_read_parameter())
+        return;
     m_sign_numeric_argument = (sign >= 0) ? 1 : -1;
     apply_message_text();
 }
 
 void editor_context::invert_argument_sign()
 {
+    if (is_read_parameter())
+        return;
     m_sign_numeric_argument = 0 - m_sign_numeric_argument;
     apply_message_text();
 }
@@ -896,6 +1072,8 @@ int32_t editor_context::get_numeric_argument() const
 
 void editor_context::set_numeric_argument(int32_t value)
 {
+    if (is_read_parameter())
+        return;
     m_numflags |= NUMFLAG_HAS_ARGUMENT|NUMFLAG_HAS_ARG_DIGITS;
     m_sign_numeric_argument = (value >= 0) ? 1 : -1;
     m_numeric_argument = (value >= 0) ? value : 0 - value;
@@ -904,6 +1082,8 @@ void editor_context::set_numeric_argument(int32_t value)
 
 bool editor_context::numeric_digit(int32_t key)
 {
+    if (is_read_parameter())
+        return false;
     switch (key)
     {
     case '0':
@@ -973,13 +1153,15 @@ bool editor_context::numeric_digit(int32_t key)
 
     set_auto_clear_numeric_argument(false);
     m_numflags |= NUMFLAG_ARGUMENT_MODE;
-    apply_override_bindings();
+    apply_argument_bindings();
     apply_message_text();
     return true;
 }
 
 bool editor_context::universal_argument()
 {
+    if (is_read_parameter())
+        return false;
     const bool uni_mode = !!(m_numflags & NUMFLAG_UNIVERSAL_MODE);
     const bool uni_digits = !!(m_numflags & NUMFLAG_HAS_UNI_DIGITS);
     assert(implies(!uni_mode, !uni_digits));
@@ -1015,19 +1197,130 @@ bool editor_context::universal_argument()
     }
 
     set_auto_clear_numeric_argument(false);
-    apply_override_bindings();
+    apply_argument_bindings();
     apply_message_text();
     return true;
 }
 
+bool editor_context::start_read_parameter(parameter_request request)
+{
+    // Ideally this would require at least one non-empty key_table and one
+    // non-empty command_table.  But that makes unit tests messy, and an
+    // author should test their code, so they should realize very quickly
+    // when they've forgotten to add key bindings and/or commands to accept
+    // the parameter string.
+
+    assert(!m_done);
+    if (m_done)
+        return false;
+
+    assert(!m_reading_parameter);
+    if (m_reading_parameter)
+        return false;
+
+    assert(!m_edit->undo.m_grouping);
+    if (m_edit->undo.m_grouping)
+        return false;
+
+    request.max_length = min<uint32_t>(request.max_length, int16_max);
+    if (request.initial_text.length() > request.max_length)
+        return false;
+
+    static std::shared_ptr<const key_table> s_parameter_key_table;
+    if (!s_parameter_key_table)
+        s_parameter_key_table = make_parameter_key_table();
+
+    auto tables = std::make_shared<key_table_list>();
+    tables->push_back(s_parameter_key_table);
+    const auto& bindings = request.bindings;
+    tables->insert(tables->end(), bindings.begin(), bindings.end());
+
+    m_reading_parameter = std::make_unique<reading_parameter>();
+    m_reading_parameter->request = std::move(request);
+    m_reading_parameter->bindings = add_bindings(std::move(tables), binding_policy::exclusive);
+    m_reading_parameter->orig_buffer = std::move(m_buffer);
+    m_reading_parameter->orig_editing_state = std::move(m_edit);
+    m_reading_parameter->had_argument = has_numeric_argument();
+    m_reading_parameter->orig_argument = get_numeric_argument();
+
+    m_buffer.m_text = m_reading_parameter->request.initial_text.c_str();
+    m_buffer.m_selection.set_caret(0);
+    inc_change_counter(); // Implicit side effect: resets mouse input states.
+
+    m_edit = std::make_unique<editing_state>();
+    m_display.override_input_presentation(m_reading_parameter->request.prompt.c_str());
+
+    clear_numeric_argument();
+    set_overwrite_mode(get_overwrite_mode());
+    clear_was_kill_command();
+
+    force_redisplay();
+    return true;
+}
+
+bool editor_context::accept_read_parameter(cstring& parameter)
+{
+    if (!m_reading_parameter)
+    {
+        parameter.clear();
+        return false;
+    }
+
+    parameter = std::move(m_buffer.m_text);
+    cancel_read_parameter();
+    return true;
+}
+
+void editor_context::cancel_read_parameter()
+{
+    if (!m_reading_parameter)
+        return;
+
+    auto r = std::move(m_reading_parameter);
+    r->bindings.remove();
+
+    m_buffer.m_selection = std::move(r->orig_buffer.m_selection);
+    m_buffer.m_text = std::move(r->orig_buffer.m_text);
+    inc_change_counter(); // Implicit side effect: resets mouse input states.
+
+    m_edit = std::move(r->orig_editing_state);
+    m_display.override_input_presentation(nullptr);
+
+    if (r->had_argument)
+        set_numeric_argument(r->orig_argument);
+    else
+        clear_numeric_argument();
+    set_overwrite_mode(get_overwrite_mode());
+    clear_was_kill_command();
+
+    apply_argument_bindings();
+    force_redisplay();
+}
+
 bool editor_context::scroll_horizontally(int32_t columns, int32_t cursor_column, bool exclude_auto_scroll)
 {
-    return m_display.scroll_horizontally(columns, cursor_column, *this, exclude_auto_scroll);
+    const textpos_t old_left = get_left();
+    textpos_t caret;
+    if (!m_display.scroll_horizontally(columns, cursor_column, caret))
+        return false;
+    const bool changed = get_left() != old_left || caret != get_caret();
+    set_caret(caret);
+    if (exclude_auto_scroll)
+        suppress_auto_horizontal_scroll();
+    return changed;
 }
 
 bool editor_context::move_caret_vertically(int32_t rows, int32_t cursor_column, bool select)
 {
-    return m_display.move_caret_vertically(rows, cursor_column, *this, select);
+    textpos_t caret;
+    if (!m_display.get_pos_vertically(rows, cursor_column, caret))
+        return false;
+    const bool changed = caret != get_caret();
+    if (select)
+        set_selection(get_anchor(), caret);
+    else
+        set_caret(caret);
+    return changed;
 }
 
 bool editor_context::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos, screen_scroll_info* scroll)
@@ -1035,14 +1328,18 @@ bool editor_context::get_pos_from_screen(uint32_t x, uint32_t y, textpos_t& pos,
     return m_display.get_pos_from_screen(x, y, pos, scroll);
 }
 
-bool editor_context::set_caret_from_screen(uint32_t x, uint32_t y, uint32_t drag_scroll_chars, bool word_drag)
+bool editor_context::set_caret_from_screen(uint32_t x, uint32_t y, uint32_t /*drag_scroll_chars*/, bool /*word_drag*/)
 {
-    return m_display.set_caret_from_screen(x, y, *this, drag_scroll_chars, word_drag);
+    textpos_t pos;
+    if (!get_pos_from_screen(x, y, pos))
+        return false;
+    set_caret(pos);
+    return true;
 }
 
 void editor_context::suppress_auto_horizontal_scroll()
 {
-    m_display.suppress_auto_horizontal_scroll(m_selection);
+    m_display.suppress_auto_horizontal_scroll(m_buffer.m_selection);
 }
 
 static size_t count_graphemes(const char* s, size_t len)
@@ -1056,8 +1353,8 @@ static size_t count_graphemes(const char* s, size_t len)
 
 void editor_context::clear_overwrite_input()
 {
-    m_overwrite_input.clear();
-    m_overwrite_input_original_text.clear();
+    m_edit->m_overwrite_input.clear();
+    m_edit->m_overwrite_input_original_text.clear();
 }
 
 void editor_context::apply_message_text()
@@ -1071,23 +1368,25 @@ void editor_context::apply_message_text()
     }
     else
     {
-        m_display.set_message_text(m_message_text.c_str(), m_message_text.width());
+        m_display.set_message_text(m_edit->m_message_text.c_str(), m_edit->m_message_text.width());
     }
 }
 
-void editor_context::apply_override_bindings()
+void editor_context::apply_argument_bindings()
 {
-    std::shared_ptr<const key_table_list> bindings;
-
-    if (m_numflags & NUMFLAG_ARGUMENT_MODE)
+    if (!m_reading_parameter && (m_numflags & NUMFLAG_ARGUMENT_MODE))
     {
         const bool uni = ((m_numflags & NUMFLAG_UNIVERSAL_MODE) &&
                           !(m_numflags & NUMFLAG_HAS_ARG_DIGITS) &&
                           m_sign_numeric_argument > 0);
-        bindings = (uni ? get_universal_argument_key_table() : get_digit_argument_key_table());
+        auto table = (uni ? get_universal_argument_key_table() : get_digit_argument_key_table());
+        m_argument_bindings.remove();
+        m_argument_bindings = add_bindings(std::move(table), binding_policy::fallback);
     }
-
-    override_bindings(bindings, true);
+    else
+    {
+        m_argument_bindings.remove();
+    }
 }
 
 void editor_context::insert_raw_char(char c)
@@ -1095,28 +1394,28 @@ void editor_context::insert_raw_char(char c)
     const bool merge = (uint8_t(c) & 0xc0) == 0x80;
     begin_undo_group(merge);
 
-    m_selection.reset_word_anchor();
+    m_buffer.m_selection.reset_word_anchor();
 
     elide_selected_text();
 
     inc_change_counter();
 
-    if (m_text.length() < m_max_length)
+    if (m_buffer.m_text.length() < get_input_max_length())
     {
-        if (m_selection.get_caret() == m_text.length())
+        if (m_buffer.m_selection.get_caret() == m_buffer.m_text.length())
         {
-            m_text.append(&c, 1);
-            m_selection.set_caret(textpos_t(m_text.length()));
+            m_buffer.m_text.append(&c, 1);
+            m_buffer.m_selection.set_caret(textpos_t(m_buffer.m_text.length()));
         }
         else
         {
             cstring tmp;
-            const int32_t insert_pos = m_selection.get_caret();
-            tmp.set(m_text.c_str(), insert_pos);
+            const int32_t insert_pos = m_buffer.m_selection.get_caret();
+            tmp.set(m_buffer.m_text.c_str(), insert_pos);
             tmp.append(&c, 1);
-            m_selection.set_caret(textpos_t(tmp.length()));
-            tmp.append(m_text.c_str() + insert_pos, m_text.length() - insert_pos);
-            m_text = std::move(tmp);
+            m_buffer.m_selection.set_caret(textpos_t(tmp.length()));
+            tmp.append(m_buffer.m_text.c_str() + insert_pos, m_buffer.m_text.length() - insert_pos);
+            m_buffer.m_text = std::move(tmp);
         }
     }
 
@@ -1135,13 +1434,15 @@ void editor_context::insert_char(char c, bool overwrite)
         return;
     }
 
-    bool continuing = (!m_overwrite_input.empty() &&
-                       m_overwrite_input_change_counter == m_change_counter &&
-                       m_overwrite_input_navigation_counter == m_selection.get_navigation_counter() &&
-                       !m_selection.has_selection());
+    // FUTURE:  The overwrite mode was added by AI, and it's becoming
+    // increasingly clear that it's a bit jumbled and poorly factored.
+    bool continuing = (!m_edit->m_overwrite_input.empty() &&
+                       m_edit->m_overwrite_input_change_counter == m_buffer.m_change_counter &&
+                       m_edit->m_overwrite_input_navigation_counter == m_buffer.m_selection.get_navigation_counter() &&
+                       !m_buffer.m_selection.has_selection());
     if (continuing)
     {
-        cstring candidate(m_overwrite_input);
+        cstring candidate(m_edit->m_overwrite_input);
         candidate.append(&c, 1);
         str_iter iter(candidate.c_str(), candidate.length());
         iter.next();
@@ -1150,28 +1451,28 @@ void editor_context::insert_char(char c, bool overwrite)
 
     if (continuing)
     {
-        m_overwrite_input.append(&c, 1);
+        m_edit->m_overwrite_input.append(&c, 1);
         begin_undo_group(true);
-        m_text.set(m_overwrite_input_original_text);
-        m_selection = m_overwrite_input_original_selection;
+        m_buffer.m_text.set(m_edit->m_overwrite_input_original_text);
+        m_buffer.m_selection = m_edit->m_overwrite_input_original_selection;
     }
     else
     {
         clear_overwrite_input();
-        m_overwrite_input.append(&c, 1);
-        m_overwrite_input_original_text.set(m_text);
-        m_overwrite_input_original_selection = m_selection;
+        m_edit->m_overwrite_input.append(&c, 1);
+        m_edit->m_overwrite_input_original_text.set(m_buffer.m_text);
+        m_edit->m_overwrite_input_original_selection = m_buffer.m_selection;
     }
 
-    m_replaying_overwrite_input = true;
-    insert_text(m_overwrite_input.c_str(), m_overwrite_input.length(), true);
-    m_replaying_overwrite_input = false;
+    m_edit->m_replaying_overwrite_input = true;
+    insert_text(m_edit->m_overwrite_input.c_str(), m_edit->m_overwrite_input.length(), true);
+    m_edit->m_replaying_overwrite_input = false;
 
     if (continuing)
         end_undo_group();
 
-    m_overwrite_input_change_counter = m_change_counter;
-    m_overwrite_input_navigation_counter = m_selection.get_navigation_counter();
+    m_edit->m_overwrite_input_change_counter = m_buffer.m_change_counter;
+    m_edit->m_overwrite_input_navigation_counter = m_buffer.m_selection.get_navigation_counter();
 }
 
 void editor_context::insert_text(const char* s, size_t available, bool overwrite)
@@ -1179,22 +1480,22 @@ void editor_context::insert_text(const char* s, size_t available, bool overwrite
     if (!available)
         return;
 
-    if (!m_replaying_overwrite_input)
+    if (!m_edit->m_replaying_overwrite_input)
         clear_overwrite_input();
 
     available = min<size_t>(int16_max, resolve_auto_length(available, s));
 
     begin_undo_group();
 
-    m_selection.reset_word_anchor();
+    m_buffer.m_selection.reset_word_anchor();
 
-    const bool had_selection = m_selection.has_selection();
-    const textpos_t replace_begin = had_selection ? m_selection.get_sel_begin() : m_selection.get_caret();
-    const textpos_t selection_end = had_selection ? m_selection.get_sel_end() : replace_begin;
+    const bool had_selection = m_buffer.m_selection.has_selection();
+    const textpos_t replace_begin = had_selection ? m_buffer.m_selection.get_sel_begin() : m_buffer.m_selection.get_caret();
+    const textpos_t selection_end = had_selection ? m_buffer.m_selection.get_sel_end() : replace_begin;
 
     cstring base;
-    base.append(m_text.c_str(), replace_begin);
-    base.append(m_text.c_str() + selection_end, m_text.length() - selection_end);
+    base.append(m_buffer.m_text.c_str(), replace_begin);
+    base.append(m_buffer.m_text.c_str() + selection_end, m_buffer.m_text.length() - selection_end);
 
     textpos_t replace_end = replace_begin;
     size_t accepted = 0;
@@ -1220,7 +1521,7 @@ void editor_context::insert_text(const char* s, size_t available, bool overwrite
         }
 
         const size_t candidate_length = base.length() - (candidate_end - replace_begin) + accepted + source_length;
-        if (candidate_length > m_max_length)
+        if (candidate_length > get_input_max_length())
         {
             context.set_length(context.length() - source_length);
             context_graphemes = old_context_graphemes;
@@ -1236,77 +1537,78 @@ void editor_context::insert_text(const char* s, size_t available, bool overwrite
     cstring tmp;
     tmp.append(base.c_str(), replace_begin);
     tmp.append(s, accepted);
-    m_selection.set_caret(textpos_t(tmp.length()));
+    m_buffer.m_selection.set_caret(textpos_t(tmp.length()));
     tmp.append(base.c_str() + replace_end, base.length() - replace_end);
-    m_text = std::move(tmp);
+    m_buffer.m_text = std::move(tmp);
 
     end_undo_group();
 }
 
 void editor_context::remove_text(const textpos_t _begin, textpos_t end)
 {
-    const auto begin = min(max(_begin, 0), textpos_t(m_text.length()));
+    const auto begin = min(max(_begin, 0), textpos_t(m_buffer.m_text.length()));
     if (end <= begin)
         end = -1;
 
     begin_undo_group();
 
-    m_selection.reset_word_anchor();
+    m_buffer.m_selection.reset_word_anchor();
 
     inc_change_counter();
 
-    if (end < 0 || end >= m_text.length())
+    if (end < 0 || end >= m_buffer.m_text.length())
     {
-        m_text.set_length(begin);
+        m_buffer.m_text.set_length(begin);
     }
     else
     {
         cstring tmp;
-        tmp.append(m_text.c_str(), begin);
-        tmp.append(m_text.c_str() + end, m_text.length() - end);
-        m_text = std::move(tmp);
+        tmp.append(m_buffer.m_text.c_str(), begin);
+        tmp.append(m_buffer.m_text.c_str() + end, m_buffer.m_text.length() - end);
+        m_buffer.m_text = std::move(tmp);
     }
 
-    m_selection.set_caret(begin);
+    m_buffer.m_selection.set_caret(begin);
 
     end_undo_group();
 }
 
 bool editor_context::elide_selected_text()
 {
-    if (!m_selection.has_selection())
+    if (!m_buffer.m_selection.has_selection())
         return false;
 
-    const textpos_t begin = m_selection.get_sel_begin();
-    const textpos_t end = m_selection.get_sel_end();
+    const textpos_t begin = m_buffer.m_selection.get_sel_begin();
+    const textpos_t end = m_buffer.m_selection.get_sel_end();
     remove_text(begin, end);
     return true;
+}
+
+uint32_t editor_context::get_input_max_length() const noexcept
+{
+    return m_reading_parameter ? m_reading_parameter->request.max_length : m_max_length;
 }
 
 void editor_context::init_undo()
 {
     clear_undo_internal();
-    m_undo_head = m_undo_tail = new undo_entry;
-    m_undo_tail->m_text = m_text;
-    m_undo_tail->m_sel_before = m_selection;
-    m_undo_tail->m_sel_after = m_selection;
-    m_undo_tail->m_left = m_display.get_left();
-    m_undo_tail->m_top = m_display.get_top();
-    m_defer_init_undo = false;
+    m_edit->undo.m_head = m_edit->undo.m_tail = new undo_entry;
+    m_edit->undo.m_tail->m_text = m_buffer.m_text;
+    m_edit->undo.m_tail->m_sel_before = m_buffer.m_selection;
+    m_edit->undo.m_tail->m_sel_after = m_buffer.m_selection;
+    m_edit->undo.m_tail->m_left = m_display.get_left();
+    m_edit->undo.m_tail->m_top = m_display.get_top();
+    m_edit->undo.m_defer_init = false;
 }
 
 void editor_context::clear_undo_internal()
 {
-    while (m_undo_head)
-        unlink_endo_entry(m_undo_head);
-    assert(!m_undo_head);
-    assert(!m_undo_tail);
-    m_undo_current = nullptr;
+    m_edit->undo.clear();
 }
 
 void editor_context::unlink_endo_entry(undo_entry* p)
 {
-    p->unlink(m_undo_head, m_undo_tail);
+    p->unlink(m_edit->undo.m_head, m_edit->undo.m_tail);
 }
 
 void editor_context::begin_undo_group()
@@ -1316,131 +1618,131 @@ void editor_context::begin_undo_group()
 
 void editor_context::begin_undo_group(bool merge)
 {
-    if (!m_undo_head)
+    if (!m_edit->undo.m_head)
         return;
 
-    assert(m_grouping >= 0);
-    if (!m_grouping)
+    assert(m_edit->undo.m_grouping >= 0);
+    if (!m_edit->undo.m_grouping)
     {
-        if (m_defer_init_undo)
+        if (m_edit->undo.m_defer_init)
             init_undo();
 
-        undo_entry* current = m_undo_current ? m_undo_current : m_undo_tail;
+        undo_entry* current = m_edit->undo.m_current ? m_edit->undo.m_current : m_edit->undo.m_tail;
         current->m_left = m_display.get_left();
         current->m_top = m_display.get_top();
 
-        if (m_undo_current)
+        if (m_edit->undo.m_current)
         {
             // Keep current, discard everything after current.
-            m_undo_current = m_undo_current->m_next;
-            while (m_undo_current)
+            m_edit->undo.m_current = m_edit->undo.m_current->m_next;
+            while (m_edit->undo.m_current)
             {
-                undo_entry* del = m_undo_current;
-                m_undo_current = m_undo_current->m_next;
+                undo_entry* del = m_edit->undo.m_current;
+                m_edit->undo.m_current = m_edit->undo.m_current->m_next;
                 unlink_endo_entry(del);
                 delete del;
             }
-            assert(!m_undo_current);
+            assert(!m_edit->undo.m_current);
         }
 
-        if (!merge || m_undo_tail == m_undo_head)
+        if (!merge || m_edit->undo.m_tail == m_edit->undo.m_head)
         {
             undo_entry* p = new undo_entry;
-            p->m_sel_before = m_selection;
+            p->m_sel_before = m_buffer.m_selection;
             p->m_left = m_display.get_left();
             p->m_top = m_display.get_top();
-            p->link_at_tail(m_undo_head, m_undo_tail);
-            assert(p == m_undo_tail);
+            p->link_at_tail(m_edit->undo.m_head, m_edit->undo.m_tail);
+            assert(p == m_edit->undo.m_tail);
         }
     }
-    ++m_grouping;
+    ++m_edit->undo.m_grouping;
 }
 
 void editor_context::end_undo_group()
 {
-    if (!m_undo_head)
+    if (!m_edit->undo.m_head)
         return;
 
-    assert(m_grouping > 0);
-    --m_grouping;
-    if (!m_grouping)
+    assert(m_edit->undo.m_grouping > 0);
+    --m_edit->undo.m_grouping;
+    if (!m_edit->undo.m_grouping)
     {
-        m_undo_tail->m_text.set(m_text);
-        m_undo_tail->m_sel_after = m_selection;
+        m_edit->undo.m_tail->m_text.set(m_buffer.m_text);
+        m_edit->undo.m_tail->m_sel_after = m_buffer.m_selection;
     }
 }
 
 bool editor_context::undo()
 {
-    assert(!m_grouping);
-    if (m_grouping)
+    assert(!m_edit->undo.m_grouping);
+    if (m_edit->undo.m_grouping)
         return false;
-    if (!m_undo_head)
+    if (!m_edit->undo.m_head)
         return false;
 
-    if (!m_undo_current)
-        m_undo_current = m_undo_tail;
-    m_undo_current->m_left = m_display.get_left();
-    m_undo_current->m_top = m_display.get_top();
-    undo_entry* p = m_undo_current->m_prev;
+    if (!m_edit->undo.m_current)
+        m_edit->undo.m_current = m_edit->undo.m_tail;
+    m_edit->undo.m_current->m_left = m_display.get_left();
+    m_edit->undo.m_current->m_top = m_display.get_top();
+    undo_entry* p = m_edit->undo.m_current->m_prev;
     if (!p)
         return false;
 
     inc_change_counter();
-    m_text.set(p->m_text);
-    m_selection = m_undo_current->m_sel_before;
-    m_undo_current = p;
+    m_buffer.m_text.set(p->m_text);
+    m_buffer.m_selection = m_edit->undo.m_current->m_sel_before;
+    m_edit->undo.m_current = p;
     m_display.set_scroll_offsets(p->m_left, p->m_top);
     return true;
 }
 
 bool editor_context::undo_all()
 {
-    assert(!m_grouping);
-    if (m_grouping)
+    assert(!m_edit->undo.m_grouping);
+    if (m_edit->undo.m_grouping)
         return false;
-    if (!m_undo_head)
+    if (!m_edit->undo.m_head)
         return false;
 
-    undo_entry* current = m_undo_current ? m_undo_current : m_undo_tail;
-    if (current == m_undo_head)
+    undo_entry* current = m_edit->undo.m_current ? m_edit->undo.m_current : m_edit->undo.m_tail;
+    if (current == m_edit->undo.m_head)
         return false;
 
     current->m_left = m_display.get_left();
     current->m_top = m_display.get_top();
 
-    undo_entry* first = m_undo_head->m_next;
+    undo_entry* first = m_edit->undo.m_head->m_next;
     assert(first);
 
     inc_change_counter();
-    m_text.set(m_undo_head->m_text);
-    m_selection = first->m_sel_before;
-    m_undo_current = m_undo_head;
-    m_display.set_scroll_offsets(m_undo_head->m_left, m_undo_head->m_top);
+    m_buffer.m_text.set(m_edit->undo.m_head->m_text);
+    m_buffer.m_selection = first->m_sel_before;
+    m_edit->undo.m_current = m_edit->undo.m_head;
+    m_display.set_scroll_offsets(m_edit->undo.m_head->m_left, m_edit->undo.m_head->m_top);
     return true;
 }
 
 bool editor_context::redo()
 {
-    assert(!m_grouping);
-    if (m_grouping)
+    assert(!m_edit->undo.m_grouping);
+    if (m_edit->undo.m_grouping)
         return false;
-    if (!m_undo_tail)
-        return false;
-
-    if (!m_undo_current || m_undo_current == m_undo_tail)
+    if (!m_edit->undo.m_tail)
         return false;
 
-    m_undo_current->m_left = m_display.get_left();
-    m_undo_current->m_top = m_display.get_top();
-    undo_entry* r = m_undo_current->m_next;
+    if (!m_edit->undo.m_current || m_edit->undo.m_current == m_edit->undo.m_tail)
+        return false;
+
+    m_edit->undo.m_current->m_left = m_display.get_left();
+    m_edit->undo.m_current->m_top = m_display.get_top();
+    undo_entry* r = m_edit->undo.m_current->m_next;
     assert(r);
 
     inc_change_counter();
-    m_text.set(r->m_text);
-    m_selection = r->m_sel_after;
+    m_buffer.m_text.set(r->m_text);
+    m_buffer.m_selection = r->m_sel_after;
 
-    m_undo_current = r;
+    m_edit->undo.m_current = r;
     m_display.set_scroll_offsets(r->m_left, r->m_top);
     return true;
 }
@@ -1502,7 +1804,8 @@ void editor_context::clear_kbd_macro()
 
 void editor_context::transfer_text(cstring& out)
 {
-    out = std::move(m_text);
+    cancel_read_parameter();
+    out = std::move(m_buffer.m_text);
     initialize();
 }
 
@@ -1549,7 +1852,7 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
                 if (m_callbacks && m_callbacks->on_dispatch(*this, name))
                     break;
 
-                editor_command_func_t func = lookup_command(name);
+                editor_command_func_t func = find_available_command(name);
                 if (func)
                 {
                     ret = func(*this, key, name, resolved);
@@ -1641,25 +1944,31 @@ int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const bin
     if (m_numflags & NUMFLAG_AUTO_CLEAR)
         clear_numeric_argument();
 
-    if (m_auto_deactivate_mark)
+    if (m_edit->m_auto_deactivate_mark)
         set_mark_active(false);
     else
-        m_auto_deactivate_mark = true;
+        m_edit->m_auto_deactivate_mark = true;
 
     return ret;
 }
 
-void editor_context::on_binding_fallback() noexcept
+void editor_context::on_binding_fallback(const binding_handle& handle_crossed) noexcept
 {
-    if (m_numflags & NUMFLAG_ARGUMENT_MODE)
+    if (m_argument_bindings &&
+        handle_crossed == m_argument_bindings &&
+        (m_numflags & NUMFLAG_ARGUMENT_MODE))
     {
         m_numflags &= ~NUMFLAG_ARGUMENT_MODE;
-        apply_override_bindings();
+        apply_argument_bindings();
         apply_message_text();
         if (m_callbacks)
             m_callbacks->do_display(*this);
         else
             display();
+    }
+    else if (m_callbacks)
+    {
+        m_callbacks->on_binding_fallback(*this, handle_crossed);
     }
 }
 
@@ -1674,12 +1983,12 @@ void editor_context::report_error(const char* msg) noexcept
 void editor_context::dump_undo_stack()
 {
     puts("");
-    for (undo_entry* p = m_undo_head; p; p = p->m_next)
+    for (undo_entry* p = m_edit->undo.m_head; p; p = p->m_next)
     {
         cstring tag;
-        if (p == m_undo_head) tag.append("H");
-        if (p == m_undo_tail) tag.append("T");
-        if (p == m_undo_current) tag.append("C");
+        if (p == m_edit->undo.m_head) tag.append("H");
+        if (p == m_edit->undo.m_tail) tag.append("T");
+        if (p == m_edit->undo.m_current) tag.append("C");
         printf("%s\tcaret %u/%u, anchor %u/%u, text '%s'\n", tag.c_str(), p->m_sel_before.get_caret(), p->m_sel_after.get_caret(), p->m_sel_before.get_anchor(), p->m_sel_after.get_anchor(), p->m_text.c_str());
     }
     printf("----\n");
