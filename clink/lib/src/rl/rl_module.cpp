@@ -1507,33 +1507,135 @@ static void bind_keyseq_translated(const char* keys, int32 keys_len, const char*
 }
 
 //------------------------------------------------------------------------------
-static void bind_keyseq(const char* keyseq, const char* target, const std::shared_ptr<tib::key_table>& t)
+extern "C" void set_key_table(int table)
 {
-    assert(keyseq && *keyseq);
+    std::shared_ptr<tib::key_table> t;
 
-    const size_t need = 1 + (2 * strlen(keyseq));
-    char* keys = (char*)malloc(need);
-    if (!keys)
-        return;
-
-    int32 keys_len;
-    if (rl_translate_keyseq(keyseq, keys, &keys_len))
+    switch (table)
     {
-        assert(false);
-        free(keys);
-        return;
+    case emacs_table:   t = s_emacs_standard_bindings; break;
+    default:            assert(false); return;
     }
 
-    bind_keyseq_translated(keys, keys_len, target, t);
+    if (!s_main_bindings_handle)
+    {
+        s_main_bindings = std::make_shared<tib::key_table_list>();
+        s_main_bindings->emplace_back(s_emacs_standard_bindings);
+        s_main_bindings_handle = g_tib->add_bindings(s_main_bindings);
+    }
 
-    free(keys);
+    s_main_bindings->clear();
+    s_main_bindings->emplace_back(std::move(t));
 }
 
 //------------------------------------------------------------------------------
-static void bind_keyseq_list(const two_strings* list, const std::shared_ptr<tib::key_table>& t)
+extern "C" int get_key_table(void)
+{
+    return emacs_table;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
+{
+    std::shared_ptr<tib::key_table> t;
+    switch (table)
+    {
+    case emacs_table:   t = s_emacs_standard_bindings; break;
+    default:            return;
+    }
+
+    assert(t);
+    if (!t)
+        return;
+
+    if (!is_macro || !target)
+    {
+        bind_keyseq_translated(keys, keys_len, target, t);
+    }
+    else if (strnicmp(target, "luafunc:", 8) == 0)
+    {
+        t->add(keys, keys_len, tib::binding_target_func(target));
+    }
+    else
+    {
+        t->add(keys, keys_len, tib::binding_target_macro(target));
+    }
+}
+
+//------------------------------------------------------------------------------
+static const char* clink_translate_keyseq(const char* keyseq, int32& keys_len)
+{
+    assert(keyseq && *keyseq);
+
+    static char* s_keys = nullptr;
+    static size_t s_capacity = 0;
+
+    size_t need = 1 + (2 * strlen(keyseq));
+    if (need > s_capacity)
+    {
+        dbg_ignore_scope(snapshot, "clink_translate_keyseq");
+        need *= 3;
+        need /= 2;
+        char* tmp = (char*)malloc(need);
+        if (!tmp)
+            return nullptr;
+        s_keys = tmp;
+        s_capacity = need;
+    }
+
+    if (rl_translate_keyseq(keyseq, s_keys, &keys_len))
+    {
+        assert(false);
+        return nullptr;
+    }
+
+    return s_keys;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    int32 keys_len;
+    const char* keys = clink_translate_keyseq(keyseq, keys_len);
+    if (!keys)
+        return;
+
+    clink_bind_translated(false, keys, keys_len, target, table);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
+{
+    assert(keyseq && *keyseq);
+
+    int32 keys_len;
+    const char* keys = clink_translate_keyseq(keyseq, keys_len);
+    if (!keys)
+        return;
+
+    char* macro = nullptr;
+    if (target)
+    {
+        int macro_len;
+        macro = (char*)malloc((2 * strlen(target)) + 1);
+        if (rl_translate_keyseq(target, macro, &macro_len))
+            goto out;
+        target = macro;
+    }
+
+    clink_bind_translated(true, keys, keys_len, target, table);
+
+out:
+    free(macro);
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_list(const two_strings* list, int table)
 {
     for (int32 i = 0; list[i][0]; ++i)
-        bind_keyseq(list[i][0], list[i][1], t);
+        clink_bind(list[i][0], list[i][1], table);
 }
 
 //------------------------------------------------------------------------------
@@ -1693,127 +1795,8 @@ static void init_emacs_standard_binds(bool force=false)
         s_emacs_standard_bindings = std::make_shared<tib::key_table>(true/*can_self_insert*/);
     else
         s_emacs_standard_bindings->clear();
-    bind_keyseq_list(emacs_standard_binds, s_emacs_standard_bindings);
-}
 
-//------------------------------------------------------------------------------
-extern "C" void set_key_table(int table)
-{
-    std::shared_ptr<tib::key_table> t;
-
-    switch (table)
-    {
-    case emacs_table:   t = s_emacs_standard_bindings; break;
-    default:            assert(false); return;
-    }
-
-    if (!s_main_bindings_handle)
-    {
-        s_main_bindings = std::make_shared<tib::key_table_list>();
-        s_main_bindings->emplace_back(s_emacs_standard_bindings);
-        s_main_bindings_handle = g_tib->add_bindings(s_main_bindings);
-    }
-
-    s_main_bindings->clear();
-    s_main_bindings->emplace_back(std::move(t));
-}
-
-//------------------------------------------------------------------------------
-extern "C" int get_key_table(void)
-{
-    return emacs_table;
-}
-
-//------------------------------------------------------------------------------
-extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
-{
-    std::shared_ptr<tib::key_table> t;
-    switch (table)
-    {
-    case emacs_table:   t = s_emacs_standard_bindings; break;
-    default:            return;
-    }
-
-    assert(t);
-    if (!t)
-        return;
-
-    if (!is_macro || !target)
-    {
-        bind_keyseq_translated(keys, keys_len, target, t);
-    }
-    else if (strnicmp(target, "luafunc:", 8) == 0)
-    {
-        t->add(keys, keys_len, tib::binding_target_func(target));
-    }
-    else
-    {
-        t->add(keys, keys_len, tib::binding_target_macro(target));
-    }
-}
-
-//------------------------------------------------------------------------------
-extern "C" void clink_bind(const char* keyseq, const char* target, int table)
-{
-    assert(keyseq && *keyseq);
-
-    const size_t need = 1 + (2 * strlen(keyseq));
-    char* keys = (char*)malloc(need);
-    if (!keys)
-        return;
-
-    int32 keys_len;
-    if (rl_translate_keyseq(keyseq, keys, &keys_len))
-    {
-        assert(false);
-        goto out;
-    }
-
-    clink_bind_translated(false, keys, keys_len, target, table);
-
-out:
-    free(keys);
-}
-
-//------------------------------------------------------------------------------
-extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
-{
-    assert(keyseq && *keyseq);
-
-    const size_t need = 1 + (2 * strlen(keyseq));
-    char* keys = (char*)malloc(need);
-    char* macro = nullptr;
-    if (!keys)
-        return;
-
-    int32 keys_len;
-    if (rl_translate_keyseq(keyseq, keys, &keys_len))
-    {
-        assert(false);
-        goto out;
-    }
-
-    if (target)
-    {
-        int macro_len;
-        macro = (char*)malloc((2 * strlen(target)) + 1);
-        if (rl_translate_keyseq(target, macro, &macro_len))
-            goto out;
-        target = macro;
-    }
-
-    clink_bind_translated(true, keys, keys_len, target, table);
-
-out:
-    free(macro);
-    free(keys);
-}
-
-//------------------------------------------------------------------------------
-extern "C" void clink_bind_list(const two_strings* list, int table)
-{
-    for (int32 i = 0; list[i][0]; ++i)
-        clink_bind(list[i][0], list[i][1], table);
+    clink_bind_list(emacs_standard_binds, emacs_table);
 }
 
 //------------------------------------------------------------------------------
