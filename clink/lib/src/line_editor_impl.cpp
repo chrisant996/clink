@@ -1244,6 +1244,12 @@ const char* line_editor_impl::get_face_def(const tib::input_buffer& buffer, char
 }
 
 //------------------------------------------------------------------------------
+const char* line_editor_impl::get_face_hyperlink(char face)
+{
+    return m_module.get_face_hyperlink(face);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::do_display(tib::editor_context& ctx)
 {
     display_readline();

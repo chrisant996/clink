@@ -88,6 +88,7 @@ public:
     // tib::editor_callbacks
     virtual void        provide_faces(const tib::input_buffer& buffer, tib::cstring& faces) override;
     virtual const char* get_face_def(const tib::input_buffer& buffer, char face) override;
+    virtual const char* get_face_hyperlink(char face) override;
     virtual void        do_display(tib::editor_context& ctx) override;
     virtual bool        on_dispatch(tib::editor_context& ctx, const char* name) override;
     virtual void        on_dispatched(tib::editor_context& ctx, const char* name) override;

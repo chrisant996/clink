@@ -56,6 +56,7 @@ public:
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay, bool transient=false);
     void            provide_faces(const tib::input_buffer& buffer, tib::cstring& faces);
     const char*     get_face_def(char face);
+    const char*     get_face_hyperlink(char face);
 
     bool            next_line(str_base& out);
     bool            quoted_insert_pending() const;

@@ -675,11 +675,6 @@ inline const char* fallback_color(const char* preferred, const char* fallback)
 const char* rl_module::get_face_def(char face)
 {
     static const char c_normal[] = "\x1b[m";
-#ifdef TIB_TODO
-    static const char c_hyperlink[] = "\x1b]8;;";
-    static const char c_BEL[] = "\a";
-    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
-#endif
 
     switch (face)
     {
@@ -718,11 +713,6 @@ const char* rl_module::get_face_def(char face)
 
     case FACE_HISTEXPAND1:
     case FACE_HISTEXPAND2:
-#ifdef TIB_TODO
-        hyperlink.set(c_hyperlink);
-        hyperlink.append(c_doc_histexpand);
-        hyperlink.append(c_BEL);
-#endif
         return fallback_color(s_histexpand_color, "\x1b[0;97;45m");
 
 
@@ -736,6 +726,21 @@ const char* rl_module::get_face_def(char face)
     case FACE_FLAG:         return fallback_color(s_flag_color, c_normal);
     case FACE_NONE:         return fallback_color(s_none_color, c_normal);
     }
+}
+
+//------------------------------------------------------------------------------
+const char* rl_module::get_face_hyperlink(char face)
+{
+    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
+
+    switch (face)
+    {
+    case FACE_HISTEXPAND1:
+    case FACE_HISTEXPAND2:
+        return c_doc_histexpand;
+    }
+
+    return nullptr;
 }
 
 
