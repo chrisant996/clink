@@ -117,6 +117,8 @@ void* dbgalloc_(size_t size, uint32 flags);
 void* dbgrealloc_(void* pv, size_t size, uint32 flags);
 void dbgfree_(void* pv, uint32 type);
 
+void dbgcapturecallstacks(int32 capture);
+
 void dbgsetlabel(const void* pv, const char* label, int32 copy);
 void dbgverifylabel(const void* pv, const char* label);
 void dbgsetignore(const void* pv, int32 ignore _DEFAULT_ONE);
