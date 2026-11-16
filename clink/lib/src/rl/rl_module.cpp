@@ -1431,6 +1431,10 @@ static void postprocess_lcd(char* lcd, const char* text)
 void load_user_inputrc(const char* state_dir, bool no_user)
 {
 #if defined(PLATFORM_WINDOWS)
+    extern bool is_test_harness();
+    if (is_test_harness())
+        return;
+
     // Remember to update clink_info() if anything changes in here.
 
     static const char* const env_vars[] = {
