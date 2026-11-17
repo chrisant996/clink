@@ -112,8 +112,9 @@ struct parameter_request
     cstring             initial_text;
     uint32_t            max_length = int16_max;
     // Additional tables, in priority order; later tables override earlier
-    // ones and the built-in parameter bindings.  At least one non-null table
+    // ones and the base parameter request table.  At least one non-null table
     // is required.
+    bool                no_base_bindings = false;
     std::vector<std::shared_ptr<key_table>> bindings;
     // Additional commands, invokable only while the parameter_request is
     // active (note that the commands are invokable from any key tables for as
@@ -288,6 +289,7 @@ public:
     bool                universal_argument();
 
     // Read parameter string.
+    void                set_read_parameter_base_bindings(std::shared_ptr<const key_table> table) { m_parameter_base_bindings = std::move(table); }
     bool                start_read_parameter(parameter_request request);
     bool                is_read_parameter() const noexcept { return !!m_reading_parameter; }
     bool                accept_read_parameter(cstring& parameter);
@@ -365,6 +367,7 @@ private:
     style_info          m_style;    // REVIEW: does tib_context actually need access to this?
     editor_quirks       m_quirks;
     uint32_t            m_max_length = int16_max;
+    std::shared_ptr<const key_table> m_parameter_base_bindings;
 
     // Input state.
     input_buffer        m_buffer;

@@ -265,6 +265,128 @@ TEST_CASE("Parameter request commands")
     }
 }
 
+TEST_CASE("Parameter request default key table")
+{
+    auto context = std::make_shared<tib::editor_context>();
+    context->initialize("original");
+    context->add_bindings(tib::make_default_key_table(), tib::binding_policy::exclusive);
+    auto custom = std::make_shared<tib::key_table>(true/*can_self_insert*/);
+    REQUIRE(custom->add("\006", tib::binding_target_func("host-forward")));
+    REQUIRE(custom->add("\t", tib::binding_target_func("parameter-end")));
+    REQUIRE(custom->add("\001", tib::binding_target_func("parameter-begin")));
+
+    tib::parameter_request request;
+    request.initial_text = "abc";
+    auto first = std::make_shared<tib::key_table>();
+    auto second = std::make_shared<tib::key_table>();
+    REQUIRE(first->add("\r", tib::binding_target_func("parameter-accept")));
+    REQUIRE(first->add("\001", tib::binding_target_func("parameter-end")));
+    REQUIRE(first->add("\t", tib::binding_target_func("parameter-end")));
+    REQUIRE(second->add("\t", tib::binding_target_func("parameter-begin")));
+    request.bindings = { first, second };
+    static const tib::editor_command commands[] =
+    {
+        { "host-forward", tib::forward_char },
+        { "parameter-begin", tib::begin_of_line },
+        { "parameter-end", tib::end_of_line },
+        { "parameter-accept", accept_test_parameter },
+    };
+    request.set_commands(commands);
+
+    bool use_custom = false;
+    SECTION("the built-in table remains the default")
+    {
+    }
+    SECTION("a context table replaces the built-in table")
+    {
+        use_custom = true;
+        context->set_read_parameter_base_bindings(custom);
+    }
+    SECTION("a request can omit the built-in table")
+    {
+        request.no_base_bindings = true;
+    }
+    SECTION("a request can omit the custom context table")
+    {
+        use_custom = true;
+        context->set_read_parameter_base_bindings(custom);
+        request.no_base_bindings = true;
+    }
+    SECTION("nullptr restores the built-in table")
+    {
+        context->set_read_parameter_base_bindings(custom);
+        context->set_read_parameter_base_bindings(nullptr);
+    }
+
+    // Hosts using their own tables need not register any tib command names.
+    std::vector<std::pair<tib::cstring, tib::editor_command_func_t>> saved_commands;
+    MAKE_CLEANUP([&saved_commands]()
+    {
+        if (!saved_commands.empty())
+        {
+            tib::editor_context::clear_all_commands();
+            for (const auto& command : saved_commands)
+                tib::editor_context::register_command(command.first.c_str(), command.second);
+        }
+    });
+    const bool skip = request.no_base_bindings;
+    if (use_custom || skip)
+    {
+        for (const auto& command : tib::editor_context::get_registered_commands())
+            saved_commands.emplace_back(command.first, command.second);
+        tib::editor_context::clear_all_commands();
+    }
+    REQUIRE(context->start_read_parameter(std::move(request)));
+    const auto& group = context->get_bindings().back();
+    REQUIRE(group.policy == tib::binding_policy::exclusive);
+    const auto& tables = *group.tables;
+    REQUIRE(tables.size() == (skip ? 2 : 3));
+    REQUIRE(tables[tables.size() - 2] == first);
+    REQUIRE(tables.back() == second);
+    if (use_custom && !skip)
+        REQUIRE(tables.front() == custom);
+
+    tib::binding_resolver resolver;
+    resolver.add_target(context);
+
+    // The request overrides the context table; later request tables win.
+    auto resolved = resolver.step('\001');
+    REQUIRE(resolved.is_func_name("parameter-end"));
+    REQUIRE(resolved.dispatch());
+    REQUIRE(context->get_caret() == 3);
+    resolved = resolver.step('\t');
+    REQUIRE(resolved.is_func_name("parameter-begin"));
+    REQUIRE(resolved.dispatch());
+    REQUIRE(context->get_caret() == 0);
+
+    resolved = resolver.step('\006');
+    if (use_custom && !skip)
+    {
+        REQUIRE(resolved.is_func_name("host-forward"));
+        REQUIRE(resolved.dispatch());
+        REQUIRE(context->get_caret() == 1);
+    }
+    else
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::miss);
+
+    // No built-in or normal editor bindings may leak into custom/skip mode.
+    resolved = resolver.step('\007');
+    if (use_custom || skip)
+        REQUIRE(resolved.outcome == tib::dispatch_outcome::miss);
+    else
+        REQUIRE(resolved.is_func_name("abort"));
+
+    resolved = resolver.step('\r');
+    REQUIRE(resolved.is_func_name("parameter-accept"));
+    REQUIRE(resolved.dispatch());
+    REQUIRE(!context->is_read_parameter());
+    REQUIRE(context->get_text() == "originalabc");
+
+    // The normal editor bindings are restored after acceptance.
+    resolved = resolver.step('\007');
+    REQUIRE(resolved.is_func_name("abort"));
+}
+
 TEST_CASE("Ending a parameter request removes only its binding group")
 {
     auto context = std::make_shared<tib::editor_context>();

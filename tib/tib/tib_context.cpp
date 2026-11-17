@@ -46,7 +46,7 @@ static std::shared_ptr<const key_table> make_digit_argument_key_table(bool leadi
     return table;
 }
 
-static std::shared_ptr<const key_table> make_parameter_key_table()
+static std::shared_ptr<const key_table> make_parameter_base_bindings()
 {
     auto t = make_default_key_table();
     t->remove("\r");
@@ -1246,12 +1246,17 @@ bool editor_context::start_read_parameter(parameter_request request)
     if (request.initial_text.length() > request.max_length)
         return false;
 
-    static std::shared_ptr<const key_table> s_parameter_key_table;
-    if (!s_parameter_key_table)
-        s_parameter_key_table = make_parameter_key_table();
-
     auto tables = std::make_shared<key_table_list>();
-    tables->push_back(s_parameter_key_table);
+    if (!request.no_base_bindings)
+    {
+        if (m_parameter_base_bindings)
+            tables->push_back(m_parameter_base_bindings);
+        else
+        {
+            static const auto s_parameter_base_bindings = make_parameter_base_bindings();
+            tables->push_back(s_parameter_base_bindings);
+        }
+    }
     const auto& bindings = request.bindings;
     tables->insert(tables->end(), bindings.begin(), bindings.end());
 
