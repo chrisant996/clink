@@ -176,15 +176,18 @@ static int32_t print_parameter_result(tib::editor_context& ctx, int32_t, const c
 
 int32_t print_parameter(tib::editor_context& ctx, int32_t, const char*, const tib::resolved_binding*) noexcept
 {
-    static const auto commands = std::make_shared<const tib::command_table>(tib::command_table{
+    static const tib::editor_command c_commands[] =
+    {
         { "print-parameter-result", print_parameter_result },
-    });
+    };
+
     auto bindings = std::make_shared<tib::key_table>();
     bindings->add("\r", tib::binding_target_func("print-parameter-result"));
+
     tib::parameter_request request;
     request.prompt.set("Text: ", 6);
     request.bindings.push_back(std::move(bindings));
-    request.commands = commands;
+    request.set_commands(c_commands);
     if (!ctx.start_read_parameter(std::move(request)))
         tib::ding();
     return 0;

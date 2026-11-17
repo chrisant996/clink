@@ -30,8 +30,6 @@ struct editor_command
     editor_command_func_t func;
 };
 
-typedef std::vector<editor_command> command_table;
-
 textpos_t pos_mover(const char* s, const size_t _len, textpos_t& pos, const bool forward, const uint8_t word);
 
 struct editor_callbacks;
@@ -121,7 +119,13 @@ struct parameter_request
     // active (note that the commands are invokable from any key tables for as
     // long as the parameter_request is active.  At least one command is
     // required (otherwise how could a parameter be accepted?).
-    std::shared_ptr<const command_table> commands;
+    void                set_commands(const editor_command* commands, size_t num);
+    template<size_t I> void set_commands(const editor_command (&commands)[I]) { set_commands(commands, I); }
+    editor_command_func_t find_command(const char* name) const;
+
+private:
+    const editor_command* commands = nullptr;
+    size_t              num_commands = 0;
 };
 
 class editor_context

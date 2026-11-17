@@ -233,6 +233,26 @@ void undo_history::clear() noexcept
     m_current = nullptr;
 }
 
+void parameter_request::set_commands(const editor_command* commands, size_t num)
+{
+    this->commands = commands;
+    this->num_commands = num;
+}
+
+editor_command_func_t parameter_request::find_command(const char* name) const
+{
+    if (name)
+    {
+        size_t n = num_commands;
+        for (const editor_command* c = commands; n--; ++c)
+        {
+            if (_stricmp(c->name, name) == 0)
+                return c->func;
+        }
+    }
+    return nullptr;
+}
+
 editor_context::~editor_context()
 {
     clear_undo_internal();
@@ -1205,7 +1225,7 @@ bool editor_context::universal_argument()
 bool editor_context::start_read_parameter(parameter_request request)
 {
     // Ideally this would require at least one non-empty key_table and one
-    // non-empty command_table.  But that makes unit tests messy, and an
+    // non-empty editor_command.  But that makes unit tests messy, and an
     // author should test their code, so they should realize very quickly
     // when they've forgotten to add key bindings and/or commands to accept
     // the parameter string.
