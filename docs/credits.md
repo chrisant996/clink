@@ -57,7 +57,7 @@ Clink documentation embeds the highlight.js library (https://highlightjs.org).<b
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
 
 Clink documentation embeds SVG artwork for a link icon from [Bootstrap](https://github.com/twbs/icons).<br/>
-Licensed under the [MIT License](https://github.com/twbs/icons/blob/main/LICENSE.md).
+Licensed under the [MIT License](https://github.com/twbs/icons/blob/main/LICENSE).
 
 Special thanks to Alexandra Barros and Matthew Wild for (https://code.matthewwild.co.uk/luatraverse).<br/>
 Originally from (http://lua-users.org/lists/lua-l/2006-07/msg00110.html).<br/>
