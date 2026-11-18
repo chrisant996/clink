@@ -973,6 +973,9 @@ find:
                 // Remove the corresponding entry from Readline's copy of history.
                 HIST_ENTRY* hist = remove_history(external_index);
                 free_history_entry(hist);
+                // Keep the position within the shortened history list.
+                if (where_history() > history_length)
+                    using_history();
             }
             else if (m_mode == textlist_mode::directories)
             {
