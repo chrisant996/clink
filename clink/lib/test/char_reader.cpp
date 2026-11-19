@@ -8,6 +8,7 @@
 #include "line_editor_integration.h"
 #include "char_reader_impl.h"
 #include "rl_integration.h"
+#include "rl/rl_module.h"
 
 #include <core/settings.h>
 #include <terminal/terminal.h>
@@ -416,4 +417,62 @@ TEST_CASE("win copy history number")
     REQUIRE(g_tib->get_text() == "history 1");
     tester.feed_input("\x1b[20~99\r"); // Out of range selects the last entry.
     REQUIRE(g_tib->get_text() == "history 12");
+}
+
+TEST_CASE("Escape cancels numeric argument through tib bindings")
+{
+    line_editor_tester tester;
+    REQUIRE(tester.get_editor()->update());
+    tester.feed_input("original");
+    const char* esc = get_bindable_esc();
+    REQUIRE(esc != nullptr);
+
+    auto table = std::make_shared<tib::key_table>();
+    auto test_abort_binding = [&]()
+    {
+        g_tib->add_bindings(table, tib::binding_policy::exclusive);
+        REQUIRE(g_tib->numeric_digit('2'));
+        REQUIRE(g_tib->is_numeric_argument_mode());
+        auto resolved = g_tib->lookup_command("abort");
+        REQUIRE(resolved.is_func_name("abort"));
+
+        str<> translated;
+        REQUIRE(rl_module::get()->translate(esc, int32(strlen(esc)), translated));
+        REQUIRE(translated.length() == resolved.sequence.length());
+        REQUIRE(memcmp(translated.c_str(), resolved.sequence.c_str(), translated.length()) == 0);
+        REQUIRE(g_tib->is_numeric_argument_mode());
+        REQUIRE(g_tib->get_numeric_argument() == 2);
+        REQUIRE(g_tib->get_text() == "original");
+
+        // The test terminal supplies bytes directly, so feed the translation that
+        // the real terminal's key tester would produce for physical Escape.
+        tester.feed_input(translated.c_str());
+        REQUIRE(!g_tib->is_numeric_argument_mode());
+        REQUIRE(!g_tib->has_numeric_argument());
+        REQUIRE(g_tib->get_text() == "original");
+    };
+
+    SECTION("default abort binding")
+    {
+        REQUIRE(table->add("\007", tib::binding_target_func("abort")));
+        test_abort_binding();
+    }
+
+    SECTION("custom multibyte abort binding")
+    {
+        REQUIRE(table->add("\030z", tib::binding_target_func("ABORT")));
+        REQUIRE(table->add("\007", tib::binding_target_func("forward-char")));
+        test_abort_binding();
+    }
+
+    SECTION("no abort binding leaves translation output unchanged")
+    {
+        g_tib->add_bindings(table, tib::binding_policy::exclusive);
+        REQUIRE(g_tib->numeric_digit('2'));
+        str<> translated("unchanged");
+        REQUIRE(!rl_module::get()->translate(esc, int32(strlen(esc)), translated));
+        REQUIRE(translated.equals("unchanged"));
+        REQUIRE(g_tib->is_numeric_argument_mode());
+        REQUIRE(g_tib->get_text() == "original");
+    }
 }
