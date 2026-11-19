@@ -1452,6 +1452,19 @@ void load_user_inputrc(const char* state_dir, bool no_user)
 }
 
 //------------------------------------------------------------------------------
+static std::shared_ptr<tib::key_table> get_key_table(int table)
+{
+    std::shared_ptr<tib::key_table> t;
+    switch (table)
+    {
+    case emacs_table:
+        return s_emacs_standard_bindings;
+    default:
+        return nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
 static void bind_keyseq_translated(const char* keys, int32 keys_len, const char* target, const std::shared_ptr<tib::key_table>& t)
 {
 #ifdef TIB_TODO // For now it's accepted that non-existent commands are in the lists.
@@ -1479,43 +1492,8 @@ static void bind_keyseq_translated(const char* keys, int32 keys_len, const char*
 }
 
 //------------------------------------------------------------------------------
-extern "C" void set_key_table(int table)
+static void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, std::shared_ptr<tib::key_table> t)
 {
-    std::shared_ptr<tib::key_table> t;
-
-    switch (table)
-    {
-    case emacs_table:   t = s_emacs_standard_bindings; break;
-    default:            assert(false); return;
-    }
-
-    if (!s_main_bindings_handle)
-    {
-        s_main_bindings = std::make_shared<tib::key_table_list>();
-        s_main_bindings->emplace_back(s_emacs_standard_bindings);
-        s_main_bindings_handle = g_tib->add_bindings(s_main_bindings);
-    }
-
-    s_main_bindings->clear();
-    s_main_bindings->emplace_back(std::move(t));
-}
-
-//------------------------------------------------------------------------------
-extern "C" int get_key_table(void)
-{
-    return emacs_table;
-}
-
-//------------------------------------------------------------------------------
-extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
-{
-    std::shared_ptr<tib::key_table> t;
-    switch (table)
-    {
-    case emacs_table:   t = s_emacs_standard_bindings; break;
-    default:            return;
-    }
-
     assert(t);
     if (!t)
         return;
@@ -1532,6 +1510,34 @@ extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_l
     {
         t->add(keys, keys_len, tib::binding_target_macro(target));
     }
+}
+
+//------------------------------------------------------------------------------
+extern "C" void clink_bind_translated(int is_macro, const char* keys, int keys_len, const char* target, int table)
+{
+    clink_bind_translated(is_macro, keys, keys_len, target, get_key_table(table));
+}
+
+//------------------------------------------------------------------------------
+extern "C" void set_key_table(int table)
+{
+    std::shared_ptr<tib::key_table> t = get_key_table(table);
+
+    if (!s_main_bindings_handle)
+    {
+        s_main_bindings = std::make_shared<tib::key_table_list>();
+        s_main_bindings->emplace_back(s_emacs_standard_bindings);
+        s_main_bindings_handle = g_tib->add_bindings(s_main_bindings);
+    }
+
+    s_main_bindings->clear();
+    s_main_bindings->emplace_back(std::move(t));
+}
+
+//------------------------------------------------------------------------------
+extern "C" int get_key_table(void)
+{
+    return emacs_table;
 }
 
 //------------------------------------------------------------------------------
@@ -1565,8 +1571,12 @@ static const char* clink_translate_keyseq(const char* keyseq, int32& keys_len)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void clink_bind(const char* keyseq, const char* target, int table)
+static void clink_bind(const char* keyseq, const char* target, std::shared_ptr<tib::key_table> t, bool defer_star=false)
 {
+    assert(t);
+    if (!t)
+        return;
+
     assert(keyseq && *keyseq);
 
     int32 keys_len;
@@ -1574,12 +1584,25 @@ extern "C" void clink_bind(const char* keyseq, const char* target, int table)
     if (!keys)
         return;
 
-    clink_bind_translated(false, keys, keys_len, target, table);
+    if (defer_star && target && *target == '*')
+        t->add(keys, keys_len, tib::binding_target_func(target + 1));
+    else
+        clink_bind_translated(false, keys, keys_len, target, t);
 }
 
 //------------------------------------------------------------------------------
-extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
+extern "C" void clink_bind(const char* keyseq, const char* target, int table)
 {
+    clink_bind(keyseq, target, get_key_table(table));
+}
+
+//------------------------------------------------------------------------------
+static void clink_bind_macro(const char* keyseq, const char* target, std::shared_ptr<tib::key_table> t)
+{
+    assert(t);
+    if (!t)
+        return;
+
     assert(keyseq && *keyseq);
 
     int32 keys_len;
@@ -1597,17 +1620,33 @@ extern "C" void clink_bind_macro(const char* keyseq, const char* target, int tab
         target = macro;
     }
 
-    clink_bind_translated(true, keys, keys_len, target, table);
+    clink_bind_translated(true, keys, keys_len, target, t);
 
 out:
     free(macro);
 }
 
 //------------------------------------------------------------------------------
+extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
+{
+    clink_bind_macro(keyseq, target, get_key_table(table));
+}
+
+//------------------------------------------------------------------------------
+static void clink_bind_list(const two_strings* list, std::shared_ptr<tib::key_table> t, bool defer_star=false)
+{
+    assert(t);
+    if (!t)
+        return;
+
+    for (int32 i = 0; list[i][0]; ++i)
+        clink_bind(list[i][0], list[i][1], t, defer_star);
+}
+
+//------------------------------------------------------------------------------
 extern "C" void clink_bind_list(const two_strings* list, int table)
 {
-    for (int32 i = 0; list[i][0]; ++i)
-        clink_bind(list[i][0], list[i][1], table);
+    clink_bind_list(list, get_key_table(table));
 }
 
 //------------------------------------------------------------------------------
