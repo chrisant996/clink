@@ -32,6 +32,7 @@
 #include "hinter.h"
 #include "recognizer.h"
 #include "clink_ctrlevent.h"
+#include "rl/rl_commands.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -749,8 +750,7 @@ void display_manager::display()
 
     assert(g_terminal);
 
-// TODO-TIB: special states.
-    if (RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR))
+    if (g_tib->is_read_parameter())
     {
         m_modal_input = true;
         allow_suggestion_list(0);
@@ -805,7 +805,7 @@ void display_manager::display()
     // Is history expansion preview desired?
     const bool can_show_comment_row = (!m_is_transient &&
                                        !g_display_manager_no_comment_row &&
-                                       !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR) &&
+                                       !g_tib->is_read_parameter() &&
                                        (!is_suggestion_list_enabled() || !g_suggestionlist_hide_hints.get()));
     const bool want_histexpand_preview = (can_show_comment_row &&
                                           g_history_show_preview.get() &&
@@ -1533,7 +1533,7 @@ bool has_modmark()
 {
 #ifdef TIB_TODO
     const bool is_message = (rl_display_prompt == rl_get_message_buffer() &&
-                             !RL_ISSTATE(RL_STATE_NSEARCH|RL_STATE_READSTR));
+                             !g_tib->is_read_parameter());
     return (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
 #else
     return false;

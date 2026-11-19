@@ -2544,18 +2544,17 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
     if (!bindableEsc)
         return false;
 
-#ifdef TIB_TODO
-    if (RL_ISSTATE(RL_STATE_NUMERICARG))
+    if (g_tib->is_numeric_argument_mode())
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
             // Let ESC terminate numeric arg mode (digit mode) by redirecting it
             // to 'abort'.
-            if (find_abort_in_keymap(out))
+            if (find_abort_keyseq(out))
                 return true;
         }
     }
-    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_READSTR))
+    else if (RL_ISSTATE(RL_STATE_ISEARCH) || g_tib->is_read_parameter())
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
@@ -2566,11 +2565,12 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
             return true;
         }
     }
+#ifdef TIB_TODO
     else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
              rl_is_insert_next_callback_pending() ||
              is_char_reader_active())
 #else
-    if (quoted_insert_pending())
+    else if (quoted_insert_pending())
 #endif
     {
         if (len == int32(strlen(bindableEsc)) &&
