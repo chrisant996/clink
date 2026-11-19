@@ -8,7 +8,7 @@
 
 static void invoke_command(tib::editor_context& context, const char* name)
 {
-    const auto command = tib::editor_context::lookup_command(name);
+    const auto command = tib::editor_context::lookup_registered_command(name);
     REQUIRE(command != nullptr);
     REQUIRE(command(context, 0, name, nullptr) == 0);
 }

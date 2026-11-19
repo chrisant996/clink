@@ -497,47 +497,14 @@ int32 read_key_direct(bool wait)
 }
 
 //------------------------------------------------------------------------------
-static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap map)
+static bool find_abort_keyseq(str_base& out)
 {
-    for (int32 key = 0; key < KEYMAP_SIZE; key++)
-    {
-        switch (map[key].type)
-        {
-        case ISMACR:
-            break;
-        case ISFUNC:
-            if (map[key].function == func)
-            {
-                char ch = char(uint8(key));
-                out.concat_no_truncate(&ch, 1);
-                return true;
-            }
-            break;
-        case ISKMAP:
-            {
-                uint32 old_len = out.length();
-                char ch = char(uint8(key));
-                out.concat_no_truncate(&ch, 1);
-                if (find_func_in_keymap(out, func, FUNCTION_TO_KEYMAP(map, key)))
-                    return true;
-                out.truncate(old_len);
-            }
-            break;
-        }
-    }
-
-    return false;
-}
-
-//------------------------------------------------------------------------------
-static bool find_abort_in_keymap(str_base& out)
-{
-    rl_command_func_t *func = rl_named_function("abort");
-    if (!func)
+    auto resolved = g_tib->lookup_command("abort");
+    if (!resolved.is_func_name("abort"))
         return false;
 
-    Keymap map = rl_get_keymap();
-    return find_func_in_keymap(out, func, map);
+    out.concat_no_truncate(resolved.sequence.c_str(), uint32(resolved.sequence.length()));
+    return true;
 }
 
 
@@ -850,14 +817,14 @@ bool can_show_suggestion_hint()
             int32 type;
             str_moveable tmp;
 
-            auto resolved = lookup_keyseq(*g_tib, "\x1b[C", 3);
+            auto resolved = g_tib->lookup_keyseq("\x1b[C", 3);
             const bool has_right = (resolved.outcome == tib::dispatch_outcome::match &&
                                     g_autosuggest_inline.get() &&
                                     (resolved.is_func_name("win-cursor-forward") ||
                                      resolved.is_func_name("forward-char") ||
                                      resolved.is_func_name("forward-byte") ||
                                      resolved.is_func_name("end-of-line")));
-            auto func_f2 = lookup_keyseq(*g_tib, "\x1bOQ", 3);
+            auto func_f2 = g_tib->lookup_keyseq("\x1bOQ", 3);
             const char* toggle_key_name = nullptr;
             if (func_f2.is_func_name("clink-toggle-suggestion-list"))
             {
@@ -1488,11 +1455,11 @@ void load_user_inputrc(const char* state_dir, bool no_user)
 static void bind_keyseq_translated(const char* keys, int32 keys_len, const char* target, const std::shared_ptr<tib::key_table>& t)
 {
 #ifdef TIB_TODO // For now it's accepted that non-existent commands are in the lists.
-    assert(tib::editor_context::lookup_command(target));
+    assert(tib::editor_context::lookup_registered_command(target));
 #endif
     if (target &&
         !is_luafunc_command(target) &&
-        !tib::editor_context::lookup_command(target))
+        !tib::editor_context::lookup_registered_command(target))
         return;
 
     if (!target || !*target)

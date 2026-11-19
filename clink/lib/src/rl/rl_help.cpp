@@ -683,40 +683,6 @@ bool translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool frie
 }
 
 //------------------------------------------------------------------------------
-tib::resolved_binding lookup_keyseq(tib::editor_context& ctx, const char* keyseq, size_t len)
-{
-    len = tib::resolve_auto_length(len, keyseq);
-
-    tib::binding_resolver resolver;
-    resolver.add_target(ctx.weak_from_this());
-
-    while (len--)
-    {
-        auto resolved = resolver.step(*keyseq);
-        ++keyseq;
-
-        if (resolved.ambiguous() && !len)
-            resolved = resolver.resolve_pending();
-
-        switch (resolved.outcome)
-        {
-        case tib::dispatch_outcome::more:
-            break;
-        case tib::dispatch_outcome::self_insert:
-        case tib::dispatch_outcome::match:
-            if (len)
-                goto nope;
-            return resolved;
-        default:
-            goto nope;
-        }
-    }
-
-nope:
-    return {};
-}
-
-//------------------------------------------------------------------------------
 static Keyentry* collect_keymap(
     std::shared_ptr<const tib::key_table_list> bindings,
     Keyentry* collector,

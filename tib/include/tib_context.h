@@ -123,6 +123,8 @@ struct parameter_request
     void                set_commands(const editor_command* commands, size_t num);
     template<size_t I> void set_commands(const editor_command (&commands)[I]) { set_commands(commands, I); }
     editor_command_func_t find_command(const char* name) const;
+    // Optional; called once after the original editor state is restored.
+    std::function<void(bool canceled)> on_end;
 
 private:
     const editor_command* commands = nullptr;
@@ -280,6 +282,7 @@ public:
     void                set_auto_clear_numeric_argument(bool clear=true);
     void                clear_numeric_argument();
     bool                has_numeric_argument() const;
+    bool                is_numeric_argument_mode() const;
     int32_t             get_argument_sign() const;
     void                set_argument_sign(int32_t sign);
     void                invert_argument_sign();
@@ -333,6 +336,12 @@ public:
     int32_t             count_error_messages() const { return int32_t(m_error_messages.size()); }
     void                clear_error_messages() { m_error_messages.clear(); }
 
+    // Look up a key sequence or named command.  This checks whether the
+    // keyseq or name would be resolvable and dispatchable by this
+    // editor_context, but without taking into account quoted insert.
+    resolved_binding    lookup_keyseq(const char* keyseq, size_t len=c_auto_length);
+    resolved_binding    lookup_command(const char* name);
+
     struct stricmp_less
     {
         using is_transparent = void;
@@ -346,7 +355,7 @@ public:
     static void         clear_all_commands();
     static void         register_command(const char* name, editor_command_func_t func);
     static const std::map<const char*, editor_command_func_t, stricmp_less>& get_registered_commands();
-    static editor_command_func_t lookup_command(const char* name); // Global commands only.
+    static editor_command_func_t lookup_registered_command(const char* name); // Global commands only.
     editor_command_func_t find_available_command(const char* name) const; // Includes contextual commands (m_reading_parameter).
 
 private:
@@ -359,6 +368,7 @@ private:
     void                clear_overwrite_input();
     void                apply_message_text();
     void                apply_argument_bindings();
+    void                end_read_parameter(bool canceled);
 
 private:
     // Configuration.

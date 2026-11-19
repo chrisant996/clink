@@ -398,7 +398,7 @@ static int32 get_rl_binding(lua_State* state)
             return 0;
         }
 
-        resolved = lookup_keyseq(*g_tib, keyseq, keylen);
+        resolved = g_tib->lookup_keyseq(keyseq, keylen);
         free(keyseq);
     }
 
@@ -537,7 +537,7 @@ static int32 set_rl_binding(lua_State* state)
     }
     else
     {
-        if (tib::editor_context::lookup_command(binding))
+        if (tib::editor_context::lookup_registered_command(binding))
         {
             clink_bind(keys.c_str(), binding, emacs_table);
             result = 0;
@@ -618,7 +618,7 @@ static int32 invoke_command(lua_State* state)
         return 1;
     }
 
-    auto func = tib::editor_context::lookup_command(command);
+    auto func = tib::editor_context::lookup_registered_command(command);
     if (func == nullptr)
         return 0;
 

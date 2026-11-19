@@ -782,7 +782,7 @@ TEST_CASE("Self insert optimization respects bindings")
         REQUIRE(input->get_overwrite_mode());
     }
 
-    SECTION("Stops batching when the producing resolver has expired")
+    SECTION("Does not dispatch after the producing resolver expires")
     {
         test_input_stream stream("b");
         auto input = std::make_shared<self_insert_tester>();
@@ -797,10 +797,9 @@ TEST_CASE("Self insert optimization respects bindings")
         }
         REQUIRE(resolved.outcome == tib::dispatch_outcome::self_insert);
 
-        tib::binding_resolver probe(&resolved);
-        REQUIRE(probe.step('b').outcome == tib::dispatch_outcome::miss);
-        REQUIRE(resolved.dispatch());
-        REQUIRE(input->get_text() == "a");
+        REQUIRE(!resolved.dispatch());
+        REQUIRE(input->get_text().empty());
+        REQUIRE(input->get_dispatch_count() == 0);
         REQUIRE(tib::term_in() == 'b');
     }
 

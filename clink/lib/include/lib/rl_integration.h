@@ -60,9 +60,6 @@ void    clear_macro_descriptions();
 bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort);
 
 //------------------------------------------------------------------------------
-tib::resolved_binding lookup_keyseq(tib::editor_context& ctx, const char* keyseq, size_t len=tib::c_auto_length);
-
-//------------------------------------------------------------------------------
 bool    rl_has_queued_input();
 
 //------------------------------------------------------------------------------

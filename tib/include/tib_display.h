@@ -288,6 +288,7 @@ private:
     void                output_spaces(size_t n);
 
     bool                is_initialized() const;
+    void                update_override_left_text();
 
 #ifdef _WIN32
     void                init_horizpos_workaround();
@@ -328,6 +329,7 @@ private:
     std::vector<grapheme_info> m_tmp_graphemes;
 
     std::unique_ptr<input_presentation> m_saved_input_presentation;
+    text_and_width      m_override_prompt;
 };
 
 void show_display_manager_statistics(bool show);

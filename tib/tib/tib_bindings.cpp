@@ -430,7 +430,7 @@ int32_t dispatcher_target::push_macro_text(const char* macro, size_t len)
     return pushed;
 }
 
-resolved_binding::resolved_binding(std::shared_ptr<binding_resolver_state> state)
+resolved_binding::resolved_binding(std::weak_ptr<binding_resolver_state> state)
 : m_resolver_state(state)
 {
 }
@@ -450,6 +450,10 @@ bool resolved_binding::is_func_name(const char* name) const
 
 bool resolved_binding::dispatch()
 {
+    auto state = m_resolver_state.lock();
+    if (!state)
+        return false;
+
     // Resolution defers fallback switches until dispatch, since dispatch
     // might not happen at all (e.g. when probing with is_keyseq_recognized).
     // Finalize any deferred switches at the beginning of a dispatch.
@@ -511,8 +515,8 @@ bool resolved_binding::dispatch()
                 else
                 {
                     const int32_t result = ctx->dispatch(sequence, key, target, this);
-                    if (result == c_dispatch_request_quoted_insert && m_resolver_state)
-                        m_resolver_state->quoted_insert_target = ctx;
+                    if (result == c_dispatch_request_quoted_insert)
+                        state->quoted_insert_target = ctx;
                 }
                 return true;
             }
@@ -565,6 +569,13 @@ binding_resolver::binding_resolver(const binding_resolver* resolver)
         m_registrants = std::make_shared<binding_registrants>();
 }
 
+void binding_resolver::copy_input_state_from(const binding_resolver& source)
+{
+    *m_state = *source.m_state;
+    m_sequence = source.m_sequence;
+    m_fallbacks = source.m_fallbacks;
+}
+
 void binding_resolver::clear_targets()
 {
     assert(!m_borrowed_registrants);
@@ -602,12 +613,14 @@ resolved_binding binding_resolver::step(uint8_t c)
         resolved.dispatcher_target = weak;
         resolved.outcome = dispatch_outcome::quoted_insert;
         resolved.m_registrants = m_registrants;
+        resolved.m_resolver_state = m_state;
         return resolved;
     }
 
     m_sequence.append(reinterpret_cast<const char*>(&c), 1);
     auto resolved = resolve(false);
     resolved.m_registrants = m_registrants;
+    resolved.m_resolver_state = m_state;
     return resolved;
 }
 
@@ -615,6 +628,7 @@ resolved_binding binding_resolver::resolve_pending()
 {
     auto resolved = resolve(true);
     resolved.m_registrants = m_registrants;
+    resolved.m_resolver_state = m_state;
     return resolved;
 }
 
@@ -630,12 +644,9 @@ bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) co
     if (quoted_insert_pending())
         return false;
 
-    // Clone a resolver, minus m_state so that this operation cannot perturb
-    // the real m_state.  This implies that the resolved_binding from step()
-    // is not properly dispatchable, which is ok since it isn't exposed.
-    binding_resolver probe(*this);
-    probe.m_sequence = m_sequence;
-    probe.m_fallbacks = m_fallbacks;
+    // Probe a snapshot without changing this resolver's current input state.
+    binding_resolver probe(this);
+    probe.copy_input_state_from(*this);
     for (size_t i = 0; i < len; ++i)
     {
         auto resolved = probe.step(uint8_t(sequence[i]));

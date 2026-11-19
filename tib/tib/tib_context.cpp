@@ -1064,6 +1064,11 @@ bool editor_context::has_numeric_argument() const
     return !!(m_numflags & NUMFLAG_HAS_ARGUMENT);
 }
 
+bool editor_context::is_numeric_argument_mode() const
+{
+    return !!(m_numflags & NUMFLAG_ARGUMENT_MODE);
+}
+
 int32_t editor_context::get_argument_sign() const
 {
     return m_sign_numeric_argument;
@@ -1292,11 +1297,16 @@ bool editor_context::accept_read_parameter(cstring& parameter)
     }
 
     parameter = std::move(m_buffer.m_text);
-    cancel_read_parameter();
+    end_read_parameter(false/*canceled*/);
     return true;
 }
 
 void editor_context::cancel_read_parameter()
+{
+    end_read_parameter(true/*canceled*/);
+}
+
+void editor_context::end_read_parameter(bool canceled)
 {
     if (!m_reading_parameter)
         return;
@@ -1320,6 +1330,9 @@ void editor_context::cancel_read_parameter()
 
     apply_argument_bindings();
     force_redisplay();
+
+    if (r->request.on_end)
+        r->request.on_end(canceled);
 }
 
 bool editor_context::scroll_horizontally(int32_t columns, int32_t cursor_column, bool exclude_auto_scroll)
@@ -1839,6 +1852,63 @@ const char* editor_context::get_error_message(int32_t index) const
     if (size_t(index) < m_error_messages.size())
         return m_error_messages[index].c_str();
     return nullptr;
+}
+
+resolved_binding editor_context::lookup_keyseq(const char* keyseq, size_t len)
+{
+    len = resolve_auto_length(len, keyseq);
+
+    binding_resolver resolver;
+    resolver.add_target(weak_from_this());
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        auto resolved = resolver.step(uint8_t(keyseq[i]));
+        if (resolved.ambiguous() && i + 1 == len)
+            resolved = resolver.resolve_pending();
+
+        switch (resolved.outcome)
+        {
+        case dispatch_outcome::more:
+            break;
+        case dispatch_outcome::self_insert:
+        case dispatch_outcome::match:
+            // A shadow fallback or retry may have consumed only part of the
+            // input.  A lookup must match the entire requested sequence.
+            if (i + 1 == len && resolved.sequence.equals(keyseq, len))
+                return resolved;
+            return {};
+        default:
+            return {};
+        }
+    }
+
+    return {};
+}
+
+resolved_binding editor_context::lookup_command(const char* name)
+{
+    // Later groups and tables have priority.  Let the resolver determine
+    // whether a candidate is reachable through the active binding policies.
+    const auto& groups = get_bindings();
+    for (auto group = groups.rbegin(); group != groups.rend(); ++group)
+    {
+        const auto& tables = *group->tables;
+        for (auto table = tables.rbegin(); table != tables.rend(); ++table)
+        {
+            for (const auto& binding : **table)
+            {
+                if (binding.pattern || !binding.target.is_func_name(name))
+                    continue;
+
+                auto resolved = lookup_keyseq(binding.sequence.c_str(), binding.sequence.length());
+                if (resolved.is_func_name(name))
+                    return resolved;
+            }
+        }
+    }
+
+    return {};
 }
 
 int32_t editor_context::dispatch(const cstring& sequence, int32_t key, const binding_target* binding, const resolved_binding* resolved) noexcept

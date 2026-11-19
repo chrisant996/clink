@@ -378,19 +378,6 @@ bool is_term_sigclose()
 }
 #endif
 
-static bool s_term_ended = false;
-class auto_term_end
-{
-public:
-    ~auto_term_end()
-    {
-        if (!s_term_zombie)
-            term_sigint();
-        s_term_ended = true;
-    }
-};
-static auto_term_end s_auto_term_end;
-
 int32_t term_in()
 {
 #ifdef _WIN32
@@ -628,7 +615,22 @@ int32_t display_accumulator::s_nested = 0;
 bool display_accumulator::s_can_synchronize_output = false;
 bool display_accumulator::s_active = false;
 bool display_accumulator::s_synchronized_output = false;
-static tib::cstring s_acc;
+
+static bool s_term_ended = false;
+class auto_term_end
+{
+public:
+    ~auto_term_end()
+    {
+        s_term_ended = true;
+        if (!s_term_zombie)
+            term_sigint();
+    }
+};
+
+// Order of uninitialization is sensitive!
+static tib::cstring s_acc;              // Must be declared before s_auto_term_end.
+static auto_term_end s_auto_term_end;   // Must be declared after s_acc.
 
 display_accumulator::display_accumulator()
 {

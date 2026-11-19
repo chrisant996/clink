@@ -241,7 +241,7 @@ typedef std::vector<std::weak_ptr<dispatcher_target>> binding_registrants;
 struct resolved_binding
 {
                         resolved_binding() = default;
-                        resolved_binding(std::shared_ptr<binding_resolver_state> state);
+                        resolved_binding(std::weak_ptr<binding_resolver_state> state);
                         operator bool();
     bool                more() const { return outcome == dispatch_outcome::more; }
                         // True when the pending sequence contains a complete
@@ -264,7 +264,7 @@ private:
     probe_result        get_probe_result() const;
 
 private:
-    std::shared_ptr<binding_resolver_state> m_resolver_state;
+    std::weak_ptr<binding_resolver_state> m_resolver_state;
     std::weak_ptr<binding_registrants> m_registrants;
     cstring             m_replay;
     bool                m_ambiguous = false;
@@ -278,6 +278,10 @@ public:
                         binding_resolver();
                         binding_resolver(const binding_resolver* resolver);
                         binding_resolver(const resolved_binding* resolved);
+                        binding_resolver(const binding_resolver&) = delete;
+                        binding_resolver(binding_resolver&&) = default;
+    binding_resolver&   operator=(const binding_resolver&) = delete;
+    binding_resolver&   operator=(binding_resolver&&) = default;
 
     void                clear_targets();
     void                add_target(std::weak_ptr<dispatcher_target> target);
@@ -296,6 +300,7 @@ public:
     bool                is_keyseq_recognized(const char* sequence, size_t len) const;
 
 private:
+    void                copy_input_state_from(const binding_resolver& source);
     resolved_binding    resolve(bool force);
 
     std::shared_ptr<binding_registrants> m_registrants;

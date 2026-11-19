@@ -218,6 +218,12 @@ int32_t screen_line_up(editor_context& ctx, int32_t key, const char* name, const
 
 int32_t del_char_left(editor_context& ctx, int32_t key, const char* name, const resolved_binding* resolved) noexcept
 {
+    if (ctx.is_read_parameter() && ctx.get_caret() == 0 && ctx.get_length() == 0)
+    {
+        ctx.cancel_read_parameter();
+        return 0;
+    }
+
     return do_with_numeric_argument(ctx, key, name, resolved, del_char_right, [&]() {
         return ctx.backspace();
     }, UNDO_GROUP|KILL_RING_MULTI);
@@ -1170,7 +1176,7 @@ const std::map<const char*, editor_command_func_t, editor_context::stricmp_less>
     return s_commands;
 }
 
-editor_command_func_t editor_context::lookup_command(const char* name)
+editor_command_func_t editor_context::lookup_registered_command(const char* name)
 {
     if (!name)
         return nullptr;
@@ -1189,7 +1195,7 @@ editor_command_func_t editor_context::find_available_command(const char* name) c
     if (m_reading_parameter)
         func = m_reading_parameter->request.find_command(name);
     if (!func)
-        func = lookup_command(name);
+        func = lookup_registered_command(name);
     return func;
 }
 

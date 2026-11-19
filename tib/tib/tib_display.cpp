@@ -406,8 +406,11 @@ void display_manager::set_color_table(std::shared_ptr<const color_table> colors)
 
 void display_manager::set_left_text(const char* left, uint16_t width)
 {
-    if (m_presentation.m_left_text.set(left, width))
+    auto& presentation = m_saved_input_presentation ? *m_saved_input_presentation : m_presentation;
+    if (presentation.m_left_text.set(left, width))
     {
+        if (m_saved_input_presentation)
+            update_override_left_text();
         m_hwheel_exclusion = false;
         invalidate();
     }
@@ -415,7 +418,8 @@ void display_manager::set_left_text(const char* left, uint16_t width)
 
 void display_manager::set_right_text(const char* right, uint16_t width)
 {
-    if (m_presentation.m_right_text.set(right, width))
+    auto& presentation = m_saved_input_presentation ? *m_saved_input_presentation : m_presentation;
+    if (presentation.m_right_text.set(right, width) && !m_saved_input_presentation)
         invalidate();
 }
 
@@ -458,18 +462,10 @@ void display_manager::override_input_presentation(const char* override_prompt) n
         assert(!m_saved_input_presentation);
         if (!m_saved_input_presentation)
         {
-            cstring left_text;
-            uint16_t left_width = m_presentation.m_left_text.width();
-            left_text.set(m_presentation.m_left_text.c_str());
-            m_colors->append_color(left_text, color_element::base, color_element::message);
-            left_text.append(override_prompt);
-            left_width += cell_count(override_prompt, -1);
-
+            m_override_prompt.set(override_prompt, cell_count(override_prompt, -1));
             m_saved_input_presentation = std::make_unique<input_presentation>(std::move(m_presentation));
-
-            input_presentation presentation;
-            presentation.m_left_text.set(left_text.c_str(), left_width);
-            m_presentation = std::move(presentation);
+            m_presentation = input_presentation();
+            update_override_left_text();
         }
     }
     else
@@ -478,9 +474,20 @@ void display_manager::override_input_presentation(const char* override_prompt) n
             return;
         m_presentation = std::move(*m_saved_input_presentation);
         m_saved_input_presentation.reset();
+        m_override_prompt.clear();
     }
     m_hwheel_exclusion = false;
     force_redisplay();
+}
+
+void display_manager::update_override_left_text()
+{
+    const auto& left = m_saved_input_presentation->m_left_text;
+    cstring text;
+    text.set(left.c_str());
+    m_colors->append_color(text, color_element::base, color_element::message);
+    text.append(m_override_prompt.c_str());
+    m_presentation.m_left_text.set(std::move(text), left.width() + m_override_prompt.width());
 }
 
 coord display_manager::get_effective_max_size(bool omit_scroll_markers)
