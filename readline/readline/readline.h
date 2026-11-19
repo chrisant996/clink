@@ -243,8 +243,6 @@ extern int rl_stop_output (int, int);
 extern int rl_abort (int, int);
 extern int rl_tty_status (int, int);
 
-extern int rl_execute_named_command (int, int);
-
 /* Bindable commands for incremental and non-incremental history searching. */
 extern int rl_history_search_forward (int, int);
 extern int rl_history_search_backward (int, int);

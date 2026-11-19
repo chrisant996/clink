@@ -162,6 +162,8 @@ int32_t glob_expand_word(tib::editor_context& ctx, int32_t key, const char* name
 int32_t glob_list_expansions(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
+bool    is_reading_named_command();
+int32_t execute_named_command(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t edit_and_execute_command(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t magic_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 

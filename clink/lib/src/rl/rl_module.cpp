@@ -1811,6 +1811,50 @@ static void init_emacs_standard_binds(bool force=false)
 }
 
 //------------------------------------------------------------------------------
+static std::shared_ptr<tib::key_table> get_read_parameter_base_binds()
+{
+    static std::shared_ptr<tib::key_table> s_read_parameter_base_bindings;
+
+    static constexpr const char* const read_parameter_base_binds[][2] = {
+        { "\\C-c",          "*readstr-ding-cancel" },   // Ctrl-C
+        { "\\C-g",          "*readstr-ding-cancel" },   // Ctrl-G
+        // { "\\C-h",          "backward-kill-word" },     // VT sends 0x08 for Ctrl-Backspace.
+        { "\\C-h",          "backward-delete-char" },   // Clink sends 0x08 for Backspace.
+        { "\t",             "*readstr-complete" },      // TAB
+        { "\\C-q",          "quoted-insert" },          // Ctrl-Q
+        { "\\C-u",          "unix-line-discard" },      // Ctrl-U
+        { "\\C-v",          "quoted-insert" },          // Ctrl-V
+        { "\\C-w",          "unix-word-rubout" },       // Ctrl-W
+        { "\\C-z",          "undo" },                   // Ctrl-Z
+        { "\\C-_",          "undo" },                   // Ctrl-_
+        // { "\x7f",           "backward-delete-char" },   // RUBOUT / VT sends 0x7F for Backspace.
+        { "\x7f",           "backward-kill-word" },     // RUBOUT / Clink sends 0x7F for Ctrl-Backspace.
+
+        // TODO: support for bracketed paste.
+
+        {}
+    };
+
+    s_read_parameter_base_bindings = std::make_shared<tib::key_table>(true/*can_self_insert*/);
+    clink_bind_list(read_parameter_base_binds, s_read_parameter_base_bindings, true/*defer_star*/);
+
+    const char* bindableEsc = get_bindable_esc();
+    if (bindableEsc)
+        clink_bind(bindableEsc, "*readstr-ding-cancel", s_read_parameter_base_bindings, true/*defer_star*/);
+    if (g_default_bindings.get() == 0/*bash*/)
+    {
+        str<16> tmp;
+        if (bindableEsc)
+            tmp << bindableEsc << bindableEsc;
+        else
+            tmp = "\\e\\e";
+        clink_bind(tmp.c_str()/*Esc,Esc*/, "*readstr-complete", s_read_parameter_base_bindings, true/*defer_star*/);
+    }
+
+    return s_read_parameter_base_bindings;
+}
+
+//------------------------------------------------------------------------------
 #ifdef UNDO_LIST_HEAP_DIAGNOSTICS
 static bool undo_list_root_is_interior(UNDO_LIST* undo, UNDO_LIST* root)
 {
@@ -2408,6 +2452,7 @@ void initialise_readline(bool no_user)
     rl_set_keymap_from_edit_mode();
 
     set_key_table(emacs_table);
+    g_tib->set_read_parameter_base_bindings(get_read_parameter_base_binds());
 }
 
 

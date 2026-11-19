@@ -609,6 +609,11 @@ void line_editor_impl::maybe_collect_words()
 //------------------------------------------------------------------------------
 bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matches)
 {
+    // Parameter prompts generate their own matches; deferred command-line
+    // generators must not replace them or clear flag_generate.
+    if (g_tib->is_read_parameter())
+        return false;
+
 #ifdef DEBUG
     assert(!m_in_matches_ready);
     rollback<bool> rb(m_in_matches_ready, true);
@@ -751,7 +756,7 @@ void line_editor_impl::update_matches()
 //------------------------------------------------------------------------------
 matches* line_editor_impl::maybe_regenerate_matches(const char* needle, display_filter_flags flags)
 {
-    if (m_matches.is_regen_blocked())
+    if (is_reading_named_command() || m_matches.is_regen_blocked())
         return nullptr;
 
     // Check if a match display filter is active.
@@ -1207,7 +1212,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
     if (mode == collect_words_mode::stop_at_cursor)
     {
         word_break_info break_info;
-        if (m_generator)
+        if (m_generator && !is_reading_named_command())
             m_generator->get_word_break_info(command_line_states.get_linestate(m_buffer), break_info);
         const uint32 end_word_offset = command_line_states.break_end_word(break_info.truncate, break_info.keep, break_info.discard);
 
@@ -1824,6 +1829,14 @@ void line_editor_impl::try_suggest()
     assert(g_terminal);
     if (!g_autosuggest_enable.get() || !g_tib || !g_terminal)
         return;
+
+    // Suggestions use command-line generators, including an asynchronous
+    // path that bypasses match_pipeline::generate().
+    if (g_tib->is_read_parameter())
+    {
+        clear_suggestion();
+        return;
+    }
 
     // This prevents generating suggestions while navigating in the suggestion
     // list (UP, DOWN, etc).

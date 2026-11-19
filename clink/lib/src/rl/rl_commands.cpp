@@ -2634,6 +2634,91 @@ int32_t glob_list_expansions(tib::editor_context& ctx, int32_t key, const char* 
 
 
 //------------------------------------------------------------------------------
+static bool s_reading_named_command = false;
+bool is_reading_named_command() { return s_reading_named_command; }
+
+//------------------------------------------------------------------------------
+static int32_t readstr_complete(tib::editor_context& ctx, int32_t key, const char*, const tib::resolved_binding*) noexcept
+{
+// TODO: need a way to let the user override TAB during parameter requests.
+    auto resolved = g_tib->lookup_keyseq("\t", 1);
+    const char* command = "complete";
+
+    if (resolved.outcome == tib::dispatch_outcome::match &&
+        (resolved.is_func_name("complete") ||
+         resolved.is_func_name("menu-complete") ||
+         resolved.is_func_name("menu-complete-backward") ||
+         resolved.is_func_name("old-menu-complete") ||
+         resolved.is_func_name("old-menu-complete-backward") ||
+         resolved.is_func_name("clink-select-complete")))
+        command = resolved.binding_target.get_text();
+
+    const auto func = ctx.find_available_command(command);
+    if (func)
+    {
+        const auto ret = func(ctx, key, command, nullptr);
+        override_last_command(command, func);
+        return ret;
+    }
+
+    tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int32_t readstr_ding_cancel(tib::editor_context& ctx, int32_t key, const char*, const tib::resolved_binding*) noexcept
+{
+    ctx.cancel_read_parameter();
+    tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int32_t execute_named_command_accept(tib::editor_context& ctx, int32_t key, const char*, const tib::resolved_binding*) noexcept
+{
+    tib::cstring command;
+    if (ctx.accept_read_parameter(command))
+    {
+        if (const auto func = ctx.find_available_command(command.c_str()))
+            return func(ctx, key, command.c_str(), nullptr);
+    }
+    tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t execute_named_command(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    static const tib::editor_command c_commands[] =
+    {
+        { "readstr-complete", readstr_complete },
+        { "readstr-ding-cancel", readstr_ding_cancel },
+        { "execute-named-command-accept", execute_named_command_accept },
+    };
+
+    auto bindings = std::make_shared<tib::key_table>();
+    bindings->add("\r", tib::binding_target_func("execute-named-command-accept"));
+
+    tib::parameter_request request;
+    request.prompt.set("!", 1);
+    request.bindings.push_back(std::move(bindings));
+    request.set_commands(c_commands);
+    request.on_end = [](bool)
+    {
+        s_reading_named_command = false;
+        reset_generate_matches();
+    };
+    if (ctx.start_read_parameter(std::move(request)))
+    {
+        s_reading_named_command = true;
+        reset_generate_matches();
+    }
+    else
+        tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 int32_t edit_and_execute_command(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     str<> line;

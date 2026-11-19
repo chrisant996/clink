@@ -8,6 +8,7 @@
 #include "matches_impl.h"
 #include "display_matches.h"
 #include "slash_translation.h"
+#include "rl/rl_commands.h"
 
 #include <core/array.h>
 #include <core/path.h>
@@ -339,7 +340,17 @@ void match_pipeline::generate(
     m_matches.set_path_separator(sep);
 
     match_builder builder(m_matches);
-    if (generator)
+    const bool reading_command_name = is_reading_named_command();
+    m_matches.set_generator(reading_command_name ? nullptr : generator);
+    if (reading_command_name)
+    {
+        builder.set_matches_are_files(false);
+        builder.set_suppress_append();
+        builder.set_suppress_quoting();
+        for (const auto& command : tib::editor_context::get_registered_commands())
+            builder.add_match(command.first, match_type::word);
+    }
+    else if (generator)
         generator->generate(states, builder, old_filtering);
 
     m_matches.done_building();
