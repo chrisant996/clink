@@ -487,6 +487,7 @@ void display_manager::update_override_left_text()
     text.set(left.c_str());
     m_colors->append_color(text, color_element::base, color_element::message);
     text.append(m_override_prompt.c_str());
+    m_colors->append_color(text, color_element::base);
     m_presentation.m_left_text.set(std::move(text), left.width() + m_override_prompt.width());
 }
 
