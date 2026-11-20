@@ -2698,6 +2698,7 @@ int32_t execute_named_command(tib::editor_context& ctx, int32_t key, const char*
 
     auto bindings = std::make_shared<tib::key_table>();
     bindings->add("\r", tib::binding_target_func("execute-named-command-accept"));
+    bindings->add(" ", tib::binding_target_func("readstr-complete"));
 
     tib::parameter_request request;
     request.prompt.set("!", 1);
