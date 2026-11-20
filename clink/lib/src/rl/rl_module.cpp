@@ -621,7 +621,12 @@ int32 g_suggestion_offset = -1;
 //------------------------------------------------------------------------------
 void rl_module::provide_faces(const tib::input_buffer& buffer, tib::cstring& faces)
 {
-    if (s_classifications)
+    if (g_tib->is_read_parameter())
+    {
+        for (uint32 i = 0; i < faces.length(); ++i)
+            faces.set_at(i, tib::FACE_EMPTY);
+    }
+    else if (s_classifications)
     {
         for (uint32 i = 0; i < faces.length(); ++i)
         {
