@@ -259,11 +259,6 @@ struct resolved_binding
 
 private:
     friend class binding_resolver;
-    enum class probe_result { continue_input, recognized, unrecognized };
-
-    probe_result        get_probe_result() const;
-
-private:
     std::weak_ptr<binding_resolver_state> m_resolver_state;
     std::weak_ptr<binding_registrants> m_registrants;
     cstring             m_replay;
@@ -294,13 +289,12 @@ public:
     bool                quoted_insert_pending() const;
     bool                pending() const { return !m_sequence.empty(); }
 
-                        // This is for checking whether additional input will
-                        // trigger a miss, which is the primitive needed for
-                        // an incremental "is bound" operation.
+                        // True when one binding consumes the entire sequence,
+                        // or all input is self-insert.  Requires no pending
+                        // input or quoted insert; does not dispatch anything.
     bool                is_keyseq_recognized(const char* sequence, size_t len) const;
 
 private:
-    void                copy_input_state_from(const binding_resolver& source);
     resolved_binding    resolve(bool force);
 
     std::shared_ptr<binding_registrants> m_registrants;

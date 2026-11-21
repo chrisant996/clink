@@ -534,15 +534,6 @@ bool resolved_binding::dispatch()
     return false;
 }
 
-resolved_binding::probe_result resolved_binding::get_probe_result() const
-{
-    if (!m_fallbacks.empty())
-        return probe_result::recognized;
-    if (outcome == dispatch_outcome::miss || !m_replay.empty())
-        return probe_result::unrecognized;
-    return probe_result::continue_input;
-}
-
 binding_resolver::binding_resolver()
     : m_registrants(std::make_shared<binding_registrants>())
     , m_state(std::make_shared<binding_resolver_state>())
@@ -567,13 +558,6 @@ binding_resolver::binding_resolver(const binding_resolver* resolver)
         m_registrants = resolver->m_registrants;
     if (!m_registrants)
         m_registrants = std::make_shared<binding_registrants>();
-}
-
-void binding_resolver::copy_input_state_from(const binding_resolver& source)
-{
-    *m_state = *source.m_state;
-    m_sequence = source.m_sequence;
-    m_fallbacks = source.m_fallbacks;
 }
 
 void binding_resolver::clear_targets()
@@ -639,24 +623,35 @@ bool binding_resolver::quoted_insert_pending() const
 
 bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) const
 {
-    // The caller must respond to a quoted insert state on their own.
+    assert(len);
+    assert(!pending());
     assert(!quoted_insert_pending());
-    if (quoted_insert_pending())
+    if (pending() || quoted_insert_pending() || !len)
         return false;
 
-    // Probe a snapshot without changing this resolver's current input state.
+    // Share the active bindings, starting with no input state.
     binding_resolver probe(this);
-    probe.copy_input_state_from(*this);
-    for (size_t i = 0; i < len; ++i)
+    size_t consumed = 0;
+    size_t scanned = 0;
+    while (scanned < len)
     {
-        auto resolved = probe.step(uint8_t(sequence[i]));
-        const auto result = resolved.get_probe_result();
-        if (result == resolved_binding::probe_result::recognized)
-            return true;
-        if (result == resolved_binding::probe_result::unrecognized)
+        auto resolved = probe.step(uint8_t(sequence[scanned++]));
+        if (scanned == len && resolved.ambiguous())
+            resolved = probe.resolve_pending();
+        if (resolved.more())
+            continue;
+        if (resolved.outcome == dispatch_outcome::match)
+            return resolved.sequence.length() == len;
+        // Self-insert and replay must account for every examined byte.
+        // Recovery that discarded a prefix cannot recognize the sequence.
+        if (resolved.outcome != dispatch_outcome::self_insert ||
+            resolved.sequence.length() + resolved.m_replay.length() != scanned - consumed)
             return false;
+
+        consumed += resolved.sequence.length();
+        scanned = consumed; // Examine any surplus input again after self-insert.
     }
-    return true;
+    return len > 0 && consumed == len;
 }
 
 resolved_binding binding_resolver::resolve(bool force)

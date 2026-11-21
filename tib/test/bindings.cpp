@@ -127,6 +127,85 @@ public:
 
 using tib::binding_fallback_tester;
 
+TEST_CASE("Key sequence recognition")
+{
+    auto table = std::make_shared<tib::key_table>(false);
+    auto target = std::make_shared<binding_fallback_tester>();
+    target->add_bindings(table, tib::binding_policy::exclusive);
+    tib::binding_resolver resolver;
+    resolver.add_target(target);
+
+    SECTION("One binding must consume the entire sequence")
+    {
+        REQUIRE(add_binding(*table, "a", "short"));
+        REQUIRE(add_binding(*table, "abc", "long"));
+        REQUIRE(add_binding(*table, "x", "other"));
+        REQUIRE(resolver.is_keyseq_recognized("a", 1));
+        REQUIRE(resolver.is_keyseq_recognized("abc", 3));
+        REQUIRE(!resolver.is_keyseq_recognized("ab", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("abx", 3));
+        REQUIRE(!resolver.is_keyseq_recognized("ax", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("abcx", 4));
+        REQUIRE(!resolver.is_keyseq_recognized("", 0));
+
+        REQUIRE(table->add("m", tib::binding_target_macro("text")));
+        REQUIRE(resolver.is_keyseq_recognized("m", 1));
+        REQUIRE(!resolver.is_keyseq_recognized("mx", 2));
+    }
+
+    SECTION("Recovery cannot recognize an unbound sequence")
+    {
+        REQUIRE(add_binding(*table, "\x1b[20~", "F9"));
+        REQUIRE(add_binding(*table, "\x1b[A", "Up"));
+        REQUIRE(add_binding(*table, "Z", "other"));
+        REQUIRE(add_binding(*table, "xy", "prefix"));
+        for (bool self_insert : { false, true })
+        {
+            table->set_can_self_insert(self_insert);
+            REQUIRE(resolver.is_keyseq_recognized("\x1b[20~", 5));
+            REQUIRE(!resolver.is_keyseq_recognized("\x1b[20;6~", 7));
+            REQUIRE(!resolver.is_keyseq_recognized("\x1b[Z", 3));
+            REQUIRE(!resolver.is_keyseq_recognized("\x1b[x", 3));
+        }
+    }
+
+    SECTION("All self-insert input is recognized without mixing bindings")
+    {
+        table->set_can_self_insert(true);
+        REQUIRE(add_binding(*table, "abc", "command"));
+        REQUIRE(resolver.is_keyseq_recognized("xyz", 3));
+        REQUIRE(resolver.is_keyseq_recognized("ax", 2));
+        REQUIRE(resolver.is_keyseq_recognized("abx", 3));
+        REQUIRE(resolver.is_keyseq_recognized("ab", 2));
+        REQUIRE(resolver.is_keyseq_recognized("abc", 3));
+        REQUIRE(!resolver.is_keyseq_recognized("abcx", 4));
+        REQUIRE(!resolver.is_keyseq_recognized("xabc", 4));
+        REQUIRE(!resolver.is_keyseq_recognized("xabcx", 5));
+        REQUIRE(!resolver.is_keyseq_recognized("a\x1bxyz", 5));
+        REQUIRE(resolver.is_keyseq_recognized("\xf0\x9f\x98\x80x", 5));
+        REQUIRE(!resolver.is_keyseq_recognized("\xf0\x9f", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("\xf0\x9fx", 3));
+    }
+
+    SECTION("Aliases patterns and binary bindings retain their semantics")
+    {
+        REQUIRE(add_binding(*table, "ax", "lowercase"));
+        REQUIRE(table->add("aX", tib::binding_target_lowercase_version()));
+        REQUIRE(table->add("\x1b[%#A", tib::binding_target_func("pattern"), true));
+        REQUIRE(table->add("\0\xff", 2, tib::binding_target_func("binary")));
+        REQUIRE(resolver.is_keyseq_recognized("aX", 2));
+        REQUIRE(resolver.is_keyseq_recognized("\x1b[123A", 6));
+        REQUIRE(!resolver.is_keyseq_recognized("\x1b[123", 5));
+        REQUIRE(!resolver.is_keyseq_recognized("\x1b[123Z", 6));
+        REQUIRE(resolver.is_keyseq_recognized("\0\xff", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("\0\xffx", 3));
+    }
+
+    REQUIRE(!resolver.pending());
+    REQUIRE(target->get_dispatch_count() == 0);
+    REQUIRE(target->fallbacks.empty());
+}
+
 TEST_CASE("Partial match suppresses later binding fallback")
 {
     auto prefix_table = std::make_shared<tib::key_table>();
@@ -169,7 +248,7 @@ TEST_CASE("Binding fallback commits only on dispatch")
     tib::binding_resolver resolver;
     resolver.add_target(target);
     REQUIRE(resolver.is_keyseq_recognized("ab", 2));
-    REQUIRE(resolver.is_keyseq_recognized("z", 1)); // Dispatch must commit the fallback.
+    REQUIRE(!resolver.is_keyseq_recognized("z", 1)); // A group fallback is not a key binding.
     REQUIRE(target->get_fallback_count() == 0);
 
     REQUIRE(resolver.step('a').more());
@@ -181,13 +260,6 @@ TEST_CASE("Binding fallback commits only on dispatch")
     REQUIRE(target->get_fallback_count() == 1);
     argument_handle.remove();
     REQUIRE(!resolver.is_keyseq_recognized("z", 1));
-
-    // Recognition uses the pending prefix without consuming or resetting it.
-    REQUIRE(resolver.step('a').more());
-    REQUIRE(resolver.is_keyseq_recognized("b", 1));
-    REQUIRE(!resolver.is_keyseq_recognized("z", 1));
-    REQUIRE(resolver.pending());
-    REQUIRE(resolver.step('b').is_func_name("base-command"));
 }
 
 TEST_CASE("Binding fallback is reported on a final miss")
@@ -522,8 +594,6 @@ TEST_CASE("Nested binding fallback boundaries")
         REQUIRE(target->fallbacks.empty());
         REQUIRE(resolver.step('a').more());
         REQUIRE(resolver.step('b').more());
-        REQUIRE(resolver.is_keyseq_recognized("c", 1));
-        REQUIRE(resolver.pending());
         REQUIRE(target->fallbacks.empty());
         auto resolved = resolver.step('c');
         REQUIRE(resolved.is_func_name("base"));
