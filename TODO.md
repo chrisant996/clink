@@ -12,7 +12,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Suggestion list full functionality.
   - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
 - [ ] Non-incremental search commands.
-- [ ] Execute named command.
+- [x] Execute named command.
 - [ ] Miscellaneous commands.
 - [ ] Internal states, for specialized behaviors that used to rely on RL_STATE flags.
 - [ ] Some Readline termcap strings need native replacement:
