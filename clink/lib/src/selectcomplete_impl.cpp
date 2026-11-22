@@ -2056,6 +2056,9 @@ void selectcomplete_impl::insert_match(int32 final)
     update_len(needle_len);
     m_inserted = true;
 
+    if (final)
+        m_len = 0;
+
     const int32 botlin = _rl_vis_botlin;
     m_buffer->draw();
     if (botlin != _rl_vis_botlin)
