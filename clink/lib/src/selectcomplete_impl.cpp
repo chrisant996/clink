@@ -2141,6 +2141,9 @@ void selectcomplete_impl::insert_match(int32 final)
     update_len(needle_len);
     m_inserted = true;
 
+    if (final)
+        m_len = 0;
+
     const int32 input_height = get_input_height();
     m_buffer->draw();
     if (input_height != get_input_height())

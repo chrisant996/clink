@@ -1003,8 +1003,10 @@ rl_remove_history (int count, int key)
 
   if (suggestionlist_history_index >= 0)
     {
-      /* Nothing to do here.  rl_remove_history_hook already let
-         suggestionlist_impl update the suggestion list accordingly. */
+      /* The hook updated the suggestion list before removal.
+         Keep the history position within the shortened list. */
+      if (where_history () > history_length)
+        using_history ();
     }
   else if (no_more)
     {
