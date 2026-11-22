@@ -73,7 +73,7 @@ int32_t clink_popup_complete_numbers(tib::editor_context& ctx, int32_t key, cons
 int32_t clink_popup_show_help(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
-bool    point_in_select_complete(int32 in);
+bool    get_select_complete_range(uint32& offset, uint32& len);
 int32_t clink_select_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------

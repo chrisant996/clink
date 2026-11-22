@@ -21,6 +21,7 @@
 #include "pager.h"
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
+#include "selectcomplete_impl.h"
 
 extern "C" {
 #include <compat/hooks.h>
@@ -58,7 +59,9 @@ enum keycat
     keycat_scroll,
     keycat_misc,
     keycat_macros,
-    keycat_MAX
+    keycat_MAX,
+
+    keycat_selectcomplete,
 };
 
 //------------------------------------------------------------------------------
@@ -419,6 +422,29 @@ static const func_desc c_func_descriptions[] =
     { "history-expand-line", clink_expand_history },
     // { "insert-last-argument", rl_yank_last_arg },
     { "shell-expand-line", clink_expand_line },
+
+    // CONTEXTUAL COMMANDS -- These only work in certain modes.
+
+    // clink-select-complete commands.
+    { "select-complete-next", selectcomplete_impl::cmd_next, keycat_selectcomplete },
+    { "select-complete-prev", selectcomplete_impl::cmd_prev, keycat_selectcomplete },
+    { "select-complete-up", selectcomplete_impl::cmd_up, keycat_selectcomplete },
+    { "select-complete-down", selectcomplete_impl::cmd_down, keycat_selectcomplete },
+    { "select-complete-left", selectcomplete_impl::cmd_left, keycat_selectcomplete },
+    { "select-complete-right", selectcomplete_impl::cmd_right, keycat_selectcomplete },
+    { "select-complete-pgup", selectcomplete_impl::cmd_pgup, keycat_selectcomplete },
+    { "select-complete-pgdn", selectcomplete_impl::cmd_pgdn, keycat_selectcomplete },
+    { "select-complete-first", selectcomplete_impl::cmd_first, keycat_selectcomplete },
+    { "select-complete-last", selectcomplete_impl::cmd_last, keycat_selectcomplete },
+    { "select-complete-backspace", selectcomplete_impl::cmd_backspace, keycat_selectcomplete },
+    { "select-complete-delete", selectcomplete_impl::cmd_delete, keycat_selectcomplete },
+    { "select-complete-space", selectcomplete_impl::cmd_space, keycat_selectcomplete },
+    { "select-complete-enter", selectcomplete_impl::cmd_enter, keycat_selectcomplete },
+    { "select-complete-slash", selectcomplete_impl::cmd_slash, keycat_selectcomplete },
+    { "select-complete-backslash", selectcomplete_impl::cmd_backslash, keycat_selectcomplete },
+    { "select-complete-quote", selectcomplete_impl::cmd_quote, keycat_selectcomplete },
+    { "select-complete-f1", selectcomplete_impl::cmd_f1, keycat_selectcomplete },
+    { "select-complete-escape", selectcomplete_impl::cmd_escape, keycat_selectcomplete },
 };
 
 //------------------------------------------------------------------------------
@@ -463,7 +489,7 @@ void init_editor_commands()
         {
             auto cat = d.cat;
             auto desc = d.desc;
-            if (!desc && !maybe_exclude_function(d.name))
+            if (!desc && cat < keycat_MAX && !maybe_exclude_function(d.name))
             {
                 for (const auto find : *map)
                 {
@@ -734,9 +760,12 @@ static Keyentry* collect_keymap(
                 else
                 {
                     name = get_function_info(b.target.get_text(), &desc, &cat);
+                    // Omit contextual commands.
+                    if (cat >= keycat_MAX)
+                        continue;
                 }
                 assert(name);
-                if (!name)
+                if (!name || cat >= keycat_MAX)
                     continue;
             }
 
@@ -922,6 +951,10 @@ static Keyentry* collect_functions(
         const char* desc;
         keycat cat = keycat_misc;
         get_function_info(name, &desc, &cat);
+
+        // Omit contextual commands.
+        if (cat >= keycat_MAX)
+            continue;
 
         if (*offset >= *max)
         {
@@ -1226,6 +1259,7 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
         const int32 m_step;
     };
 
+// TODO: must not get the entire key_table_list; that includes overlays!
     std::shared_ptr<const tib::key_table_list> bindings = get_current_bindings();
     int32 offset = 1;
     int32 max_collect = 64;
@@ -1284,6 +1318,11 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     {
         const Keyentry& entry = collector[i];
         int32 cat = show_categories ? entry.cat : 0;
+
+        // Omit contextual commands.
+        if (cat >= keycat_MAX)
+            continue;
+
         uint32 k = (uint32)strlen(entry.key_name);
         uint32 f = 0;
         if (entry.func_name)

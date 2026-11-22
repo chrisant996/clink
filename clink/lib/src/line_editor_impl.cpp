@@ -239,7 +239,6 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
 , m_collector(desc.command_tokeniser, desc.word_tokeniser, desc.get_quote_pair())
 , m_pager(*this)
-, m_selectcomplete(*this)
 , m_textlist(*this)
 , m_suggestionlist(*this)
 {

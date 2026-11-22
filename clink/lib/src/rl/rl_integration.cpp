@@ -6,6 +6,7 @@
 #include "rl_commands.h"
 #include "editor_module.h"
 #include "line_editor_integration.h"
+#include "selectcomplete_impl.h"
 #include "display_readline.h"
 #include "matches.h"
 
@@ -31,7 +32,7 @@ extern int rl_reset_line_state(void);
 
 //------------------------------------------------------------------------------
 extern editor_module::result* g_result;
-std::shared_ptr<tib::input_box> g_tib;
+std::shared_ptr<clink_tib> g_tib;
 str_moveable g_prompt_prefix;
 str_moveable g_prompt;
 str_moveable g_rprompt;
@@ -365,6 +366,29 @@ void rl_sync_with_clink::verify()
     assert(rl_complete_line_buffer == g_tib->get_text().c_str());
     assert(rl_complete_end == g_tib->get_text().length());
     assert(rl_complete_point == g_tib->get_caret());
+}
+
+
+
+//------------------------------------------------------------------------------
+int32_t clink_tib::dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::resolved_binding* resolved) noexcept
+{
+    if ((!binding || !*binding) &&
+        is_select_complete_active() &&
+        tib::is_self_insertable(key) &&
+        do_select_complete_self_insert(sequence.c_str(), sequence.length()))
+    {
+        return 0;
+    }
+
+    return base::dispatch(sequence, key, binding, resolved);
+}
+
+//------------------------------------------------------------------------------
+void clink_tib::on_binding_fallback(const tib::binding_handle& handle_crossed) noexcept
+{
+    if (is_select_complete_active())
+        on_select_complete_fallback(handle_crossed);
 }
 
 

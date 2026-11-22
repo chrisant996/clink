@@ -635,6 +635,27 @@ void rl_module::provide_faces(const tib::input_buffer& buffer, tib::cstring& fac
                 faces.set_at(i, face);
         }
     }
+
+    if (g_tib->has_selection())
+    {
+        const tib::textpos_t sel_end = g_tib->get_sel_end();
+        for (tib::textpos_t i = g_tib->get_sel_begin(); i < sel_end; ++i)
+            faces.set_at(i, tib::FACE_SELECTION);
+    }
+
+    uint32 offset;
+    uint32 len;
+    if (get_select_complete_range(offset, len))
+    {
+        assert(offset + len <= faces.length());
+        if (offset >= faces.length())
+            len = 0;
+        else if (offset + len > faces.length())
+            len = faces.length() - offset;
+
+        while (len--)
+            faces.set_at(offset++, tib::FACE_SELECTION);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -2222,7 +2243,7 @@ void initialise_readline(bool no_user)
     {
         // Wait until after registering the editor commands, so it doesn't
         // trigger auto-registering tib's list of commands.
-        g_tib = std::make_shared<tib::input_box>();
+        g_tib = std::make_shared<clink_tib>();
     }
     if (!initialized)
     {

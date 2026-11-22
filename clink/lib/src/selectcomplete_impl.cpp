@@ -101,6 +101,7 @@ setting_int g_clink_scroll_offset(
     3);
 
 extern setting_bool g_match_expand_abbrev;
+extern editor_module::result* g_result;
 
 
 
@@ -135,6 +136,157 @@ enum {
 
     bind_id_selectcomplete_catchall,
 };
+
+//------------------------------------------------------------------------------
+static selectcomplete_impl* s_selectcomplete = nullptr;
+
+//------------------------------------------------------------------------------
+int32_t selectcomplete_impl::handle_command(uint8 id, const tib::resolved_binding* resolved) noexcept
+{
+    if (s_selectcomplete)
+    {
+        assert(g_result);
+        editor_module::input input;
+        input.id = id;
+        input.keys = resolved->sequence.c_str();
+        input.len = resolved->sequence.length();
+        input.more = false; // TODO: ?!
+        s_selectcomplete->on_input(input);
+    }
+    else
+    {
+        tib::ding();
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t selectcomplete_impl::cmd_next(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_next, resolved);
+}
+int32_t selectcomplete_impl::cmd_prev(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_prev, resolved);
+}
+int32_t selectcomplete_impl::cmd_up(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_up, resolved);
+}
+int32_t selectcomplete_impl::cmd_down(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_down, resolved);
+}
+int32_t selectcomplete_impl::cmd_left(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_left, resolved);
+}
+int32_t selectcomplete_impl::cmd_right(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_right, resolved);
+}
+int32_t selectcomplete_impl::cmd_pgup(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_pgup, resolved);
+}
+int32_t selectcomplete_impl::cmd_pgdn(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_pgdn, resolved);
+}
+int32_t selectcomplete_impl::cmd_first(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_first, resolved);
+}
+int32_t selectcomplete_impl::cmd_last(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_last, resolved);
+}
+int32_t selectcomplete_impl::cmd_backspace(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_backspace, resolved);
+}
+int32_t selectcomplete_impl::cmd_delete(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_delete, resolved);
+}
+int32_t selectcomplete_impl::cmd_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_space, resolved);
+}
+int32_t selectcomplete_impl::cmd_enter(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    // TODO: provide_faces misfires: Ctrl-Space, Enter.
+    // TODO: Readline-Clink has the same bug, but doesn't have an assert.  The
+    // bind_id_selectcomplete_enter handler inserts a match and redraws while
+    // get_select_range() considers there to still be a highlighted selection.
+    // If there's text in the input line after the inserted match, then some
+    // of it gets briefly highlighted as though there's a match starting at
+    // the current cursor position (i.e. at the end of the newly inserted
+    // match).
+    return handle_command(bind_id_selectcomplete_enter, resolved);
+}
+int32_t selectcomplete_impl::cmd_slash(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_slash, resolved);
+}
+int32_t selectcomplete_impl::cmd_backslash(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_backslash, resolved);
+}
+int32_t selectcomplete_impl::cmd_quote(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_quote, resolved);
+}
+int32_t selectcomplete_impl::cmd_f1(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_f1, resolved);
+}
+int32_t selectcomplete_impl::cmd_escape(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return handle_command(bind_id_selectcomplete_escape, resolved);
+}
+
+//------------------------------------------------------------------------------
+static std::shared_ptr<tib::key_table> make_key_table()
+{
+    std::shared_ptr<tib::key_table> t = std::make_shared<tib::key_table>(true);
+
+    const char* esc = get_bindable_esc();
+
+    t->add("\t", tib::binding_target_func("select-complete-next"));
+    t->add("\x1b[Z", tib::binding_target_func("select-complete-prev"));
+    t->add("\x1b[A", tib::binding_target_func("select-complete-up"));
+    t->add("\x1b[B", tib::binding_target_func("select-complete-down"));
+    t->add("\x1b[D", tib::binding_target_func("select-complete-left"));
+    t->add("\x1b[C", tib::binding_target_func("select-complete-right"));
+    t->add("\x1b[5~", tib::binding_target_func("select-complete-pgup"));
+    t->add("\x1b[6~", tib::binding_target_func("select-complete-pgdn"));
+    t->add("\x1b[1;5H", tib::binding_target_func("select-complete-first"));
+    t->add("\x1b[1;5F", tib::binding_target_func("select-complete-last"));
+    // ("\x1b[$*;*L", tib::binding_target_func("select-complete-leftclick"), true/*has_params*/);
+    // ("\x1b[$*;*D", tib::binding_target_func("select-complete-doubleclick"), true/*has_params*/);
+    // ("\x1b[$*A", tib::binding_target_func("select-complete-wheelup"), true/*has_params*/);
+    // ("\x1b[$*B", tib::binding_target_func("select-complete-wheeldown"), true/*has_params*/);
+    // ("\x1b[$*<", tib::binding_target_func("select-complete-wheelleft"), true/*has_params*/);
+    // ("\x1b[$*>", tib::binding_target_func("select-complete-wheelright"), true/*has_params*/);
+    // ("\x1b[$*;*M", tib::binding_target_func("select-complete-drag"), true/*has_params*/);
+    t->add("\x08", tib::binding_target_func("select-complete-backspace"));
+    t->add("\x1b[3~", tib::binding_target_func("select-complete-delete"));
+    t->add(" ", tib::binding_target_func("select-complete-space"));
+    t->add("\r", tib::binding_target_func("select-complete-enter"));
+    t->add("/", tib::binding_target_func("select-complete-slash"));
+    t->add("\\", tib::binding_target_func("select-complete-backslash"));
+    t->add("\"", tib::binding_target_func("select-complete-quote"));
+    t->add("\x1bOP", tib::binding_target_func("select-complete-f1"));
+
+    t->add("\x07", tib::binding_target_func("select-complete-escape"));
+    if (esc)
+        t->add(esc, tib::binding_target_func("select-complete-escape"));
+
+    // binder.bind(m_bind_group, "", selectcomplete_catchall);
+
+    return t;
+}
 
 
 
@@ -192,11 +344,7 @@ static bool move_selection_higher(int32& index, int32& major, int32& minor, cons
 
 
 //------------------------------------------------------------------------------
-static selectcomplete_impl* s_selectcomplete = nullptr;
-
-//------------------------------------------------------------------------------
-selectcomplete_impl::selectcomplete_impl(input_dispatcher& dispatcher)
-    : m_dispatcher(dispatcher)
+selectcomplete_impl::selectcomplete_impl()
 {
 }
 
@@ -212,12 +360,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     allow_suggestion_list(0);
 
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
-    {
-#ifdef DEBUG
-        rollback<int32> rb(m_prev_bind_group, 999999); // Dummy to make assertion happy in insert_needle().
-#endif
-        insert_needle();
-    }
+        insert_needle(reactivate);
 
     pause_suggestions(true);
 
@@ -330,8 +473,8 @@ cant_activate:
     g_display_manager_no_comment_row = true;
 
     // Activate key bindings.
-    assert(m_prev_bind_group < 0);
-    m_prev_bind_group = result.set_bind_group(m_bind_group);
+    if (!m_bindings)
+        m_bindings = g_tib->add_bindings(make_key_table(), tib::binding_policy::fallback);
     m_was_backspace = false;
 
     // Insert first match.
@@ -342,7 +485,7 @@ cant_activate:
 
     // If there's only one match, then we're done.
     if (only_one)
-        cancel(result);
+        cancel();
     else
         update_display();
 
@@ -350,48 +493,8 @@ cant_activate:
 }
 
 //------------------------------------------------------------------------------
-bool selectcomplete_impl::point_within(int32 in) const
-{
-    return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
-}
-
-//------------------------------------------------------------------------------
 void selectcomplete_impl::bind_input(binder& binder)
 {
-    const char* esc = get_bindable_esc();
-
-    m_bind_group = binder.create_group("selectcomplete");
-    binder.bind(m_bind_group, "\\t", bind_id_selectcomplete_next);
-    binder.bind(m_bind_group, "\\e[Z", bind_id_selectcomplete_prev);
-    binder.bind(m_bind_group, "\\e[A", bind_id_selectcomplete_up);
-    binder.bind(m_bind_group, "\\e[B", bind_id_selectcomplete_down);
-    binder.bind(m_bind_group, "\\e[D", bind_id_selectcomplete_left);
-    binder.bind(m_bind_group, "\\e[C", bind_id_selectcomplete_right);
-    binder.bind(m_bind_group, "\\e[5~", bind_id_selectcomplete_pgup);
-    binder.bind(m_bind_group, "\\e[6~", bind_id_selectcomplete_pgdn);
-    binder.bind(m_bind_group, "\\e[1;5H", bind_id_selectcomplete_first);
-    binder.bind(m_bind_group, "\\e[1;5F", bind_id_selectcomplete_last);
-    binder.bind(m_bind_group, "\\e[$*;*L", bind_id_selectcomplete_leftclick, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*;*D", bind_id_selectcomplete_doubleclick, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*A", bind_id_selectcomplete_wheelup, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*B", bind_id_selectcomplete_wheeldown, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*<", bind_id_selectcomplete_wheelleft, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*>", bind_id_selectcomplete_wheelright, true/*has_params*/);
-    binder.bind(m_bind_group, "\\e[$*;*M", bind_id_selectcomplete_drag, true/*has_params*/);
-    binder.bind(m_bind_group, "^h", bind_id_selectcomplete_backspace);
-    binder.bind(m_bind_group, "\\e[3~", bind_id_selectcomplete_delete);
-    binder.bind(m_bind_group, " ", bind_id_selectcomplete_space);
-    binder.bind(m_bind_group, "\\r", bind_id_selectcomplete_enter);
-    binder.bind(m_bind_group, "/", bind_id_selectcomplete_slash);
-    binder.bind(m_bind_group, "\\", bind_id_selectcomplete_backslash);
-    binder.bind(m_bind_group, "\"", bind_id_selectcomplete_quote);
-    binder.bind(m_bind_group, "\\eOP", bind_id_selectcomplete_f1);
-
-    binder.bind(m_bind_group, "^g", bind_id_selectcomplete_escape);
-    if (esc)
-        binder.bind(m_bind_group, esc, bind_id_selectcomplete_escape);
-
-    binder.bind(m_bind_group, "", bind_id_selectcomplete_catchall);
 }
 
 //------------------------------------------------------------------------------
@@ -455,11 +558,13 @@ void selectcomplete_impl::on_need_input(int32& bind_group)
 //------------------------------------------------------------------------------
 void selectcomplete_impl::on_input(const input& input, result& result, const context& context)
 {
-    assert(is_active());
+    assert(false);
+}
 
-    // Automatically add input while recording a macro.  Some places that use
-    // result.pass() will clear instead, to let something else add the input.
-    auto_closure add_to_macro([this, input](){ add_to_rl_macro(input); });
+//------------------------------------------------------------------------------
+void selectcomplete_impl::on_input(const input& input)
+{
+    assert(is_active());
 
 #ifdef FISH_ARROW_KEYS
     const uint8 prev_input_id = m_prev_input_id;
@@ -482,7 +587,7 @@ revert:
             m_buffer->undo();
             m_inserted = false;
         }
-        cancel(result);
+        cancel();
         return;
     }
 
@@ -491,7 +596,7 @@ revert:
     if (!count)
     {
         assert(count);
-        cancel(result);
+        cancel();
         // REVIEW: should this record an ESC sequence?
         return;
     }
@@ -499,7 +604,7 @@ revert:
     // Cancel if no room.
     if (m_visible_rows <= 0)
     {
-        cancel(result);
+        cancel();
         // REVIEW: should this record an ESC sequence?
         return;
     }
@@ -793,9 +898,11 @@ do_mouse_position:
                 }
                 else
                 {
-                    cancel(result, true/*can_reactivate*/);
-                    result.pass();
-                    add_to_macro.clear();
+                    cancel(true/*can_reactivate*/);
+#ifdef TIB_TODO
+// TODO: need a way to attempt dispatching through lower binding tables.
+                    g_result->pass();
+#endif
                     return;
                 }
             }
@@ -863,27 +970,27 @@ do_mouse_position:
         {
             int32 point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
             m_needle.truncate(point);
-            goto update_needle;
+            do_update_needle();
         }
         break;
 
     case bind_id_selectcomplete_delete:
 delete_completion:
         insert_needle();
-        cancel(result);
+        cancel();
         m_inserted = false; // A subsequent activation should not resume.
         break;
 
     case bind_id_selectcomplete_space:
         insert_match(2/*final*/);
-        cancel(result);
+        cancel();
         m_inserted = false; // A subsequent activation should not resume.
         break;
 
     case bind_id_selectcomplete_enter:
 enter:
         insert_match(true/*final*/);
-        cancel(result);
+        cancel();
         m_inserted = false; // A subsequent activation should not resume.
         break;
 
@@ -891,10 +998,9 @@ enter:
         if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
             m_buffer->set_cursor(m_point + m_len + m_quoted); // Past quotes, if any.
-            cancel(result);
+            cancel();
             m_inserted = false; // A subsequent activation should not resume.
-            result.pass();
-            add_to_macro.clear();
+            m_buffer->insert(input.keys);
             break;
         }
 append_not_dup:
@@ -903,14 +1009,15 @@ append_not_dup:
             m_needle.concat(input.keys, input.len);
             goto delete_completion;
         }
-        goto append_to_needle;
+        append_to_needle(input.keys, input.len);
+        break;
     case bind_id_selectcomplete_backslash:
         if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
             m_buffer->set_cursor(m_point + m_len); // Inside quotes, if any.
             if (m_point + m_len > 0 && m_buffer->get_buffer()[m_point + m_len - 1] != '\\')
                 m_buffer->insert("\\");
-            cancel(result);
+            cancel();
             m_inserted = false; // A subsequent activation should not resume.
             break;
         }
@@ -918,10 +1025,9 @@ append_not_dup:
 
     case bind_id_selectcomplete_quote:
         insert_needle();
-        cancel(result);
+        cancel();
         m_inserted = false; // A subsequent activation should not resume.
-        result.pass();
-        add_to_macro.clear();
+        m_buffer->insert(input.keys);
         break;
 
     case bind_id_selectcomplete_f1:
@@ -950,39 +1056,6 @@ append_not_dup:
 
     case bind_id_selectcomplete_escape:
         goto revert;
-
-    case bind_id_selectcomplete_catchall:
-        {
-            // Figure out whether the input is text to be inserted.
-            {
-                auto len = input.len;
-                for (const char* seq = input.keys; len-- > 0; ++seq)
-                {
-                    if (*seq < ' ' || *seq == 0x7f)
-                    {
-                        cancel(result, true/*can_reactivate*/);
-                        result.pass();
-                        add_to_macro.clear();
-                        return;
-                    }
-                }
-            }
-
-            // Insert the text.
-append_to_needle:
-            m_needle.concat(input.keys, input.len);
-update_needle:
-            reset_top();
-            insert_needle();
-            update_matches();
-            update_layout();
-            update_display();
-            if (m_matches.get_match_count())
-                insert_match();
-            else
-                cancel(result);
-        }
-        break;
     }
 }
 
@@ -1031,12 +1104,12 @@ void selectcomplete_impl::on_signal(int32 sig)
         };
 
         dummy_result result;
-        cancel(result);
+        cancel();
     }
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactivate)
+void selectcomplete_impl::cancel(bool can_reactivate)
 {
     assert(is_active());
 
@@ -1045,8 +1118,7 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
 
     m_buffer->set_need_draw();
 
-    result.set_bind_group(m_prev_bind_group);
-    m_prev_bind_group = -1;
+    m_bindings.remove();
 
     if (!can_reactivate)
         override_last_command(nullptr, nullptr, true/*force_when_null*/);
@@ -1880,9 +1952,23 @@ void selectcomplete_impl::update_display()
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::insert_needle()
+void selectcomplete_impl::do_update_needle()
 {
-    assert(is_active());
+    reset_top();
+    insert_needle();
+    update_matches();
+    update_layout();
+    update_display();
+    if (m_matches.get_match_count())
+        insert_match();
+    else
+        cancel();
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::insert_needle(bool reactivate)
+{
+    assert(reactivate || is_active());
 
     if (m_inserted)
     {
@@ -2119,7 +2205,28 @@ void selectcomplete_impl::reset_top()
 //------------------------------------------------------------------------------
 bool selectcomplete_impl::is_active() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_terminal && m_anchor >= 0 && m_point >= m_anchor;
+    return m_bindings && m_buffer && m_terminal && m_anchor >= 0 && m_point >= m_anchor;
+}
+
+//------------------------------------------------------------------------------
+bool selectcomplete_impl::get_select_range(uint32& offset, uint32& len) const
+{
+    if (!is_active() || m_point < 0 || m_len <= 0)
+        return false;
+    offset = m_point;
+    len = m_len;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::append_to_needle(const char* keyseq, size_t len)
+{
+    assert(is_active());
+    if (!is_active())
+        return;
+
+    m_needle.concat(keyseq, len);
+    do_update_needle();
 }
 
 //------------------------------------------------------------------------------
@@ -2138,6 +2245,21 @@ bool selectcomplete_impl::accepts_mouse_input(mouse_input_type type) const
     }
 }
 
+//------------------------------------------------------------------------------
+void selectcomplete_impl::on_binding_fallback(const tib::binding_handle& handle_crossed)
+{
+    assert(is_active());
+    if (!is_active())
+        return;
+
+    if (handle_crossed == m_bindings)
+    {
+        // The key sequence being dispatched is from a different key table, so
+        // cancel the select-complete mode.
+        cancel(true/*can_reactivate*/);
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -2150,11 +2272,31 @@ bool activate_select_complete(editor_module::result& result, bool reactivate)
 }
 
 //------------------------------------------------------------------------------
-bool point_in_select_complete(int32 in)
+bool get_select_complete_range(uint32& offset, uint32& len)
 {
     if (!s_selectcomplete)
         return false;
-    return s_selectcomplete->point_within(in);
+
+    return s_selectcomplete->get_select_range(offset, len);
+}
+
+//------------------------------------------------------------------------------
+bool do_select_complete_self_insert(const char* keyseq, size_t len)
+{
+    if (!s_selectcomplete)
+        return false;
+
+    s_selectcomplete->append_to_needle(keyseq, len);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void on_select_complete_fallback(const tib::binding_handle& handle_crossed)
+{
+    if (!s_selectcomplete)
+        return;
+
+    s_selectcomplete->on_binding_fallback(handle_crossed);
 }
 
 //------------------------------------------------------------------------------

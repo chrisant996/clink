@@ -30,7 +30,16 @@ struct rl_sync_with_clink
 };
 
 //------------------------------------------------------------------------------
-extern std::shared_ptr<tib::input_box> g_tib;
+class clink_tib : public tib::input_box
+{
+    typedef tib::input_box base;
+public:
+    int32_t             dispatch(const tib::cstring& sequence, int32_t key, const tib::binding_target* binding, const tib::resolved_binding* resolved) noexcept override;
+    void                on_binding_fallback(const tib::binding_handle& handle_crossed) noexcept override;
+};
+
+//------------------------------------------------------------------------------
+extern std::shared_ptr<clink_tib> g_tib;
 extern str_moveable g_prompt_prefix;
 extern str_moveable g_prompt;
 extern str_moveable g_rprompt;
