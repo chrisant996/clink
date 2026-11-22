@@ -20,6 +20,16 @@ class tib_terminal_bridge;
 // functions help bridge that gap.
 
 //------------------------------------------------------------------------------
+// This is a temporary shim until Readline is excised from Clink.
+struct rl_sync_with_clink
+{
+    rl_sync_with_clink() { sync(); }
+    ~rl_sync_with_clink() { verify(); }
+    static void sync();
+    static void verify();
+};
+
+//------------------------------------------------------------------------------
 extern std::shared_ptr<tib::input_box> g_tib;
 extern str_moveable g_prompt_prefix;
 extern str_moveable g_prompt;

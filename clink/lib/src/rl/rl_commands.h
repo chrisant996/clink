@@ -106,13 +106,6 @@ int32_t win_f9(tib::editor_context& ctx, int32_t key, const char* name, const ti
 
 //------------------------------------------------------------------------------
 // Readline compatibility.
-struct rl_sync_with_clink
-{
-    rl_sync_with_clink() { sync(); }
-    ~rl_sync_with_clink() { verify(); }
-    static void sync();
-    static void verify();
-};
 int32_t backward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t forward_kill_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t backward_kill_line(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;

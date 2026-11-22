@@ -5,12 +5,8 @@
 #include "pch.h"
 #include "rl_buffer.h"
 #include "line_state.h"
-#ifdef TIB_TODO
-#include "rl_commands.h"
-#else
 #include "rl_integration.h"
 #include "display_readline.h"
-#endif
 
 #include <core/base.h>
 #include <core/os.h>

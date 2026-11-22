@@ -322,6 +322,54 @@ bool rl_has_queued_input()
 
 
 //------------------------------------------------------------------------------
+extern "C" const char* rl_complete_line_buffer = 0;
+extern "C" int rl_complete_end = 0;
+extern "C" int rl_complete_point = 0;
+void rl_sync_with_clink::sync()
+{
+    rl_complete_line_buffer = g_tib->get_text().c_str();
+    rl_complete_end = g_tib->get_text().length();
+    rl_complete_point = g_tib->get_caret();
+
+    auto func = g_tib->get_last_command_func();
+    if (func == complete)
+        rl_last_func = rl_complete;
+    else if (func == possible_completions)
+        rl_last_func = rl_possible_completions;
+    else if (func == insert_completions)
+        rl_last_func = rl_insert_completions;
+    else if (func == menu_complete)
+        rl_last_func = rl_menu_complete;
+    else if (func == backward_menu_complete)
+        rl_last_func = rl_backward_menu_complete;
+    else if (func == old_menu_complete)
+        rl_last_func = rl_old_menu_complete;
+    else if (func == backward_old_menu_complete)
+        rl_last_func = rl_backward_old_menu_complete;
+    else if (func == glob_complete_word)
+        rl_last_func = (rl_command_func_t*)glob_complete_word;
+    else if (func == glob_expand_word)
+        rl_last_func = (rl_command_func_t*)glob_expand_word;
+    else if (func == glob_list_expansions)
+        rl_last_func = (rl_command_func_t*)glob_list_expansions;
+// TODO-TIB: other commands...
+    else
+        rl_last_func = _rl_null_function;
+
+    rl_explicit_arg = g_tib->has_numeric_argument();
+    rl_numeric_arg = g_tib->get_numeric_argument();
+    rl_arg_sign = g_tib->get_argument_sign();
+}
+void rl_sync_with_clink::verify()
+{
+    assert(rl_complete_line_buffer == g_tib->get_text().c_str());
+    assert(rl_complete_end == g_tib->get_text().length());
+    assert(rl_complete_point == g_tib->get_caret());
+}
+
+
+
+//------------------------------------------------------------------------------
 resync_rl_cursor_pos::resync_rl_cursor_pos()
     : m_resync(!!g_terminal)
     , m_vpos(get_relative_cursor_row())

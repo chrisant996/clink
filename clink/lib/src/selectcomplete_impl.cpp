@@ -1087,6 +1087,7 @@ void selectcomplete_impl::init_matches()
     if (m_buffer->get_cursor())
     {
         int32 tmp = m_buffer->get_cursor();
+        rl_sync_with_clink::sync();
         quote_char = _rl_find_completion_word(&found_quote, &m_delimiter);
         m_buffer->set_cursor(tmp);
     }
@@ -2069,8 +2070,6 @@ void selectcomplete_impl::insert_match(int32 final)
         m_comment_row_displayed = false;
         update_layout();
     }
-
-    rl_sync_with_clink::sync();
 }
 
 //------------------------------------------------------------------------------

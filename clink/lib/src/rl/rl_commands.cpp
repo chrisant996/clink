@@ -290,50 +290,7 @@ static void enqueue_lines(std::list<str_moveable>& lines)
 
 
 //------------------------------------------------------------------------------
-extern "C" const char* rl_complete_line_buffer = 0;
-extern "C" int rl_complete_end = 0;
-extern "C" int rl_complete_point = 0;
-void rl_sync_with_clink::sync()
-{
-    rl_complete_line_buffer = g_tib->get_text().c_str();
-    rl_complete_end = g_tib->get_text().length();
-    rl_complete_point = g_tib->get_caret();
-
-    auto func = g_tib->get_last_command_func();
-    if (func == complete)
-        rl_last_func = rl_complete;
-    else if (func == possible_completions)
-        rl_last_func = rl_possible_completions;
-    else if (func == insert_completions)
-        rl_last_func = rl_insert_completions;
-    else if (func == menu_complete)
-        rl_last_func = rl_menu_complete;
-    else if (func == backward_menu_complete)
-        rl_last_func = rl_backward_menu_complete;
-    else if (func == old_menu_complete)
-        rl_last_func = rl_old_menu_complete;
-    else if (func == backward_old_menu_complete)
-        rl_last_func = rl_backward_old_menu_complete;
-    else if (func == glob_complete_word)
-        rl_last_func = (rl_command_func_t*)glob_complete_word;
-    else if (func == glob_expand_word)
-        rl_last_func = (rl_command_func_t*)glob_expand_word;
-    else if (func == glob_list_expansions)
-        rl_last_func = (rl_command_func_t*)glob_list_expansions;
-// TODO-TIB: other commands...
-    else
-        rl_last_func = _rl_null_function;
-
-    rl_explicit_arg = g_tib->has_numeric_argument();
-    rl_numeric_arg = g_tib->get_numeric_argument();
-    rl_arg_sign = g_tib->get_argument_sign();
-}
-void rl_sync_with_clink::verify()
-{
-    assert(rl_complete_line_buffer == g_tib->get_text().c_str());
-    assert(rl_complete_end == g_tib->get_text().length());
-    assert(rl_complete_point == g_tib->get_caret());
-}
+extern "C" extern int rl_complete_point;
 static int32 do_rl_command(rl_command_func_t* func, int32 invoking_key)
 {
     rl_sync_with_clink sync;
@@ -378,7 +335,7 @@ extern "C" void rl_complete_insert_text(const char *text)
 {
     g_tib->insert_text(text);
 
-    rl_sync_with_clink();
+    rl_sync_with_clink::sync();
 }
 extern "C" void rl_complete_delete_text(int start, int end)
 {
@@ -386,7 +343,7 @@ extern "C" void rl_complete_delete_text(int start, int end)
 
     g_tib->remove_text(start, end);
 
-    rl_sync_with_clink();
+    rl_sync_with_clink::sync();
 }
 extern "C" void rl_complete_replace_text(const char *text, int start, int end)
 {
@@ -396,7 +353,7 @@ extern "C" void rl_complete_replace_text(const char *text, int start, int end)
     g_tib->insert_text(text);
     g_tib->end_undo_group();
 
-    rl_sync_with_clink();
+    rl_sync_with_clink::sync();
 }
 
 
@@ -1368,7 +1325,6 @@ int32_t clink_popup_show_help(tib::editor_context& ctx, int32_t key, const char*
 int32_t clink_select_complete(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
-    rl_sync_with_clink sync;
     if (!g_result || !activate_select_complete(*g_result, ctx.get_last_command_func() == clink_select_complete))
         tib::ding();
     return 0;
