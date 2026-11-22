@@ -1598,6 +1598,11 @@ static void clink_bind(const char* keyseq, const char* target, std::shared_ptr<t
 //------------------------------------------------------------------------------
 extern "C" void clink_bind(const char* keyseq, const char* target, int table)
 {
+#ifdef TIB_TODO
+#else
+    if (table != emacs_table)
+        return;
+#endif
     clink_bind(keyseq, target, get_key_table(table));
 }
 
@@ -1634,6 +1639,11 @@ out:
 //------------------------------------------------------------------------------
 extern "C" void clink_bind_macro(const char* keyseq, const char* target, int table)
 {
+#ifdef TIB_TODO
+#else
+    if (table != emacs_table)
+        return;
+#endif
     clink_bind_macro(keyseq, target, get_key_table(table));
 }
 
@@ -1651,6 +1661,11 @@ static void clink_bind_list(const two_strings* list, std::shared_ptr<tib::key_ta
 //------------------------------------------------------------------------------
 extern "C" void clink_bind_list(const two_strings* list, int table)
 {
+#ifdef TIB_TODO
+#else
+    if (table != emacs_table)
+        return;
+#endif
     clink_bind_list(list, get_key_table(table));
 }
 
