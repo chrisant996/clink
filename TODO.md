@@ -11,6 +11,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] And the non-incremental mode needs an alternative input line.
 - [ ] Suggestion list full functionality.
   - [ ] Suggestions can trigger the `assert(false)` inside `command_line_states::get_linestate`, and I think it's because the suggestion text isn't appended as early as when using Readline, and the borrowed pointer goes stale early.
+- [ ] Allow binding contextual commands.
+  - [ ] `select-complete-*` commands in a `clink-select-complete` keymap;
+  - [ ] `suggestion-list-*` commands in a `clink-suggestion-list` keymap;
 - [ ] Non-incremental search commands.
 - [x] Execute named command.
 - [ ] Miscellaneous commands.
