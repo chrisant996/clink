@@ -266,8 +266,8 @@ void suggestionlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*B", bind_id_suggestionlist_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_suggestionlist_drag, true/*has_params*/);
 
-    int32 type;
-    if (rl_function_of_keyseq("\x07", rl_get_keymap(), &type) == rl_abort)
+    auto resolved = g_tib->lookup_keyseq("\x07", 1);
+    if (resolved.is_func_name("abort"))
         binder.bind(m_bind_group, "^g", bind_id_suggestionlist_escape);
     if (esc)
         binder.bind(m_bind_group, esc, bind_id_suggestionlist_escape);

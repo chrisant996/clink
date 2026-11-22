@@ -1977,10 +1977,13 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
         return;
 
     // m_buffer is circular, so copy the key sequence to a separate sequential
-    // buffer.  And also because Readline has a bug in rl_function_of_keyseq_len
-    // that looks for nul termination even though it's supposed to use a length
-    // instead; copying to a separate buffer makes that easier to mitigate.
-    char chord[sizeof_array(m_buffer) + 1];
+    // buffer.
+#ifdef DEBUG
+    constexpr size_t c_guard_chord_buffer = 2;
+#else
+    constexpr size_t c_guard_chord_buffer = 0;
+#endif
+    char chord[sizeof_array(m_buffer) + c_guard_chord_buffer];
     static const uint32 mask = sizeof_array(m_buffer) - 1;
     for (int32 i = 0; i < len; ++i)
     {
@@ -1989,7 +1992,10 @@ void win_terminal_in::filter_unbound_input(uint32 buffer_count)
             return;
         chord[i] = uint8(m_buffer[index]);
     }
-    chord[len] = '\0'; // Work around rl_function_of_keyseq_len bug.
+#ifdef DEBUG
+    chord[len] = 'Z';       // Guard to flush out NUL termination assumptions.
+    chord[len + 1] = '\0';
+#endif
 
     str<32> new_chord;
     if (m_keys->translate(chord, len, new_chord))

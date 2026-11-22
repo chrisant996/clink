@@ -448,7 +448,13 @@ add_character:
 	 affects the search. */
 #if defined (HANDLE_MULTIBYTE)
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0 && cxt->mb[1])
+# ifdef TIB_TODO
 	f = rl_function_of_keyseq (cxt->mb, cxt->keymap, (int *)NULL);
+# else
+	// TODO-TIB: temporary hack to compile until Clink has a native
+	// isearch that uses tib.
+	f = 0;
+# endif
       else
 #endif
 	{

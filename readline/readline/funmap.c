@@ -82,8 +82,6 @@ static const FUNMAP default_funmap[] = {
   { "digit-argument", rl_digit_argument },
   { "do-lowercase-version", rl_do_lowercase_version },
   { "downcase-word", rl_downcase_word },
-  { "dump-functions", rl_dump_functions },
-  { "dump-macros", rl_dump_macros },
   { "dump-variables", rl_dump_variables },
   { "emacs-editing-mode", rl_emacs_editing_mode },
   { "end-kbd-macro", rl_end_kbd_macro },

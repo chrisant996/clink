@@ -166,8 +166,6 @@ extern int rl_overwrite_mode (int, int);
 
 /* Bindable commands for managing key bindings. */
 extern int rl_re_read_init_file (int, int);
-extern int rl_dump_functions (int, int);
-extern int rl_dump_macros (int, int);
 extern int rl_dump_variables (int, int);
 
 /* Bindable commands for word completion. */
@@ -341,19 +339,6 @@ extern int rl_variable_bind (const char *, const char *);
 extern int rl_translate_keyseq (const char *, char *, int *);
 extern char *rl_untranslate_keyseq (int);
 
-extern rl_command_func_t *rl_named_function (const char *);
-extern rl_command_func_t *rl_function_of_keyseq (const char *, Keymap, int *);
-extern rl_command_func_t *rl_function_of_keyseq_len (const char *, size_t, Keymap, int *);
-extern int rl_trim_arg_from_keyseq (const char *, size_t, Keymap);
-
-extern void rl_list_funmap_names (void);
-extern char **rl_invoking_keyseqs_in_map (rl_command_func_t *, Keymap);
-extern char **rl_invoking_keyseqs (rl_command_func_t *);
-
-extern void rl_print_keybinding (const char *, Keymap, int);
-
-extern void rl_function_dumper (int);
-extern void rl_macro_dumper (int);
 extern void rl_variable_dumper (int);
 
 extern int rl_read_init_file (const char *);
