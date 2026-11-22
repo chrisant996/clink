@@ -4,6 +4,7 @@
 
 #### v1.9.37
 
+- Fixed an almost unobservable issue where `clink-select-complete` could briefly draw any text after the inserted match using the selection color by mistake, and then redraw it using correct colors, resulting in a quick flicker.
 - Fixed [#918](https://github.com/chrisant996/clink/issues/918); crash during history search after delete a history entry.
 
 #### v1.9.36
