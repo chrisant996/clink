@@ -127,7 +127,7 @@ int32   win_f9(int32 count, int32 invoking_key);
 bool    win_fn_callback_pending();
 
 //------------------------------------------------------------------------------
-bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?
+bool    is_globbing_wild();     // Is globbing completion running?
 bool    is_literal_wild();      // Avoid appending star in alternative_matches()?
 int32   glob_complete_word(int32 count, int32 invoking_key);
 int32   glob_expand_word(int32 count, int32 invoking_key);
