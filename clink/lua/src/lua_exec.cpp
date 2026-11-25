@@ -249,6 +249,9 @@ int32 lua_execute(lua_State* state)
         }
     }
 
+    // BUGBUG: the process is already running before job assignment, so any
+    // children already spawned are excluded from the job; it should create
+    // the process suspended, assign it to the job, then resume the process.
     AssignProcessToJobObject(exec_state.job, exec_state.pi.hProcess);
     thread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)thread_proc,
         &exec_state, 0, nullptr
@@ -335,9 +338,19 @@ int32 lua_execute(lua_State* state)
     }
 
     proc_ret = -1;
+    // BUGBUG: reaching the end of stdout does not guarantee that the process
+    // has ended, so GetExitCodeProcess can report STILL_ACTIVE while the
+    // thread_proc is still waiting on the process handle.
     GetExitCodeProcess(exec_state.pi.hProcess, &proc_ret);
     lua_pushinteger(state, proc_ret);
 
+    // BUGBUG: the main thread and the background thread share the same
+    // exec_state.pi.hThread copy of the handle, and both of them close the
+    // handle.  At best, one of them will fail.  At worst, the handle is
+    // already closed before GetExitCodeProcess is reached, or one of the
+    // threads closes the handle and the OS reuses the handle value for
+    // something else before the second close which then closes an unrelated
+    // handle out from underneath something else.
     CloseHandle(exec_state.pi.hThread);
 
     WaitForSingleObject(thread, INFINITE);
