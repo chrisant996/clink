@@ -1849,25 +1849,6 @@ sv_compwidth (const char *value)
 static int
 sv_histsize (const char *value)
 {
-/* begin_clink_change */
-#if 0
-/* end_clink_change */
-  int nval;
-
-  nval = 500;
-  if (value && *value)
-    {
-      nval = atoi (value);
-      if (nval < 0)
-	{
-	  unstifle_history ();
-	  return 0;
-	}
-    }
-  stifle_history (nval);
-/* begin_clink_change */
-#endif
-/* end_clink_change */
   return 0;
 }
 
@@ -2331,9 +2312,9 @@ _rl_get_string_variable_value (const char *name)
   else if (_rl_stricmp (name, "history-size") == 0)
     {
 #if defined (HAVE_VSNPRINTF)
-      snprintf (numbuf, sizeof (numbuf), "%d", history_is_stifled() ? history_max_entries : -1);
+      snprintf (numbuf, sizeof (numbuf), "%d", -1);
 #else
-      sprintf (numbuf, "%d", history_is_stifled() ? history_max_entries : -1);
+      sprintf (numbuf, "%d", -1);
 #endif
       return (numbuf);
     }

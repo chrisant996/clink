@@ -66,9 +66,6 @@ typedef struct _hist_state {
   int flags;
 } HISTORY_STATE;
 
-/* Flag values for the `flags' member of HISTORY_STATE. */
-#define HS_STIFLED	0x01
-
 /* Initialization and state management. */
 
 /* Begin a session in which the history functions might be used.  This
@@ -116,17 +113,6 @@ extern HIST_ENTRY *replace_history_entry (int, const char *, histdata_t);
 
 /* Clear the history list and start over. */
 extern void clear_history (void);
-
-/* Stifle the history list, remembering only MAX number of entries. */
-extern void stifle_history (int);
-
-/* Stop stifling the history.  This returns the previous amount the
-   history was stifled by.  The value is positive if the history was
-   stifled, negative if it wasn't. */
-extern int unstifle_history (void);
-
-/* Return 1 if the history is stifled, 0 if it is not. */
-extern int history_is_stifled (void);
 
 /* Information about the history list. */
 
@@ -254,7 +240,6 @@ extern char **history_tokenize (const char *);
 /* Exported history variables. */
 extern int history_base;
 extern int history_length;
-extern int history_max_entries;
 extern int history_offset;
 
 extern int history_lines_read_from_file;

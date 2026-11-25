@@ -808,8 +808,6 @@ rl_fetch_history (int count, int c)
 static rl_hook_func_t *_rl_saved_internal_startup_hook = 0;
 static int saved_history_logical_offset = -1;
 
-#define HISTORY_FULL() (history_is_stifled () && history_length >= history_max_entries)
-
 #ifdef TIB_TODO
 static int
 set_saved_history (void)

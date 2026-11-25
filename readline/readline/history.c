@@ -74,17 +74,8 @@ static char *hist_inittime (void);
 /* An array of HIST_ENTRY.  This is where we store the history. */
 static HIST_ENTRY **the_history = (HIST_ENTRY **)NULL;
 
-/* Non-zero means that we have enforced a limit on the amount of
-   history that we save. */
-static int history_stifled;
-
 /* The current number of slots allocated to the input_history. */
 static int history_size;
-
-/* If HISTORY_STIFLED is non-zero, then this is the maximum number of
-   entries to remember. */
-int history_max_entries;
-int max_input_history;	/* backwards compatibility */
 
 /* The current location of the interactive history pointer.  Just makes
    life easier for outside callers. */
@@ -114,8 +105,6 @@ history_get_history_state (void)
   state->length = history_length;
   state->size = history_size;
   state->flags = 0;
-  if (history_stifled)
-    state->flags |= HS_STIFLED;
 
   return (state);
 }
@@ -128,8 +117,6 @@ history_set_history_state (HISTORY_STATE *state)
   history_offset = state->offset;
   history_length = state->length;
   history_size = state->size;
-  if (state->flags & HS_STIFLED)
-    history_stifled = 1;
 /* begin_clink_change */
   history_prev_use_curr = 0;
 /* end_clink_change */
@@ -305,47 +292,21 @@ add_history (const char *string)
   HIST_ENTRY *temp;
   int new_length;
 
-  if (history_stifled && (history_length == history_max_entries))
+  if (history_size == 0)
     {
-      /* If the history is stifled, and history_length is zero,
-	 and it equals history_max_entries, we don't save items. */
-      if (history_length == 0)
-	return;
-
-      /* If there is something in the slot, then remove it. */
-      if (the_history[0])
-	(void) free_history_entry (the_history[0]);
-
-      /* Copy the rest of the entries, moving down one slot.  Copy includes
-	 trailing NULL.  */
-      memmove (the_history, the_history + 1, history_length * sizeof (HIST_ENTRY *));
-
-      new_length = history_length;
-      history_base++;
+      history_size = DEFAULT_HISTORY_INITIAL_SIZE;
+      the_history = (HIST_ENTRY **)xmalloc (history_size * sizeof (HIST_ENTRY *));
+      new_length = 1;
     }
   else
     {
-      if (history_size == 0)
+      if (history_length == (history_size - 1))
 	{
-	  if (history_stifled && history_max_entries > 0)
-	    history_size = (history_max_entries > MAX_HISTORY_INITIAL_SIZE)
-				? MAX_HISTORY_INITIAL_SIZE
-				: history_max_entries + 2;
-	  else
-	    history_size = DEFAULT_HISTORY_INITIAL_SIZE;
-	  the_history = (HIST_ENTRY **)xmalloc (history_size * sizeof (HIST_ENTRY *));
-	  new_length = 1;
+	  history_size += DEFAULT_HISTORY_GROW_SIZE;
+	  the_history = (HIST_ENTRY **)
+	    xrealloc (the_history, history_size * sizeof (HIST_ENTRY *));
 	}
-      else
-	{
-	  if (history_length == (history_size - 1))
-	    {
-	      history_size += DEFAULT_HISTORY_GROW_SIZE;
-	      the_history = (HIST_ENTRY **)
-		xrealloc (the_history, history_size * sizeof (HIST_ENTRY *));
-	    }
-	  new_length = history_length + 1;
-	}
+      new_length = history_length + 1;
     }
 
   temp = alloc_history_entry ((char *)string, hist_inittime ());
@@ -591,53 +552,6 @@ remove_history_range (int first, int last)
   history_length -= nentries;
 
   return (return_value);
-}
-
-/* Stifle the history list, remembering only MAX number of lines. */
-void
-stifle_history (int max)
-{
-  register int i, j;
-
-  if (max < 0)
-    max = 0;
-
-  if (history_length > max)
-    {
-      /* This loses because we cannot free the data. */
-      for (i = 0, j = history_length - max; i < j; i++)
-	free_history_entry (the_history[i]);
-
-      history_base = i;
-      for (j = 0, i = history_length - max; j < max; i++, j++)
-	the_history[j] = the_history[i];
-      the_history[j] = (HIST_ENTRY *)NULL;
-      history_length = j;
-    }
-
-  history_stifled = 1;
-  max_input_history = history_max_entries = max;
-}
-
-/* Stop stifling the history.  This returns the previous maximum
-   number of history entries.  The value is positive if the history
-   was stifled, negative if it wasn't. */
-int
-unstifle_history (void)
-{
-  if (history_stifled)
-    {
-      history_stifled = 0;
-      return (history_max_entries);
-    }
-  else
-    return (-history_max_entries);
-}
-
-int
-history_is_stifled (void)
-{
-  return (history_stifled);
 }
 
 void
