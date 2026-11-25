@@ -269,7 +269,7 @@ function internal._in_generate()
 end
 
 --------------------------------------------------------------------------------
-function clink._internal._generate(line_state, line_states, match_builder, old_filtering)
+function clink._internal._generate(line_state, line_states, match_builder, old_filtering, globbing)
     local do_log = os.getenv("CLINK_LOG_GENERATORS")
 
     local impl = function ()
@@ -283,19 +283,21 @@ function clink._internal._generate(line_state, line_states, match_builder, old_f
         cancel_match_generate_coroutine()
 
         -- Run match generators.
-        for _, generator in ipairs(_generators) do
-            line_state:_reset_shift()
-            local ret = generator:generate(line_state, match_builder)
-            if ret == true then
-                -- Remember the generator function that stopped.
-                clink._internal._generator_stopped = generator.generate
-                if do_log then
-                    local info = debug.getinfo(clink._internal._generator_stopped, 'S')
-                    local why = clink._internal._why_argmatcher_stopped
-                    internal._log_generators("_generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
-                                          why and "why" or nil, why)
+        if not globbing then
+            for _, generator in ipairs(_generators) do
+                line_state:_reset_shift()
+                local ret = generator:generate(line_state, match_builder)
+                if ret == true then
+                    -- Remember the generator function that stopped.
+                    clink._internal._generator_stopped = generator.generate
+                    if do_log then
+                        local info = debug.getinfo(clink._internal._generator_stopped, 'S')
+                        local why = clink._internal._why_argmatcher_stopped
+                        internal._log_generators("_generate", "STOPPED", "who", info.short_src..":"..info.linedefined,
+                                            why and "why" or nil, why)
+                    end
+                    return true
                 end
-                return true
             end
         end
 
@@ -362,6 +364,10 @@ function clink._internal._get_word_break_info(line_state)
             end
         end
 
+        -- FUTURE: technically, from one perspective, while is_globbing_wild()
+        -- is true only file_match_generator should be called here.  But word
+        -- collection is performed before it's known that is_globbing_wild()
+        -- will be true.
         for _, generator in ipairs(_generators) do
             if generator.getwordbreakinfo then
                 doeach(generator)

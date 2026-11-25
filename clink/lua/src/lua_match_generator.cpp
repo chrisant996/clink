@@ -32,6 +32,9 @@ char* __printable_part(char* pathname);
 #include <unordered_set>
 
 //------------------------------------------------------------------------------
+bool    is_globbing_wild();     // Is globbing completion running?
+
+//------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_state& lua)
 : m_lua(&lua)
 {
@@ -58,6 +61,10 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
     lua_State* state = get_state();
     save_stack_top ss(state);
 
+    const bool globbing = is_globbing_wild();
+    if (globbing)
+        builder.set_volatile();
+
     if (lines.back().get_command_word_index() + 1 == lines.back().get_word_count())
         builder.set_command_word();
 
@@ -75,9 +82,11 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
 
     lua_pushboolean(state, old_filtering);
 
+    lua_pushboolean(state, globbing);
+
     os::cwd_restorer cwd;
 
-    if (lua_state::pcall(state, 4, 1) != 0)
+    if (lua_state::pcall(state, 5, 1) != 0)
         return false;
 
     int32 use_matches = lua_toboolean(state, -1);

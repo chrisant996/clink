@@ -684,7 +684,7 @@ void line_editor_impl::notify_matches_changed(const char* needle)
 //------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
-    if (m_matches.is_volatile())
+    if (m_matches.is_volatile() || is_globbing_wild())
         reset_generate_matches();
 
     maybe_collect_words();

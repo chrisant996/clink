@@ -148,7 +148,7 @@ int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* nam
 int32_t print_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
-bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?
+bool    is_globbing_wild();     // Is globbing completion running?
 bool    is_literal_wild();      // Avoid appending star in alternative_matches()?
 int32_t glob_complete_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t glob_expand_word(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
