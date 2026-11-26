@@ -9,6 +9,8 @@
 
 #include <vector>
 
+class line_state;
+
 //------------------------------------------------------------------------------
 enum class suggestion_action : uint8
 {

@@ -7,6 +7,7 @@
 #include "line_state.h"
 #include "rl_integration.h"
 #include "display_readline.h"
+#include "history_list.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -20,6 +21,7 @@ void rl_buffer::reset()
 {
     assert(m_attached);
     clear_override();
+
 #ifdef TIB_TODO
     rl_maybe_replace_line();
 
@@ -45,13 +47,17 @@ void rl_buffer::reset()
 
         using_history();
     }
+#else
+    history_list* list = history_list::get();
+    // TODO: swap current undo history, if not empty, into current list entry.
+    // TODO: swap saved undo history, if any, into current undo history.
+    list->clear_saved_entry();
+    list->reset_cursor();
+#endif
 
     remove(0, ~0u);
-    assert(!rl_point);
-    assert(!rl_end);
-#else
-    g_tib->initialize();
-#endif
+    assert(!get_cursor());
+    assert(!get_length());
 }
 
 //------------------------------------------------------------------------------

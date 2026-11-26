@@ -4,6 +4,7 @@
 #pragma once
 
 #include <core/auto_free_str.h>
+#include <core/str.h>
 #include <core/str_iter.h>
 #include <core/singleton.h>
 
@@ -38,16 +39,17 @@ public:
     bool                        remove_history(int32 index);
 
     // Cursoring.
+    void                        reset_cursor();
     int32                       length() const { return int32(m_entries.size()); }
     int32                       get_index() const { return m_index; }
     bool                        set_index(int32 index);
     const hist_entry*           get_entry(int32 index) const;
     const char*                 get_line(int32 index) const;
-    void                        reset_cursor() { m_index = length(); }
-
-    // Navigation.
 
     // Searching.
+    void                        init_search(const char* line, int32 caret);
+    bool                        has_search_string() const;
+    int32                       search(int32 start, int32 direction, int32& new_caret) const;
 
     // Saved entry.
     void                        clear_saved_entry();
@@ -63,8 +65,13 @@ public:
 private:
     int32                       m_index = 0;
     history_entries             m_entries;
+
     std::unique_ptr<hist_entry> m_saved;
+
+    str_moveable                m_needle;
+    mutable const char*         m_last_found = nullptr; // Borrowed from m_entries.
 };
 
 //------------------------------------------------------------------------------
 void clear_history();
+void replace_from_history(int32 history_index);

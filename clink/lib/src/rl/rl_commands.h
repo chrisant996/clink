@@ -98,6 +98,8 @@ int32_t clink_popup_history(tib::editor_context& ctx, int32_t key, const char* n
 //------------------------------------------------------------------------------
 int32_t get_next_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t get_previous_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
+int32_t history_search_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
+int32_t history_search_forward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
 int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
