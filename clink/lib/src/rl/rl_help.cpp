@@ -213,7 +213,7 @@ static const func_desc c_func_descriptions[] =
     { "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
     { "exchange-point-and-mark", tib::exchange_caret_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
     { "execute-named-command", execute_named_command, keycat_misc, "Execute the named bindable command supplied by the user" },
-    // { "fetch-history", rl_fetch_history, keycat_history, "With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list" },
+    { "fetch-history", fetch_history, keycat_history, "With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list" },
     { "forward-backward-delete-char", rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
 #if 0
     { "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
@@ -404,7 +404,7 @@ static const func_desc c_func_descriptions[] =
     { "win-copy-up-to-end", win_f3, keycat_history, "Copy the rest of the previous command" },
     { "win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command, or insert suggestion" },
     { "win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line" },
-    // { "win-history-list", win_f7, keycat_history, "Executes a history entry from a list" },
+    { "win-history-list", win_f7, keycat_history, "Executes a history entry from a list" },
     { "win-insert-eof", win_f6, keycat_misc, "Insert ^Z" },
     { "edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order" },
     { "glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended" },

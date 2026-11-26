@@ -1524,6 +1524,29 @@ int32_t end_of_history(tib::editor_context& ctx, int32_t key, const char* name, 
     return navigate_history(ctx, list->length() - list->get_index());
 }
 
+//------------------------------------------------------------------------------
+int32_t fetch_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    if (!ctx.has_numeric_argument())
+        return beginning_of_history(ctx, key, name, resolved);
+
+    history_list* list = history_list::get();
+    int32 index = ctx.get_numeric_argument();
+    if (index > 0)
+        --index;
+    else if (index < 0)
+        index = list->length() + index;
+
+    if (index < 0 || index >= list->length())
+    {
+        // TODO-VI: in vi mode, just ding if the index is out of range.
+        index = 0;
+    }
+
+    const auto count = index - list->get_index();
+    return navigate_history(ctx, count);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1806,9 +1829,8 @@ int32_t win_f6(tib::editor_context& ctx, int32_t key, const char* name, const ti
 }
 
 //------------------------------------------------------------------------------
-int32 win_f7(int32 count, int32 invoking_key)
+int32_t win_f7(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-
     history_infos hi;
     const int32 total = hi.make();
     if (!total)
