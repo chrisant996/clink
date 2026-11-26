@@ -174,7 +174,9 @@ static const func_desc c_func_descriptions[] =
 
     { "abort", tib::abort, keycat_basic, "Abort the current editing command and ring the terminal's bell (subject to the setting of 'bell-style')" },
     { "accept-line", clink_accept_line, keycat_basic, "Accept the input line.  The line may be added to the history list for future recall" },
-    // { "arrow-key-prefix", rl_arrow_keys, keycat_cursor, "" },
+#if 0
+    { "arrow-key-prefix", rl_arrow_keys, keycat_cursor, "" },
+#endif
 #if 0
     { "backward-byte", rl_backward_byte, keycat_cursor, "Move back a single byte" },
 #endif
