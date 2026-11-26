@@ -38,15 +38,17 @@ for /f %%a in ('where msbuild.exe 2^>nul') do (
 	goto :gotmsbuild
 )
 
-set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
-set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+if exist %__MSBUILD% goto gotmsbuild
+set __MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
-set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2026\BuildTools\MSBuild\18.0\Bin\MSBuild.exe"
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\18\BuildTools\MSBuild\18.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\17.0\Bin\MSBuild.exe"
 if exist %__MSBUILD% goto gotmsbuild
@@ -72,7 +74,7 @@ if exist *.sln (
 ) else if exist .build\vs2026\*.sln (
 	for %%a in (.build\vs2026\*.sln) do (
 		set __SLN="%%a"
-		set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2026\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+		set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 		goto :gotsln
 	)
 ) else if exist .build\vs2022\*.sln (
