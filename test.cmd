@@ -39,6 +39,7 @@ if x%2x == x--shipx goto:oopsflag
 
 if exist "%__ME%.build\vs2019\bin\%__FLAVOR%\clink_test_%__CPU%.exe" set __TEST=%__ME%.build\vs2019\bin\%__FLAVOR%\clink_test_%__CPU%.exe
 if exist "%__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe" set __TEST=%__ME%.build\vs2022\bin\%__FLAVOR%\clink_test_%__CPU%.exe
+if exist "%__ME%.build\vs2026\bin\%__FLAVOR%\clink_test_%__CPU%.exe" set __TEST=%__ME%.build\vs2026\bin\%__FLAVOR%\clink_test_%__CPU%.exe
 if "%__TEST%" == "" goto no_exe
 
 if "%__FLAGS%" == "" echo %__DBG% %__TEST%%__FLAGS% %1 %2 %3
