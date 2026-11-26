@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "history_db.h"
+#include "history_list.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -17,12 +18,10 @@
 #include <assert.h>
 
 #include <new>
+#include <time.h>
 extern "C" {
-#include <readline/readline.h>  // Needed by rlprivate.h.
-#include <readline/rldefs.h>    // Needed by rlmbutil.h in rlprivate.h.
+#include <readline/rldefs.h>    // Needed for HAVE_STRING in history.h.
 #include <readline/history.h>
-#include <readline/histlib.h>   // Depends on config.h.
-#include <readline/rlprivate.h> // Needed for _rl_free_undo_list().
 }
 
 #include <algorithm>
@@ -1450,29 +1449,10 @@ void history_db::get_file_path(str_base& out, bool session) const
 }
 
 //------------------------------------------------------------------------------
-static void __clear_history()
-{
-    rl_clear_history();
-    assert(!rl_undo_list);
-
-    if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
-        _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
-    _rl_free_saved_history_line ();
-
-    history_prev_use_curr = 0;
-
-    free(const_cast<char*>(history_event_lookup_cache.search_string));
-    memset(&history_event_lookup_cache, 0, sizeof(history_event_lookup_cache));
-
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-    clink_check_undo_entry_leaks();
-#endif
-}
-
-//------------------------------------------------------------------------------
 void history_db::load_internal()
 {
-    __clear_history();
+
+    clear_history();
     m_index_map.clear();
     m_master_len = 0;
     m_master_deleted_count = 0;
@@ -1481,6 +1461,7 @@ void history_db::load_internal()
 
     DIAG("... loading history\n");
 
+    history_list* list = history_list::get();
     const history_db& const_this = *this;
     const_this.for_each_bank([&] (uint32 bank_index, const read_lock& lock)
     {
@@ -1507,9 +1488,7 @@ void history_db::load_internal()
             const char* line = out.get_pointer();
             int32 buffer_offset = int32(line - buffer.data());
             buffer.data()[buffer_offset + out.length()] = '\0';
-            add_history(line);
-            if (!time.empty())
-                add_history_time(time.c_str());
+            list->add_history(line, time.c_str());
 
             num_lines++;
 
@@ -1536,8 +1515,12 @@ void history_db::load_internal()
 }
 
 //------------------------------------------------------------------------------
-void history_db::load_rl_history(bool can_clean)
+void history_db::load_history_list(bool can_clean)
 {
+    history_list* list = history_list::get();
+    if (!list)
+        list = new history_list();
+
     if (!is_valid())
         return;
 
@@ -1559,7 +1542,9 @@ void history_db::load_rl_history(bool can_clean)
         _rl_internal_startup_hook();
 #endif
 
-    _rl_start_using_history();
+    list->reset_cursor();
+    // TODO-HISTORY: reset history search position.
+    // TODO-HISTORY: clear any "saved history line" caches.
 }
 
 //------------------------------------------------------------------------------
@@ -1964,7 +1949,8 @@ history_db::expand_result history_db::expand(const char* line, str_base& out)
 
     // Reset history offset so expansion is always relative to the end of
     // the history list.
-    using_history();
+    history_list* list = history_list::get();
+    list->reset_cursor();
 
     // Perform history expansion.
     char* expanded = nullptr;

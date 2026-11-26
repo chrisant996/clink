@@ -7,6 +7,8 @@
 #include "line_editor_tester.h"
 #include "line_editor_integration.h"
 #include "char_reader_impl.h"
+#include "history_db.h"
+#include "history_list.h"
 #include "rl_integration.h"
 #include "rl/rl_module.h"
 
@@ -16,7 +18,7 @@
 #include <vector>
 
 extern "C" {
-#include <readline/history.h>
+// #include <readline/history.h>
 }
 
 class read_start_module : public editor_module
@@ -265,8 +267,9 @@ TEST_CASE("win copy up to char")
         clear_history();
     });
     clear_history();
-    add_history("ab\xc3\xa9XYZ");
-    history_set_pos(history_length);
+    history_list* list = history_list::get();
+    list->add_history("ab\xc3\xa9XYZ");
+    list->reset_cursor();
     clink_bind("\\eZ", "win-copy-up-to-char", emacs_table);
 
     tester.feed_input("abZZ\x1b[D\x1b[D");
@@ -311,8 +314,9 @@ TEST_CASE("win copy up to char with suggestion list")
         clear_history();
     });
     clear_history();
-    add_history("ab\xc3\xa9XYZ");
-    history_set_pos(history_length);
+    history_list* list = history_list::get();
+    list->add_history("ab\xc3\xa9XYZ");
+    list->reset_cursor();
     clink_bind("\\eZ", "win-copy-up-to-char", emacs_table);
 
     tester.feed_input("abZZ\x1b[D\x1b[D");
@@ -384,13 +388,14 @@ TEST_CASE("win copy history number")
 
     MAKE_CLEANUP([]() { clear_history(); });
     clear_history();
+    history_list* list = history_list::get();
     for (int i = 1; i <= 12; ++i)
     {
         str_moveable entry;
         entry.format("history %d", i);
-        add_history(entry.c_str());
+        list->add_history(entry.c_str());
     }
-    history_set_pos(history_length);
+    list->reset_cursor();
 
     tester.feed_input("draft");
     if (!is_suggestion_list_active(true))

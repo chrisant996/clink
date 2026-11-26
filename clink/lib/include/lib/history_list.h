@@ -16,15 +16,17 @@ struct hist_entry
     auto_free_str               m_line;
     auto_free_str               m_timestamp;
     // TODO: pointer to undo stack.
+    void*                       m_undo = nullptr;
 };
 
 //------------------------------------------------------------------------------
 typedef std::vector<std::unique_ptr<hist_entry>> history_entries;
+constexpr uint32 history_base = 1;
 
 //------------------------------------------------------------------------------
-class history_list
+class history_list : public singleton<history_list>
 {
-    const uint32 c_max_capacity = 999999;
+    const int32 c_max_capacity = 999999;
 
 public:
                                 history_list() = default;
@@ -33,28 +35,30 @@ public:
     // List management.
     void                        clear();
     bool                        add_history(const char* line, const char* timestamp=nullptr);
-    bool                        remove_history(uint32 index);
+    bool                        remove_history(int32 index);
 
     // Cursoring.
-    uint32                      get_count() const { return uint32(m_entries.size()); }
-    uint32                      get_index() const { return m_index; }
-    bool                        set_index(uint32 index);
-    const hist_entry*           get_entry(uint32 index) const;
-    void                        reset_cursor() { m_index = get_count(); }
+    int32                       length() const { return int32(m_entries.size()); }
+    int32                       get_index() const { return m_index; }
+    bool                        set_index(int32 index);
+    const hist_entry*           get_entry(int32 index) const;
+    const char*                 get_line(int32 index) const;
+    void                        reset_cursor() { m_index = length(); }
 
     // Navigation.
 
     // Searching.
 
+    // Range loops.
+    auto                        begin() const noexcept { return m_entries.cbegin(); }
+    auto                        end() const noexcept { return m_entries.cend(); }
+    auto                        cbegin() const noexcept { return m_entries.cbegin(); }
+    auto                        cend() const noexcept { return m_entries.cend(); }
+
 private:
-    uint32                      m_index = 0;
+    int32                       m_index = 0;
     history_entries             m_entries;
 };
 
 //------------------------------------------------------------------------------
-class history : public history_list, public singleton<history>
-{
-public:
-    history() = default;
-    ~history() = default;
-};
+void clear_history();

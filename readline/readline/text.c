@@ -646,6 +646,7 @@ rl_skip_csi_sequence (int count, int key)
   return (ch < 0);
 }
 
+#if defined(HISTORY_TODO) || defined(VI_TODO)
 int
 rl_arrow_keys (int count, int key)
 {
@@ -687,6 +688,7 @@ rl_arrow_keys (int count, int key)
 
   return 0;
 }
+#endif
 
 /* **************************************************************** */
 /*								    */
@@ -2087,18 +2089,6 @@ _rl_readstr_init (int pchar, int flags)
 
   return cxt;
 }
-
-/* begin_clink_change */
-#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
-UNDO_LIST *
-_rl_get_saved_readstr_undo_list (void)
-{
-  if (_rl_saved_line_for_readstr)
-    return (UNDO_LIST *)_rl_saved_line_for_readstr->data;
-  return ((UNDO_LIST *)NULL);
-}
-#endif
-/* end_clink_change */
 
 int
 _rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)

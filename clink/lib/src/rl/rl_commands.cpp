@@ -11,6 +11,7 @@
 #include "doskey.h"
 #include "textlist_impl.h"
 #include "history_db.h"
+#include "history_list.h"
 #include "ellipsify.h"
 #include "host_callbacks.h"
 #include "display_readline.h"
@@ -42,7 +43,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 extern int32 find_streqn (const char *a, const char *b, int32 n);
-extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
 #include <tib.h>
@@ -395,167 +395,11 @@ int32 host_remove_history(int32 rl_history_index, const char* line)
     return true;
 }
 
-
-
 //------------------------------------------------------------------------------
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-class undo_entry_heap
+void replace_from_history(const hist_entry* entry)
 {
-    struct tracker
-    {
-        bool m_freed = false;
-        bool m_seen = false;
-        uint32 m_num = 0;
-        DWORD m_alloc_frames_hash = 0;
-        uint32 m_alloc_frames_count = 0;
-        void* m_alloc_frames[20];
-        DWORD m_free_frames_hash = 0;
-        uint32 m_free_frames_count = 0;
-        void* m_free_frames[20];
-    };
-
-    struct wrapped_UNDO_LIST
-    {
-        tracker*    m_tracker;      // Make it easy to find in the debugger:  ((tracker**)rl_undo_list)[-1]
-        UNDO_LIST   m_undo_list;
-    };
-
-public:
-    undo_entry_heap() : m_heap(32768)
-    {
-    }
-
-    UNDO_LIST* alloc_undo_entry()
-    {
-        dbg_ignore_scope(snapshot, "undo_entry_heap");
-
-        tracker* t = new tracker;
-        wrapped_UNDO_LIST* p = (wrapped_UNDO_LIST*)m_heap.alloc(sizeof(tracker*) + sizeof(*p));
-        if (!p)
-        {
-            delete t;
-            return nullptr;
-        }
-        t->m_num = s_num++;
-        t->m_alloc_frames_count = get_callstack_frames(1, sizeof_array(t->m_alloc_frames), t->m_alloc_frames, &t->m_alloc_frames_hash);
-        assert(!t->m_freed);
-        p->m_tracker = t;
-        m_allocated.emplace(&p->m_undo_list, t);
-        return &p->m_undo_list;
-    }
-
-    void free_undo_entry(UNDO_LIST* p)
-    {
-        auto it = m_allocated.find(p);
-        assert(it != m_allocated.end());
-        tracker* t = it->second;
-        assert(t);
-        if (t->m_freed)
-        {
-            str<> s;
-            char sa[4096];
-            char sf[4096];
-            char sd[4096];
-            format_frames(t->m_alloc_frames_count, t->m_alloc_frames, t->m_alloc_frames_hash, sa, sizeof(sa), true);
-            format_frames(t->m_free_frames_count, t->m_free_frames, t->m_free_frames_hash, sf, sizeof(sf), true);
-            DWORD df_hash;
-            void* df_frames[20];
-            uint32 df_count = get_callstack_frames(1, sizeof_array(df_frames), df_frames, &df_hash);
-            format_frames(df_count, df_frames, df_hash, sd, sizeof(sd), true);
-            s.format("ALREADY FREED %p (#%u)\r\n\r\nalloc stacktrace:  %s\r\noriginal free stacktrace:  %s\r\nthis double-free stacktrace:  %s", p, t->m_num, sa, sf, sd);
-            assert(!t->m_freed);
-            dbgtracef("%s", s.c_str());
-        }
-        // NOTE: This diagnostic heap doesn't actually free any blocks; that
-        // enables it to accurately, uniquely, and independently track the
-        // history of each individual allocation.
-        t->m_freed = true;
-        t->m_free_frames_count = get_callstack_frames(1, sizeof_array(t->m_free_frames), t->m_free_frames, &t->m_free_frames_hash);
-    }
-
-    void check_undo_entry_leaks()
-    {
-        uint32 leaks = 0;
-        uint32 new_leaks = 0;
-        for (const auto tracker : m_allocated)
-        {
-            if (!tracker.second->m_freed)
-            {
-                ++leaks;
-                if (!tracker.second->m_seen)
-                    ++new_leaks;
-            }
-        }
-
-        if (leaks)
-        {
-            if (new_leaks)
-            {
-                assert(!leaks);
-
-                dbgtracef("----- UNDO_LIST leaks: new %u (total %u) -----", new_leaks, leaks);
-
-#ifdef INCLUDE_CALLSTACKS
-                char stack[4096];
-#endif
-                for (const auto alloc : m_allocated)
-                {
-                    if (!alloc.second->m_seen)
-                    {
-                        alloc.second->m_seen = true;
-#ifdef INCLUDE_CALLSTACKS
-                        if (!alloc.second->m_freed)
-                        {
-                            stack[0] = '\0';
-                            format_frames(alloc.second->m_alloc_frames_count, alloc.second->m_alloc_frames, alloc.second->m_alloc_frames_hash, stack, sizeof(stack), false);
-                            dbgtracef("Leak:  0x%p (#%u),  text \"%s\",  context: %s", alloc.first, alloc.second->m_num, alloc.first->text ? alloc.first->text : "(nullptr)", stack);
-                        }
-#endif
-                    }
-                }
-#ifdef INCLUDE_CALLSTACKS
-                dbgtracef("----- end of UNDO_LIST leaks -----");
-#endif
-            }
-            else
-            {
-                dbgtracef("----- UNDO_LIST leaks: total %u; can't reset undo_entry_heap -----", leaks);
-            }
-        }
-        else
-        {
-            dbg_ignore_scope(snapshot, "undo_entry_heap");
-
-            m_allocated.clear();
-            m_heap.clear();
-        }
-    }
-
-private:
-    linear_allocator m_heap;
-    std::unordered_map<const UNDO_LIST*, tracker*> m_allocated;
-
-    static uint32 s_num;
-};
-
-static undo_entry_heap s_undo_entry_heap;
-uint32 undo_entry_heap::s_num = 0;
-
-extern "C" UNDO_LIST* clink_alloc_undo_entry(void)
-{
-    return s_undo_entry_heap.alloc_undo_entry();
+    // TODO: replace line and undo list.
 }
-
-extern "C" void clink_free_undo_entry(UNDO_LIST* p)
-{
-    s_undo_entry_heap.free_undo_entry(p);
-}
-
-extern "C" void clink_check_undo_entry_leaks(void)
-{
-    s_undo_entry_heap.check_undo_entry_leaks();
-}
-#endif // UNDO_LIST_HEAP_DIAGNOSTICS
 
 
 
@@ -570,7 +414,7 @@ public:
 private:
     void            discard();
 private:
-    char**          m_history = nullptr;
+    const char**    m_history = nullptr;
     entry_info*     m_infos = nullptr;
     int32           m_total = 0;
     int32           m_current = -1;
@@ -600,9 +444,10 @@ history_infos::~history_infos()
         }
         else
         {
-            HIST_ENTRY* entry = current_history();
+            history_list* list = history_list::get();
+            const auto* entry = list->get_entry(list->get_index());
             if (entry)
-                rl_replace_from_history(entry, 0);
+                replace_from_history(entry);
         }
     }
 }
@@ -613,12 +458,14 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
     assert(!m_saved_line);
     assert(m_saved_point < 0);
 
-    HIST_ENTRY** list = history_list();
-    if (!list || !history_length)
+    history_list* list = history_list::get();
+    if (!list || !list->length())
         return false;
+    const auto history_length = list->length();
 
+// TODO-HISTORY: tib undo list instead of rl_undo_list.
     const bool had_undo_list = !!rl_undo_list;
-    if (current_history())
+    if (list->get_index() > 0)
     {
         m_in_history_entry = true;
         rl_maybe_replace_line();
@@ -631,7 +478,7 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
     }
     rl_undo_list = 0;
 
-    m_history = (char**)malloc(sizeof(*m_history) * history_length);
+    m_history = (const char**)malloc(sizeof(*m_history) * history_length);
     m_infos = (entry_info*)malloc(sizeof(*m_infos) * history_length);
     m_current = -1;
 
@@ -639,11 +486,12 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
     m_total = 0;
     for (int32 i = 0; i < history_length; i++)
     {
-        if (prefix && search_len > 0 && !find_streqn(prefix, list[i]->line, search_len))
+        const auto e = list->get_entry(i);
+        if (prefix && search_len > 0 && !find_streqn(prefix, e->m_line.get(), search_len))
             continue;
-        m_history[m_total] = list[i]->line;
+        m_history[m_total] = e->m_line.get();
         m_infos[m_total].index = i;
-        m_infos[m_total].marked = (list[i]->data != nullptr);
+        m_infos[m_total].marked = (e->m_undo != nullptr);
         if (i == orig_pos)
         {
             m_infos[m_total].marked = had_undo_list;
@@ -653,7 +501,7 @@ bool history_infos::make(const char* prefix, int32 search_len, int32 orig_pos)
     }
 
     if (m_current < 0 && orig_pos < 0)
-        m_current = where_history();
+        m_current = list->get_index();
     if (m_current < 0 || m_current > m_total - 1)
         m_current = m_total - 1;
 
@@ -678,7 +526,8 @@ popup_results history_infos::activate_history_text_list(bool win_history)
             {
                 discard();
                 rl_replace_line("", 1);
-                using_history();
+                history_list* list = history_list::get();
+                list->reset_cursor();
             }
             results.m_reset_history_index = false;
         }
@@ -1488,8 +1337,10 @@ int32_t clink_accept_suggested_line(tib::editor_context& ctx, int32_t key, const
 //------------------------------------------------------------------------------
 int32 clink_popup_history(int32 count, int32 invoking_key)
 {
+    history_list* list = history_list::get();
+
     int32 current = -1;
-    int32 orig_pos = where_history();
+    int32 orig_pos = list->get_index();
     int32 search_len = g_tib->get_caret();
 
     history_infos hi;
@@ -1512,8 +1363,8 @@ ding:
     case popup_result::select:
     case popup_result::use:
         {
-            history_set_pos(results.m_index);
-            rl_replace_from_history(current_history(), 0);
+            list->set_index(results.m_index);
+            replace_from_history(list->get_entry(list->get_index()));
             suppress_suggestions();
 
             const tib::textpos_t end = g_tib->get_length();
@@ -1625,25 +1476,18 @@ static int32 adjust_point_keyseq(int32& point, const char* keyseq, const char* b
 }
 
 //------------------------------------------------------------------------------
-static char* get_history(int32 item)
+static const char* get_previous_command()
 {
-    HIST_ENTRY** list = history_list();
-    if (!list || !history_length)
+    history_list* list = history_list::get();
+    if (!list || list->get_index() != list->length())
         return nullptr;
 
-    if (item >= history_length)
-        item = history_length - 1;
-    if (item < 0)
+    auto item = list->length();
+    if (item <= 0)
         return nullptr;
 
-    return list[item]->line;
-}
-
-//------------------------------------------------------------------------------
-static char* get_previous_command()
-{
-    int32 previous = where_history();
-    return get_history(previous);
+    const auto* e = list->get_entry(item - 1);
+    return e->m_line.get();
 }
 
 //------------------------------------------------------------------------------
@@ -1667,7 +1511,7 @@ int32_t win_f1(tib::editor_context& ctx, int32_t key, const char* name, const ti
     if (had_selection)
         return 0;
 
-    char* prev_buffer = get_previous_command();
+    const char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
 ding:
@@ -1843,8 +1687,9 @@ ding:
     case popup_result::use:
     case popup_result::select:
         {
-            history_set_pos(results.m_index);
-            rl_replace_from_history(current_history(), 0);
+            history_list* list = history_list::get();
+            list->set_index(results.m_index);
+            replace_from_history(list->get_entry(list->get_index()));
             suppress_suggestions();
 
             display_readline();
@@ -1886,18 +1731,22 @@ static void finish_win_f9(read_number_result result)
 #endif
 
     g_tib->set_message_text(nullptr, 0);
-    if (!result.success || result.number <= 0 || history_length <= 0)
+    if (!result.success || result.number <= 0)
         return;
 
-    const int32 index = min(result.number - 1, history_length - 1);
-    HIST_ENTRY** entries = history_list();
-    if (!entries || !entries[index])
+    history_list* list = history_list::get();
+    if (!list || list->length() <= 0)
+        return;
+
+    const int32 index = min<uint32>(result.number - 1, list->length() - 1);
+    const auto* e = list->get_entry(index);
+    if (!e || !e->m_line.get())
         return;
 
     g_tib->begin_undo_group();
     g_tib->remove_text(0, g_tib->get_length());
     g_tib->set_caret(0);
-    g_tib->insert_text(entries[index]->line);
+    g_tib->insert_text(e->m_line.get());
     g_tib->end_undo_group();
 }
 
@@ -2681,13 +2530,14 @@ int32_t edit_and_execute_command(tib::editor_context& ctx, int32_t key, const ch
     str<> line;
     if (ctx.has_numeric_argument())
     {
-        HIST_ENTRY* h = history_get(ctx.get_numeric_argument());
+        history_list* list = history_list::get();
+        const auto* h = list->get_entry(ctx.get_numeric_argument() - 1);
         if (!h)
         {
             tib::ding();
             return 0;
         }
-        line = h->line;
+        line = h->m_line.get();
     }
     else
     {

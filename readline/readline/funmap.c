@@ -58,7 +58,9 @@ static const FUNMAP default_funmap[] = {
 /* begin_clink_change */
   { "add-history", rl_add_history },
 /* end_clink_change */
+#if defined(HISTORY_TODO) || defined(VI_TODO)
   { "arrow-key-prefix", rl_arrow_keys },
+#endif
   { "backward-byte", rl_backward_byte },
   { "backward-char", rl_backward_char },
   { "backward-delete-char", rl_rubout },
@@ -113,7 +115,9 @@ static const FUNMAP default_funmap[] = {
   { "kill-word", rl_kill_word },
   { "menu-complete", rl_menu_complete },
   { "menu-complete-backward", rl_backward_menu_complete },
+#ifdef HISTORY_TODO
   { "next-history", rl_get_next_history },
+#endif
   { "next-screen-line", rl_next_screen_line },
   { "non-incremental-forward-search-history", rl_noninc_forward_search },
   { "non-incremental-reverse-search-history", rl_noninc_reverse_search },
@@ -129,7 +133,9 @@ static const FUNMAP default_funmap[] = {
   { "paste-from-clipboard", rl_paste_from_clipboard },
 #endif
   { "possible-completions", rl_possible_completions },
+#ifdef HISTORY_TODO
   { "previous-history", rl_get_previous_history },
+#endif
   { "previous-screen-line", rl_previous_screen_line },
   { "print-last-kbd-macro", rl_print_last_kbd_macro },
   { "quoted-insert", rl_quoted_insert },

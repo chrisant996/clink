@@ -14,6 +14,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/history_db.h>
+#include <lib/history_list.h>
 #include <utils/app_context.h>
 
 #include <initializer_list>
@@ -355,7 +356,7 @@ TEST_CASE("history rl")
     test_history_db history;
     for (const char* line : history_lines)
         history.add(line);
-    history.load_rl_history();
+    history.load_history_list();
 
     // Here be the tests.
     SECTION("Navigation")
@@ -481,7 +482,7 @@ TEST_CASE("history rl")
         SECTION("!?string")
         {
             history.add("one two");
-            history.load_rl_history();
+            history.load_history_list();
             REQUIRE(history.expand("three !?one", out) == history_db::expand_ok);
             REQUIRE(out.equals("three one two"));
         }
@@ -587,7 +588,7 @@ TEST_CASE("history limit")
 
     for(const char* line : history_lines)
         history.add(line);
-    history.load_rl_history();
+    history.load_history_list();
 
     SECTION("Stable ctag")
     {
@@ -610,7 +611,7 @@ TEST_CASE("history limit")
     SECTION("Not compacted")
     {
         history.add(history_lines[5-1]);
-        history.load_rl_history();
+        history.load_history_list();
 
         REQUIRE(history.get_master_length() == 3);
         REQUIRE(history.get_master_deleted_count() == 3);
@@ -629,7 +630,7 @@ TEST_CASE("history limit")
     {
         history.add(history_lines[5-1]);
         history.add(history_lines[5-1]);
-        history.load_rl_history();
+        history.load_history_list();
 
         REQUIRE(history.get_master_length() == 3);
         REQUIRE(history.get_master_deleted_count() == 0);
@@ -646,7 +647,7 @@ TEST_CASE("history limit")
         SECTION("Not compacted again")
         {
             history.add(history_lines[2-1]);
-            history.load_rl_history();
+            history.load_history_list();
 
             REQUIRE(history.get_master_length() == 3);
             REQUIRE(history.get_master_deleted_count() == 1);
@@ -709,7 +710,7 @@ TEST_CASE("history unique")
 
     for(const char* line : history_lines)
         history.add(line);
-    history.load_rl_history();
+    history.load_history_list();
 
     SECTION("Stable ctag")
     {
@@ -726,15 +727,16 @@ TEST_CASE("history unique")
     SECTION("Unique")
     {
         history.compact(true/*force*/, true/*uniq*/);
-        history.load_rl_history();
+        history.load_history_list();
 
         REQUIRE(history.get_master_length() == 3);
         REQUIRE(history.get_master_deleted_count() == 0);
         REQUIRE(strcmp(ctag.get(), history.get_master_tag()) != 0);
 
-        REQUIRE(strcmp(history_get(1)->line, "ccc") == 0);
-        REQUIRE(strcmp(history_get(2)->line, "aaa") == 0);
-        REQUIRE(strcmp(history_get(3)->line, "bbb") == 0);
+        history_list* list = history_list::get();
+        REQUIRE(strcmp(list->get_line(0), "ccc") == 0);
+        REQUIRE(strcmp(list->get_line(1), "aaa") == 0);
+        REQUIRE(strcmp(list->get_line(2), "bbb") == 0);
     }
 }
 
@@ -779,7 +781,7 @@ TEST_CASE("history removals ctag")
         {
             test_history_db history;
             history.clear();
-            history.load_rl_history(true); // initialize ctag
+            history.load_history_list(true); // initialize ctag
 
             orig_ctag.set(history.get_master_tag());
             REQUIRE(!orig_ctag.empty());
@@ -794,7 +796,7 @@ TEST_CASE("history removals ctag")
 
         {
             test_history_db history;
-            history.load_rl_history(false);
+            history.load_history_list(false);
 
             // Remove first line from master history directly.
             REQUIRE(history.remove_direct(history_lines[0]));
@@ -830,7 +832,7 @@ TEST_CASE("history removals ctag")
         {
             test_history_db history;
             history.clear();
-            history.load_rl_history(true); // initialize ctag
+            history.load_history_list(true); // initialize ctag
 
             for(const char* line : history_lines)
                 REQUIRE(history.add(line));
@@ -841,7 +843,7 @@ TEST_CASE("history removals ctag")
         // Queue a deferred deletion (in the .removals file).
         {
             test_history_db history;
-            history.load_rl_history(false);
+            history.load_history_list(false);
 
             REQUIRE(history.remove(history_lines[1]));
 

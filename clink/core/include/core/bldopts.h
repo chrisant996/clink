@@ -56,9 +56,6 @@
 //#define DEBUG_RESOLVEIMPL
 //#define USE_OS_UTF_CONVERSION
 #endif
-#if defined(DEBUG) && defined(USE_MEMORY_TRACKING)
-#define UNDO_LIST_HEAP_DIAGNOSTICS
-#endif
 
 //------------------------------------------------------------------------------
 // Define this to maintain a clink._internal._loaded_scripts table tracking an

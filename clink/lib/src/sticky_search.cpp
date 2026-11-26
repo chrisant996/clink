@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "history_list.h"
 #include "sticky_search.h"
 
 #include <core/base.h>
@@ -41,7 +42,9 @@ void save_sticky_search_position()
         // search position.  If the search position is invalid or the input line
         // doesn't match the search position, then it works out ok because the
         // search position gets ignored.
-        int32 history_pos = where_history();
+        history_list* list = history_list::get();
+        const auto history_pos = list->get_index();
+        const auto history_length = list->length();
         if (history_pos >= 0 && history_pos < history_length)
             s_init_history_pos = history_pos;
         else if (s_history_search_pos >= 0 && s_history_search_pos < history_length)
@@ -72,7 +75,8 @@ void restore_sticky_search_position()
     // Apply the remembered history position from the previous command, if any.
     if (s_init_history_pos >= 0)
     {
-        history_set_pos(s_init_history_pos);
+        history_list* list = history_list::get();
+        list->set_index(s_init_history_pos);
         history_prev_use_curr = 1;
     }
 
@@ -101,8 +105,9 @@ extern "C" void suppress_sticky_search_position()
 //------------------------------------------------------------------------------
 static bool history_line_differs(int32 history_pos, const char* line)
 {
-    const HIST_ENTRY* entry = history_get(history_pos + history_base);
-    return (!entry || strcmp(entry->line, line) != 0);
+    history_list* list = history_list::get();
+    const auto* entry = list->get_entry(history_pos);
+    return (!entry || strcmp(entry->m_line.get(), line) != 0);
 }
 
 //------------------------------------------------------------------------------
@@ -111,7 +116,8 @@ bool can_sticky_search_add_history(const char* line)
     if (!has_sticky_search_position())
         return true;
 
-    if (s_init_history_pos >= history_length || history_line_differs(s_init_history_pos, line))
+    history_list* list = history_list::get();
+    if (s_init_history_pos >= list->length() || history_line_differs(s_init_history_pos, line))
         return true;
 
     // If sticky search is active and the input line matches the history entry

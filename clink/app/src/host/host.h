@@ -8,11 +8,7 @@
 #include <lib/doskey.h>
 #include <lib/line_editor.h>
 #include <lib/line_queue.h>
-#include <lib/history_db.h>
 #include <lib/host_callbacks.h>
-
-#include <list>
-#include <memory>
 
 class lua_state;
 class str_base;

@@ -24,6 +24,7 @@
 #include <core/debugheap.h>
 #include <lib/popup.h>
 #include <lib/cmd_tokenisers.h>
+#include <lib/history_list.h>
 #include <lib/reclassify.h>
 #include <lib/recognizer.h>
 #include <lib/matches_lookaside.h>
@@ -1310,7 +1311,7 @@ static int32 generate_from_history(lua_State* state)
 {
     LUA_ONLYONMAIN(state, "clink._internal._generate_from_history");
 
-    HIST_ENTRY** list = history_list();
+    history_list* list = history_list::get();
     if (!list)
         return 0;
 
@@ -1323,9 +1324,9 @@ static int32 generate_from_history(lua_State* state)
 
     lua_state::push_named_function(state, "clink._internal._generate_from_historyline");
 
-    while (*list)
+    for (auto& e : *list)
     {
-        const char* buffer = (*list)->line;
+        const char* buffer = e->m_line.get();
         uint32 len = uint32(strlen(buffer));
 
         // Collect one line_state for each command in the line.

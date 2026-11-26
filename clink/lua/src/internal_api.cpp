@@ -24,6 +24,7 @@
 #include <core/debugheap.h>
 #include <lib/popup.h>
 #include <lib/cmd_tokenisers.h>
+#include <lib/history_list.h>
 #include <lib/reclassify.h>
 #include <lib/recognizer.h>
 #include <lib/matches_lookaside.h>
@@ -651,9 +652,10 @@ static int32 history_suggester(lua_State* state)
     if (!line || (has_limit && limit <= 0))
         return 0;
 
-    HIST_ENTRY** history = history_list();
-    if (!history || history_length <= 0)
+    history_list* history = history_list::get();
+    if (!history || history->length() <= 0)
         return 0;
+    const auto history_length = history->length();
 
     // 'match_prev_cmd' only works when 'history.dupe_mode' is 'add'.
     if (match_prev_cmd && g_dupe_mode.get() != 0)
@@ -663,7 +665,7 @@ static int32 history_suggester(lua_State* state)
     if (has_limit)
         limit = min(limit, 10);
 
-    const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
+    const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history->get_line(history_length - 1) : nullptr;
 
     bool substr = false;
     int32 n = 0;
@@ -683,21 +685,23 @@ again:
             break;
         scanned++;
 
+        const char* const hline = history->get_line(i);
+
         int32 offset;
         int32 matchlen;
         if (substr)
         {
             offset = 0;
             matchlen = 0;
-            for (const char* hline = history[i]->line; *hline; ++hline, ++offset)
+            for (const char* p = hline; *p; ++p, ++offset)
             {
                 str_iter lhs(line);
-                str_iter rhs(hline);
+                str_iter rhs(p);
                 const int32 sublen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
                 if (sublen && !lhs.more() && (rhs.more() || sublen < 0))
                 {
                     ++offset; // Convert from 0-based to 1-based.
-                    matchlen = (sublen < 0) ? str_len(hline) : sublen;
+                    matchlen = (sublen < 0) ? str_len(p) : sublen;
                     break;
                 }
             }
@@ -705,7 +709,7 @@ again:
         else
         {
             str_iter lhs(line);
-            str_iter rhs(history[i]->line);
+            str_iter rhs(hline);
             matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
             offset = 1;
 
@@ -722,14 +726,14 @@ again:
         // Match previous command, if needed.
         if (match_prev_cmd)
         {
-            if (i <= 0 || str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(prev_cmd, history[i - 1]->line) != -1)
+            if (i <= 0 || str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(prev_cmd, history->get_line(i - 1)) != -1)
                 continue;
         }
 
         // Suggest this history entry.
         lua_createtable(state, 0, 2);
 
-        lua_pushstring(state, history[i]->line);
+        lua_pushstring(state, hline);
         lua_rawseti(state, -2, 1);
 
         lua_pushinteger(state, 1);
@@ -795,6 +799,9 @@ static int32 set_suggestion_result(lua_State* state)
         return 0;
 
     suggestions suggestions;
+
+    history_list* list = history_list::get();
+    const auto history_length = list->length();
 
     if (lua_istable(state, 3))
     {

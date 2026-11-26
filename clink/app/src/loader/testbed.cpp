@@ -9,6 +9,7 @@
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <lib/line_editor.h>
+#include <lib/history_list.h>
 #include <lib/match_generator.h>
 #include <lib/recognizer.h>
 #include <lib/rl_integration.h>
@@ -202,28 +203,28 @@ static int32 editline()
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
+    extern void initialise_readline(bool no_user=false);
+    initialise_readline();
+
     line_editor::desc desc = { nullptr };
     line_editor* editor = line_editor_create(desc);
     editor->set_generator(lua_generator);
 
-    init_editor_commands();
-    init_readline_testbed();
-
-    std::vector<str_moveable> history_list;
+    std::vector<str_moveable> local_history;
+    (void)new history_list();
 
     str<> out;
     while (true)
     {
         reset_display_readline();
 
-        rl_clear_history();
+        clear_history();
         assert(!rl_undo_list);
         history_prev_use_curr = 0;
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-        clink_check_undo_entry_leaks();
-#endif
-        for (const auto& h : history_list)
-            add_history(h.c_str());
+
+        history_list* list = history_list::get();
+        for (const auto& h : local_history)
+            list->add_history(h.c_str());
 
         out.clear();
         editor->edit(out);
@@ -232,7 +233,7 @@ static int32 editline()
             break;
 
         if (!out.empty())
-            history_list.emplace_back(out.c_str());
+            local_history.emplace_back(out.c_str());
     }
 
     line_editor_destroy(editor);
@@ -348,10 +349,6 @@ int32 testbed(int32 argc, char** argv)
     {
         ret = editline();
     }
-
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-    clink_check_undo_entry_leaks();
-#endif
 
     shutdown_recognizer();
 

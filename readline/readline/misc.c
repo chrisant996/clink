@@ -559,42 +559,6 @@ _rl_revert_all_lines (void)
   history_set_pos (pos);
 }
 
-/* Free the history list, including private readline data and take care
-   of pointer aliases to history data.  Resets rl_undo_list if it points
-   to an UNDO_LIST * saved as some history entry's data member.  This
-   should not be called while editing is active. */
-void
-rl_clear_history (void)
-{
-  HIST_ENTRY **hlist, *hent;
-  register int i;
-  UNDO_LIST *ul, *saved_undo_list;
-
-  saved_undo_list = rl_undo_list;
-  hlist = history_list ();		/* direct pointer, not copy */
-
-  for (i = 0; i < history_length; i++)
-    {
-      hent = hlist[i];
-      if (ul = (UNDO_LIST *)hent->data)
-	{
-	  if (ul == saved_undo_list)
-	    saved_undo_list = 0;
-	  _rl_free_undo_list (ul);
-	  hent->data = 0;
-	}
-      _rl_free_history_entry (hent);
-/* begin_clink_change */
-#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
-      hlist[i] = 0;
-#endif
-/* end_clink_change */
-    }
-
-  history_offset = history_length = 0;
-  rl_undo_list = saved_undo_list;	/* should be NULL */
-}
-
 /* **************************************************************** */
 /*								    */
 /*			History Commands			    */

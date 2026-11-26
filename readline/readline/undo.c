@@ -61,12 +61,6 @@ int _rl_undo_group_level = 0;
 /* The current undo list for THE_LINE. */
 UNDO_LIST *rl_undo_list = (UNDO_LIST *)NULL;
 
-/* begin_clink_change */
-#if defined (UNDO_LIST_HEAP_DIAGNOSTICS)
-extern rl_on_free_undo_list_func_t *rl_on_free_undo_list_func = 0;
-#endif
-/* end_clink_change */
-
 /* **************************************************************** */
 /*								    */
 /*			Undo, and Undoing			    */
@@ -78,11 +72,7 @@ alloc_undo_entry (enum undo_code what, int start, int end, char *text)
 {
   UNDO_LIST *temp;
 
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-  temp = clink_alloc_undo_entry();
-#else
   temp = (UNDO_LIST *)xmalloc (sizeof (UNDO_LIST));
-#endif
   temp->what = what;
   temp->start = start;
   temp->end = end;
@@ -113,13 +103,6 @@ _rl_free_undo_list (UNDO_LIST *ul)
 {
   UNDO_LIST *release;
 
-/* begin_clink_change */
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-  if (rl_on_free_undo_list_func)
-    rl_on_free_undo_list_func (ul);
-#endif
-/* end_clink_change */
-
   while (ul)
     {
       release = ul;
@@ -128,13 +111,7 @@ _rl_free_undo_list (UNDO_LIST *ul)
       if (release->what == UNDO_DELETE)
 	xfree (release->text);
 
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-      if (release->what == UNDO_DELETE)
-	release->text = 0;
-      clink_free_undo_entry(release);
-#else
       xfree (release);
-#endif
     }
 }
 
@@ -293,13 +270,7 @@ rl_do_undo (void)
 	    }
 	}
 
-#ifdef UNDO_LIST_HEAP_DIAGNOSTICS
-      if (release->what == UNDO_DELETE)
-	release->text = 0;
-      clink_free_undo_entry(release);
-#else
       xfree (release);
-#endif
     }
   while (waiting_for_begin);
 

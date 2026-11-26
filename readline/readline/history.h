@@ -112,39 +112,49 @@ extern histdata_t free_history_entry (HIST_ENTRY *);
 extern HIST_ENTRY *replace_history_entry (int, const char *, histdata_t);
 
 /* Clear the history list and start over. */
+#ifdef BUILD_READLINE
 extern void clear_history (void);
+#endif
 
 /* Information about the history list. */
 
 /* Return a NULL terminated array of HIST_ENTRY which is the current input
    history.  Element 0 of this list is the beginning of time.  If there
    is no history, return NULL. */
+#ifdef BUILD_READLINE
 extern HIST_ENTRY **history_list (void);
+#endif
 
 /* Returns the number which says what history element we are now
    looking at.  */
+#ifdef BUILD_READLINE
 extern int where_history (void);
+#endif
   
 /* Return the history entry at the current position, as determined by
    history_offset.  If there is no entry there, return a NULL pointer. */
+#ifdef BUILD_READLINE
 extern HIST_ENTRY *current_history (void);
+#endif
 
 /* Return the history entry which is logically at OFFSET in the history
    array.  OFFSET is relative to history_base. */
+#ifdef BUILD_READLINE
 extern HIST_ENTRY *history_get (int);
+#endif
 
 /* Return the timestamp associated with the HIST_ENTRY * passed as an
    argument */
+#ifdef BUILD_READLINE
 extern time_t history_get_time (HIST_ENTRY *);
-
-/* Return the number of bytes that the primary history entries are using.
-   This just adds up the lengths of the_history->lines. */
-extern int history_total_bytes (void);
+#endif
 
 /* Moving around the history list. */
 
 /* Set the position in the history list to POS. */
+#ifdef BUILD_READLINE
 extern int history_set_pos (int);
+#endif
 
 /* Back up history_offset to the previous history entry, and return
    a pointer to that entry.  If there is no previous entry, return
@@ -238,9 +248,11 @@ extern char *get_history_event (const char *, int *, int);
 extern char **history_tokenize (const char *);
 
 /* Exported history variables. */
+#ifdef BUILD_READLINE
 extern int history_base;
 extern int history_length;
 extern int history_offset;
+#endif
 
 extern int history_lines_read_from_file;
 extern int history_lines_written_to_file;

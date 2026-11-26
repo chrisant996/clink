@@ -194,7 +194,7 @@ static void print_history(uint32 tail_count, bool bare)
             fprintf(stderr, "... printed %u lines from session bank\n", num_from[bank_session]);
 
         // Load history to report diagnostic info about active/deleted lines.
-        history->load_rl_history(false/*can_clean*/);
+        history->load_history_list(false/*can_clean*/);
     }
 }
 
@@ -308,7 +308,7 @@ static int32 compact(bool uniq, int32 limit)
 static int32 print_expansion(const char* line)
 {
     history_scope history;
-    history->load_rl_history(false/*can_clean*/);
+    history->load_history_list(false/*can_clean*/);
 
     str<> out;
     history->expand(line, out);

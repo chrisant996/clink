@@ -12,6 +12,7 @@
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
+#include "history_list.h"
 #include "history_timeformatter.h"
 #include "line_editor_integration.h"
 #include "rl_integration.h"
@@ -614,7 +615,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     const bool history_timestamps = (m_history_mode &&
         ((g_history_timestamp.get() == 2 && (!rl_explicit_arg || rl_numeric_arg)) ||
          (g_history_timestamp.get() == 1 && rl_explicit_arg && rl_numeric_arg)));
-    const HIST_ENTRY* const* const histlist = history_list();
+    history_list* histlist = history_list::get();
     assertimplies(history_timestamps, !has_columns);
     history_timeformatter timeformatter;
     if (history_timestamps)
@@ -640,7 +641,8 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
             if (history_timestamps)
             {
                 const int32 j = m_infos ? m_infos[i].index : i;
-                const char* timestamp = histlist[j]->timestamp;
+                const auto* e = histlist->get_entry(j);
+                const char* timestamp = e ? e->m_timestamp.get() : nullptr;
                 tmp2.clear();
                 if (timestamp && *timestamp)
                 {
@@ -970,11 +972,8 @@ find:
                 // Remove the corresponding persisted history entry.
                 host_remove_history(external_index, nullptr);
                 // Remove the corresponding entry from Readline's copy of history.
-                HIST_ENTRY* hist = remove_history(external_index);
-                free_history_entry(hist);
-                // Keep the position within the shortened history list.
-                if (where_history() > history_length)
-                    using_history();
+                history_list* histlist = history_list::get();
+                histlist->remove_history(external_index);
             }
             else if (m_mode == textlist_mode::directories)
             {

@@ -116,7 +116,7 @@ public:
                                 history_db(const char* path, int32 id, bool use_master_bank);
                                 ~history_db();
     void                        initialise(str_base* error_message=nullptr);
-    void                        load_rl_history(bool can_clean=true);
+    void                        load_history_list(bool can_clean=true);
     void                        clear();
     bool                        compact(bool force=false, bool uniq=false, int32 limit=-1);
     bool                        add(const char* line, time_t* out_timestamp=nullptr);

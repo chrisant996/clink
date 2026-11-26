@@ -108,7 +108,9 @@ extern int rl_forward_word (int, int);
 extern int rl_backward_word (int, int);
 extern int rl_refresh_line (int, int);
 extern int rl_skip_csi_sequence (int, int);
+#if defined(HISTORY_TODO) || defined(VI_TODO)
 extern int rl_arrow_keys (int, int);
+#endif
 
 extern int rl_previous_screen_line (int, int);
 extern int rl_next_screen_line (int, int);
@@ -145,8 +147,10 @@ extern int rl_add_history (int, int);
 /* end_clink_change */
 extern int rl_beginning_of_history (int, int);
 extern int rl_end_of_history (int, int);
+#if defined(HISTORY_TODO) || defined(BUILD_READLINE)
 extern int rl_get_next_history (int, int);
 extern int rl_get_previous_history (int, int);
+#endif
 extern int rl_operate_and_get_next (int, int);
 extern int rl_fetch_history (int, int);
 /* begin_clink_change */
@@ -467,8 +471,6 @@ extern void rl_echo_signal_char (int);
 extern int rl_set_paren_blink_timeout (int);
 
 /* History management functions. */
-
-extern void rl_clear_history (void);
 
 /* begin_clink_change */
 /* Returns true if rl_operate_and_get_next has set a saved history

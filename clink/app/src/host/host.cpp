@@ -18,6 +18,8 @@
 #include <core/callstack.h>
 #include <core/assert_improved.h>
 #include <lib/doskey.h>
+#include <lib/history_db.h>
+#include <lib/history_list.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lib/line_editor_integration.h>
@@ -1081,7 +1083,7 @@ force_reload_lua:
         if (history)
         {
             history->initialise();
-            history->load_rl_history();
+            history->load_history_list();
         }
     }
 

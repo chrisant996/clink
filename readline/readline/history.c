@@ -133,20 +133,6 @@ using_history (void)
 /* end_clink_change */
 }
 
-/* Return the number of bytes that the primary history entries are using.
-   This just adds up the lengths of the_history->lines and the associated
-   timestamps. */
-int
-history_total_bytes (void)
-{
-  int i, result;
-
-  for (i = result = 0; the_history && the_history[i]; i++)
-    result += HISTENT_BYTES (the_history[i]);
-
-  return (result);
-}
-
 /* Returns the magic number which says what history element we are
    looking at now.  In this implementation, it returns history_offset. */
 int
@@ -552,20 +538,4 @@ remove_history_range (int first, int last)
   history_length -= nentries;
 
   return (return_value);
-}
-
-void
-clear_history (void)
-{
-  register int i;
-
-  /* This loses because we cannot free the data. */
-  for (i = 0; i < history_length; i++)
-    {
-      free_history_entry (the_history[i]);
-      the_history[i] = (HIST_ENTRY *)NULL;
-    }
-
-  history_offset = history_length = 0;
-  history_base = 1;		/* reset history base to default */
 }

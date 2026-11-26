@@ -12,6 +12,7 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <terminal/ecma48_iter.h>
+#include <lib/history_list.h>
 #include <lib/host_callbacks.h>
 #include <lib/line_editor_integration.h>
 #include <lib/rl_integration.h>
@@ -1090,7 +1091,8 @@ static int32 getset_insert_mode(lua_State* state)
 /// -show:  clink.onaftercommand(modmark_refilter)
 static int32 is_modified_line(lua_State* state)
 {
-    lua_pushboolean(state, current_history() && rl_undo_list);
+    history_list* list = history_list::get();
+    lua_pushboolean(state, list && list->get_index() > 0 && rl_undo_list);
     return 1;
 }
 
@@ -1149,6 +1151,8 @@ static int32 get_match_color(lua_State* state)
 /// Returns the number of history items.
 static int32 get_history_count(lua_State* state)
 {
+    history_list* list = history_list::get();
+    const auto history_length = list ? list->length() : 0;
     lua_pushinteger(state, history_length);
     return 1;
 }
@@ -1167,6 +1171,9 @@ static int32 get_history_count(lua_State* state)
 /// item, and this function returns nil.
 static int32 get_history_index(lua_State* state)
 {
+    history_list* list = history_list::get();
+    const auto history_offset = list ? list->get_index() : -1;
+    const auto history_length = list ? list->length() : -1;
     if (history_offset < 0 || history_offset >= history_length)
         lua_pushnil(state);
     else
@@ -1204,31 +1211,34 @@ static int32 get_history_items(lua_State* state)
     if (!_start.isnum() || !_end.isnum())
         return 0;
 
+    history_list* list = history_list::get();
+
     int32 start = _start - 1;
     int32 end = _end;
-    if (start >= history_length || end < 1)
+    if (start >= list->length() || end < 1)
         return 0;
     if (start < 0)
         start = 0;
-    if (end > history_length)
-        end = history_length;
+    if (end > list->length())
+        end = list->length();
 
     lua_createtable(state, (end - start), 0);
 
-    HIST_ENTRY const* const* const items = history_list();
     int32 index = 0;
     for (int32 i = start; i < end; ++i)
     {
+        const auto* e = list->get_entry(i);
+
         lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "line");
-        lua_pushstring(state, items[i]->line);
+        lua_pushstring(state, e->m_line.get());
         lua_rawset(state, -3);
 
-        if (items[i]->timestamp)
+        if (e->m_timestamp.get())
         {
             lua_pushliteral(state, "time");
-            lua_pushinteger(state, atoi(items[i]->timestamp));
+            lua_pushinteger(state, atoi(e->m_timestamp.get()));
             lua_rawset(state, -3);
         }
 

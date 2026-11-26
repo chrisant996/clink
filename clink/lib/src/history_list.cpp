@@ -14,6 +14,12 @@
 
 #include <core/debugheap.h>
 
+extern "C" {
+#include <readline/rldefs.h>    // Needed for HAVE_STRING in history.h.
+#include <readline/history.h>
+#include <readline/histlib.h>   // Depends on config.h.
+}
+
 //------------------------------------------------------------------------------
 void history_list::clear()
 {
@@ -24,12 +30,12 @@ void history_list::clear()
 //------------------------------------------------------------------------------
 bool history_list::add_history(const char* line, const char* timestamp)
 {
-    if (get_count() >= c_max_capacity)
+    if (length() >= c_max_capacity)
         return false;
 
     std::unique_ptr<hist_entry> e = std::make_unique<hist_entry>();
     e->m_line = line;
-    if (timestamp)
+    if (timestamp && *timestamp)
         e->m_timestamp = timestamp;
 
     m_entries.emplace_back(std::move(e));
@@ -37,9 +43,9 @@ bool history_list::add_history(const char* line, const char* timestamp)
 }
 
 //------------------------------------------------------------------------------
-bool history_list::remove_history(uint32 index)
+bool history_list::remove_history(int32 index)
 {
-    if (index >= get_count())
+    if (index < 0 || index >= length())
         return false;
 
     if (m_index && m_index >= index)
@@ -49,9 +55,9 @@ bool history_list::remove_history(uint32 index)
 }
 
 //------------------------------------------------------------------------------
-bool history_list::set_index(uint32 index)
+bool history_list::set_index(int32 index)
 {
-    if (index > get_count())
+    if (index < 0 || index > length())
         return false;
 
     m_index = index;
@@ -59,10 +65,34 @@ bool history_list::set_index(uint32 index)
 }
 
 //------------------------------------------------------------------------------
-const hist_entry* history_list::get_entry(uint32 index) const
+const hist_entry* history_list::get_entry(int32 index) const
 {
-    if (index >= m_entries.size())
+    if (index < 0 || index >= m_entries.size())
         return nullptr;
 
     return m_entries[index].get();
+}
+
+//------------------------------------------------------------------------------
+const char* history_list::get_line(int32 index) const
+{
+    if (index < 0 || index >= m_entries.size())
+        return nullptr;
+
+    return m_entries[index]->m_line.get();
+}
+
+//------------------------------------------------------------------------------
+void clear_history()
+{
+    history_list* list = history_list::get();
+
+    list->clear();
+
+    // TODO-HISTORY: clear any "saved history line" caches.
+
+    history_prev_use_curr = 0;
+
+    free(const_cast<char*>(history_event_lookup_cache.search_string));
+    memset(&history_event_lookup_cache, 0, sizeof(history_event_lookup_cache));
 }
