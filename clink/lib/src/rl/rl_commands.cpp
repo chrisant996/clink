@@ -398,7 +398,58 @@ int32 host_remove_history(int32 rl_history_index, const char* line)
 //------------------------------------------------------------------------------
 void replace_from_history(const hist_entry* entry)
 {
-    // TODO: replace line and undo list.
+    history_list* unsave_list = nullptr;
+    if (!entry)
+    {
+        unsave_list = history_list::get();
+        entry = unsave_list->get_saved_entry();
+    }
+    assert(entry);
+    if (!entry)
+        return;
+
+    const char* line = entry->m_line.get();
+
+    // TODO: replace line and undo list; but for now, just replace the line as
+    // an undoable step.
+    g_tib->begin_undo_group();
+    g_tib->remove_text(0, -1);
+    g_tib->insert_text(line);
+    // TODO: might need to set caret here in order for undo to work intuitively.
+    g_tib->end_undo_group();
+
+    if (unsave_list)
+        unsave_list->clear_saved_entry();
+}
+
+//------------------------------------------------------------------------------
+void replace_from_history(int32 history_index)
+{
+    history_list* list = history_list::get();
+    const auto old_index = list->get_index();
+
+    list->set_index(history_index);
+    history_index = list->get_index();
+
+    if (old_index == history_index)
+        return;
+
+    const auto history_length = list->length();
+    const hist_entry* entry = nullptr;
+
+    if (history_length != history_index)
+    {
+        if (old_index == list->length())
+        {
+            // TODO: undo stack.
+            list->save_entry(g_tib->get_text().c_str());
+        }
+        entry = list->get_entry(history_index);
+    }
+
+    replace_from_history(entry);
+
+    suppress_suggestions();
 }
 
 
@@ -1335,7 +1386,7 @@ int32_t clink_accept_suggested_line(tib::editor_context& ctx, int32_t key, const
 }
 
 //------------------------------------------------------------------------------
-int32 clink_popup_history(int32 count, int32 invoking_key)
+int32_t clink_popup_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     history_list* list = history_list::get();
 
@@ -1363,9 +1414,7 @@ ding:
     case popup_result::select:
     case popup_result::use:
         {
-            list->set_index(results.m_index);
-            replace_from_history(list->get_entry(list->get_index()));
-            suppress_suggestions();
+            replace_from_history(results.m_index);
 
             const tib::textpos_t end = g_tib->get_length();
             const bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
@@ -1380,6 +1429,68 @@ ding:
     }
 
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+static int32_t navigate_history(tib::editor_context& ctx, int32_t count) noexcept
+{
+    if (!count)
+        return 0;
+
+    assert(!ctx.is_read_parameter());
+    if (ctx.is_read_parameter())
+    {
+ding:
+        tib::ding();
+        return 0;
+    }
+
+    history_list* list = history_list::get();
+    if (list->length() <= 0)
+        goto ding;
+
+    const int32 old_pos = list->get_index();
+    const bool use_current = count < 0 && history_prev_use_curr;
+    const auto requested = old_pos + count + (use_current ? 1 : 0);
+    const auto new_pos = int32(max(0, min(list->length(), requested)));
+    if (new_pos == old_pos && !use_current)
+        goto ding;
+
+    // Capture a non-end cursor position, matching history-preserve-point.
+    if (_rl_history_saved_point == -1 && ctx.get_caret() != ctx.get_length())
+        _rl_history_saved_point = ctx.get_caret();
+
+    assert(g_tib.get() == &ctx);
+    replace_from_history(new_pos);
+
+    tib::textpos_t caret;
+    if (_rl_history_preserve_point && _rl_history_saved_point >= 0)
+        caret = _rl_history_saved_point;
+    else
+        caret = ctx.get_length();
+    ctx.set_caret(min<tib::textpos_t>(caret, ctx.get_length()));
+
+    if (_rl_history_preserve_point && _rl_history_saved_point >= 0)
+        ctx.set_caret(min<int32>(_rl_history_saved_point, int32(ctx.get_length())));
+    // TODO-VI: Readline sets the caret to the beginning in vi command mode?
+
+    // TODO-VI: Readline doesn't set the mark in vi mode?
+    ctx.set_mark(ctx.get_caret() == ctx.get_length() ? 0 : tib::textpos_t(ctx.get_length()));
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t get_next_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return navigate_history(ctx, ctx.get_numeric_argument());
+}
+
+//------------------------------------------------------------------------------
+int32_t get_previous_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return navigate_history(ctx, -ctx.get_numeric_argument());
 }
 
 
@@ -1687,10 +1798,7 @@ ding:
     case popup_result::use:
     case popup_result::select:
         {
-            history_list* list = history_list::get();
-            list->set_index(results.m_index);
-            replace_from_history(list->get_entry(list->get_index()));
-            suppress_suggestions();
+            replace_from_history(results.m_index);
 
             display_readline();
             if (results.m_result == popup_result::use)
@@ -2136,7 +2244,7 @@ int32_t yank(tib::editor_context& ctx, int32_t key, const char* name, const tib:
     if (!tib::get_kill_ring_count())
     {
         tib::abort(ctx, key, name, resolved);
-        return 1;
+        return 0;
     }
 
     ctx.begin_undo_group();
@@ -2170,7 +2278,7 @@ int32_t yank_pop(tib::editor_context& ctx, int32_t key, const char* name, const 
     {
 nope:
         tib::abort(ctx, key, name, resolved);
-        return 1;
+        return 0;
     }
 
     const auto text = tib::get_kill_ring_text(index);
@@ -2365,7 +2473,7 @@ int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* nam
     {
         const auto cin = tib::term_in();
         if (cin < 0)
-            return 1;
+            return 0;
         if (cin < 0x20 || cin >= 0x40)
             return 0;
     }

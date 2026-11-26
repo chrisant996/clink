@@ -25,6 +25,7 @@ void history_list::clear()
 {
     m_index = 0;
     m_entries.clear();
+    clear_saved_entry();
 }
 
 //------------------------------------------------------------------------------
@@ -83,13 +84,35 @@ const char* history_list::get_line(int32 index) const
 }
 
 //------------------------------------------------------------------------------
+void history_list::clear_saved_entry()
+{
+    m_saved.reset();
+}
+
+//------------------------------------------------------------------------------
+bool history_list::save_entry(const char* line)
+{
+    assert(!m_saved);
+    if (m_saved)
+        return false;
+
+    m_saved = std::make_unique<hist_entry>();
+    m_saved->m_line = line;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+const hist_entry* history_list::get_saved_entry() const
+{
+    return m_saved.get();
+}
+
+//------------------------------------------------------------------------------
 void clear_history()
 {
     history_list* list = history_list::get();
 
     list->clear();
-
-    // TODO-HISTORY: clear any "saved history line" caches.
 
     history_prev_use_curr = 0;
 

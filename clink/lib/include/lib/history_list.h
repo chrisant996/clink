@@ -49,6 +49,11 @@ public:
 
     // Searching.
 
+    // Saved entry.
+    void                        clear_saved_entry();
+    bool                        save_entry(const char* line);
+    const hist_entry*           get_saved_entry() const;
+
     // Range loops.
     auto                        begin() const noexcept { return m_entries.cbegin(); }
     auto                        end() const noexcept { return m_entries.cend(); }
@@ -58,6 +63,7 @@ public:
 private:
     int32                       m_index = 0;
     history_entries             m_entries;
+    std::unique_ptr<hist_entry> m_saved;
 };
 
 //------------------------------------------------------------------------------

@@ -1451,7 +1451,6 @@ void history_db::get_file_path(str_base& out, bool session) const
 //------------------------------------------------------------------------------
 void history_db::load_internal()
 {
-
     clear_history();
     m_index_map.clear();
     m_master_len = 0;
@@ -1543,8 +1542,6 @@ void history_db::load_history_list(bool can_clean)
 #endif
 
     list->reset_cursor();
-    // TODO-HISTORY: reset history search position.
-    // TODO-HISTORY: clear any "saved history line" caches.
 }
 
 //------------------------------------------------------------------------------
