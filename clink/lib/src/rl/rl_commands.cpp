@@ -1510,6 +1510,20 @@ int32_t history_search_forward(tib::editor_context& ctx, int32_t key, const char
     return search_history(ctx, ctx.get_numeric_argument());
 }
 
+//------------------------------------------------------------------------------
+int32_t beginning_of_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    history_list* list = history_list::get();
+    return navigate_history(ctx, 0 - list->get_index());
+}
+
+//------------------------------------------------------------------------------
+int32_t end_of_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    history_list* list = history_list::get();
+    return navigate_history(ctx, list->length() - list->get_index());
+}
+
 
 
 //------------------------------------------------------------------------------
