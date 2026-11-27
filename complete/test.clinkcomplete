@@ -5,7 +5,7 @@ require("arghelper")
 local function test_names(_, _, _, builder, _)
 	local matches = {}
 	local testcmd = path.join(path.getdirectory(args[1]), "test.cmd")
-	local p = io.popen(testcmd.." --list-tests")
+	local p = io.popen(testcmd.." --list")
 	if p then
 		for l in p:lines() do
 			table.insert(matches, l)

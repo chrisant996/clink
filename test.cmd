@@ -28,7 +28,7 @@ if "%~1" == "/release" set __FLAVOR=release& goto:nextarg
 if "%~1" == "--release" set __FLAVOR=release& goto:nextarg
 if "%~1" == "/ship" set __FLAVOR=release& goto:nextarg
 if "%~1" == "--ship" set __FLAVOR=release& goto:nextarg
-if "%~1" == "--list-tests" set __FLAGS= --list-tests& goto:nextarg
+if "%~1" == "--list" set __FLAGS= --list& goto:nextarg
 
 if "%~2" == "/rel" goto:oopsflag
 if "%~2" == "-rel" goto:oopsflag
@@ -73,6 +73,7 @@ echo.
 echo Test options:
 echo   -d        Load Lua debugger.
 echo   -t        Show execution time.
+echo   --list    List tests.
 echo.
 echo Script options must precede test options.
 echo.
