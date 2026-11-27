@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <core/settings.h>
 #include <core/os.h>
+#include <core/debugheap.h>
 #include <lib/recognizer.h>
 #include <lua/lua_task_manager.h>
 #include <rl/rl_commands.h>
@@ -90,6 +91,7 @@ int32 main(int32 argc, char** argv)
 
     bool list = false;
     bool times = false;
+    bool capture_callstacks = false;
     int32 d_flag = 0;
 
     while (argc > 0)
@@ -100,6 +102,9 @@ int32 main(int32 argc, char** argv)
                  "  -?        Show this help.\n"
                  "  -d        Load Lua debugger.\n"
                  "  -dd       Force break on Lua errors.\n"
+#ifdef DEBUG
+                 "  -k        Capture allocation callstacks in the debug heap.\n"
+#endif
                  "  -o        Use stdout for native assertions instead of GUI.\n"
                  "  -t        Show individual test times.\n"
                  "  --list    List tests.");
@@ -115,6 +120,10 @@ int32 main(int32 argc, char** argv)
         {
             d_flag = 2;
             g_force_break_on_error = true;
+        }
+        else if (!strcmp(argv[0], "-k"))
+        {
+            capture_callstacks = true;
         }
         else if (!strcmp(argv[0], "-o"))
         {
@@ -138,6 +147,10 @@ int32 main(int32 argc, char** argv)
 
         argc--, argv++;
     }
+
+#ifdef DEBUG
+    dbgcapturecallstacks(capture_callstacks); // Only exists in debug builds.
+#endif
 
     if (list)
     {

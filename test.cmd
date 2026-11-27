@@ -72,6 +72,7 @@ echo   /rel      Run release version (runs debug version by default).
 echo.
 echo Test options:
 echo   -d        Load Lua debugger.
+echo   -k        Capture allocation stacks (only in debug version).
 echo   -t        Show execution time.
 echo   --list    List tests.
 echo.

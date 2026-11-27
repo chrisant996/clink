@@ -176,6 +176,12 @@ struct config
     };
 };
 
+// Outside of the config struct to avoid critsec contention.  Capturing
+// callstacks happens outside the critsec to avoid interference, performance
+// degradation, and deadlocks.  If s_capture_callstacks were inside the config
+// struct then it would be necessary to enter the critsec twice per alloc.
+static bool s_capture_callstacks = true;
+
 static config& get_config()
 {
     static config s_config;
@@ -554,10 +560,14 @@ extern "C" struct sane_alloc_config dbggetsaneallocconfig()
 extern "C" void* dbgalloc_(size_t size, uint32 flags)
 {
 #ifdef INCLUDE_CALLSTACKS
-    DWORD hash;
+    DWORD hash = 0;
     void* stack[MAX_STACK_DEPTH];
-    const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
-    size_t const levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack, &hash);
+    size_t levels = 0;
+    if (s_capture_callstacks)
+    {
+        const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
+        levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack, &hash);
+    }
 #endif
 
     auto_lock lock;
@@ -594,7 +604,7 @@ extern "C" void* dbgalloc_(size_t size, uint32 flags)
     static_assert(sizeof(p->m_stack[0]) == sizeof(stack[0]), "mismatched stack frame size");
     memcpy(p->m_stack, stack, levels * sizeof(stack[0]));
     if (levels < _countof(p->m_stack))
-        p->m_stack[levels] = 0;
+        stack[levels] = nullptr; // Null terminate.
     p->m_hash = hash;
 #endif
 
@@ -619,14 +629,13 @@ void* dbgrealloc_(void* pv, size_t size, uint32 flags)
         return dbgalloc_(size, flags | memSkipAnotherFrame);
 
 #ifdef INCLUDE_CALLSTACKS
-    DWORD hash;
+    DWORD hash = 0;
     void* stack[MAX_STACK_DEPTH];
-    const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
-    size_t levels = get_callstack_frames(skip, _countof(stack), stack, &hash);
-    if (levels < _countof(stack))
+    size_t levels = 0;
+    if (s_capture_callstacks)
     {
-        stack[levels] = nullptr; // Null terminate.
-        levels++;
+        const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
+        levels = get_callstack_frames(skip, _countof(stack), stack, &hash);
     }
 #endif
 
@@ -673,6 +682,8 @@ void* dbgrealloc_(void* pv, size_t size, uint32 flags)
     static_assert(sizeof(p->m_stack) == sizeof(stack), "mismatched stack array size");
     static_assert(sizeof(p->m_stack[0]) == sizeof(stack[0]), "mismatched stack frame size");
     memcpy(p->m_stack, stack, levels * sizeof(stack[0]));
+    if (levels < _countof(stack))
+        stack[levels] = nullptr; // Null terminate.
     p->m_hash = hash;
 #endif
 
@@ -856,6 +867,11 @@ static void reset_checker()
 
     config.reference_alloc_number = 0;
     config.reference_tag = nullptr;
+}
+
+extern "C" void dbgcapturecallstacks(int32 capture)
+{
+    s_capture_callstacks = capture;
 }
 
 extern "C" void dbgsetlabel(const void* pv, char const* label, int32 copy)

@@ -25,6 +25,7 @@ clink.argmatcher(args[1])
 	{ "/rel",			"Run release version (runs debug version by default)" },
 	{ "-d",				"Load Lua debugger" },
 	{ "-dd",			"Force break on Lua errors" },
+	{ "-k",				"Capture allocation callstacks (only in DEBUG builds)" },
 	{ "-o",				"Use stdout for native assertions instead of GUI" },
 	{ "-t",				"Show execution time" },
 })
