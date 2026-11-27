@@ -146,6 +146,10 @@ int32 main(int32 argc, char** argv)
 
     init_readline_funmap();
 
+    // Prevent loading a live .inputrc file, which could interfere with test
+    // outcomes.
+    os::set_env("clink_inputrc", "dummy_to_use_defaults");
+
     // Make console input work, e.g. for the Lua debugger.
     console_config cc(nullptr, false);
     __lua_set_clink_callbacks(&g_lua_callbacks);
