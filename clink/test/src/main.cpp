@@ -106,7 +106,8 @@ int32 main(int32 argc, char** argv)
                  "  -k        Capture allocation callstacks in the debug heap.\n"
 #endif
                  "  -o        Use stdout for native assertions instead of GUI.\n"
-                 "  -t        Show individual test times.");
+                 "  -t        Show individual test times.\n"
+                 "  --list    List tests.");
             return 1;
         }
         else if (!strcmp(argv[0], "-d"))
@@ -132,7 +133,7 @@ int32 main(int32 argc, char** argv)
         {
             times = true;
         }
-        else if (!strcmp(argv[0], "--list-tests"))
+        else if (!strcmp(argv[0], "--list"))
         {
             list = true;
         }
@@ -158,6 +159,10 @@ int32 main(int32 argc, char** argv)
     }
 
     init_editor_commands();
+
+    // Prevent loading a live .inputrc file, which could interfere with test
+    // outcomes.
+    os::set_env("clink_inputrc", "dummy_to_use_defaults");
 
     // Prevent loading a live .inputrc file, which could interfere with test
     // outcomes.
