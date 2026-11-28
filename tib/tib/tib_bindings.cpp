@@ -621,37 +621,80 @@ bool binding_resolver::quoted_insert_pending() const
     return !m_state->quoted_insert_target.expired();
 }
 
-bool binding_resolver::is_keyseq_recognized(const char* sequence, size_t len) const
+bool binding_resolver::is_keyseq_recognized(const char* const sequence, const size_t _len) const
 {
-    assert(len);
-    assert(!pending());
+    assert(_len);
     assert(!quoted_insert_pending());
-    if (pending() || quoted_insert_pending() || !len)
+    if (quoted_insert_pending() || !_len)
         return false;
+
+    // Index the pending and new bytes together, allowing replay across either
+    // buffer without allocating a combined string.
+    const size_t pending_length = m_sequence.length();
+    const size_t len = pending_length + _len;
 
     // Share the active bindings, starting with no input state.
     binding_resolver probe(this);
+    size_t self_insert_bytes = 0;
     size_t consumed = 0;
-    size_t scanned = 0;
-    while (scanned < len)
+    while (consumed < len)
     {
-        auto resolved = probe.step(uint8_t(sequence[scanned++]));
-        if (scanned == len && resolved.ambiguous())
-            resolved = probe.resolve_pending();
-        if (resolved.more())
-            continue;
-        if (resolved.outcome == dispatch_outcome::match)
-            return resolved.sequence.length() == len;
-        // Self-insert and replay must account for every examined byte.
+        const uint8_t c = ((consumed < pending_length) ?
+                           m_sequence.c_str()[consumed] :
+                           sequence[consumed - pending_length]);
+        ++consumed;
+
+        auto resolved = probe.step(c);
+
+        // Every examined byte must remain in the result or its replay.
         // Recovery that discarded a prefix cannot recognize the sequence.
-        if (resolved.outcome != dispatch_outcome::self_insert ||
-            resolved.sequence.length() + resolved.m_replay.length() != scanned - consumed)
+        if (resolved.sequence.length() + resolved.m_replay.length() != consumed - self_insert_bytes)
             return false;
 
-        consumed += resolved.sequence.length();
-        scanned = consumed; // Examine any surplus input again after self-insert.
+        if (resolved.more())
+        {
+            if (consumed != len)
+                continue;
+
+            // The input was fully consumed.
+
+            // If no bytes were self-insert yet, the outcome is conclusive;
+            // either the full input is a prefix of a binding, or the full
+            // input exactly matches a binding.
+            if (!self_insert_bytes)
+                return true;
+
+            // The remaining suffix has no complete fallback, so not all input
+            // can be handled as self-insert, and therefore the input does not
+            // represent a bound key sequence.
+            if (!resolved.ambiguous())
+                return false;
+
+            // Resolve the ambiguous suffix and finish processing it.
+            resolved = probe.resolve_pending();
+            assert(!resolved.more()); // Impossible without a bug elsewhere.
+        }
+        else if (resolved.outcome == dispatch_outcome::match)
+        {
+            // Fallback recovery could result in the resolved sequence being
+            // less than len.  Any recovery means not a recognized sequence.
+            return resolved.sequence.length() == len;
+        }
+
+        // The two valid non-self-insert cases were handled above.  At this
+        // point, if it isn't self-insert then it isn't recognized.
+        if (resolved.outcome != dispatch_outcome::self_insert)
+            return false;
+
+        // Examine any surplus input again after self-insert.
+        self_insert_bytes += resolved.sequence.length();
+        consumed = self_insert_bytes;
     }
-    return len > 0 && consumed == len;
+
+    // Valid non-self-insert cases are handled earlier.  Once the input is
+    // fully consumed but isn't a valid non-self-insert case, then the input
+    // is only a recognized key sequence if the entire input is self-insert.
+    return self_insert_bytes == len;
 }
 
 resolved_binding binding_resolver::resolve(bool force)

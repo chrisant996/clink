@@ -135,22 +135,137 @@ TEST_CASE("Key sequence recognition")
     tib::binding_resolver resolver;
     resolver.add_target(target);
 
-    SECTION("One binding must consume the entire sequence")
+    SECTION("The entire input must match a binding or its prefix")
     {
         REQUIRE(add_binding(*table, "a", "short"));
         REQUIRE(add_binding(*table, "abc", "long"));
         REQUIRE(add_binding(*table, "x", "other"));
         REQUIRE(resolver.is_keyseq_recognized("a", 1));
+        REQUIRE(resolver.is_keyseq_recognized("ab", 2));
         REQUIRE(resolver.is_keyseq_recognized("abc", 3));
-        REQUIRE(!resolver.is_keyseq_recognized("ab", 2));
         REQUIRE(!resolver.is_keyseq_recognized("abx", 3));
         REQUIRE(!resolver.is_keyseq_recognized("ax", 2));
         REQUIRE(!resolver.is_keyseq_recognized("abcx", 4));
-        REQUIRE(!resolver.is_keyseq_recognized("", 0));
 
         REQUIRE(table->add("m", tib::binding_target_macro("text")));
         REQUIRE(resolver.is_keyseq_recognized("m", 1));
         REQUIRE(!resolver.is_keyseq_recognized("mx", 2));
+    }
+
+    SECTION("Chord prefixes do not need standalone bindings")
+    {
+        REQUIRE(add_binding(*table, "xa", "a"));
+        REQUIRE(add_binding(*table, "xb", "b"));
+        REQUIRE(add_binding(*table, "xc", "c"));
+        REQUIRE(add_binding(*table, "xdef", "deep"));
+        REQUIRE(add_binding(*table, "z", "other"));
+        REQUIRE(add_binding(*table, "yq", "other-prefix"));
+        for (const char* sequence : { "x", "xa", "xb", "xc", "xd", "xde", "xdef" })
+        {
+            REQUIRE(resolver.is_keyseq_recognized(sequence, strlen(sequence)));
+            REQUIRE(!resolver.pending());
+        }
+        REQUIRE(!resolver.is_keyseq_recognized("xax", 3));
+        REQUIRE(!resolver.is_keyseq_recognized("xdx", 3));
+        REQUIRE(!resolver.is_keyseq_recognized("xz", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("xy", 2));
+    }
+
+    SECTION("Ctrl-X chords recognize individual key presses")
+    {
+        REQUIRE(add_binding(*table, "\x18\x18", "ctrl-x-ctrl-x"));
+        REQUIRE(add_binding(*table, "\x18\x12", "ctrl-x-ctrl-r"));
+
+        REQUIRE(resolver.is_keyseq_recognized("\x18", 1));
+        REQUIRE(resolver.is_keyseq_recognized("\x18\x18", 2));
+        REQUIRE(resolver.is_keyseq_recognized("\x18\x12", 2));
+        REQUIRE(!resolver.is_keyseq_recognized("\x18\x1b[20;6~", 8));
+        REQUIRE(!resolver.pending());
+
+        // Ctrl-X is only a prefix; it has no standalone binding.
+        const auto prefix = resolver.step(0x18);
+        REQUIRE(prefix.more());
+        REQUIRE(!prefix.ambiguous());
+        REQUIRE(resolver.pending());
+
+        // Probe each possible next key without consuming the pending Ctrl-X.
+        REQUIRE(resolver.is_keyseq_recognized("\x12", 1));
+        REQUIRE(!resolver.is_keyseq_recognized("\x1b[20;6~", 7)); // Ctrl-Shift-F9.
+        REQUIRE(resolver.is_keyseq_recognized("\x18", 1));
+        REQUIRE(resolver.pending());
+        REQUIRE(resolver.step(0x12).is_func_name("ctrl-x-ctrl-r"));
+    }
+
+    SECTION("Pending chords use the current binding table")
+    {
+        REQUIRE(add_binding(*table, "xa", "original"));
+        REQUIRE(add_binding(*table, "xb", "other"));
+        REQUIRE(resolver.step('x').more());
+
+        REQUIRE(table->remove("xa"));
+        REQUIRE(add_binding(*table, "xc", "replacement"));
+        REQUIRE(!resolver.is_keyseq_recognized("a", 1));
+        REQUIRE(resolver.is_keyseq_recognized("b", 1));
+        REQUIRE(resolver.is_keyseq_recognized("c", 1));
+        REQUIRE(resolver.pending());
+        REQUIRE(resolver.step('c').is_func_name("replacement"));
+    }
+
+    SECTION("Self-insert replay crosses pending and new input")
+    {
+        table->set_can_self_insert(true);
+        REQUIRE(add_binding(*table, "abc", "command"));
+        REQUIRE(resolver.step('a').more());
+        REQUIRE(resolver.step('b').more());
+
+        // The mismatch selects self-insert for a, then replays pending b
+        // followed by the newly supplied x.
+        REQUIRE(resolver.is_keyseq_recognized("x", 1));
+        REQUIRE(resolver.is_keyseq_recognized("c", 1));
+        REQUIRE(!resolver.is_keyseq_recognized("cx", 2));
+        REQUIRE(resolver.pending());
+        REQUIRE(resolver.step('c').is_func_name("command"));
+    }
+
+    SECTION("Long pending chords cross fallback groups")
+    {
+        const char chord[] = "abcdefgh";
+        const size_t length = sizeof(chord) - 1;
+        REQUIRE(add_binding(*table, chord, "eight-key-chord"));
+
+        // In search order, each group matches one more key before falling
+        // through: aX, abX, abcX, ..., abcdefgX, then abcdefgh in the base.
+        for (size_t prefix_length = length - 1; prefix_length; --prefix_length)
+        {
+            auto fallback = std::make_shared<tib::key_table>(false);
+            tib::cstring competing(chord, prefix_length);
+            competing.append("X");
+            REQUIRE(add_binding(*fallback, competing.c_str(), "competing-chord"));
+            target->add_bindings(fallback, tib::binding_policy::fallback);
+        }
+
+        for (size_t i = 0; i < length; ++i)
+        {
+            REQUIRE(resolver.is_keyseq_recognized(chord + i, 1));
+            REQUIRE(resolver.is_keyseq_recognized(chord + i, length - i));
+            const auto resolved = resolver.step(uint8_t(chord[i]));
+            if (i + 1 < length)
+                REQUIRE(resolved.more());
+            else
+                REQUIRE(resolved.is_func_name("eight-key-chord"));
+        }
+    }
+
+    SECTION("Ambiguous chord recognition does not commit the shorter binding")
+    {
+        REQUIRE(add_binding(*table, "x", "short"));
+        REQUIRE(add_binding(*table, "xa", "long"));
+        REQUIRE(resolver.is_keyseq_recognized("x", 1));
+        REQUIRE(!resolver.pending());
+        REQUIRE(resolver.step('x').ambiguous());
+        REQUIRE(resolver.is_keyseq_recognized("a", 1));
+        REQUIRE(!resolver.is_keyseq_recognized("z", 1));
+        REQUIRE(resolver.resolve_pending().is_func_name("short"));
     }
 
     SECTION("Recovery cannot recognize an unbound sequence")
@@ -174,6 +289,10 @@ TEST_CASE("Key sequence recognition")
         table->set_can_self_insert(true);
         REQUIRE(add_binding(*table, "abc", "command"));
         REQUIRE(resolver.is_keyseq_recognized("xyz", 3));
+        // Resolving a trailing ambiguous prefix must process the self-insert
+        // result, including any suffix that needs to be replayed.
+        REQUIRE(resolver.is_keyseq_recognized("xa", 2));
+        REQUIRE(resolver.is_keyseq_recognized("xab", 3));
         REQUIRE(resolver.is_keyseq_recognized("ax", 2));
         REQUIRE(resolver.is_keyseq_recognized("abx", 3));
         REQUIRE(resolver.is_keyseq_recognized("ab", 2));
@@ -183,7 +302,9 @@ TEST_CASE("Key sequence recognition")
         REQUIRE(!resolver.is_keyseq_recognized("xabcx", 5));
         REQUIRE(!resolver.is_keyseq_recognized("a\x1bxyz", 5));
         REQUIRE(resolver.is_keyseq_recognized("\xf0\x9f\x98\x80x", 5));
-        REQUIRE(!resolver.is_keyseq_recognized("\xf0\x9f", 2));
+        REQUIRE(resolver.is_keyseq_recognized("\xf0", 1));
+        REQUIRE(resolver.is_keyseq_recognized("\xf0\x9f", 2));
+        REQUIRE(resolver.is_keyseq_recognized("\xf0\x9f\x98", 3));
         REQUIRE(!resolver.is_keyseq_recognized("\xf0\x9fx", 3));
     }
 
@@ -194,11 +315,13 @@ TEST_CASE("Key sequence recognition")
         REQUIRE(table->add("\x1b[%#A", tib::binding_target_func("pattern"), true));
         REQUIRE(table->add("\0\xff", 2, tib::binding_target_func("binary")));
         REQUIRE(resolver.is_keyseq_recognized("aX", 2));
+        REQUIRE(resolver.is_keyseq_recognized("\x1b[", 2));
         REQUIRE(resolver.is_keyseq_recognized("\x1b[123A", 6));
-        REQUIRE(!resolver.is_keyseq_recognized("\x1b[123", 5));
+        REQUIRE(resolver.is_keyseq_recognized("\x1b[123", 5));
         REQUIRE(!resolver.is_keyseq_recognized("\x1b[123Z", 6));
         REQUIRE(resolver.is_keyseq_recognized("\0\xff", 2));
         REQUIRE(!resolver.is_keyseq_recognized("\0\xffx", 3));
+        REQUIRE(resolver.is_keyseq_recognized("\0", 1));
     }
 
     REQUIRE(!resolver.pending());

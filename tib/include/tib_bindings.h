@@ -289,9 +289,11 @@ public:
     bool                quoted_insert_pending() const;
     bool                pending() const { return !m_sequence.empty(); }
 
-                        // True when one binding consumes the entire sequence,
-                        // or all input is self-insert.  Requires no pending
-                        // input or quoted insert; does not dispatch anything.
+                        // Test pending input plus the supplied bytes against
+                        // current bindings.  True for a binding or its prefix,
+                        // or all self-insert.  Requires nonempty supplied input
+                        // and no quoted insert; does not dispatch or change
+                        // pending input.
     bool                is_keyseq_recognized(const char* sequence, size_t len) const;
 
 private:
