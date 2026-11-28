@@ -68,6 +68,7 @@ static int _rl_history_search_flags;
 
 /* begin_clink_change */
 int _rl_history_point_at_end_of_anchored_search = 0;
+int _rl_history_point_at_end_of_substring_search = 0;
 /* end_clink_change */
 
 static char *history_search_string;

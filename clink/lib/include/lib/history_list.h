@@ -47,8 +47,9 @@ public:
     const char*                 get_line(int32 index) const;
 
     // Searching.
-    void                        init_search(const char* line, int32 caret);
+    void                        init_search(const char* line, int32 caret, bool substring);
     bool                        has_search_string() const;
+    int32                       get_search_len() const { return int32(m_needle.length()); }
     int32                       search(int32 start, int32 direction, int32& new_caret) const;
 
     // Saved entry.
@@ -69,6 +70,7 @@ private:
     std::unique_ptr<hist_entry> m_saved;
 
     str_moveable                m_needle;
+    bool                        m_substring = false;
     mutable const char*         m_last_found = nullptr; // Borrowed from m_entries.
 };
 

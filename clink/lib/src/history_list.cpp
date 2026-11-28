@@ -98,9 +98,10 @@ const char* history_list::get_line(int32 index) const
 }
 
 //------------------------------------------------------------------------------
-void history_list::init_search(const char* line, int32 caret)
+void history_list::init_search(const char* line, int32 caret, bool substring)
 {
     m_needle.clear();
+    m_substring = substring;
     m_last_found = nullptr;
     if (!line)
         return;
@@ -142,8 +143,30 @@ int32 history_list::search(int32 start, int32 direction, int32& new_caret) const
             continue;
 
         // Compare the search string with the candidate line.
-        const auto cmp = str_compare(line, m_needle.c_str());
-        if (cmp < 0 || cmp == m_needle.length())
+        bool match = false;
+        if (m_substring)
+        {
+            for (str_iter iter(line); iter.more(); iter.next())
+            {
+                const auto cmp = str_compare(iter.get_pointer(), m_needle.c_str());
+                if (cmp < 0 || cmp == m_needle.length())
+                {
+                    match = true;
+                    new_caret = int32(iter.get_pointer() - line);
+                    // Backwards search keeps going to make sure it gets the
+                    // last match on the line.
+                    if (direction >= 0)
+                        break;
+                }
+            }
+        }
+        else
+        {
+            const auto cmp = str_compare(line, m_needle.c_str());
+            match = (cmp < 0 || cmp == m_needle.length());
+            new_caret = m_needle.length();
+        }
+        if (match)
         {
             m_last_found = line;
             return start;
@@ -180,7 +203,8 @@ void clear_history()
 {
     history_list* list = history_list::get();
 
-    list->clear();
+    if (list)
+        list->clear();
 
     history_prev_use_curr = 0;
 

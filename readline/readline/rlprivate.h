@@ -647,6 +647,7 @@ extern _rl_search_cxt *_rl_nscxt;
 extern int _rl_history_search_pos;
 /* begin_clink_change */
 extern int _rl_history_point_at_end_of_anchored_search;
+extern int _rl_history_point_at_end_of_substring_search;
 /* end_clink_change */
 
 /* signals.c */

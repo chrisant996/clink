@@ -1425,7 +1425,7 @@ ding:
 }
 
 //------------------------------------------------------------------------------
-static int32_t search_history(tib::editor_context& ctx, int32_t count) noexcept
+static int32_t search_history(tib::editor_context& ctx, int32_t count, bool substring) noexcept
 {
     if (!count)
         return 0;
@@ -1443,8 +1443,11 @@ ding:
         goto ding;
 
     const auto last_func = ctx.get_last_command_func();
-    if (last_func != history_search_backward && last_func != history_search_forward)
-        list->init_search(ctx.get_text().c_str(), ctx.get_caret());
+    const auto last_func2 = get_effective_last_command_func();
+    if (substring ?
+        (last_func != history_substr_search_backward && last_func != history_substr_search_forward) :
+        (last_func != history_search_backward && last_func != history_search_forward))
+        list->init_search(ctx.get_text().c_str(), ctx.get_caret(), substring);
 
     if (!list->has_search_string())
         return navigate_history(ctx, count);
@@ -1472,14 +1475,25 @@ ding:
     }
 
     if (old_index == new_index)
-        tib::ding();
-    else
-        replace_from_history(new_index);
+        goto ding;
 
-    tib::textpos_t mark = ctx.get_length();
-    if (new_caret < 0)
-        new_caret = mark;
-    if (_rl_history_point_at_end_of_anchored_search)
+    replace_from_history(new_index);
+
+    tib::textpos_t mark;
+    bool swap;
+    if (substring)
+    {
+        mark = new_caret + list->get_search_len();
+        if (new_caret < 0)
+            new_caret = mark;
+        swap = !!_rl_history_point_at_end_of_substring_search;
+    }
+    else
+    {
+        mark = ctx.get_length();
+        swap = !!_rl_history_point_at_end_of_anchored_search;
+    }
+    if (swap)
         std::swap(new_caret, mark);
     ctx.set_caret(new_caret);
     ctx.set_mark(mark);
@@ -1501,13 +1515,25 @@ int32_t get_previous_history(tib::editor_context& ctx, int32_t key, const char* 
 //------------------------------------------------------------------------------
 int32_t history_search_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    return search_history(ctx, -ctx.get_numeric_argument());
+    return search_history(ctx, -ctx.get_numeric_argument(), false);
 }
 
 //------------------------------------------------------------------------------
 int32_t history_search_forward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
-    return search_history(ctx, ctx.get_numeric_argument());
+    return search_history(ctx, ctx.get_numeric_argument(), false);
+}
+
+//------------------------------------------------------------------------------
+int32_t history_substr_search_backward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return search_history(ctx, -ctx.get_numeric_argument(), true);
+}
+
+//------------------------------------------------------------------------------
+int32_t history_substr_search_forward(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return search_history(ctx, ctx.get_numeric_argument(), true);
 }
 
 //------------------------------------------------------------------------------

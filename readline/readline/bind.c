@@ -1560,6 +1560,7 @@ static const struct {
   { "expand-tilde",		&rl_complete_with_tilde_expansion, 0 },
 /* begin_clink_change */
   { "history-point-at-end-of-anchored-search", &_rl_history_point_at_end_of_anchored_search, 0 },
+  { "history-point-at-end-of-substring-search", &_rl_history_point_at_end_of_substring_search, 0 },
 /* end_clink_change */
   { "history-preserve-point",	&_rl_history_preserve_point,	0 },
   { "horizontal-scroll-mode",	&_rl_horizontal_scroll_mode,	0 },

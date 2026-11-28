@@ -1294,6 +1294,7 @@ Variable | Description
 -|-
 <a name="configcompletionautoqueryitems"></a>`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they won't fit without scrolling (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
 <a name="confighistorypointatendofanchoredsearch"></a>`history-point-at-end-of-anchored-search` | If set to "on", this puts the cursor at the end of the line when using [`history-search-forward`](#rlcmd-history-search-forward) or [`history-search-backward`](#rlcmd-history-search-backward). The default is "off".
+<a name="confighistorypointatendofsubstringsearch"></a>`history-point-at-end-of-substring-search` | If set to "on", this puts the cursor at the end of the found substring when using [`history-substring-search-forward`](#rlcmd-history-substring-search-forward) or [`history-substring-search-backward`](#rlcmd-history-substring-search-backward). The default is "off".
 <a name="configmenucompletewraparound"></a>`menu-complete-wraparound` | If this is "on", the [`menu-complete`](#rlcmd-menu-complete) family of commands wraps around when reaching the end of the possible completions. The default is "on".
 <a name="configsearchignorecase"></a>`search-ignore-case` | Controls whether the history search commands ignore case. The default is "on".
 

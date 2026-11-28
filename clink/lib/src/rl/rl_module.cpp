@@ -2063,6 +2063,7 @@ static void save_restore_initial_state(const bool restore)
         { &_rl_enable_meta                              },  // "enable-meta-key"
         { &rl_complete_with_tilde_expansion             },  // "expand-tilde"
         { &_rl_history_point_at_end_of_anchored_search  },  // "history-point-at-end-of-anchored-search"
+        { &_rl_history_point_at_end_of_substring_search },  // "history-point-at-end-of-substring-search"
         { &_rl_history_preserve_point                   },  // "history-preserve-point"
         //{ nullptr                                       },  // "history-size"
         { &_rl_horizontal_scroll_mode                   },  // "horizontal-scroll-mode"

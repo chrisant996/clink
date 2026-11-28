@@ -15,6 +15,7 @@
 #include <core/str.h>
 #include <lib/history_db.h>
 #include <lib/history_list.h>
+#include <lib/rl_integration.h>
 #include <utils/app_context.h>
 
 #include <initializer_list>
@@ -51,6 +52,21 @@ struct test_history_db
     : history_db(::get_history_path(), app_context::get()->get_id(), true/*use_master_bank*/)
     {
         initialise();
+    }
+
+    template<size_t N>
+    test_history_db(const char* (&history_lines)[N])
+    : history_db(::get_history_path(), app_context::get()->get_id(), true/*use_master_bank*/)
+    {
+        initialise();
+        for (const char* line : history_lines)
+            add(line);
+        load_history_list();
+    }
+
+    ~test_history_db()
+    {
+        clear_history();
     }
 
     uint32 get_master_length() const
@@ -328,7 +344,7 @@ TEST_CASE("history db")
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("history rl")
+TEST_CASE("history list")
 {
     // Start with an empty state dir.
     const char* empty_fs[] = { nullptr };
@@ -346,21 +362,17 @@ TEST_CASE("history rl")
     str_base(context_desc.state_dir).copy(fs.get_root());
     app_context context(context_desc);
 
-    // Fill the history. reload() call will fill Readline.
-    static const char* history_lines[] = {
-        "cmd1 arg1 arg2 arg3 arg4",
-        "cmd2 arg1 arg2 arg3 arg4 extra",
-        "cmd3 arg1 arg2 arg3 arg4",
-    };
-
-    test_history_db history;
-    for (const char* line : history_lines)
-        history.add(line);
-    history.load_history_list();
-
     // Here be the tests.
     SECTION("Navigation")
     {
+        static const char* history_lines[] = {
+            "cmd1 arg1 arg2 arg3 arg4",
+            "cmd2 arg1 arg2 arg3 arg4 extra",
+            "cmd3 arg1 arg2 arg3 arg4",
+        };
+
+        test_history_db history(history_lines);
+
         line_editor_tester tester;
 
         SECTION("Ctrl-P 1")
@@ -406,8 +418,100 @@ TEST_CASE("history rl")
         }
     }
 
+    SECTION("Anchored")
+    {
+        static const char* history_lines[] = {
+            "cmd first",
+            "other cmd middle",
+            "cmd second",
+            "other latest",
+        };
+
+        test_history_db history(history_lines);
+
+        line_editor_tester tester;
+
+        MAKE_CLEANUP([]() {
+            clink_bind("\\eZ", nullptr, emacs_table);
+            clink_bind("\\eY", nullptr, emacs_table);
+        });
+        clink_bind("\\eZ", "history-search-backward", emacs_table);
+        clink_bind("\\eY", "history-search-forward", emacs_table);
+
+        SECTION("Backward 1")
+        {
+            tester.set_input("cmd" "\x1bZ");
+            tester.set_expected_output(history_lines[2]);
+            tester.run();
+        }
+
+        SECTION("Backward 2")
+        {
+            tester.set_input("cmd" "\x1bZ\x1bZ");
+            tester.set_expected_output(history_lines[0]);
+            tester.run();
+        }
+
+        SECTION("Forward")
+        {
+            tester.set_input("cmd" "\x1bZ\x1bZ\x1bY");
+            tester.set_expected_output(history_lines[2]);
+            tester.run();
+        }
+    }
+
+    SECTION("Substring")
+    {
+        static const char* history_lines[] = {
+            "first arg",
+            "unrelated middle",
+            "second arg",
+            "unrelated latest",
+        };
+
+        test_history_db history(history_lines);
+
+        line_editor_tester tester;
+
+        MAKE_CLEANUP([]() {
+            clink_bind("\\eZ", nullptr, emacs_table);
+            clink_bind("\\eY", nullptr, emacs_table);
+        });
+        clink_bind("\\eZ", "history-substring-search-backward", emacs_table);
+        clink_bind("\\eY", "history-substring-search-forward", emacs_table);
+
+        SECTION("Backward 1")
+        {
+            tester.set_input("arg" "\x1bZ");
+            tester.set_expected_output(history_lines[2]);
+            tester.run();
+        }
+
+        SECTION("Backward 2")
+        {
+            tester.set_input("arg" "\x1bZ\x1bZ");
+            tester.set_expected_output(history_lines[0]);
+            tester.run();
+        }
+
+        SECTION("Forward")
+        {
+            tester.set_input("arg" "\x1bZ\x1bZ\x1bY");
+            tester.set_expected_output(history_lines[2]);
+            tester.run();
+        }
+    }
+
     SECTION("Search")
     {
+        static const char* history_lines[] = {
+            "cmd1 arg1 arg2 arg3 arg4",
+            "cmd2 arg1 arg2 arg3 arg4 extra",
+            "cmd3 arg1 arg2 arg3 arg4",
+        };
+
+        test_history_db history(history_lines);
+
         line_editor_tester tester;
 
         SECTION("Ctrl-R Ctrl-E")
@@ -444,6 +548,35 @@ TEST_CASE("history rl")
             tester.run();
         }
     }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("history expansion")
+{
+    // Start with an empty state dir.
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
+
+    // This sets the state id to something explicit.
+    static const char* env_desc[] = {
+        "=clink.id", "493",
+        nullptr
+    };
+    env_fixture env(env_desc);
+
+    app_context::desc context_desc;
+    context_desc.inherit_id = true;
+    str_base(context_desc.state_dir).copy(fs.get_root());
+    app_context context(context_desc);
+
+    // Fill the history. reload() call will fill Readline.
+    static const char* history_lines[] = {
+        "cmd1 arg1 arg2 arg3 arg4",
+        "cmd2 arg1 arg2 arg3 arg4 extra",
+        "cmd3 arg1 arg2 arg3 arg4",
+    };
+
+    test_history_db history(history_lines);
 
     SECTION("Expansion")
     {
