@@ -7,6 +7,7 @@
 #include <core/settings.h>
 #include <core/os.h>
 #include <core/debugheap.h>
+#include <lib/history_list.h>
 #include <lib/recognizer.h>
 #include <lua/lua_task_manager.h>
 #include <rl/rl_commands.h>
@@ -175,6 +176,10 @@ int32 main(int32 argc, char** argv)
     DWORD start = GetTickCount();
 
     clatch::colors::initialize();
+
+    clatch::prepare_test::get_func() = []() {
+        clear_history();
+    };
 
     const char* prefix = (argc > 0) ? argv[0] : "";
     int32 result = (clatch::run(prefix, times) != true);

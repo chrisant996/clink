@@ -3050,6 +3050,8 @@ void rl_module::on_begin_line(const context& context)
     case FACE_NONE:         return fallback_color(s_none_color, c_normal);
 #endif
 
+    restore_saved_history(*g_tib); // Finish operate-and-get-next.
+
     reset_display_readline();
 
     m_active = true;

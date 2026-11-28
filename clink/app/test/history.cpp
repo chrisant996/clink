@@ -35,6 +35,7 @@ char* tgetstr(const char*, char**);
 #define CTRL_N "\x0e"
 #define CTRL_P "\x10"
 #define CTRL_R "\x12"
+#define ESC    "\x1b"
 
 //------------------------------------------------------------------------------
 static const char* get_history_path()
@@ -440,21 +441,21 @@ TEST_CASE("history list")
 
         SECTION("Backward 1")
         {
-            tester.set_input("cmd" "\x1bZ");
+            tester.set_input("cmd" ESC"Z");
             tester.set_expected_output(history_lines[2]);
             tester.run();
         }
 
         SECTION("Backward 2")
         {
-            tester.set_input("cmd" "\x1bZ\x1bZ");
+            tester.set_input("cmd" ESC"Z" ESC"Z");
             tester.set_expected_output(history_lines[0]);
             tester.run();
         }
 
         SECTION("Forward")
         {
-            tester.set_input("cmd" "\x1bZ\x1bZ\x1bY");
+            tester.set_input("cmd" ESC"Z" ESC"Z" ESC"Y");
             tester.set_expected_output(history_lines[2]);
             tester.run();
         }
@@ -482,21 +483,21 @@ TEST_CASE("history list")
 
         SECTION("Backward 1")
         {
-            tester.set_input("arg" "\x1bZ");
+            tester.set_input("arg" ESC"Z");
             tester.set_expected_output(history_lines[2]);
             tester.run();
         }
 
         SECTION("Backward 2")
         {
-            tester.set_input("arg" "\x1bZ\x1bZ");
+            tester.set_input("arg" ESC"Z" ESC"Z");
             tester.set_expected_output(history_lines[0]);
             tester.run();
         }
 
         SECTION("Forward")
         {
-            tester.set_input("arg" "\x1bZ\x1bZ\x1bY");
+            tester.set_input("arg" ESC"Z" ESC"Z" ESC"Y");
             tester.set_expected_output(history_lines[2]);
             tester.run();
         }
@@ -530,7 +531,7 @@ TEST_CASE("history list")
 
         SECTION("Ctrl-R <Esc>")
         {
-            tester.set_input(CTRL_R "cmd2" "\x1b");
+            tester.set_input(CTRL_R "cmd2" ESC);
             tester.set_expected_output(history_lines[1]);
             tester.run();
         }

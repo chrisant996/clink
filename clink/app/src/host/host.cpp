@@ -846,7 +846,7 @@ skip_errorlevel:
     bool send_event = interactive;
     bool init_prompt = interactive;
     bool init_editor = interactive;
-    bool init_history = reset || (interactive && !rl_has_saved_history());
+    bool init_history = reset || (interactive && !has_saved_history());
 
     // Delete Lua if the script path has changed, to reinitialize Lua.
     if (m_lua && m_lua->is_script_path_changed())
@@ -1250,7 +1250,7 @@ force_reload_lua:
         // Determine whether to add the line to history.  Must happen before
         // calling expand() because that resets the history position.
         bool add_history = true;
-        if (skip_editor || rl_has_saved_history())
+        if (skip_editor || has_saved_history())
         {
             // Don't add to history when the onprovideline event returned a
             // string.  Don't add to history when the operate-and-get-next

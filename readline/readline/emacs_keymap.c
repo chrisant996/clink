@@ -47,7 +47,7 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-l */
   { ISFUNC, rl_newline },			/* Control-m */
   { ISFUNC, rl_get_next_history },		/* Control-n */
-  { ISFUNC, rl_operate_and_get_next },		/* Control-o */
+  { ISFUNC, /*rl_operate_and_get_next*/ },	/* Control-o */
   { ISFUNC, rl_get_previous_history },		/* Control-p */
   { ISFUNC, rl_quoted_insert },			/* Control-q */
   { ISFUNC, rl_reverse_search_history },	/* Control-r */

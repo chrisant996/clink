@@ -30,7 +30,7 @@ public:
     uint32          get_height() const;
     void            clear_index(bool force=false);
     void            notify_cleared();
-    bool            get_selected_history_index(int32& index) const;
+    int32           get_selected_history_index() const;
     bool            remove_history_index(int32 history_index);
     bool            is_active() const;
     bool            is_active_even_if_hidden() const;

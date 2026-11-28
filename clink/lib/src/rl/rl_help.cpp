@@ -241,7 +241,7 @@ static const func_desc c_func_descriptions[] =
     // { "non-incremental-forward-search-history-again", rl_noninc_forward_search_again, keycat_history, "" },
     // { "non-incremental-reverse-search-history-again", rl_noninc_reverse_search_again, keycat_history, "" },
     { "old-menu-complete", old_menu_complete, keycat_completion, "Replace the completion word with the next match.  Repeated execution steps through the possible completions" },
-    // { "operate-and-get-next", rl_operate_and_get_next, keycat_history, "Accept the current line, and fetch the next line relative to the current line from the history for editing.  A numeric argument, if supplied, specifies the history entry to use instead of the current line" },
+    { "operate-and-get-next", operate_and_get_next, keycat_history, "Accept the current line, and fetch the next line relative to the current line from the history for editing.  A numeric argument, if supplied, specifies the history entry to use instead of the current line" },
     { "overwrite-mode", tib::toggle_overwrite_mode, keycat_basic, "Toggle overwrite mode.  This commands affects only 'emacs' mode.  Each input line always starts in insert mode" },
     { "paste-from-clipboard", clink_paste, keycat_basic, "Paste text from the clipboard at the cursor point" },
     { "possible-completions", possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },

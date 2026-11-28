@@ -9,8 +9,19 @@
 #include "line_state.h"
 #include "word_collector.h"
 #include "rl_integration.h"
+#include "history_list.h"
 
 #include <core/array.h>
+
+//------------------------------------------------------------------------------
+#define CTRL_A "\x01"
+#define CTRL_N "\x0e"
+#define CTRL_O "\x0f"
+#define CTRL_P "\x10"
+#define CTRL_Q "\x11"
+#define CTRL_U "\x15"
+#define CTRL_X "\x18"
+#define ESC    "\x1b"
 
 //------------------------------------------------------------------------------
 struct delim_module
@@ -136,17 +147,17 @@ TEST_CASE("keyboard macro : record")
     line_editor_tester tester;
 
     // Record a kbd macro.
-    tester.set_input("\x18(" "ab" "\x18)");
+    tester.set_input(CTRL_X"(" "ab" CTRL_X")");
     tester.set_expected_output("ab");
     tester.run();
 
     // Verify number argument with call-last-kbd-macro.
-    tester.set_input(/*ALT-2 arg*/ "\x1b" "2" /*call-last-kbd-macro*/ "\x18" "e");
+    tester.set_input(/*ALT-2 arg*/ ESC"2" /*call-last-kbd-macro*/ CTRL_X"e");
     tester.set_expected_output("abab");
     tester.run();
 
     // Verify calling an empty kbd macro has no effect.
-    tester.set_input("\x18(" "\x18)" "\x18" "e");
+    tester.set_input(CTRL_X"(" CTRL_X")" CTRL_X"e");
     tester.set_expected_output("");
     tester.run();
 }
@@ -159,10 +170,143 @@ TEST_CASE("keyboard macro : print")
     MAKE_CLEANUP([](){ clink_bind("\\eZ", nullptr, emacs_table); });
     clink_bind("\\eZ", "print-last-kbd-macro", emacs_table);
 
-    tester.set_input("\x18(" "a" "\x11" "\x01" "\x18)" "\x1bZ");
-    tester.set_expected_output("a\x01");
+    tester.set_input(CTRL_X"(" "a" CTRL_Q CTRL_A CTRL_X")" ESC"Z");
+    tester.set_expected_output("a" CTRL_A);
     tester.capture_command_output();
     tester.run();
 
     REQUIRE(strcmp(tester.get_command_output(), "a\\C-q\\C-a\n") == 0);
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("operate and get next")
+{
+    std::unique_ptr<history_list> owned_history;
+    if (!history_list::get())
+        owned_history = std::make_unique<history_list>();
+
+    line_editor_tester tester;
+    line_editor* editor = tester.get_editor();
+    REQUIRE(editor->update());
+    clear_history();
+    MAKE_CLEANUP([]() { clear_history(); });
+    history_list* list = history_list::get();
+    list->add_history("one");
+    list->add_history("two");
+    list->add_history("three");
+    list->reset_cursor();
+
+    tester.feed_input(CTRL_P CTRL_P); // Recall the second entry.
+    REQUIRE(g_tib->get_text() == "two");
+
+    const char* expected = "three";
+    int32 expected_index = 2;
+    bool pending = true;
+    SECTION("next entry") {}
+    SECTION("edited entry") { tester.feed_input(" edited"); }
+    SECTION("search result")
+    {
+        tester.feed_input(CTRL_N CTRL_N CTRL_U "tw" ESC"[5~"); // Ctrl+U, prefix, history search.
+        REQUIRE(g_tib->get_text() == "two");
+    }
+    SECTION("explicit entry")
+    {
+        g_tib->set_numeric_argument(2);
+        expected = "two";
+        expected_index = 1;
+    }
+    SECTION("zero argument")
+    {
+        g_tib->set_numeric_argument(0);
+        expected = "one";
+        expected_index = 0;
+    }
+    SECTION("negative argument")
+    {
+        g_tib->set_numeric_argument(-1);
+        expected = "";
+        pending = false;
+    }
+    SECTION("past end")
+    {
+        g_tib->set_numeric_argument(999);
+        expected = "";
+        expected_index = 3;
+    }
+    SECTION("last entry")
+    {
+        tester.feed_input(CTRL_N);
+        expected = "";
+        expected_index = 3;
+    }
+    SECTION("new line")
+    {
+        tester.feed_input(CTRL_N CTRL_N);
+        expected = "";
+        expected_index = 3;
+    }
+    SECTION("empty history")
+    {
+        clear_history();
+        expected = "";
+        expected_index = 0;
+    }
+
+    str_moveable accepted(g_tib->get_text().c_str());
+    auto binding = g_tib->lookup_keyseq(CTRL_O);
+    REQUIRE(binding.is_func_name("operate-and-get-next"));
+    REQUIRE(g_tib->dispatch(binding.sequence, binding.key, &binding.binding_target, &binding) == 0);
+    REQUIRE(g_tib->is_done());
+    REQUIRE(has_saved_history() == pending);
+    str<> line;
+    REQUIRE(editor->get_line(line));
+    REQUIRE(line.equals(accepted.c_str()));
+
+    // Starting the next prompt consumes the saved position exactly once.
+    REQUIRE(editor->update());
+    REQUIRE(!has_saved_history());
+    REQUIRE(g_tib->get_text() == expected);
+    REQUIRE(g_tib->get_caret() == g_tib->get_length());
+    if (pending)
+        REQUIRE(list->get_index() == expected_index);
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("operate and get next replay")
+{
+    std::unique_ptr<history_list> owned_history;
+    if (!history_list::get())
+        owned_history = std::make_unique<history_list>();
+
+    clear_history();
+    MAKE_CLEANUP([]() { clear_history(); });
+
+    history_list* list = history_list::get();
+    list->add_history("one");
+    list->add_history("two");
+    list->add_history("three");
+    list->reset_cursor();
+
+    line_editor_tester tester;
+    line_editor* editor = tester.get_editor();
+
+    REQUIRE(editor->update());
+    tester.feed_input(CTRL_P CTRL_P CTRL_P);
+
+    for (const char* expected : { "one", "two", "three" })
+    {
+        REQUIRE(g_tib->get_text() == expected);
+        auto binding = g_tib->lookup_keyseq(CTRL_O);
+        REQUIRE(g_tib->dispatch(binding.sequence, binding.key, &binding.binding_target, &binding) == 0);
+        str<> line;
+        REQUIRE(editor->get_line(line));
+        REQUIRE(line.equals(expected));
+        REQUIRE(has_saved_history());
+        REQUIRE(editor->update());
+        REQUIRE(!has_saved_history());
+    }
+
+    REQUIRE(g_tib->get_text().empty());
+    REQUIRE(list->get_index() == list->length());
+    REQUIRE(list->length() == 3);
 }

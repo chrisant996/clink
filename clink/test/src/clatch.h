@@ -109,6 +109,14 @@ struct test
 };
 
 //------------------------------------------------------------------------------
+struct prepare_test
+{
+    typedef std::function<void(void)> prepare_func;
+
+    static prepare_func& get_func() { static prepare_func func; return func; }
+};
+
+//------------------------------------------------------------------------------
 struct cleanup
 {
                         cleanup(std::function<void(void)>&& func) : m_func(std::move(func)) {}
@@ -163,6 +171,10 @@ inline bool run(const char* prefix="", bool times=false)
 
         // Ensure consistent test results even when filtering tests by prefix.
         os::set_current_dir(temp_dir.c_str());
+
+        // Invoke an optional preparation function before each test.
+        if (prepare_test::get_func())
+            prepare_test::get_func()();
 
         try
         {

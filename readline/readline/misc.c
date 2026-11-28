@@ -765,70 +765,7 @@ rl_fetch_history (int count, int c)
   return (0);
 }
 
-/* The equivalent of the Korn shell C-o operate-and-get-next-history-line
-   editing command. */
-
-/* This could stand to be global to the readline library */
-static rl_hook_func_t *_rl_saved_internal_startup_hook = 0;
-static int saved_history_logical_offset = -1;
-
-#ifdef TIB_TODO
-static int
-set_saved_history (void)
-{
-  int absolute_offset, count;
-
-  if (saved_history_logical_offset >= 0)
-    {
-      absolute_offset = saved_history_logical_offset - history_base;
-      count = where_history () - absolute_offset;
-      rl_get_previous_history (count, 0);
-    }
-  saved_history_logical_offset = -1;
-  _rl_internal_startup_hook = _rl_saved_internal_startup_hook;
-
-  return (0);
-}
-#endif
-
-int
-rl_operate_and_get_next (int count, int c)
-{
 /* begin_clink_change */
-  int where;
-  get_suggestion_list_selected_history_index (&where);
-/* end_clink_change */
-
-  /* Accept the current line. */
-  rl_newline (1, c);
-
-/* begin_clink_change */
-  //saved_history_logical_offset = rl_explicit_arg ? count : where_history () + history_base + 1;
-  {
-    if (where < 0)
-      where = rl_get_history_search_pos ();
-    if (where < 0)
-      where = where_history ();
-    saved_history_logical_offset = rl_explicit_arg ? count : where + history_base + 1;
-    suppress_sticky_search_position ();
-  }
-/* end_clink_change */
-
-#ifdef TIB_TODO
-  _rl_saved_internal_startup_hook = _rl_internal_startup_hook;
-  _rl_internal_startup_hook = set_saved_history;
-#endif
-
-  return 0;
-}
-
-/* begin_clink_change */
-
-int
-rl_has_saved_history (void)
-{
-  return saved_history_logical_offset >= 0;
-}
 
 /* Add the current line to the history. */
 int
@@ -884,13 +821,12 @@ get_effective_where (void)
 int
 rl_remove_history (int count, int key)
 {
-  int suggestionlist_history_index;
-  if (get_suggestion_list_selected_history_index (&suggestionlist_history_index))
-    if (suggestionlist_history_index < 0)
-      {
-      	rl_ding ();
-      	return 0;
-      }
+  int suggestionlist_history_index = get_suggestion_list_selected_history_index ();
+  if (suggestionlist_history_index < 0)
+    {
+      rl_ding ();
+      return 0;
+    }
 
   int search_pos = rl_get_history_search_pos ();
   const int old_where = ((suggestionlist_history_index >= 0) ?

@@ -1533,14 +1533,6 @@ void history_db::load_history_list(bool can_clean)
             load_internal();
     }
 
-#ifdef TIB_TODO
-    // HACK:  FRAGILE!  _rl_internal_startup_hook is currently either NULL or
-    // static set_saved_history in misc.c.  It's responsible for restoring the
-    // history offset correctly after operate_and_get_next.
-    if (_rl_internal_startup_hook)
-        _rl_internal_startup_hook();
-#endif
-
     list->reset_cursor();
 }
 

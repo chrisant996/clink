@@ -80,6 +80,7 @@ bool    translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool f
 
 //------------------------------------------------------------------------------
 bool    rl_has_queued_input();
+bool    has_saved_history();
 
 //------------------------------------------------------------------------------
 bool    is_terminal_scrolled();

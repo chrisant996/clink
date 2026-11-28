@@ -382,7 +382,7 @@ void suggestionlist_impl::on_need_input(int32& bind_group)
         }
         else if (s_suggestion_list_enabled && m_prev_bind_group < 0 &&
                  bind_group >= 0 && bind_group != m_bind_group &&
-                 !rl_has_saved_history())
+                 !has_saved_history())
         {
             class result_shim : public editor_module::result
             {
@@ -1407,18 +1407,14 @@ void suggestionlist_impl::notify_cleared()
 }
 
 //------------------------------------------------------------------------------
-bool suggestionlist_impl::get_selected_history_index(int32& index) const
+int32 suggestionlist_impl::get_selected_history_index() const
 {
     assert(!m_disabled);
 
     if (!is_active() || m_index < 0)
-    {
-        index = -1;
-        return false;
-    }
+        return -1;
 
-    index = m_suggestions[m_index].m_history_index;
-    return true;
+    return m_suggestions[m_index].m_history_index;
 }
 
 //------------------------------------------------------------------------------
@@ -1570,15 +1566,12 @@ void notify_suggestion_list_cleared()
 }
 
 //------------------------------------------------------------------------------
-extern "C" int get_suggestion_list_selected_history_index(int* index)
+int32 get_suggestion_list_selected_history_index()
 {
     if (!s_suggestionlist)
-    {
-        *index = -1;
-        return false;
-    }
+        return -1;
 
-    return s_suggestionlist->get_selected_history_index(*index);
+    return s_suggestionlist->get_selected_history_index();
 }
 
 //------------------------------------------------------------------------------

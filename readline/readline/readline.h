@@ -144,18 +144,15 @@ extern int rl_backward_char_search (int, int);
 /* Bindable commands for readline's interface to the command history. */
 /* begin_clink_change */
 extern int rl_add_history (int, int);
-/* end_clink_change */
-extern int rl_beginning_of_history (int, int);
-extern int rl_end_of_history (int, int);
-#if defined(HISTORY_TODO) || defined(BUILD_READLINE)
-extern int rl_get_next_history (int, int);
-extern int rl_get_previous_history (int, int);
-#endif
-extern int rl_operate_and_get_next (int, int);
-extern int rl_fetch_history (int, int);
-/* begin_clink_change */
 extern int rl_remove_history (int, int);
 /* end_clink_change */
+#if defined(HISTORY_TODO) || defined(BUILD_READLINE)
+extern int rl_beginning_of_history (int, int);
+extern int rl_end_of_history (int, int);
+extern int rl_get_next_history (int, int);
+extern int rl_get_previous_history (int, int);
+extern int rl_fetch_history (int, int);
+#endif
 
 /* Bindable commands for managing the mark and region. */
 extern int rl_set_mark (int, int);
@@ -471,12 +468,6 @@ extern void rl_echo_signal_char (int);
 extern int rl_set_paren_blink_timeout (int);
 
 /* History management functions. */
-
-/* begin_clink_change */
-/* Returns true if rl_operate_and_get_next has set a saved history
-   offset, so that the host knows not to rearrange history entries yet. */
-extern int rl_has_saved_history (void);
-/* end_clink_change */
 
 /* Undocumented. */
 extern int rl_maybe_save_line (void);

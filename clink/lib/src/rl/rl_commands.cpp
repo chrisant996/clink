@@ -1501,6 +1501,43 @@ ding:
 }
 
 //------------------------------------------------------------------------------
+static int32 s_saved_history = -1; // History number to fetch at the next prompt.
+
+//------------------------------------------------------------------------------
+bool has_saved_history()
+{
+    return s_saved_history >= 0;
+}
+
+//------------------------------------------------------------------------------
+void restore_saved_history(tib::editor_context& ctx)
+{
+    if (!has_saved_history())
+        return;
+
+    history_list* list = history_list::get();
+    const auto index = max(0, min(list->length(), s_saved_history - int32(history_base)));
+    s_saved_history = -1;
+
+    // Start from the new input line, rather than the previously accepted entry.
+    list->clear_saved_entry();
+    list->reset_cursor();
+    navigate_history(ctx, index - list->get_index());
+}
+
+//------------------------------------------------------------------------------
+int32_t operate_and_get_next(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    int32 index = get_suggestion_list_selected_history_index();
+    if (index < 0)
+        index = history_list::get()->get_index();
+
+    s_saved_history = ctx.has_numeric_argument() ? ctx.get_numeric_argument() : index + int32(history_base) + 1;
+    suppress_sticky_search_position();
+    return clink_accept_line(ctx, key, name, resolved);
+}
+
+//------------------------------------------------------------------------------
 int32_t get_next_history(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
 {
     return navigate_history(ctx, ctx.get_numeric_argument());
