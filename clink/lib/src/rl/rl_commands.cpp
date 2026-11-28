@@ -2856,6 +2856,55 @@ int32_t magic_space(tib::editor_context& ctx, int32_t key, const char* name, con
     return 0;
 }
 
+//------------------------------------------------------------------------------
+static int32_t search_char(tib::editor_context& ctx, int32_t count) noexcept
+{
+    if (!g_result)
+        return 0;
+
+    bool r = read_one_codepoint(*g_result, [&ctx, count](char_reader_result result) mutable
+    {
+        if (!result.success)
+            return;
+
+        const auto& text = ctx.get_text();
+        const auto direction = count < 0 ? -1 : 1;
+        auto point = ctx.get_caret();
+        while (count)
+        {
+            if (!tib::pos_mover(text.c_str(), text.length(), point, direction > 0, 0) ||
+                point == text.length())
+            {
+                tib::ding();
+                break;
+            }
+
+            if (point + result.utf8.length() <= text.length() &&
+                memcmp(text.c_str() + point, result.utf8.c_str(), result.utf8.length()) == 0)
+            {
+                ctx.set_caret(point);
+                count -= direction;
+            }
+        }
+    });
+
+    if (!r)
+        tib::ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32_t char_search(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return search_char(ctx, ctx.get_numeric_argument());
+}
+
+//------------------------------------------------------------------------------
+int32_t backward_char_search(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept
+{
+    return search_char(ctx, -ctx.get_numeric_argument());
+}
+
 
 
 //------------------------------------------------------------------------------

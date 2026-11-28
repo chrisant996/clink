@@ -157,6 +157,8 @@ int32_t delete_or_show_completions(tib::editor_context& ctx, int32_t key, const 
 int32_t delete_horizontal_space(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t skip_csi_sequence(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 int32_t print_last_kbd_macro(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
+int32_t char_search(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
+int32_t backward_char_search(tib::editor_context& ctx, int32_t key, const char* name, const tib::resolved_binding* resolved) noexcept;
 
 //------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Is globbing completion running?

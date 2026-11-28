@@ -481,3 +481,65 @@ TEST_CASE("Escape cancels numeric argument through tib bindings")
         REQUIRE(g_tib->get_text() == "original");
     }
 }
+
+TEST_CASE("character search")
+{
+    line_editor_tester tester;
+    REQUIRE(tester.get_editor()->update());
+
+    MAKE_CLEANUP([]() {
+        clink_bind("\\eZ", nullptr, emacs_table);
+        clink_bind("\\eY", nullptr, emacs_table);
+    });
+    clink_bind("\\eZ", "character-search", emacs_table);
+    clink_bind("\\eY", "character-search-backward", emacs_table);
+
+    const char* text = "a\xc3\xa9" "b\xc3\xa9" "c\xc3\xa9" "a\xf0\x9f\x98\x80";
+    tester.feed_input(text);
+
+    const struct {
+        const char* command;
+        const char* target;
+        int32 caret;
+        int32 count;
+        int32 expected;
+    } cases[] = {
+        { "\x1bZ", "\xc3\xa9", 0, 1, 1 },
+        { "\x1bZ", "\xc3\xa9", 0, 2, 4 },
+        { "\x1bZ", "\xc3\xa9", 1, 1, 4 }, // Skip the current character.
+        { "\x1bY", "\xc3\xa9", 14, 1, 7 },
+        { "\x1bY", "\xc3\xa9", 14, 2, 4 },
+        { "\x1bY", "\xc3\xa9", 7, 1, 4 },
+        { "\x1bZ", "\xc3\xa9", 14, -2, 4 },
+        { "\x1bY", "\xc3\xa9", 0, -2, 4 },
+        { "\x1bZ", "a", 0, 1, 9 },
+        { "\x1bY", "a", 9, 1, 0 },
+        { "\x1bZ", "\xf0\x9f\x98\x80", 0, 1, 10 },
+        { "\x1bY", "\xf0\x9f\x98\x80", 14, 1, 10 },
+        { "\x1bZ", "x", 4, 1, 4 }, // No match leaves the caret alone.
+        { "\x1bY", "x", 4, 1, 4 },
+        { "\x1bZ", "\xc3\xa9", 0, 4, 7 }, // Retain the last match.
+        { "\x1bY", "\xc3\xa9", 14, 4, 1 },
+        { "\x1bZ", "a", 14, 1, 14 },
+        { "\x1bY", "a", 0, 1, 0 },
+        { "\x1bZ", "a", 4, 0, 4 },
+        { "\x1bY", "a", 4, 0, 4 },
+    };
+
+    for (const auto& c : cases)
+    {
+        g_tib->set_caret(c.caret);
+        g_tib->set_numeric_argument(c.count);
+        tester.feed_input(c.command);
+        REQUIRE(is_char_reader_active());
+        tester.feed_input(c.target);
+        REQUIRE(!is_char_reader_active());
+        REQUIRE(g_tib->get_caret() == c.expected);
+        REQUIRE(g_tib->get_text() == text);
+    }
+
+    tester.feed_input("\x1bZ\x07"); // Ctrl+G cancels the pending search.
+    REQUIRE(!is_char_reader_active());
+    REQUIRE(g_tib->get_caret() == 4);
+    REQUIRE(g_tib->get_text() == text);
+}
